@@ -1,0 +1,745 @@
+class DDStatusBarMain : BaseStatusBar
+{
+	DynamicValueInterpolator mHealthInterpolator;
+	DynamicValueInterpolator mArmorInterpolator;
+	DynamicValueInterpolator mEXPInterpolator;
+	int prevhealthtick, healthtick;
+	int prevarmortick, armortick;
+	int prevEXPtick, EXPtick;
+	HUDFont mHUDFont;
+	HUDFont mIndexFont;
+	HUDFont mBigFont;
+	InventoryBarState diparms;
+	InventoryBarState diparms_sbar;
+	private int wiggle;
+
+	override void Init()
+	{
+		Super.Init();
+		SetSize(42, 320, 200); // 42, 320, 200
+
+		// Create the font used for the fullscreen HUD
+		Font fnt = "HUDFONT_RAVEN";
+		mHUDFont = HUDFont.Create(fnt, fnt.GetCharWidth("0") + 1, Mono_CellLeft, 1, 1);
+		fnt = "INDEXFONT_RAVEN";
+		mIndexFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
+		fnt = "BIGFONT";
+		mBigFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 2, 2);
+		diparms = InventoryBarState.Create(mIndexFont);
+		diparms_sbar = InventoryBarState.CreateNoBox(mIndexFont, boxsize:(31, 31), arrowoffs:(0,-10));
+		mHealthInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
+		mArmorInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
+		mEXPInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
+		healthtick = armortick = EXPtick = 8;
+	}
+	
+	override int GetProtrusion(double scaleratio) const
+	{
+		return scaleratio > 0.7? 8 : 0;
+	}
+
+	override void NewGame ()
+	{
+		Super.NewGame();
+		mHealthInterpolator.Reset (0);
+		mArmorInterpolator.Reset (0);
+		mEXPInterpolator.Reset (0);
+	}
+
+	override void Tick()
+	{
+		Super.Tick();
+		double tickinc = 0.1;
+		healthtick = CPlayer.mo.CountInv("PlayerMaxHP") * tickinc;
+		if (healthtick < 1) healthtick = 1;
+		if (healthtick != prevhealthtick) mHealthInterpolator = DynamicValueInterpolator.Create(CPlayer.health, 0.25, 1, healthtick);
+		let armor = CPlayer.mo.FindInventory("BasicArmor");
+		if (armor != null && armor.Amount > 0) 
+		{
+			if (CPlayer.mo.CountInv("KnightGownItem")) armortick = 250 * tickinc;
+			if (CPlayer.mo.CountInv("KnightGownItem2")) armortick = 500 * tickinc;
+			if (CPlayer.mo.CountInv("KnightGownItem3")) armortick = 1000 * tickinc;
+			if (armortick < 1) armortick = 1;
+			if (armortick != prevarmortick) mArmorInterpolator = DynamicValueInterpolator.Create(armor.Amount, 0.25, 1, armortick);
+		}
+		EXPtick = CPlayer.mo.CountInv("ExpPtsNeeded") * tickinc;
+		if (EXPtick < 1) EXPtick = 1;
+		if (EXPtick != prevEXPtick) mEXPInterpolator = DynamicValueInterpolator.Create(CPlayer.mo.CountInv("ExpPts"), 0.25, 1, EXPTick);
+		//Console.Printf("HealthTick: %d [%d], ArmorTick %d [%d], EXPTick %d [%d]", healthtick, prevhealthtick, armortick, prevarmortick, EXPtick, prevEXPtick);
+
+		mHealthInterpolator.Update(CPlayer.health);
+		if (armor != null && armor.Amount > 0) mArmorInterpolator.Update(armor.Amount);
+		mEXPInterpolator.Update(CPlayer.mo.CountInv("ExpPts"));
+		
+		prevhealthtick = healthtick;
+		prevarmortick = armortick;
+		prevEXPtick = EXPtick;
+
+		// wiggle the chain if it moves
+		if (Level.time & 1)
+		{
+			wiggle = (mHealthInterpolator.GetValue() != CPlayer.health) && Random[ChainWiggle](0, 1);
+		}
+	}
+	
+	//============================================================================
+	//
+	// DrawInventoryBar
+	//
+	// This function needs too many parameters, so most have been offloaded to
+	// a struct to keep code readable and allow initialization somewhere outside
+	// the actual drawing code.
+	//
+	//============================================================================
+	
+	// Except for the placement information this gets all info from the struct that gets passed in.
+	void DrawInventoryBar(InventoryBarState parms, Vector2 position, int numfields, int flags = 0, double bgalpha = 1.)
+	{
+		Font fnt = "INDEXFONT_DD";
+		parms.amountfont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
+		parms.box = TexMan.CheckForTexture("ARTIBOXD", TexMan.TYPE_MiscPatch);
+		parms.selector = TexMan.CheckForTexture("SELECTBO", TexMan.TYPE_MiscPatch);
+		
+		double width = parms.boxsize.X * numfields;
+		[position, flags] = AdjustPosition(position, flags, width, parms.boxsize.Y);
+		
+		CPlayer.mo.InvFirst = ValidateInvFirst(numfields);
+		if (CPlayer.mo.InvFirst == null) return;	// Player has no listed inventory items.
+		
+		Vector2 boxsize = parms.boxsize;
+		// First draw all the boxes
+		for(int i = 0; i < numfields; i++)
+		{
+			DrawTexture(parms.box, position + (boxsize.X * i, 0), flags | DI_ITEM_LEFT_TOP, bgalpha);
+		}
+		
+		// now the items and the rest
+		
+		Vector2 itempos = position + boxsize / 2;
+		Vector2 textpos = position + boxsize - (1, 1 + parms.amountfont.mFont.GetHeight());
+		Vector2 textposextra;
+
+		int i = 0;
+		Inventory item;
+		bool inventorylimits;
+		double inviconalpha, inviconalphapulse, inviconscalex, inviconscaley;
+		int inviconalphatimer = level.time % 35;
+		CPlayer.inventorytics = 0; // Makes it you can immediately "use" items after selecting through them.
+		
+		int ItemHeldRatio;
+		int texttranslation = font.CR_UNTRANSLATED;
+		//Console.Printf("%d", CPlayer.inventorytics);
+		//Console.Printf("texttranslation: %d", texttranslation);
+		PlayerPawn cplayerpawn;
+		cplayerpawn = PlayerPawn(CPlayer.mo);
+		for(item = CPlayer.mo.InvFirst; item != NULL && i < numfields; item = item.NextInv())
+		{
+			for(int j = 0; j < 2; j++)
+			{
+				if (j ^ !!(flags & DI_DRAWCURSORFIRST))
+				{
+					if (item == CPlayer.mo.InvSel)
+					{
+						double flashAlpha = bgalpha;
+						if (flags & DI_ARTIFLASH) flashAlpha *= itemflashFade;
+						DrawTexture(parms.selector, position + parms.selectofs + (boxsize.X * i, 0), flags | DI_ITEM_LEFT_TOP, flashAlpha);
+					}
+				}
+				else
+				{
+					inviconscalex = 1.0;
+					inviconscaley = 1.0;
+					if (item is "Coin")
+					{
+						inviconalpha = 0.875;
+					}
+					else
+					{
+						if (item.Amount <= 0) 
+						{
+							inviconalpha = 0.4375; 
+							inviconscalex *= 0.875;
+							inviconscaley *= 0.875;
+						}
+						else 
+						if (item.Amount >= item.MaxAmount) 
+						{
+							if (inviconalphatimer == 0) inviconalphapulse = -0.125;
+							if (inviconalphatimer == 1 || inviconalphatimer == 39) inviconalphapulse = -0.1125;
+							if (inviconalphatimer == 2 || inviconalphatimer == 38) inviconalphapulse = -0.1000;
+							if (inviconalphatimer == 3 || inviconalphatimer == 37) inviconalphapulse = -0.0875;
+							if (inviconalphatimer == 4 || inviconalphatimer == 36) inviconalphapulse = -0.075;
+							if (inviconalphatimer == 5 || inviconalphatimer == 35) inviconalphapulse = -0.0625;
+							if (inviconalphatimer == 6 || inviconalphatimer == 34) inviconalphapulse = -0.05;
+							if (inviconalphatimer == 7 || inviconalphatimer == 33) inviconalphapulse = -0.0375;
+							if (inviconalphatimer == 8 || inviconalphatimer == 32) inviconalphapulse = -0.025;
+							if (inviconalphatimer == 9 || inviconalphatimer == 31) inviconalphapulse = -0.0125;
+							if (inviconalphatimer == 10 || inviconalphatimer == 30) inviconalphapulse = -0.00;
+							if (inviconalphatimer == 11 || inviconalphatimer == 29) inviconalphapulse = 0.0125;
+							if (inviconalphatimer == 12 || inviconalphatimer == 28) inviconalphapulse = 0.025;
+							if (inviconalphatimer == 13 || inviconalphatimer == 27) inviconalphapulse = 0.0375;
+							if (inviconalphatimer == 14 || inviconalphatimer == 26) inviconalphapulse = 0.05;
+							if (inviconalphatimer == 15 || inviconalphatimer == 25) inviconalphapulse = 0.0625;
+							if (inviconalphatimer == 16 || inviconalphatimer == 24) inviconalphapulse = 0.075;
+							if (inviconalphatimer == 17 || inviconalphatimer == 23) inviconalphapulse = 0.0875;
+							if (inviconalphatimer == 18 || inviconalphatimer == 22) inviconalphapulse = 0.10;
+							if (inviconalphatimer == 19 || inviconalphatimer == 21) inviconalphapulse = 0.125;
+							if (inviconalphatimer == 20) inviconalphapulse = 0.1375;
+							inviconalphapulse *= 2;
+							inviconalpha = 0.75 + inviconalphapulse;
+							inviconscalex *= 1.0 + ((inviconalphapulse * 0.25));
+							inviconscaley *= 1.0 + ((inviconalphapulse * 0.25));
+						}
+						else 
+						{
+							inviconalpha = 0.875;
+							inviconscalex *= 0.9375;
+							inviconscaley *= 0.9375;
+						}
+						/*
+						if (cplayerpawn && cplayerpawn.buttons & BT_ZOOM) 
+						{
+							if (item.GetClassName() == "" ||
+									item.GetClassName() == "" ||) 
+							{
+								inviconalpha *= 4; 
+								inviconscalex *= 1.25;
+								inviconscaley *= 1.25;
+							}
+							else 
+							{
+								inviconalpha *= 0.25;
+								inviconscalex *= 0.8;
+								inviconscaley *= 0.8;
+							}
+						}
+						*/
+					}
+
+					DrawInventoryIcon(item, itempos + (boxsize.X * i, 0), flags | DI_ITEM_CENTER, inviconalpha, (-1, -1), (inviconscalex, inviconscaley) );
+					//DrawInventoryIcon(item, itempos + (boxsize.X * i, 0), flags | DI_ITEM_CENTER | DI_DIMDEPLETED );
+				}
+			}
+			
+			int textsize = 1;
+			if (parms.amountfont != null && (item.Amount >= 0 || (flags & DI_ALWAYSSHOWCOUNTERS)))
+			{
+				if (item.MaxAmount > 0) ItemHeldRatio = (item.Amount * 1000) / item.MaxAmount;
+				else ItemHeldRatio = 0;
+				
+				if (item is "Coin")
+				{
+					fnt = "INDEXFONT_DD";
+					parms.amountfont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
+					if (textsize == 0) textposextra = (0,0);
+					if (textsize == 1) textposextra = (0,0);
+					if (textsize == 2) textposextra = (0,5);
+					DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 6), textpos + (boxsize.X * i, 0) + (-14,0) + textposextra, flags | DI_TEXT_ALIGN_CENTER, font.CR_GOLD, parms.itemalpha);
+				}
+				else
+				{
+					if (textsize == 0) fnt = "INDEXFONT_DD";
+					if (textsize == 1) fnt = "INDEXFONT_DDM";
+					if (textsize == 2) fnt = "INDEXFONT_DDL";
+
+					parms.amountfont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
+
+					if (dydu_imposeinventorylimits)
+					{
+						if (textsize == 0) textposextra = (0,0);
+						if (textsize == 1) textposextra = (-1,0);
+						if (textsize == 2) textposextra = (-3,1);
+						if (item.Amount <= 0) texttranslation = Font.CR_DARKRED;
+						else if (item.Amount >= item.MaxAmount) texttranslation = Font.CR_LIGHTBLUE;
+						else
+						{
+							if (ItemHeldRatio <= 250) texttranslation = Font.CR_RED;
+							else if (ItemHeldRatio > 250 && ItemHeldRatio <= 500) texttranslation = Font.CR_ORANGE;
+							else if (ItemHeldRatio > 500 && ItemHeldRatio <= 750) texttranslation = Font.CR_YELLOW;
+							else if (ItemHeldRatio > 750 && ItemHeldRatio <= 1000) texttranslation = Font.CR_GREEN;
+						}
+						DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 6), textpos + (boxsize.X * i, 0) + (-26,-19) + textposextra, flags | DI_TEXT_ALIGN_LEFT, texttranslation, parms.itemalpha);
+
+						if (textsize == 0) textposextra = (0,0);
+						if (textsize == 1) textposextra = (0,0);
+						if (textsize == 2) textposextra = (-1,1);
+						DrawString(parms.amountfont, "/", textpos + (boxsize.X * i, 0) + (-14,-10) + textposextra, flags | DI_TEXT_ALIGN_CENTER, Font.CR_WHITE, parms.itemalpha);
+
+						if (textsize == 0) textposextra = (0,0);
+						if (textsize == 1) textposextra = (1,0);
+						if (textsize == 2) textposextra = (1,2);
+						DrawString(parms.amountfont, FormatNumber(item.MaxAmount, 0, 10), textpos + (boxsize.X * i, 0) + (-2,-2) + textposextra, flags | DI_TEXT_ALIGN_RIGHT, Font.CR_GOLD, parms.itemalpha);
+						
+						textposextra = (0,0);
+					}
+					else
+					{
+						if (item.Amount <= 0) texttranslation = Font.CR_DARKRED;
+						else if (item.Amount >= item.MaxAmount) texttranslation = Font.CR_LIGHTBLUE;
+						else
+						{
+							if (ItemHeldRatio <= 250) texttranslation = Font.CR_RED;
+							else if (ItemHeldRatio > 250 && ItemHeldRatio <= 500) texttranslation = Font.CR_ORANGE;
+							else if (ItemHeldRatio > 500 && ItemHeldRatio <= 750) texttranslation = Font.CR_YELLOW;
+							else if (ItemHeldRatio > 750 && ItemHeldRatio <= 1000) texttranslation = Font.CR_GREEN;
+						}
+						if (textsize == 0) textposextra = (0,0);
+						if (textsize == 1) textposextra = (1,0);
+						if (textsize == 2) textposextra = (1,2);
+						DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 6), textpos + (boxsize.X * i, 0) + (-2,-2) + textposextra, flags | DI_TEXT_ALIGN_RIGHT, texttranslation, parms.itemalpha);
+
+						textposextra = (0,0);
+					}
+				}
+			}
+			i++;
+		}
+		// Is there something to the left?
+		if (CPlayer.mo.FirstInv() != CPlayer.mo.InvFirst)
+		{
+			DrawTexture(parms.left, position + (-parms.arrowoffset.X, parms.arrowoffset.Y), flags | DI_ITEM_RIGHT|DI_ITEM_VCENTER);
+		}
+		// Is there something to the right?
+		if (item != NULL)
+		{
+			DrawTexture(parms.right, position + parms.arrowoffset + (width, 0), flags | DI_ITEM_LEFT|DI_ITEM_VCENTER);
+		}
+	}
+
+	override void Draw (int state, double TicFrac)
+	{
+		Super.Draw (state, TicFrac);
+
+		if (state == HUD_StatusBar)
+		{
+			BeginStatusBar();
+			DrawMainBar (TicFrac);
+		}
+		else if (state == HUD_Fullscreen)
+		{
+			BeginHUD();
+			DrawFullScreenStuff ();
+		}
+	}
+
+	protected void DrawMainBar (double TicFrac)
+	{
+		DrawImage("BARBACK", (0, 158), DI_ITEM_OFFSETS);
+		DrawImage("LTFCTOP", (0, 148), DI_ITEM_OFFSETS);
+		DrawImage("RTFCTOP", (290, 148), DI_ITEM_OFFSETS);
+		if (isInvulnerable())
+		{
+			//god mode
+			DrawImage("GOD1", (16, 167), DI_ITEM_OFFSETS);
+			DrawImage("GOD2", (287, 167), DI_ITEM_OFFSETS);
+		}
+		//health
+		DrawImage("CHAINBAC", (0, 190), DI_ITEM_OFFSETS);
+		// wiggle the chain if it moves
+		int inthealth =  mHealthInterpolator.GetValue();
+		DrawGem("CHAIN", "LIFEGEM4", inthealth, CPlayer.mo.GetMaxHealth(true), (2, 191 + wiggle), 15, 25, 16, (multiplayer? DI_TRANSLATABLE : 0) | DI_ITEM_LEFT_TOP); 
+		DrawImage("LTFACE", (0, 190), DI_ITEM_OFFSETS);
+		DrawImage("RTFACE", (276, 190), DI_ITEM_OFFSETS);
+		DrawShader(SHADER_HORZ, (19, 190), (16, 10));
+		DrawShader(SHADER_HORZ|SHADER_REVERSE, (278, 190), (16, 10));
+
+		if (!isInventoryBarVisible())
+		{
+			int x = 86;
+			int y = 174;
+			//statbar
+			int PlayerMaxHP = CPlayer.mo.CountInv("PlayerMaxHP");
+
+			DrawImage("LIFEBAR", (34, 160), DI_ITEM_OFFSETS);
+			DrawImage("ARMCLEAR", (57, 171), DI_ITEM_OFFSETS);
+			DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(PlayerMaxHP, 3), (x, y+5), DI_TEXT_ALIGN_RIGHT, font.cr_brick);
+			DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x+6, y), DI_TEXT_ALIGN_RIGHT, font.cr_brick);
+			DrawString(HUDFont.Create("INDEXFONT_DDL"), FormatNumber(mHealthInterpolator.GetValue(), 3), (x, y-6), DI_TEXT_ALIGN_RIGHT, font.cr_brick);
+
+			x = 253;
+			y = 174;
+			int armorcolor = font.CR_White; 
+			int armormax;
+			let armor = CPlayer.mo.FindInventory("BasicArmor");
+			if (CPlayer.mo.CountInv("KnightGownItem"))
+			{
+				armorcolor = font.CR_Purple;
+				armormax = 250;
+			}
+			if (CPlayer.mo.CountInv("KnightGownItem2"))
+			{
+				armorcolor = font.CR_Cyan;
+				armormax = 500;
+			}
+			if (CPlayer.mo.CountInv("KnightGownItem3"))
+			{
+				armorcolor = font.CR_Gold;
+				armormax = 1000;
+			}
+			if (armormax)
+			{
+				DrawInventoryIcon(armor, (x-22, y+10), DI_TEXT_ALIGN_CENTER, 0.75, (-1, -1), (0.5,0.5)); // 58, -24
+				DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(armormax, 4), (x, y+5), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
+				DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x+6, y), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
+				DrawString(HUDFont.Create("INDEXFONT_DDL"), FormatNumber(mArmorInterpolator.GetValue(), 4), (x, y-6), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
+			}
+			else
+			{
+				DrawString(HUDFont.Create("INDEXFONT_DDL"), FormatNumber(mArmorInterpolator.GetValue(), 4), (x, y-4), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
+			}
+
+			//ammo
+			Ammo ammo1, ammo2;
+			[ammo1, ammo2] = GetCurrentAmmo();
+			x = 136;
+			y = 162;
+			if (ammo1 != null && ammo2 == null)
+			{
+				DrawTexture(ammo1.icon, (x-15, y+13), DI_ITEM_CENTER, 0.75, (-1, -1), (1.0,1.0));
+				DrawString(HUDFont.Create("INDEXFONT_DDL"), FormatNumber(ammo1.Amount, 3), (136, y), DI_TEXT_ALIGN_RIGHT, font.cr_Gold);
+				DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (136, y+12), DI_TEXT_ALIGN_RIGHT, font.cr_Gold);
+				DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(ammo1.MaxAmount, 3), (136, y+19), DI_TEXT_ALIGN_RIGHT, font.cr_Gold);
+			}
+			else if (ammo2 != null)
+			{
+				DrawString(mIndexFont, FormatNumber(ammo1.Amount, 3), (137, 165), DI_TEXT_ALIGN_RIGHT, font.cr_Gold);
+				DrawString(mIndexFont, FormatNumber(ammo2.Amount, 3), (137, 177), DI_TEXT_ALIGN_RIGHT, font.cr_Gold);
+				DrawTexture(ammo1.icon, (115, 169), DI_ITEM_CENTER);
+				DrawTexture(ammo2.icon, (115, 180), DI_ITEM_CENTER);
+			}
+
+			//keys
+			if (gameinfo.gametype & 1) // Doom Mode
+			{
+				bool locks[6];
+				String image = "";
+				for(int i = 0; i < 6; i++) locks[i] = CPlayer.mo.CheckKeys(i + 1, false, true);
+				// key 1
+				if (locks[1] && locks[4]) image = "BKEYICO2";
+				else if (locks[1]) image = "BKEYICO0";
+				else if (locks[4]) image = "BKEYICO1";
+				else image = "";
+				DrawImage(image, (153, 164), DI_ITEM_OFFSETS);
+
+				if (locks[2] && locks[5]) image = "YKEYICO2";
+				else if (locks[2]) image = "YKEYICO0";
+				else if (locks[5]) image = "YKEYICO1";
+				else image = "";
+				DrawImage(image, (153, 172), DI_ITEM_OFFSETS);
+
+				if (locks[0] && locks[3]) image = "RKEYICO2";
+				else if (locks[0]) image = "RKEYICO0";
+				else if (locks[3]) image = "RKEYICO1";
+				else image = "";
+				DrawImage(image, (153, 180), DI_ITEM_OFFSETS);
+			}
+			if (gameinfo.gametype & 2) // Heretic Mode
+			{
+				if (CPlayer.mo.CheckKeys(3, false, true)) DrawImage("YKEYICON", (153, 164), DI_ITEM_OFFSETS);
+				if (CPlayer.mo.CheckKeys(1, false, true)) DrawImage("GKEYICON", (153, 172), DI_ITEM_OFFSETS);
+				if (CPlayer.mo.CheckKeys(2, false, true)) DrawImage("BKEYICON", (153, 180), DI_ITEM_OFFSETS);
+			}
+
+			//inventory box
+			if (CPlayer.mo.InvSel != null)
+			{
+				DrawInventoryIcon(CPlayer.mo.InvSel, (194, 175), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
+				if (CPlayer.mo.InvSel.Amount > 1)
+				{
+					DrawString(mIndexFont, FormatNumber(CPlayer.mo.InvSel.Amount, 3), (209, 182), DI_TEXT_ALIGN_RIGHT);
+				}
+			}
+		}
+		else
+		{
+			DrawImage("INVBAR", (34, 160), DI_ITEM_OFFSETS);
+			DrawInventoryBar(diparms_sbar, (49, 160), 7, DI_ITEM_LEFT_TOP, HX_SHADOW);
+		}
+	}
+
+	protected void DrawFullScreenStuff ()
+	{
+		int digx, digy, spacing;
+		int valueamt = CPlayer.mo.health;
+		string valueamtS = FormatNumber(valueamt);
+		int PlayerMaxHP = CPlayer.mo.CountInv("PlayerMaxHP");
+		string PlayerMaxHPS = FormatNumber(PlayerMaxHP);
+
+		int healthdigits = 2;
+		healthdigits = PlayerMaxHPS.Length();
+		if (valueamt > PlayerMaxHP) healthdigits = valueamtS.Length();
+
+		int slashunit = (-6 * (healthdigits-2));
+		int healthcolor = font.CR_brick;
+		bool isinvuln = false;
+		if (CPlayer.mo.bINVULNERABLE || 
+				 CPlayer.mo.CountInv("PowerInvulnerable") || CPlayer.mo.CountInv("PowerInvulnDD") || 
+				 CPlayer.cheats & CF_GODMODE2 || CPlayer.cheats & CF_GODMODE) isinvuln = true;
+		if (isinvuln) healthcolor = font.CR_Gold;
+		//health
+		DrawImage("ARTIWINE", (64, -4)); // 51, -3
+		DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(PlayerMaxHP, 4), (48, -13), DI_TEXT_ALIGN_RIGHT, healthcolor, 0.90); // 41, -43
+		DrawString(HUDFont.Create("SMALLFONT"), "/", ((24+slashunit), -17), DI_TEXT_ALIGN_RIGHT, healthcolor, 0.90); // 41, -43
+		double healthalpha = 0.90;
+		double xscal = 1.00;
+		double yscal = 1.00;
+		int direction = 1;
+		int scalerbase, scaler, scaler2, scalerdiv;
+		double scaleincamt;
+		double scaleamtbase = 1.334;
+		if (CPlayer.mo.CountInv("PlayerIsDead") || valueamt <= 0)
+		{
+			healthalpha *= 0.1;
+			healthcolor = font.CR_black;
+		}
+		else
+		{
+			if (CPlayer.mo.CountInv("CriticalHealth") && level.time % 8 >= 4) 
+			{
+				healthalpha = 0.125;
+			}
+			else if (CPlayer.mo.CountInv("LowHealth") && level.time % 24 >= 12) 
+			{
+				healthalpha *= 0.25;
+			}
+			else if (CPlayer.mo.CountInv("DecentHealth") && level.time % 48 >= 24) 
+			{
+				healthalpha *= 0.5;
+			}
+			else 
+			{
+				if (valueamt > PlayerMaxHP)
+				{
+					scalerbase = 192;
+					scaleincamt = 0.00166667;
+					scaleamtbase = 1.0;
+					healthcolor = font.CR_Teal;
+					if (valueamt >= (PlayerMaxHP * 1.334))
+					{
+						scalerbase = 128;
+						scaleincamt = 0.0025;
+						scaleamtbase = 1.0625;
+						healthcolor = font.CR_Cyan;
+						if (valueamt >= (PlayerMaxHP * 1.667))
+						{
+							scalerbase = 96;
+							scaleincamt = 0.0033334;
+							scaleamtbase = 1.125;
+							healthcolor = font.CR_Sapphire;
+							if (valueamt >= (PlayerMaxHP * 2))
+							{
+								scalerbase = 64;
+								scaleincamt = 0.005;
+								scaleamtbase = 1.1875;
+								healthcolor = font.CR_LightBlue;
+								if (valueamt >= (PlayerMaxHP * 2.5))
+								{
+									scalerbase = 32;
+									scaleincamt = 0.01;
+									scaleamtbase = 1.25;
+									healthcolor = font.CR_Purple;
+									if (valueamt >= (PlayerMaxHP * 3.0))
+									{
+										scalerbase = 16;
+										scaleincamt = 0.02;
+										scaleamtbase = 1.3125;
+										healthcolor = font.CR_Gold;
+									}
+								}
+							}
+						}
+					}
+					scaler = (level.time % scalerbase);
+					if (scaler >= (scalerbase*0.5) && scaler <= (scalerbase-1)) scaler2 = (scalerbase - scaler);
+																																else scaler2 = scaler;
+					xscal = yscal = 1.0 + (scaler2 * (scaleincamt * scaleamtbase)); // 4
+					//Console.Printf("Scaler2: %d (%d), scaleincamt: %.8f (%d)", scaler2, scaler, scaleincamt, scalerbase);
+				}
+			}
+		}
+		//Console.Printf("scal: %.8f / %.8f", xscal, yscal);
+		if (isinvuln) healthcolor = font.CR_Gold;
+		DrawString(HUDFont.Create("BIGFONT"), FormatNumber(mHealthInterpolator.GetValue()), (48, -26), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, -1, 4, (xscal, yscal));
+		xscal = yscal = 1.00;
+
+		//armor
+
+		int armorcolor = font.CR_White; 
+		int armormax;
+		string armormaxS;
+		let armor = CPlayer.mo.FindInventory("BasicArmor");
+		if (armor != null && armor.Amount > 0)
+		{
+			valueamt = armor.Amount;
+			valueamtS = FormatNumber(valueamt);
+
+			DrawInventoryIcon(armor, (64, -32)); // 58, -24
+			if (CPlayer.mo.CountInv("KnightGownItem"))
+			{
+				armorcolor = font.CR_Purple;
+				armormax = 250;
+			}
+			if (CPlayer.mo.CountInv("KnightGownItem2"))
+			{
+				armorcolor = font.CR_Cyan;
+				armormax = 500;
+			}
+			if (CPlayer.mo.CountInv("KnightGownItem3"))
+			{
+				armorcolor = font.CR_Gold;
+				armormax = 1000;
+			}
+			valueamtS = FormatNumber(valueamt);
+			armormaxS = FormatNumber(armormax);
+
+			int armordigits = 2;
+			
+			armordigits = armormaxS.Length();
+			if (valueamt > armormax) armordigits = valueamtS.Length();
+			
+			slashunit = (-6 * (armordigits-2));
+			
+			DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(armormax, 4), (48, -44), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
+			DrawString(HUDFont.Create("SMALLFONT"), "/", ((20+slashunit), -49), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
+			DrawString(HUDFont.Create("BIGFONT"), FormatNumber(mArmorInterpolator.GetValue(), 4), (46, -57), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
+		}
+
+		//level
+		DrawString(HUDFont.Create("BIGFONT"), FormatNumber(CPlayer.mo.CountInv("PlayerLevel"), 3), (48, -82), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
+		DrawString(HUDFont.Create("SMALLFONT"), "LVL", (48, -90), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
+		//EXP
+		int EXPPts = CPlayer.mo.CountInv("ExpPts");
+		int EXPNeeded = CPlayer.mo.CountInv("ExpPtsNeeded");
+		int digits;
+		if (EXPNeeded < 100000000) digits = 8;
+		if (EXPNeeded < 10000000) digits = 7;
+		if (EXPNeeded < 1000000) digits = 6;
+		if (EXPNeeded < 100000) digits = 5;
+		if (EXPNeeded < 10000) digits = 4;
+		if (EXPNeeded < 1000) digits = 3;
+		if (EXPNeeded < 100) digits = 2;
+		if (EXPNeeded < 10) digits = 1;
+		spacing = 6;
+		digx = 64 + (digits * spacing);
+		DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(mEXPInterpolator.GetValue(), digits), (digx, -87), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
+		DrawString(HUDFont.Create("SMALLFONT"), "/", ((digx+(spacing*1.334)), -83), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
+		DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(EXPNeeded, digits), (digx, -79), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
+
+		//frags/keys
+		if (deathmatch)
+		{
+			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (70, -16));
+		}
+		else
+		{
+			Vector2 keypos = (86, -7); // 60, -1
+			int rowc = 0;
+			double roww = 0;
+			for(let i = CPlayer.mo.Inv; i != null; i = i.Inv)
+			{
+				if (i is "Key" && i.Icon.IsValid())
+				{
+					DrawTexture(i.Icon, keypos, DI_ITEM_LEFT_BOTTOM);
+					Vector2 size = TexMan.GetScaledSize(i.Icon);
+					keypos.Y -= size.Y + 2;
+					roww = max(roww, size.X);
+					if (++rowc == 3)
+					{
+						keypos.Y = -1;
+						keypos.X += roww + 2;
+						roww = 0;
+						rowc = 0;
+					}
+				}
+			}
+		}
+		
+		// dash
+		int candash = CPlayer.mo.CountInv("DashReady");
+		int dash = CPlayer.mo.CountInv("DashGauge");
+		int dashcharges = CPlayer.mo.CountInv("DashCharges");
+		int dashcharge = CPlayer.mo.CountInv("DashCharge");
+		int dashtics = CPlayer.mo.CountInv("DashTics");
+		int dashmaxcharge = CPlayer.mo.CountInv("DashMaxCharge");
+		double dashmeterlength = (0.75 + (CPlayer.mo.CountInv("PlayerLevel") * 0.01));
+		if (dashmeterlength > 1.5) dashmeterlength = 1.5;
+		int dashbarunits = dash * dashmeterlength;
+		digy = -100;
+		digx = 18;
+		string dun = "DASHUNI2";
+		if (candash) dun = "DASHUNIT";
+		int dashcost = CPlayer.mo.CountInv("DashCost");
+		if (DashMaxCharge >= dashcost)
+		{
+			for (int i; i < dashbarunits; i++) DrawImage(dun, (digx+i, digy), 0, HX_SHADOW); // -46, -1
+		}
+		
+		if (dydudebug_dashmeter)
+		{
+			digy = -116;
+			digx = 48;
+			if (candash) DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue);
+							else DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick);
+			digy = -124;
+			digx = 48;
+			if (candash) DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue);
+							else DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick);
+			digy = -116;
+			digx = 80;
+			if (candash) DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue);
+							else DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick);
+			if (dashtics)
+			{
+				digy = -122;
+				digx = 80;
+				if (candash) DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue);
+								else DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick);
+			}
+		}
+		
+		//ammo
+		Ammo ammo1, ammo2;
+		[ammo1, ammo2] = GetCurrentAmmo();
+		int x = -4;
+		int y = -22;
+		if (ammo1 != null)
+		{
+			DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(ammo1.MaxAmount, 3), (x+2, y+14), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray);
+			DrawString(HUDFont.Create("SMALLFONT"), "/", (x-27, y+9), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray);
+			DrawString(HUDFont.Create("BIGFONT"), FormatNumber(ammo1.Amount, 3), (x, y+2), DI_TEXT_ALIGN_RIGHT, font.cr_Gray);
+			DrawTexture(ammo1.Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (1.0,1.0)); // -17, y
+			y -= 40;
+		}
+		/*
+		if (ammo2 != null)
+		{
+			DrawTexture(ammo2.Icon, (-14, y));
+			DrawString(mHUDFont, FormatNumber(ammo2.Amount, 3), (-3, y+7), DI_TEXT_ALIGN_RIGHT);
+			y -= 40;
+		}
+		*/
+
+		x = -46;
+		x -= 16;
+		y = -1;
+		y -= 8;
+		//if (!isInventoryBarVisible() && !Level.NoInventoryBar && CPlayer.mo.InvSel != null)
+		//{
+			// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
+			// Heretic's ARTIBOX is 30x30 pixels. 
+			DrawImage("ARTIBOXD", (x, y), 0, HX_SHADOW); // -46, -1
+			DrawInventoryIcon(CPlayer.mo.InvSel, (x, y-14), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
+			y += 7;
+			DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.Amount, 3), (x-23, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_LEFT, font.cr_gray);
+			DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x-2, y - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_CENTER, font.cr_gray);
+			DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.MaxAmount, 3), (x+14, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, font.cr_gray);
+			//if (CPlayer.mo.InvSel.Amount > 1)
+			//{
+			//}
+		//}
+		//if (isInventoryBarVisible())
+		//{
+		DrawInventoryBar(diparms, (0, 0), 9, DI_SCREEN_CENTER_BOTTOM, HX_SHADOW);
+		//}
+	}
+}

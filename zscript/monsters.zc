@@ -1,0 +1,2039 @@
+//************************
+//* ORIGINAL DD MONSTERS *
+//************************
+//KILLETANTE
+class Killetante : DDCreature
+{
+	default
+	{
+		//$Category RPMonsters
+		Health 160;
+		Radius 20;
+		Height 64;
+		Speed 10;
+		PainChance 256;
+		MeleeRange 64;
+		Mass 100;
+		DamageFactor "Fire", 3;
+		PainChance "Fire", 256;
+		DamageFactor "Chop", 3;
+		PainChance "Chop", 256;
+		DamageFactor "Suck", 1.875;
+		PainChance "Suck", 256;
+		DamageFactor "Beats", 3;
+		PainChance "Beats", 256;
+		DamageFactor "Bap", 1;
+		PainChance "Bap", 256;
+		MONSTER;
+		+FLOORCLIP
+		+NOINFIGHTING
+		+NOBLOOD
+		SeeSound "dancer/sight";
+		PainSound "dancer/pain";
+		DeathSound "virtuoso/death";
+		ActiveSound "dancer/active";
+		Obituary "%o was out-danced by a Killetante.";
+		HitObituary "%o was roundhouse-kicked by a Killetante.";
+		Tag "Killetante";
+		Species "Killetante";
+		+DONTHARMCLASS
+		+AVOIDHAZARDS
+		+JUMPDOWN
+	}
+	States
+	{
+		Spawn:
+			DANI A 7 A_Look;
+			DANI B 5 A_Look;
+			DANI C 7 A_Look;
+			DANI D 5 A_Look;
+			Loop;
+		See:
+			DANS BBCCDDEE 3 A_Chase;
+			DANS B 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+			DANS B 0 A_Jump(192,"dodge");
+			Loop;
+		Dodge:
+			DANS F 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+			DANS FGH 2 A_FastChase;
+			DANS I 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+			DANS IJ 2 A_FastChase;
+			Goto See;
+		Missile:
+			DANS F 0 A_Jump(96,"MusicAttk");
+			DANS F 0; //ACS_Execute(102,0,0,0,0)
+			DANS F 4 A_Facetarget;
+			DANS GHI 4 A_Recoil(-2);
+			DANS J 0 ThrustThingz (0, 27, 0, 0);
+			DANS J 4 ThrustThing (angle*256/360, 18, 0, 0);
+			DANS GHIJ 2;
+			DANS D 5 A_CustomMeleeAttack (random(10,15), "mallethit", "malletswing", "", 1);
+			Goto See;
+		MusicAttk:
+			DANS F 0; //ACS_Execute(102,0,0,0,0)
+			DANS F 4 A_StartSound("dancer/danceattk",CHAN_BODY);
+			DANS GHIFGHI 4 A_Recoil(2);
+			DANS J 0 ThrustThingz (0, 27, 0, 0);
+			DANS J 4 ThrustThing (angle*256/360, 18, 0, 0);
+			DANS D 0 A_StartSound("virtuoso/musicfire",CHAN_VOICE);
+			DANS D 4 A_SpawnProjectile("MusicBall",40);
+			DANS E 4;
+			Goto See;
+		Melee:
+			DANS F 0; //ACS_Execute(102,0,0,0,0)
+			DANS FGHIJ 2 A_Facetarget;
+			DANS D 5 A_CustomMeleeAttack (random(10,15), "mallethit", "malletswing", "", 1); 
+			Goto See;
+		Pain.Suck:
+			DANS K 4 
+			{
+				A_SetTics(randompick(2,2,3,3,3,4,4));
+				A_FaceTarget();
+			}
+			DANS L 0 
+			{
+				if (random(1,16) == 1)
+				{
+					ThrustThingZ (0, 6, 0, 0);
+					ThrustThing (angle*256/360+180, random(1,2), 0, 0);
+				}
+			}
+			DANS L 12 
+			{
+				A_Pain();
+				A_SetTics(randompick(8,9,9,10,11,11,12));
+			}
+			DANS K 12 //ACS_Execute(102,0,0,0,0)
+			{
+				A_SetTics(randompick(8,9,9,10,11,11,12));
+			}
+			DANS K 0
+			{
+				if (random(1,8) <= 3) { return resolvestate("Dodge"); }
+				return resolvestate(null);
+			}
+			Goto See;
+		Pain:
+			DANS K 2 A_FaceTarget;
+			DANS L 0 ThrustThingZ (0, 24, 0, 0);
+			DANS L 0 ThrustThing (angle*256/360+180, 6, 0, 0);
+			DANS L 6 A_Pain;
+			DANS K 6; //ACS_Execute(102,0,0,0,0)
+			DANS K 0
+			{
+				if (random(1,16) == 1) 
+				{ 
+					if (random(1,8) <= 5) 
+					{
+						return resolvestate("Dodge"); 
+					}
+					else
+					{
+						return resolvestate("Melee"); 
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+			Goto See;
+		/*
+		Death.Suck:
+			DANS K 5 A_StartSound("VacDed",CHAN_BODY);
+			DANS K 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4);
+			Stop;
+		*/
+		Death:
+			DANS K 3 A_FaceTarget;
+			DANS L 0 ThrustThingZ (0, 24, 0, 0);
+			DANS L 0 ThrustThing (angle*256/360+180, 6, 0, 0);
+			DANS L 5 A_Scream;
+			DANS MNOP 3 bright;
+			DANS Q 2 bright A_NoBlocking();
+			DANS RSTUVWXYZ 2 bright;
+			Stop;
+	}
+}
+
+class KilletanteBuffDEF : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.4;
+		DamageFactor "Melee", 0.025;
+		Powerup.Duration 2147483646;
+	}
+}
+
+class KilletanteLowHealthBuffDEFS1 : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.925;
+		Powerup.Duration 2147483646;
+	}
+}
+
+class KilletanteLowHealthBuffDEFS2 : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.85;
+		Powerup.Duration 2147483646;
+	}
+}
+
+class KilletanteLowHealthBuffDEFS3 : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.775;
+		Powerup.Duration 2147483646;
+	}
+}
+
+class KilletanteLowHealthBuffDEFS4 : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.7;
+		Powerup.Duration 2147483646;
+	}
+}
+
+class KilletanteLowHealthBuffDEFS5 : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.625;
+		Powerup.Duration 2147483646;
+	}
+}
+
+class KilletanteBuffATK : PowerDamage
+{
+	default
+	{
+		DamageFactor "Normal", 2.5;
+		DamageFactor "Melee", 25;
+		Powerup.Duration 2147483646;
+	}
+}
+
+class KilletanteSoloistAImage : DDVisualAImage
+{
+	default
+	{
+		Radius 16;
+		Height 8;
+		Scale 0.8;
+		Alpha 0.85;
+		+NOGRAVITY
+		+THRUACTORS
+		RenderStyle "AddStencil";
+		StencilColor "Red";
+		-VISIBILITYPULSE
+		+NOTIMEFREEZE
+	}
+	States
+	{
+		Spawn:
+			"####" "#" 0 Bright;
+			"####" "#" 0 Bright A_FadeTo (alpha * 0.5, 1, 0);
+			"####" "#" 0 Bright ThrustThingZ (0, 1, 0, 0);
+			"####" "#" 0 A_Jump (256, "SpawnLoop");
+			Goto SpawnLoop;
+		SpawnLoop:
+			"####" "#" 0 Bright A_FadeTo (0, 0.16, 1);
+			"####" "#" 1 Bright A_SetScale (scale.x*frandom(1.005,1.01), scale.y*frandom(1.01,1.02));
+			Goto SpawnLoop;
+	}
+}
+
+class KilletanteSoloistAImage2 : KilletanteSoloistAImage
+{
+	default
+	{
+		RenderStyle "AddStencil";
+		StencilColor "Green";
+	}
+}
+
+class KilletanteSoloistAImage3 : KilletanteSoloistAImage
+{
+	default
+	{
+		RenderStyle "AddStencil";
+		StencilColor "Blue";
+	}
+}
+
+class KilletanteSoloist : Killetante
+{
+	int reactive1;
+	int regentimer, regentimermax;
+	int mldmg;
+	int mass1;
+	int intspd;
+
+	int timeresist, trestimer, timereschance;
+
+	default
+	{
+		Health 240;
+		Scale 0.9325;
+		Radius 18; // 20
+		Height 60; // 64
+		Speed 12;
+		Mass 125;
+		MeleeRange 68;
+		PainChance 64;
+		DamageFactor 0.4375;
+		DamageFactor "Dashing", 2.0;
+		PainChance "Dashing", 248;
+		DamageFactor "Fire", 2;
+		PainChance "Fire", 128;
+		DamageFactor "Chop", 2;
+		PainChance "Chop", 128;
+		DamageFactor "Suck", 1.75;
+		PainChance "Suck", 224; //x2 the usual
+		DamageFactor "Beats", 1.5;
+		PainChance "Beats", 96;
+		DamageFactor "Bap", 1;
+		PainChance "Bap", 64;
+		MONSTER;
+		+FLOORCLIP
+		+NOINFIGHTING
+		+NOBLOOD
+		SeeSound "dancer/sight";
+		PainSound "dancer/pain";
+		DeathSound "virtuoso/death";
+		ActiveSound "dancer/active";
+		Obituary "%o was out-tango'd by a Killetante Soloist.";
+		HitObituary "%o was roundhouse-kicked over the horizon by a Killetante Soloist.";
+		Tag "Killetante Soloist";
+		Species "Killetante";
+		+DONTHARMCLASS
+		+AVOIDHAZARDS
+		+JUMPDOWN
+	}
+	
+	override void PostBeginPlay()
+	{
+		mldmg = random(10,15);
+		mass1 = mass;
+		intspd = Speed;
+		
+		Super.PostBeginPlay();
+	}
+	
+	override void Tick() 
+	{
+		mass1 = mass;
+		mldmg = random(10,15);
+		int spdc = intspd;
+		int lowHPbuffchance;
+		timeresist = random(3,5) * (Skill * frandom(0.75,1.25));
+		timereschance = 16 + (Skill * 8);
+
+		if (health > 0)
+		{
+			if (!bNOTIMEFREEZE)
+			{
+				mass1 *= random(4,5);
+				if (random(1,1024) <= 16)
+				{
+					bNOTIMEFREEZE = true;
+					trestimer = timeresist;
+				}
+			}
+			else
+			{
+				trestimer--;
+				if (trestimer <= 0) bNOTIMEFREEZE = false;
+			}
+		}
+		else
+		{
+			if (!isfrozen() && bNOTIMEFREEZE) bNOTIMEFREEZE = true;
+		}
+
+		int inc = 1;
+		int maxhealth = Spawnhealth();
+		regentimermax = (65 - (Skill * 0.667));
+		if (health <= 0) reactive1 = 0;
+		if (!isFrozen())
+		{
+			bBUDDHA = false;
+			if (health < maxhealth)
+			{
+				if (health <= (maxhealth*(frandom(0.675,0.825))))
+				{
+					mldmg *= frandom(1.05,1.1);
+					inc *= frandom(1.565,2.1);
+					
+					lowHPbuffchance = 5;
+					if (random(1,88) == 1) bBUDDHA = true;
+				}
+				if (health <= (maxhealth*(frandom(0.45,0.55))))
+				{
+					mldmg *= frandom(1.05,1.1);
+					inc *= frandom(1.565,2.1);
+					lowHPbuffchance = 40;
+					if (random(1,56) == 1) bBUDDHA = true;
+				}
+				if (health <= (maxhealth*(frandom(0.225,0.275)))) 
+				{
+					mldmg *= frandom(1.05,1.1);
+					inc *= frandom(1.565,2.1);
+					lowHPbuffchance = 80;
+					if (random(1,32) == 1) bBUDDHA = true;
+				}
+				if (health <= (maxhealth*(frandom(0.1125,0.1375)))) 
+				{
+					mldmg *= frandom(1.05,1.1);
+					inc *= frandom(1.565,2.1);
+					lowHPbuffchance = 100;
+					if (random(1,16) == 1) bBUDDHA = true;
+				}
+				if (reactive1) 
+				{
+					mass1 *= frandom(3.3,3.6);
+					mldmg *= frandom(1.1,1.2);
+					if (random(1,4) == 1) bBUDDHA = true;
+				}
+
+				if (skill == SKILL_VERY_EASY && !bFRIENDLY) inc *= frandom(0.25,0.50);
+				if (skill == SKILL_VERY_EASY && bFRIENDLY) inc *= frandom(1.50,1.75);
+				if (skill == SKILL_EASY && !bFRIENDLY) inc *= frandom(0.5,0.75);
+				if (skill == SKILL_EASY && bFRIENDLY) inc *= frandom(1.25,1.5);
+				if (skill == SKILL_HARD && !bFRIENDLY) inc *= frandom(1.25,1.5);
+				if (skill == SKILL_HARD && bFRIENDLY) inc *= frandom(0.5,0.75);
+				if (skill == SKILL_VERY_HARD && !bFRIENDLY) inc *= frandom(1.50,1.75);
+				if (skill == SKILL_VERY_HARD && bFRIENDLY) inc *= frandom(0.25,0.50);
+				if (inc < 1) inc = 1;
+				
+				if (random(1,100) <= lowHPbuffchance)
+				{
+					if (!bFRIENDLY)
+					{
+						if (skill == SKILL_VERY_EASY) A_SetInventory("KilletanteLowHealthBuffDEFS1",1);
+						if (skill == SKILL_EASY) A_SetInventory("KilletanteLowHealthBuffDEFS2",1);
+						if (skill == SKILL_NORMAL) A_SetInventory("KilletanteLowHealthBuffDEFS3",1);
+						if (skill == SKILL_HARD) A_SetInventory("KilletanteLowHealthBuffDEFS4",1);
+						if (skill == SKILL_VERY_HARD) A_SetInventory("KilletanteLowHealthBuffDEFS5",1);
+					}
+					else
+					{
+						if (skill == SKILL_VERY_EASY) A_SetInventory("KilletanteLowHealthBuffDEFS5",1);
+						if (skill == SKILL_EASY) A_SetInventory("KilletanteLowHealthBuffDEFS4",1);
+						if (skill == SKILL_NORMAL) A_SetInventory("KilletanteLowHealthBuffDEFS3",1);
+						if (skill == SKILL_HARD) A_SetInventory("KilletanteLowHealthBuffDEFS2",1);
+						if (skill == SKILL_VERY_HARD) A_SetInventory("KilletanteLowHealthBuffDEFS1",1);
+					}
+				}
+				else
+				{
+					A_SetInventory("KilletanteLowHealthBuffDEFS1",0);
+					A_SetInventory("KilletanteLowHealthBuffDEFS2",0);
+					A_SetInventory("KilletanteLowHealthBuffDEFS3",0);
+					A_SetInventory("KilletanteLowHealthBuffDEFS4",0);
+					A_SetInventory("KilletanteLowHealthBuffDEFS5",0);
+				}
+
+				if (reactive1)
+				{
+					regentimermax *= frandompick(0.5,0.667,0.667,0.833,0.833);
+					inc *= randompick(7,7,8,8,9);
+				}
+				regentimer += inc;
+				if (regentimer > regentimermax)
+				{
+					regentimer -= regentimermax;
+					health += randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2);
+					A_SpawnItemEx("Micronote2", frandom(6,7), frandom(6,7), (frandom(24,28)*2), 0, frandom(-1.5, 1.5), frandom(-1.5, 1.5));
+					if (health > maxhealth) health = maxhealth;
+				}
+			}
+			else
+			{
+				regentimer = random(-5,5);
+			}
+
+			if (reactive1)
+			{
+				bool debugbufftime = false;
+				if (level.time % randompick(2,3,3,4) == 0) A_SpawnItemEx ("KilletanteSoloistAImage", frandom(-1,1),frandom(-1,1),frandom(-1,1), 0,0,0, 0, SXF_NOCHECKPOSITION | SXF_TRANSFERSPRITEFRAME |  SXF_TRANSFERSCALE | SXF_TRANSFERALPHA);
+				if (level.time % randompick(2,3,3,4) == 0) A_SpawnItemEx ("KilletanteSoloistAImage2", frandom(-1,1),frandom(-1,1),frandom(-1,1), 0,0,0, 0, SXF_NOCHECKPOSITION | SXF_TRANSFERSPRITEFRAME |  SXF_TRANSFERSCALE | SXF_TRANSFERALPHA);
+				if (level.time % randompick(2,3,3,4) == 0) A_SpawnItemEx ("KilletanteSoloistAImage3", frandom(-1,1),frandom(-1,1),frandom(-1,1), 0,0,0, 0, SXF_NOCHECKPOSITION | SXF_TRANSFERSPRITEFRAME |  SXF_TRANSFERSCALE | SXF_TRANSFERALPHA);
+				A_SetInventory("KilletanteBuffATK",1);
+				A_SetInventory("KilletanteBuffDEF",1);
+				spdc *= 1.625;
+				Speed = spdc;
+
+				if (
+					InStateSequence(curstate,ResolveState("Pain")) || 
+					InStateSequence(curstate,ResolveState("Pain.Bonk")) || 
+					InStateSequence(curstate,ResolveState("Pain.Breakfast")) || 
+					InStateSequence(curstate,ResolveState("Pain.Zap")) || 
+					InStateSequence(curstate,ResolveState("Pain.Chop")) || 
+					InStateSequence(curstate,ResolveState("Pain.Cricket")) || 
+					InStateSequence(curstate,ResolveState("Pain.Lead")) || 
+					InStateSequence(curstate,ResolveState("Pain.Bop")) || 
+					InStateSequence(curstate,ResolveState("Pain.Beats")) || 
+					InStateSequence(curstate,ResolveState("Pain.Dust")) || 
+					InStateSequence(curstate,ResolveState("Pain.CherryBomb")) || 
+					InStateSequence(curstate,ResolveState("Pain.BRocket")) || 
+					InStateSequence(curstate,ResolveState("Pain.Spinner")) || 
+					InStateSequence(curstate,ResolveState("Pain.Popper")) || 
+					InStateSequence(curstate,ResolveState("Pain.Dashing")) || 
+					InStateSequence(curstate,ResolveState("Pain.Boiling")) || 
+					InStateSequence(curstate,ResolveState("Pain.Tank")) || 
+					InStateSequence(curstate,ResolveState("Pain.Suck")) || 
+					InStateSequence(curstate,ResolveState("Pain.Musak")) || 
+					InStateSequence(curstate,ResolveState("Pain.DoomSpell")) || 
+					InStateSequence(curstate,ResolveState("Pain.Magic")) || 
+					InStateSequence(curstate,ResolveState("Pain.Holy")) || 
+					InStateSequence(curstate,ResolveState("Pain.Dark")) ||
+					InStateSequence(curstate,ResolveState("Pain.Eldritch")) ||
+					InStateSequence(curstate,ResolveState("Pain.Fire")) || 
+					InStateSequence(curstate,ResolveState("Pain.Ice")) || 
+					InStateSequence(curstate,ResolveState("Pain.Plasma")) || 
+					InStateSequence(curstate,ResolveState("Pain.Thunder")) || 
+					InStateSequence(curstate,ResolveState("Pain.Electric")) || 
+					InStateSequence(curstate,ResolveState("Pain.Lightning")) || 
+					InStateSequence(curstate,ResolveState("Pain.Shock")) || 
+					InStateSequence(curstate,ResolveState("Pain.Sceptre")) || 
+					InStateSequence(curstate,ResolveState("Pain.Fist")) || 
+					InStateSequence(curstate,ResolveState("Pain.Kick")) ||
+					InStateSequence(curstate,ResolveState("Pain.PoisonNeedle")) ||
+					InStateSequence(curstate,ResolveState("Pain.Deadlight")) ||
+					InStateSequence(curstate,ResolveState("Pain.Chainsaw")) ||
+					InStateSequence(curstate,ResolveState("Pain.Gauntlets")) ||
+					InStateSequence(curstate,ResolveState("PainShield")) ||
+					InStateSequence(curstate,ResolveState("PainShieldEnd")) ||
+					InStateSequence(curstate,ResolveState("PainReact")) ||
+					InStateSequence(curstate,ResolveState("PainEnd"))
+					) 
+				{
+					if (random(1,32) >= (20 + (skill*4))) reactive1--;
+					if (debugbufftime) Console.Printf("PainState Detected"); 
+				}
+				else
+				{
+					if (random(1,8) <= (7 - (skill/3))) reactive1--;
+					if (debugbufftime) Console.Printf("PainState Not Detected"); 
+				}
+				if (debugbufftime) Console.Printf("Killetante Soloist Buff Timer: %d (tic: %d)", reactive1, level.time);
+			}
+			else
+			{
+				A_SetInventory("KilletanteBuffATK",0);
+				A_SetInventory("KilletanteBuffDEF",0);
+				Speed = intspd;
+			}
+		}
+		mass = mass1;
+		
+		Super.Tick();
+	}
+	
+	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
+	{
+		if (IsFrozen())
+		{
+			damage *= frandompick(0.20,0.25);
+			Console.Printf("%s resists your damage due to being frozen in time!", GetTag());
+			A_StartSound("misc/ResistanceHit",21,CHANF_DEFAULT,frandom(1.25,1.334),ATTN_NORM,frandom(0.875,1.125));
+			if (damage <= 0) return 0;
+		}
+		return super.DamageMobj(inflictor, source, damage, mod, flags, angle); 
+	}
+	
+	
+	States
+	{
+		Spawn:
+			DAKI A 7 
+			{
+				A_SetTics(random(5,7));
+				A_Look();
+			}
+			DAKI B 5
+			{
+				A_SetTics(random(3,5));
+				A_Look();
+			}
+			DAKI C 7
+			{
+				A_SetTics(random(5,7));
+				A_Look();
+			}
+			DAKI D 5
+			{
+				A_SetTics(random(3,5));
+				A_Look();
+			}
+			Loop;
+		See:
+			DAKS BBCC 3 
+			{
+				A_Chase();
+				A_SetTics(randompick(2,3,3,3,3,3,4));
+				if (random(1,4) == 1) { A_SpawnItemEx("Mininote2", 0, 0, 25, 0, random(-1, 1), random(-1, 1)); }
+			}
+			DAKS B 0 
+			{
+				A_SpawnItemEx("Mininote2", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+				if (random(1,16) <= random(5,7)) { return resolvestate("Dodge"); }
+
+				return resolvestate(null);
+			}
+			DAKS DDEE 3 
+			{
+				A_Chase();
+				A_SetTics(randompick(2,3,3,3,3,3,4));
+				if (random(1,4) == 1) { A_SpawnItemEx("Mininote2", 0, 0, 25, 0, random(-1, 1), random(-1, 1)); }
+			}
+			DAKS B 0 
+			{
+				A_SpawnItemEx("Mininote2", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+				if (random(1,16) <= random(5,7)) { return resolvestate("Dodge"); }
+
+				return resolvestate(null);
+			}
+			Loop;
+		Dodge:
+			DAKS F 0
+			{
+				A_SpawnItemEx("Mininote2", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+			}
+			DAKS FFGGH 1
+			{
+				A_FastChase();
+				A_SetTics(randompick(0,1,1,1,1,1,1,2));
+				if (random(1,10) == 1) { A_SpawnItemEx("Mininote2", 0, 0, 25, 0, random(-1, 1), random(-1, 1)); }
+			}
+			DAKS I 0 
+			{
+				A_SpawnItemEx("Mininote2", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+			}
+			DAKS HIIJJ 1 
+			{
+				A_FastChase();
+				A_SetTics(randompick(0,1,1,1,1,1,1,2));
+				if (random(1,10) == 1) { A_SpawnItemEx("Mininote2", 0, 0, 25, 0, random(-1, 1), random(-1, 1)); }
+			}
+			DAKS J 0
+			{
+				if (random(1,8) == 1) { return resolvestate("Dodge"); }
+				return resolvestate(null);
+			}
+			Goto See;
+		Missile:
+			DAKS F 0 A_Jump(96,"MusicAttk");
+		Missile2:
+			DAKS F 0; //ACS_Execute(102,0,0,0,0)
+			DAKS F 4 
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				A_Facetarget();
+			}
+			DAKS GHI 4 
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				A_Recoil(frandompick(-1,1.5,-2,-2.5,-3));
+			}
+			DAKS J 4
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				ThrustThingz (0, randompick(18,27,36), 0, 0);
+				ThrustThing (((angle*256/360*frandom(0.75,1.25))), randompick(18,27,36), 0, 0);
+			}
+			DAKS J 0
+			{
+				if (random(1,3) <= 2) { A_CustomMeleeAttack((mldmg*frandom(0.2375,0.2625)), "mallethit", "malletswing", "", 1); }
+			}
+			DAKS GH 2
+			{
+				A_SetTics(randompick(1,1,1,2,2,3,3,3));
+				A_Facetarget();
+			}
+			DAKS H 0
+			{
+				if (random(1,3) <= 2) { A_CustomMeleeAttack((mldmg*frandom(0.2375,0.2625)), "mallethit", "malletswing", "", 1); }
+			}
+			DAKS IJ 2
+			{
+				A_SetTics(randompick(1,1,1,2,2,3,3,3));
+				A_Facetarget();
+			}
+			DAKS D 4 
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				A_CustomMeleeAttack ((mldmg*frandom(0.95,1.05)), "mallethit", "malletswing", "", 1);
+			}
+			DAKS J 0
+			{
+				if (random(1,8) == 1) { return resolvestate("Missile"); }
+				return resolvestate(null);
+			}
+			Goto See;
+		MusicAttk:
+			DAKS F 0; //ACS_Execute(102,0,0,0,0)
+			DAKS F 4 
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				A_StartSound("dancer/danceattk",CHAN_BODY);
+			}
+			DAKS GHI 4 
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				A_Recoil(frandompick(-1,1.5,-2,-2.5,-3));
+				if (random(1,24) <= 1)
+				{
+					A_StartSound("virtuoso/musicfire",CHAN_VOICE);
+					A_SpawnProjectile("MusicBall2",40);
+				}
+			}
+			DAKS F 4
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				if (random(1,6) <= 1)
+				{
+					A_StartSound("virtuoso/musicfire",CHAN_VOICE);
+					A_SpawnProjectile("MusicBall2",40);
+				}
+			}
+			DAKS GHI 4 
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				A_Recoil(frandompick(-1,1.5,-2,-2.5,-3));
+				if (random(1,24) <= 1)
+				{
+					A_StartSound("virtuoso/musicfire",CHAN_VOICE);
+					A_SpawnProjectile("MusicBall2",40);
+				}
+			}
+			DAKS J 4 
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				ThrustThingz (0, randompick(18,27,36), 0, 0);
+				ThrustThing (((angle*256/360*frandom(0.75,1.25))), randompick(18,27,36), 0, 0);
+				if (random(1,6) <= 1)
+				{
+					A_StartSound("virtuoso/musicfire",CHAN_VOICE);
+					A_SpawnProjectile("MusicBall2",40);
+				}
+			}
+			DAKS D 4 
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				A_StartSound("virtuoso/musicfire",CHAN_VOICE);
+				A_SpawnProjectile("MusicBall2",40);
+			}
+			DAKS E 4
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				if (random(1,6) <= 1)
+				{
+					A_StartSound("virtuoso/musicfire",CHAN_VOICE);
+					A_SpawnProjectile("MusicBall2",40);
+				}
+			}
+			DAKS J 0
+			{
+				if (random(1,8) == 1) { return resolvestate("Missile"); }
+				return resolvestate(null);
+			}
+			Goto See;
+		Melee:
+			DAKS F 0; //ACS_Execute(102,0,0,0,0)
+			DAKS FG 2 
+			{
+				A_SetTics(randompick(1,1,1,2,2,3,3,3));
+				A_Facetarget();
+			}
+			DAKS G 0
+			{
+				if (random(1,3) <= 2) { A_CustomMeleeAttack((mldmg*frandom(0.2375,0.2625)), "mallethit", "malletswing", "", 1); }
+			}
+			DAKS HI 2 
+			{
+				A_SetTics(randompick(1,1,1,2,2,3,3,3));
+				A_Facetarget();
+			}
+			DAKS J 0
+			{
+				if (random(1,3) <= 2) { A_CustomMeleeAttack((mldmg*frandom(0.2375,0.2625)), "mallethit", "malletswing", "", 1); }
+			}
+			DAKS J 2 
+			{
+				A_SetTics(randompick(1,1,1,2,2,3,3,3));
+				A_Facetarget();
+			}
+			DAKS D 4
+			{
+				A_SetTics(randompick(2,2,3,3,3,3,4,4));
+				A_CustomMeleeAttack((mldmg*frandom(0.95,1.05)), "mallethit", "malletswing", "", 1);
+			}
+			Goto See;
+		Pain.Suck:
+			DAKS K 2 A_FaceTarget;
+			DAKS L 0
+			{
+				if (random(1,16) == 1)
+				{
+					ThrustThingZ (0, randompick(4,6,8), 0, 0);
+					ThrustThing (((angle*256/360)+(180*frandom(0.75,1.25))), frandompick(1,1.5,2), 0, 0);
+				}
+			}
+			DAKS L 6
+			{
+				A_Pain();
+				A_SetTics(randompick(4,4,5,6));
+				if (random(1,16) == 1)
+				{
+					int f = random(8,9) * randompick(1,1,1,1,1,1,2,2,2,3);
+					if (health < (spawnhealth()*0.75)) 
+					{
+						f *= frandom(1.05,1.0833);
+					}
+					if (health < (spawnhealth()*0.5)) 
+					{
+						f *= frandom(1.0834,1.15);
+					}
+					if (health < (spawnhealth()*0.25)) 
+					{
+						A_SetTics(randompick(0,1,1,2));
+						f *= frandom(1.1167,1.2167);
+					}
+					reactive1 += f;
+				}
+			}
+			DAKS K 6 //ACS_Execute(102,0,0,0,0)
+			{
+				A_SetTics(randompick(4,4,5,6));
+			}
+			DAKS K 0
+			{
+				if (random(1,8) <= 7) { return resolvestate("Dodge"); }
+				return resolvestate(null);
+			}
+			Goto See;
+		Pain.Dashing:
+			DAKS K 1 A_FaceTarget;
+			DAKS L 0 
+			{
+				ThrustThingZ (0, randompick(16,24,32), 0, 0);
+				ThrustThing (((angle*256/360)+(180*frandom(0.975,1.025))), (randompick(4,6,8)*frandompick(3,3.5,4)), 0, 0);
+			}
+			DAKS L 15 
+			{
+				A_SetTics(randompick(5,10,10,15));
+
+				A_Pain();
+				int f = randompick(8,8,9) * randompick(1,1,1,1,1,2,2,3);
+				if (health < (spawnhealth()*0.75)) 
+				{
+					f *= frandom(1.15,1.25);
+				}
+				if (health < (spawnhealth()*0.5)) 
+				{
+					f *= frandom(1.25,1.45);
+				}
+				if (health < (spawnhealth()*0.25)) 
+				{
+					A_SetTics(randompick(0,5,5,10));
+					f *= frandom(1.35,1.65);
+				}
+				reactive1 += f;
+			}
+			DAKS L 15 
+			{
+				A_SetTics(randompick(5,10,10,15));
+			}
+			DAKS K 0; //ACS_Execute(102,0,0,0,0)
+			DAKS KK 15
+			{
+				A_SetTics(randompick(5,10,10,15));
+			}
+			DAKS K 0
+			{
+				if (random(1,32) <= 5) 
+				{
+					return resolvestate("Dodge"); 
+				}
+				else
+				{
+					return resolvestate("Melee"); 
+				}
+				return resolvestate(null);
+			}
+			Goto See;
+		Pain:
+			DAKS K 1 A_FaceTarget;
+			DAKS L 0 
+			{
+				ThrustThingZ (0, randompick(16,24,32), 0, 0);
+				ThrustThing (((angle*256/360)+(180*frandom(0.75,1.25))), randompick(4,6,8), 0, 0);
+			}
+			DAKS L 3 
+			{
+				A_Pain();
+				int f = random(32,38) * randompick(1,1,1,1,1,1,2,2,2,3);
+				A_SetTics(randompick(1,2,2,3));
+				if (health < (spawnhealth()*0.75)) 
+				{
+					f *= frandom(1.15,1.25);
+				}
+				if (health < (spawnhealth()*0.5)) 
+				{
+					f *= frandom(1.25,1.45);
+				}
+				if (health < (spawnhealth()*0.25)) 
+				{
+					A_SetTics(randompick(0,1,1,2));
+					f *= frandom(1.35,1.65);
+				}
+				reactive1 += f;
+			}
+			DAKS L 3 
+			{
+				A_SetTics(randompick(1,2,2,3));
+			}
+			DAKS K 0; //ACS_Execute(102,0,0,0,0)
+			DAKS KK 3
+			{
+				A_SetTics(randompick(1,2,2,3));
+			}
+			DAKS K 0
+			{
+				if (random(1,8) == 1) 
+				{ 
+					if (random(1,8) <= 3) 
+					{
+						return resolvestate("Dodge"); 
+					}
+					else
+					{
+						return resolvestate("Melee"); 
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+			Goto See;
+			/*
+		Death.Suck:
+			DAKS K 5 A_StartSound("VacDed",CHAN_BODY);
+			DAKS K 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4);
+			Stop;
+			*/
+		Death:
+			DAKS K 3 A_FaceTarget;
+			DAKS L 0 
+			{
+				ThrustThingZ (0, randompick(16,24,32), 0, 0);
+				ThrustThing (((angle*256/360)+(180*frandom(0.75,1.25))), randompick(4,6,8), 0, 0);
+			}
+			DAKS L 5 A_Scream;
+			DAKS MNOP 3 bright;
+			DAKS Q 2 bright A_NoBlocking();
+			DAKS RSTUVWXYZ 2 bright;
+			Stop;
+	}
+}
+
+//*****************
+//* Doom specific *
+//*****************
+class ExplosiveBarrelNew : ExplosiveBarrel replaces ExplosiveBarrel
+{
+	default
+	{
+		Tag "Explosive Barrel";
+		+PUSHABLE
+	}
+	States
+	{
+		Spawn:
+			BAR1 AB 6;
+			Loop;
+		Death:
+			BEXP A 5 Bright;
+			BEXP B 5 Bright
+			{
+				A_Scream();
+				A_AlertMonsters();
+			}
+			BEXP C 5 Bright;
+			BEXP D 5 Bright A_Explode(128,128,XF_HURTSOURCE, false,0,0, 10,"BulletPuff");
+			BEXP E 10 Bright;
+			TNT1 A 1050 Bright A_BarrelDestroy;
+			TNT1 A 5 A_Respawn;
+			Wait;
+	}
+}
+
+class ZombiemanNew : Zombieman replaces Zombieman
+{
+	default
+	{
+		Tag "Zombieman";
+		DamageFactor "Fire", 2.0;
+		Painchance "Fire", 256;
+		DamageFactor "CherryBomb", 1.5;
+		Painchance "CherryBomb", 256;
+		DamageFactor "Chop", 1.25;
+		Painchance "Chop", 250;
+	}
+}
+
+class ShotgunGuyNew : ShotgunGuy replaces ShotgunGuy
+{
+	default
+	{
+		Tag "Shotgun Guy";
+		DamageFactor "Fire", 2.0;
+		Painchance "Fire", 256;
+		DamageFactor "CherryBomb", 1.5;
+		Painchance "CherryBomb", 255;
+		DamageFactor "Chop", 1.25;
+		Painchance "Chop", 213;
+	}
+}
+
+class ChaingunGuyNew : ChaingunGuy replaces ChaingunGuy
+{
+	default
+	{
+		Tag "Chaingun Guy";
+		DamageFactor "Fire", 2.0;
+		Painchance "Fire", 256;
+		DamageFactor "CherryBomb", 1.5;
+		Painchance "CherryBomb", 255;
+		DamageFactor "Chop", 1.25;
+		Painchance "Chop", 213;
+	}
+}
+class WolfensteinSSNew : WolfensteinSS replaces WolfensteinSS
+{
+	default
+	{
+		Tag "Schutzstaffel";
+		DamageFactor "Fire", 2.0;
+		Painchance "Fire", 256;
+		DamageFactor "CherryBomb", 1.5;
+		Painchance "CherryBomb", 255;
+		DamageFactor "Chop", 1.25;
+		Painchance "Chop", 213;
+	}
+}
+
+class DoomImpNew : DoomImp replaces DoomImp
+{
+	default
+	{
+		Tag "Imp";
+		DamageFactor "Fire", 0.2;
+		Painchance "Fire", 40;
+		DamageFactor "CherryBomb", 0.6;
+		Painchance "CherryBomb", 120;
+		DamageFactor "Chop", 1.5;
+		Painchance "Chop", 256;
+	}
+}
+
+class DemonNew : Demon replaces Demon
+{
+	default
+	{
+		Tag "Pinky Demon";
+		DamageFactor "Fire", 0.75;
+		Painchance "Fire", 135;
+		DamageFactor "Suck", 0.75;
+		Painchance "Suck", 135;
+		DamageFactor "CherryBomb", 0.875;
+		Painchance "CherryBomb", 157;
+		DamageFactor "Chop", 0.625;
+		Painchance "Chop", 113;
+		DamageFactor "Breakfast", 2.5;
+		Painchance "Breakfast", 256;
+		DamageFactor "Bonk", 1.125;
+		Painchance "Bonk", 202;
+		DamageFactor "Cricket", 1.5;
+		Painchance "Cricket", 240;
+		DamageFactor "Dust", 1.5;
+		Painchance "Dust", 240;
+	}
+}
+
+class SpectreNew : DemonNew replaces Spectre
+{
+	default
+	{
+		Tag "Pinky Spectre";
+		+SHADOW
+		RenderStyle "OptFuzzy";
+	}
+}
+
+class LostSoulNew : LostSoul replaces LostSoul
+{
+	default
+	{
+		Tag "Lost Soul";
+		DamageFactor "Fire", 0.334;
+		Painchance "Fire", 85;
+		DamageFactor "Suck", 15;
+		Painchance "Suck", 256;
+		DamageFactor "Bonk", 1.25;
+		Painchance "Bonk", 256;
+		DamageFactor "Cricket", 2.5;
+		Painchance "Cricket", 256;
+		DamageFactor "Chop", 5;
+		Painchance "Chop", 256;
+		DamageFactor "Lead", 0.5;
+		Painchance "Lead", 128;
+		DamageFactor "Dust", 0.25;
+		Painchance "Dust", 64;
+		DamageFactor "CherryBomb", 0.25;
+		Painchance "CherryBomb", 64;
+		DamageFactor "BRocket", 0.5;
+		Painchance "BRocket", 128;
+		DamageFactor "Spinner", 1.25;
+		Painchance "Spinner", 256;
+		DamageFactor "Popper", 2.5;
+		Painchance "Popper", 256;
+		//-RETARGEAFTERNSLAM
+	}
+}
+
+class CacodemonNew : Cacodemon replaces Cacodemon
+{
+	default
+	{
+		Tag "Cacodemon";
+		MeleeRange 80;
+		DamageFactor "Fire", 0.25;
+		Painchance "Fire", 32;
+		DamageFactor "Breakfast", 5;
+		Painchance "Breakfast", 256;
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 32;
+		DamageFactor "CherryBomb", 0.5;
+		Painchance "CherryBomb", 64;
+		DamageFactor "BRocket", 2.5;
+		Painchance "BRocket", 40;
+		DamageFactor "Spinner", 3.75;
+		Painchance "Spinner", 256;
+		DamageFactor "Dust", 5;
+		Painchance "Dust", 256;
+		DamageFactor "Popper", 0.25;
+		Painchance "Popper", 32;
+	}
+
+	States
+	{
+		Melee:
+		Missile:
+			HEAD B 5 A_FaceTarget;
+			HEAD C 5 A_FaceTarget;
+			HEAD D 5 BRIGHT A_CustomComboAttack("CacodemonBall", 32, 10 * random(1, 6), "caco/melee");
+			Goto See;
+	}
+}
+
+class PainElementalNew : PainElemental replaces PainElemental
+{
+	default
+	{
+		Tag "Pain Elemental";
+		MeleeRange 80;
+		PainChance "Normal", 16;
+		DamageFactor "Fire", 0.5;
+		Painchance "Fire", 8;
+		DamageFactor "Breakfast", 5;
+		Painchance "Breakfast", 80;
+		DamageFactor "Suck", 7.5;
+		Painchance "Suck", 120;
+		DamageFactor "BRocket", 2.5;
+		Painchance "BRocket", 40;
+		DamageFactor "Dust", 5;
+		Painchance "Dust", 80;
+		//-RETARGEAFTERNSLAM
+	}
+	
+	States
+	{
+		Melee:
+		Missile:
+			PAIN D 5 A_FaceTarget;
+			PAIN E 5 A_FaceTarget;
+			PAIN F 5 BRIGHT A_FaceTarget;
+			PAIN F 0 BRIGHT 
+			{
+				if (CheckMeleeRange()) 
+				{ 
+					A_CustomMeleeAttack(10*random(1,6),"caco/melee","none","Melee",true);
+				}
+				else
+				{
+					A_PainAttack();
+				}
+			}
+			Goto See;
+	}
+}
+
+class RevenantNew : Revenant replaces Revenant
+{
+	default
+	{
+		Tag "Revenant";
+	}
+}
+
+class ArachnotronNew : Arachnotron replaces Arachnotron
+{
+	default
+	{
+		Tag "Arachnotron";
+	}
+}
+
+class MancubusNew : Fatso replaces Fatso
+{
+	default
+	{
+		Tag "Mancubus";
+		DamageFactor "Fire", 0.667;
+		Painchance "Fire", 53;
+		DamageFactor "Suck", 0.5;
+		Painchance "Suck", 40;
+		DamageFactor "Bonk", 3.75;
+		Painchance "Bonk", 256;
+		DamageFactor "Cricket", 0.5;
+		Painchance "Cricket", 40;
+		DamageFactor "Chop", 5;
+		Painchance "Chop", 256;
+		DamageFactor "Lead", 1.25;
+		Painchance "Lead", 100;
+		DamageFactor "Dust", 1.5;
+		Painchance "Dust", 120;
+		DamageFactor "BRocket", 1.5;
+		Painchance "BRocket", 256;
+		DamageFactor "CherryBomb", 2;
+		Painchance "CherryBomb", 160;
+		DamageFactor "Spinner", 1.75;
+		Painchance "Spinner", 140;
+		DamageFactor "Popper", 1.25;
+		Painchance "Popper", 100;
+	}
+}
+class HellKnightNew : HellKnight replaces HellKnight
+{
+	default
+	{
+		Tag "Hell Knight";
+		DamageFactor "Fire", 0.5;
+		Painchance "Fire", 25;
+		DamageFactor "CherryBomb", 3.75;
+		Painchance "CherryBomb", 187;
+		DamageFactor "BRocket", 2.5;
+		Painchance "BRocket", 125;
+		DamageFactor "Spinner", 2.5;
+		Painchance "Spinner", 125;
+		DamageFactor "Suck", 0.75;
+		Painchance "Suck", 37;
+	}
+}
+
+class BaronOfHellNew : BaronOfHell replaces BaronOfHell
+{
+	default
+	{
+		Tag "Baron of Hell";
+		DamageFactor "Fire", 0.5;
+		Painchance "Fire", 25;
+		DamageFactor "CherryBomb", 3.75;
+		Painchance "CherryBomb", 187;
+		DamageFactor "BRocket", 2.5;
+		Painchance "BRocket", 125;
+		DamageFactor "Spinner", 2.5;
+		Painchance "Spinner", 125;
+		DamageFactor "Suck", 0.75;
+		Painchance "Suck", 37;
+	}
+}
+
+class ArchvileNew : Archvile replaces Archvile
+{
+	default
+	{
+		Tag "Archvile";
+		DamageFactor "Fire", 0.1;
+		Painchance "Fire", 1;
+		DamageFactor "Suck", 3.75;
+		Painchance "Suck", 38;
+		DamageFactor "Bonk", 2.5;
+		Painchance "Bonk", 25;
+		DamageFactor "Cricket", 5;
+		Painchance "Cricket", 5;
+		DamageFactor "Chop", 5.0;
+		Painchance "Chop", 50;
+		DamageFactor "Lead", 1.5;
+		Painchance "Lead", 15;
+		DamageFactor "BRocket", 1.5;
+		Painchance "BRocket", 15;
+		DamageFactor "CherryBomb", 0.25;
+		Painchance "CherryBomb", 2;
+		DamageFactor "Spinner", 1.5;
+		Painchance "Spinner", 15;
+		DamageFactor "Popper", 1.5;
+		Painchance "Popper", 15;
+	}
+}
+
+class CyberdemonNew : Cyberdemon replaces Cyberdemon
+{
+	default
+	{
+		Tag "Cyberdemon";
+		DamageFactor "BRocket", 10;
+		Painchance "BRocket", 200;
+		DamageFactor "CherryBomb", 0.5;
+		Painchance "CherryBomb", 10;
+		DamageFactor "Spinner", 1.25;
+		Painchance "Spinner", 25;
+		DamageFactor "Popper", 2.5;
+		Painchance "Popper", 50;
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 5;
+	}
+}
+
+class SpiderMasterMindNew : SpiderMasterMind replaces SpiderMasterMind
+{
+	default
+	{
+		Tag "Spider Mastermind";
+		DamageFactor "BRocket", 10;
+		Painchance "BRocket", 256;
+		DamageFactor "CherryBomb", 0.5;
+		Painchance "CherryBomb", 20;
+		DamageFactor "Spinner", 1.25;
+		Painchance "Spinner", 50;
+		DamageFactor "Popper", 2.5;
+		Painchance "Popper", 100;
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 10;
+	}
+}
+
+//********************
+//* Heretic specific *
+//********************
+class ChickenNew : Chicken replaces Chicken
+{
+	default
+	{
+		Tag "Chicken";
+	}
+}
+
+class HereticImpNew : HereticImp replaces HereticImp
+{
+	default
+	{
+		Tag "Gargoyle";
+		DamageFactor "Suck", 1.75;
+		Painchance "Suck", 256;
+	}
+}
+
+class HereticImpLeaderNew : HereticImpLeader replaces HereticImpLeader
+{
+	default
+	{
+		Tag "Gargoyle Leader";
+		DamageFactor "Suck", 1.75;
+		Painchance "Suck", 256;
+	}
+}
+
+class MummyNew : Mummy replaces Mummy
+{
+	default
+	{
+		Tag "Golem";
+	}
+}
+
+class MummyGhostNew : MummyGhost replaces MummyGhost
+{
+	default
+	{
+		Tag "Golem (Ghost)";
+		DamageFactor "Suck", 4.00;
+		Painchance "Suck", 256;
+	}
+}
+
+class MummyLeaderNew : MummyLeader replaces MummyLeader
+{
+	default
+	{
+		Tag "Golem Leader";
+	}
+}
+
+class MummyLeaderGhostNew : MummyLeaderGhost replaces MummyLeaderGhost
+{
+	default
+	{
+		Tag "Golem Leader (Ghost)";
+		DamageFactor "Suck", 4.00;
+		Painchance "Suck", 256;
+	}
+}
+
+class KnightNew : Knight replaces Knight
+{
+	default
+	{
+		Tag "Undead Warrior";
+	}
+}
+
+class KnightGhostNew : KnightGhost replaces KnightGhost
+{
+	default
+	{
+		Tag "Undead Warrior (Ghost)";
+		DamageFactor "Suck", 4.00;
+		Painchance "Suck", 256;
+	}
+}
+
+class WizardNew : Wizard replaces Wizard
+{
+	default
+	{
+		Tag "Disciple of D'Sparil";
+		DamageFactor "Suck", 2.00;
+		Painchance "Suck", 128;
+	}
+}
+
+class IronLichNew : IronLich replaces IronLich
+{
+	default
+	{
+		Tag "Iron Lich";
+		DamageFactor "Suck", 0.05;
+		Painchance "Suck", 1;
+	}
+}
+
+class BeastNew : Beast replaces Beast
+{
+	default
+	{
+		Tag "Weredragon";
+		DamageFactor "Suck", 0.75;
+		Painchance "Suck", 75;
+	}
+}
+
+class ClinkNew : Clink replaces Clink
+{
+	default
+	{
+		Tag "Sabreclaw";
+		DamageFactor "Suck", 0.75;
+		Painchance "Suck", 24;
+	}
+}
+
+class MinotaurNew : Minotaur replaces Minotaur
+{
+	default
+	{
+		Tag "Maulotaur";
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 6;
+	}
+}
+
+class SnakeNew : Snake replaces Snake
+{
+	default
+	{
+		Tag "Ophidian";
+		DamageFactor "Suck", 1.50;
+		Painchance "Suck", 72;
+	}
+}
+
+class Sorcerer1New : Sorcerer1 replaces Sorcerer1
+{
+	default
+	{
+		Tag "\c[gold]D'Sparil (on Serpent)";
+		DamageFactor "Suck", 0.334;
+		Painchance "Suck", 19;
+	}
+}
+
+class Sorcerer2New : Sorcerer2 replaces Sorcerer2
+{
+	default
+	{
+		Tag "\c[gold]D'Sparil";
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 8;
+	}
+}
+
+//******************
+//* Hexen specific *
+//******************
+class PigNew : Pig replaces Pig
+{
+	default
+	{
+		Tag "Pig";
+	}
+}
+
+class FireDemonNew : FireDemon replaces FireDemon
+{
+	default
+	{
+		Tag "Afrit";
+		DamageFactor "Suck", 2.50;
+		Painchance "Suck", 3;
+	}
+}
+
+class EttinNew : Ettin replaces Ettin
+{
+	default
+	{
+		Tag "Ettin";
+		DamageFactor "Suck", 0.667;
+		Painchance "Suck", 40;
+	}
+}
+
+class EttinMashNew : EttinMash replaces EttinMash
+{
+	default
+	{
+		Tag "Ettin (Ghost)";
+		DamageFactor "Suck", 2.67;
+		Painchance "Suck", 160;
+	}
+}
+
+class CentaurNew : Centaur replaces Centaur
+{
+	default
+	{
+		Tag "Centaur";
+		DamageFactor "Suck", 0.75;
+		Painchance "Suck", 101;
+	}
+}
+
+class CentaurMashNew : CentaurMash replaces CentaurMash
+{
+	default
+	{
+		Tag "Centaur (Ghost)";
+		DamageFactor "Suck", 4.00;
+		Painchance "Suck", 256;
+	}
+}
+
+class CentaurLeaderNew : CentaurLeader replaces CentaurLeader
+{
+	default
+	{
+		Tag "Slaughtaur";
+		DamageFactor "Suck", 0.75;
+		Painchance "Suck", 101;
+	}
+}
+
+class Demon1New : Demon1 replaces Demon1
+{
+	default
+	{
+		Tag "Green Chaos Serpent";
+		DamageFactor "Suck", 0.667;
+		Painchance "Suck", 34;
+	}
+}
+
+class Demon1MashNew : Demon1Mash replaces Demon1Mash
+{
+	default
+	{
+		Tag "Green Chaos Serpent (Ghost)";
+		DamageFactor "Suck", 2.67;
+		Painchance "Suck", 134;
+	}
+}
+
+class Demon2New : Demon2 replaces Demon2
+{
+	default
+	{
+		Tag "Brown Chaos Serpent";
+		DamageFactor "Suck", 0.667;
+		Painchance "Suck", 34;
+	}
+}
+
+class Demon2MashNew : Demon2Mash replaces Demon2Mash
+{
+	default
+	{
+		Tag "Brown Chaos Serpent (Ghost)";
+		DamageFactor "Suck", 2.67;
+		Painchance "Suck", 134;
+	}
+}
+
+class IceGuyNew : IceGuy replaces IceGuy
+{
+	default
+	{
+		Tag "Wendigo";
+		DamageFactor "Suck", 0.01;
+		Painchance "Suck", 0;
+	}
+}
+
+class SerpentNew : Serpent replaces Serpent
+{
+	default
+	{
+		Tag "Stalker";
+		DamageFactor "Suck", 1.50;
+		Painchance "Suck", 144;
+	}
+}
+
+class SerpentLeaderNew : SerpentLeader replaces SerpentLeader
+{
+	default
+	{
+		Tag "Alpha Stalker";
+		DamageFactor "Suck", 1.50;
+		Painchance "Suck", 144;
+	}
+}
+
+class BishopNew : Bishop replaces Bishop
+{
+	default
+	{
+		Tag "Dark Bishop";
+		DamageFactor "Suck", 2.00;
+		Painchance "Suck", 220;
+	}
+}
+
+class WraithNew : Wraith replaces Wraith
+{
+	default
+	{
+		Tag "Reiver";
+		DamageFactor "Suck", 3.00;
+		Painchance "Suck", 75;
+	}
+}
+
+class WraithBuriedNew : WraithBuried replaces WraithBuried
+{
+	default
+	{
+		Tag "Reiver";
+		DamageFactor "Suck", 3.00;
+		Painchance "Suck", 75;
+	}
+}
+
+class DragonNew : Dragon replaces Dragon
+{
+	default
+	{
+		Tag "Death Wyvern";
+		DamageFactor "Suck", 0.5;
+		Painchance "Suck", 64;
+	}
+}
+
+class HeresiarchNew : Heresiarch replaces Heresiarch
+{
+	default
+	{
+		Tag "Heresiarch";
+		DamageFactor "Suck", 0.5;
+		Painchance "Suck", 5;
+	}
+}
+
+class ClericBossNew : ClericBoss replaces ClericBoss
+{
+	default
+	{
+		Tag "\c[gold]Traductus";
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 13;
+	}
+}
+
+class FighterBossNew : FighterBoss replaces FighterBoss
+{
+	default
+	{
+		Tag "\c[gold]Zedek";
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 13;
+	}
+}
+
+class MageBossNew : MageBoss replaces MageBoss
+{
+	default
+	{
+		Tag "\c[gold]Menelkir";
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 13;
+	}
+}
+
+class KoraxNew : Korax replaces Korax
+{
+	default
+	{
+		Tag "\c[gold]Korax";
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 5;
+	}
+}
+
+class MinotaurFriendNew : MinotaurFriend replaces MinotaurFriend
+{
+	default
+	{
+		Tag "Maulotaur";
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 6;
+	}
+}
+
+//*******************
+//* Strife specific *
+//*******************
+
+class AcolyteNew : Acolyte replaces Acolyte
+{
+	default
+	{
+	}
+}
+
+class AcolyteTanNew : AcolyteTan replaces AcolyteTan
+{
+	default
+	{
+	}
+}
+
+class AcolyteRedNew : AcolyteRed replaces AcolyteRed
+{
+	default
+	{
+	}
+}
+
+class AcolyteRustNew : AcolyteRust replaces AcolyteRust
+{
+	default
+	{
+	}
+}
+
+class AcolyteGrayNew : AcolyteGray replaces AcolyteGray
+{
+	default
+	{
+	}
+}
+
+class AcolyteDGreenNew : AcolyteDGreen replaces AcolyteDGreen
+{
+	default
+	{
+	}
+}
+
+class AcolyteGoldNew : AcolyteGold replaces AcolyteGold
+{
+	default
+	{
+	}
+}
+
+class AcolyteLGreenNew : AcolyteLGreen replaces AcolyteLGreen
+{
+	default
+	{
+	}
+}
+
+class AcolyteBlueNew : AcolyteBlue replaces AcolyteBlue
+{
+	default
+	{
+	}
+}
+
+class AcolyteShadowNew : AcolyteShadow replaces AcolyteShadow
+{
+	default
+	{
+	}
+}
+
+class AcolyteToBeNew : AcolyteToBe replaces AcolyteToBe
+{
+	default
+	{
+	}
+}
+
+class RebelNew : Rebel replaces Rebel
+{
+	default
+	{
+	}
+}
+
+class Rebel1New : Rebel1 replaces Rebel1
+{
+	default
+	{
+	}
+}
+
+class Rebel2New : Rebel2 replaces Rebel2
+{
+	default
+	{
+	}
+}
+
+class Rebel3New : Rebel3 replaces Rebel3
+{
+	default
+	{
+	}
+}
+
+class Rebel4New : Rebel4 replaces Rebel4
+{
+	default
+	{
+	}
+}
+
+class Rebel5New : Rebel5 replaces Rebel5
+{
+	default
+	{
+	}
+}
+
+class Rebel6New : Rebel6 replaces Rebel6
+{
+	default
+	{
+	}
+}
+
+class CeilingTurretNew : CeilingTurret replaces CeilingTurret
+{
+	default
+	{
+	}
+}
+
+class StalkerNew : Stalker replaces Stalker
+{
+	default
+	{
+	}
+}
+
+class SentinelNew : Sentinel replaces Sentinel
+{
+	default
+	{
+	}
+}
+
+class TemplarNew : Templar replaces Templar
+{
+	default
+	{
+	}
+}
+
+class ReaverNew : Reaver replaces Reaver
+{
+	default
+	{
+	}
+}
+
+class CrusaderNew : Crusader replaces Crusader
+{
+	default
+	{
+	}
+}
+
+class InquisitorNew : Inquisitor replaces Inquisitor
+{
+	default
+	{
+	}
+}
+
+class ProgrammerNew : Programmer replaces Programmer
+{
+	default
+	{
+		DamageFactor "Suck", 0.25;
+		Painchance "Suck", 13;
+	}
+}
+
+class StrifeBishopNew : StrifeBishop replaces StrifeBishop
+{
+	default
+	{
+		DamageFactor "Suck", 2.5;
+		Painchance "Suck", 256;
+	}
+}
+
+class OracleNew : Oracle replaces Oracle
+{
+	default
+	{
+		DamageFactor "Suck", 2.5;
+		Painchance "Suck", 256;
+	}
+}
+
+class Macil1New : Macil1 replaces Macil1
+{
+	default
+	{
+		DamageFactor "Suck", 2.5;
+		Painchance "Suck", 256;
+	}
+}
+
+class Macil2New : Macil2 replaces Macil2
+{
+	default
+	{
+		DamageFactor "Suck", 2.5;
+		Painchance "Suck", 256;
+	}
+}
+
+class LoremasterNew : Loremaster replaces Loremaster
+{
+	default
+	{
+		Painchance 50;
+		DamageFactor "Suck", 2.5;
+		Painchance "Suck", 125;
+	}
+	
+	States
+	{
+		Pain.Suck:
+			PDED A 9;
+			PDED A 9 A_Pain;
+			stop;
+		Pain:
+			PDED A 3;
+			PDED A 3 A_Pain;
+			stop;
+	}
+}
+
+class AlienSpectre1New : AlienSpectre1 replaces AlienSpectre1
+{
+	default
+	{
+		DamageFactor "Suck", 5.0;
+		Painchance "Suck", 256;
+	}
+}
+
+class AlienSpectre2New : AlienSpectre2 replaces AlienSpectre2
+{
+	default
+	{
+		DamageFactor "Suck", 5.0;
+		Painchance "Suck", 250;
+	}
+}
+
+class AlienSpectre3New : AlienSpectre3 replaces AlienSpectre3
+{
+	default
+	{
+		DamageFactor "Suck", 5.0;
+		Painchance "Suck", 250;
+	}
+}
+
+class AlienSpectre4New : AlienSpectre4 replaces AlienSpectre4
+{
+	default
+	{
+		DamageFactor "Suck", 5.0;
+		Painchance "Suck", 250;
+	}
+}
+
+class AlienSpectre5New : AlienSpectre5 replaces AlienSpectre5
+{
+	default
+	{
+		DamageFactor "Suck", 5.0;
+		Painchance "Suck", 250;
+	}
+}
+
+class EntityBossNew : EntityBoss replaces EntityBoss
+{
+	default
+	{
+		DamageFactor "Suck", 2.5;
+		Painchance "Suck", 256;
+	}
+}
+// TBC :V

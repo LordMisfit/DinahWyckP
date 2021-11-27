@@ -1,0 +1,325 @@
+class DD_EventHandler : EventHandler
+{
+	/*
+	override void WorldThingSpawned(WorldEvent e)
+	{
+		Super.WorldThingSpawned(e);
+	}
+	*/
+
+	override void WorldThingDamaged(WorldEvent e)
+	{
+		if (e.thing)
+		{
+			if (!(e.thing.GetClassName() == "DinahPlayer") || e.thing.bCOUNTKILL)
+			{
+				int user_type;
+				string AttackName = "NONE";
+				string AttackerName = "NONE";
+				if (e.inflictor) AttackName = e.inflictor.GetClassName();
+				if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
+				if (dydudebug_worlddamaged) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", AttackName, AttackerName);
+				
+				if (e.thing.health > 0)
+				{
+					if (AttackName == "BlunderPuff")
+					{
+						int baseval = randompick(5,6,6,6,6,7,7,7,7,7,7,7,7,8,8,8,8,9);
+						if (dydudebug_worlddamaged) Console.Printf("%d", baseval);
+						if (random(1,(baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					}
+				}
+			}
+			
+			int dmg = e.damage;
+			string dmgtype = e.damagetype;
+			string dname = e.thing.GetTag();
+			string atkrname = "(?)";
+			if (!e.thing.GetTag()) dname = e.thing.GetClassName();
+			if (e.inflictor)
+			{
+				if (e.inflictor.GetTag()) atkrname = e.inflictor.GetTag();
+														 else atkrname = e.inflictor.GetClassName();
+			}
+			if (dydu_combatlog && !(dname == "DinahPlayer" || dname == "Dinah Wyck") && e.thing.bCOUNTKILL)
+			{
+				if (dmg) 
+				{
+					if (e.thing.health <= 0) Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-] \c[brick]%s dies!", dmg, dname, atkrname, dmgtype, dname);
+					else Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-]", dmg, dname, atkrname, dmgtype);
+				}
+				else
+				{
+					Console.Printf("\c[red]%s\c- took \c[purple]no damage\c- from \c[gold]%s\c-! [\c[lightblue]%s\c-]", dname, atkrname, dmgtype);
+				}
+			}
+		}
+		
+		Super.WorldThingDamaged(e);
+	}
+	
+	override void WorldThingDied(WorldEvent e)
+	{
+		if (e.thing)
+		{
+			if (!(e.thing.GetClassName() == "DinahPlayer") || e.thing.bCOUNTKILL)
+			{
+				int user_type;
+				string AttackName = "NONE";
+				string AttackerName = "NONE";
+				if (e.inflictor) AttackName = e.inflictor.GetClassName();
+				if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
+				if (dydudebug_worlddied) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", AttackName, AttackerName);
+				if (e.inflictor && e.inflictor.target && AttackerName == "DinahPlayer" && !e.thing.bFRIENDLY && e.thing.bCOUNTKILL) 
+				{
+					int ExpGain = ((e.thing.spawnhealth()*frandom(0.05,0.125)));
+					if (e.thing.GetClassName() == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
+					if (e.inflictor.target.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
+					if (ExpGain < 1) ExpGain = 1;
+
+					e.inflictor.target.A_GiveInventory("KillsCount",1);
+					e.inflictor.target.A_GiveInventory("ExpPts",ExpGain);
+					int Kills = e.inflictor.target.CountInv("KillsCount"); 
+					int ExpNew = e.inflictor.target.CountInv("ExpPts");
+					int ExpNeeded = e.inflictor.target.CountInv("ExpPtsNeeded");
+					int PlayerLevel = e.inflictor.target.CountInv("PlayerLevel");
+					Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
+				}
+				
+				// Drop Tables
+				if (!e.thing.bFRIENDLY && e.thing.bCOUNTKILL)
+				{
+					// Heal Items
+					int basechance = 256;
+					int maxchance = basechance;
+					if (AttackName == "BatPuff") maxchance = (basechance * 0.5);
+					if (AttackName == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+					if (AttackName == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+					if (AttackName == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+					if (AttackName == "VacPuff") maxchance = (basechance * 16);
+					if (random(1,(maxchance)) == 1) e.thing.A_SpawnItemEx("GalaApple",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (random(1,(maxchance)) == 1) e.thing.A_SpawnItemEx("FoodPlateFruit",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (random(1,(maxchance*2)) == 1) e.thing.A_SpawnItemEx("AppleWine",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (random(1,(maxchance*4)) == 1) e.thing.A_SpawnItemEx("PigRoastDishExtra",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (random(1,(maxchance*4)) == 1) e.thing.A_SpawnItemEx("Berserk",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [heal]: %d (%d)", maxchance, basechance);
+					
+					// Armor Items
+					basechance = 512;
+					maxchance = basechance;
+					if (AttackName == "BatPuff") maxchance = (basechance * 0.5);
+					if (AttackName == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+					if (AttackName == "BlunderPuff") maxchance = (basechance * 16);
+					if (AttackName == "RecordShot") maxchance = (basechance * 4);
+					if (AttackName == "VacPuff") maxchance = (basechance * 0.125);
+					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [armor]: %d (%d)", maxchance, basechance);
+					if (random(1,maxchance) == 1)
+					{
+						//Full Armor Drops
+						user_type = random(1,100);
+						if (user_type >= 1 || user_type <= 67) { e.thing.A_SpawnItemEx("KnightGown",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION); }
+						else if (user_type >= 68 || user_type <= 89) { e.thing.A_SpawnItemEx("KnightGown2",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION); }
+						else if (user_type >= 90) { e.thing.A_SpawnItemEx("KnightGown3",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION); }
+					}
+					else
+					{
+						int scraprolls = 1;
+						if (AttackName == "BlunderPuff") scraprolls += randompick(0,0,0,0,1,1,1,1,1,1,2,2,3);
+						if (AttackName == "RecordShot") scraprolls += randompick(0,0,0,0,0,0,1,1,1,1,1,2,2);
+						if (AttackName == "VacPuff") scraprolls += (randompick(0,0,0,0,0,0,1,1,1,1,1,2,2) - 1);
+						//Scrap Drops
+						if (scraprolls)
+						{
+							int baseval = randompick(2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3);
+							for (int i = 0; i < scraprolls; i++)
+							{
+								if (AttackName == "BlunderPuff" && i == 0) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (random(1,(baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (random(1,(baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (random(1,(baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (random(1,(baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (dydudebug_worlddiedmonsterdrops) Console.Printf("ScrapRolls: %d / %d", i, scraprolls);
+							}
+						}
+					}
+					
+					// Random Inventory Item Drops
+					// Primary
+					basechance = 32;
+					maxchance = basechance;
+					if (AttackName == "BatPuff") maxchance = (basechance * 0.5);
+					if (AttackName == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+					if (AttackName == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+					if (AttackName == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+					if (AttackName == "VacPuff") maxchance = (basechance * 16);
+					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [primaryinv]: %d (%d)", maxchance, basechance);
+					if (random(1,maxchance) == 1)
+					{
+						user_type = random(1,20);
+						if (user_type == 1) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 2) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 3) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 4) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 5) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 6) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 7) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 8) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 9) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 10) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 11) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 12) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 13) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 14) { e.thing.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 15) { e.thing.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 16) { e.thing.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 17) { e.thing.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 18) { e.thing.A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 19) { e.thing.A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 20) { e.thing.A_SpawnItemEx("SnakePickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					}
+
+					// Secondary
+					basechance = 256;
+					maxchance = basechance;
+					if (AttackName == "BatPuff") maxchance = (basechance * 0.5);
+					if (AttackName == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+					if (AttackName == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+					if (AttackName == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+					if (AttackName == "VacPuff") maxchance = (basechance * 16);
+					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
+					if (random(1,maxchance) == 1)
+					{
+						user_type = random(1,20);
+						if (user_type >= 1 || user_type <= 19) { e.thing.A_SpawnItemEx("TimePotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 20) { e.thing.A_SpawnItemEx("DoorBell",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					}
+					
+					//
+					if (e.thing.GetClassName() == "KilletanteSoloist")
+					{
+						string dropname = "GalaApple";
+						if (random(1,2) == 1) dropname = "AppleWine";
+						e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+						if (random(1,2) == 1)
+						{
+							dropname = "GalaApple";
+							if (random(1,2) == 1) dropname = "AppleWine";
+							e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+							
+							if (random(1,4) == 1)
+							{
+								dropname = "GalaApple";
+								if (random(1,2) == 1) dropname = "AppleWine";
+								e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+								
+								if (random(1,8) == 1)
+								{
+									dropname = "GalaApple";
+									if (random(1,2) == 1) dropname = "AppleWine";
+									e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					if (e.thing.GetClassName() == "ZBell")
+					{
+						int typesdrop = 1;
+						string dropname;
+						if ((e.thing.Stamina <= 0) || (e.thing.Stamina <= 2 && (e.inflictor && AttackName == "BatPuff")))
+						{
+							e.thing.Stamina++;
+							if (e.inflictor && AttackName == "BatPuff") typesdrop = random(2,5);
+
+							for(int i = 0; i < typesdrop; i++)
+							{
+								user_type = random(1,2);
+								//Console.Printf("#1: %d", user_type);
+								if (user_type == 1) // Weapons
+								{
+									user_type = random(1,25);
+									//Console.Printf("#2a: %d", user_type);
+									if (user_type >= 1 && user_type <= 4) dropname = "CricketBat";
+									if (user_type >= 5 && user_type <= 8) dropname = "AppleJack";
+									if (user_type >= 9 && user_type <= 12) dropname = "BlunderAxe";
+									if (user_type >= 13 && user_type <= 16) dropname = "Scrambler";
+									if (user_type >= 17 && user_type <= 20) dropname = "WizardPike";
+									if (user_type >= 21 && user_type <= 24) dropname = "SuperVac";
+									if (user_type == 25) dropname = "Grimophone";
+								}
+								else
+								if (user_type == 2) // Health
+								{
+									user_type = random(1,25);
+									//Console.Printf("#2b: %d", user_type);
+									if (user_type >= 1 && user_type <= 12) dropname = "GalaApple";
+									if (user_type >= 13 && user_type <= 18) dropname = "FoodPlateFruit";
+									if (user_type >= 19 && user_type <= 22) dropname = "AppleWine";
+									if (user_type >= 23 && user_type <= 24) dropname = "PigRoastDish";
+									if (user_type == 25) dropname = "GourmetMeal";
+								}
+								e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+							}
+						}
+					}
+				}
+				
+				// Killed With Certain Weapons
+				if (e.inflictor && AttackerName == "DinahPlayer" && e.thing.bCOUNTKILL)
+				{
+					if (AttackName == "VacPuff")
+					{
+						int vacgive = e.thing.spawnhealth();
+						vacgive *= frandompick(0.6667,0.8334,1.000,1.1667,1.3334);
+						vacgive *= 0.5;
+						e.inflictor.target.A_GiveInventory("VacAmmoCounter",vacgive);
+						e.inflictor.target.A_StartSound("VacDed",10,CHANF_DEFAULT,frandom(0.75,0.90),ATTN_NORM,frandom(1.8,2.7));
+						e.thing.A_BossDeath(); // Makes sure certain monsters do their hardcoded E1M8/MAP07 type effects on death
+						e.thing.A_FadeOut(1.0,FTF_REMOVE);
+
+						Console.Printf("+%d Vacuum Bag Units", vacgive);
+					}
+				}
+			}
+		}
+		
+		Super.WorldThingDied(e);
+	}
+	
+	override void PlayerDied(PlayerEvent e) 
+	{
+		S_ChangeMusic("GAMOVR", 0, false, true);
+		Super.PlayerDied(e);
+	}
+	
+	override void PlayerRespawned(PlayerEvent e) 
+	{
+		S_ChangeMusic("*", 0, false, true);
+		Super.PlayerRespawned(e);
+	}
+}
+
+class DD_StaticEventHandler : StaticEventHandler
+{
+	override void WorldLoaded(WorldEvent evt) 
+	{
+		if (gameinfo.gametype & GAME_Raven)
+		{
+			for (let i = 0, l = level.Sectors.Size(); i < l; i++)
+			{
+				if (dydudebug_worldloaded) Console.Printf("    \czFireFloorAdjuster\c-: %d / %d", i, l);
+				if (level.Sectors[i].damagetype == 'Fire' || level.Sectors[i].damagetype == 'Lava')
+						level.Sectors[i].damagetype = 'Magma';
+			}
+		}
+	}
+}

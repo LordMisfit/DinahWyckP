@@ -1,0 +1,85 @@
+mixin class DmgCalc
+{
+	action int A_GetPunchDamage(int altfire = 0, int shockwave = 0, bool istarget = false)
+	{
+		Weapon weapon;
+		if (istarget && target) weapon = target.player.ReadyWeapon;
+		else weapon = player.ReadyWeapon;
+
+		string weaponname;
+		weaponname = weapon.GetClassName();
+		string actorname = GetClassName();
+		int damage;
+		int previousdamage;
+		int strengthcounter;
+		int debugmelee = false;
+		String nm, nn, no, np;
+
+		// Character Check [base damage]
+		If (weapon is "HandToHand")
+		{
+			if (altfire == 0)
+			{
+				damage = random(9,15);
+			}
+			else
+			if (altfire == 1)
+			{
+				damage = random(59,101);
+			}
+		}
+		else
+		{
+			damage = random(9,15);
+		}
+		if (debugmelee) Console.Printf("BaseDmg: %d", damage);
+
+		// Gauntlet Check #1 [base damage]
+		previousdamage = damage;
+		If (CountInv("UsingBoxingGloves"))
+		{
+			damage = random(9,13);
+			if (debugmelee) Console.Printf("GloveDmg: %d - (Previous Dmg: %d)", damage, previousdamage);
+		}
+
+		// Berserk Check
+		previousdamage = damage;
+		if (CountInv("PowerStrength", AAPTR_PLAYER1) || CountInv("PowerStrengthDD", AAPTR_PLAYER1)) damage = floor(damage * 10);
+		if (debugmelee) Console.Printf("BerserkDmg: %d - (Previous Dmg: %d)", damage, previousdamage);
+
+		double PerkFactor;
+		double temp1, temp2;
+		previousdamage = damage;
+		if (shockwave)
+		{
+			if (altfire == 0) damage = floor(damage * (0.04166667 * randompick(1,2,2,2,2,2,3)));
+			if (altfire == 1) damage = floor(damage * (0.05 * randompick(1,2,2,2,2,2,3)));
+			if (debugmelee) Console.Printf("MeleeDmg [Shockwave]: (%s) %d - (Previous Dmg: %d [Martial Arts Mastery Perk (Shockwave)])", weaponname, damage, previousdamage);
+		}
+		else
+		{
+			previousdamage = damage;
+		}
+
+		previousdamage = damage;
+		If (weapon is "HandToHand")
+		{
+			if (altfire == 0) damage = damage;
+		}
+		if (debugmelee && altfire == 0) Console.Printf("MeleeDmgAltCheck: (%s) %d - (Previous Dmg: %d) [Punch]", weaponname, damage, previousdamage);
+		if (debugmelee && altfire == 1) Console.Printf("MeleeDmgAltCheck: (%s) %d - (Previous Dmg: %d) [Uppercut]", weaponname, damage, previousdamage);
+
+		if (istarget)
+		{
+			if (debugmelee && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Puff: %s) %d\c- - \cx(Previous Dmg: %d) [Punch]\c-", weaponname, actorname, damage, previousdamage);
+			if (debugmelee && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Puff: %s) %d\c- - \cx(Previous Dmg: %d) [Uppercut]\c-", weaponname, actorname, damage, previousdamage);
+		}
+		else
+		{
+			if (debugmelee && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Source: %s) %d\c- - \cx(Previous Dmg: %d) [Punch]\c-", weaponname, actorname, damage, previousdamage);
+			if (debugmelee && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Source: %s) %d\c- - \cx(Previous Dmg: %d) [Uppercut]\c-", weaponname, actorname, damage, previousdamage);
+		}
+		
+		return damage;
+	}
+}

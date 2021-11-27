@@ -1,0 +1,9416 @@
+//INVENTORY
+ACTOR CherryBombShot
+{
+	Tag "Cherry Bomb"
+	Radius 3
+	Height 3
+	Speed 40
+	Damage 10
+	DamageType "CherryBomb"
+	PROJECTILE
+	-NOGRAVITY
+	//+NOEXTREMEDEATH
+	RENDERSTYLE "Normal"
+	SeeSound "weapons/cherrywick"
+	States
+	{
+		Spawn:
+			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3))
+			loop
+
+		Death:
+		XDeath:
+		Crash:
+			BMX2 A 2 Bright 
+			{
+				A_PlaySound("weapons/cherryboom");
+				A_Explode(16,32,XF_HURTSOURCE|XF_THRUSTZ,0,4);
+			}
+			BMX2 B 2 Bright 
+			{
+				A_AlertMonsters;
+				A_Explode(24,48,XF_HURTSOURCE|XF_THRUSTZ,0,6);
+			}
+			BMX2 C 1 Bright 
+			{
+				A_Explode(32,64,XF_HURTSOURCE|XF_THRUSTZ,0,8);
+			}
+			BMX2 D 2 Bright 
+			{
+				A_Explode(40,80,XF_HURTSOURCE|XF_THRUSTZ,0,10);
+			}
+			BMX2 E 1 Bright 
+			{
+				A_Explode(48,96,XF_HURTSOURCE|XF_THRUSTZ,0,12);
+			}
+			BMX2 F 2 Bright 
+			{
+				A_Explode(56,112,XF_HURTSOURCE|XF_THRUSTZ,0,14);
+			}
+			BMX2 G 1 Bright 
+			{
+				A_Explode(64,128,XF_HURTSOURCE|XF_THRUSTZ,0,16);
+			}
+			stop
+	}
+}
+
+ACTOR CherryBombShotBerserk : CherryBombShot
+{
+	Tag "-Cherry Bomb-"
+	Speed 80
+	Damage 50
+	DamageType "CherryBomb"
+	States
+	{
+		Spawn:
+			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3))
+			loop
+	}
+}
+
+
+actor BadCherryBomb : CherryBombShot
+{
+	Tag "Cherry Bomb"
+	Speed 15
+	Gravity 0.05
+	States
+	{
+		Spawn:
+			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3))
+			loop
+	}
+}
+
+
+ACTOR Firetrail
+{
+	Radius 2
+	Height 2
+	Speed 0
+	Scale 0.5
+	renderstyle "Add"
+	Alpha 0.6
+	PROJECTILE
+	+CLIENTSIDEONLY
+	+NOINTERACTION
+	States
+	{
+		Spawn:
+			FX09 GHIJK 4 BRIGHT
+			Stop
+	}
+}
+
+//Bottle Rocket
+ACTOR BRocketPickup : CustomInventory 12017
+{
+	//$Category RPFireworks
+	Inventory.Amount 1
+	Inventory.MaxAmount 4 // 2
+	Inventory.InterHubAmount 4 // 2
+	Inventory.PickupSound "Dinah/giggle"
+	Inventory.PickupMessage "A Bottle Rocket!"
+	Inventory.Icon BROKI0
+	Tag "Bottle Rocket: Shot forward and will create a cluster of explosions around it's impact point. Can deal self-damage via AOE."
+	Scale 1
+	+INVENTORY.INVBAR
+	+INVENTORY.HUBPOWER
+	+INVENTORY.PERSISTENTPOWER
+	+INVENTORY.KEEPDEPLETED
+	+FLOATBOB
+	+DONTGIB
+	States
+	{
+		Spawn:
+			BROK P -1
+			Stop
+		Use:
+			TNT1 A 0 A_FireProjectile ("BRocketShot", 0)
+			Stop
+	} 
+}
+
+ACTOR BRocketShot : DDProjectile
+{
+	Tag "Bottle Rocket"
+	Radius 8
+	Height 8
+	Speed 60
+	Damage 20
+	DamageType "BRocket"
+	Projectile
+	renderstyle "Normal"
+	+RANDOMIZE
+	+DEHEXPLOSION
+	+ROCKETTRAIL
+	//+NOEXTREMEDEATH
+	SeeSound "weapons/rocketfire"
+	DeathSound "weapons/cherryboom"
+	States
+	{
+		Spawn:
+			BROK A 0 A_AlertMonsters
+			BROK ABCD 2 Bright A_PlaySoundEx("weapons/spinnerfire", "SoundSlot7", 1)
+			Loop
+		Death:
+			TNT1 A 0 A_StopSoundEx("SoundSlot7")
+			TNT1 A 0 A_AlertMonsters
+			BMX1 A 5 Bright A_Explode
+			BMX1 B 5 Bright
+			BMX1 C 8 Bright A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0) 
+			BMX1 D 8 Bright A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0) 
+			BMX1 E 8 Bright A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0) 
+			TNT1 A 8 Bright A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0)
+			Stop
+	}
+}
+
+ACTOR BigBRocketShot : DDProjectile
+{
+	Tag "Big Bottle Rocket"
+	var int user_explosion;
+	Radius 12
+	Height 12
+	Speed 60
+	Damage 100
+	DamageType "BRocket"
+	Scale 1.5
+	Projectile
+	renderstyle "Normal"
+	+RANDOMIZE
+	+DEHEXPLOSION
+	+ROCKETTRAIL
+	//+NOEXTREMEDEATH
+	SeeSound "weapons/rocketfire"
+	DeathSound "weapons/cherryboom"
+	States
+	{
+		Death:
+			TNT1 A 0 A_StopSoundEx("SoundSlot7")
+			TNT1 A 0 A_AlertMonsters
+			BMX1 AABBB 2 Bright 
+			{
+				A_Explode;
+			}
+			BMX1 CCCCC 2 Bright 
+			{
+				if (user_explosion % 2 == 1) { A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0); }
+																else { A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0); }
+				user_explosion++;
+			}
+			BMX1 DDDDD 2 Bright
+			{
+				if (user_explosion % 2 == 1) { A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0); }
+																else { A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0); }
+				user_explosion++;
+			}
+			BMX1 EEEEE 2 Bright
+			{
+				if (user_explosion % 2 == 1) { A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0); }
+																else { A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0); }
+				user_explosion++;
+			}
+			TNT1 AAAAA 2 Bright
+			{
+				if (user_explosion % 2 == 1) { A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0); }
+																else { A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0); }
+				user_explosion++;
+			}
+			Stop
+	}
+}
+
+ACTOR MultiBRocketShot : BigBRocketShot
+{
+	Radius 18
+	Height 18
+	Scale 2.25
+	Damage 400
+	Tag "Multi-Bottle Rocket"
+}
+
+ACTOR BadBrocketShot : BrocketShot
+{
+	Speed 30
+	DONTHURTSHOOTER
+	States
+	{
+		Death:
+			TNT1 A 0 A_StopSoundEx("SoundSlot7")
+			TNT1 A 0 A_AlertMonsters
+			BMX1 A 5 Bright A_Explode
+			BMX1 B 5 Bright
+			BMX1 C 8 Bright A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0) 
+			BMX1 D 8 Bright A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0) 
+			BMX1 E 8 Bright A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0)  
+			Stop
+	}
+}
+
+actor BRocketBoom1
+{
+	radius 10
+	height 12
+	DamageType "BRocket"
+	speed 0
+	Scale 2
+	renderstyle "Add"
+	Alpha 0.80
+	seesound "weapons/cherryboom"
+	PROJECTILE
+	+NOCLIP
+	+DONTSPLASH
+	+SPAWNSOUNDSOURCE
+	states
+	{
+		Spawn:
+			TNT1 A 0 A_Die
+		Death:
+			CBAL C 6 Bright A_Explode
+			CBAL DEF 6 Bright
+			stop
+	}
+}
+
+actor BRocketBoom2
+{
+	radius 10
+	height 12
+	DamageType "BRocket"
+	speed 0
+	Scale 2
+	renderstyle "Add"
+	Alpha 0.80
+	seesound "weapons/cherryboom"
+	PROJECTILE
+	+NOCLIP
+	+DONTSPLASH
+	+SPAWNSOUNDSOURCE
+	states
+	{
+		Spawn:
+			TNT1 A 0 A_Die
+		Death:
+			BROX A 6 Bright A_Explode
+			BROX BCD 6 Bright
+			stop
+	}
+}
+
+//Spinner
+ACTOR SpinnerPickup : CustomInventory 12018
+{
+	//$Category RPFireworks
+	Inventory.Amount 1
+	Inventory.MaxAmount 16 // 8
+	Inventory.InterHubAmount 16 // 8
+	Inventory.PickupSound "Dinah/giggle"
+	Inventory.PickupMessage "A Spinner-Chaser!"
+	Inventory.Icon SPINI0
+	Tag "Spinner-Chaser: Shot forward and will seek a close target and explode on impact. Can deal self-damage via AOE."
+	Scale 1
+	+INVENTORY.INVBAR
+	+INVENTORY.HUBPOWER
+	+INVENTORY.PERSISTENTPOWER
+	+INVENTORY.KEEPDEPLETED
+	+FLOATBOB
+	+DONTGIB
+	States
+	{
+		Spawn:
+			SPNR P -1
+			Stop
+		Use:
+			TNT1 A 0 A_FireProjectile ("SpinnerShot", 0)
+			Stop
+	} 
+}
+
+actor Spinnershot
+{
+	Radius 8
+	Height 6
+	Speed 14
+	Damage 5
+	DamageType "Spinner"
+	+SEEKERMISSILE
+	//+NOEXTREMEDEATH
+	PROJECTILE
+	renderstyle "Add"
+	SeeSound "weapons/spinnerfire"
+	DeathSound "weapons/cherryboom"
+	States
+	{
+		Spawn:
+			SPNR A 0 Bright NoDelay
+			{
+				A_SpawnItemEx("Firetrail", 0, 0, 0, 0, 0, 0, 180, 128);
+				A_AlertMonsters;
+				A_PlaySoundEx("weapons/cherrywick", "SoundSlot7", 1);
+			}
+			SPNR AABB 1 Bright 
+			{
+				A_SeekerMissile(12,12,SMF_LOOK|SMF_PRECISE);
+			}
+			Loop
+		Death:
+			SPNR C 0 A_AlertMonsters
+			BMX1 A 2 Bright A_Explode
+			BMX1 BCDE 2 Bright
+			Stop
+	}
+}
+
+//Party Popper
+ACTOR PopperPickup : CustomInventoryExt 13019
+{
+	//$Category RPFireworks
+	Inventory.Amount 1
+	Inventory.MaxAmount 2
+	Inventory.InterHubAmount 2
+	Inventory.PickupSound "Dinah/giggle"
+	Inventory.PickupMessage "A Scatter-Popper!"
+	Inventory.Icon POPRI0
+	Tag "Scatter-Popper"
+	Scale 1
+	+INVENTORY.INVBAR
+	+INVENTORY.HUBPOWER
+	+INVENTORY.PERSISTENTPOWER
+	+INVENTORY.KEEPDEPLETED
+	+FLOATBOB
+	+DONTGIB
+	States
+	{
+		Spawn:
+			POPR P -1
+			Stop
+		Use:
+			TNT1 A 0 A_PlaySound("popper/toot",CHAN_WEAPON)
+			TNT1 A 0 Bright 
+			{
+				A_UsePartyPopper();
+			}
+			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
+			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
+			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
+			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
+			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
+			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
+			TNT1 A 0
+			{
+				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1)) { A_Recoil(frandom(0.96,1.44)); } else { A_Recoil(frandom(4.8,7.2)); }
+			}
+			Stop
+	} 
+}
+
+ACTOR StreamerShot 
+{
+	Radius 3
+	Height 3
+	Speed 20
+	Damage 10
+	PROJECTILE
+	-NOGRAVITY
+	//+NOEXTREMEDEATH
+	+RIPPER
+	+LOWGRAVITY
+	renderstyle "Normal"
+	States
+	{
+		Spawn:
+			STRM A 1 Bright A_SpawnItemEx("streamertrail",0,0,0)
+			loop
+		Death:
+			STRM A 1
+			stop
+	}
+}
+
+ACTOR Streamertrail
+{
+	Radius 2
+	Height 2
+	Speed 0
+	Scale 0.5
+	renderstyle "Add"
+	Alpha 0.6
+	PROJECTILE
+	+CLIENTSIDEONLY
+	+NOINTERACTION
+	States
+	{
+		Spawn:
+			STRM AAAAAA 4 BRIGHT
+			Stop
+	}
+}
+
+ACTOR PopperPuff1 : DDPuff
+{
+	Tag "Popper Confetti (2)"
+	+NOBLOCKMAP
+	+NOGRAVITY
+	//+NOEXTREMEDEATH
+	+PUFFONACTORS
+	RenderStyle "Translucent"
+	Alpha 0.6
+	DamageType "Popper"
+	States
+	{
+		Spawn:
+			CBAL C 0 A_AlertMonsters
+			CBAL CD 4 Bright
+			CBAL EF 3 bright
+			Stop
+	}
+} 
+
+ACTOR PopperPuff2 : DDPuff
+{
+	Tag "Popper Confetti (2)"
+	+NOBLOCKMAP
+	+NOGRAVITY
+	//+NOEXTREMEDEATH
+	+PUFFONACTORS
+	RenderStyle "Translucent"
+	Alpha 0.6
+	DamageType "Popper"
+	States
+	{
+		Spawn:
+			SPNR C 0 A_AlertMonsters
+			SPNR C 4 Bright A_Explode(128,128)
+			SPNR DEFG 4 Bright
+			Stop
+	}
+} 
+
+//Snake Grenade
+ACTOR SnakePickup : CustomInventory 12091
+{
+	//$Category RPFireworks
+	Inventory.Amount 1
+	Inventory.MaxAmount 2
+	Inventory.InterHubAmount 2
+	Inventory.PickupSound "Dinah/giggle"
+	Inventory.PickupMessage "A King Sugar Snake!"
+	Inventory.Icon FSNKI0
+	Tag "Sugar Snake: Summons a King Sugar Snake ally when used."
+	Scale 1
+	+INVENTORY.INVBAR
+	+INVENTORY.HUBPOWER
+	+INVENTORY.PERSISTENTPOWER
+	+INVENTORY.KEEPDEPLETED
+	+FLOATBOB
+	+DONTGIB
+	States
+	{
+		Spawn:
+			FSNK P -1
+			Stop
+		Use:
+			TNT1 A 0 A_ThrowGrenade("SnakeGrenade",4,16,3,0)
+			Stop
+	} 
+}
+
+ACTOR ArmorScrap : ArmorBonus
+{
+	var int user_type;
+	Inventory.Icon "DACLB0"
+	Inventory.Pickupmessage "Knight-Gown Scrap! \c[green]+1 Armor"
+	Inventory.PickupSound "Scrap/Find"
+	Armor.SavePercent 50
+	Armor.SaveAmount 1
+	Armor.MaxSaveAmount 1000 //500
+	DamageFactor "Melee", 0.8
+	DamageFactor "Zap", 0.9
+	+FLOATBOB
+	+DONTGIB
+	States
+	{
+		Spawn:
+			DACL B 0 NoDelay
+			{
+				if (random(1,20) == 1)
+				{
+					user_type = random(1,20);
+					if (user_type == 1) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 2) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 3) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 4) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 5) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 6) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 7) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 8) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 9) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 10) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 11) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 12) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 13) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 14) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 15) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 16) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 17) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 18) { A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 19) { A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 20) { A_SpawnItemEx("SnakePickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+
+					A_ChangeFlag("COUNTITEM",0);
+					Thing_Remove(0); 
+				}
+			}
+		Idle:
+			DACL B -1 
+			stop
+	}
+}
+
+ACTOR ArmorScrap2 : ArmorScrap
+{
+	Inventory.Icon "DACLC0"
+	Inventory.Pickupmessage "Knight-Gown Scrap! \c[green]+1 Armor"
+	Inventory.PickupSound "Scrap/Find"
+	Armor.SavePercent 75
+	Armor.SaveAmount 1
+	Armor.MaxSaveAmount 1000 //500
+	DamageFactor "Melee", 0.6
+	DamageFactor "Zap", 0.8
+	+FLOATBOB
+	+DONTGIB
+	States
+	{
+		Spawn:
+			DACL C -1 
+			stop
+	}
+}
+
+ACTOR ArmorScrap3 : ArmorScrap2
+{
+	Inventory.Icon "DACLB0"
+	Inventory.Pickupmessage "Knight-Gown Scrap! \c[green]+1 Armor"
+	Inventory.PickupSound "Scrap/Find"
+  Armor.SavePercent 87.5
+	Armor.SaveAmount 1
+	Armor.MaxSaveAmount 1000 //500
+	DamageFactor "Melee", 0.4
+	DamageFactor "Zap", 0.6
+	+FLOATBOB
+	+DONTGIB
+	States
+	{
+		Spawn:
+			DACL D -1 
+			stop
+	}
+}
+
+ACTOR ArmorScrap4 : ArmorScrap3
+{
+	Inventory.Icon "DACLB0"
+	Inventory.Pickupmessage "Knight-Gown Scrap! \c[green]+1 Armor"
+	Inventory.PickupSound "Scrap/Find"
+  Armor.SavePercent 93.75
+	Armor.SaveAmount 1
+	Armor.MaxSaveAmount 1000 //500
+	DamageFactor "Melee", 0.2
+	DamageFactor "Zap", 0.3
+	+FLOATBOB
+	+DONTGIB
+	States
+	{
+		Spawn:
+			DACL D -1 
+			stop
+	}
+}
+
+ 
+
+//Armor
+ACTOR KnightGown : SilverShield
+{
+	//$Category RPArtifacts
+	Inventory.Icon "AGWNI0"
+	Inventory.Pickupmessage "Knight-Gown (50% Protection)"
+	Inventory.PickupSound "Dinah/marvelous"
+  Armor.SavePercent 50
+  Armor.SaveAmount 125
+	DamageFactor "Melee", 0.8
+	DamageFactor "Zap", 0.9
+	Scale 0.5
+	+DONTGIB
+	+FLOATBOB
+	Tag "Knight-Gown"
+	States
+	{
+		Spawn:
+			AGWN A -1
+			Stop
+	}
+}
+
+
+ACTOR KnightGown2 : EnchantedShield
+{
+	//$Category RPArtifacts
+	Inventory.Icon "AGWNJ0"
+	Inventory.Pickupmessage "Expert's Knight-Gown (75% Protection)"
+	Inventory.PickupSound "Dinah/marvelous"
+  Armor.SavePercent 75
+  Armor.SaveAmount 250
+	DamageFactor "Melee", 0.6
+	DamageFactor "Zap", 0.8
+	Scale 0.5
+	+DONTGIB
+	+FLOATBOB
+	Tag "Expert's Knight-Gown"
+	States
+	{
+		Spawn:
+			AGWN B -1
+			Stop
+	}
+}
+
+ACTOR KnightGown3 : EnchantedShield
+{
+	//$Category RPArtifacts
+	Inventory.Icon "AGWNK0"
+	Inventory.Pickupmessage "Master's Knight-Gown (87.5% Protection)"
+	Inventory.PickupSound "Dinah/giggle"
+  Armor.SavePercent 87.5
+  Armor.SaveAmount 500
+	DamageFactor "Melee", 0.4
+	DamageFactor "Zap", 0.6
+	Scale 0.5
+	+DONTGIB
+	+FLOATBOB
+	Tag "Master's Knight-Gown"
+	States
+	{
+		Spawn:
+			AGWN C -1
+			Stop
+	}
+}
+
+ACTOR KnightGown4 : EnchantedShield
+{
+	//$Category RPArtifacts
+	Inventory.Icon "AGWNK0"
+	Inventory.Pickupmessage "Master's Knight-Gown (93.75% Protection)"
+	Inventory.PickupSound "Dinah/giggle"
+  Armor.SavePercent 93.75
+  Armor.SaveAmount 1000
+	DamageFactor "Melee", 0.2
+	DamageFactor "Zap", 0.3
+	Scale 0.5
+	+DONTGIB
+	+FLOATBOB
+	Tag "Master's Knight-Gown"
+	States
+	{
+		Spawn:
+			AGWN C -1
+			Stop
+	}
+}
+
+ACTOR WineArmor : BasicArmorPickup
+{
+	+DONTGIB
+	+FLOATBOB
+	Inventory.PickupMessage "One little sip won't hurt..."
+	Inventory.Icon "WINEI0"
+	Armor.SavePercent 33
+	Armor.SaveAmount 50
+	States
+	{
+		Spawn:
+			WINE A -1
+			Stop
+	}
+}
+
+//Diving Helmet
+Actor PowerNoDrown : PowerProtection
+{
+	DamageFactor "Drowning", 0
+	Powerup.Color Grey 0.1
+	Powerup.Duration -180
+	Inventory.Icon "DIVRA0"
+}
+
+actor DivingHelm : CustomInventoryExt 15126
+{
+	//$Category RPArtifacts
+	Inventory.PickupMessage "Chic Diving Helmet"
+	Inventory.Amount 1
+	Inventory.MaxAmount 2
+	Inventory.InterHubAmount 2
+	+INVENTORY.INVBAR
+	+INVENTORY.HUBPOWER
+	+INVENTORY.PERSISTENTPOWER
+	+INVENTORY.KEEPDEPLETED
+	+DONTGIB
+	+FLOATBOB
+	Inventory.Icon "DIVRI0"
+	Tag "Chic Diving Helmet: Gives temporary immunity to drowning."
+	states
+	{
+		Spawn:
+			DIVR A -1
+			Stop
+		Use:
+			TNT1 A 0
+			stop
+	}
+}
+
+//ARTIFACTS
+//Palace Key
+ACTOR PalaceKey : PuzzleItem 12015
+{
+	//$Category RPArtifacts
+	Inventory.Icon "GKEYI0"
+	Inventory.PickupMessage "A fancy palace key!"
+	Inventory.PickupSound "Dinah/allowme"
+	PuzzleItem.Number 1
+	Tag "Palace Key"
+	+INVENTORY.INVBAR
+	+INVENTORY.HUBPOWER
+	+INVENTORY.PERSISTENTPOWER
+	+INVENTORY.KEEPDEPLETED
+	+DONTGIB
+	+FLOATBOB
+	States
+	{
+		Spawn:
+			GKEY AB 6 Bright
+			Loop
+	}
+}
+
+//Clock Gear
+ACTOR ClockGear : PuzzleItem 12016
+{
+	//$Category RPArtifacts
+	Inventory.Icon "GEARI0"
+	Inventory.PickupMessage "A silver gear...?"
+	Inventory.PickupSound "Dinah/allowme"
+	PuzzleItem.Number 2
+	Tag "Clock Gear"
+	+DONTGIB
+	+FLOATBOB
+	States
+	{
+		Spawn:
+			GEAR A -1
+			Stop
+	}
+}
+
+//Arcade Chip
+ACTOR ArcadeChip : PuzzleItem 13020
+{
+	//$Category RPArtifacts
+	Inventory.Amount 1
+	Inventory.MaxAmount 9999
+	Inventory.InterHubAmount 9999
+	Inventory.Icon "CHIPI0"
+	Inventory.PickupMessage "An arcade token"
+	Inventory.PickupSound "misc/i_pkup"
+	PuzzleItem.Number 5
+	Tag "Arcade Token"
+	+INVENTORY.INVBAR
+	+INVENTORY.HUBPOWER
+	+INVENTORY.PERSISTENTPOWER
+	+INVENTORY.KEEPDEPLETED
+	+DONTGIB
+	+FLOATBOB
+	-NOGRAVITY
+	States
+	{
+		Spawn:
+			CHIP ABCD 2
+			Loop
+	}
+}
+
+//Exit Bell
+ACTOR DoorBell : CustomInventory 13126
+{
+	//$Category RPArtifacts
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	Inventory.InterHubAmount 1
+	Inventory.PickupMessage "The Door Bell. (Instantly Exit the Current Map [non secret])"
+	Inventory.Icon "BELLI0"
+	Tag "Door Bell: Use to exit the current level immediately."
+	+INVENTORY.INVBAR
+	+INVENTORY.HUBPOWER
+	+INVENTORY.PERSISTENTPOWER
+	+INVENTORY.KEEPDEPLETED
+	+DONTGIB
+	+FLOATBOB
+	States
+	{
+		Spawn:
+			GBEL AB 10
+			Loop
+		Use:
+			TNT1 A 0 A_PlaySound("misc/bellring",CHAN_BODY)
+			TNT1 A 35
+			{
+				A_SetTics(random(35,51));
+			}
+			TNT1 A 0 
+			{
+				if (random(1,8) <= 7) { Exit_Normal(0); } else { Exit_Secret(0); }
+			}
+			Stop
+	} 
+}
+
+
+// MONSTERS AND BOSSES
+//HAMMERDUCK
+actor Hammerduck 3118
+{
+	//$Category RPMonsters
+	Health 30
+	Radius 20
+	Height 56
+	Speed 10
+	PainChance 256
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+	DamageFactor "Bap", 1
+	PainChance "Bap", 256
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	MissileType CroquetBall
+	SeeSound "hduck/sight"
+	PainSound "hduck/pain"
+	DeathSound "hduck/death"
+	ActiveSound "hduck/active"
+	Obituary "%o was picked off by a hammerduck."
+	DropItem "MalletAmmo", 96
+	DropItem "EggAmmo", 16
+	Tag "Hammerduck"
+	SpawnID 3118
+	States
+	{
+		Spawn:
+			HDUK PPPPPP 10
+			HDUK QQQQ 10 A_Look
+			HDUK R 5
+			HDUK Q 10 A_Look
+			HDUK R 5
+			HDUK QQQ 10 A_Look
+			Loop
+		See:
+			HDUK AABBCCDD 3 A_Chase
+			Loop
+		Missile:
+			HDUK F 5 //ACS_Execute(102,0,0,0,0)
+			HDUK GHI 8 A_FaceTarget
+			HDUK JK 4
+			HDUK L 4 A_Playsound("croquet/ballfire")
+			HDUK M 4 A_CustomMissile("CroquetBall",40)
+			HDUK N 3
+			HDUK O 8
+			Goto See
+		Pain:
+			HDUK E 6 A_Pain
+			HDUK E 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death.Suck:
+			HDUK E 5 A_PlaySound("VacDed",CHAN_BODY)
+			HDUK E 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			HDUK E 5 bright A_Scream
+			HDUK STUV 5 bright
+			HDUK W 5 A_NoBlocking
+			HDUK X 35
+			Stop
+	}
+}
+
+actor CroquetBall
+{
+	Radius 8
+	Height 12
+	Speed 18
+	Damage 3
+	DamageType "Cricket"
+	Projectile
+	+RANDOMIZE
+	//+NOEXTREMEDEATH
+	renderstyle "Normal"
+	DeathSound "croquet/ballhit"
+	States
+	{
+		Spawn:
+			CBAL AB 3
+			Loop
+		Death:
+			CBAL CDEF 4 Bright
+			Stop
+		Crash:
+			CBAL CDEF 4 Bright
+			Stop
+		XDeath:
+			TNT1 A 1 
+			Stop
+	}
+}
+
+//PLANTER
+actor Planter 3119
+{
+	//$Category RPMonsters
+	Health 80
+	Radius 20
+	Height 56
+	Speed 10
+	PainChance 256
+	DamageFactor "Fire", 5
+	DamageFactor "Chop", 5
+	DamageFactor "Cricket", 2
+	DamageFactor "Lead", 0.5
+	DamageFactor "Bap", 0
+	PainChance "Bap", 200
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	SeeSound "gard/sight"
+	PainSound "gard/pain"
+	DeathSound "gard/death"
+	ActiveSound "gard/active"
+	MeleeSound "gard/swing"
+	Obituary "%o was clipped by a planter."
+	Tag "Planter"
+	SpawnID 3119
+	States
+		{
+			Spawn:
+				GARD P 10 A_Look
+				Loop
+			See:
+				GARD AABBCCDD 3 A_Chase
+				Loop
+			Melee:
+				GARD E 0 A_PlaySound("gard/sight",CHAN_VOICE)
+				GARD E 0 //ACS_Execute(102,0,0,0,0)
+				GARD E 6 A_FaceTarget
+				GARD F 6 A_CustomMeleeAttack (random(15,35), "gard/swing", "gard/swing", "", 1) 
+				GARD G 6 
+				GARD F 6 
+				Goto See
+			Pain:
+				GARD H 6 A_Pain
+				GARD H 3 //ACS_Execute(102,0,0,0,0)
+				Goto See
+			Death.Suck:
+				GARD H 5 A_PlaySound("VacDed",CHAN_BODY)
+				GARD H 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4)
+				Stop
+			Death:
+				GARD I 5 Bright A_Scream
+				GARD JKLMN 4 Bright 
+				GARD O 5 Bright A_NoBlocking
+				Stop
+		}
+}
+
+actor PlanterBird : Planter 3129
+{
+	Tag "Planter (bird)"
+	SpawnID 3129
+	States
+	{
+		Missile:
+			GARD P 0 //ACS_Execute(102,0,0,0,0)
+			GARD PQRS 4 A_FaceTarget
+			GARD Q 6 A_CustomMissile("BirdBall",48,random(-5,5)) 
+			GARD QP 6 A_Feathers
+			Goto See
+	}
+}
+
+actor BirdBall
+{
+	Radius 10
+	Height 12
+	Speed 9
+	Health 5
+	Damage 2
+	+SEEKERMISSILE
+	+SHOOTABLE
+	+NOBLOOD
+	+NOEXTREMEDEATH
+	PROJECTILE
+	renderstyle "Normal"
+	SeeSound "birdy/sight"
+	DeathSound "birdy/death"
+	States
+	{
+		Spawn:
+			FFLY AB 2 A_SeekerMissile (10,10)
+			Loop
+		Death:
+			JSPL AAAA 1 A_Feathers
+			Stop
+	}
+}
+
+//MAN-CHINEEL
+actor Manchineel 4119
+{
+	//$Category RPMonsters
+	Health 100
+	Radius 20
+	Height 56
+	Mass 10000
+	Speed 0
+	PainChance 256
+	DamageFactor "Fire", 5
+	DamageFactor "Chop", 5
+	DamageFactor "Cricket", 2
+	DamageFactor "Lead", 0.5
+	DamageFactor "Bap", 0
+	PainChance "Bap", 0
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+CANNOTPUSH
+	+MISSILEMORE
+	PainSound "gard/pain"
+	DeathSound "gard/death"
+	MeleeSound "gard/swing"
+	Obituary "%o was clipped by a man-chineel."
+	MeleeDamage 3
+	MissileType SeedBall
+	Tag "Man-Chineel"
+	States
+	{
+		Spawn:
+			TRNT A 10 A_Look
+			Loop
+		See:
+			TRNT AA 3 A_Chase
+			Loop
+		Melee:
+		Missile:
+			TRNT BCD 6
+			TRNT E 0 A_PlaySound("gard/sight",CHAN_VOICE)
+			TRNT E 0 //ACS_Execute(102,0,0,0,0)
+			TRNT E 6 A_FaceTarget
+			TRNT F 6 A_ComboAttack 
+			TRNT G 6 
+			TRNT DCB 4 
+			Goto See
+		Pain:
+			TRNT H 6 A_Pain
+			TRNT DCB 2
+			Goto See
+		Death.Suck:
+			TRNT H 5 A_PlaySound("VacDed",CHAN_BODY)
+			TRNT H 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,6)
+			Stop
+		Death:
+			TRNT I 5 Bright A_Scream
+			TRNT JK 5 Bright
+			GARD LMN 4 Bright 
+			GARD O 5 Bright A_NoBlocking
+			Stop
+	}
+}
+
+actor SeedBall
+{
+	Radius 8
+	Height 12
+	Speed 18
+	Damage 3
+	Projectile
+	+RANDOMIZE
+	+NOEXTREMEDEATH
+	renderstyle "Normal"
+	SeeSound "MalletSwing"
+	DeathSound "croquet/ballhit"
+	States
+	{
+		Spawn:
+			ORNJ ABCD 2
+			Loop
+		Death:
+			ORNJ E 12 Bright
+			Stop
+	}
+}
+
+//CENTAURION
+actor Centaurion 3121
+{
+	//$Category RPMonsters
+	Health 100
+	Radius 20
+	Height 56
+	Speed 10
+	PainChance 256
+	DamageFactor "Lead", 2
+	DamageFactor "Zap", 4
+	DamageFactor "Bap", 0
+	PainChance "Bap", 200
+	Mass 300
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+NEVERFAST
+	SeeSound "cent/sight"
+	PainSound "cent/active"
+	DeathSound "cent/pain"
+	ActiveSound "cent/active"
+	MeleeSound "gard/swing"
+	Obituary "%o was clobbered by a centaurion."
+	MeleeDamage 3
+	Tag "Centaurion"
+	SpawnID 3121
+	States
+	{
+		Spawn:
+			C2NT Z 10 A_Look
+			Loop
+		See:
+			C2NT A 0 A_UnSetReflectiveInvulnerable
+			C2NT AABBCCDD 2 A_Chase
+			Loop
+		ShieldUp:
+			C2NT A 0 A_SetReflectiveInvulnerable
+			C2NB AABBCCDD 3 A_Chase
+			Goto See
+		Melee:
+			C2NT A 0 A_UnSetReflectiveInvulnerable
+			C2NT E 4 A_PlaySound("cent/sight",CHAN_VOICE)
+			C2NT F 4 A_FaceTarget
+			C2NT G 6 A_CustomMeleeAttack (random(15,35), "gard/swing", "gard/swing", "", 1) 
+			C2NT H 4 //ACS_Execute(102,0,0,0,0)
+			C2NT I 4 
+			Goto See
+		Missile:
+			C2NT A 5 A_Jump(256,"Shieldup")
+			Goto See
+    Pain:
+			C2NT J 6 A_Pain
+			C2NT J 3 //ACS_Execute(102,0,0,0,0)
+			C2NT K 0 A_Jump(192,"See")
+			C2NT K 6 A_SetReflectiveInvulnerable
+			C2NT K 12
+			Goto ShieldUp
+		Death.Suck:
+			C2NT J 5 A_PlaySound("VacDed",CHAN_BODY)
+			C2NT J 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4)
+			Stop
+		Death:
+			C2NT L 6 Bright A_Scream
+			C2NT MNO 6 Bright 
+			C2NT P 10 A_NoBlocking
+			C2NT QRST 7
+			Stop
+	}
+}
+
+actor CentaurionSgt : Centaurion 4121
+{
+	//$Category RPMonsters
+	DamageFactor "Zap", 1
+	Tag "Centaurion Sergeant"
+	SpawnID 4121
+	Dropitem "PikeAmmo", 64
+	States
+	{
+		ShieldUp:
+			C2NT A 0 A_SetReflectiveInvulnerable
+			C2NB AABBCCDD 3 A_Chase("Melee","SwordZap",0)
+			C2NB D 0 A_Jump(108,"see")
+			C2NB D 0 A_Jump(108,"swordzap")
+			Loop
+		SwordZap:
+			C2NT A 0 A_UnSetReflectiveInvulnerable
+			C2NZ A 6 bright
+			C2NZ B 6 bright A_FaceTarget
+			C2NZ C 0 bright A_PlaySound("zappo",CHAN_BODY)
+			C2NZ C 6 bright A_CustomMissile("BadZapshot",48,0)
+			C2NZ D 6 bright //ACS_Execute(102,0,0,0,0)
+			C2NZ E 6 bright
+			Goto See
+	}
+}
+
+//PUDDING DOG
+ACTOR PuddingDog 20303
+{
+	//$Category RPMonsters
+	Health 250
+	PainChance 256
+	Painchance "Suck", 64
+	DamageFactor "Bap", 0
+	PainChance "Bap", 200
+	Speed 14
+	Radius 20
+	Height 56
+	Mass 150
+	Scale 0.75
+	DamageFactor "chop", 0.5
+	Damagefactor "breakfast", 2
+	DamageFactor "Zap", 2
+	Meleedamage 3
+	Meleerange 56
+	Maxtargetrange 192
+	Meleethreshold 96
+	Monster
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	SeeSound "pdog/active"
+	PainSound "misc/splat"
+	DeathSound "misc/splat"
+	ActiveSound "pdog/active"
+	Obituary "%o was dipped by a pudding dog."
+	Tag "Pudding Dog"
+	SpawnID 20303
+	States
+	{
+		Spawn:
+			CDOG B 10 A_Look
+			Loop
+		See:
+			CDOG AABB 2 A_Chase
+			Loop
+		Missile:
+			CDOG C 4 A_FaceTarget
+			CDOG C 0 A_CheckProximity("MissilePounce",PLAYERPAWN,640,1,CPXF_CHECKSIGHT|CPXF_ANCESTOR)
+			CDOG C 0
+			Goto See
+		MissilePounce:
+			CDOG C 0 //ACS_Execute(102,0,0,0,0)
+			CDOG C 4 A_FaceTarget
+			CDOG C 0 A_PlaySoundEX ("pdog/attack", CHAN_VOICE)
+			CDOG C 0 ThrustThingZ (0, 27, 0, 0)
+			CDOG C 0 ThrustThing (angle*256/360, 24, 0, 0)
+		JumpUp:
+			CDOG D 3 A_CustomMeleeAttack(random[MummyAttack](2,6)*2, "misc/splat", " ")
+		CDOG D 1 A_CustomMeleeAttack(random[MummyAttack](2,6)*2, "misc/splat", " ")
+		CDOG D 1 A_CustomMeleeAttack(random[MummyAttack](2,6)*2, "misc/splat", " ")
+		JumpDown:
+			CDOG D 1 A_CheckFloor ("Land")
+		CDOG D 1
+		CDOG D 1 
+			loop
+		Land:
+			CDOG E 0 A_FaceTarget
+			CDOG E 0 A_CustomMeleeAttack(random[MummyAttack](2,6)*2, "misc/splat", " ")
+			CDOG E 4 A_Stop
+			CDOG F 4
+			CDOG E 4
+			goto See
+		Pain:
+			CDOG F 5 A_Pain
+			CDOG E 0 A_Jump(127,1)
+			CDOG E 0 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0)
+			CDOG E 3
+			CDOG C 3
+			Goto See
+		Pain.Chop:
+			CDOG F 5 A_Pain
+			CDOG E 0 A_Jump(127,1)
+			CDOG E 0 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0)
+			CDOG E 3 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0)
+			CDOG C 3
+			Goto See
+		Death.Suck:
+			CDOG F 5 A_PlaySound("VacDed",CHAN_BODY)
+			CDOG F 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,6)
+			Stop
+		Death:
+			CDOG F 6 A_Scream
+			CDOG G 6 A_NoBlocking
+			CDOG H 1 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0)
+			CDOG H 1 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0)
+			CDOG H 1 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0)
+			CDOG H 1 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0)
+			Stop
+	}
+}
+
+ACTOR PupGrenade
+{
+	Radius 3
+	Height 3
+	Speed 10
+	Damage 1
+	Scale 0.25
+	PROJECTILE
+	-NOGRAVITY
+	renderstyle "Normal"
+	SeeSound "pdog/sight"
+	States
+	{
+		Spawn:
+			CDOG D 3
+			loop
+		Death:
+			CDOG EFE 2
+			CDOG E 0 A_SpawnItemEX ("puddingpup",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			Stop
+	}
+}
+
+ACTOR PuddingPup 20304
+{
+	//$Category RPMonsters
+	Health 5
+	PainChance 256
+	Speed 18
+	Radius 20
+	Height 32
+	Mass 150
+	Scale 0.25
+	Meleedamage 1
+	Meleerange 40
+	Maxtargetrange 192
+	Meleethreshold 96
+	Monster
+	+FLOORCLIP
+	+NOINFIGHTING
+	+MISSILEMORE
+	+NOBLOOD
+	SeeSound "pdog/sight"
+	PainSound "misc/splat"
+	DeathSound "misc/splat"
+	ActiveSound "pdog/sight"
+	Obituary "%o was swarmed by a pudding pup."
+	Tag "Pudding Pup"
+	States
+	{
+		Spawn:
+			CDOG B 10 A_Look
+			Loop
+		See:
+			CDOG AABB 2 A_Chase
+			Loop
+		Missile:
+			CDOG C 3 A_FaceTarget
+			CDOG C 0 A_CheckProximity("MissilePounce",PLAYERPAWN,480,1,CPXF_CHECKSIGHT|CPXF_ANCESTOR)
+			CDOG C 0 
+		Goto See
+		MissilePounce:
+			CDOG C 0 //ACS_Execute(102,0,0,0,0)
+			CDOG C 3 A_FaceTarget
+			CDOG C 0 A_PlaySoundEX ("pdog/attack", CHAN_VOICE)
+			CDOG C 0 ThrustThingZ (0, 20, 0, 0)
+			CDOG C 0 ThrustThing (angle*256/360, 24, 0, 0)
+		JumpUp:
+			CDOG D 3 A_CustomMeleeAttack(random[MummyAttack](1,2)*2, "misc/splat", " ")
+			CDOG D 1 A_CustomMeleeAttack(random[MummyAttack](1,2)*2, "misc/splat", " ")
+			CDOG D 1 A_CustomMeleeAttack(random[MummyAttack](1,2)*2, "misc/splat", " ")
+		JumpDown:
+			CDOG D 1 A_CheckFloor ("Land")
+			CDOG D 1
+			CDOG D 1 
+			loop
+		Land:
+			CDOG F 0 A_FaceTarget
+			CDOG F 0 A_CustomMeleeAttack(random[MummyAttack](1,2)*2, "misc/splat", " ")
+			CDOG E 4 A_Stop
+			CDOG F 4
+			CDOG E 4
+			goto See
+		Pain:
+			CDOG F 4 A_Pain
+			CDOG E 2 //ACS_Execute(102,0,0,0,0)
+			CDOG C 2
+			Goto See
+		Death.Suck:
+			CDOG F 5 A_PlaySound("VacDed",CHAN_BODY)
+			CDOG F 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,1)
+			Stop
+		Death:
+			CDOG F 5 A_Scream
+			CDOG G 5 A_NoBlocking
+			CDOG H 5
+			Stop
+	}
+}
+
+actor JellyBall
+{
+	Radius 8
+	Height 6
+	Speed 15
+	Health 5
+	Damage 2
+	PROJECTILE
+	renderstyle "Add"
+	Alpha 0.9
+	DeathSound "misc/splat"
+	+NOEXTREMEDEATH
+	States
+	{
+		Spawn:
+			JBAL ABC 2 A_SeekerMissile (10,10)
+			Loop
+		Death:
+			JSPL ABC 4 
+			Stop
+	}
+}
+
+//VITRIOLA
+actor Vitriola 10305
+{
+	//$Category RPMonsters
+	Health 250
+	Radius 20
+	Height 64
+	Speed 10
+	PainChance 256
+	DamageFactor "Fire", 3
+	DamageFactor "Chop", 5
+	DamageFactor "Cricket", 2
+	DamageFactor "Lead", 2
+	DamageFactor "Bap", 0
+	PainChance "Bap", 200
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+FLOAT
+	+NOGRAVITY
+	+FLOATBOB
+	SeeSound "virtuoso/active"
+	PainSound "virtuoso/pain"
+	DeathSound "virtuoso/death"
+	ActiveSound "virtuoso/active"
+	Obituary "%o was seranaded by a Vitriola."
+	Tag "Vitriola"
+	SpawnID 10305
+	DropItem "MusicAmmo" 96
+	States
+	{
+		Spawn:
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT CC 10 A_Look
+			VIRT D 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT DD 10 A_Look
+			Loop
+		See:
+			VIRT AABB 3 A_Chase
+			VIRT B 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			Loop
+		Missile:
+			VIRT C 0 //ACS_Execute(102,0,0,0,0)
+			VIRT C 2 A_Playsound("virtuoso/virtfire")
+			VIRT D 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT C 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT D 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT C 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT D 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT C 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT D 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT C 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT D 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT C 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT D 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT C 2 A_FaceTarget
+			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			VIRT D 2 A_FaceTarget
+			VIRT C 4 A_Playsound("virtuoso/musicfire")
+			VIRT D 4 A_CustomMissile("MusicBall",40)
+			Goto See
+		Pain:
+			VIRT E 3 A_Pain
+			VIRT FE 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death.Suck:
+			VIRT E 5 A_PlaySound("VacDed",CHAN_BODY)
+			VIRT E 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4)
+			Stop
+		Death:
+			VIRT E 6 bright A_Scream
+			VIRT F 6 bright A_ChangeFlag("floatbob",0)
+			VIRT GHI 6 bright
+			VIRT J 6 A_NoBlocking
+			Stop
+	}
+}
+
+ACTOR notetrail
+{
+	Radius 2
+	Height 2
+	Speed 0
+	renderstyle "Add"
+	Alpha 0.4
+	PROJECTILE
+	+CLIENTSIDEONLY
+	+NOINTERACTION
+	States
+	{
+		Spawn:
+			HRT2 ABCBADED 4 BRIGHT
+			Stop
+	}
+}
+
+ACTOR notetrail2
+{
+	Radius 2
+	Height 2
+	Speed 0
+	renderstyle "Add"
+	Alpha 0.4
+	PROJECTILE
+	+CLIENTSIDEONLY
+	+NOINTERACTION
+	States
+	{
+		Spawn:
+			HRT4 ABCBADED 4 BRIGHT
+			Stop
+	}
+}
+
+actor NoteCloud
+{ 
+	Radius 24 
+	Height 6 
+	Speed 5 
+	PROJECTILE 
+	RenderStyle "Translucent" 
+	ALPHA 0.67 
+	States 
+	{ 
+		Spawn: 
+			HRT1 ABABABAB 4 
+			Stop 
+		Death:
+			HRT1 ABAB 4
+			Stop
+	} 
+} 
+
+actor NoteCloud2
+{ 
+	Radius 24 
+	Height 6 
+	Speed 5 
+	PROJECTILE 
+	RenderStyle "Translucent" 
+	ALPHA 0.67 
+	States 
+	{ 
+		Spawn: 
+			HRT3 ABABABAB 4 
+			Stop 
+		Death:
+			HRT3 ABAB 4
+			Stop
+	} 
+} 
+
+actor MiniNote : NoteCloud
+{ 
+	Radius 18 
+	Height 5
+	Speed 0
+	Scale 0.75
+} 
+
+actor MiniNote2 : NoteCloud2
+{ 
+	Radius 18 
+	Height 5
+	Speed 0
+	Scale 0.75
+} 
+
+actor MicroNote1 : NoteCloud
+{ 
+	Radius 12 
+	Height 3
+	Speed 0
+	Scale 0.5
+} 
+
+actor MicroNote2 : NoteCloud2
+{ 
+	Radius 12 
+	Height 3
+	Speed 0
+	Scale 0.5
+} 
+
+//MUDDERNAUT
+actor Muddernaut 21305
+{
+	//$Category RPMonsters
+	Health 300
+	Radius 32
+	Height 80
+	Speed 18
+	PainChance 256
+	DamageFactor "Fire", 0.5
+	DamageFactor "Cricket", 2
+	DamageFactor "Lead", 0.5
+	DamageFactor "Zap", 4
+	MeleeThreshold 208
+	MeleeRange 80
+	MaxTargetRange 512
+	Mass 5000
+	Scale 1.5
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+	SeeSound "muddy/sight"
+	PainSound "muddy/pain"
+	DeathSound "muddy/death"
+	ActiveSound "muddy/active"
+	MeleeSound "mallethit"
+	Obituary "%o was flattened by a muddernaut."
+	Tag "Muddernaut"
+	States
+	{
+		Spawn:
+			CLOP Z 10 A_Look
+			Loop
+		See:
+			CLOP AABBCCDD 3 A_Chase
+			Loop
+		Melee:
+			CLOP E 0 //ACS_Execute(102,0,0,0,0)
+			CLOP EF 3 A_FaceTarget
+			CLOP G 6 A_CustomMeleeAttack (random(25,35), "mallethit", "malletswing", "", 1) 
+			CLOP H 6 
+			Goto See
+		Missile:
+			CLOP E 0 A_PlaySound("muddy/sight",CHAN_BODY)
+			CLOP S 0 //ACS_Execute(102,0,0,0,0)
+			CLOP STU 3 A_FaceTarget
+			CLOP H 6 A_CustomMissile("BadCherrybomb",48,0,random(-3,3),0,90)
+			CLOP H 6
+			Goto See
+		Pain:
+			CLOP I 6 A_Pain
+			CLOP I 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death.Suck:
+			CLOP I 5 A_PlaySound("VacDed",CHAN_BODY)
+			CLOP I 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,12)
+			Stop
+		Death:
+			CLOP I 5 A_Scream
+			CLOP JKLMNOPQ 4
+			CLOP R 5 A_NoBlocking
+			CLOP R -1
+			Stop
+	}
+}
+
+//JUGGER
+actor Jugger 11305
+{
+	//$Category RPMonsters
+	Health 300
+	Radius 32
+	Height 80
+	Speed 18
+	PainChance 200
+	Painchance "Suck", 64
+	DamageFactor "Zap", 2
+	DamageFactor "Bap", 0
+	PainChance "Bap", 200
+	MeleeThreshold 208
+	MeleeRange 80
+	MaxTargetRange 512
+	Mass 5000
+	Scale 1.5
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+	SeeSound "muddy/sight"
+	PainSound "muddy/pain"
+	DeathSound "muddy/death"
+	ActiveSound "muddy/active"
+	MeleeSound "mallethit"
+	Obituary "%o was flattened by a jugger."
+	Tag "Jugger"
+	MissileType "JuggerAxe"
+	SpawnID 11305
+	States
+	{
+		Spawn:
+			BEEF B 10 A_Look
+			Loop
+		See:
+			BEEF AABBCCDD 3 A_Chase
+			Loop
+		Melee:
+			BEEF E 0 //ACS_Execute(102,0,0,0,0)
+			BEEF EF 4 A_FaceTarget
+			BEEF G 6 A_CustomMeleeAttack (random(25,35), "mallethit", "malletswing", "chop", 1) 
+			BEEF H 6 
+			Goto See
+		Missile:
+			BEEF E 0 A_PlaySound("muddy/sight",CHAN_BODY)
+			BEEF E 0 //ACS_Execute(102,0,0,0,0)
+			BEEF EF 4 A_FaceTarget
+			BEEF G 6 A_ComboAttack
+			BEEF H 6
+			Goto See
+		Pain:
+			BEEF I 6 A_Pain
+			BEEF I 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death.Suck:
+			BEEF I 5 A_PlaySound("VacDed",CHAN_BODY)
+			BEEF I 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,12)
+			Stop
+		Death:
+			BEEF J 5 A_Scream
+			BEEF KLMNOPQR 4
+			BEEF S 5 A_NoBlocking
+			BEEF S -1
+			Stop
+	}
+}
+
+actor JuggerAxe
+{
+	Radius 10
+	Height 16
+	Speed 25
+	Scale 2
+	Damage 5
+	DamageType "Chop"
+	PROJECTILE
+	renderstyle "Normal"
+	SeeSound "axe/throw"
+	DeathSound "axe/hit"
+	+NOEXTREMEDEATH
+	States
+	{
+		Spawn:
+			JUAX ABC 2 bright
+			JUAX A 0 A_Playsound("axe/wooga",CHAN_BODY)
+			Loop
+		Death:
+			JUAX DEF 4 bright
+			Stop
+	}
+}
+
+//JUGGETTE
+actor Juggette 12305
+{
+	//$Category RPMonsters
+	Health 200
+	Radius 24
+	Height 80
+	Speed 18
+	PainChance 200
+	Painchance "Suck", 64
+	DamageFactor "Zap", 2
+	DamageFactor "Bap", 0
+	PainChance "Bap", 200
+	MeleeThreshold 128
+	MeleeRange 80
+	Mass 5000
+	Scale 1
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+	SeeSound "jugette/active"
+	PainSound "jugette/pain"
+	DeathSound "jugette/death"
+	ActiveSound "jugette/active"
+	MeleeSound "mallethit"
+	Obituary "%o was flattened by a juggette."
+	Tag "Juggette"
+	MissileType "BadJackshot"
+	Dropitem "jackammo"
+	SpawnID 12305
+	States
+	{
+		Spawn:
+			JGET B 10 A_Look
+			Loop
+		See:
+			JGET AABBCCDD 3 A_Chase
+			Loop
+		Melee:
+			JGET E 0 //ACS_Execute(102,0,0,0,0)
+			JGET E 0 A_Playsound("juggette/swing",CHAN_VOICE)
+			JGET EF 4 A_FaceTarget
+			JGET G 6 A_CustomMeleeAttack (random(25,35), "mallethit", "malletswing", "bonk", 1) 
+			JGET H 6 
+			Goto See
+		Missile:
+			JGET E 0 //ACS_Execute(102,0,0,0,0)
+			JGET E 0 A_Playsound("juggette/swing",CHAN_VOICE)
+			JGET EF 4 A_FaceTarget
+			JGET G 6 A_ComboAttack
+			JGET H 6
+			Goto See
+		Pain:
+			JGET I 6 A_Pain
+			JGET I 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death.Suck:
+			JGET I 5 A_PlaySound("VacDed",CHAN_BODY)
+			JGET I 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,6)
+			Stop
+		Death:
+			JGET I 9 A_Scream
+			JGET JKL 6
+			BEEF R 5 
+			BEEF S 5 A_NoBlocking
+			BEEF S -1
+			Stop
+	}
+}
+
+//REEL HEEL
+actor ReelHeel 11306
+{
+	//$Category RPMonsters
+	Health 150
+	Radius 20
+	Height 56
+	Mass 1000
+	Speed 20
+	PainChance 256
+	DamageFactor "Lead", 2
+	DamageFactor "Bap", 0
+	PainChance "Bap", 200
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTHARMCLASS
+	SeeSound "slots/sight"
+	PainSound "slots/pain"
+	DeathSound "slots/death"
+	ActiveSound "slots/sight"
+	Obituary "%o was busted by a reel heel."
+	Explosiondamage 96
+	SpawnID 11306
+	Dropitem "ArcadeChip", 64
+	Dropitem "ArcadeChip", 16
+	States
+	{
+		Spawn:
+			SLOT AB 3 A_Look
+			Loop
+		See:
+			SLOT C 5
+			SLOT C 0 A_PlaySound("slots/boing",CHAN_BODY)
+			SLOT DDDD 2 A_Chase
+			SLOT C 5
+			SLOT R 5 
+			SLOT R 0 A_PlaySound("slots/boing",CHAN_BODY)
+			SLOT SSSS 2 A_Chase
+			SLOT R 5 
+			Loop
+		Missile:
+			SLOT A 0 //ACS_Execute(102,0,0,0,0)
+			SLOT A 0 A_Playsound("slots/jackpot")
+			SLOT EGIEGIEGI 2 Bright
+			SLOT A 0 A_Jump(112,"slotapple")
+			SLOT A 0 A_Jump(96,"slotbomb")
+			SLOT A 0 A_Jump(256,"slotcherry")
+			Goto See
+		SlotApple:
+			SLOT GHGHGHGH 2 Bright A_FaceTarget
+			SLOT K 6
+			SLOT L 0 A_Playsound("slots/burp")
+			SLOT L 0 A_CustomMissile("SeedBall",40,0,random(-9,9))
+			SLOT L 0 A_CustomMissile("SeedBall",40,0,random(-9,9))
+			SLOT L 12 A_CustomMissile("SeedBall",40,0,random(-6,6))
+			SLOT A 3
+			Goto See
+		SlotBomb:
+			SLOT IJIJIJIJ 2 Bright A_FaceTarget
+			SLOT K 6
+			SLOT L 0 A_Playsound("slots/burp")
+			SLOT L 12 A_CustomMissile("BadCherryBomb",40,0,random(-6,6))
+			SLOT A 3
+			Goto See
+		SlotCherry:
+			SLOT EFEFEFEF 2 Bright A_FaceTarget
+			SLOT K 6
+			SLOT L 0 A_Playsound("slots/burp")
+			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
+			SLOT A 3
+			Goto See
+		Pain:
+			SLOT M 3 A_Pain
+			SLOT M 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death.Suck:
+			SLOT M 5 A_PlaySound("VacDed",CHAN_BODY)
+			SLOT M 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4)
+			Stop
+		Death:
+			SLOT M 4 A_Scream
+			SLOT CM 6 
+			SLOT N 0 A_PlaySound("weapons/cherryboom",CHAN_BODY)
+			SLOT N 8 A_Explode
+			SLOT O 8 A_NoBlocking
+			SLOT PQ 8
+			Stop
+	}
+}
+
+actor CoinShot
+{
+	Radius 8
+	Height 6
+	Speed 20
+	Health 5
+	Damage 2
+	PROJECTILE
+	renderstyle "Normal"
+	DeathSound "mallethit"
+	+NOEXTREMEDEATH
+	States
+	{
+		Spawn:
+			CBUL ABCB 2 bright
+			Loop
+		Death:
+			BASH ABCDE 4 
+			Stop
+	}
+}
+
+//SPIDER-CENSER
+actor Spidercenser 5229
+{
+	//$Category RPMonsters
+	Health 150
+	Radius 20
+	Height 56
+	Speed 10
+	PainChance 256
+	DamageFactor "Bonk", 4
+	DamageFactor "Chop", 0.5
+	DamageFactor "Zap", 4
+	DamageFactor "Bap", 0
+	PainChance "Bap", 32
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	MissileType CroquetBall
+	SeeSound "spidercen/sight"
+	PainSound "birdy/sight"
+	DeathSound "spidercen/death"
+	ActiveSound "spidercen/sight"
+	Obituary "%o was smothered by a spider-censer."
+	Tag "Spider-Censer"
+	SpawnID 5229
+	States
+	{
+		Spawn:
+			SPHR A 10 A_Look
+			Loop
+		See:
+			SPRS AABB 3
+			Goto Idle
+		Idle:
+			SPCN AABBCCDD 1 A_Chase
+			Loop
+		Melee:
+			SPCN E 3 //ACS_Execute(102,0,0,0,0)
+			SPCN FG 3 bright A_FaceTarget
+			SPCN H 0 A_Playsound("Weapons/SpinnerFire",CHAN_BODY)
+			SPCN H 5 bright A_CustomMissile("IncenseBall",40,0)
+			SPCN K 5 bright 
+			SPCN M 5 bright
+			SPCN G 3 bright
+			SPCN FE 3
+			Goto Idle
+		Missile:
+			SPCN E 3 //ACS_Execute(102,0,0,0,0)
+			SPCN FG 3 bright A_FaceTarget
+			SPCN H 0 A_Playsound("Weapons/SpinnerFire",CHAN_BODY)
+			SPCN H 0 bright A_CustomMissile("IncenseBall",48,24)
+			SPCN H 5 bright A_CustomMissile("IncenseBall",48,-24)
+			SPCN I 5 bright 
+			SPCN J 5 bright A_CustomMissile("IncenseBall",48,0)
+			SPCN K 5 bright 
+			SPCN L 5 bright 
+			SPCN M 5 bright 
+			SPCN G 3 bright
+			SPCN FE 3
+			Goto Idle
+		Pain:
+			SPCN N 6 A_Pain
+			SPCN N 3 //ACS_Execute(102,0,0,0,0)
+			Goto Idle
+		Death.Suck:
+			SPCN N 5 A_PlaySound("VacDed",CHAN_BODY)
+			SPCN N 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4)
+			Stop
+		Death:
+			SPCN N 7 bright A_Scream
+			SPCN OPQR 3 bright
+			SPCN S 3 bright A_NoBlocking
+			Stop
+	}
+}
+
+actor IncenseBall
+{
+	Radius 8
+	Height 12
+	Speed 18
+	Damage 3
+	Scale 0.35
+	Projectile
+	+RANDOMIZE
+	+NOEXTREMEDEATH
+	PoisonDamage 15
+	renderstyle "Add"
+	Alpha 0.7
+	DeathSound "croquet/ballhit"
+	States
+	{
+		Spawn:
+			SPBL ABCDE 3 bright
+			Loop
+		Death:
+			SPBX ABCDE 4 Bright
+			Stop
+	}
+}
+
+//GALGOYLE
+actor Galgoyle 5230
+{
+	//$Category RPMonsters
+	Health 150
+	Radius 20
+	Height 56
+	Speed 10
+	Mass 500
+	Damage 3
+	PainChance 256
+	DamageFactor "Lead", 2
+	DamageFactor "Zap", 2
+	DamageFactor "Dust", 0
+	DamageFactor "Bap", 1
+	PainChance "Bap", 200
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	SeeSound "galgoyle/swoop"
+	PainSound "hduck/pain"
+	DeathSound "virtuoso/death"
+	ActiveSound "galgoyle/swoop"
+	Obituary "%o was prey for a galgoyle."
+	DropItem "jackammo", 96
+	Tag "Galgoyle"
+	SpawnID 5230
+	States
+	{
+		Spawn:
+			GGRL A 10 A_Look
+			Loop
+		See:
+			TNT1 A 0 A_ChangeFlag("FLOAT",0)
+			TNT1 A 0 A_ChangeFlag("NOGRAVITY",0)
+			TNT1 A 0 A_ChangeFlag("DROPOFF",0)
+			GGRL AABBCCDD 3 A_Chase
+			GGRL A 0 A_Jump(208,1)
+			GGRL A 0 A_CheckSight("Takeoff")
+			Loop
+		Missile:
+			GGRF A 0 A_Jump(96,"Takeoff")
+			GGRF A 4 //ACS_Execute(102,0,0,0,0)
+			GGRF BC 5 A_FaceTarget
+			GGRF D 0 A_Playsound("galgoyle/fire",CHAN_BODY)
+			GGRF D 4 A_CustomMissile("Jellyball",48,0)
+			GGRF E 3
+			Goto See
+		Takeoff: 
+			TNT1 A 0 A_JumpIf( Z + height + 64 >= CeilingZ, "See")
+			TNT1 A 0 A_ChangeFlag("FLOAT",1)
+			TNT1 A 0 A_ChangeFlag("NOGRAVITY",1)
+			TNT1 A 0 A_ChangeFlag("DROPOFF",1)
+			Goto Fly
+		Fly:
+			GGRL E 0 ThrustThingZ(0,15,0,0)
+			GGRL EEFFGGHH 2 A_Chase(0,"MissileF")
+			Goto Hover
+		MissileF:
+			GGRL E 0 A_Jump(64,"Land")
+			GGRL E 0 //ACS_Execute(102,0,0,0,0)
+			GGRL E 0 A_FaceTarget
+			GGRL E 0 A_PlaySound("galgoyle/swoop",CHAN_VOICE)
+			GGRL E 0 A_SkullAttack
+			GGRL EFGH 4 
+			goto MissileF+5
+		Land:
+			GGRL EE 4 ThrustThingZ(0,-20,0,0)
+			GGRL E 1 A_CheckFloor("See")
+			GGRL EEFFGGHH 2 
+			GGRL E 1 A_CheckFloor("See")
+			Goto Hover
+		Hover:
+			GGRL EEFFGGHH 2 A_Chase(0,"MissileF")
+			GGRL E 0 A_Jump(64,"Fly")
+			GGRL E 0 A_Jump(32,"Land")
+			Loop
+		Pain:
+			GGRX B 6 A_Pain
+			GGRX A 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death.Suck:
+			GGRX B 5 A_PlaySound("VacDed",CHAN_BODY)
+			GGRX B 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4)
+			Stop
+		Death:
+			GGRX A 5 bright A_Scream
+			GGRX BCDEF 3 bright
+			GGRX G 3 bright A_NoBlocking
+			GGRX HIJKLMNOP 2 bright
+			Stop
+	}
+}
+
+ACTOR Galgoyle_Hide 6230
+{
+	//$Category RPMonsters
+	Height 56
+	Radius 24
+	Mass 500
+	Health 200
+	PainChance 256
+	MONSTER
+	+NOBLOOD
+	Tag "Galgoyle (Hiding)"
+	States
+	{
+		Spawn:
+			STGR A 10 A_Look
+			Loop
+		See:
+			STGR A 1 A_Die
+			Goto Death
+		Pain:
+			STGR A 1 A_Die
+			Goto Death
+		Death:
+			TNT1 A 1 A_SpawnItemEX("Galgoyle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			TNT1 A 0 A_NoBlocking
+			Stop
+	}
+}
+
+//KNUCKLEHEAD
+actor Knucklehead 5231
+{
+	//$Category RPMonsters
+	Health 300
+	Radius 32
+	Height 80
+	Speed 18
+	PainChance 256
+	Painchance "Suck", 64
+	DamageFactor "Cricket", 0.25
+	DamageFactor "Lead", 0.25
+	DamageFactor "Cherrybomb", 0.5
+	DamageFactor "Zap", 2
+	DamageFactor "Bap", 0
+	PainChance "Bap", 200
+	BloodType "batpuff"
+	BloodColor "black"
+	MeleeThreshold 208
+	MeleeRange 96
+	MaxTargetRange 512
+	Mass 5000
+	Scale 1.5
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+DONTHARMCLASS
+	+NORADIUSDMG
+	SeeSound "muddy/sight"
+	PainSound "muddy/pain"
+	DeathSound "muddy/death"
+	ActiveSound "muddy/active"
+	MeleeSound "mallethit"
+	HitObituary "%o shook hands with knucklehead."
+	Obituary "%o lost a tennis match with knucklehead."
+	Tag "Knucklehead"
+	SpawnID 5231
+	States
+	{
+		Spawn:
+			KHED A 10 A_Look
+			Loop
+		See:
+			KHED AABBCCDD 3 A_Chase
+			Loop
+		Melee:
+			KHED E 0 //ACS_Execute(102,0,0,0,0)
+			KHED E 4 A_FaceTarget
+			KHED F 0 A_Playsound("muddy/sight",CHAN_VOICE)
+			KHED F 4
+			KHED G 6 A_CustomMeleeAttack (random(25,35), "mallethit", "malletswing", "", 1) 
+			Goto See
+		ThrowbackCricket:
+			KHEY B 0 A_PlaySound("muddy/sight",CHAN_BODY)
+			KHEY B 0 //ACS_Execute(102,0,0,0,0)
+			KHEY B 8
+			KHED F 6 A_CustomMissile("croquetball",48,0,0,0,90)
+			KHED F 6
+			Goto See
+		ThrowbackLead:
+			KHEY C 0 A_PlaySound("muddy/sight",CHAN_BODY)
+			KHEY C 0 //ACS_Execute(102,0,0,0,0)
+			KHEY C 8
+			KHED F 0 A_CustomMissile("badblundershot",48,0,random(-3,3),0,0)
+			KHED F 0 A_CustomMissile("badblundershot",48,0,random(-5,5),0,0)
+			KHED F 6 A_CustomMissile("badblundershot",48,0,random(-7,7),0,0)
+			KHED F 6
+			Goto See
+		ThrowbackCherry:
+			KHEY D 0 A_PlaySound("muddy/sight",CHAN_BODY)
+			KHEY D 0 //ACS_Execute(102,0,0,0,0)
+			KHEY DEDE 2 Bright A_FaceTarget 
+			KHED F 6 A_CustomMissile("badCherryBomb",48,0,random(-3,3),0,90)
+			KHED F 6
+			Goto See
+		Pain:
+			KHEX A 6 A_Pain
+			KHEX A 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Pain.Cricket:
+			KHEX B 2 A_Pain
+			KHEX B 2 //ACS_Execute(102,0,0,0,0)
+			Goto ThrowbackCricket
+		Pain.Lead:
+			KHEX C 2 A_Pain
+			KHEX C 2 //ACS_Execute(102,0,0,0,0)
+			Goto ThrowbackLead
+		Pain.CherryBomb:
+			KHEX D 2 A_Pain
+			KHEX D 2 //ACS_Execute(102,0,0,0,0)
+			Goto ThrowbackCherry
+		Death.Suck:
+			KHEX A 5 A_PlaySound("VacDed",CHAN_BODY)
+			KHEX A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,12)
+			Stop
+		Death:
+			KHED H 5 A_Scream
+			KHED IJK 2
+			KHED L 8
+			KHED MNOP 5
+			KHED Q 5 A_NoBlocking
+			KHED Q -1
+			Stop
+		Death.Cricket:
+			KHEX B 6 
+			KHED H 5 A_Scream
+			KHED IJK 2
+			KHED L 8
+			KHED MNOP 5
+			KHED Q 5 A_NoBlocking
+			KHED Q -1
+			Stop
+		Death.Lead:
+			KHEX C 6 
+			KHED H 5 A_Scream
+			KHED IJK 2
+			KHED L 8
+			KHED MNOP 5
+			KHED Q 5 A_NoBlocking
+			KHED Q -1
+			Stop
+		Death.CherryBomb:
+			KHEY DEDEDEDE 2 Bright
+			KHEX A 0 Bright A_CustomMissile("BossBoom",48,0,0,0) 
+			KHEX A 7 A_Explode
+			KHED H 5 A_Scream
+			KHED IJK 2
+			KHED L 8
+			KHED MNOP 5
+			KHED Q 5 A_NoBlocking
+			KHED Q -1
+			Stop
+	}
+}
+
+//SHILLFISH
+actor Shillfish 5233
+{
+	//$Category RPMonsters
+    Health 80
+    Radius 20
+    Height 56
+    Speed 10
+    PainChance 256
+	DamageFactor "Fire", 0.5
+	DamageFactor "Chop", 0.25
+	DamageFactor "Bonk", 0.25
+	DamageFactor "Boiling", 0
+	DamageFactor "Bap", 0
+	PainChance "Bap", 0
+    MONSTER 
+    +FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+    Obituary "%o was sunk by a shillfish."
+	Painsound "aqua/kill2"
+	Deathsound "aqua/kill2"
+	Tag "Shillfish"
+	SpawnID 5233
+    States
+    {
+    Spawn:
+        SHEL AABB 10 
+		SHEL E 10 A_Look
+        Loop
+    See:
+        SHEL AA 5 A_Chase
+        SHEL BB 5
+        Loop
+	Melee:
+        SHEL C 0 //ACS_Execute(102,0,0,0,0)
+		SHEL C 6 A_FaceTarget
+        SHEL D 6 A_CustomMeleeAttack (random(15,35), "gard/swing", "gard/swing", "", 1) 
+		SHEL E 6 
+        Goto See
+    Pain:
+    	SHEL E 6 A_Pain
+		SHEL E 3 //ACS_Execute(102,0,0,0,0)
+    	Goto See
+    Death.Suck:
+		SHEL E 5 A_PlaySound("VacDed",CHAN_BODY)
+		SHEL E 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,6)
+		Stop
+	Death:
+        SHEL J 0 A_Playsound("aqua/kill1")
+		SHEL F 7 Bright A_Scream
+        SHEL GH 7 Bright 
+        SHEL I 7 Bright A_NoBlocking
+        Stop
+    }
+}
+
+//BELLEFISH
+actor Bellefish 5234
+{
+	//$Category RPMonsters
+    Health 150
+    Radius 20
+    Height 56
+    Speed 10
+	Mass 500
+	MeleeRange 128
+    PainChance 256
+	DamageFactor "Fire", 0.25
+	DamageFactor "Boiling", 0
+	DamageFactor "Bap", 1
+	PainChance "Bap", 200
+    MONSTER 
+    +FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+NOGRAVITY
+    Obituary "%o was zapped by a bellefish."
+	PainSound "aqua/kill2"
+	Deathsound "aqua/kill2"
+	Tag "Bellefish"
+	SpawnID 5234
+    States
+    {
+    Spawn:
+        SHLF ABCB 10 bright A_Look 
+        Loop
+    See:
+        SHLF ABCB 5 bright A_GiveInventory("Chase_Water",1)
+        SHLF A 0 A_ChangeFlag("float",true)
+        Loop
+	Melee:
+        SHLF D 0 //ACS_Execute(102,0,0,0,0)
+		SHLF E 0 A_Playsound("bellefish/charge",CHAN_BODY)
+		SHLF EFG 3 bright A_FaceTarget
+        SHLF HIHI 3 bright A_CustomMeleeAttack (random(1,5), "bellefish/zap", "bellefish/charge", "", 1) 
+        SHLF G 8 bright
+		Goto See
+    Pain:
+    	SHLF J 9 bright A_Pain
+		SHLF D 3 bright
+    	Goto See
+    Death.Suck:
+		SHLF J 5 A_PlaySound("VacDed",CHAN_BODY)
+		SHLF J 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,2)
+		Stop
+	Death:
+		SHLF J 0 A_Playsound("aqua/kill1")
+		SHLF J 7 Bright A_Scream
+        SHLF KLM 7 Bright 
+        SHLF N 7 Bright A_NoBlocking
+        Stop
+    }
+}
+
+ Actor Chase_Water : CustomInventory
+{
+	Inventory.MaxAmount 0
+	+Inventory.AutoActivate
+	States
+	{
+		Spawn:
+			TNT1 A 1
+			Fail
+		Use:
+			TNT1 A 0 A_jumpif(waterlevel < 3, "Waterlimit")
+			TNT1 A 0 A_Chase
+			Stop
+		Waterlimit:
+			TNT1 A 0 ThrustThingZ(0, 4, 1, 1)
+			TNT1 A 0 A_Chase
+			Stop
+	}
+}
+
+// DD BOSSES
+//ROSE MOTHER
+actor RoseMother 5119
+{
+	//$Category RPBosses
+	Health 1000
+	Radius 20
+	Height 80
+	Mass 90000
+	Scale 2
+	Speed 0
+	PainChance 200
+	DamageFactor "Fire", 0.5
+	DamageFactor "Chop", 3
+	DamageFactor "Breakfast", 0.25
+	DamageFactor "Suck", 0
+	DamageFactor "Bap", 1
+	PainChance "Bap", 128
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+CANNOTPUSH
+	+MISSILEMORE
+	+MISSILEEVENMORE
+	+LOOKALLAROUND
+	Obituary "%o was planted by Rose Mother."
+	MeleeDamage 3
+	SpawnID 5119
+	painsound "mother/pain"
+	States
+	{
+		Spawn:
+			RMOT A 10 A_Look
+			Loop
+		See:
+			RMOT ABCDEF 6 
+			Goto Idle
+		Idle:
+			RMOT EEEEFFFF 2 A_Chase
+			RMOT A 0 //ACS_Execute(102,0,0,0,0)
+			Loop
+		Missile:
+			RMOT A 0 //ACS_Execute(102,0,0,0,0)
+			RMOT C 0 A_Jump(208,"Spreadshot")
+			RMOT CDA 4 A_FaceTarget
+			RMOT B 6 A_CustomMissile("BadCherrybomb",48,0,random(-3,3),0,90)
+			RMOT CD 4
+			RMOT F 4
+			Goto Idle
+		SpreadShot:
+			RMOT E 0 //ACS_Execute(102,0,0,0,0)
+			RMOT E 4 A_FaceTarget
+			RMOT G 4
+			RMOT H 4 A_CustomMissile("SeedBall",48,0,-15)
+			RMOT H 4 A_CustomMissile("SeedBall",48,0,-11)
+			RMOT I 4 A_CustomMissile("SeedBall",48,0,-7)
+			RMOT I 4 A_CustomMissile("SeedBall",48,0,-3)
+			RMOT J 4 A_CustomMissile("SeedBall",48,0,3)
+			RMOT J 4 A_CustomMissile("SeedBall",48,0,7)
+			RMOT K 4 A_CustomMissile("SeedBall",48,0,11)
+			RMOT K 4 A_CustomMissile("SeedBall",48,0,15)
+			RMOT L 4
+			RMOT F 4
+			Goto Idle
+		Pain:
+			RMOT X 0 //ACS_Execute(102,0,0,0,0)
+			RMOT X 8 A_Pain
+			RMOT E 4 A_Jump(128,"Missile")
+			Goto Idle
+		Death:
+			RMOT X 0 //ACS_Execute(102,0,0,0,0)
+			RMOT X 0 A_Scream
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT X 0 A_PlaySound("weapons/cherryboom")
+			RMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			RMOT Y 10 A_NoBlocking
+			RMOT Z 10
+			RMOT Z 0 ACS_Execute(911,0,0,0,0)
+			RMOT Z -1
+			Stop
+	}
+}
+
+actor BossBoom
+{
+	radius 10
+	height 12
+	damage 0
+	speed 0
+	renderstyle "Add"
+	Alpha 0.80
+	PROJECTILE
+	+NOCLIP
+	+DONTSPLASH
+	+SPAWNSOUNDSOURCE
+	states
+	{
+		Spawn:
+			TNT1 A 1 A_Die
+		Death:
+			BMX1 ABCDE 5 Bright 
+			stop
+	}
+}
+
+//GAME MOTHER
+actor GameMother 5121
+{
+	//$Category RPBosses
+	Health 2000
+	Radius 24
+	Height 96
+	Speed 18
+	PainChance 200
+	Painchance "Breakfast", 64
+	Mass 5000
+	DamageFactor "Breakfast", 0.25
+	DamageFactor "Fire", 0.5
+	DamageFactor "Suck", 0
+	DamageFactor "Beats", 0.25
+	Painchance "Beats", 64
+	DamageFactor "Bap", 0
+	PainChance "Bap", 0
+	MeleeRange 80
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+LOOKALLAROUND
+	+DONTHARMCLASS
+	MissileType FastCroquetBall
+	Obituary "%o was trampled by Game Mother."
+	Tag "Game Mother"
+	SpawnID 5121
+	painsound "mother/pain"
+	States
+	{
+		Spawn:
+			CNST A 10 A_Look
+			Loop
+		See:
+			CNST A 10 ACS_Execute(111,0,0,0,0)
+			CMOT J 10 
+			CMOT ATUVATUV 7
+			Goto Idle
+		Idle:
+			CMOT B 0 //ACS_Execute(102,0,0,0,0)
+			CMOT BBCCDDEE 2 A_Chase
+			Loop
+		Missile:
+			CMOT F 0 //ACS_Execute(102,0,0,0,0)
+			CMOT F 0 A_Jump(128,"MissileSpread")
+			CMOT FFGG 2 A_Recoil(-4)
+			CMOT H 0 A_FaceTarget
+			CMOT H 0 A_Playsound("MalletHit",CHAN_BODY)
+			CMOT H 0 A_ComboAttack
+			CMOT HHII 3 A_Recoil(-4)
+			Goto Idle
+		MissileSpread:
+			CMOT J 4 //ACS_Execute(102,0,0,0,0)
+			CMOT KLM 4 A_FaceTarget
+			CMOT N 0 A_Playsound("Weapons/cherryboom",CHAN_BODY)
+			CMOT N 0 A_CustomMissile("BadCherryBomb",40,0,random(-12,12),0,random(-5,-15))
+			CMOT N 4 A_CustomMissile("BadCherryBomb",40,0,random(-12,12),0,random(-5,-15))
+			CMOT O 0 A_CustomMissile("FastCroquetBall",40,0,random(-12,12))
+			CMOT O 0 A_CustomMissile("FastCroquetBall",40,0,random(-12,12))
+			CMOT O 4 Bright A_CustomMissile("FastCroquetBall",48,0,0,0)
+			CMOT P 0 A_Jump(127,2)
+			CMOT P 0 A_SpawnItemEX("malletammo",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			CMOT P 4 Bright
+			Goto Idle
+		Pain:
+			CMOT X 0 //ACS_Execute(102,0,0,0,0)
+			CMOT X 6 A_Pain
+			CMOT X 3 //ACS_Execute(102,0,0,0,0)
+			Goto Idle
+		Death:
+			CMOT X 0 //ACS_Execute(102,0,0,0,0)
+			CMOT X 0 A_Scream
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 A_PlaySound("weapons/cherryboom")
+			CMOT X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CMOT X 0 Bright A_NoBlocking
+			CMOT X 0 ACS_Execute(911,0,0,0,0)
+			Stop
+	}
+}
+
+ACTOR FastCroquetBall : CroquetBall
+{
+	Speed 25
+	Damage 5
+}
+
+//GLOBE MOTHER
+ACTOR GlobeMotherSpawner 5527
+{
+	//$Category RPBosses
+	Height 64
+	Radius 24
+	Mass 0x7fffffff
+	Health 1500
+	PainChance 200
+	DamageFactor "Fire", 0.25
+	Damagefactor "zap", 0.5
+	DamageFactor "Suck", 0
+	DamageFactor "Bap", 1
+	PainChance "Bap", 64
+	Speed 12
+	Monster
+	+NOGRAVITY
+	+FLOAT
+	+NOBLOOD
+	+DONTMORPH
+	+NOTARGET
+	+NOICEDEATH
+	+LOOKALLAROUND
+	States
+	{
+		Spawn:
+			SUNG A 0 A_SetInvulnerable
+			SUNG ABC 5 Bright A_Look
+			Loop
+		See:
+			SUNG A 0 //ACS_Execute(102,0,0,0,0)
+			SUNG ABC 5 bright
+			GMOT EFGHFGH 5 bright
+			GMOT I 20 bright 
+			GMOT I 0 A_Die
+			Goto Death
+		Death:
+			TNT1 A 1 A_SpawnITemEX("GlobeMother",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,250)
+			Stop
+	}
+}
+
+ACTOR GlobeMother : Dragon 5528
+{
+	//$Category RPBosses
+	Height 64
+	Radius 24
+	Mass 0x7fffffff
+	Health 1500
+	PainChance 256
+	DamageFactor "Fire", 0.25
+	Damagefactor "zap", 0.5
+	DamageFactor "Suck", 0
+	DamageFactor "Beats", 0.25
+	Painchance "Beats", 64
+	DamageFactor "Bap", 1
+	PainChance "Bap", 64
+	Speed 12
+	Monster
+	+NOGRAVITY
+	+FLOAT
+	+NOBLOOD
+	+DONTMORPH
+	+NOTARGET
+	+NOICEDEATH
+	+LOOKALLAROUND
+	PainSound "Mother/Pain"
+	Tag "Globe Mother"
+	Obituary "%o was knocked into orbit by Globe Mother."
+	
+	States
+	{
+		Spawn:
+			GMOT ABC 5 Bright A_Look
+			Loop
+		See:
+			GMOT ABC 5 bright
+			GMOT A 5 bright A_DragonInitFlight
+			GMOT B 5 bright A_CustomMissile("StarBall",random(0,40),random(-32,32))
+			GMOT A 0 //ACS_Execute(102,0,0,0,0)
+			GMOT BCCAABBCCAAB 5 bright A_DragonFlight
+			GMOT A 0 //ACS_Execute(102,0,0,0,0)
+			Goto See+4
+		Pain:
+			GMOT A 0 //ACS_Execute(102,0,0,0,0)
+			GMOT D 10 bright A_DragonPain
+			Goto See+4
+		Missile:
+			GMOT I 0 //ACS_Execute(102,0,0,0,0)
+			GMOT I 8 bright
+			GMOT FGH 8 bright A_DragonAttack
+			Goto See+4
+		Death:
+			GMOT D 0 //ACS_Execute(102,0,0,0,0)
+			GMOT D 5 bright A_Scream
+			GMOT D 4 bright A_NoBlocking
+			GMOT D 4 bright A_DragonCheckCrash
+			Wait
+		Crash:
+			GMOT F 0 //ACS_Execute(102,0,0,0,0)
+			GMOT F 0 A_Scream
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 A_PlaySound("weapons/cherryboom")
+			GMOT F 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			GMOT F 0 Bright A_NoBlocking
+			GMOT F 0 ACS_Execute(911,0,0,0,0)
+			Stop
+	}
+}
+
+//StarBall
+actor StarBall
+{
+	Radius 8
+	Height 6
+	Speed 8
+	Damage 3
+	DamageType "Fire"
+	+SEEKERMISSILE
+	+ROCKETTRAIL
+	+NOEXTREMEDEATH
+	PROJECTILE
+	DONTHURTSHOOTER
+	renderstyle "Add"
+	SeeSound "Weapons/RocketFire"
+	DeathSound "virtuoso/musichit"
+	ExplosionDamage 64
+	States
+	{
+		Spawn:
+			GMBL A 2 Bright A_SeekerMissile (10,20,SMF_LOOK)
+			GMBL BCD 2 Bright 
+			Loop
+		Death:
+			SPNR C 4 Bright A_Explode
+			SPNR DEFG 4 Bright
+			Stop
+	}
+}
+
+//MeteorBall
+Actor MeteorBall
+{
+	Radius 8
+	Height 6
+	Speed 14
+	Damage 3
+	DamageType "Fire"
+	+ROCKETTRAIL
+	+NOEXTREMEDEATH
+	PROJECTILE
+	DONTHURTSHOOTER
+	renderstyle "Normal"
+	SeeSound "Weapons/RocketFire"
+	DeathSound "weapons/cherryboom"
+	States
+	{
+		Spawn:
+			GMMT ABCD 2 Bright 
+			Loop
+		Death:
+			BMX1 A 3 Bright 
+			BMX1 B 3 Bright A_Explode
+			BMX1 C 3 Bright
+			BMX1 DE 3 Bright
+			Stop
+	}
+}
+
+//MOSS MOTHER
+ACTOR MossMother 5529
+{
+	//$Category RPBosses
+	Health 1500
+	Speed 10
+	Radius 16
+	Height 64
+	PainChance 200
+	Mass 1400
+	Scale 2
+	DamageFactor "Boiling", 0
+	DamageFactor "Fire", 0.1
+	DamageFactor "Zap", 3
+	DamageFactor "Beats", 0.25
+	Painchance "Beats", 64
+	DamageFactor "Bap", 1
+	PainChance "Bap", 64
+    Monster
+	painsound "mother/pain"
+	+FLOORCLIP 
+	+LOOKALLAROUND 
+	+NOTARGET
+	+NOBLOOD
+	+NORADIUSDMG
+	Obituary "Moss Mother eventually grew on %o."
+	Tag "Moss Mother"
+	States
+	{
+		Spawn:
+			MMRS D 0 A_Look
+			TNT1 A 0 A_SetInvulnerable
+			TNT1 A 1 A_Look
+			Goto Spawn+1
+		See:
+			TNT1 A 0 //ACS_Execute(102,0,0,0,0)
+			TNT1 A 0 A_ChangeFlag("NOTARGET",0)
+			TNT1 A 0 A_JumpIfInventory("RiseCheck",1,"Walk")
+			TNT1 A 0 A_GiveInventory("RiseCheck",1)
+			TNT1 A 0 A_UnsetInvulnerable
+			MMRS DC 4 
+			MMRS CD 4
+			Loop
+		Walk:
+			TNT1 A 0 //ACS_Execute(102,0,0,0,0)
+			TNT1 A 0 A_SetInvulnerable
+			TNT1 A 0 A_ChangeFlag("NOTARGET",1)
+			TNT1 AA 2 A_Chase
+			TNT1 A 0 A_Jump(8,"PeekUp")
+			Loop
+		PeekUp:
+			TNT1 A 0 //ACS_Execute(102,0,0,0,0)
+			TNT1 A 0 A_ChangeFlag("NOTARGET",0)
+			TNT1 A 0 A_UnsetInvulnerable
+			MMRS DC 6
+			MMRS C 6 A_CustomMissile("mossball",40,0,random(-8,8))
+			MMRS CD 6
+			Goto Walk
+		Melee:
+		Missile:
+			TNT1 A 0 //ACS_Execute(102,0,0,0,0)
+			TNT1 A 0 A_ChangeFlag("NOTARGET",0)
+			TNT1 A 0 A_UnsetInvulnerable
+			MMRS DCBA 4 A_CustomMissile("Geyserball",40,random(-32,32),0,0,random(0,10))
+			MMAT ABC 4 A_FaceTarget
+			MMAT D 0 A_CustomMissile("mossballmini",40,0,random(-8,8))
+			MMAT D 0 A_CustomMissile("mossballmini",40,0,random(-8,8))
+			MMAT D 4 A_CustomMissile("mossball",40,0,random(-8,8))
+			MMAT EFG 4 A_FaceTarget
+			MMAT H 0 A_CustomMissile("mossballmini",40,0,random(-8,8))
+			MMAT H 0 A_CustomMissile("mossballmini",40,0,random(-8,8))
+			MMAT H 4 A_CustomMissile("mossball",40,0,random(-8,8))
+			MMRS ABCD 2
+			Goto Walk
+		Pain:
+			TNT1 A 0 //ACS_Execute(102,0,0,0,0)
+			MMDM X 6 A_Pain
+			MMRS CD 4
+			Goto See
+		Death:
+			MMDM X 0 //ACS_Execute(102,0,0,0,0)
+			MMDM X 0 A_Scream
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM X 0 A_PlaySound("weapons/cherryboom")
+			MMDM X 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			MMDM Y 10 A_NoBlocking
+			MMDM Z 10
+			Stop
+		Raise:
+			MMRS DC 4
+			Goto See
+	}
+}
+
+ACTOR MossBall : JellyBall
+{
+	Speed 12
+	Damage 4
+	renderstyle "Normal"
+	+NOEXTREMEDEATH
+	States
+	{
+		Spawn:
+			SBAL ABC 2 
+			Loop
+		Death:
+			WBUX A 4 BRIGHT 
+			WBUX BC 4 BRIGHT
+			Stop
+	}
+}
+
+ACTOR MossballMini : Mossball
+{
+	Speed 8
+	Damage 2
+	Scale 0.5
+}
+
+actor RiseCheck : Inventory
+{
+	Inventory.MaxAmount 1
+}
+
+//SPHINX MOTHER
+actor SphinxMother 9230
+{
+	//$Category RPBosses
+	Health 1500
+	Radius 20
+	Height 56
+	Speed 20
+	Mass 500
+	MaxDropOffHeight 64
+	MeleeRange 80
+	MeleeThreshold 128
+	PainChance 200
+	Painchance Fire, 96
+	DamageFactor "bonk", 0.5
+	DamageFactor "fire", 0.5
+	DamageFactor "Suck", 0
+	DamageFactor "Beats", 0.25
+	Painchance "Beats", 64
+	DamageFactor "Bap", 1
+	PainChance "Bap", 64
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+LOOKALLAROUND
+	+MISSILEMORE
+	+MISSILEEVENMORE
+	painsound "mother/pain"
+	Obituary "%o was baffled and devoured by Sphinx Mother."
+	Tag "Sphinx Mother"
+	SpawnID 9230
+	States
+	{
+		Spawn:
+			SMOT K 2 A_Look
+			Loop
+		See:
+			SMOT K 1 //ACS_Execute(102,0,0,0,0)
+			SMOT K 0 A_Playsound("sphinx/pounce",CHAN_VOICE)
+			SMOT KKLMKKKLMK 3 
+			Goto Pounce
+		Idle:
+			TNT1 A 0 A_ChangeFlag("FLOAT",0)
+			TNT1 A 0 A_ChangeFlag("NOGRAVITY",0)
+			TNT1 A 0 A_ChangeFlag("DROPOFF",0)
+			SMOT A 0 //ACS_Execute(102,0,0,0,0)
+			SMOT AABBCCDD 2 A_Chase
+			SMOT A 0 A_JumpIfHealthLower(700,"takeoff",0)
+			SMOT A 0
+			Loop
+		Missile:
+			SMOT F 0 A_Jump(96,"Pounce")
+			SMOT F 4 //ACS_Execute(102,0,0,0,0)
+			SMOT GHH 5 A_FaceTarget
+			SMOT J 0 A_Playsound("galgoyle/fire",CHAN_BODY)
+			SMOT I 4 bright A_CustomMissile("SphinxBall1",48,0)
+			SMOT I 0 bright A_CustomMissile("SphinxBall2",48,0,random(0,4))
+			SMOT I 4 bright A_CustomMissile("SphinxBall2",48,0,random(0,-4))
+			SMOT J 4 bright A_CustomMissile("SphinxBall1",48,0)
+			SMOT J 0 bright A_CustomMissile("SphinxBall2",48,0,random(0,4))
+			SMOT J 4 bright A_CustomMissile("SphinxBall2",48,0,random(0,-4))
+			SMOT KKLMK 3
+			Goto Idle
+		Melee:
+		Pounce:
+			TNT1 A 0 A_ChangeFlag("FLOAT",0)
+			TNT1 A 0 A_ChangeFlag("NOGRAVITY",0)
+			TNT1 A 0 A_ChangeFlag("DROPOFF",0)
+			SMOT K 0 A_Playsound("sphinx/pounce",CHAN_VOICE)
+			SMOT F 0 //ACS_Execute(102,0,0,0,0)
+			SMOT F 4 A_Facetarget
+			SMOT N 0 ThrustThingz (0, 27, 0, 0)
+			SMOT N 0 ThrustThing (angle*256/360, 27, 0, 0)
+			SMOT NNNN 2 A_CustomMeleeAttack (random(10,15), "mallethit", " ", "", 1)
+			SMOT F 5 A_CustomMeleeAttack (random(10,15), "mallethit", " ", "", 1)
+			Goto Idle
+		Takeoff: 
+			SMOF A 0 //ACS_Execute(102,0,0,0,0)
+			TNT1 A 0 A_JumpIf( Z + height + 64 >= CeilingZ, "Idle")
+			TNT1 A 0 A_ChangeFlag("FLOAT",1)
+			TNT1 A 0 A_ChangeFlag("NOGRAVITY",1)
+			TNT1 A 0 A_ChangeFlag("DROPOFF",1)
+			Goto Fly
+		Fly:
+			SMOF E 0 ThrustThingZ(0,15,0,0)
+			SMOF AABBCCDD 2 A_Chase(0,"MissileF")
+			Goto Hover
+		MissileF:
+			SMOF A 0 //ACS_Execute(102,0,0,0,0)
+			SMOF A 0 A_FaceTarget
+			SMOF A 0 A_Recoil(-4)
+			SMOF E 0 A_Playsound("galgoyle/fire",CHAN_BODY)
+			SMOF E 4 bright A_CustomMissile("SphinxBall2",16,0,random(-9,9))
+			SMOF B 4 bright A_CustomMissile("SphinxBall2",16,0,random(-9,9))
+			SMOF G 4 bright A_CustomMissile("SphinxBall2",16,0,random(-9,9))
+			SMOF D 4 A_Stop
+			goto Land
+		Land:
+			SMOF AA 4 ThrustThingZ(0,-20,0,0)
+			SMOF E 1 A_CheckFloor("Idle")
+			SMOF E 0 A_Playsound("galgoyle/fire",CHAN_BODY)
+			SMOF E 4 bright A_CustomMissile("SphinxBall1",16,0,random(-9,9))
+			SMOF BCD 4 
+			SMOF E 1 A_CheckFloor("Idle")
+			Goto Hover
+		Hover:
+			SMOF AABBCCDD 2 A_Chase(0,"MissileF")
+			SMOF A 0 A_Jump(64,"Fly")
+			SMOF A 0 A_Jump(32,"Land")
+			Loop
+		Pain:
+			TNT1 A 0 A_ChangeFlag("FLOAT",0)
+			TNT1 A 0 A_ChangeFlag("NOGRAVITY",0)
+			TNT1 A 0 A_ChangeFlag("DROPOFF",0)
+			SMOT E 6 A_Pain
+			SMOT F 3 //ACS_Execute(102,0,0,0,0)
+			Goto Idle
+		Death:
+			TNT1 A 0 A_ChangeFlag("FLOAT",0)
+			TNT1 A 0 A_ChangeFlag("NOGRAVITY",0)
+			TNT1 A 0 A_ChangeFlag("DROPOFF",0)
+			SMOT E 0 //ACS_Execute(102,0,0,0,0)
+			SMOT E 0 A_Scream
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			SMOT E 0 A_PlaySound("weapons/cherryboom")
+			SMOT E 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			TNT1 A 10 A_NoBlocking
+			TNT1 A 10 ACS_Execute(198,0,0,0,0)
+			Stop
+	}
+}
+
+ACTOR SphinxBall1 : Musicball
+{
+	Damage 5
+	Speed 30
+	PoisonDamage 16
+	+NOEXTREMEDEATH
+	States
+	{
+		Spawn:
+			GBAL AB 4 
+			Loop
+		Death:
+			BROX B 4 Bright 
+			BROX CDE 4 Bright
+			Stop
+	}
+}
+
+ACTOR SphinxBall2 : Musicball
+{
+	Damage 3
+	Speed 30
+	Scale 0.5
+	PoisonDamage 8
+	+NOEXTREMEDEATH
+	States
+	{
+		Spawn:
+			GBAL AB 4 
+			Loop
+		Death:
+			BROX B 4 Bright 
+			BROX CDE 4 Bright
+			Stop
+	}
+}
+
+
+//HANDMOTHER
+ACTOR HandMother 5123
+{
+	//$Category RPBosses
+	Radius 24
+	Height 128
+	Tag "HandMother (Prop)"
+	SpawnID 5123
+	States
+	{
+		Spawn:
+			BMOT YZ 20 
+			Loop
+	}
+}
+
+ACTOR HandMotherTeleport
+{
+	Radius 24
+	Height 128
+	Tag "HandMother (Teleport)"
+	SpawnID 5139
+	States
+	{
+		Spawn:
+			BMTX A 0 A_Playsound("misc/teleport")
+			BMTX ABCD 3 Bright 
+			stop
+	}
+}
+
+actor HandMotherVac 5129
+{
+	//$Category RPBosses
+	Health 1500
+	Radius 24
+	Height 128
+	Speed 12
+	PainChance 200
+	Painchance "Breakfast", 64
+	Painchance "Beats", 64
+	DamageFactor "Beats", 0.25
+	DamageFactor "Bap", 1
+	PainChance "Bap", 64
+	Damagefactor "Zap", 0.5
+	Mass 5000
+	MeleeRange 96
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+LOOKALLAROUND
+	+DONTHARMCLASS
+	+MISSILEMORE
+	Obituary "%o was put to bed by Handmother."
+	Tag "HandMother (Vacuum)"
+	SpawnID 5129
+	painsound "mother/pain"
+	DamageFactor "Breakfast", 0.5
+	DamageFactor "Suck", 0
+	States
+	{
+		Spawn:
+			BMOT YYYYZZZZ 5 A_Look
+			Loop
+		See:
+			BMOT A 0 //ACS_Execute(102,0,0,0,0)
+			BMOT E 20 
+			Goto Idle
+		Idle:
+			BMOT A 0 //ACS_Execute(102,0,0,0,0)
+			BMOT AABBCCDD 3 A_Chase
+			Loop
+		Missile:
+			BMOT E 0 //ACS_Execute(102,0,0,0,0)
+			BMOT E 0 A_Jump(96,"MissileCherry")
+			BMOT E 8
+			BMOT G 0 A_Playsound("Handmother/Vacon",CHAN_BODY)
+			BMOT GHIJGHIJGHIJKLMNKLMNKLMNKLMN 1 A_FaceTarget
+			BMOT O 0 A_Playsound("Weapons/spinnerfire")
+			BMOT O 1 A_CustomMissile("DustBall",80,0,random(-12,12))
+			BMOT O 1 A_CustomMissile("DustBall",72,0,random(-12,12))
+			BMOT O 1 A_CustomMissile("DustBall",96,0,random(-12,12))
+			BMOT O 1 A_CustomMissile("DustBall",64,0,random(-12,12))
+			BMOT O 1 A_CustomMissile("DustBall",80,0,random(-12,12))
+			BMOT O 1 A_CustomMissile("DustBall",72,0,random(-12,12))
+			BMOT O 1 A_CustomMissile("DustBall",96,0,random(-12,12))
+			BMOT O 1 A_CustomMissile("DustBall",64,0,random(-12,12))
+			BMOT P 6 A_CustomMissile("BigDustBall",80,0,0)
+			BMOT Q 7 A_Playsound("Handmother/Vacoff",CHAN_BODY)
+			Goto Idle
+		MissileCherry:
+			BMOT R 0 //ACS_Execute(102,0,0,0,0)
+			BMOT R 7 A_FaceTarget
+			BMOT S 5 A_CheckSight("idle")
+			BMOT T 0 A_CustomMissile("BadCherryBomb",80,0,random(-12,12),0,random(-5,-15))
+			BMOT T 0 A_CustomMissile("BadCherryBomb",76,0,random(-12,12),0,random(-5,-15))
+			BMOT T 7 A_CustomMissile("BadCherryBomb",64,0,random(-12,12),0,random(-5,-15))
+			Goto Missile+3
+		Melee:
+			BMOT T 0 //ACS_Execute(102,0,0,0,0)
+			BMOT T 7 A_FaceTarget
+			BMOT V 3 A_CustomMeleeAttack (random(25,35), "mallethit", "malletswing", "", 1) 
+			BMOT V 3 
+			Goto Idle
+		Pain:
+			BMOT U 0 //ACS_Execute(102,0,0,0,0)
+			BMOT U 4 A_Pain
+			BMOT V 6
+			BMOT V 0 A_Jump(208,"Idle")
+			Goto MissileCherry+4
+		Death:
+			BMOT U 0 //ACS_Execute(102,0,0,0,0)
+			BMOT U 0 A_Scream
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOX A 7 A_NoBlocking
+			BMOX BCABCABC 7 
+			BMOX C 0 //ACS_Execute(102,0,0,0,0)
+			BMOX DEFDEFDEFDEF 7
+			BMOX F 0 ACS_Execute(113,0,0,0,0)
+			BMOX F 0 A_Playsound("misc/teleport")
+			BMTX EFGH 3 Bright
+			Stop
+	}
+}
+
+ACTOR HandmotherPhaseA : HandMotherVac 6129
+{
+	Health 2000
+	SpawnID 6129
+	Tag "HandMother (Phase A)"
+	Dropitem "AppleWine"
+	States
+	{
+		Death:
+			BMOT U 0 //ACS_Execute(102,0,0,0,0)
+			BMOT U 0 A_Scream
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOT U 0 A_PlaySound("weapons/cherryboom")
+			BMOT U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMOX A 7 A_NoBlocking
+			BMOX BCABCABC 7 
+			BMOX C 0 //ACS_Execute(102,0,0,0,0)
+			BMOX DEFDEFDEFDEF 7
+			BMOX F 0 A_Playsound("misc/teleport")
+			BMTX F 0 A_SpawnItemEX("HandMotherPhaseB",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			Stop
+	}
+}
+
+actor HandMotherPhaseB 6131
+{
+	//$Category RPBosses
+	Health 2500
+	Radius 24
+	Height 128
+	Speed 12
+	PainChance 200
+	Painchance "Breakfast", 64
+	Painchance "Beats", 64
+	Mass 5000
+	DamageFactor "Chop", 3
+	DamageFactor "Bonk", 3
+	DamageFactor "Breakfast", 0.5
+	DamageFactor "Suck", 0
+	DamageFactor "Bap", 1
+	PainChance "Bap", 64
+	Damagefactor "Zap", 0.5
+	MeleeRange 96
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+LOOKALLAROUND
+	+DONTHARMCLASS
+	+MISSILEMORE
+	Obituary "%o was put to bed by Handmother."
+	Tag "HandMother (Phase B)"
+	SpawnID 6131
+	painsound "mother/pain"
+	Dropitem "AppleWine"
+	States
+	{
+		Spawn:
+			BMO2 E 5 A_Look
+			Loop
+		See:
+			BMO2 A 0 //ACS_Execute(102,0,0,0,0)
+			BMO2 E 20 
+			Goto Idle
+		Idle:
+			BMO2 A 0 //ACS_Execute(102,0,0,0,0)
+			BMO2 AABBCCDD 3 A_Chase
+			BMO2 D 0 A_Jump(96,"IdleDash")
+			Loop
+		IdleDash:
+			BMO2 A 0 //ACS_Execute(102,0,0,0,0)
+			BMO2 AABBCCDD 2 A_Chase
+			BMO2 D 0 A_Jump(64,"Idle")
+			Loop
+		Missile:
+			BMO2 E 0 //ACS_Execute(102,0,0,0,0)
+			BMO2 E 0 A_Jump(96,"MissileSpinner")
+			BMO2 E 0 A_Jump(96,"MissileCherry")
+			BMO2 E 8
+			BMO2 F 0 A_Playsound("Handmother/Zap",CHAN_BODY)
+			BMO2 HIHIHIHIHIHIH 1 A_FaceTarget
+			BMO2 H 1 A_CustomMissile("badzapshot",80,0,0)
+			BMO2 I 0 A_CustomMissile("badzapshot",72,0,12)
+			BMO2 I 1 A_CustomMissile("badzapshot",96,0,-12)
+			BMO2 I 1 A_CustomMissile("badzapshot",80,0,0)
+			BMO2 H 0 A_CustomMissile("badzapshot",72,0,12)
+			BMO2 H 1 A_CustomMissile("badzapshot",96,0,-12)
+			BMO2 I 1 A_CustomMissile("badzapshot",80,0,0)
+			BMO2 H 0 A_CustomMissile("badzapshot",72,0,12)
+			BMO2 H 1 A_CustomMissile("badzapshot",96,0,-12)
+			BMO2 V 8
+			Goto Idle
+		MissileCherry:
+			BMO2 R 0 //ACS_Execute(102,0,0,0,0)
+			BMO2 R 7 A_FaceTarget
+			BMO2 S 5
+			BMO2 T 0 A_CustomMissile("BadCherryBomb",80,0,random(-12,12),0,random(-5,-15))
+			BMO2 T 0 A_CustomMissile("BadCherryBomb",76,0,random(-12,12),0,random(-5,-15))
+			BMO2 T 7 A_CustomMissile("BadCherryBomb",64,0,random(-12,12),0,random(-5,-15))
+			Goto Missile+3
+		MissileSpinner:
+			BMO2 R 0 //ACS_Execute(102,0,0,0,0)
+			BMO2 R 7 A_FaceTarget
+			BMO2 S 5 A_CheckSight("idle")
+			BMO2 T 0 A_CustomMissile("SpinnerShot",80,0,random(-12,12),0,random(-5,-15))
+			BMO2 V 0 A_SpawnItemEX("SpinnerPickup",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			BMO2 V 0
+			Goto Idle
+		Melee:
+			BMO2 T 0 //ACS_Execute(102,0,0,0,0)
+			BMO2 T 7 A_FaceTarget
+			BMO2 V 3 A_CustomMeleeAttack (random(25,35), "mallethit", "malletswing", "", 1) 
+			BMO2 V 3 
+			Goto Idle
+		Pain:
+			BMO2 U 0 //ACS_Execute(102,0,0,0,0)
+			BMO2 U 4 A_Pain
+			BMO2 V 6 A_Jump(192,"idle")
+			BMO2 V 0 A_SpawnItemEX("malletammo",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			Goto Idle
+		Death:
+			BMO2 U 0 //ACS_Execute(102,0,0,0,0)
+			BMO2 U 0 A_Scream
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO2 U 0 A_PlaySound("weapons/cherryboom")
+			BMO2 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM2X A 7 A_NoBlocking
+			BM2X BCABCABC 7
+			BM2X C 0 //ACS_Execute(102,0,0,0,0)
+			BM2X DEFDEFDEFDEF 7
+			BM2X F 0 A_Playsound("misc/teleport")
+			BM2X F 0 A_SpawnItemEX("HandMotherPhaseC",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			Stop
+	}
+}
+
+actor HandMotherPhaseC 6132
+{
+	//$Category RPBosses
+	Health 2500
+	Radius 24
+	Height 128
+	Speed 12
+	PainChance 200
+	Painchance "Breakfast", 64
+	Painchance "Beats", 64
+	Mass 5000
+	DamageFactor "Chop", 3
+	DamageFactor "Bonk", 3
+	DamageFactor "Breakfast", 0.5
+	DamageFactor "Suck", 0
+	DamageFactor "Bap", 1
+	PainChance "Bap", 64
+	Damagefactor "Zap", 0.5
+	MeleeRange 96
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+LOOKALLAROUND
+	+DONTHARMCLASS
+	+MISSILEMORE
+	Obituary "%o was put to bed by Handmother."
+	Tag "HandMother (Phase C)"
+	SpawnID 6132
+	painsound "mother/pain"
+	States
+	{
+		Spawn:
+			BMO3 A 5 A_Look
+			Loop
+		See:
+			BMO3 A 0 //ACS_Execute(102,0,0,0,0)
+			BMO3 EFE 10 
+			Goto Idle
+		Idle:
+			BMO3 A 0 //ACS_Execute(102,0,0,0,0)
+			BMO3 AABBCCDD 2 A_Chase
+			Loop
+		Missile:
+			BMO3 E 0 //ACS_Execute(102,0,0,0,0)
+			BMO3 E 0 A_Jump(96,"MissileSpinner")
+			BMO3 E 9
+			BMO3 F 9 A_FaceTarget
+			BMO3 G 0 A_CheckSight("idle")
+			BMO3 G 0 A_Playsound("Weapons/brocketfire")
+			BMO3 G 5 bright A_CustomMissile("badbrocketshot",80,0,0)
+			BMO3 HI 3 bright
+			Goto Idle
+		MissileSpinner:
+			BMO3 R 0 //ACS_Execute(102,0,0,0,0)
+			BMO3 R 7 A_FaceTarget
+			BMO3 S 5 A_CheckSight("idle")
+			BMO3 T 0 A_CustomMissile("SpinnerShot",80,0,random(-12,12),0,random(-5,-15))
+			BMO3 V 0 A_Jump(192,"Idle")
+			BMO3 V 0 A_SpawnItemEX("cherrybombpickup",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			Goto Idle
+		Melee:
+			BMO3 T 0 //ACS_Execute(102,0,0,0,0)
+			BMO3 T 7 A_FaceTarget
+			BMO3 V 3 A_CustomMeleeAttack (random(25,35), "mallethit", "malletswing", "", 1) 
+			BMO3 V 3 
+			Goto Idle
+		Pain:
+			BMO3 U 0 //ACS_Execute(102,0,0,0,0)
+			BMO3 U 4 A_Pain
+			BMO3 V 6
+			Goto Idle
+		Death:
+			BMO3 U 0 //ACS_Execute(102,0,0,0,0)
+			BMO3 U 0 A_Scream
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X ABCDEFABCDEF 7
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X ABCDEF 7
+			BM3X C 0 //ACS_Execute(102,0,0,0,0)
+			BM3X ABCDEFABCDEF 7
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 V 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_NoBlocking
+			BMO3 U 0 ACS_Execute(113,0,0,0,0)
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BMO3 U 0 A_PlaySound("weapons/cherryboom")
+			BMO3 U 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X Z 0 A_PlaySound("weapons/cherryboom")
+			BM3X Z 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X Z 0 A_PlaySound("weapons/cherryboom")
+			BM3X Z 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X Z 0 A_PlaySound("weapons/cherryboom")
+			BM3X Z 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X Z 0 A_PlaySound("weapons/cherryboom")
+			BM3X Z 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X Z 0 A_PlaySound("weapons/cherryboom")
+			BM3X Z 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X Z 0 A_PlaySound("weapons/cherryboom")
+			BM3X Z 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X Z 0 A_PlaySound("weapons/cherryboom")
+			BM3X Z 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X Z 0 A_PlaySound("weapons/cherryboom")
+			BM3X Z 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION) 
+			BM3X Z 0 
+			Stop
+	}
+}
+
+
+actor DustBall
+{
+	Radius 8
+	Height 12
+	Speed 18
+	Damage 3
+	DamageType "Dust"
+	Scale 0.35
+	Projectile
+	+RANDOMIZE
+	+NOEXTREMEDEATH
+	PoisonDamage 15
+	renderstyle "Add"
+	Alpha 0.7
+	DeathSound "croquet/ballhit"
+	States
+	{
+		Spawn:
+			HMBL ABCDE 3 bright
+			Loop
+		Death:
+			HMBX ABCDE 4 Bright
+			Stop
+	}
+}
+
+actor BigDustBall
+{
+	Radius 8
+	Height 12
+	Speed 12
+	Damage 5
+	DamageType "Dust"
+	Projectile
+	+RANDOMIZE
+	+NOEXTREMEDEATH
+	PoisonDamage 25
+	renderstyle "Add"
+	Alpha 0.7
+	DeathSound "croquet/ballhit"
+	States
+	{
+		Spawn:
+			HMBL ABCDE 3 bright
+			Loop
+		Death:
+			HMBX ABCDE 4 Bright
+			Stop
+	}
+}
+
+
+
+ACTOR Geyser : Volcano 6123
+{
+	//$Category RPHazards
+}
+
+ACTOR Geyserball : Volcanoblast
+{
+	DamageType "Boiling"
+	+NOEXTREMEDEATH
+	States
+	{
+		Spawn:
+			WBUL ABCB 4 BRIGHT A_SpawnItemEx("Puffy", random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, 
+																		random2[BeastPuff]()*0.015625, 0, 0, 0, 0, SXF_ABSOLUTEPOSITION, 64)
+			Loop
+		Death:
+			WBUX A 4 BRIGHT A_VolcBallImpact
+			WBUX BC 4 BRIGHT
+			Stop
+	}
+}
+
+ACTOR Geyserminiball : VolcanoTBlast
+{
+	Scale 0.5
+	DamageType "Boiling"
+	+NOEXTREMEDEATH
+	States
+	{
+		Spawn:
+		WBUL ABCB 4 Bright
+		Loop
+	Death:
+		WBUX ABC 4 Bright
+		Stop
+	}
+}
+
+//SUGARSNAKE
+actor SugarSnake 
+{
+	//$Category RPMonsters
+	Health 60
+	Radius 20
+	Height 56
+	Speed 10
+	PainChance 256
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+FRIENDLY
+	+FLOAT
+	+NOGRAVITY
+	+LOOKALLAROUND
+	SeeSound "hduck/sight"
+	PainSound "hduck/pain"
+	DeathSound "hduck/death"
+	ActiveSound "hduck/active"
+	Obituary "%o was sizzled by a sugar snake."
+	Tag "Sugar Snake"
+	States
+	{
+		Spawn:
+			FSNK A 2 A_Look
+			Loop
+		See:
+			FSNK AABBCCDD 3 A_Chase
+			Loop
+		Missile:
+			FSNK B 5 //ACS_Execute(102,0,0,0,0)
+			FSNK B 5 A_FaceTarget
+			FSNK B 0 A_AlertMonsters(1024,0)
+			FSNK BBB 4 A_CustomMissile("SnakeFireball",40)
+			Goto See
+		Pain:
+			FSNK A 6 A_Pain
+			FSNK B 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death:
+			FSNK A 5 bright A_Scream
+			FSNK XY 5 bright
+			FSNK Z 5 A_NoBlocking
+			CBOX A 6 Bright A_PlaySound("weapons/cherryboom")
+			CBOX B 0 A_AlertMonsters
+			CBOX B 6 Bright A_Explode
+			CBOX CDE 6 Bright A_ThrowGrenade("SnakeMiniGrenade",2,random(2,6),random(8,16),0)
+			Stop
+	}
+}
+
+actor MiniSugarSnake 
+{
+	//$Category RPMonsters
+	Health 30
+	Radius 20
+	Height 56
+	Speed 18
+	Scale 0.5
+	PainChance 256
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+FRIENDLY
+	+FLOAT
+	+NOGRAVITY
+	+LOOKALLAROUND
+	SeeSound "hduck/sight"
+	PainSound "hduck/pain"
+	DeathSound "hduck/death"
+	ActiveSound "hduck/active"
+	Obituary "%o was sizzled by a sugar snake."
+	Tag "Sugar Snake"
+	States
+	{
+		Spawn:
+			FSNK A 0 A_AlertMonsters(1024,0)
+			FSNK A 2 A_Look
+			Loop
+		See:
+			FSNK AABBCCDD 2 A_Chase
+			Loop
+		Missile:
+			FSNK B 5 //ACS_Execute(102,0,0,0,0)
+			FSNK B 5 A_FaceTarget
+			FSNK B 0 A_AlertMonsters(1024,0)
+			FSNK B 4 A_CustomMissile("SnakeMiniFireball",32)
+			FSNK B 4 A_CustomMissile("SnakeMiniFireball",32)
+			FSNK B 4 A_CustomMissile("SnakeMiniFireball",32)
+			Goto See
+		Pain:
+			FSNK A 6 A_Pain
+			FSNK B 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death:
+			FSNK A 5 bright A_Scream
+			FSNK XY 5 bright
+			FSNK Z 5 A_NoBlocking
+			CBOX A 6 Bright A_PlaySound("weapons/cherryboom")
+			CBOX B 0 A_AlertMonsters
+			CBOX B 6 Bright A_Explode
+			CBOX CDE 6 Bright 
+			Stop
+	}
+}
+
+actor SnakeFireBall
+{
+	Radius 8
+	Height 12
+	Speed 18
+	Damage 5
+	DamageType "Fire"
+	Projectile
+	DONTHURTSHOOTER
+	+RANDOMIZE
+	+NOEXTREMEDEATH
+	renderstyle "Normal"
+	Seesound "weapons/rocketfire"
+	DeathSound "croquet/ballhit"
+	States
+	{
+		Spawn:
+			BROK ABCD 3 bright
+			Loop
+		Death:
+			SPNR C 4 bright 
+			SPNR DEFG 4 Bright
+			Stop
+	}
+}
+
+actor SnakeMiniFireBall
+{
+	Radius 8
+	Height 12
+	Speed 18
+	Damage 2
+	Scale 0.5
+	DamageType "Fire"
+	Projectile
+	+RANDOMIZE
+	+NOEXTREMEDEATH
+	renderstyle "Normal"
+	Seesound "weapons/rocketfire"
+	DeathSound "croquet/ballhit"
+	States
+	{
+		Spawn:
+			BROK ABCD 3 bright
+			Loop
+		Death:
+			SPNR CDEFG 4 Bright
+			Stop
+	}
+}
+
+ACTOR SnakeGrenade
+{
+	Radius 3
+	Height 3
+	Speed 10
+	Damage 1
+	Scale 0.5
+	PROJECTILE
+	-NOGRAVITY
+	renderstyle "Normal"
+	Seesound "weapons/cherrywick"
+	States
+	{
+		Spawn:
+			BSHT AB 3
+			loop
+		Death:
+			FSNK ZYX 4
+			FSNK X 0 A_SpawnItemEX("SugarSnake",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			Stop
+   }
+}
+
+ACTOR SnakeMiniGrenade
+{
+	Radius 3
+	Height 3
+	Speed 10
+	Damage 1
+	Scale 0.25
+	PROJECTILE
+	-NOGRAVITY
+	renderstyle "Normal"
+	Seesound "weapons/cherrywick"
+	States
+	{
+		Spawn:
+			BSHT AB 3
+			loop
+		Death:
+			FSNK ZYX 4
+			FSNK X 0 A_SpawnItemEX ("MiniSugarSnake",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			Stop
+	}
+}
+
+// FURNITURE AND OTHER JUNK
+ACTOR ArmorStatue 10410
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	SpawnID 10410
+	States
+	{
+		Spawn:
+			STAR A -1
+			Stop
+	}
+}
+
+ACTOR ArmorHeadless 10411
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STAR B -1
+			Stop
+	}
+}
+
+ACTOR Brazier 10412
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			BRAZ ABCDEFGH 5 BRIGHT
+			loop
+	}
+}
+
+ACTOR CandleStand 10413
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			MCAN A -1
+			Stop
+	}
+}
+
+ACTOR Chains 10414
+{
+	//$Category RPProps
+	Radius 24
+	Height 56
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+		Spawn:
+			CHAN A -1
+			Stop
+	}
+}
+
+
+ACTOR Fireplace 10417
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	States
+	{
+		Spawn:
+			PYRE ABCD 8 BRIGHT
+			loop
+	}
+}
+
+ACTOR CeilingLamp 10418
+{
+	//$Category RPProps
+	Radius 24
+	Height 32
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+		Spawn:
+			MLMP A -1 BRIGHT
+			stop
+	}
+}
+
+ACTOR Pillar1 10419
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			PILR A -1
+			Stop
+	}
+}
+
+ACTOR Pillar2 10420
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			PILR B -1
+			Stop
+	}
+}
+
+
+ACTOR Pillar4 10422
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			PILR D -1
+			Stop
+	}
+}
+
+ACTOR Pillar5 10423
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			PILR E -1
+			stop
+	}
+}
+
+ACTOR Pillar6 10424
+{
+	//$Category RPProps
+	Radius 16
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			PILR F -1
+			Stop
+	}
+}
+
+ACTOR Vase1 10421
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	States
+	{
+		Spawn:
+			VASE A -1
+			Stop
+	}
+}
+
+
+ACTOR Vase2 10425
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	States
+	{
+		Spawn:
+			VASE B -1
+			Stop
+	}
+}
+
+ACTOR Vase3 10426
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	States
+	{
+		Spawn:
+			VASE C -1
+			Stop
+	}
+}
+
+ACTOR Gourd 10427
+{
+	//$Category RPProps
+	Radius 16
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			SPHR A -1
+			Stop
+	}
+}
+
+ACTOR Stalag 10428
+{
+	//$Category RPProps
+	Radius 24
+	Height 56
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+		Spawn:
+			SMIT A -1
+			Stop
+	}
+}
+
+ACTOR Statue1 10429
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STAT A -1
+			Stop
+	}
+}
+
+ACTOR Statue2 10430
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STAT B -1
+			Stop
+	}
+}
+
+ACTOR Statue3 10431
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STAT C -1
+			Stop
+	}
+}
+
+ACTOR StoolSmall 10432
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	States
+	{
+		Spawn:
+			STUL A -1
+			Stop
+	}
+}
+
+ACTOR Tree1 10433
+{
+	//$Category RPProps
+	Radius 16
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TRE1 A -1
+			Stop
+	}
+}
+
+ACTOR Tree2 10434
+{
+	//$Category RPProps
+	Radius 16
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TRE2 A -1
+			Stop
+	}
+}
+
+ACTOR Tree3 10435
+{
+	//$Category RPProps
+	Radius 16
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TRE3 A -1
+			Stop
+	}
+}
+
+ACTOR Tree4 10436
+{
+	//$Category RPProps
+	Radius 16
+	Height 96
+	+SOLID
+	States
+	{
+		Spawn:
+			TRE4 A -1
+			Stop
+	}
+}
+
+ACTOR Table1 10437
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TABL A -1
+			Stop
+	}
+}
+
+ACTOR Table2 10438
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TABL B -1
+			Stop
+	}
+}
+
+ACTOR Table3 10439
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TABL C -1
+			Stop
+	}
+}
+
+ACTOR SkullTorch 10440
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			MTRC ABCDEFGH 5 BRIGHT
+			Loop
+	}
+}
+
+ACTOR LabJunk1 10441
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	States
+	{
+		Spawn:
+			LBJ1 ABCD 5 BRIGHT
+			Loop
+	}
+}
+
+ACTOR LabJunk2 10442
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	States
+	{
+		Spawn:
+			LBJ2 ABCD 5 BRIGHT
+			Loop
+	}
+}
+
+ACTOR LabJunk3 10443
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	States
+	{
+		Spawn:
+			LBJ3 ABCD 5 BRIGHT
+			Loop
+	}
+}
+
+ACTOR LabJunk4 10444
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	States
+	{
+		Spawn:
+			LBJ4 ABCDEFGHIJ 5 BRIGHT
+			Loop
+	}
+}
+
+ACTOR LabJunk5 10445
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	States
+	{
+		Spawn:
+			LBJ5 ABC 5 BRIGHT
+			Loop
+	}
+}
+
+ACTOR LabJunk6 10446
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	States
+	{
+		Spawn:
+			LBJ6 ABCDE 5 BRIGHT
+			Loop
+	}
+}
+
+ACTOR LabJunk7 10447
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	States
+	{
+		Spawn:
+			LBJ7 ABCDEFGH 5 BRIGHT
+			Loop
+	}
+}
+
+Actor FancyChandelier 20842
+{
+	//$Category RPProps
+	Radius 24
+	Height 128
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+		Spawn:
+			FCHN A -1
+			Stop
+	}
+}
+
+ACTOR TreeOak 10449
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TRNT A -1
+			Stop
+	}
+}
+
+ACTOR CentaurStatue 10450
+{
+	//$Category RPProps
+	Radius 20
+	Height 128
+	+SOLID
+	States
+	{
+		Spawn:
+			CNST A -1
+			Stop
+	}
+}
+
+ACTOR MemoryPapa 10451
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	renderstyle "Add"
+	Alpha 0.7
+	SpawnID 10451
+	States
+	{
+		Spawn:
+			SHDP A -1
+			Stop
+	}
+}
+
+ACTOR MemoryDinah 10452
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	renderstyle "Add"
+	Alpha 0.7
+	SpawnId 10452
+	States
+	{
+		Spawn:
+			SHDD A -1
+			Stop
+	}
+}
+
+ACTOR MemoryDinahSit 10453
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	renderstyle "Add"
+	Alpha 0.7
+	SpawnID 10453
+	States
+	{
+		Spawn:
+			SHDD B -1
+			Stop
+	}
+}
+
+ACTOR MemoryMother 20453
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	renderstyle "Add"
+	Alpha 0.7
+	SpawnID 20453
+	States
+	{
+		Spawn:
+			SHDM A -1
+			Stop
+	}
+}
+
+ACTOR MemoryMotherProne 20454
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	renderstyle "Add"
+	Alpha 0.7
+	SpawnID 20454
+	States
+	{
+		Spawn:
+			SHDM B -1
+			Stop
+	}
+}
+
+Actor Faucet 10454
+{
+	//$Category RPProps
+	Radius 24
+	Height 24
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+		Spawn:
+			FAUC A -1
+			Stop
+	}
+}
+
+ACTOR TableFancy 10455
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			FTAB A -1
+			Stop
+	}
+}
+
+ACTOR StoolFancy 10456
+{
+	//$Category RPProps
+	Radius 20
+	Height 32
+	States
+	{
+		Spawn:
+			FSTL A -1
+			Stop
+	}
+}
+
+ACTOR PillarFancy 10457
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			BPIL A -1
+			Stop
+	}
+}
+
+ACTOR Keg 10458
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			BARL A -1
+			Stop
+	}
+}
+
+ACTOR WineSet : SwitchableDecoration 10459
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Spawn:
+			WINE A -1
+			Stop
+		Inactive:
+			WINE A -1
+			Stop
+		Active:
+			WINE B 0 A_PlaySound("dinah/drink")
+			WINE B 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 15)
+			WINE B 1 A_RadiusGive("WineArmor", 96, RGF_PLAYERS, 1)
+			WINE B -1
+			Stop
+	}
+}
+
+ACTOR LampFancy 10460
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			FLMP A -1 Bright
+			Stop
+	}
+}
+
+ACTOR SunGlobe 10461
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	States
+	{
+		Spawn:
+			SUNG ABC 5 Bright
+			Loop
+	}
+}
+
+ACTOR MemoryPapaHurt 10462
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	renderstyle "Add"
+	Alpha 0.7
+	SpawnID 10462
+	States
+	{
+		Spawn:
+			SHDP B -1
+			Stop
+	}
+}
+
+ACTOR MotherHead 10463
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	SpawnID 10463
+	Scale 2
+	renderstyle "Add"
+	Alpha 0.9
+	+NOGRAVITY
+	States
+	{
+		Spawn:
+			MOTR A -1
+			Stop
+	}
+}
+
+ACTOR StatueGalg 10464
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STGR A -1
+			Stop
+	}
+}
+
+ACTOR StatueGalg_Pillar 10465
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	States
+	{
+		Spawn:
+			STGR B -1
+			Stop
+	}
+}
+
+ACTOR StatueGalg_Gray 10466
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STGR Y -1
+			Stop
+	}
+}
+
+ACTOR StatueGalg_Gold 10467
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STGR X -1
+			Stop
+	}
+}
+
+ACTOR Globe_Y 10476
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	Scale 0.5
+	+NOGRAVITY
+	Species "SmallGlobe"
+	SpawnID 10476
+	States
+	{
+		Spawn:
+			MOON A -1 
+			Stop
+	}
+}
+
+ACTOR Globe_Y_Big : Globe_Y 10576
+{
+	Scale 1
+	Species "BigGlobe"
+}
+
+ACTOR Globe_R 10477
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	Scale 0.5
+	+NOGRAVITY
+	Species "SmallGlobe"
+	SpawnID 10477
+	States
+	{
+		Spawn:
+			MOON B -1 
+			Stop
+	}
+}
+
+ACTOR Globe_R_Big : Globe_R 10577
+{
+	Scale 1
+	Species "BigGlobe"
+}
+
+
+ACTOR Globe_P 10478
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	Scale 0.5
+	+NOGRAVITY
+	Species "SmallGlobe"
+	SpawnID 10478
+	States
+	{
+		Spawn:
+			MOON C -1 
+			Stop
+	}
+}
+
+ACTOR Globe_P_Big : Globe_P 10578
+{
+	Scale 1
+	Species "BigGlobe"
+}
+
+
+ACTOR Globe_B 10479
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	Scale 0.5
+	+NOGRAVITY
+	Species "SmallGlobe"
+	SpawnID 10479
+	States
+	{
+		Spawn:
+			MOON D -1 
+			Stop
+	}
+}
+
+ACTOR Globe_B_Big : Globe_B 10579
+{
+	Scale 1
+	Species "BigGlobe"
+}
+
+
+ACTOR Globe_A 10480
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	Scale 0.5
+	+NOGRAVITY
+	Species "SmallGlobe"
+	SpawnID 10480
+	States
+	{
+		Spawn:
+			MOON E -1 
+			Stop
+	}
+}
+
+ACTOR Globe_A_Big : Globe_A 10580
+{
+	Scale 1
+	Species "BigGlobe"
+}
+
+
+ACTOR Globe_G 10481
+{
+	//$Category RPProps
+	Radius 16
+	Height 32
+	Scale 0.5
+	+NOGRAVITY
+	Species "SmallGlobe"
+	SpawnID 10481
+	States
+	{
+		Spawn:
+			MOON F -1 
+			Stop
+	}
+}
+
+ACTOR Globe_G_Big : Globe_G 10581
+{
+	Scale 1
+	Species "BigGlobe"
+}
+
+ACTOR TeaPot 10590
+{
+	//$Category RPProps
+	Height 32
+	Radius 16
+	Scale 1
+	Tag "TeaPot"
+	States
+	{
+		Spawn:
+			TPOT A -1
+			Stop
+	}
+}
+
+ACTOR TeaSaucer 10591
+{
+	//$Category RPProps
+	Height 32
+	Radius 16
+	Scale 1
+	Tag "Tea Saucer"
+	States
+	{
+		Spawn:
+			TCUP D -1
+			Stop
+	}
+}
+
+ACTOR Tea_Ready 10592
+{
+	//$Category RPProps
+	Height 32
+	Radius 16
+	Scale 1
+	Tag "Tea Ready"
+	SpawnID 10592
+	States
+	{
+		Spawn:
+			TCUP BC 10
+			Loop
+	}
+}
+
+//REEL HEEL VARIANTS
+actor ReelHeel_Loser : SwitchableDecoration 10593
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	+FLOORCLIP
+	+SOLID
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Active:
+			SLOT A 0 A_Playsound("misc/unlock")
+			SLOP AB 10
+			SLOP A 3
+			SLOT A 3
+			SLOT A 0 A_Playsound("slots/jackpot")
+			SLOT EGIEGIEGI 2 Bright
+			SLOP X 40 Bright 
+			SLOP X 0 A_SpawnItemEX("ReelHeel",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			SLOP X 0 A_Die
+			Stop
+		Spawn:
+			SLOT AB 3 
+			Loop
+		Inactive:
+			SLOT AB 3
+			Loop
+		Death:
+			TNT1 A 1 A_Noblocking
+			Stop
+	}
+}
+
+actor ReelHeel_Broken 10594
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	+FLOORCLIP
+	+SOLID
+	States
+	{
+		Spawn:
+			SLOP Z -1 
+			Stop
+	}
+}
+
+actor ReelHeel_Cherry : SwitchableDecoration 10595
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	+FLOORCLIP
+	+SOLID
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Active:
+			SLOT A 0 A_Playsound("misc/unlock")
+			SLOP AB 10
+			SLOP A 3
+			SLOT A 3
+			SLOT A 0 A_Playsound("slots/jackpot")
+			SLOT EGIEGIEGI 2 Bright
+			SLOT IJIJIJIJIJIJ 2 Bright A_FaceTarget
+			SLOT K 6
+			SLOT L 0 A_Playsound("slots/burp")
+			SLOT L 3 A_ThrowGrenade("CherryBombPickup",40,3,random(-2,2))
+			SLOT L 0 A_Jump(192,2)
+			SLOT L 3 A_ThrowGrenade("CherryBombPickup",40,3,random(-2,2))
+			SLOT L 0 A_Jump(192,2)
+			SLOT L 3 A_ThrowGrenade("CherryBombPickup",40,3,random(-2,2))
+			SLOT L 12
+			SLOT A 3
+			SLOP Z -1
+			Stop
+		Spawn:
+			SLOT AB 3 
+			Loop
+		Inactive:
+			SLOT AB 3
+			Loop
+	}
+}
+
+actor ReelHeel_AppleWine : SwitchableDecoration 10596
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	+FLOORCLIP
+	+SOLID
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Active:
+			SLOT A 0 A_Playsound("misc/unlock")
+			SLOP AB 10
+			SLOP A 3
+			SLOT A 3
+			SLOT A 0 A_Playsound("slots/jackpot")
+			SLOT EGIEGIEGI 2 Bright
+			SLOT GHGHGHGHGHGH 2 Bright A_FaceTarget
+			SLOT K 6
+			SLOT L 0 A_Playsound("slots/burp")
+			SLOT L 3 A_ThrowGrenade("AppleWine",40,3,random(-2,2))
+			SLOT L 12
+			SLOT A 3
+			SLOP Z -1
+			Stop
+		Spawn:
+			SLOT AB 3 
+			Loop
+		Inactive:
+			SLOT AB 3
+			Loop
+	}
+}
+
+actor ReelHeel_Ammo : SwitchableDecoration 10597
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	+FLOORCLIP
+	+SOLID
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Active:
+			SLOT A 0 A_Playsound("misc/unlock")
+			SLOP AB 10
+			SLOP A 3
+			SLOT A 3
+			SLOT A 0 A_Playsound("slots/jackpot")
+			SLOT EGIEGIEGI 2 Bright
+			SLOT EFEFEFEFEFEF 2 Bright A_FaceTarget
+			SLOT K 6
+			SLOT L 0 A_Playsound("slots/burp")
+			SLOT L 3 A_ThrowGrenade("MalletAmmo",40,3,random(-2,2))
+			SLOT L 0 A_Jump(128,2)
+			SLOT L 3 A_ThrowGrenade("BlunderAmmo",40,3,random(-2,2))
+			SLOT L 0 A_Jump(128,2)
+			SLOT L 3 A_ThrowGrenade("JackAmmo",40,3,random(-2,2))
+			SLOT L 0 A_Jump(192,2)
+			SLOT L 3 A_ThrowGrenade("EggAmmo",40,3,random(-2,2))
+			SLOT L 12
+			SLOT A 3
+			SLOP Z -1
+			Stop
+		Spawn:
+			SLOT AB 3 
+			Loop
+		Inactive:
+			SLOT AB 3
+			Loop
+	}
+}
+
+actor ReelHeel_Jackpot : SwitchableDecoration 10697
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	+FLOORCLIP
+	+SOLID
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Active:
+			SLOT A 0 A_Playsound("misc/unlock")
+			SLOP AB 10
+			SLOP A 3
+			SLOT A 3
+			SLOT A 0 A_Playsound("slots/jackpot")
+			SLOT EGIEGIEGI 2 Bright
+			SLOT EFEFEFEFEFEF 2 Bright A_FaceTarget
+			SLOT K 6
+			SLOT L 0 A_Playsound("slots/burp")
+			SLOT LLLLLLLLLLLL 2 A_ThrowGrenade("ArcadeChip",40,3,random(-2,2))
+			SLOT L 12
+			SLOT A 3
+			SLOP Z -1
+			Stop
+		Spawn:
+			SLOT AB 3 
+			Loop
+		Inactive:
+			SLOT AB 3
+			Loop
+	}
+}
+
+actor Pianoman : SwitchableDecoration 10598
+{
+	//$Category RPProps
+	Radius 30
+	Height 56
+	Mass 1000
+	+FLOORCLIP
+	+SOLID
+	Activation THINGSPEC_Switch
+	States
+	{
+		Spawn:
+			PIAN AB 10 
+			Loop
+		Active:
+			PIAN AB 5 
+			Loop
+		Inactive:
+			PIAN AB 10 
+			Loop
+	}
+}
+
+actor Singer : SwitchableDecoration 10599
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	+FLOORCLIP
+	Activation THINGSPEC_Switch
+	States
+	{
+		Spawn:
+			SING WXYZWXYZ 6
+			Loop
+		Active:
+			SING ABAB 5
+			SING EFGH 4
+			SING CDCD 5
+			SING EFGH 4
+			Loop
+		Inactive:
+			SING WXYZWXYZ 6
+			Loop
+	}
+}
+
+ACTOR FoodPlate1 : SwitchableDecoration 10602 //pig
+{
+	//$Category RPProps
+	Height 32
+	Radius 16
+	Scale 1
+	Tag "Food Plate (Pig)"
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Spawn:
+			FOOD A -1
+			Stop
+		Inactive:
+			FOOD A -1
+			Stop
+		Active:
+			FOOD E 0 A_PlaySound("dinah/eat")
+			FOOD E 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 50)
+			FOOD E -1
+			Stop
+	}
+}
+
+ACTOR FoodPlate2 : SwitchableDecoration 10603 //fruit
+{
+	//$Category RPProps
+	Height 32
+	Radius 16
+	Scale 1
+	Tag "Food Plate (Fruit)"
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Spawn:
+			FOOD B -1
+			Stop
+		Inactive:
+			FOOD B -1
+			Stop
+		Active:
+			FOOD F 0 A_PlaySound("dinah/eatapple")
+			FOOD F 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 10)
+			FOOD F -1
+			Stop
+	}
+}
+
+ACTOR FoodPlate3 : SwitchableDecoration 10604 //jello
+{
+	//$Category RPProps
+	Height 32
+	Radius 16
+	Scale 1
+	Tag "Food Plate (Jello)"
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Spawn:
+			FOOD C -1
+			Stop
+		Inactive:
+			FOOD C -1
+			Stop
+		Active:
+			FOOD G 0 A_PlaySound("dinah/eat")
+			FOOD G 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 10)
+			FOOD G -1
+			Stop
+	}
+}
+
+ACTOR FoodPlate4 : SwitchableDecoration 10605 //turkey
+{
+	//$Category RPProps
+	Height 32
+	Radius 16
+	Scale 1
+	Tag "Food Plate (Turkey)"
+	+USESPECIAL
+	Activation THINGSPEC_Activate
+	States
+	{
+		Spawn:
+			FOOD D -1
+			Stop
+		Inactive:
+			FOOD D -1
+			Stop
+		Active:
+			FOOD H 0 A_PlaySound("dinah/eat")
+			FOOD H 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 25)
+			FOOD H -1
+			Stop
+	}
+}
+
+
+ACTOR Skillet : SwitchableDecoration 10607
+{
+	//$Category RPProps
+	Height 32
+	Radius 16
+	Scale 1
+	Tag "Skillet"
+	+USESPECIAL
+	Activation THINGSPEC_Activate | THINGSPEC_ClearSpecial
+	States
+	{
+		Spawn:
+			CPOT E -1 
+			Stop
+		Inactive:
+			CPOT E -1 
+			Stop
+		Active:
+			CPOT E 0 A_Playsound("weapons/spinnerfire")
+			CPOT ABCD 7 bright
+			Goto Active+1
+	}
+}
+
+ACTOR SkilletSizzle 10608
+{
+	//$Category RPProps
+	Height 32
+	Radius 16
+	Scale 1
+	Tag "Skillet Sizzling"
+	States
+	{
+		Spawn:
+			CPOT ABCD 7 bright
+			Loop
+	}
+}
+
+ACTOR Snowman 10609
+{
+	//$Category RPProps
+	Radius 20
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			SNMN A -1
+			Stop
+	}
+}
+
+ACTOR Bet_Ready 10600
+{
+	//$Category RPProps
+	Height 8
+	Radius 4
+	Scale 1
+	Tag "Bet Ready"
+	SpawnID 10600
+	States
+	{
+		Spawn:
+			CHBT A -1
+			Stop
+	}
+}
+
+actor Sphinx 10701
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	States
+	{
+		Spawn:
+			RWHL ABABA 10
+			RWHL CD 5
+			Loop
+	}
+}
+
+actor RouletteWheelSpin 10702
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	SpawnID 10702
+	States
+	{
+		Spawn:
+			RWHS A 0 A_Playsound("dancer/danceattk",CHAN_BODY)
+			RWHS ABC 7
+			RWHS DEDEDEDE 3
+			RWHS IJIJKLKLMNOP 3
+			RWHS GHGHGHGHGHGH 3
+			RWHS R 0 A_Playsound("slots/jackpot",CHAN_BODY)
+			RWHS RSTRSTRST 5 bright
+			RWHL A 1 ACS_Execute(86,0,0,0,0)
+			RWHL A -1
+			Stop
+	}
+}
+
+ACTOR RouletteEmpty 10710
+{
+	//$Category RPProps
+	Radius 20
+	Height 32
+	SpawnID 10710
+	States
+	{
+		Spawn:
+			RWHL Z -1
+			Stop
+	}
+}
+
+ACTOR ProptreeA 10711
+{
+	//$Category RPProps
+	Radius 20
+	Height 32
+	States
+	{
+		Spawn:
+			ATRE A -1
+			Stop
+	}
+}
+
+ACTOR ProptreeB 10712
+{
+	//$Category RPProps
+	Radius 20
+	Height 32
+	States
+	{
+		Spawn:
+			ATRE B -1
+			Stop
+	}
+}
+
+ACTOR HoganTarget_Good 10713
+{
+	//$Category RPProps
+	Health 1
+	Speed 0
+	Radius 20
+	Height 56
+	Mass 5000
+	Monster
+	+DONTTHRUST
+	+NOGRAVITY
+	+FLOAT
+	+NOBLOOD
+	+LOOKALLAROUND
+	SpawnID 10713
+	States
+	{
+		Spawn:
+			HOGX A 0 A_Setinvulnerable
+			HOGX ABC 6 bright
+			HOGN A 0 A_Unsetinvulnerable
+			HOGN AAA 10 bright 
+			HOGN A 6 A_Look
+			Goto See
+		See:
+			HOGN AB 6 bright 
+			HOGN F 40 bright 
+			HOGN F 1 bright A_Die("timeout")
+			Goto Death
+		Death.Timeout:
+			HOGN BA 6 bright 
+			HOGX CBA 6 bright
+			Stop
+		Death:
+			HOGN C 2 bright ACS_Execute(908,0,0,0,0)
+			HOGN CDABCDABCDAB 2 bright 
+			HOGX CBA 6 bright
+			Stop
+	}
+}
+
+ACTOR HoganTarget_Bad 10714
+{
+	//$Category RPProps
+	Health 1
+	Speed 0
+	Radius 20
+	Height 56
+	Mass 5000
+	Monster
+	+DONTTHRUST
+	+NOGRAVITY
+	+FLOAT
+	+NOBLOOD
+	+LOOKALLAROUND
+	SpawnID 10714
+	States
+	{
+		Spawn:
+			HOGX A 0 A_Setinvulnerable
+			HOGX ABC 6 bright
+			HOGN A 0 A_Unsetinvulnerable
+			HOGN AAA 10 bright 
+			HOGN A 6 A_Look
+			Goto See
+		See:
+			HOGN AB 6 bright 
+			HOGN E 40 bright
+			HOGN E 1 A_Chase
+			Goto Missile
+		Missile:
+			HOGN E 3 bright A_FaceTarget
+			HOGN E 0 A_Playsound("BlunderFire",CHAN_BODY)
+			HOGN E 3 bright A_CustomMissile("BadBlundershot",40,0,0)
+			HOGN E 0 A_Playsound("BlunderFire",CHAN_BODY)
+			HOGN E 3 bright A_CustomMissile("BadBlundershot",40,0,0)
+			HOGN E 0 A_Playsound("BlunderFire",CHAN_BODY)
+			HOGN E 3 bright A_CustomMissile("BadBlundershot",40,0,0)
+			HOGN E 1 bright A_Die("timeout")
+			Goto Death
+		Death.Timeout:
+			HOGN BA 6 bright 
+			HOGX CBA 6 bright
+			HOGX A 0 ACS_Execute(1908,0,0,0,0)
+			Stop
+		Death:
+			HOGN C 2 bright ACS_Execute(909,0,0,0,0)
+			HOGN CDABCDABCDAB 2 bright
+			HOGX CBA 6 bright
+			Stop
+	}
+}
+
+ACTOR HoganTarget 10716
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 5000
+	+NOGRAVITY
+	+FLOAT
+	SpawnID 10716
+	States
+	{
+		Spawn:
+			TNT1 A 0
+			TNT1 A 1 A_Jump(128,2)
+			TNT1 A 1 A_SpawnItem("HoganTarget_Good",0,0)
+			Goto Death
+			TNT1 A 1 A_SpawnItem("HoganTarget_Bad",0,0)
+			Goto Death
+		Death:
+			TNT1 A 1
+			Stop
+	}
+}
+
+ACTOR HoganTarget_GTut 10718
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 5000
+	+DONTTHRUST
+	+NOGRAVITY
+	+FLOAT
+	SpawnID 10718
+	States
+	{
+		Spawn:
+			HOGX ABC 6 bright
+			HOGN AB 6 bright 
+			HOGN F 6 bright 
+			HOGN X 6 bright
+			HOGN F 6 bright 
+			HOGN X 6 bright
+			HOGN F 6 bright 
+			HOGN X 6 bright
+			HOGN F 6 bright 
+			HOGN X 6 bright
+			HOGN F 6 bright 
+			HOGN X 6 bright
+			HOGN F 6 bright 
+			HOGN X 6 bright
+			HOGN F 6 bright 
+			HOGN X 6 bright
+			HOGN F 6 bright 
+			HOGN X 6 bright
+			HOGN BA 6 bright 
+			HOGX CBA 6 bright
+			Stop
+	}
+}
+
+ACTOR HoganTarget_BTut 10719
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 5000
+	+DONTTHRUST
+	+NOGRAVITY
+	+FLOAT
+	SpawnID 10719
+	States
+	{
+		Spawn:
+			HOGX ABC 6 bright
+			HOGN AB 6 bright 
+			HOGN E 6 bright 
+			HOGN W 6 bright
+			HOGN E 6 bright 
+			HOGN W 6 bright
+			HOGN E 6 bright 
+			HOGN W 6 bright
+			HOGN E 6 bright 
+			HOGN W 6 bright
+			HOGN E 6 bright 
+			HOGN W 6 bright
+			HOGN E 6 bright 
+			HOGN W 6 bright
+			HOGN E 6 bright 
+			HOGN W 6 bright
+			HOGN E 6 bright 
+			HOGN W 6 bright
+			HOGN BA 6 bright 
+			HOGX CBA 6 bright
+			Stop
+	}
+}
+
+ACTOR RedGlitterMaker : TeleGlitterGenerator1
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DONTSPLASH
+	+MOVEWITHSECTOR
+	spawnid 166
+	States
+	{
+		Spawn:
+			TNT1 A 8 A_SpawnItemEx("TeleGlitter1", random[TeleGlitter](0,31)-16, random[TeleGlitter](0,31)-16, 0, 0, 0, 0.25)
+			Loop
+	}
+}
+
+ACTOR BlueGlitterMaker : TeleGlitterGenerator2
+{
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+DONTSPLASH
+	+MOVEWITHSECTOR
+	spawnid 167
+	States
+	{
+		Spawn:
+			TNT1 A 8 A_SpawnItemEx("TeleGlitter2", random[TeleGlitter2](0,31)-16, random[TeleGlitter2](0,31)-16, 0, 0, 0, 0.25)
+			Loop
+	}
+}
+
+ACTOR Confetti_B : Feather
+{
+	Scale 0.5
+	States
+	{
+		Spawn:
+			CON1 ABCDEDCB 3
+			Loop
+		Death:
+			CON1 B 6
+			Stop
+	}
+}
+
+ACTOR Confetti_P : Feather
+{
+	Scale 0.5
+	States
+	{
+		Spawn:
+			CON2 ABCDEDCB 3
+			Loop
+		Death:
+			CON2 B 6
+			Stop
+	}
+}
+
+ACTOR Confetti_Y : Feather
+{
+	Scale 0.5
+}
+
+//TANK GAME
+actor MiniTank_Green 
+{
+	Health 30
+	Radius 8
+	Height 16
+	Speed 2
+	Scale 0.25
+	PainChance 256
+	Mass 200
+	MaxDropOffHeight 8
+	MaxStepHeight 8
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+FRIENDLY
+	+DONTHARMCLASS
+	Species "GreenTank"
+	Obituary "%o died embarrassingly to a toy tank."
+	Tag "Tank Unit"
+	SpawnID 10721
+	States
+	{
+		Spawn:
+			TANG A 3 A_Look
+			Loop
+		See:
+			TANG AA 4 A_Chase
+			TANG A 0 A_Jump(208,7)
+			TANG AAAAAA 2 A_Chase
+			TANG AA 4 A_Chase
+			Loop
+		Retreat:
+			TANG A 0 A_ChangeFlag("FRIGHTENED",true)
+			TANG AA 4 A_Chase
+			TANG A 0 A_Jump(80,2)
+			TANG A 0 A_ChangeFlag("FRIGHTENED",false)
+			TANG AA 4 A_Chase
+			Loop
+		Missile:
+			TANG A 5 //ACS_Execute(102,0,0,0,0)
+			TANG A 5 A_FaceTarget
+			TANG A 4 A_CustomMissile("TankShell",12,0,random(-3,3))
+			Goto See
+		Pain:
+			TANG A 6 A_Pain
+			TANG A 0 A_Jump(64,"Retreat")
+			Goto See
+		Death:
+			TNKX A 6 Bright A_PlaySound("weapons/cherryboom")
+			TNKX B 6 Bright 
+			TNKX C 6 Bright 
+			Stop
+	}
+}
+
+actor MiniTank_Green_Scout : Minitank_Green
+{
+	Health 20
+	Radius 6
+	Height 10
+	Speed 2
+	Scale 0.20
+	PainChance 256
+	Mass 200
+	MaxDropOffHeight 8
+	MaxStepHeight 8
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+FRIENDLY
+	Species "GreenTank"
+	Obituary "%o died embarrassingly to a toy tank."
+	Tag "Tank Unit"
+	SpawnID 10723
+	States
+	{
+		Spawn:
+			TANG A 3 A_Look
+			Loop
+		See:
+			TANG AA 2 A_Chase
+			Loop
+		Retreat:
+			TANG A 0 A_ChangeFlag("FRIGHTENED",true)
+			TANG AAAAAAAAAAAA 2 A_Chase
+			TANG A 0 A_ChangeFlag("FRIGHTENED",false)
+			Goto See
+		Missile:
+			TANG A 5 //ACS_Execute(102,0,0,0,0)
+			TANG A 5 A_FaceTarget
+			TANG A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANG A 3 A_FaceTarget
+			TANG A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANG A 3 A_FaceTarget
+			TANG A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANG A 3 A_Jump(208,"Retreat")
+			Goto See
+		Pain:
+			TANG A 6 A_Pain
+			TANG A 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death:
+			TNKX A 6 Bright A_PlaySound("weapons/cherryboom")
+			TNKX B 6 Bright 
+			TNKX C 6 Bright 
+			Stop
+	}
+}
+
+actor MiniTank_Green_Battery : Minitank_Green
+{
+	Health 40
+	Radius 8
+	Height 16
+	Speed 2
+	Scale 0.40
+	PainChance 256
+	Mass 200
+	MaxDropOffHeight 8
+	MaxStepHeight 8
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+FRIENDLY
+	+DONTHARMCLASS
+	Species "GreenTank"
+	Obituary "%o died embarrassingly to a toy tank."
+	Tag "Tank Unit"
+	SpawnID 10725
+	States
+	{
+		Spawn:
+			TANG A 3 A_Look
+			Loop
+		See:
+			TANG AA 4 A_Chase
+			Loop
+		Missile:
+			TANG A 5 //ACS_Execute(102,0,0,0,0)
+			TANG A 0 A_Jump(108,"Rocket")
+			TANG A 5 A_FaceTarget
+			TANG A 0 A_CustomMissile("TankShell",12,0,random(-7,7))
+			TANG A 0 A_CustomMissile("TankShell",12,0,random(-7,7))
+			TANG A 4 A_CustomMissile("TankShell",12,0,random(-7,7))
+			Goto See
+		Rocket:
+			TANG A 5 A_FaceTarget
+			TANG A 4 A_CustomMissile("TankMissile",12)
+			TANG A 40
+			Goto See
+		Pain:
+			TANG A 6 A_Pain
+			TANG A 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death:
+			TNKX A 6 Bright A_PlaySound("weapons/cherryboom")
+			TNKX B 6 Bright 
+			TNKX C 6 Bright 
+			Stop
+	}
+}
+
+actor MiniTank_Brown
+{
+	Health 30
+	Radius 8
+	Height 16
+	Speed 2
+	Scale 0.25
+	PainChance 256
+	MaxDropOffHeight 8
+	MaxStepHeight 8
+	Mass 200
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	Species "BrownTank"
+	Obituary "%o died embarrassingly to a toy tank."
+	Tag "Tank Unit"
+	SpawnID 10722
+	States
+	{
+		Spawn:
+			TANK A 3 A_Look
+			Loop
+		See:
+			TANK AA 4 A_Chase
+			TANK A 0 A_Jump(208,7)
+			TANK AAAAAA 2 A_Chase
+			TANK AA 4 A_Chase
+			Loop
+		Retreat:
+			TANK A 0 A_ChangeFlag("FRIGHTENED",true)
+			TANK AA 4 A_Chase
+			TANK A 0 A_Jump(80,2)
+			TANK A 0 A_ChangeFlag("FRIGHTENED",false)
+			TANK AA 4 A_Chase
+			Loop
+		Missile:
+			TANK A 5 //ACS_Execute(102,0,0,0,0)
+			TANK A 5 A_FaceTarget
+			TANK A 4 A_CustomMissile("TankShell",12,0,random(-3,3))
+			Goto See
+		Pain:
+			TANK A 6 A_Pain
+			TANK A 0 A_Jump(64,"Retreat")
+			Goto See
+		Death.Tank:
+			TNKX A 6 Bright A_PlaySound("weapons/cherryboom")
+			TNKX B 6 Bright 
+			TNKX C 6 Bright 
+			Stop
+		Death:
+			TNKX A 6 Bright A_PlaySound("weapons/cherryboom")
+			TNKX B 6 Bright 
+			TNKX C 6 Bright ACS_Execute(724,0,0,0,0)
+			Stop
+	}
+}
+
+actor MiniTank_Brown_Scout : MiniTank_Brown
+{
+	Health 20
+	Radius 6
+	Height 10
+	Speed 2
+	Scale 0.20
+	PainChance 256
+	Mass 200
+	MaxDropOffHeight 8
+	MaxStepHeight 8
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	Species "BrownTank"
+	Obituary "%o died embarrassingly to a toy tank."
+	Tag "Tank Unit"
+	SpawnID 10724
+	States
+	{
+		Spawn:
+			TANK A 3 A_Look
+			Loop
+		See:
+			TANK AA 2 A_Chase
+			Loop
+		Retreat:
+			TANK A 0 A_ChangeFlag("FRIGHTENED",true)
+			TANK AAAAAAAAAAAA 2 A_Chase
+			TANK A 0 A_ChangeFlag("FRIGHTENED",false)
+			Goto See
+		Missile:
+			TANK A 5 //ACS_Execute(102,0,0,0,0)
+			TANK A 5 A_FaceTarget
+			TANK A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANK A 3 A_FaceTarget
+			TANK A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANK A 3 A_FaceTarget
+			TANK A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANK A 3 A_Jump(208,"Retreat")
+			Goto See
+		Pain:
+			TANK A 6 A_Pain
+			TANK A 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death.Tank:
+			TNKX A 6 Bright A_PlaySound("weapons/cherryboom")
+			TNKX B 6 Bright 
+			TNKX C 6 Bright 
+			Stop
+		Death:
+			TNKX A 6 Bright A_PlaySound("weapons/cherryboom")
+			TNKX B 6 Bright 
+			TNKX C 6 Bright ACS_Execute(724,0,0,0,0)
+			Stop
+	}
+}
+
+actor MiniTank_Brown_Battery : Minitank_Brown
+{
+	Health 40
+	Radius 8
+	Height 16
+	Speed 2
+	Scale 0.40
+	PainChance 256
+	Mass 200
+	MaxDropOffHeight 8
+	MaxStepHeight 8
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+DONTHARMCLASS
+	Species "BrownTank"
+	Obituary "%o died embarrassingly to a toy tank."
+	Tag "Tank Unit"
+	SpawnID 10726
+	States
+	{
+		Spawn:
+			TANK A 3 A_Look
+			Loop
+		See:
+			TANK AA 4 A_Chase
+			Loop
+		Missile:
+			TANK A 5 //ACS_Execute(102,0,0,0,0)
+			TANK A 0 A_Jump(108,"Rocket")
+			TANK A 5 A_FaceTarget
+			TANK A 0 A_CustomMissile("TankShell",12,0,random(-7,7))
+			TANK A 0 A_CustomMissile("TankShell",12,0,random(-7,7))
+			TANK A 4 A_CustomMissile("TankShell",12,0,random(-7,7))
+			Goto See
+		Rocket:
+			TANK A 5 A_FaceTarget
+			TANK A 4 A_CustomMissile("TankMissile",12)
+			TANK A 40
+			Goto See
+		Pain:
+			TANK A 6 A_Pain
+			TANK A 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death.Tank:
+			TNKX A 6 Bright A_PlaySound("weapons/cherryboom")
+			TNKX B 6 Bright 
+			TNKX C 6 Bright 
+			Stop
+	Death:
+			TNKX A 6 Bright A_PlaySound("weapons/cherryboom")
+			TNKX B 6 Bright 
+			TNKX C 6 Bright ACS_Execute(724,0,0,0,0)
+			Stop
+	}
+}
+
+
+actor TankShell
+{
+	Radius 4
+	Height 8
+	Speed 4
+	Damage 2
+	Scale 0.20
+	DamageType "Tank"
+	Projectile
+	+RANDOMIZE
+	+NOEXTREMEDEATH
+	+THRUSPECIES
+	renderstyle "Normal"
+	Seesound "blunderfire"
+	DeathSound "croquet/ballhit"
+	States
+	{
+		Spawn:
+			BSHT AB 3 bright
+			Loop
+		Death:
+			BMX1 ABCDE 5 Bright
+			Stop
+	}
+}
+
+actor TankBullet
+{
+	Radius 4
+	Height 8
+	Speed 4
+	Damage 1
+	Scale 0.10
+	DamageType "Tank"
+	Projectile
+	+RANDOMIZE
+	+NOEXTREMEDEATH
+	+THRUSPECIES
+	renderstyle "Normal"
+	Seesound "blunderfire"
+	DeathSound "croquet/ballhit"
+	States
+	{
+		Spawn:
+			BSHT AB 3 bright
+			Loop
+		Death:
+			BMX1 ABCDE 5 Bright
+			Stop
+	}
+}
+
+actor TankMissile
+{
+	Radius 4
+	Height 8
+	Speed 4
+	Damage 5
+	Scale 0.25
+	DamageType "Tank"
+	Projectile
+	+RANDOMIZE
+	+NOEXTREMEDEATH
+	+THRUSPECIES
+	DONTHURTSHOOTER
+	renderstyle "Normal"
+	Seesound "weapons/rocketfire"
+	DeathSound "weapons/cherryboom"
+	ExplosionRadius 64
+	States
+	{
+		Spawn:
+			BROK ABCD 3 bright
+			Loop
+		Death:
+			BMX2 A 5 A_Explode
+			BMX2 BCDEFG 5 Bright
+			Stop
+	}
+}
+
+Actor BowlingPin 10727
+{
+	//$Category RPProps
+	Height 32
+	Radius 8
+	Health 10
+	MONSTER
+	+NOBLOOD
+	SpawnID 10727
+	DeathSound "misc/pinfall"
+	States
+	{
+		Spawn:
+			BWPN A 1
+			Loop
+		See:
+			BWPN A 1
+			Loop
+		Death:
+			TNT1 A 0 A_Scream
+			TNT1 A 0 A_NoBlocking
+			TNT1 A 1 A_SpawnItemEx ("PinFall", 0, 0, random(0,42), random(2,6), random(2,6), 0, random(0,360), 160)
+			TNT1 A 0 ACS_Execute(727,0,0,0,0)
+			Stop
+	}
+}
+
+Actor PinFall
+{
+	+DOOMBOUNCE
+	PROJECTILE
+	-NOGRAVITY
+	+NOBLOCKMAP
+	+CANNOTPUSH
+	-NOTELEPORT
+	-SOLID
+	+RIPPER
+	Radius 2
+	Damage 4
+	mass 5
+	bouncefactor 0.5
+	DeathSound "misc/pinfall"
+	bouncesound "misc/pinfall"
+	Speed 25
+	States
+	{
+		Spawn:
+			BWPN A 0
+			BWPN A 0 A_Jump(64,"Alt") 
+			BWPN A 0 ThrustThingZ (0, (Random (10, 20)), 0, 1)
+			goto See
+		Alt:
+			BWPN A 0 ThrustThingZ (0, (Random (20, 60)), 0, 1)
+			Stop 
+		See:
+			BWPN B 5
+			BWPN C 5 ThrustThingZ(0,(Random (6, 10)),1,1)
+			BWPN D 5 
+			BWPN A 5
+			loop
+		Death:
+			BWPN B 50 
+			Stop
+	}
+}
+
+// AFD MONSTERS AND THINGS 
+//MEISTER KRAG
+actor Teacher_Krag 10831
+{
+	//$Category RPTeachers
+    Health 1500
+    Radius 32
+    Height 80
+    Speed 18
+    PainChance 128
+	Painchance "Suck", 64
+	Painchance "Breakfast", 0
+	Painchance "Beats", 0
+	DamageFactor "Bonk", 0.5
+	DamageFactor "Fire", 0.5
+	DamageFactor "Beats", 0.25
+	DamageFactor "Chop", 2
+	DamageFactor "Breakfast", 0
+	DamageFactor "suck", 0
+	MeleeThreshold 208
+	MeleeRange 80
+	Mass 5000
+	Scale 1.5
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+	+NORADIUSDMG
+	SeeSound "krag/sight"
+	PainSound "krag/pain"
+	DeathSound "krag/death"
+	ActiveSound "krag/active"
+	MeleeSound "mallethit"
+	Obituary "%o was flunked by Meister Krag."
+	Tag "Meister Krag"
+	SpawnID 10831
+	States
+	{
+		Spawn:
+			MKRG J 10 A_Look
+			Loop
+		See:
+			MKRG A 0 A_JumpIfHealthLower(1000,"SeeFast")
+			MKRG AABBCCDD 3 A_Chase
+			Loop
+		SeeFast:
+			MKRG AABBCCDD 2 A_Chase
+			Loop
+		Melee:
+			MKRG E 0 //ACS_Execute(102,0,0,0,0)
+			MKRG E 0 A_JumpIfHealthLower(1000,"MeleeFast")
+			MKRG E 0 A_PlaySound("krag/throw",CHAN_VOICE)
+			MKRG EF 4 A_FaceTarget
+			MKRG G 6 A_CustomMeleeAttack (random(35,50), "mallethit", "malletswing","bonk", 1) 
+			MKRG HIJ 6 
+			Goto See
+		MeleeFast:
+			MKRG E 0 A_PlaySound("krag/throw",CHAN_VOICE)
+			MKRG EF 3 A_FaceTarget
+			MKRG G 4 A_CustomMeleeAttack (random(45,65), "mallethit", "malletswing","bonk", 1) 
+			MKRG HIJ 4 
+			Goto See
+		Missile:
+			MKRG K 0 //ACS_Execute(102,0,0,0,0)
+			MKRG K 0 A_JumpIfHealthLower(800,"MissileFast")
+			MKRG K 0 A_PlaySound("krag/throw",CHAN_VOICE)
+			MKRG KL 4 A_FaceTarget
+			MKRG M 6 A_CustomMissile("KragBall",40,0,random(-3,3))
+			MKRG N 6
+			Goto See
+		MissileFast:
+			MKRG K 0 A_PlaySound("krag/throw",CHAN_VOICE)
+			MKRG K 0 //ACS_Execute(102,0,0,0,0)
+			MKRG KL 3 A_FaceTarget
+			MKRG M 4 A_CustomMissile("KragBall",40,0,random(-3,3))
+			MKRG N 4
+			MKRG Q 0 A_PlaySound("krag/throw",CHAN_VOICE)
+			MKRG QR 3 A_FaceTarget
+			MKRG S 4 A_CustomMissile("KragBall",40,0,random(-3,3))
+			MKRG T 4
+			Goto See
+		Pain:
+			MKRG F 6 A_Pain
+			MKRG F 3 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death:
+			MKRG E 5 A_Scream
+			MKRG OP 5 bright
+			TBUM A 0 A_Playsound("teacher/death")
+			TBUM ABCDEFGH 5 bright
+			TBUM I 5 bright A_NoBlocking
+			Stop
+	}
+}
+
+Actor KragBall
+{
+	Radius 8
+	Height 6
+	Speed 15
+	Damage 10
+	Scale 0.5
+	Projectile
+	Gravity 0.125
+	-NOGRAVITY
+	DONTHURTSHOOTER
+	BounceType "Hexen"
+	Bouncefactor 1.4
+	Bouncecount 8
+	BounceSound "axe/hit"
+	SeeSound "axe/throw"
+	DeathSound "axe/hit"
+	SpawnID 10891
+	States
+	{
+		Spawn:
+			KRBL ABCD 4 
+			Loop
+		Death:
+			KRBL A 4 Bright A_Explode(10,96)
+			KRBL E 10 Bright
+			Stop
+	}
+}
+
+Actor QuisSpawnCookie : Inventory
+{
+	inventory.amount 1
+	inventory.maxamount 1
+}
+Actor QuisSpawnCookie2 : QuisSpawnCookie
+{
+}
+
+//MEISTER QUISLING
+actor Teacher_Quis 10832
+{
+	//$Category RPTeachers
+	Health 1200
+	Radius 20
+	Height 80
+	Speed 18
+	PainChance 200
+	DamageFactor "Fire", 0.5
+	Painchance "Suck", 64
+	DamageFactor "Bonk", 2
+	DamageFactor "Chop", 2
+	DamageFactor "Zap", 0.25
+	DamageFactor "suck", 0
+	Alpha 0.75
+	renderstyle "Add"
+	Mass 5000
+	Scale 1
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+	+NOTARGET
+	SeeSound "quisling/sight"
+	PainSound "quisling/pain"
+	DeathSound "quisling/death"
+	Obituary "%o was flunked by Meister Quisling."
+	Tag "Meister Quisling"
+	Species "Quisling"
+	SpawnID 10832
+	States
+	{
+		Spawn:
+			MQIS E 10 A_Look
+			Loop
+		See:
+			TNT1 A 0 A_JumpIfInventory ("QuisSpawnCookie2", 1, "See3")
+			TNT1 A 0 A_GiveInventory ("QuisSpawnCookie2")
+			MQIS E 3 A_SetTranslucent (0.2,0)
+			MQIS E 3 A_SetTranslucent (0.4,0)
+			MQIS E 3 A_SetTranslucent (0.6,0)
+			MQIS E 3 A_SetTranslucent (0.8,0)
+			MQIS E 3 A_SetTranslucent (1,0)
+			MQIS E 0 A_changeflag (INVULNERABLE,0)
+			goto See3
+		See3:
+			MQIS AABBCCDD 3 A_Chase
+			loop
+		SpawnClones:
+			MQIS A 0 A_KillChildren
+			MQIS A 0 A_changeflag (INVULNERABLE,1)
+			MQIS E 3 A_SetTranslucent (0.8,0)
+			MQIS E 3 A_SetTranslucent (0.6,0)
+			MQIS E 3 A_SetTranslucent (0.4,0)
+			MQIS E 3 A_SetTranslucent (0.2,0)
+			MQIS E 3 A_SetTranslucent (0,0)
+			MQIS AAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_Wander
+			MQIS A 0 A_SpawnItemEx ("QuisFake",0,0,0,0,0,0,0,48)
+			MQIS AAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_Wander
+			MQIS A 0 A_SpawnItemEx ("QuisFake",0,0,0,0,0,0,0,48)
+			MQIS AAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_Wander
+			MQIS E 3 A_SetTranslucent (0.2,0)
+			MQIS E 3 A_SetTranslucent (0.4,0)
+			MQIS E 3 A_SetTranslucent (0.6,0)
+			MQIS E 3 A_SetTranslucent (0.8,0)
+			MQIS E 3 A_SetTranslucent (1,0)
+			MQIS A 0 A_changeflag (INVULNERABLE,0)
+			goto See3
+		Missile:
+			MQIS E 0 //ACS_Execute(102,0,0,0,0)
+			MQIS E 0 A_Jump(128,"MissileZap")
+			MQIS E 0 A_Playsound("quisling/sight",CHAN_VOICE)
+			MQIS E 8 A_FaceTarget
+			MQIS FGFGFG 2 bright
+			MQIS H 0 A_Playsound("teacher/chargeup",CHAN_BODY)
+			MQIS H 6 bright A_CustomMissile("CheeseFX",40,0)
+			MQIS H 6 bright A_CustomMissile("CheeseFX",40,0,45)
+			MQIS H 6 bright A_CustomMissile("CheeseFX",40,0-45)
+			Goto See3
+		MissileZap:
+			MQIS H 0 A_PlaySound("Handmother/Zap")
+			MQIS EE 3 bright 
+			MQIS H 3 bright A_CustomMissile("badZapshot",40)
+			MQIS H 3 bright
+			MQIS H 0 bright A_CustomMissile("badZapshot",40,-48)
+			MQIS H 3 bright A_CustomMissile("badZapshot",40,48)
+			MQIS H 3 bright 
+			MQIS H 3 bright A_CustomMissile("badZapshot",40)
+			MQIS HH 3 bright
+			Goto See3
+		Pain:
+			MQIS I 4 A_Pain
+			MQIS J 6 //ACS_Execute(102,0,0,0,0)
+			MQIS J 0 A_KillChildren
+			MQIS J 0 A_changeflag (INVULNERABLE,1)
+			MQIS J 3 A_SetTranslucent (0.8,0)
+			MQIS J 3 A_SetTranslucent (0.6,0)
+			MQIS J 3 A_SetTranslucent (0.4,0)
+			MQIS J 3 A_SetTranslucent (0.2,0)
+			MQIS J 3 A_SetTranslucent (0,0)
+			Goto SpawnClones +25
+		Death:
+			MQIS I 5 A_Scream
+			MQIS J 5 A_KillChildren
+			MQIS KL 5 bright
+			TBUM A 0 A_Playsound("teacher/death")
+			TBUM ABCDEFGH 5 bright
+			TBUM I 5 bright A_NoBlocking
+			Stop
+	}
+}
+
+Actor QuisFake 
+{
+	Health 100
+	Radius 20
+	Height 80
+	Speed 18
+	PainChance 200
+	Painchance "Suck", 64
+	DamageFactor "Fire", 2
+	DamageFactor "Bonk", 2
+	DamageFactor "Chop", 2
+	DamageFactor "Zap", 0.25
+	DamageFactor "suck", 0
+	Mass 5000
+	Scale 1
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+	SeeSound "quisling/sight"
+	PainSound "quisling/pain"
+	Obituary "%o was flunked by Meister Quisling."
+	Tag "Meister Quisling (Clone)"
+	SpawnID 10839
+	Species "Quisling"
+	+LOOKALLAROUND
+	States
+	{
+		Spawn:
+			TNT1 A 0 A_changeflag (INVULNERABLE,1)
+			TNT1 A 1 A_SetTranslucent (0,0)
+			MQIS A 25
+			MQIS A 0 A_ChangeFlag (SOLID,1)
+		Iseeu:
+			MQIS A 3 A_look
+		See:
+			MQIS E 3 A_SetTranslucent (0.2,0)
+			MQIS E 3 A_SetTranslucent (0.4,0)
+			MQIS E 3 A_SetTranslucent (0.6,0)
+			MQIS E 3 A_SetTranslucent (0.8,0)
+			MQIS E 3 A_SetTranslucent (1,0)
+			MQIS E 3 A_changeflag (INVULNERABLE,0)
+			goto See2
+		See2:
+			MQIS AABBCCDD 3 A_Chase
+			Loop
+		Missile:
+			MQIS E 0 //ACS_Execute(102,0,0,0,0)
+			MQIS E 0 A_Playsound("quisling/sight",CHAN_VOICE)
+			MQIS E 8 A_FaceTarget
+			MQIS H 0 bright A_PlaySound("zappo",CHAN_BODY)
+			MQIS H 8 bright A_CustomMissile("BadZapshot",48,0)
+			MQIS H 6
+			Goto See2
+		Pain:
+			MQIS I 4 A_Pain
+			Goto See2
+		Death:
+			TBUM ABCDEFGH 5 bright
+			TBUM I 5 bright A_NoBlocking
+			Stop
+	}
+}
+
+//MEISTER LAURITZ
+actor Teacher_Lauritz 10833
+{
+	//$Category RPTeachers
+    Health 1500
+    Radius 32
+    Height 80
+    Speed 18
+    PainChance 200
+	Painchance "Suck", 64
+	Painchance "Beats", 0
+	DamageFactor "Fire", 0.5
+	DamageFactor "Cricket", 2
+	DamageFactor "suck", 0
+	Mass 5000
+	Scale 1
+    MONSTER 
+    +FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+    SeeSound "lauritz/sight"
+    PainSound "lauritz/pain"
+    DeathSound "lauritz/death"
+    ActiveSound "lauritz/active"
+    Obituary "%o was flunked by Meister Lauritz."
+	Tag "Meister Lauritz"
+	SpawnID 10833
+    States
+    {
+    Spawn:
+        MLTZ E 10 A_Look
+        Loop
+    See:
+        MLTZ AABBCCDD 3 A_Chase
+        Loop
+    Missile:
+		MLTZ E 0 //ACS_Execute(102,0,0,0,0)
+		MLTZ EF 4 A_FaceTarget
+		MLTZ G 6 A_FaceTarget
+		MLTZ H 6
+		MLTZ I 0 A_Playsound("lauritz/tuba",CHAN_BODY)
+		MLTZ I 3 A_CustomMissile("MusicBall",random(40,48),0,-35)
+		MLTZ I 3 A_CustomMissile("MusicBall",random(40,48),0,35)
+		MLTZ I 3 A_CustomMissile("MusicBall",random(40,48))
+		MLTZ J 6
+        Goto See
+	Escape:
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       TNT1 A 0 A_UnsetSolid
+       TNT1 A 0 A_SpawnItemEx("Vitriola", 0,0,0, 0,0,0, 0, SXF_TRANSFERTRANSLATION,0,995)
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 A 4 A_SetSolid
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       Goto See
+	Pain:
+    	MLTZ J 6 A_Pain
+		MLTZ J 3 A_Jump(208,"Escape")
+    	Goto See
+	Death:
+        MLTZ J 5 A_Scream
+        MLTZ KL 5 bright A_KillChildren
+		TBUM A 0 A_Playsound("teacher/death")
+		TBUM ABCDEFGH 5 bright
+        TBUM I 5 bright A_NoBlocking
+        Stop
+    }
+}
+
+//JUFFRAU JORGENSEN
+actor Teacher_Jorg 10834
+{
+	//$Category RPTeachers
+    Health 1500
+    Radius 32
+    Height 80
+    Speed 18
+    PainChance 200
+	Painchance "Suck", 64
+	DamageFactor "Fire", 0.5
+	DamageFactor "Chop", 2
+	DamageFactor "Zap", 0.25
+	DamageFactor "Beats", 0
+	DamageFactor "Breakfast", 0.5
+	DamageFactor "suck", 0
+	MeleeRange 80
+	Mass 5000
+	Scale 1
+    MONSTER 
+    +FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+	+MISSILEMORE
+    SeeSound "jorg/sight"
+    PainSound "jorg/pain"
+    DeathSound "jorg/death"
+    ActiveSound "jorg/active"
+    Obituary "%o was flunked by Juffrau Jorgensen."
+	Tag "Juffrau Jorgensen"
+	SpawnID 10834
+    States
+    {
+    Spawn:
+        JORG E 10 A_Look
+        Loop
+    See:
+        JORG A 0 //ACS_Execute(102,0,0,0,0)
+		JORG AABBCCDD 3 A_Chase
+        Loop
+	Melee:
+		JORG E 0 //ACS_Execute(102,0,0,0,0)
+		JORG EF 4 A_FaceTarget
+		JORG G 4 A_Playsound("jorg/attack",CHAN_BODY)
+        JORG H 4 A_CustomMeleeAttack (random(35,50), "", "", "chop", 1) 
+		JORG IJ 4 
+		Goto See
+    Missile:
+		JORG E 0 //ACS_Execute(102,0,0,0,0)
+		JORG EN 4 A_FaceTarget
+		JORG N 0 A_Jump(96,"DeathSong")
+		JORG O 6 A_CustomMissile("JorgTeeth",40)
+		JORG PQ 6
+        Goto See
+	DeathSong:
+		JORG OOOOOOOOOOOO 1 A_CustomMissile("JorgSong",40)
+		JORG PQ 6
+        Goto See
+	Pain:
+    	JORG K 6 A_Pain
+		JORG N 3 //ACS_Execute(102,0,0,0,0)
+    	JORG Q 3 
+		JORG Q 0 A_Jumpifhealthlower(300,"escape3")
+		JORG Q 0 A_Jumpifhealthlower(1000,"escape2")
+		JORG Q 0 A_Jumpifhealthlower(1400,"escape")
+		Goto See
+	Escape:
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 A 0 A_UnsetSolid
+       TNT1 AAAAAAAA 1 A_Wander
+       TNT1 A 4 A_SetSolid
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       Goto See
+	Escape2:
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       TNT1 A 0 A_UnsetSolid
+       TNT1 A 0 A_SpawnItemEx("Killetante", 0,0,0, 0,0,0, 0, SXF_TRANSFERTRANSLATION,0,995)
+       TNT1 AAAAAAAA 1 A_Wander
+       TNT1 AAAAAAAA 1 A_Wander
+       TNT1 A 4 A_SetSolid
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       Goto See
+	Escape3:
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 AAAAAAAA 0 A_Wander
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       TNT1 A 0 A_UnsetSolid
+       TNT1 A 0 A_SpawnItemEx("Killetante", 0,0,0, 0,0,0, 0, SXF_TRANSFERTRANSLATION,0,995)
+       TNT1 AAAAAAAA 1 A_Wander
+       TNT1 AAAAAAAA 1 A_Wander
+	   TNT1 A 0 A_Facetarget
+	   TNT1 A 0 A_CustomMissile("JorgTeeth",40)
+	   TNT1 A 0 A_SpawnItemEx("TeleportFog")
+	   TNT1 AAAAAAAA 1 A_Wander
+       TNT1 AAAAAAAA 1 A_Wander
+	   TNT1 A 0 A_SpawnItemEx("Killetante", 0,0,0, 0,0,0, 0, SXF_TRANSFERTRANSLATION,0,995)
+       TNT1 AAAAAAAA 1 A_Wander
+       TNT1 AAAAAAAA 1 A_Wander
+       TNT1 A 4 A_SetSolid
+       TNT1 A 0 A_SpawnItemEx("TeleportFog")
+       Goto Missile
+	Death:
+        JORG K 5 A_Scream
+        JORG LM 5 bright A_KillChildren
+		TBUM A 0 A_Playsound("teacher/death")
+		TBUM ABCDEFGH 5 bright
+        TBUM I 5 bright A_NoBlocking
+        Stop
+    }
+}
+
+actor JorgTeeth
+{
+    Radius 10
+    Height 12
+    Speed 10
+	Health 5
+    Damage 6
+    +SEEKERMISSILE
+	+SHOOTABLE
+	+NOBLOOD
+	+NOEXTREMEDEATH
+    PROJECTILE
+    renderstyle "Normal"
+    SeeSound "birdy/sight"
+	DeathSound "jorg/bite"
+    States
+    {
+    Spawn:
+		JOBL ABAB 2 A_SeekerMissile (10,10)
+        Loop
+    Death:
+        JOBL ABBB 4
+        Stop
+    }
+}
+
+Actor JorgSong
+{
+   Radius 2
+   Height 4
+   Speed 20
+   Damage 1
+   Scale 0.50
+   PROJECTILE
+   +FLOATBOB
+   States
+   {
+   Spawn:
+      GBAL A 0 Bright A_PlaySound("jorg/spit")
+      GBAL A 1 Bright A_CStaffMissileSlither
+      GBAL A 0 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 0, 128)
+      GBAL A 1 Bright A_CStaffMissileSlither
+      GBAL A 0 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 0, 128)
+      GBAL A 1 Bright A_CStaffMissileSlither
+      GBAL A 0 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 0, 128)
+      GBAL A 1 Bright A_CStaffMissileSlither
+      GBAL A 0 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 0, 128)
+      GBAL A 0 Bright
+      loop
+   Death:
+      TNT1 A 1 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+      stop
+   }
+}
+
+//NURSE
+actor Nurse 10844
+{
+	//$Category RPTeachers
+    Health 300
+    Radius 32
+    Height 80
+    Speed 18
+    PainChance 192
+	DamageFactor "Fire", 2
+	DamageFactor "Chop", 2
+	MeleeRange 80
+	Mass 1000
+	Scale 1
+    MONSTER 
+    +FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+    SeeSound "jorg/sight"
+    PainSound "jorg/pain"
+    DeathSound "jorg/death"
+    ActiveSound "jorg/active"
+    Obituary "%o was vaccinated by a demented nurse."
+	Tag "Nurse"
+	SpawnID 10844
+    States
+    {
+    Spawn:
+        NURS E 10 A_Look
+        Loop
+    See:
+        NURS AABBCCDD 3 A_Chase
+        Loop
+	Melee:
+		NURS E 0 //ACS_Execute(102,0,0,0,0)
+		NURS EF 4 A_FaceTarget
+		NURS G 4 A_Playsound("jorg/attack",CHAN_BODY)
+        NURS H 4 A_CustomMeleeAttack (random(35,50), "", "", "chop", 1) 
+		NURS IJ 4 
+		Goto See
+	Pain:
+    	NURS K 6 A_Pain
+    	Goto See
+	Death.Suck:
+		NURS K 5 A_PlaySound("VacDed",CHAN_BODY)
+		NURS K 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4)
+		Stop
+	Death:
+        NURS K 5 A_Scream
+		TBUM A 0 A_Playsound("teacher/death")
+		TBUM ABCDEFGH 5 bright
+        TBUM I 5 bright A_NoBlocking
+        Stop
+    }
+}
+
+//BARON VOKTER
+actor Teacher_Vokter 10835
+{
+	//$Category RPTeachers
+	Health 1500
+	Radius 20
+	Height 80
+	Speed 18
+	PainChance 200
+	Painchance "Suck", 64
+	DamageFactor "suck", 0
+	Mass 5000
+	Scale 1
+	MONSTER 
+	+FLOORCLIP
+	+NOBLOOD
+	+NOINFIGHTING
+	+DONTHARMCLASS
+	PainSound "vokter/pain"
+	DeathSound "vokter/death"
+	Obituary "%o was flunked by Baron Vokter."
+	Tag "Baron Vokter"
+	SpawnID 10835
+	States
+	{
+		Spawn:
+			VOKT Z 10 A_Look
+			Loop
+		See:
+			VOKT AABBCCDD 3 A_Chase
+			Loop
+		Missile:
+			VOKT F 0 //ACS_Execute(102,0,0,0,0)
+			VOKT F 4 A_FaceTarget
+			VOKT H 0 A_PlaySound("Handmother/Zap")
+			VOKT HIJKHI 3 bright 
+			VOKT J 3 bright A_CustomMissile("badZapshot",40)
+			VOKT K 3 bright
+			VOKT J 0 bright A_CustomMissile("badZapshot",40,-48)
+			VOKT J 3 bright A_CustomMissile("badZapshot",40,48)
+			VOKT K 3 bright 
+			VOKT J 3 bright A_CustomMissile("badZapshot",40)
+			VOKT KH 3 bright
+			Goto See
+		Pain:
+			VOKT E 6 A_Pain
+			VOKT L 6 //ACS_Execute(102,0,0,0,0)
+			Goto See
+		Death:
+			VOKT E 10 A_Scream
+			VOKT L 10
+			VOKT M 8 bright
+			TBUM A 0 A_Playsound("teacher/death")
+			TBUM ABCDEFGH 5 bright
+			TBUM I 5 bright A_NoBlocking
+			Stop
+	}
+}
+
+//BELLEFISH
+actor Bellefish_Fly 5294
+{
+	//$Category RPMonsters
+    Health 150
+    Radius 20
+    Height 56
+    Speed 10
+	Mass 500
+	MeleeRange 128
+    PainChance 256
+	DamageFactor "Fire", 0.25
+	DamageFactor "Boiling", 0
+	DamageFactor "Bap", 1
+	PainChance "Bap", 200
+    MONSTER 
+    +NOBLOOD
+	+NOINFIGHTING
+	+FLOAT
+	+NOGRAVITY
+	+DONTMORPH
+    Obituary "%o was zapped by a flying bellefish."
+	PainSound "aqua/kill2"
+	Deathsound "aqua/kill2"
+	Tag "Bellefish (Flying)"
+	SpawnID 5294
+    States
+    {
+    Spawn:
+        SHLF ABCB 10 bright A_Look 
+        Loop
+    See:
+        SHLF ABCB 5 bright A_Chase
+        Loop
+	Melee:
+        SHLF D 0 //ACS_Execute(102,0,0,0,0)
+		SHLF E 0 A_Playsound("bellefish/charge",CHAN_BODY)
+		SHLF EFG 3 bright A_FaceTarget
+        SHLF HIHI 3 bright A_CustomMeleeAttack (random(1,5), "bellefish/zap", "bellefish/charge", "", 1) 
+        SHLF G 8 bright
+		Goto See
+    Pain:
+    	SHLF J 9 bright A_Pain
+		SHLF D 3 bright
+    	Goto See
+    Death.Suck:
+		SHLF J 5 A_PlaySound("VacDed",CHAN_BODY)
+		SHLF J 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,2)
+		Stop
+	Death:
+		SHLF J 0 A_Playsound("aqua/kill1")
+		SHLF J 7 Bright A_Scream
+        SHLF KLM 7 Bright 
+        SHLF N 7 Bright A_NoBlocking
+        Stop
+    }
+}
+
+actor Manchineel_Ceiling : Manchineel 15035
+{
+	//$Category RPMonsters
+	Height 96
+	+NOGRAVITY
+	+SPAWNCEILING
+	Tag "Man-Chineel (Flipped)"
+    States
+    {
+    Spawn:
+        URNT A 10 A_Look
+        Loop
+    See:
+        URNT AA 3 A_Chase
+        Loop
+	Melee:
+	Missile:
+        URNT BCD 6
+		URNT E 0 A_PlaySound("gard/sight",CHAN_VOICE)
+		URNT E 0 //ACS_Execute(102,0,0,0,0)
+		URNT E 6 A_FaceTarget
+        URNT F 6 A_ComboAttack 
+		URNT G 6 
+		URNT DCB 4 
+        Goto See
+    Pain:
+    	URNT H 6 A_Pain
+		URNT DCB 2
+    	Goto See
+    Death.Suck:
+		URNT H 5 A_PlaySound("VacDed",CHAN_BODY)
+		URNT H 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,6)
+		Stop
+	Death:
+        URNT I 0 A_Scream
+		URNT I 0 A_NoBlocking
+		URNT I 0 A_NoGravity
+		URNT I 5 Bright 
+		URNT JK 5 Bright
+        TNT1 A 5 
+        Stop
+    }
+}
+
+//NPCS
+//VOKTER
+ACTOR Vokter_Stand 10931
+{
+  //$Category RPPeeps
+  Radius 24
+  Height 64
+  +SOLID
+  SpawnID 10931
+  States
+  {
+  Spawn:
+    VOKT Z -1
+    Stop
+  }
+}
+
+//ADULTS
+actor Chef1 10932
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 64
+    Speed 0
+    PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	DropItem "EggAmmo", 64
+	Tag "Chef 1"
+	SpawnID 10932
+    States
+    {
+    Spawn:
+        NAD9 ABCD 10 A_Look
+        Goto See
+    See:
+        NAD9 ABCD 10 A_Chase
+        Loop
+    Death.Suck:
+		NAD9 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NAD9 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NAD9 EEE 20 
+		NAD9 E 1 A_CheckProximity("death","dinahplayer",40)
+		NAD9 E -1 Thing_Raise(0)
+    Raise:
+		NAD9 AA 1
+		Goto see
+	}
+}
+
+actor Lady1 10933
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 64
+    Speed 10
+	Scale 0.75
+    PainChance 256
+	Mass 5000
+	MaxStepHeight 8
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	-CANUSEWALLS
+	Tag "Lady 1"
+	SpawnID 10933
+    States
+    {
+    Spawn:
+        NAD1 AAAA 10
+		NAD1 A 10 A_Look
+        Goto See
+    See:
+        NAD1 ABABABAB 10 A_Wander
+        Goto Spawn
+    Death.Suck:
+		NAD1 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NAD1 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NAD1 CCC 20 
+		NAD1 C 1 A_CheckProximity("death","dinahplayer",40)
+		NAD1 C -1 Thing_Raise(0)
+    Raise:
+		NAD1 AA 1
+		Goto see
+    }
+}
+
+actor Lady2 : Lady1 10983
+{
+	//$Category RPPeeps
+	Tag "Lady 2"
+	SpawnID 10983
+    States
+    {
+    Spawn:
+        NAD1 DDDD 10
+		NAD1 D 10 A_Look
+        Goto See
+    See:
+        NAD1 DEDEDEDE 10 A_Wander
+        Goto Spawn
+    Death.Suck:
+		NAD1 D 5 A_PlaySound("VacDed",CHAN_BODY)
+		NAD1 D 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NAD1 FFF 20 
+		NAD1 F 1 A_CheckProximity("death","dinahplayer",40)
+		NAD1 F -1 Thing_Raise(0)
+    Raise:
+		NAD1 DD 1
+		Goto see
+    }
+}
+
+actor Lady3 : Lady1 10993
+{
+	//$Category RPPeeps
+	+CANTLEAVEFLOORPIC
+	Tag "Lady 3"
+	SpawnID 10993
+    States
+    {
+    Spawn:
+        NA12 ABABA 10
+		NA12 B 10 A_Look
+        Goto See
+    See:
+        NA12 CDEFCDEFCDEF 6 A_Wander
+        Goto Spawn
+    Death.Suck:
+		NA12 C 5 A_PlaySound("VacDed",CHAN_BODY)
+		NA12 C 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NA12 GGG 20 
+		NA12 G 1 A_CheckProximity("death","dinahplayer",40)
+		NA12 G -1 Thing_Raise(0)
+    Raise:
+		NA12 AA 1
+		Goto see
+    }
+}
+
+
+actor Lady1Sit 10934
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 56
+    Speed 0
+    Scale 0.75
+    PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	Tag "Lady 1 Sitting"
+	SpawnID 10934
+    States
+    {
+    Spawn:
+        NA10 A 10 A_Look
+        Goto See
+    See:
+        NA10 A 10 A_Chase
+        Loop
+    Death.Suck:
+		NA10 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NA10 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NA10 BBB 20 
+		NA10 B 1 A_CheckProximity("death","dinahplayer",40)
+		NA10 B -1 Thing_Raise(0)
+    Raise:
+		NA10 AA 1
+		Goto see
+    }
+}
+
+actor Lady2Sit : Lady1Sit 10984
+{
+	//$Category RPPeeps
+	Tag "Lady 2 Sitting"
+	SpawnID 10984
+    States
+    {
+    Spawn:
+        NA10 C 10 A_Look
+        Goto See
+    See:
+        NA10 C 10 A_Chase
+        Loop
+    Death.Suck:
+		NA10 C 5 A_PlaySound("VacDed",CHAN_BODY)
+		NA10 C 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NA10 DDD 20 
+		NA10 D 1 A_CheckProximity("death","dinahplayer",40)
+		NA10 D -1 Thing_Raise(0)
+    Raise:
+		NA10 CC 1
+		Goto see
+    }
+}
+
+
+actor DudePipe 10935
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 64
+    Speed 0
+    Scale 0.75
+    PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	Tag "Dude Pipe"
+	SpawnID 10935
+    States
+    {
+    Spawn:
+        NAD2 AB 10 A_Look
+        Goto See
+    See:
+        NAD2 AB 10 A_Chase
+        Loop
+    Death.Suck:
+		NAD2 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NAD2 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NAD2 CCC 20 
+		NAD2 C 1 A_CheckProximity("death","dinahplayer",40)
+		NAD2 C -1 Thing_Raise(0)
+    Raise:
+		NAD2 AA 1
+		Goto see
+    }
+}
+
+actor DudeCape 10936
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 64
+    Speed 10
+    Scale 0.75
+    PainChance 256
+	Mass 5000
+	MaxStepHeight 8
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	-CANUSEWALLS
+	Tag "Dude Cape"
+	SpawnID 10936
+    States
+    {
+    Spawn:
+        NAD4 DEDE 7
+        NAD4 DEDE 7 A_Look
+        Goto See
+    See:
+        NAD4 ABAC 10 A_Wander
+        NAD4 A 0 A_Jump(96,"Spawn")
+		Loop
+    Death.Suck:
+		NAD4 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NAD4 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NAD4 FFF 20 
+		NAD4 F 1 A_CheckProximity("death","dinahplayer",40)
+		NAD4 F -1 Thing_Raise(0)
+    Raise:
+		NAD4 AA 1
+		Goto see
+    }
+}
+
+actor LadyNun 10937
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 64
+    Speed 10
+    Scale 0.75
+    PainChance 256
+	Mass 5000
+	MaxStepHeight 8
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	-CANUSEWALLS
+	Tag "Lady Nun"
+	SpawnID 10937
+    States
+    {
+    Spawn:
+        NAD5 ABAB 10
+		NAD5 A 10 A_Look
+        Goto See
+    See:
+        NAD5 AAAAAAAA 10 A_Wander
+        Goto Spawn
+    Death.Suck:
+		NAD5 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NAD5 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NAD5 CCC 20 
+		NAD5 C 1 A_CheckProximity("death","dinahplayer",40)
+		NAD5 C -1 Thing_Raise(0)
+    Raise:
+		NAD5 AA 1
+		Goto see
+    }
+}
+
+actor DudeBeret 10938
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 64
+    Speed 0
+    Scale 0.75
+    PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	Tag "Dude Beret"
+	SpawnID 10938
+    States
+    {
+    Spawn:
+        NAD6 AB 30 A_Look
+        Goto See
+    See:
+        NAD6 AB 30 A_Chase
+        Loop
+    Death.Suck:
+		NAD6 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NAD6 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NAD6 CCC 20 
+		NAD6 C 1 A_CheckProximity("death","dinahplayer",40)
+		NAD6 C -1 Thing_Raise(0)
+    Raise:
+		NAD6 AA 1
+		Goto see
+    }
+}
+
+actor DudeStick 10939
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 64
+    Speed 0
+    Scale 0.75
+    PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	Tag "Dude Stick"
+	SpawnID 10939
+    States
+    {
+    Spawn:
+        NAD7 AB 10 A_Look
+        Goto See
+    See:
+        NAD7 AB 10 A_Chase
+        Loop
+    Death.Suck:
+		NAD7 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NAD7 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NAD7 CCC 20 
+		NAD7 C 1 A_CheckProximity("death","dinahplayer",40)
+		NAD7 C -1 Thing_Raise(0)
+    Raise:
+		NAD7 AA 1
+		Goto see
+    }
+}
+
+actor DudePaper 10940
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 64
+    Speed 0
+    Scale 0.75
+    PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	Tag "Dude Paper"
+	SpawnID 10940
+    States
+    {
+    Spawn:
+        NAD8 AB 20 A_Look
+        Goto See
+    See:
+        NAD8 AB 20 A_Chase
+        Loop
+    Death.Suck:
+		NAD8 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NAD8 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NAD8 CCC 20 
+		NAD8 C 1 A_CheckProximity("death","dinahplayer",40)
+		NAD8 C -1 Thing_Raise(0)
+    Raise:
+		NAD8 AA 1
+		Goto see
+    }
+}
+
+actor KidWashGirl1 10941
+{
+	//$Category RPPeeps
+    Health 10
+    Radius 20
+    Height 40
+    Speed 0
+	Scale 0.75
+    PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+    MONSTER 
+    +FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	-SOLID
+	Tag "Kid Wash Girl 1"
+	SpawnID 10941
+    States
+    {
+    Spawn:
+        NKD1 AB 5 A_Look
+        Goto See
+    See:
+        NKD1 ABABABAB 5 A_Chase
+		NKD1 A 0 A_Jump(128,9)
+		NKD1 ABABABAB 8 A_Chase
+		NKD1 ABAB 5 A_Chase
+        Loop
+    Death.Suck:
+		NKD1 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NKD1 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NKD1 CCC 20 
+		NKD1 C 1 A_CheckProximity("death","dinahplayer",40)
+		NKD1 C -1 Thing_Raise(0)
+    Raise:
+		NKD1 AA 1
+		Goto see
+    }
+}
+
+actor KidWashGirl2 : KidWashGirl1 10971
+{
+	//$Category RPPeeps
+	Tag "Kid Wash Girl 2"
+	SpawnID 10971
+    States
+    {
+    Spawn:
+        NKD1 DE 5 A_Look
+        Goto See
+    See:
+        NKD1 DEDEDEDE 5 A_Chase
+		NKD1 D 0 A_Jump(128,9)
+		NKD1 DEDEDEDE 8 A_Chase
+		NKD1 DEDE 5 A_Chase
+        Loop
+    Death.Suck:
+		NKD1 D 5 A_PlaySound("VacDed",CHAN_BODY)
+		NKD1 D 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NKD1 FFF 20 
+		NKD1 F 1 A_CheckProximity("death","dinahplayer",40)
+		NKD1 F -1 Thing_Raise(0)
+    Raise:
+		NKD1 DD 1
+		Goto see
+    }
+}
+
+
+actor KidWashBoy1 : KidWashGirl1 10942
+{
+	//$Category RPPeeps
+	Tag "Kid Wash Boy 1"
+	SpawnID 10942
+    States
+    {
+    Spawn:
+        NKD4 AB 5 A_Look
+        Goto See
+    See:
+        NKD4 ABABABAB 5 A_Chase
+		NKD4 A 0 A_Jump(128,9)
+		NKD4 ABABABAB 8 A_Chase
+		NKD4 ABAB 5 A_Chase
+        Loop
+    Death.Suck:
+		NKD4 A 5 A_PlaySound("VacDed",CHAN_BODY)
+		NKD4 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NKD4 CCC 20 
+		NKD4 C 1 A_CheckProximity("death","dinahplayer",40)
+		NKD4 C -1 Thing_Raise(0)
+    Raise:
+		NKD4 AA 1
+		Goto see
+    }
+}
+
+actor KidWashBoy2 : KidWashGirl1 10972
+{
+	//$Category RPPeeps
+	Tag "Kid Wash Boy 2"
+	SpawnID 10972
+    States
+    {
+    Spawn:
+        NKD4 DE 5 A_Look
+        Goto See
+    See:
+        NKD4 DEDEDEDE 5 A_Chase
+		NKD4 D 0 A_Jump(128,9)
+		NKD4 DEDEDEDE 8 A_Chase
+		NKD4 DEDE 5 A_Chase
+        Loop
+    Death.Suck:
+		NKD4 D 5 A_PlaySound("VacDed",CHAN_BODY)
+		NKD4 D 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+		Stop
+	Death:
+		NKD4 FFF 20 
+		NKD4 F 1 A_CheckProximity("death","dinahplayer",40)
+		NKD4 F -1 Thing_Raise(0)
+    Raise:
+		NKD4 DD 1
+		Goto see
+    }
+}
+
+actor Haig : KidWashGirl1 10962
+{
+	//$Category RPPeeps
+	Tag "Haig"
+	SpawnID 10962
+	States
+	{
+		Spawn:
+			HAIG AB 5 A_Look
+			Goto See
+		See:
+			HAIG ABABABAB 5 A_Chase
+			HAIG A 0 A_Jump(128,9)
+			HAIG ABABABAB 8 A_Chase
+			HAIG ABAB 5 A_Chase
+			Loop
+		Death.Suck:
+			HAIG A 5 A_PlaySound("VacDed",CHAN_BODY)
+			HAIG A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			HAIG CCC 20 
+			HAIG C 1 A_CheckProximity("death","dinahplayer",40)
+			HAIG C -1 Thing_Raise(0)
+		Raise:
+			HAIG AA 1
+			Goto see
+	}
+}
+
+actor KidSweep1 10943
+{
+	//$Category RPPeeps
+	Health 10
+	Radius 20
+	Height 64
+	Speed 10
+	Scale 0.75
+	PainChance 256
+	Mass 5000
+	MaxStepHeight 8
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	-CANUSEWALLS
+	Tag "Kid Sweep 1"
+	SpawnID 10943
+	States
+	{
+		Spawn:
+			NKD2 A 10 A_Look
+			Goto See
+		See:
+			NKD2 ABAB 10 A_Wander
+			Goto Spawn
+		Death.Suck:
+			NKD2 A 5 A_PlaySound("VacDed",CHAN_BODY)
+			NKD2 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			NKD2 CCC 20 
+			NKD2 C 1 A_CheckProximity("death","dinahplayer",40)
+			NKD2 C -1 Thing_Raise(0)
+		Raise:
+			NKD2 AA 1
+			Goto see
+	}
+}
+
+actor KidSweep2 : KidSweep1 10973
+{
+	//$Category RPPeeps
+	Tag "Kid Sweep 2"
+	SpawnID 10973
+	States
+	{
+		Spawn:
+			NKD2 D 10 A_Look
+			Goto See
+		See:
+			NKD2 DEDE 10 A_Wander
+			Goto Spawn
+		Death.Suck:
+			NKD2 D 5 A_PlaySound("VacDed",CHAN_BODY)
+			NKD2 D 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			NKD2 FFF 20 
+			NKD2 F 1 A_CheckProximity("death","dinahplayer",40)
+			NKD2 F -1 Thing_Raise(0)
+		Raise:
+			NKD2 DD 1
+			Goto see
+	}
+}
+
+actor Frieda : KidSweep1 10963
+{
+	//$Category RPPeeps
+	Tag "Frieda"
+	SpawnID 10963
+	States
+	{
+		Spawn:
+			FRID A 10 A_Look
+			Goto See
+		See:
+			FRID ABAB 10 A_Wander
+			Goto Spawn
+		Death.Suck:
+			FRID A 5 A_PlaySound("VacDed",CHAN_BODY)
+			FRID A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			FRID CCC 20 
+			FRID C 1 A_CheckProximity("death","dinahplayer",40)
+			FRID C -1 Thing_Raise(0)
+			Raise:
+			FRID AA 1
+			Goto see
+	}
+}
+
+
+actor KidBoy1 10944
+{
+	//$Category RPPeeps
+	Health 10
+	Radius 20
+	Height 64
+	Speed 0
+	Scale 0.75
+	PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	Tag "Kid Boy 1"
+	SpawnID 10944
+	States
+	{
+		Spawn:
+			NKD3 AB 30 A_Look
+			Goto See
+		See:
+			NKD3 AB 30 A_Chase
+			Loop
+		Death.Suck:
+			NKD3 A 5 A_PlaySound("VacDed",CHAN_BODY)
+			NKD3 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			NKD3 CCC 20 
+			NKD3 C 1 A_CheckProximity("death","dinahplayer",40)
+			NKD3 C -1 Thing_Raise(0)
+		Raise:
+			NKD3 AA 1
+			Goto see
+	}
+}
+
+actor KidBoy2 : KidBoy1 10974
+{
+	//$Category RPPeeps
+	Tag "Kid Boy 2"
+	SpawnID 10974
+	States
+	{
+		Spawn:
+			NKD3 DE 30 A_Look
+			Goto See
+		See:
+			NKD3 DE 30 A_Chase
+			Loop
+		Death.Suck:
+			NKD3 D 5 A_PlaySound("VacDed",CHAN_BODY)
+			NKD3 E 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			NKD3 FFF 20 
+			NKD3 F 1 A_CheckProximity("death","dinahplayer",40)
+			NKD3 F -1 Thing_Raise(0)
+		Raise:
+			NKD3 DD 1
+			Goto see
+	}
+}
+
+actor KidPaper1 10945
+{
+	//$Category RPPeeps
+	Health 10
+	Radius 20
+	Height 64
+	Speed 0
+	Scale 0.75
+	PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	Tag "Kid Paper 1"
+	SpawnID 10945
+	States
+	{
+		Spawn:
+			NKD5 AB 10 A_Look
+			Goto See
+		See:
+			NKD5 AB 10 A_Chase
+			Loop
+		Death.Suck:
+			NKD5 A 5 A_PlaySound("VacDed",CHAN_BODY)
+			NKD5 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			NKD5 CCC 20 
+			NKD5 C 1 A_CheckProximity("death","dinahplayer",40)
+			NKD5 C -1 Thing_Raise(0)
+		Raise:
+			NKD5 AA 1
+			Goto see
+	}
+}
+
+actor KidPaper2 : KidPaper1 10975
+{
+	//$Category RPPeeps
+	Tag "Kid Paper 2"
+	SpawnID 10975
+	States
+	{
+		Spawn:
+			NKD5 DE 10 A_Look
+			Goto See
+		See:
+			NKD5 DE 10 A_Chase
+			Loop
+		Death.Suck:
+			NKD5 D 5 A_PlaySound("VacDed",CHAN_BODY)
+			NKD5 D 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			NKD5 FFF 20 
+			NKD5 F 1 A_CheckProximity("death","dinahplayer",40)
+			NKD5 F -1 Thing_Raise(0)
+		Raise:
+			NKD5 DD 1
+			Goto see
+	}
+}
+
+actor KidSword 10976
+{
+	//$Category RPPeeps
+	Health 10
+	Radius 20
+	Height 64
+	Speed 0
+	Scale 0.75
+	PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	Tag "Kid Sword"
+	SpawnID 10976
+	States
+	{
+		Spawn:
+			NKD6 AB 10 A_Look
+			Goto See
+		See:
+			NKD6 AB 10 A_Chase
+			Loop
+		Death.Suck:
+			NKD6 A 5 A_PlaySound("VacDed",CHAN_BODY)
+			NKD6 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			NKD6 CCC 20 
+			NKD6 C 1 A_CheckProximity("death","dinahplayer",40)
+			NKD6 C -1 Thing_Raise(0)
+		Raise:
+			NKD6 AA 1
+			Goto see
+	}
+}
+
+actor KidSwordFat : KidSword 10977
+{
+	//$Category RPPeeps
+	Tag "Kid Sword Fat"
+	SpawnID 10977
+	States
+	{
+		Spawn:
+			NKD6 DE 10 A_Look
+			Goto See
+		See:
+			NKD6 DE 10 A_Chase
+			Loop
+		Death.Suck:
+			NKD6 D 5 A_PlaySound("VacDed",CHAN_BODY)
+			NKD6 D 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			NKD6 FFF 20 
+			NKD6 F 1 A_CheckProximity("death","dinahplayer",40)
+			NKD6 F -1 Thing_Raise(0)
+		Raise:
+			NKD6 DD 1
+			Goto see
+	}
+}
+
+actor KidPaint 10978
+{
+	//$Category RPPeeps
+	Health 10
+	Radius 20
+	Height 64
+	Speed 0
+	Scale 0.75
+	PainChance 256
+	Mass 5000
+	DamageFactor "Cricket", 3
+	DamageFactor "Lead", 2
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	Tag "Kid Paint"
+	SpawnID 10978
+	States
+	{
+		Spawn:
+			NKD7 AB 10 A_Look
+			Goto See
+		See:
+			NKD7 ABABCC 10 A_Chase
+			Loop
+		Death.Suck:
+			NKD7 A 5 A_PlaySound("VacDed",CHAN_BODY)
+			NKD7 A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			NKD7 DDD 20 
+			NKD7 D 1 A_CheckProximity("death","dinahplayer",40)
+			NKD7 D -1 Thing_Raise(0)
+			Raise:
+			NKD7 AA 1
+			Goto see
+	}
+}
+
+actor KidMagic 10979
+{
+	//$Category RPPeeps
+	Health 10
+	Radius 20
+	Height 56
+	Speed 0
+	Scale 1
+	PainChance 256
+	Mass 5000
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+DONTTHRUST
+	+LOOKALLAROUND
+	+NOGRAVITY
+	+FLOATBOB
+	-SOLID
+	Tag "Kid Magic"
+	SpawnID 10979
+	States
+	{
+		Spawn:
+			WTCH A 0 thrustthingz(0,0,0,0)
+			WTCH AB 10 A_Look
+			Goto See
+		See:
+			WTCH AB 10 A_Chase
+			Loop
+		Death.Suck:
+			WTCH A 5 A_PlaySound("VacDed",CHAN_BODY)
+			WTCH A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,3)
+			Stop
+		Death:
+			WTCH CCC 20 A_ChangeFlag(floatbob,0)
+			WTCH C 1 A_CheckProximity("death","dinahplayer",40)
+			WTCH C -1 Thing_Raise(0)
+		Raise:
+			WTCH AA 2 thrustthingz(0,6,0,1)
+			WTCH AA 2 thrustthingz(0,4,1,1)
+			WTCH A 0 A_ChangeFlag(floatbob,1)
+			Goto spawn
+	}
+}
+
+
+//NEW JUNK
+ACTOR Chalkboard 10731
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			CBRD A -1
+			Stop
+	}
+}
+
+ACTOR Easel 10732
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	States
+	{
+		Spawn:
+			EASL A -1
+			Stop
+	}
+}
+
+ACTOR StatueChurch 10733
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			CSTT A -1
+			Stop
+	}
+}
+
+ACTOR TreeOrchard 10734
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			OTRE E -1
+			Stop
+	}
+}
+
+ACTOR StatueHero 10735
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STAT D -1
+			Stop
+	}
+}
+
+ACTOR StatueBabe 10736
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STAT E -1
+			Stop
+	}
+}
+
+ACTOR StatueKey 10737
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			STAT F -1
+			Stop
+	}
+}
+
+ACTOR Topiary_Tree 10738
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TOPI A -1
+			Stop
+	}
+}
+
+ACTOR Topiary_Bird 10739
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TOPI B -1
+			Stop
+	}
+}
+
+ACTOR Topiary_Triple 10740
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TOPI D -1
+			Stop
+	}
+}
+
+ACTOR Topiary_Hammerduck 10741
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TOPI H -1
+			Stop
+	}
+}
+
+ACTOR Topiary_Centaurion 10742
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TOPI C -1
+			Stop
+	}
+}
+
+ACTOR Topiary_Killetante 10743
+{
+	//$Category RPProps
+	Radius 24
+	Height 64
+	+SOLID
+	States
+	{
+		Spawn:
+			TOPI K -1
+			Stop
+	}
+}
+
+ACTOR Centaurion_Hedge 7231
+{
+	//$Category RPMonsters
+	Height 56
+	Radius 24
+	Mass 500
+	Health 200
+	PainChance 256
+	MONSTER
+	+NOBLOOD
+	Tag "Centaurion (Hedge)"
+	States
+	{
+		Spawn:
+			TOPI C 10 A_Look
+			Loop
+		See:
+			TOPI C 1 A_Die
+			Goto Death
+		Pain:
+			TOPI C 1 A_Die
+			Goto Death
+		Death:
+			TOPI C 20
+			TNT1 A 1 A_SpawnItemEX("CentaurionSgt",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			TNT1 A 0 A_NoBlocking
+			Stop
+	}
+}
+
+ACTOR Hammerduck_Hedge 7232
+{
+	//$Category RPMonsters
+	Height 56
+	Radius 24
+	Mass 500
+	Health 200
+	PainChance 256
+	MONSTER
+	+NOBLOOD
+	Tag "Hammerduck (Hedge)"
+	States
+	{
+		Spawn:
+			TOPI H 10 A_Look
+			Loop
+		See:
+			TOPI H 1 A_Die
+			Goto Death
+		Pain:
+			TOPI H 1 A_Die
+			Goto Death
+		Death:
+			TOPI H 20
+			TNT1 A 1 A_SpawnItemEX("Hammerduck",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			TNT1 A 0 A_NoBlocking
+			Stop
+	}
+}
+
+ACTOR Killetante_Hedge 7233
+{
+	//$Category RPMonsters
+	Height 56
+	Radius 24
+	Mass 500
+	Health 200
+	PainChance 256
+	MONSTER
+	+NOBLOOD
+	Tag "Killetante (Hedge)"
+	States
+	{
+		Spawn:
+			TOPI K 10 A_Look
+			Loop
+		See:
+			TOPI K 1 A_Die
+			Goto Death
+		Pain:
+			TOPI K 1 A_Die
+			Goto Death
+		Death:
+			TOPI K 20
+			TNT1 A 1 A_SpawnItemEX("Killetante",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			TNT1 A 0 A_NoBlocking
+			Stop
+	}
+}
+
+actor TreeSapling : SwitchingDecoration 10764
+{
+	//$Category RPProps
+	Radius 20
+	Height 56
+	Mass 1000
+	+FLOORCLIP
+	States
+	{
+		Spawn:
+			OTRE A 1
+			Loop
+		Active:
+			OTRE A 5 A_Playsound("dancer/danceattk",CHAN_BODY)
+			OTRE BCD 7
+			OTRE E 7
+			OTRE E -1
+			Stop
+	}
+}
+
+ACTOR FoodPlateFinal : SwitchingDecoration 17602
+{
+	//$Category RPProps
+	Height 32
+	Radius 20
+	Scale 1
+	Tag "Food Plate (Culinary Arts)"
+	States
+	{
+		Spawn:
+			FOOD Y -1
+			Stop
+		Active:
+			FOOD Z 0 A_PlaySound("dinah/eat")
+			FOOD Z 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 50)
+			FOOD Z -1
+			Stop
+	}
+}
+
+ACTOR OldPipe 10754
+{
+	//$Category RPProps
+	Height 56
+	Radius 8
+	Mass 500
+	Health 20
+	Painchance 256
+	MONSTER
+	+NOBLOOD
+	+DONTTHRUST
+	+NORADIUSDMG
+	Tag "Old Pipe (Prop)"
+	SpawnID 10754
+	States
+	{
+		Spawn:
+			PIPE A 10
+		Goto See
+		See:
+			PIPE A 1
+			Loop
+		Pain:
+			PIPE BCBCBC 1
+			Goto See
+		Death:
+			PIPE A 1
+			TNT1 A 1 A_SpawnItemEX("PipePickup",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			TNT1 A 0 A_NoBlocking
+			Stop
+	}
+}
+
+ACTOR PipePickup : PuzzleItem 13151
+{
+	//$Category RPArtifacts
+	Inventory.Icon "PIPEI0"
+	Inventory.PickupMessage "I'd be DELIGHTED to carry this heavy, filthy length of pipe around."
+	Inventory.PickupSound "Dinah/allowme"
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	PuzzleItem.Number 55
+	Tag "Old Pipe"
+	+FLOATBOB
+	SpawnID 13151
+	States
+	{
+		Spawn:
+			PIPE P 6 
+			Loop
+	}
+}
+
+//Knight Helm
+ACTOR Helm : PuzzleItem 12020
+{
+	//$Category RPArtifacts
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	Inventory.Icon "HELMI0"
+	Inventory.PickupMessage "An empty helmet...?"
+	Inventory.PickupSound "Dinah/allowme"
+	PuzzleItem.Number 4
+	Tag "Helmet"
+	+FLOATBOB
+	States
+	{
+		Spawn:
+			HELM A -1
+			Stop
+	}
+}
+
+ACTOR GoldHelm : PuzzleItem 19152
+{
+	//$Category RPArtifacts
+	Inventory.Icon "HELGI0"
+	Inventory.PickupMessage "A fancy gold helmet."
+	Inventory.PickupSound "Dinah/allowme"
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	PuzzleItem.Number 56
+	Tag "Golden Helm"
+	+FLOATBOB
+	SpawnID 19152
+	States
+	{
+		Spawn:
+			HELG A 6 
+			Loop
+	}
+}
+
+ACTOR FosnaStandard : PuzzleItem 19153
+{
+	//$Category RPArtifacts
+	Inventory.Icon "FLAGI0"
+	Inventory.PickupMessage "The standard of Fosna, my homeland."
+	Inventory.PickupSound "Dinah/allowme"
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	PuzzleItem.Number 57
+	Scale 0.75
+	Tag "Fosna Standard"
+	+FLOATBOB
+	-NOGRAVITY
+	SpawnID 19153
+	States
+	{
+		Spawn:
+			FLAG A -1 
+			Stop
+	}
+}
+
+ACTOR FancyFork : PuzzleItem 19154
+{
+	//$Category RPArtifacts
+	Inventory.Icon "FORKI0"
+	Inventory.PickupMessage "A glimmering dinner fork."
+	Inventory.PickupSound "Dinah/allowme"
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	PuzzleItem.Number 58
+	Scale 1
+	Tag "Fork of Culinary Judgement"
+	+FLOATBOB
+	-NOGRAVITY
+	States
+	{
+		Spawn:
+			FORK AB 6 Bright 
+			Loop
+	}
+}
+
+ACTOR GoldArmor 10774
+{
+	//$Category RPProps
+	Height 56
+	Radius 20
+	+SOLID
+	Tag "Gold Armor"
+	SpawnID 10774
+	States
+	{
+		Spawn:
+			STAG A -1
+			stop
+	}
+}
+
+ACTOR GoldArmorHeadless 10775
+{
+	//$Category RPProps
+	Height 56
+	Radius 20
+	+SOLID
+	Tag "Gold Armor (Headless)"
+	SpawnID 10775
+	States
+	{
+		Spawn:
+			STAG B -1
+			stop
+	}
+}
+
+ACTOR FancyChair 11776
+{
+	//$Category RPProps
+	Height 56
+	Radius 20
+	Tag "Fancy Chair"
+	States
+	{
+		Spawn:
+			CHAR A -1
+			stop
+	}
+}
+
+ACTOR MessengerBird 17603
+{
+	//$Category RPProps
+	Health 250
+	Radius 20
+	Height 64
+	Speed 10
+	PainChance 0
+	MONSTER 
+	+FLOORCLIP
+	+NOINFIGHTING
+	+NOBLOOD
+	+FLOAT
+	+NOGRAVITY
+	+FRIGHTENED
+	-SHOOTABLE
+	Obituary "%o somehow got pecked to death."
+	Tag "Messenger Bird"
+	SpawnID 17603
+	States
+	{
+		Spawn:
+			OWLM A 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			OWLM AA 10 A_Look
+			Loop
+		See:
+			OWLM BBCC 2 A_Chase
+			OWLM B 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
+			Loop
+		Death:
+			TNT1 A 1 A_NoBlocking
+			Stop
+	}
+}
+
+
+Actor RatWander : MorphedMonster 10002
+{
+	//$Category RPPeeps
+	Health 10
+	Radius 10
+	Height 20
+	Mass 40
+	Speed 10
+	Monster
+	-COUNTKILL
+	+DONTMORPH
+	+FLOORCLIP
+	+NOBLOOD
+	-SHOOTABLE
+	+FRIENDLY
+	SeeSound "Rat/Pain"
+	AttackSound "Rat/Attack"
+	PainSound "Rat/Pain"
+	DeathSound "Rat/Death"
+	ActiveSound "Rat/Active"
+	Obituary "$OB_RAT"
+	States
+	{
+		Spawn:
+			RATS AA 10 A_Look
+			Goto See
+		See:
+			RATS ABC 10 A_Wander
+			RATS AAAAAAAA 10
+			Loop
+		Death:
+			RATS D 6 A_Scream
+			RATS E 6 A_NoBlocking
+			RATS F 6
+			TNT1 A -1
+			Stop
+	}
+}
+
+Actor RatFriend : RatWander 10093
+{}
+
+Actor RatPlayer : PlayerPawn
+{
+	Health 30
+	ReactionTime 0
+	PainChance 255
+	Radius 10
+	Height 20
+	Speed 1
+	+NOSKIN
+	-PICKUP
+	PainSound "Rat/Pain"
+	DeathSound "Rat/Death"
+	Player.JumpZ 3
+	Player.Viewheight 18
+	Player.ForwardMove 0.75, 0.75
+  Player.SideMove 0.65, 0.65
+	Player.SpawnClass "Rat"
+	Player.SoundClass "Rat"
+	Player.DisplayName "Rat"
+	Player.MorphWeapon "RatNose"
+	States
+	{
+		Spawn:
+			RATS A 0 A_StopSound(5)
+			RATS A -1
+			Stop
+		See:
+			RATS ABC 3
+			Loop
+		Melee:
+		Missile:
+			RATS B 8
+			RATS A 8
+			Goto Spawn
+		Pain:
+			RATS C 4 A_Pain
+			Goto Spawn
+		Death:
+			RATS D 6 A_Scream
+			RATS E 6 A_NoBlocking
+			RATS F 6
+			TNT1 A 1 A_CheckPlayerDone
+			Wait
+	}
+}
+
+Actor RatNose : Beak
+{
+	Weapon.SelectionOrder 10000
+	+WEAPON.DONTBOB
+	+WEAPON.MELEEWEAPON
+	Weapon.YAdjust 15
+	Obituary "$OB_MPRAT"
+	AttackSound "Rat/Hit"
+	States
+	{
+		Ready:
+			RATW AAAAAAAA 1 A_WeaponReady
+			RATW A 0 A_Jump(16,1)
+			Loop
+			RATW B 1 A_PlaySound ("Rat/Active", CHAN_WEAPON)
+			RATW BBB 1
+			Loop
+		Deselect:
+			RATW A 1
+			{
+				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1)) { A_Lower(12); }
+				A_Lower(12);
+			}
+			Loop
+		Select:
+			RATW A 0 A_Raise
+			Loop
+		Fire:
+			RATW A 0 A_PlaySound ("Rat/Attack", CHAN_WEAPON)
+			RATW A 8
+			{
+				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1))
+				{
+					A_CustomPunch((1*10));
+				}
+				else
+				{
+					A_CustomPunch(1);
+				}
+			}
+			RATW B 8
+			Goto Ready
+	}
+}
+
+
+Actor PowerRatMorph : PowerMorph
+{
+	PowerMorph.PlayerClass "RatPlayer"
+}
+
+
+Actor RatPotion : PowerupGiver 13152
+{
+	//$Category RPArtifacts
+	Inventory.PickupSound "Misc/p_pkup"
+	Inventory.PickupMessage "'Rodentum?' Hmm..."
+	Tag "Rodentum Potion"
+	Inventory.DefMaxAmount
+	Inventory.Icon "RBOTI0"
+	Powerup.Type RatMorph
+	Powerup.Duration 500
+	+Inventory.InvBar
+	+FloatBob
+	+Inventory.PickupFlash
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	SpawnID 13152
+	States
+	{
+		Spawn:
+			RBOT AB 6
+			Loop
+	}
+}
+
+Actor CheeseFX : MorphProjectile
+{
+	SpawnID 40
+	Radius 8
+	Height 8
+	Speed 9
+	Seesound "aqua/kill2"
+	Deathsound "aqua/kill1"
+	MorphProjectile.PlayerClass "RatPlayer"
+	MorphProjectile.Duration 200
+	MorphProjectile.MorphStyle MRF_UNDOBYTOMEOFPOWER
+	+SEEKERMISSILE
+	States
+	{
+		Spawn:
+			CHEM ABCD 3 A_SeekerMissile (7,7,SMF_LOOK)
+			Loop
+		Death:
+			CHEM EFGH 3 Bright
+			Stop
+	}
+}
+
+
+Actor PowerRavenMorph : PowerMorph
+{
+	PowerMorph.PlayerClass "RavenPlayer"
+	PowerMorph.MorphStyle ( MRF_FULLHEALTH | MRF_ADDSTAMINA | MRF_WHENINVULNERABLE | MRF_LOSEACTUALWEAPON | MRF_NEWTIDBEHAVIOUR | MRF_UNDOBYDEATH | MRF_UNDOBYDEATHSAVES )
+}
+
+
+Actor BirdPotion : PowerupGiver 13172
+{
+	//$Category RPArtifacts
+	Inventory.PickupSound "Misc/p_pkup"
+	Inventory.PickupMessage "The label simply says, 'Nevermore'."
+	Inventory.DefMaxAmount
+	Inventory.Icon "RAVNI0"
+	Powerup.Type RavenMorph
+	Powerup.Duration 250
+	+Inventory.InvBar
+	+FloatBob
+	+Inventory.PickupFlash
+	Scale 1
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	SpawnID 13172
+	Tag "Nevermore Potion"
+	States
+	{
+		Spawn:
+			RAVN A 6 Bright
+			Loop
+	}
+}
+
+Actor PowerRavenInvisibility : PowerInvisibility
+{
+	Powerup.Mode None
+	Powerup.Strength 0
+}
+
+Actor PowerRavenFlight : PowerFlight
+{
+	Inventory.Icon "TNT1A0"
+}
+
+Actor RavenStealth : PowerupGiver
+{
+	Inventory.PickupSound ""
+	Inventory.PickupMessage ""
+	Inventory.MaxAmount 0
+	Inventory.Icon "TNT1A0"
+	Powerup.Type "RavenInvisibility"
+	Powerup.Duration 8
+	+Inventory.AutoActivate
+	States
+	{
+		Spawn:
+			TNT1 A 1
+			Fail
+	}
+}
+
+Actor RavenFlyer : PowerupGiver
+{
+	Inventory.PickupSound ""
+	Inventory.PickupMessage ""
+	Inventory.MaxAmount 0
+	Inventory.Icon "TNT1A0"
+	Powerup.Type "RavenFlight"
+	Powerup.Duration 8
+	+Inventory.AutoActivate
+	States
+	{
+		Spawn:
+			TNT1 A 1
+			Fail
+	}
+}
+
+Actor RavenPowerups : CustomInventory
+{
+	Inventory.MaxAmount 0
+	+Inventory.AutoActivate
+	States
+	{
+		Use:
+			TNT1 A 0 A_GiveInventory("RavenFlyer", 1)
+			//TNT1 A 0 A_GiveInventory("RavenStealth", 1)
+			Stop
+	}
+}
+
+Actor RavenWeapon : Beak
+{
+	Weapon.SelectionOrder 10000
+	+Weapon.DontBob
+	+Weapon.MeleeWeapon
+	+Weapon.NoAlert
+	States
+	{
+		Ready:
+			TNT1 A 1 A_WeaponReady
+			Loop
+		Deselect:
+			TNT1 A 1
+			{
+				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1)) { A_Lower(12); }
+				A_Lower(12);
+			}
+			Loop
+		Select:
+			TNT1 A 1 A_BeakRaise
+			Loop
+		Fire:
+			TNT1 A 18 A_Punch
+			Goto Ready
+	}
+}
+
+Actor Lightningbolt 
+{
+	Height 32
+	Radius 20
+	Scale 2
+	SpawnID 13163
+	Seesound "zappo"
+	States
+	{
+		Spawn:
+			LITN ABAB 5 bright
+			LITN A 0 A_Die
+			Goto Death
+		Death:
+			LITN CDE 5 bright A_Explode
+			LITN F 5 bright
+			Stop
+	}
+}
+
+//PUZZLE OBJECTS
+ACTOR RevisionaryBrush : PuzzleItem 13127
+{
+	//$Category RPArtifacts
+	Inventory.Icon "MPNTI0"
+	Inventory.PickupMessage "An exquisite, glimmering paint brush...?"
+	Inventory.PickupSound "Dinah/allowme"
+	Inventory.Amount 1
+	Inventory.MaxAmount 1
+	PuzzleItem.Number 51
+	Tag "Revisionary Brush"
+	+FLOATBOB
+	SpawnID 13127
+	States
+	{
+		Spawn:
+			MPNT AB 6 Bright
+			Loop
+	}
+}
+
+//UPSIDE-DOWN STUFF
+ACTOR RevisionaryBrush_Flipped : CustomInventory 15127
+{
+	//$Category RPPropsFlipped
+	Height 20
+	Radius 20
+	Tag "Revisionary Brush (Flipped)"
+	Inventory.PickupMessage "An exquisite, glimmering paint brush...?"
+	Inventory.PickupSound "Dinah/allowme"
+	+FLOATBOB
+	+NOGRAVITY
+	SpawnID 15127
+	States
+	{
+		Spawn:
+			MPNT YZ 6 Bright
+			Loop
+		Pickup:
+			TNT1 A 1 A_GiveInventory("RevisionaryBrush",1)
+			Stop
+	}
+}
+
+ACTOR Pike_Flipped : CustomInventory 15128
+{
+	//$Category RPPropsFlipped
+	Height 20
+	Radius 20
+	Tag "Pike (Flipped)"
+	+FLOATBOB
+	+NOGRAVITY
+	SpawnID 15128
+	Inventory.PickupMessage "Pike"
+	inventory.pickupsound "misc/w_pkup" //"Dinah/marvelous"
+	States
+	{
+		Spawn:
+			SCPP ZYXWVUTS 6 Bright
+			Loop
+		Pickup:
+			TNT1 A 1 A_GiveInventory("WizardPike")
+			Stop
+	}
+}
+
+ACTOR TreeOak_Flipped 15129
+{
+	//$Category RPPropsFlipped
+	Radius 20
+	Height 96
+	+SOLID
+	+NOGRAVITY
+	+SPAWNCEILING
+	States
+	{
+		Spawn:
+			URNT A -1
+			Stop
+	}
+}
+
+ACTOR LabJunk5_Flipped 15130
+{
+	//$Category RPPropsFlipped
+	Radius 20
+	Height 64
+	+NOGRAVITY
+	+SPAWNCEILING
+	States
+	{
+		Spawn:
+			UBJ5 ABC 5 BRIGHT
+			Loop
+	}
+}
+
+//Apple
+Actor GalaApple_Flipped : GalaApple 15131
+{
+	//$Category RPPropsFlipped
+	+NOGRAVITY
+	Tag "Gala Apple (Flipped)"
+	Inventory.PickupSound "misc/p_pkup"
+	Inventory.PickupMessage "Sweet apple wine!"
+	States
+	{
+		Spawn:
+		UPPL A -1 
+		Stop
+	}
+}
+
+//Goblet
+Actor AppleWine_Flipped : CustomInventory 15132
+{
+	//$Category RPPropsFlipped
+	Height 20
+	Radius 20
+	+NOGRAVITY
+	+FLOATBOB
+	Tag "Apple Wine Goblet (Flipped)"
+	States
+	{
+		Spawn:
+			UOBL ABC 6 
+			Loop
+		Pickup:
+			TNT1 A 1 A_GiveInventory("AppleWine",1)
+			Stop
+	}
+}
+
+//Palace Key
+ACTOR PalaceKey_Flipped : CustomInventory 15133
+{
+	//$Category RPPropsFlipped
+	Height 20
+	Radius 20
+	Tag "Palace Key (Flipped)"
+	Inventory.PickupMessage "A fancy palace key!"
+	Inventory.PickupSound "Dinah/allowme"
+	+NOGRAVITY
+	+FLOATBOB
+	SpawnID 15133
+	States
+	{
+		Spawn:
+			UKEY AB 6 Bright
+			Loop
+		Pickup:
+			TNT1 A 1 A_GiveInventory("PalaceKey",1)
+			Stop
+	}
+}
+
+ACTOR KnightGown_Flipped : KnightGown 15134
+{
+	//$Category RPPropsFlipped
+	+NOGRAVITY
+	Tag "Knight-Gown (Flipped)"
+	SpawnID 15134
+	States
+	{
+		Spawn:
+			UGWN A -1
+			Stop
+	}
+}
+
+ACTOR GalgoyleStatue_Flipped : SwitchingDecoration 11777
+{
+	//$Category RPPropsFlipped
+	Height 56
+	Radius 20
+	Tag "Galgoyle Statue (Flipped)"
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+		Spawn:
+			UTGR A -1
+			stop
+		Active:
+			UTGR B -1
+			stop
+	}
+}
+
+ACTOR GalgoyleBase_Flipped 11778
+{
+	//$Category RPPropsFlipped
+	Height 56
+	Radius 20
+	Tag "Galgoyle Base (Flipped)"
+	+SPAWNCEILING
+	+NOGRAVITY
+	States
+	{
+		Spawn:
+			UTGR B -1
+			stop
+	}
+}
+
+ACTOR VokterCannon 11787
+{
+	//$Category RPProps
+	Health 300
+	Painchance 200
+	Speed 0
+	Scale 2
+	Height 80
+	Radius 24
+	Mass 50000
+	+DONTTHRUST
+	+NOGRAVITY
+	+SPAWNCEILING
+	+NOBLOOD
+	+MISSILEMORE
+	MONSTER
+	States
+	{
+		Spawn:
+			CANN A 10 A_Look
+			Loop
+		See:
+			CANN AA 1 A_Chase
+			Loop
+		Missile:
+			CANN BB 4 A_Facetarget
+			CANN B 0 A_Playsound("jorg/spit",CHAN_WEAPON)
+			CANN C 0 bright A_CustomMissile("BadZapshot",16,32)
+			CANN C 6 bright A_CustomMissile("BadZapshot",16,-32)
+			CANN D 4 bright
+			CANN B 0 //ACS_Execute(102,0,0,0,0)
+			CANN B 2 A_Jump(128,"see")
+			CANN B 0 A_Playsound("jorg/spit",CHAN_WEAPON)
+			CANN C 0 bright A_CustomMissile("BadZapshot",16,32)
+			CANN C 6 bright A_CustomMissile("BadZapshot",16,-32)
+			CANN D 4 bright
+			Goto See
+		Pain:
+			CANN A 6
+			Goto See
+		Death:
+			CANN A 0 A_SpawnItemEX ("TurretHole",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			CANN A 0 A_PlaySound("weapons/cherryboom")
+			CANN A 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CANN A 0 A_PlaySound("weapons/cherryboom")
+			CANN A 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CANN A 0 A_PlaySound("weapons/cherryboom")
+			CANN A 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CANN A 0 A_PlaySound("weapons/cherryboom")
+			CANN A 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CANN A 0 A_PlaySound("weapons/cherryboom")
+			CANN A 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CANN A 0 A_PlaySound("weapons/cherryboom")
+			CANN A 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			CANN A 0 A_PlaySound("weapons/cherryboom")
+			Stop
+	}
+}
+
+ACTOR TurretHole 11788
+{
+	Height 80
+	Radius 24
+	Mass 50000
+	Scale 2
+	+DONTTHRUST
+	+NOGRAVITY
+	+SPAWNCEILING
+	SpawnID 11788
+	States
+	{
+		Spawn:
+			CANN DEFG 5 Bright
+			CANN G -1
+			Stop
+	}
+}
+
+ACTOR JorgSphereCannon 11789
+{
+	//$Category RPTeachers
+	Health 1000
+	Painchance 200
+	Painchance "Music", 0
+	DamageFactor "Music", 0.5
+	Speed 0
+	Scale 1
+	Height 120
+	Radius 48
+	Mass 50000
+	+DONTTHRUST
+	+NOGRAVITY
+	+SPAWNCEILING
+	+NOBLOOD
+	+MISSILEMORE
+	+MISSILEEVENMORE
+	+BOSS
+	MONSTER
+	Seesound "jorg/sight"
+	Activesound "jorg/sight"
+	PainSound "jorg/pain"
+	Deathsound "jorg/death"
+	States
+	{
+		Spawn:
+			JCAN F 10 A_Look
+			Loop
+		See:
+			JCAN A 0 //ACS_Execute(102,0,0,0,0)
+			JCAN AA 2 A_Chase
+			Loop
+		Missile:
+			JCAN F 0 //ACS_Execute(102,0,0,0,0)
+			JCAN FFF 4 A_Facetarget
+			JCAN F 0 A_Playsound("jorg/spit",CHAN_WEAPON)
+			JCAN B 0 bright A_CustomMissile("BadZapshot",64,80)
+			JCAN B 6 bright A_CustomMissile("BadZapshot",32,80)
+			JCAN C 0 A_Playsound("jorg/spit",CHAN_WEAPON)
+			JCAN C 0 bright A_CustomMissile("BadZapshot",64,-80)
+			JCAN C 6 bright A_CustomMissile("BadZapshot",32,-80)
+			JCAN F 0 A_Playsound("jorg/spit",CHAN_WEAPON)
+			JCAN B 0 bright A_CustomMissile("BadZapshot",64,80)
+			JCAN B 6 bright A_CustomMissile("BadZapshot",32,80)
+			JCAN C 0 A_Playsound("jorg/spit",CHAN_WEAPON)
+			JCAN C 0 bright A_CustomMissile("BadZapshot",64,-80)
+			JCAN C 6 bright A_CustomMissile("BadZapshot",32,-80)
+			JCAN FA 4
+			Goto See
+		Pain:
+			JCAN D 3 A_Pain
+			JCAN D 3
+			Goto See
+		Death:
+			JORG K 0 A_SpawnItemEX ("SphereTurretHole",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
+			JORG K 0 A_SetGravity(0.5)
+			JORG K 0 A_Scream
+			JORG K 0 A_PlaySound("weapons/cherryboom")
+			JORG K 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			JORG K 0 A_PlaySound("weapons/cherryboom")
+			JORG K 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			JORG K 0 A_PlaySound("weapons/cherryboom")
+			JORG K 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			JORG K 0 A_PlaySound("weapons/cherryboom")
+			JORG K 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			JORG K 0 A_PlaySound("weapons/cherryboom")
+			JORG K 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			JORG K 0 A_PlaySound("weapons/cherryboom")
+			JORG K 7 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-32,32),0,0,0,0,SXF_NOCHECKPOSITION) 
+			JORG K 0 A_PlaySound("weapons/cherryboom")
+			Stop
+	}
+}
+
+ACTOR SphereTurretHole 11790
+{
+	Height 80
+	Radius 24
+	Mass 50000
+	Scale 1
+	+DONTTHRUST
+	+NOGRAVITY
+	+SPAWNCEILING
+	SpawnID 11790
+	States
+	{
+		Spawn:
+			JCAN E 5 Bright
+			JCAN E -1
+			Stop
+	}
+}
+
+
+
+ACTOR BarrierBeam : Zapshot 
+{
+	Height 16
+	Radius 20
+	SpawnID 11799
+	Seesound ""
+	Deathsound ""
+}

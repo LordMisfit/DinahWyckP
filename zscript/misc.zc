@@ -1,0 +1,1515 @@
+class PlayerStatItem : Inventory
+{
+	const SKILL_VERY_EASY = 0;
+	const SKILL_EASY = 1;
+	const SKILL_NORMAL = 2;
+	const SKILL_HARD = 3;
+	const SKILL_VERY_HARD = 4;
+
+	int LevelCap;
+	Array<int> LevelExpRequirement;
+
+	int landdmgbonus;
+	int RenderStyleType;
+	int tempalpha;
+
+	int InitEXPTables;
+	int PrevTimeFreezeTimer;
+	int TimeFreeze;
+	int TimeFreezeTimer;
+	int CharacterClass;
+
+	int HPRegenBoostTimer;
+	int HPRegenBonPenTimer;
+	int HPRegenTimer;
+	int HPDegenTimer;
+	int HPRegenTimerMax;
+	int HPDegenTimerMax;
+	bool berserked;
+	
+	int DashTimer;
+
+	int PrevHealthRatio;
+	int HealthRatio;
+	int CurrentHealth;
+	int MaxHealthTrue;
+	int MaxHealthLimit;
+
+	int TrueGameSkill;
+	int CurrentArmorClass;
+	int CurrentMaxArmor;
+	int ArmorResistance;
+	int ClassicDoomType;
+	int ModType;
+	int TotalMass;
+
+	int PlayerLevel;
+	int PlayerJUMP;
+	
+	int SurvivalRate;
+	
+	int SuperVacBagSize;
+	
+	int ClassCheck;
+	
+	int buttons;
+	int FreezePlayer;
+	int Player1TID;
+	
+	int StrifeStamLvl;
+	int StrifeAccuLvl;
+	
+	int CricketBatBuffTimer;
+	int CricketBatSwingBuffTimer;
+	
+	double atkfct, deffct, spdfct, jmpfct, suvfct;
+
+	default 
+	{
+		+Inventory.PERSISTENTPOWER;
+		+Inventory.UNDROPPABLE;
+		+Inventory.UNTOSSABLE;
+	}
+
+	override void DoEffect()
+	{
+		let playeractor = PlayerPawn(owner);
+		if (!playeractor) // Removes itself if given to a non-Player Class
+		{
+			owner.A_SetInventory("PlayerStatItem",0); super.DoEffect(); 
+		} 
+		else
+		if (playeractor) // Otherwise, Keep
+		{
+			let weapon = owner.player.ReadyWeapon;
+			if (playeractor.GetClassName() == "DinahPlayer") CharacterClass == 10;
+			if (!owner.CountInv("HandToHand")) owner.A_SetInventory("HandToHand",1); // Prevents your "fists/hand-to-hand" from being removed by inventory removing events.
+			if (owner.CountInv("PowerStrength") || owner.CountInv("PowerStrengthDD")) berserked = true;
+			
+			ClassicDoomType = gameinfo.gametype; // 0 = Unknown, 1 = Doom [any], 2 = Heretic, 4 = Hexen, 8 = Strife
+			//Console.Printf("%d", ClassicDoomType);					if (ClassicDoomType == 0) { owner.A_SetInventory("PlayingDoom2",1); } // Doom 2
+			if (ClassicDoomType & 1) { owner.A_SetInventory("PlayingDoom",1); } // Doom 1
+			if (ClassicDoomType & 2) { owner.A_SetInventory("PlayingHeretic",1); } // Heretic
+			if (ClassicDoomType & 4) { owner.A_SetInventory("PlayingHexen",1); } // HeXen
+			if (ClassicDoomType & 8) { owner.A_SetInventory("PlayingStrife",1); } // Strife
+			buttons = owner.GetPlayerInput(INPUT_BUTTONS);
+			TrueGameSkill = skill;
+			
+			bool debugexptables = false;
+			bool debugstartup = false;
+			if (ClassCheck <= 6)
+			{
+				if (ClassCheck <= 0) 
+				{
+					owner.A_SetInventory("DoorBell",1);
+					owner.A_SetInventory("DoorBell",0);
+					owner.A_SetInventory("DivingHelm",1);
+					owner.A_SetInventory("DivingHelm",0);
+					owner.A_SetInventory("TimePotion",1);
+					owner.A_SetInventory("TimePotion",0);
+					owner.A_SetInventory("SnakePickup",1);
+					owner.A_SetInventory("SnakePickup",0);
+					owner.A_SetInventory("PopperPickup",1);
+					owner.A_SetInventory("PopperPickup",0);
+					owner.A_SetInventory("BRocketPickup",1);
+					owner.A_SetInventory("BRocketPickup",0);
+					owner.A_SetInventory("SpinnerPickup",1);
+					owner.A_SetInventory("SpinnerPickup",0);
+					owner.A_SetInventory("CherryBombPickup",1);
+					owner.A_SetInventory("CherryBombPickup",0);
+					owner.A_SetInventory("AppleWine",1);
+					owner.A_SetInventory("AppleWine",0);
+
+					PlayerLevel = 0;
+
+					atkfct = deffct = spdfct = jmpfct = suvfct = 1.00;
+					double variance = 0.10;
+					if (TrueGameSkill == SKILL_VERY_EASY) 
+					{
+						MaxHealthTrue = 96;
+						MaxHealthTrue *= (1.00 + (frandom(-0.0125,0.0125)));
+						owner.A_SetInventory("Blunderaxe",1);
+						owner.A_SetInventory("BlunderAmmo",6);
+						owner.A_SetInventory("AppleJack",1);
+						owner.A_SetInventory("JackAmmo",12);
+						variance = 0.05;
+					}
+					if (TrueGameSkill == SKILL_EASY) 
+					{
+						MaxHealthTrue = 88; 
+						MaxHealthTrue *= (1.00 + (frandom(-0.025,0.025)));
+						owner.A_SetInventory("AppleJack",1);
+						owner.A_SetInventory("JackAmmo",6);
+						variance = 0.075;
+					}
+					if (TrueGameSkill == SKILL_NORMAL) 
+					{
+						MaxHealthTrue = 80; 
+						MaxHealthTrue *= (1.00 + (frandom(-0.05,0.05)));
+						variance = 0.10;
+					}
+					if (TrueGameSkill == SKILL_HARD) 
+					{
+						MaxHealthTrue = 72; 
+						MaxHealthTrue *= (1.00 + (frandom(-0.1,0.1)));
+						variance = 0.125;
+					}
+					if (TrueGameSkill == SKILL_VERY_HARD) 
+					{
+						MaxHealthTrue = 64; 
+						MaxHealthTrue *= (1.00 + (frandom(-0.2,0.2)));
+						variance = 0.15;
+					}
+					atkfct += frandom(-variance,variance);
+					deffct += frandom(-variance,variance);
+					spdfct += frandom(-variance,variance);
+					jmpfct += frandom(-variance,variance);
+					suvfct += frandom(-variance,variance);
+					if (debugstartup) Console.Printf("atkfct: %.8f, deffct: %.8f, spdfct: %.8f, jmpfct: %.8f, suvfct: %.8f", atkfct, deffct, spdfct, jmpfct, suvfct);
+					
+					if (MaxHealthTrue < 1) MaxHealthTrue = 1;
+					owner.player.mo.stamina = 0;
+					owner.player.health = owner.player.mo.health = owner.player.mo.maxhealth = CurrentHealth = MaxHealthTrue;
+					owner.A_SetInventory("PlayerMaxHP",MaxHealthTrue);
+					if (debugstartup) Console.Printf("MaxHP: %d", MaxHealthTrue);
+					
+					owner.A_SetInventory("PlayerLevel",PlayerLevel);
+					LevelCap = 200;
+					LevelExpRequirement.Resize((LevelCap+1));
+					
+					// EXP Tables
+					if (InitEXPTables == 0)
+					{
+						double ExpValue;
+						int BaseEXPRequirement = 250; // clamp(dydu_baseexprequirement, 250, 11200);
+						BaseEXPRequirement *= (0.875 + (TrueGameSkill * 0.0625));
+
+						double BaseExtra = 1; // clamp(dydu_baseexpextra, 0, 100);
+						double BaseAccel1 = 6; // clamp(dydu_baseexpaccel1, 0, 100);
+						double BaseAccel2 = 0.0384; // clamp(dydu_baseexpaccel2, 0.0, 5.0);
+						double BaseMulti1 = 48; // clamp(dydu_expmulti1, 1, 1024);
+						double BaseMulti2 = 50; // clamp(dydu_expmulti2, 1, 10000);
+						
+						double BaseMulti3 = 1.0;
+						int baseval;
+						int addval;
+						double mulval;
+						int preval = 0;
+						
+						double BaseMulti3b = 2.0;
+						double BaseMulti4 = 1.0;
+						double BaseMulti5 = 0.01;
+
+						// Sets up the actual EXP requirement tables based from BaseEXPRequirement above.
+						for (int CuLv = 0; CuLv < (LevelCap+1); CuLv++)
+						{
+							if (CuLv >= 0 && CuLv <= 31) BaseMulti4 = 1.0;
+							if (CuLv >= 32 && CuLv <= 56) BaseMulti4 = 1.334;
+							if (CuLv >= 57 && CuLv <= 80) BaseMulti4 = 1.667;
+							if (CuLv >= 81 && CuLv <= 100) BaseMulti4 = 2;
+							if (CuLv >= 101 && CuLv <= 109) BaseMulti4 = 4;
+							if (CuLv >= 110 && CuLv <= 118) BaseMulti4 = 6;
+							if (CuLv >= 119 && CuLv <= 127) BaseMulti4 = 8;
+							if (CuLv >= 128 && CuLv <= 136) BaseMulti4 = 10;
+							if (CuLv >= 137 && CuLv <= 145) BaseMulti4 = 12;
+							if (CuLv >= 146 && CuLv <= 154) BaseMulti4 = 14;
+							if (CuLv >= 155 && CuLv <= 163) BaseMulti4 = 16;
+							if (CuLv >= 164 && CuLv <= 172) BaseMulti4 = 18;
+							if (CuLv >= 173 && CuLv <= 181) BaseMulti4 = 20;
+							if (CuLv >= 182 && CuLv <= 190) BaseMulti4 = 22;
+							if (CuLv >= 191 && CuLv <= 199) BaseMulti4 = 24;
+							if (CuLv >= 200) BaseMulti4 = 30.0;
+							
+							BaseMulti3 = (BaseMulti4 + (CuLv * ((BaseMulti4 * BaseMulti5) * BaseMulti3b)));
+							
+							baseval = BaseEXPRequirement * (((CuLv * BaseExtra) + 1));
+							baseval *= (1.00 + ((CuLv + 1) * 0.000625));
+							
+							mulval = (((CuLv * (BaseAccel1 * ((BaseMulti1 + CuLv) / BaseMulti1))) + BaseMulti2) / BaseMulti2);
+							addval = (((BaseEXPRequirement * (CuLv * BaseAccel2)) * BaseMulti3) * ((BaseMulti4) * 1.5));
+							ExpValue = baseval;
+							if (debugexptables) Console.Printf("ExpValue: %d (%d)", ExpValue, baseval);
+							ExpValue *= mulval;
+							if (debugexptables) Console.Printf("(*) ExpValue: %d (%.8f)", ExpValue, mulval);
+							ExpValue += addval;
+							if (debugexptables) Console.Printf("(+) ExpValue: %d (%d)", ExpValue, addval);
+							
+							if (CuLv > 0) preval = LevelExpRequirement[(CuLv-1)];
+			
+							if (debugexptables) Console.Printf("\czLevel \cy%d\c- \czEXP Requirement: \cy%d \cz(prev: \cy%d)\cz, Multi: %.8f, baseval: %d, mulval: %.8f, addval: %d, diff: %d\c-", CuLv, ExpValue, preval, BaseMulti3, baseval, mulval, addval, (ExpValue-preval));
+							LevelExpRequirement[CuLv] = ExpValue;
+						}
+						if (debugexptables) Console.Printf("BaseEXPRequirement: %4f, BaseExtra: %4f / 100, BaseAccel1: %4f / 100, BaseAccel2: %3f / 25000, BaseMulti1: %3f / 1024, BaseMulti2: %3f / 10000", BaseEXPRequirement, BaseExtra, BaseAccel1, BaseAccel2, BaseMulti1, BaseMulti2);
+
+						InitEXPTables++;
+					}
+				}
+			}
+
+			//
+			// Leveling Up
+			//
+			int Experience = owner.CountInv("ExpPts");
+			owner.A_SetInventory("ExpPtsLeft",(LevelExpRequirement[(PlayerLevel)]-Experience));
+			owner.A_SetInventory("ExpPtsNeeded",LevelExpRequirement[(PlayerLevel)]);
+			bool debuglevelup = false;
+			int levelmodulo, levelbonustype;
+			int leveluptimes = 0;
+			int leveluptimesmax = LevelCap - PlayerLevel;
+			int StatIncrease;
+			PlayerLevel = owner.CountInv("PlayerLevel");
+			for (leveluptimes = 0; leveluptimes < leveluptimesmax; leveluptimes++)
+			{
+				if (debuglevelup) Console.Printf("%d / %d", leveluptimes, leveluptimesmax);
+				if (Experience >= LevelExpRequirement[PlayerLevel])
+				{
+					if (PlayerLevel < LevelCap)
+					{
+						PlayerLevel += 1;
+
+						levelmodulo = PlayerLevel % 20;
+						if (levelmodulo == 0) levelbonustype = 0;
+						else if (levelmodulo == 4) levelbonustype = 1;
+						else if (levelmodulo == 5) levelbonustype = randompick(2,2,2,2,2,1);
+						else if (levelmodulo == 8) levelbonustype = 1;
+						else if (levelmodulo == 10) levelbonustype = randompick(2,2,2,2,2,1);
+						else if (levelmodulo == 12) levelbonustype = 1;
+						else if (levelmodulo == 15) levelbonustype = randompick(2,2,2,2,2,1);
+						else if (levelmodulo == 16) levelbonustype = 1;
+						else levelbonustype = 2;
+						
+						// Health/HP Boost
+						CurrentHealth = owner.player.mo.health;
+						int LevelAddMaxHP = 0;
+						int HPMaxGain;
+						int HPRandomizer1;
+						
+						if (PlayerLevel >= 151 && PlayerLevel <= 200)				HPMaxGain += floor(PlayerLevel * frandompick(0.105,0.12));
+						else if (PlayerLevel >= 101 && PlayerLevel <= 150)	HPMaxGain += floor(PlayerLevel * frandompick(0.09,0.105));
+						else if (PlayerLevel >= 51 && PlayerLevel <= 100)		HPMaxGain += floor(PlayerLevel * frandompick(0.075,0.09));
+						else if (PlayerLevel <= 50)													HPMaxGain += floor(PlayerLevel * frandompick(0.06,0.075));
+						
+						HPMaxGain += 													randompick(1,1,1,1,1,1,1,1,1,2,2,2,2,3);
+						if (levelbonustype == 0) HPMaxGain += randompick(1,1,1,1,1,2,2,2,2,2,2,3,3,3);
+						if (levelbonustype == 1) HPMaxGain += randompick(0,1,1,1,1,1,1,2,2,2,2,2,3,3);
+						if (levelbonustype == 2) HPMaxGain += randompick(0,0,0,0,0,0,0,1,1,1,1,1,1,2);
+						if (TrueGameSkill <= SKILL_VERY_EASY) HPMaxGain += (MaxHealthTrue / 144); // 288
+						if (TrueGameSkill == SKILL_EASY) HPMaxGain += (MaxHealthTrue / 180); // 360
+						if (TrueGameSkill == SKILL_NORMAL) HPMaxGain += (MaxHealthTrue / 216); // 432
+						if (TrueGameSkill == SKILL_HARD) HPMaxGain += (MaxHealthTrue / 252); // 504
+						if (TrueGameSkill == SKILL_VERY_HARD) HPMaxGain += (MaxHealthTrue / 288); // 576
+						owner.player.mo.stamina += HPMaxGain;
+						owner.player.mo.health += HPMaxGain;
+						MaxHealthTrue = (owner.player.mo.maxhealth + owner.player.mo.stamina);
+
+						owner.A_StartSound("misc/bellring",101,CHANF_DEFAULT,frandom(0.6,0.75),ATTN_NORM,frandom(1.25,1.5));
+						owner.A_SetInventory("PlayerLevel",PlayerLevel);
+						owner.A_Print(String.Format("\c[Green]Congradulations, you've reached Level %d \c[brick][+%d HP]", PlayerLevel, HPMaxGain));
+						owner.A_SetBlend("00 00 FF",0.3,3,"00 00 FF",0.0);
+					}
+				}
+			}
+
+			//*********************
+			//* Super Vac Bagging *
+			//*********************
+			if (SuperVacBagSize <= 0) 
+			{ 
+				if (TrueGameSkill == SKILL_VERY_EASY) SuperVacBagSize = 240;
+				if (TrueGameSkill == SKILL_EASY) SuperVacBagSize = 320;
+				if (TrueGameSkill == SKILL_NORMAL) SuperVacBagSize = 400;
+				if (TrueGameSkill == SKILL_HARD) SuperVacBagSize = 480;
+				if (TrueGameSkill == SKILL_VERY_HARD) SuperVacBagSize = 560;
+			}
+
+			HPRegenTimerMax = 7000 - (owner.player.mo.stamina * 35);
+			HPDegenTimerMax = 1750 + (owner.player.mo.stamina * 17.5);
+			CurrentHealth = owner.player.mo.health;
+			MaxHealthTrue = (owner.player.mo.maxhealth + owner.player.mo.stamina);
+			
+			//******************
+			//* HP Regen/Degen *
+			//******************
+			if (CurrentHealth > 0)
+			{
+				if (dydudebug_hpregen) Console.Printf("Health: %d / %d", CurrentHealth, MaxHealthTrue);
+				
+				//****************************************
+				//*Get Health Ratio & Health Level Checks*
+				//****************************************
+				if (playeractor && MaxHealthTrue > 0)
+				{
+					HealthRatio = (CurrentHealth * 1000) / MaxHealthTrue;
+					HealthRatio = clamp(HealthRatio, 0, 2000);
+		
+					if (CurrentHealth <= 0) { Owner.A_SetInventory("PlayerIsDead", 1); }
+					else
+					{
+						Owner.A_SetInventory("PlayerIsDead", 0);
+						if (HealthRatio != PrevHealthRatio)
+						{
+							if (HealthRatio < 625)
+							{
+								if (HealthRatio < 167)
+								{
+									if (HealthRatio < 21)
+									{
+										Owner.A_SetInventory("CriticalHealth", 1);
+										Owner.A_SetInventory("LowHealth", 0);
+										Owner.A_SetInventory("DecentHealth", 0);
+										Owner.A_SetInventory("NormalHealth", 0);
+									}
+									else 
+									{
+										Owner.A_SetInventory("CriticalHealth", 0);
+										Owner.A_SetInventory("LowHealth", 1);
+										Owner.A_SetInventory("DecentHealth", 0);
+										Owner.A_SetInventory("NormalHealth", 0);
+									}
+								}
+								else 
+								{
+									Owner.A_SetInventory("CriticalHealth", 0);
+									Owner.A_SetInventory("LowHealth", 0);
+									Owner.A_SetInventory("DecentHealth", 1);
+									Owner.A_SetInventory("NormalHealth", 0);
+								}
+							}
+							else
+							{
+								Owner.A_SetInventory("CriticalHealth", 0);
+								Owner.A_SetInventory("LowHealth", 0);
+								Owner.A_SetInventory("DecentHealth", 0);
+								Owner.A_SetInventory("NormalHealth", 1);
+							}
+							if (CurrentHealth >= MaxHealthTrue) Owner.A_SetInventory("FullHealth", 1); else Owner.A_SetInventory("FullHealth", 0);
+							
+							PrevHealthRatio = HealthRatio;
+						}
+					}
+				}
+
+				if (CurrentHealth < MaxHealthTrue)
+				{
+					if (dydu_hpwillregen)
+					{
+						int inc = 20 + (PlayerLevel * 0.025);
+						if (HPRegenBoostTimer) inc *= 2.5;
+						
+						if (Owner.CountInv("CricketBatGuard")) inc = floor(inc * frandom(1.334,1.667)); 
+						
+						if (owner.CountInv("KnightGownItem")) inc = floor(inc * 1.05);
+						if (owner.CountInv("KnightGownItem2")) inc = floor(inc * 1.10);
+						if (owner.CountInv("KnightGownItem3")) inc = floor(inc * 1.15);
+						if (owner.CountInv("KnightGownItem4")) inc = floor(inc * 1.20);
+
+						if (berserked) inc = floor(inc * frandom(1.5,2.0));
+
+						if (buttons & BT_FORWARD || buttons & BT_BACK || buttons & BT_MOVELEFT || buttons & BT_MOVERIGHT) inc = floor(inc * 0.4);
+						if (buttons & BT_ATTACK || buttons & BT_ALTATTACK) inc = floor(inc * 0.5);
+						if (buttons & BT_MOVEUP || buttons & BT_MOVEDOWN) inc = floor(inc * 0.6);
+						if (buttons & BT_JUMP) inc = floor(inc * 0.4);
+						if (buttons & BT_CROUCH) inc = floor(inc * 1.8);
+
+						if (Owner.CountInv("PowerWineBuffWeak")) inc = floor(inc * 1.5);
+						if (Owner.CountInv("PowerWineBuffStrong")) inc = floor(inc * 2.25);
+						if (Owner.CountInv("PowerWineBuffStrongest")) inc = floor(inc * 3.25);
+						if (Owner.CountInv("PowerWineBuffStrongestEven")) inc = floor(inc * 4.5);
+
+						if (CurrentHealth <= (MaxHealthTrue * 0.02)) inc = floor(inc * 20);
+						else if (CurrentHealth <= (MaxHealthTrue * 0.10)) inc = floor(inc * 5);
+						else if (CurrentHealth <= (MaxHealthTrue * 0.25)) inc = floor(inc * 1.25);
+						else if (CurrentHealth <= (MaxHealthTrue * 0.50)) inc = floor(inc * 1.0625);
+						
+						HPRegenTimer += inc;
+						
+						if (HPRegenTimer > HPRegenTimerMax)
+						{
+							HPRegenTimer -= HPRegenTimerMax;
+							if (HPRegenTimer < 0) HPRegenTimer = 0;
+							
+							if (CurrentHealth < MaxHealthTrue)
+							{
+								if (berserked) CurrentHealth += randompick(1,1,1,1,1,1,1,1,1,2);
+								else CurrentHealth += randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
+								if (CurrentHealth >= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
+								owner.player.health = owner.player.mo.health = CurrentHealth;
+							}
+						}
+						if (dydudebug_hpregen) Console.Printf("RegenTimer: %d / %d  (inc: %d)", HPRegenTimer, HPRegenTimerMax, inc);
+					}
+					else
+					{
+						HPRegenTimer = 0;
+					}
+				}
+				else
+				if (CurrentHealth > MaxHealthTrue)
+				{
+					if (dydu_hpwilldegen)
+					{
+						int inc = 20 - (PlayerLevel * 0.0125);
+						if (HPRegenBoostTimer) inc *= 0.4;
+						
+						if (Owner.CountInv("CricketBatGuard")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
+
+						if (owner.CountInv("KnightGownItem")) inc = ceil(inc * 0.95);
+						if (owner.CountInv("KnightGownItem2")) inc = ceil(inc * 0.90);
+						if (owner.CountInv("KnightGownItem3")) inc = ceil(inc * 0.85);
+						if (owner.CountInv("KnightGownItem4")) inc = ceil(inc * 0.80);
+						
+						if (berserked) inc = ceil(inc * frandom(0.5,0.667));
+						
+						if (buttons & BT_FORWARD || buttons & BT_BACK || buttons & BT_MOVELEFT || buttons & BT_MOVERIGHT) inc = ceil(inc * 2.5);
+						if (buttons & BT_ATTACK || buttons & BT_ALTATTACK) inc = ceil(inc * 2.0);
+						if (buttons & BT_MOVEUP || buttons & BT_MOVEDOWN) inc = ceil(inc * 1.666666666666667);
+						if (buttons & BT_JUMP) inc = ceil(inc * 2.5);
+						if (buttons & BT_CROUCH) inc = ceil(inc * 0.5555555555555556);
+
+						if (Owner.CountInv("PowerWineBuffWeak")) inc = ceil(inc * 0.6666666666666667);
+						if (Owner.CountInv("PowerWineBuffStrong")) inc = ceil(inc * 0.4444444444444444);
+						if (Owner.CountInv("PowerWineBuffStrongest")) inc = ceil(inc * 0.3076923076923077);
+						if (Owner.CountInv("PowerWineBuffStrongestEven")) inc = ceil(inc * 0.2222222222222222);
+						
+						if (CurrentHealth >= (MaxHealthTrue * 3.0)) inc = ceil(inc * 3.0);
+						else if (CurrentHealth >= (MaxHealthTrue * 2.75)) inc = ceil(inc * 2.75);
+						else if (CurrentHealth >= (MaxHealthTrue * 2.50)) inc = ceil(inc * 2.5);
+						else if (CurrentHealth >= (MaxHealthTrue * 2.25)) inc = ceil(inc * 2.25);
+						else if (CurrentHealth >= (MaxHealthTrue * 2.00)) inc = ceil(inc * 2.0);
+						else if (CurrentHealth >= (MaxHealthTrue * 1.75)) inc = ceil(inc * 1.75);
+						else if (CurrentHealth >= (MaxHealthTrue * 1.50)) inc = ceil(inc * 1.5);
+						else if (CurrentHealth >= (MaxHealthTrue * 1.25)) inc = ceil(inc * 1.25);
+						else if (CurrentHealth >= (MaxHealthTrue * 1.00)) inc = ceil(inc * 1.0);
+						
+						HPDegenTimer += inc;
+						if (HPDegenTimer > HPDegenTimerMax)
+						{
+							HPDegenTimer -= HPDegenTimerMax;
+							if (HPDegenTimer < 0) HPDegenTimer = 0;
+							
+							if (CurrentHealth > MaxHealthTrue)
+							{
+								if (berserked) CurrentHealth -= randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
+								else CurrentHealth -= randompick(1,1,1,1,1,1,1,1,1,2);
+								if (CurrentHealth <= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
+								owner.player.health = owner.player.mo.health = CurrentHealth;
+							}
+						}
+						if (dydudebug_hpregen) Console.Printf("DegenTimer: %d / %d  (inc: %d)", HPDegenTimer, HPDegenTimerMax, inc);
+					}
+					else
+					{
+						HPDegenTimer = 0;
+					}
+				}
+				else
+				{
+					HPRegenTimer = 0;
+					HPDegenTimer = 0;
+					if (dydudebug_hpregen) Console.Printf("Regen/Degen Neutral");
+				}
+				
+				if (HPRegenBoostTimer) HPRegenBoostTimer--;
+				if (HPRegenBoostTimer < 0) HPRegenBoostTimer = 0;
+				if (dydudebug_hpregen && HPRegenBoostTimer) Console.Printf("HPRegenBoostTimer: %d", HPRegenBoostTimer);
+			}
+			
+			//**************************
+			//* Survival Rate [Buddha] *
+			//**************************
+			SurvivalRate = 100 * suvfct; // out of 10000 [100 = 1%]
+			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Base]: %d", SurvivalRate);
+			SurvivalRate += (PlayerLevel * 5); // +0.05% per level
+			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Level]: %d", SurvivalRate);
+			
+			if (owner.CountInv("KnightGownItem")) SurvivalRate += random(312,313);
+			if (owner.CountInv("KnightGownItem2")) SurvivalRate += 625;
+			if (owner.CountInv("KnightGownItem3")) SurvivalRate += 1250;
+			if (owner.CountInv("KnightGownItem4")) SurvivalRate += 2500;
+			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Armor]: %d", SurvivalRate);
+
+			if (berserked) SurvivalRate += 500;
+			if (Owner.CountInv("PowerWineBuffWeak")) SurvivalRate += random(312,313);
+			if (Owner.CountInv("PowerWineBuffStrong")) SurvivalRate += 625;
+			if (Owner.CountInv("PowerWineBuffStrongest")) SurvivalRate += random(937,938);
+			if (Owner.CountInv("PowerWineBuffStrongestEven")) SurvivalRate += 1250;
+			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Buffs]: %d", SurvivalRate);
+			
+			if (Owner.CountInv("CricketBatGuard")) 
+			{
+				SurvivalRate += ((10000 - SurvivalRate) * frandompick(0.25,0.375,0.375,0.50,0.50,0.50,0.50,0.625,0.625,0.75));
+				if (SurvivalRate > 9375) SurvivalRate = 9375;
+				if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/ CricketBat]: %d", SurvivalRate);
+			}
+			else
+			{
+				if (SurvivalRate > 7500) SurvivalRate = 7500;
+				if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o CricketBat]: %d", SurvivalRate);
+			}
+			int SurviveRNGVal = random[statitem](1,10000); // Based on 0.01% to 100.00%
+			if (SurviveRNGVal <= SurvivalRate) owner.player.cheats |= CF_BUDDHA; else owner.player.cheats &= ~CF_BUDDHA;
+
+			if (dydudebug_survivalrate)
+			{
+				if (SurviveRNGVal <= SurvivalRate) Console.Printf("    \cdSurvival Rate % Roll / Rate: %d / %d, \cx[cheatbits: %d]", SurviveRNGVal, SurvivalRate, owner.player.cheats);
+																			else Console.Printf("    \cgSurvival Rate % Roll / Rate: %d / %d, \cx[cheatbits: %d]", SurviveRNGVal, SurvivalRate, owner.player.cheats);
+			}
+			
+			//********
+			//* Mass *
+			//********
+			bool debugmass = false;
+			TotalMass = 64;
+			if (debugmass) Console.Printf("Mass [Base]: %d", TotalMass);
+
+			TotalMass += (PlayerLevel * 0.08889);
+			if (debugmass) Console.Printf("Mass [Level]: %d", TotalMass);
+			
+			// Buffs
+			if ((owner.bINVULNERABLE || owner.player.cheats & CF_GODMODE2 || owner.player.cheats & CF_GODMODE) || 
+					owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")) TotalMass *= 128; 
+			if (berserked) TotalMass *= 1.111; 
+
+			if (Owner.CountInv("CricketBatGuard")) TotalMass *= frandom(1.334,1.667);
+			
+			if (Owner.CountInv("PowerWineBuffWeak")) TotalMass *= 1.125;
+			if (Owner.CountInv("PowerWineBuffStrong")) TotalMass *= 1.25;
+			if (Owner.CountInv("PowerWineBuffStrongest")) TotalMass *= 1.5;
+			if (Owner.CountInv("PowerWineBuffStrongestEven")) TotalMass *= 2;
+			if (debugmass) Console.Printf("Mass [Buffs]: %d", TotalMass);
+
+			// Armor
+			if (Owner.CountInv("KnightGownItem"))	{ TotalMass += 4;  TotalMass *= 1.01; }
+			if (Owner.CountInv("KnightGownItem2"))	{ TotalMass += 8;  TotalMass *= 1.02; }
+			if (Owner.CountInv("KnightGownItem3"))	{ TotalMass += 12; TotalMass *= 1.04; }
+			if (Owner.CountInv("KnightGownItem4"))	{ TotalMass += 16; TotalMass *= 1.08; }
+			if (debugmass) Console.Printf("Mass [Armor]: %d", TotalMass);
+
+			owner.Mass = TotalMass;
+			if (debugmass) Console.Printf("    Calculated Mass: %d [Real Mass: %d]", TotalMass, owner.mass);
+			
+			
+			//*********
+			//* JumpZ *
+			//*********
+			bool debugjumpz = false;
+			double CharacterJumpZ = 8.25;
+
+			// Level
+			double LevelJumpZ = 1.00;
+			LevelJumpZ += (PlayerLevel * 0.0025);
+			if (debugjumpz) Console.Printf("JumpZ [Level]: %.8f", LevelJumpZ);
+			
+			// Buffs
+			double BuffJumpZ = 1.00;
+			if (Owner.CountInv("CricketBatGuard")) BuffJumpZ *= frandom(0.95,0.975);
+			if (berserked) BuffJumpZ *= 1.34;
+			if (owner.CountInv("PowerWineBuffWeak")) BuffJumpZ *= frandom(0.98,1.00);
+			if (owner.CountInv("PowerWineBuffStrong")) BuffJumpZ *= frandom(0.96,1.00);
+			if (owner.CountInv("PowerWineBuffStrongest")) BuffJumpZ *= frandom(0.93,1.00);
+			if (owner.CountInv("PowerWineBuffStrongestEven")) BuffJumpZ *= frandom(0.88,1.00);
+			if (debugjumpz) Console.Printf("JumpZ [Buffs]: %.8f", BuffJumpZ);
+
+			// Armor
+			double ArmorJumpZ = 1.00;
+			if (Owner.CountInv("KnightGownItem"))					ArmorJumpZ -= 0.0125;
+			if (Owner.CountInv("KnightGownItem2"))				ArmorJumpZ -= 0.025;
+			if (Owner.CountInv("KnightGownItem3"))				ArmorJumpZ -= 0.0475;
+			if (Owner.CountInv("KnightGownItem4"))				ArmorJumpZ -= 0.0875;
+			if (debugjumpz) Console.Printf("JumpZ [Armor]: %.8f", ArmorJumpZ);
+
+			// Weapon Checks
+			double WeaponJumpZ = 1.00;
+			if (weapon is "HandToHand") 
+			{
+				if (berserked) WeaponJumpZ *= 1.1625;
+				else WeaponJumpZ *= 1.125;
+			}
+			if (weapon is "CricketBat") 
+			{
+				WeaponJumpZ *= 1.00;
+			}
+			if (weapon is "BlunderAxe") 
+			{
+				if (berserked) WeaponJumpZ *= 0.991875;
+				else WeaponJumpZ *= 0.96875;
+			}
+			if (weapon is "AppleJack") 
+			{
+				if (berserked) WeaponJumpZ *= 1.05;
+				else WeaponJumpZ *= 1.03125;
+			}
+			if (weapon is "Scrambler")
+			{
+				if (berserked) WeaponJumpZ *= 1.1625;
+				else WeaponJumpZ *= 1.125;
+			}
+			if (weapon is "WizardPike")
+			{
+				if (berserked) WeaponJumpZ *= 1.08125;
+				else WeaponJumpZ *= 1.0625;
+			}
+			if (weapon is "SuperVac")
+			{
+				if (berserked) WeaponJumpZ *= 0.984375;
+				else WeaponJumpZ *= 0.9375;
+			}
+			if (weapon is "Grimophone") 
+			{
+				if (berserked) WeaponJumpZ *= 0.996875;
+				else WeaponJumpZ *= 0.875;
+			}
+			if (debugjumpz) Console.Printf("JumpZ [WeaponEquipped]: %.8f", WeaponJumpZ);
+
+			double TotalJumpZ = CharacterJumpZ
+												* LevelJumpZ
+												* BuffJumpZ
+												* ArmorJumpZ
+												* WeaponJumpZ
+												* jmpfct;
+
+			if (debugjumpz) Console.Printf("%.8f (%.8f, %.8f, %.8f, %.8f)", TotalJumpZ, CharacterJumpZ, LevelJumpZ, BuffJumpZ, ArmorJumpZ);
+			PlayerPawn(Owner).JumpZ = TotalJumpZ;
+			
+			
+			// SuperVac Ammo
+			bool debugsupervacbag = false;
+			int vacammoprev = owner.CountInv("VacAmmo");
+			int vacgiveammo;
+			int vacammocounter = owner.CountInv("VacAmmoCounter");
+			if (debugsupervacbag) Console.Printf("Vacuum Bag Size: %d / %d", vacammocounter, SuperVacBagSize);
+			while (vacammocounter >= SuperVacBagSize)
+			{
+				vacammocounter -= SuperVacBagSize;
+				owner.A_SetInventory("VacAmmoCounter",vacammocounter);
+				vacgiveammo += 1;
+				owner.A_StartSound("VacDed",random(11,20),CHANF_DEFAULT,frandom(0.8,1.2),ATTN_NORM,frandom(0.8,1.2));
+				owner.A_StartSound("VacDed",random(21,30),CHANF_DEFAULT,frandom(0.8,1.2),ATTN_NORM,frandom(0.8,1.2));
+			}
+			if (vacgiveammo)
+			{
+				owner.A_GiveInventory("VacAmmo",vacgiveammo);
+				Console.Printf("Filled %d bag[s] in the SuperVac!", vacgiveammo);
+				vacgiveammo = 0;
+			}
+			int vacammonow = owner.CountInv("VacAmmo");
+			if (vacammoprev < 8 && vacammonow >= 8)
+			{
+				owner.A_StopSound(CHAN_VOICE);
+				owner.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT);
+				owner.A_Log("The SuperVac's Alt-Fire is Ready!", vacgiveammo);
+			}
+			if (vacammoprev < 16 && vacammonow >= 16)
+			{
+				owner.A_StopSound(CHAN_VOICE);
+				owner.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT);
+				owner.A_Log("The SuperVac's Alt-Fire Has TWO Charges now!", vacgiveammo);
+			}
+			if (vacammoprev < 24 && vacammonow >= 24)
+			{
+				owner.A_StopSound(CHAN_VOICE);
+				owner.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT);
+				owner.A_Log("The SuperVac's Alt-Fire Has THREE Charges now!", vacgiveammo);
+			}
+			
+			// TimeFreeze Handler
+			bool debugtimefreeze = false;
+			int BeatTimer;
+			int TickTimer;
+			double BeatVol;
+			TimeFreezeTimer = owner.CountInv("TimeFreezeTimer");
+			TimeFreeze = owner.CountInv("TimePotionTimeFreezer");
+			if (TimeFreeze)
+			{
+				if (TimeFreezeTimer)
+				{
+					// Start Up
+					if (PrevTimeFreezeTimer == 0)
+					{
+						owner.A_StopSound(CHAN_6);
+						owner.A_StartSound("TimeFreezeIn4",CHAN_6,CHANF_DEFAULT,0.875,ATTN_NONE); 
+						//owner.A_StartSound("TheWorldIn",CHAN_6,CHANF_DEFAULT,0.875,ATTN_NONE); 
+					}
+					owner.A_SetInventory("TimePotionTimeFreezer",1);
+					
+					// Ticks
+					TickTimer = TimeFreezeTimer % 35;
+					if (TickTimer == 0 && PrevTimeFreezeTimer != 0)
+					{
+						owner.A_StopSound(CHAN_6); 
+						owner.A_StartSound("TimeStopTick",CHAN_6,CHANF_DEFAULT,frandom[statitem2](0.80,1.20),ATTN_NONE); 
+					}
+					
+					// Heart Beat Effecty
+					if (TimeFreezeTimer > 66 && PrevTimeFreezeTimer != 0)
+					{
+						BeatVol = 0.5;
+						int BeatInt1 = 42;
+						int BeatInt2 = 34;
+						int BeatInt3 = 26;
+						int BeatInt4 = randompick(13,14,14,14,15);
+						double BeatVol1 = 0.25;
+						double BeatVol2 = 0.3125;
+						double BeatVol3 = 0.3875;
+						double BeatVol4 = 0.5;
+						double BeatBersMulti = 0.875;
+						double BeatBersMulti2 = 1.167;
+						if (berserked)
+						{
+							if (Owner.CountInv("NormalHealth"))					{ BeatTimer = TimeFreezeTimer % (BeatInt1 * BeatBersMulti); BeatVol = (BeatVol1 * BeatBersMulti2); }
+							else if (Owner.CountInv("DecentHealth"))		{ BeatTimer = TimeFreezeTimer % (BeatInt2 * BeatBersMulti); BeatVol = (BeatVol2 * BeatBersMulti2); }
+							else if (Owner.CountInv("LowHealth"))				{ BeatTimer = TimeFreezeTimer % (BeatInt3 * BeatBersMulti); BeatVol = (BeatVol3 * BeatBersMulti2); }
+							else if (Owner.CountInv("CriticalHealth"))	{ BeatTimer = TimeFreezeTimer % (BeatInt4 * BeatBersMulti); BeatVol = (BeatVol4 * BeatBersMulti2); }
+						}
+						else
+						{
+							if (Owner.CountInv("NormalHealth"))					{ BeatTimer = TimeFreezeTimer % BeatInt1; BeatVol = BeatVol1; }
+							else if (Owner.CountInv("DecentHealth"))		{ BeatTimer = TimeFreezeTimer % BeatInt2; BeatVol = BeatVol2; }
+							else if (Owner.CountInv("LowHealth"))				{ BeatTimer = TimeFreezeTimer % BeatInt3; BeatVol = BeatVol3; }
+							else if (Owner.CountInv("CriticalHealth"))	{ BeatTimer = TimeFreezeTimer % BeatInt4; BeatVol = BeatVol4; }
+						}
+					}
+					if (debugtimefreeze) Console.Printf("BeatTimer: %d", BeatTimer);
+					if (BeatTimer == 0)
+					{
+						owner.A_StopSound(33);
+						owner.A_StartSound("TimeFreezeLoop4",CHANF_DEFAULT,33,BeatVol,ATTN_NONE); 
+					}
+					
+					// Wind Down
+					if (TimeFreezeTimer >= 64 && TimeFreezeTimer <= 66) 
+					{
+						owner.A_StopSound(CHAN_7); 
+						owner.A_StartSound("TimeFreezeOut4",CHAN_7,CHANF_DEFAULT,0.875,ATTN_NONE); 
+					}
+
+					TimeFreezeTimer -= 1;
+					if (TimeFreezeTimer < 1)
+					{
+						TimeFreezeTimer = 0;
+						TimeFreeze = 0;
+					}
+				}
+				if (debugtimefreeze) Console.Printf("%d Tics of Time Freeze Left", TimeFreezeTimer);
+				PrevTimeFreezeTimer = TimeFreezeTimer;
+			}
+			owner.A_SetInventory("TimeFreezeTimer",TimeFreezeTimer);
+			owner.A_SetInventory("TimePotionTimeFreezer",TimeFreeze);
+			
+			// Land Damage
+			bool debuglanddmg = false;
+			landdmgbonus = 0;
+			if (owner.vel.z < -128.0)
+			{
+				landdmgbonus = 4;
+				if (debuglanddmg) Console.Printf("    \ceLanding Damage [Lvl 4 - 13.9453125x Melee Dmg]: ZVel: %.8f", owner.vel.z);
+			}
+			else
+			if (owner.vel.z < -32.0)
+			{
+				landdmgbonus = 3;
+				if (debuglanddmg) Console.Printf("    \ceLanding Damage [Lvl 3 - 6.5625x Melee Dmg]: ZVel: %.8f", owner.vel.z);
+			}
+			else
+			if (owner.vel.z < -8.0)
+			{
+				landdmgbonus = 2;
+				if (debuglanddmg) Console.Printf("    \ceLanding Damage [Lvl 2 - 3.5x Melee Dmg]: ZVel: %.8f", owner.vel.z);
+			}
+			else
+			if (owner.vel.z < -0.0625)
+			{
+				landdmgbonus = 1;
+				if (debuglanddmg) Console.Printf("    \ceLanding Damage [Lvl 1 - 2x Melee Dmg]: ZVel: %.8f", owner.vel.z);
+			}
+			
+			//
+			owner.player.health = owner.player.mo.health = CurrentHealth;
+			owner.A_SetInventory("PlayerMaxHP",MaxHealthTrue);
+			
+			bool debugcricketguard = false;
+			if (CricketBatBuffTimer)
+			{
+				CricketBatBuffTimer--;
+				owner.A_SetInventory("CricketBatGuard",1);
+				if (debugcricketguard) Console.Printf("timer: %d", CricketBatBuffTimer);
+			}
+			else
+			{
+				owner.A_SetInventory("CricketBatGuard",0);
+			}
+			if (CricketBatSwingBuffTimer)
+			{
+				CricketBatSwingBuffTimer--;
+				owner.A_SetInventory("CricketBatSwingDEF",1);
+				if (debugcricketguard) Console.Printf("timer: %d", CricketBatSwingBuffTimer);
+			}
+			else
+			{
+				owner.A_SetInventory("CricketBatSwingDEF",0);
+			}
+
+			// RenderStyle Stuff [Dashing, Invisibility, etc]
+			int InvisPulseTimer = level.totaltime % 40;
+			double InvisPulseAlpha = 1.00;
+			double DashAlpha = 1.00;
+			int DashTics = owner.CountInv("DashTics");
+
+			int InvisibilityTimer;
+			let MiscItem = PowerInvisibility(owner.FindInventory("PowerInvisibility",true));
+			if (MiscItem)
+			{
+				InvisibilityTimer = MiscItem.EffectTics;
+				if (InvisibilityTimer > 0)
+				{
+					if (InvisPulseTimer == 0 || InvisPulseTimer == 20 || InvisPulseTimer == 40) InvisPulseAlpha = 0.20;
+					if (InvisPulseTimer == 1 || InvisPulseTimer == 19) InvisPulseAlpha = 0.205;
+					if (InvisPulseTimer == 2 || InvisPulseTimer == 18) InvisPulseAlpha = 0.21;
+					if (InvisPulseTimer == 3 || InvisPulseTimer == 17) InvisPulseAlpha = 0.215;
+					if (InvisPulseTimer == 4 || InvisPulseTimer == 16) InvisPulseAlpha = 0.22;
+					if (InvisPulseTimer == 5 || InvisPulseTimer == 15) InvisPulseAlpha = 0.225;
+					if (InvisPulseTimer == 6 || InvisPulseTimer == 14) InvisPulseAlpha = 0.23;
+					if (InvisPulseTimer == 7 || InvisPulseTimer == 13) InvisPulseAlpha = 0.235;
+					if (InvisPulseTimer == 8 || InvisPulseTimer == 12) InvisPulseAlpha = 0.24;
+					if (InvisPulseTimer == 9 || InvisPulseTimer == 11) InvisPulseAlpha = 0.245;
+					if (InvisPulseTimer == 10) InvisPulseAlpha = 0.25;
+					if (InvisPulseTimer == 21 || InvisPulseTimer == 39) InvisPulseAlpha = 0.195;
+					if (InvisPulseTimer == 22 || InvisPulseTimer == 38) InvisPulseAlpha = 0.19;
+					if (InvisPulseTimer == 23 || InvisPulseTimer == 37) InvisPulseAlpha = 0.185;
+					if (InvisPulseTimer == 24 || InvisPulseTimer == 36) InvisPulseAlpha = 0.18;
+					if (InvisPulseTimer == 25 || InvisPulseTimer == 35) InvisPulseAlpha = 0.175;
+					if (InvisPulseTimer == 26 || InvisPulseTimer == 34) InvisPulseAlpha = 0.17;
+					if (InvisPulseTimer == 27 || InvisPulseTimer == 33) InvisPulseAlpha = 0.165;
+					if (InvisPulseTimer == 28 || InvisPulseTimer == 32) InvisPulseAlpha = 0.16;
+					if (InvisPulseTimer == 29 || InvisPulseTimer == 31) InvisPulseAlpha = 0.155;
+					if (InvisPulseTimer == 30) InvisPulseAlpha = 0.15;
+				}
+			}
+			if (DashTics)
+			{
+				if (level.time % 4 <= 1) DashAlpha = frandompick(0.375,0.5,0.625);
+														else DashAlpha = frandompick(0.625,0.75,0.875);
+			}
+			if (DashTics) owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha),STYLE_Add);
+							 else owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha),STYLE_Translucent);
+
+			let MiscItem3 = Powerup(owner.FindInventory("PowerInvulnerable",true));
+			if (MiscItem3)
+			{
+			}
+			
+			ClassCheck++;
+			super.DoEffect();
+		}
+	}
+	
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive)
+	{
+		if (owner)
+		{
+			if (Owner.CountInv("PowerStrength") || owner.CountInv("PowerStrengthDD")) berserked = true;
+		}
+		let weapon = owner.player.ReadyWeapon;
+		TrueGameSkill = skill;
+		bool debugdmg = false;
+		
+		// ******************
+		// ******************
+		// **Offensive Code**
+		// ******************
+		// ******************
+		if (!passive && damage > 0) // If the owner [usually the player] of the item is the ATTACKER
+		{
+			if (debugdmg) Console.Printf("Damage (!passive): %d", damage);
+			double LVLFactor = (1.00 + (PlayerLevel * 0.0125));
+			if (debugdmg) Console.Printf("Damage (!passive - Level): %.8f", LVLFactor);
+
+			double SkillFactor = 1.00;
+			if (Skill == SKILL_VERY_HARD) SkillFactor *= 0.75;
+			if (Skill == SKILL_HARD) SkillFactor *= 0.875;
+			if (Skill == SKILL_NORMAL) SkillFactor *= 1.00;
+			if (Skill == SKILL_EASY) SkillFactor *= 1.125;
+			if (Skill == SKILL_VERY_EASY) SkillFactor *= 1.25;
+			if (debugdmg) Console.Printf("Damage (!passive - Skill): %.8f", SkillFactor);
+
+			// Landing Bonus
+			double LandingFactor = 1.0;
+			if (damageType == 'Melee' || damageType == 'Trample' || damageType == 'Stomp' || damageType == 'Fist' || damageType == 'Kick' || damageType == 'Chainsaw' ||
+					damageType == 'Bonk' || damageType == 'Bap')
+			{
+				if (landdmgbonus == 1) LandingFactor = 2.0;
+				if (landdmgbonus == 2) LandingFactor = 3.5;
+				if (landdmgbonus == 3) LandingFactor = 6.5625;
+				if (landdmgbonus == 4) LandingFactor = 13.9453125;
+				if (debugdmg) Console.Printf("Damage (!passive - Landing): %.8f", LandingFactor);
+			}
+
+			// Dashing Bonus
+			double DashingFactor = 1.0;
+			if (CountInv("PlayerDashing"))
+			{
+				if (damageType == 'Melee' || damageType == 'Trample' || damageType == 'Stomp' || damageType == 'Fist' || damageType == 'Kick' || damageType == 'Chainsaw' ||
+					damageType == 'Bonk' || damageType == 'Bap') DashingFactor = frandompick(1.25,1.334,1.425,1.5);
+			}
+			
+			double BuffFactor = 1.00;
+			if (Owner.CountInv("PowerInvisibility")) BuffFactor *= frandompick(1.00,1.00,1.125,1.125,1.25);
+
+			if (Owner.CountInv("PowerWineBuffWeak")) BuffFactor *= frandompick(0.985,1.015);
+			if (Owner.CountInv("PowerWineBuffStrong")) BuffFactor *= frandompick(0.955,1.045);
+			if (Owner.CountInv("PowerWineBuffStrongest")) BuffFactor *= frandompick(0.91,1.09);
+			if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandompick(0.85,1.15);
+			if (debugdmg) Console.Printf("Damage (!passive - Buff): %.8f", BuffFactor);
+			
+			double TOTALFactor = 1.0
+													 * LVLFactor
+													 * SkillFactor
+													 * LandingFactor
+													 * BuffFactor
+													 * atkfct;
+			if (debugdmg) Console.Printf("Damage (!passive - Total): %.8f", TOTALFactor);
+
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+			if (debugdmg) Console.Printf("FDamage (!passive): %d", newdamage);
+		}
+		
+		// ******************
+		// ******************
+		// **Defensive Code**
+		// ******************
+		// ******************
+		if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
+		{
+			if (debugdmg) Console.Printf("FDamage (passive[pre]): %d", damage);
+			double LVLFactor = (1.00 - (PlayerLevel * 0.0125));
+			if (debugdmg) Console.Printf("Damage (passive - Level): %.8f", LVLFactor);
+
+			// Difficulty Level
+			double SkillFactor = 1.00;
+			if (Skill == SKILL_VERY_EASY) SkillFactor *= 0.75;
+			if (Skill == SKILL_EASY) SkillFactor *= 0.875;
+			if (Skill == SKILL_NORMAL) SkillFactor *= 1.00;
+			if (Skill == SKILL_HARD) SkillFactor *= 1.125;
+			if (Skill == SKILL_VERY_HARD) SkillFactor *= 1.25;
+			if (debugdmg) Console.Printf("Damage (passive - Skill): %.8f", SkillFactor);
+			
+			// Buffs
+			double BuffFactor = 1.00;
+			if (berserked) BuffFactor *= frandompick(0.8,0.9,0.9,0.9,1.0);
+			if (Owner.CountInv("PowerInvisibility")) BuffFactor *= frandompick(1.00,1.00,0.875,0.875,0.75);
+
+			if (Owner.CountInv("PowerWineBuffWeak")) BuffFactor *= frandompick(0.995,1.005);
+			if (Owner.CountInv("PowerWineBuffStrong")) BuffFactor *= frandompick(0.985,1.015);
+			if (Owner.CountInv("PowerWineBuffStrongest")) BuffFactor *= frandompick(0.97,1.03);
+			if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandompick(0.95,1.05);
+			if (debugdmg) Console.Printf("Damage (passive - Buff): %.8f", SkillFactor);
+			
+			// Weapons
+			double WeaponFactor = 1.00;
+			if (weapon is "HandToHand") WeaponFactor = 1.125;
+			if (weapon is "CricketBat") WeaponFactor = 1.00;
+			if (weapon is "BlunderAxe") WeaponFactor = 1.0625;
+			if (weapon is "AppleJack") WeaponFactor = 0.9375;
+			if (weapon is "Scrambler") WeaponFactor = 0.75;
+			if (weapon is "WizardPike") WeaponFactor = 0.875;
+			if (weapon is "SuperVac") WeaponFactor = 1.125;
+			if (weapon is "Grimophone") WeaponFactor = 1.25;
+			if (debugdmg) Console.Printf("Damage (passive - WeaponEquipped): %.8f", WeaponFactor);
+
+			double TOTALFactor = 1.0
+													 * LVLFactor
+													 * SkillFactor
+													 * BuffFactor
+													 * deffct;
+			if (debugdmg) Console.Printf("Damage (passive - Total): %.8f", TOTALFactor);
+
+			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+			if (debugdmg) Console.Printf("FDamage (passive - Final): %d", newdamage);
+		}
+	}
+	
+	override double GetSpeedFactor()
+	{
+		bool debugspeed = false;
+		let weapon = owner.player.ReadyWeapon;
+		CurrentHealth = owner.health;
+		MaxHealthTrue = (owner.player.mo.maxhealth + owner.player.mo.stamina);
+
+		Speed = 1.00;
+		if (debugspeed) Console.Printf("SpeedX [base]: %.8f", Speed);
+
+		Speed *= (1.00 + (PlayerLevel * 0.01875));
+		if (debugspeed) Console.Printf("SpeedX [level]: %.8f", Speed);
+
+		if (CurrentHealth >= (MaxHealthTrue * 3)) Speed *= 1.25;
+		else if (CurrentHealth >= (MaxHealthTrue * 2.75)) Speed *= 1.21875;
+		else if (CurrentHealth >= (MaxHealthTrue * 2.5)) Speed *= 1.1875;
+		else if (CurrentHealth >= (MaxHealthTrue * 2.25)) Speed *= 1.15625;
+		else if (CurrentHealth >= (MaxHealthTrue * 2.0)) Speed *= 1.125;
+		else if (CurrentHealth >= (MaxHealthTrue * 1.75)) Speed *= 1.09375;
+		else if (CurrentHealth >= (MaxHealthTrue * 1.5)) Speed *= 1.0625;
+		else if (CurrentHealth >= (MaxHealthTrue * 1.25)) Speed *= 1.03125;
+		else if (CurrentHealth >= (MaxHealthTrue * 0.75)) Speed *= 1.00;
+		else if (CurrentHealth >= (MaxHealthTrue * 0.5)) Speed *= 0.9375;
+		else if (CurrentHealth >= (MaxHealthTrue * 0.25)) Speed *= 0.875;
+		else Speed *= 0.8125;
+		if (debugspeed) Console.Printf("SpeedX [health]: %.8f", Speed);
+
+		if (berserked) Speed *= 1.125;
+		
+		if (Owner.CountInv("CricketBatGuard")) Speed *= frandom(0.95,0.975);
+
+		if (Owner.CountInv("PowerWineBuffWeak")) Speed *= frandom(0.965,0.975);
+		if (Owner.CountInv("PowerWineBuffStrong")) Speed *= frandom(0.89,0.91);
+		if (Owner.CountInv("PowerWineBuffStrongest")) Speed *= frandom(0.80,0.84);
+		if (Owner.CountInv("PowerWineBuffStrongestEven")) Speed *= frandom(0.69,0.75);
+		if (debugspeed) Console.Printf("SpeedX [Buffs]: %.8f", Speed);
+
+		if (owner.CountInv("KnightGownItem")) Speed *= 0.99;
+		if (owner.CountInv("KnightGownItem2")) Speed *= 0.97;
+		if (owner.CountInv("KnightGownItem3")) Speed *= 0.94;
+		if (owner.CountInv("KnightGownItem4")) Speed *= 0.90;
+		if (debugspeed) Console.Printf("SpeedX [Armor]: %.8f", Speed);
+		
+		// Weapon Checks
+		if (weapon is "HandToHand") Speed *= 1.125;
+		if (weapon is "CricketBat") Speed *= 1.00;
+		if (weapon is "BlunderAxe") Speed *= 0.95;
+		if (weapon is "AppleJack") Speed *= 1.05;
+		if (weapon is "Scrambler") Speed *= 1.125;
+		if (weapon is "WizardPike") Speed *= 1.125;
+		if (weapon is "SuperVac") Speed *= 0.875;
+		if (weapon is "Grimophone") Speed *= 0.875;
+		if (debugspeed) Console.Printf("SpeedX [WeaponEquipped]: %.8f", Speed);
+		
+		Speed *= spdfct;
+
+		if (debugspeed) Console.Printf("SpeedX [Final]: %.8f", Speed);
+		return Speed; 
+	}
+}
+
+// For a later attempt at dynamic music. :V
+class DynamicMusic : Inventory
+{
+	bool fightmusic;
+	bool bossmusic;
+	
+
+	default 
+	{
+		+Inventory.PERSISTENTPOWER;
+		+Inventory.UNDROPPABLE;
+		+Inventory.UNTOSSABLE;
+	}
+
+	override void Tick()
+	{
+		Super.Tick();
+		//
+	}
+}
+
+/////////////////////////////////////////////////////////////DASH
+// Dash and double jump code by TheCamaleonMaligno ( https://www.youtube.com/watch?v=mTfGxY_Afhs )
+class PlayerDashJump : Inventory
+{
+	const SKILL_VERY_EASY = 0;
+	const SKILL_EASY = 1;
+	const SKILL_NORMAL = 2;
+	const SKILL_HARD = 3;
+	const SKILL_VERY_HARD = 4;
+
+	Double DashDir, DashSpeed, DashVSpeed;
+	Int DashTics, DashCharge, AirTics, DashCost;
+	Bool DJump, Waiting;
+	string dashgruntsound;
+	int dashgruntchance;
+	int dashtype;
+	int airdashtype;
+	Int DashMaxCharge, MaxDashes, MaxDashTics;
+	bool slownthres1, slownthres2, slownthres3;
+	bool berserked;
+	int PlayerLevel;
+	int BaseDashChargeMax;
+	int ExtraDashCharge;
+	
+	int ClassCheck;
+	
+	Default
+	{
+		+Inventory.PERSISTENTPOWER
+		+Inventory.UNDROPPABLE
+		+Inventory.UNTOSSABLE
+	}
+	
+	override void Tick()
+	{
+		Super.Tick();
+		int debugdashing = false;
+		if (!Owner || Owner && (!Owner.Player || Owner.Health < 1)) Return;
+		if (Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD")) berserked = true;
+		PlayerInfo PlayDash = Owner.Player;
+		Int BTInput = PlayDash.cmd.buttons;
+		dashgruntchance = randompick(66,66,67);
+		MaxDashes = 1;
+		MaxDashTics = randompick(6,6,7,7,7);
+		double dashsndvol = 0.67;
+		double dashgruntsndvol = 1.0;
+		PlayerLevel = owner.CountInv("PlayerLevel");
+		int AddDashLevel = (PlayerLevel * 1.25);
+		double ADashFactor = 1.5;
+		if (skill <= SKILL_VERY_EASY) AddDashLevel = (PlayerLevel * (1.625 * ADashFactor));
+		if (skill == SKILL_EASY) AddDashLevel = (PlayerLevel * (1.5 * ADashFactor));
+		if (skill == SKILL_NORMAL) AddDashLevel = (PlayerLevel * (1.375 * ADashFactor));
+		if (skill == SKILL_HARD) AddDashLevel = (PlayerLevel * (1.25 * ADashFactor));
+		if (skill >= SKILL_VERY_HARD) AddDashLevel = (PlayerLevel * (1.125 * ADashFactor));
+		
+		if (ClassCheck == 0)
+		{
+			if (skill == SKILL_VERY_EASY) BaseDashChargeMax = random(32,35);
+			if (skill == SKILL_EASY) BaseDashChargeMax = random(30,32);
+			if (skill == SKILL_NORMAL) BaseDashChargeMax = random(27,30);
+			if (skill == SKILL_HARD) BaseDashChargeMax = random(25,27);
+			if (skill >= SKILL_VERY_HARD) BaseDashChargeMax = random(22,25);
+		}
+
+		DashMaxCharge = BaseDashChargeMax + AddDashLevel + ExtraDashCharge;
+		if (berserked) DashMaxCharge *= 1.125;
+
+		DashCost = 35;
+		if (owner.CountInv("PowerRoastBuff")) DashCost -= 1;
+		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashCost -= 2;
+
+		if (dydudebug_dashmeter) Console.Printf("DashMaxCharge: %d (%d, %d, %d), DashCost: %d", DashMaxCharge, BaseDashChargeMax, AddDashLevel, ExtraDashCharge, DashCost);
+		
+		airdashtype = 0;
+		// 0 = No loss of altitude
+		// 1 = Start with a short "hop" but fall to the ground afterwards.
+		
+		int pushingdirection = 0;
+		If (BTInput & BT_FORWARD) pushingdirection += 1;
+		If (BTInput & BT_BACK) pushingdirection += 2;
+		If (BTInput & BT_MOVELEFT) pushingdirection += 4;
+		If (BTInput & BT_MOVERIGHT) pushingdirection = 8;
+		
+		if (!Waiting && 
+				(BTInput & BT_USER3) && 
+				DashCharge >= DashCost && 
+				pushingdirection &&
+				!DashTics)
+		{
+			//Console.Printf("OnGround: %d", PlayDash.OnGround);
+			DashDir = 0;
+			If (BTInput & BT_FORWARD) DashDir = 0;
+			If (BTInput & BT_BACK) DashDir = 180;
+			If (BTInput & BT_MOVELEFT) DashDir = 90;
+			If (BTInput & BT_MOVERIGHT) DashDir = -90;
+			If ((BTInput & BT_FORWARD) && (BTInput & BT_MOVELEFT)) DashDir = 45;
+			If ((BTInput & BT_FORWARD) && (BTInput & BT_MOVERIGHT)) DashDir = -45;
+			If ((BTInput & BT_BACK) && (BTInput & BT_MOVELEFT)) DashDir = (180 - 45);
+			If ((BTInput & BT_BACK) && (BTInput & BT_MOVERIGHT)) DashDir = (180 + 45);
+			DashDir += Owner.Angle;
+
+			DashCharge -= DashCost;
+			if (DashCharge <= 0) 
+			{
+				Waiting = True;
+				DashCharge = 0;
+			}
+
+			if (PlayDash.OnGround)
+			{
+				DashSpeed = 25; // 35 
+				DashTics = MaxDashTics;
+				dashtype = 0;
+				Owner.A_StartSound("player/dash",CHAN_BODY,CHANF_OVERLAP,dashsndvol);
+			}
+			else
+			{
+				if (airdashtype == 1) DashSpeed = 25;
+												 else DashSpeed = 20; // 35
+				DashVSpeed = 5;
+				DashTics = MaxDashTics;
+				dashtype = 1; // Airdash
+				Owner.A_StartSound("player/airjump",CHAN_BODY,CHANF_OVERLAP,dashsndvol);
+			}
+			
+			if (random(1,100) <= dashgruntchance)
+			{
+				if (Owner.GetClassName() == "DinahPlayer") dashgruntsound = "dinah/jump";
+				Owner.A_StopSound(CHAN_VOICE);
+				Owner.A_StartSound(dashgruntsound,CHAN_VOICE,CHANF_DEFAULT,(dashgruntsndvol * frandom(1.25,1.375)));
+			}
+
+			bool CollisonSpawn = false;
+			if (CollisonSpawn)
+			{
+				Actor CollDash = Spawn("DashCollisionChecker", Owner.Pos);
+				CollDash.bSolid = True;
+				CollDash.Master = Self;
+				CollDash.Target = Owner;
+				CollDash.A_SetSize(Owner.Radius, Owner.Height);
+				CollDash.bNoTImeFreeze = True;
+			}
+		}
+		if (DashTics)
+		{
+			//if (PlayDash.OnGround) { PlayDash.OnGround = False; Owner.AddZ(1); }
+			if (PlayDash.OnGround && DashTics % 2) 
+			{
+				Owner.A_SpawnItemEx("DashPuff",0,0,randompick(4,6,8),0.0,0.0,0.0,0,SXF_NOCHECKPOSITION); 
+				//Owner.A_QuakeEx(1,1,1,random(2,3),0,1,"",QF_SCALEDOWN);
+			}
+			if (!PlayDash.OnGround && 
+					(DashTics > (MaxDashTics - 2)) 
+					&& airdashtype == 1) 
+					{
+						Owner.Vel.Z += DashVSpeed;
+					}
+					else
+					{
+						Owner.Vel.Z = 0.0;
+					}
+			/*
+			if (level.time % 4 <= 1) owner.A_SetRenderStyle(frandompick(0.375,0.5,0.625),STYLE_Add); 
+													else owner.A_SetRenderStyle(frandompick(0.625,0.75,0.875),STYLE_Add);
+			*/
+
+			Owner.A_SetBlend("78447E",frandom(0.08,0.12),random(2,3));
+			Owner.A_SetInventory("PlayerDashing",1);
+			Owner.bSHOOTABLE = false;
+			Owner.bVISIBILITYPULSE = true;
+			Owner.bTHRUACTORS = true;
+			DashTics--;
+
+			Owner.VelFromAngle(DashSpeed, DashDir);
+			if (berserked)
+			{
+				if (PlayDash.OnGround && DashTics % 4 <= 2) Owner.A_SetInventory("DashTimeFreezer",1);
+																							 else Owner.A_SetInventory("DashTimeFreezer",0);
+				if (DashTics > (MaxDashTics * 0.75)) DashSpeed *= 1.025;
+
+				if (DashTics % 2) Owner.A_Explode((random(8,12)*random(1,3)),(radius*3),XF_NOTMISSILE,false,(radius*1.5),0,0,"","Dashing");
+				/*
+				if (DashTics % 4)
+				{
+					bool success;
+					Actor firetrail;
+					[success, firetrail] = Owner.A_SpawnItemEx("ArchvileFire",frandom(-1,1),frandom(-1,1));
+					if (firetrail && success) 
+					{
+						firetrail.scale.x = frandom(0.4,0.6);
+						firetrail.scale.y = frandom(0.4,0.6);
+						firetrail.A_SetRenderStyle(frandom(0.4,0.6),6); // Sets to Transperant
+					}
+				}
+				*/
+			}
+			else
+			{
+				if (PlayDash.OnGround && DashTics % 4 <= 1) Owner.A_SetInventory("DashTimeFreezer",1);
+																							 else Owner.A_SetInventory("DashTimeFreezer",0);
+			}
+			
+			if (DashTics <= (MaxDashTics * 0.25))
+			{
+				if (!slownthres1)
+				{
+					slownthres1 = true;
+					DashSpeed *= 0.85;
+				}
+			}
+			else if (DashTics <= (MaxDashTics * 0.5)) 
+			{
+				if (!slownthres2)
+				{
+					slownthres2 = true;
+					DashSpeed *= 0.9;
+				}
+			}
+			else if (DashTics <= (MaxDashTics * 0.75))
+			{
+				if (!slownthres3)
+				{
+					slownthres3 = true;
+					DashSpeed *= 0.95;
+				}
+			}
+			if (debugdashing) Console.Printf("DashTics: %d / %d, Thresh: [1] %d, [2] %d, [3] %d", DashTics, MaxDashTics, slownthres1, slownthres2, slownthres3);
+		}
+		else
+		{
+			Owner.A_SetInventory("DashTimeFreezer",0);
+			Owner.A_SetInventory("PlayerDashing",0);
+			Owner.bSHOOTABLE = true;
+			Owner.bVISIBILITYPULSE = false;
+			Owner.bTHRUACTORS = false;
+			dashtype = -1;
+			slownthres1 = false;
+			slownthres2 = false;
+			slownthres3 = false;
+		}
+/*
+		if (PlayDash.onGround)
+		{
+			DJump = True;
+			//AirTics = 0;
+		}
+		else 
+		if (!(Owner.GetPlayerInput(MODINPUT_OLDBUTTONS) & BT_JUMP) && 
+				(Owner.GetPlayerInput(MODINPUT_BUTTONS) & BT_JUMP) && 
+				DJump &&
+				AirTics >= 5)
+		{
+			//Owner.Vel.Z = Max((Owner.Vel.Z + 8),8);
+			//Owner.A_StartSound("DoubleJump",69,CHANF_OVERLAP);
+			
+			DJump = False;
+		}
+		else AirTics++;
+*/
+		
+		if (DashCharge < DashMaxCharge)
+		{
+			if (!DashTics)
+			{
+				if (debugdashing) Console.Printf("(!DashTics)");
+				if (berserked)
+				{
+					if (level.time % 4) 
+					{
+						DashCharge += 2; 
+					}
+					else
+					{
+						DashCharge += 1; 
+					}
+				}
+				else
+				{
+					DashCharge += 1; 
+				}
+				if (DashCharge > DashMaxCharge) DashCharge = DashMaxCharge;
+			}
+			else
+			if (level.time % 16)
+			{
+				/*
+				if (debugdashing) Console.Printf("if (level.time % 16)");
+				if (berserked)
+				{
+					if (level.time % 64) 
+					{
+						DashCharge += 2; 
+					}
+					else
+					{
+						DashCharge += 1; 
+					}
+				}
+				else
+				{
+					if (level.time % 64) 
+					{
+						DashCharge += 1; 
+					}
+					else
+					{
+						if (level.time % 256) 
+						{
+							DashCharge += 1; 
+						}
+					}
+				}
+				if (DashCharge > DashMaxCharge) DashCharge = DashMaxCharge;
+				*/
+			}
+			//if (DashCharge == DashMaxCharge && !PlayDash.OnGround) DashCharge = DashMaxCharge - 1; 
+
+			if (DashCharge >= DashMaxCharge)
+			{
+				Waiting = False;
+				//Owner.A_StartSound("Player/DashReady",69,CHANF_OVERLAP);
+			}
+			if (debugdashing) Console.Printf("DashCharge: %d / %d", DashCharge, DashMaxCharge);
+		}
+		else
+		{
+			if (DashCharge > DashMaxCharge)
+			{
+				DashCharge = DashMaxCharge;
+				Waiting = False;
+				//Owner.A_StartSound("Player/DashReady",69,CHANF_OVERLAP);
+			}
+			if (debugdashing) Console.Printf("DashCharge: %d / %d", DashCharge, DashMaxCharge);
+		}
+		
+		int dashcharges = (DashCharge / DashCost);
+		int dashgauge;
+		if (DashMaxCharge) dashgauge = DashCharge * 100 / DashMaxCharge;
+		if (dashgauge > 100) dashgauge = 100;
+		owner.A_SetInventory("DashGauge",dashgauge);
+		owner.A_SetInventory("DashMaxCharge",DashMaxCharge);
+		owner.A_SetInventory("DashCharges",dashcharges);
+		owner.A_SetInventory("DashCharge",DashCharge);
+		owner.A_SetInventory("DashTics",DashTics);
+		owner.A_SetInventory("DashCost",DashCost);
+
+		if (Waiting) owner.A_SetInventory("DashReady",0);
+						else owner.A_SetInventory("DashReady",1);
+						
+		ClassCheck++;
+	}
+}
+
+Class DashCollisionChecker : Actor
+{
+	PlayerDashJump je;
+	Override Void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+		let sas = PlayerDashJump(Master);
+		je = sas;
+	}
+
+	Override bool CanCollideWith(Actor other, bool passive)
+	{
+		if (Other == target || Other.bMissile)
+		Return False;
+		if (Pos.Z > (Other.Pos.Z + Other.Height) || Other.Pos.Z > (Pos.Z + Height)) Return False;
+		if (Other.bSolid && Other.bShootable && Other.CanCollideWith(Self,0))
+		Tracer = Other;
+		Return False;
+	}
+
+	Override Void Tick()
+	{
+		Super.Tick();
+		if (!target || !je || je && !je.dashtics) { Destroy(); Return; }
+		SetOrigin((Target.Pos + (Target.Vel * 0.1)),0);
+		Vel = Target.Vel;
+		if (Tracer)
+		{
+			bThruActors = True;
+			/*
+			Let Cg = Weapon_Chaingun(Target.player.ReadyWeapon);
+			if (Cg && Cg.Tracer)
+			{
+				bForcePain = True;
+				Target.Vel *= 0;
+				Tracer.DamageMobj(Self, Target, 75, 'Normal', 0, Target.Angle);
+				Tracer.ApplyKickback(Target, Target, 300, Target.Angle, 'Normal', 0);
+				Tracer.A_TakeInventory("DashStun");
+				Tracer.A_GiveInventory("DashStun");
+				Target.A_StartSound("Weapons/DE/ChaingunShieldDash",9,CHANF_OVERLAP,0.5);
+				Target.A_QuakeEx(1,1,1,8,0,1,"",QF_SCALEDOWN);
+				Cg.DashImpact();
+				Cg.DashImpact();
+			}
+			*/
+			je.DashSpeed = 0;
+			Destroy();
+		}
+	}
+}

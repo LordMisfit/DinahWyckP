@@ -1,0 +1,111 @@
+// Menu Tooltips [borrowed from Nash's Tilt++ Mod for testing purposes. V:
+class OptionMenuItemDyDuOption : OptionMenuItemOption
+{
+	String mTooltip;
+
+	OptionMenuItemDyDuOption Init(String label, String tooltip, Name command, Name values, CVar graycheck = null, int center = 0)
+	{
+		mTooltip = tooltip;
+		Super.Init(label, command, values, graycheck, center);
+		return self;
+	}
+}
+
+class OptionMenuItemDyDuTextField : OptionMenuItemTextField
+{
+	String mTooltip;
+
+	OptionMenuItemDyDuTextField Init (String label, String tooltip, Name command, CVar graycheck = null)
+	{
+		mTooltip = tooltip;
+		Super.Init(label, command, graycheck);
+		return self;
+	}
+}
+
+class OptionMenuItemDyDuSlider : OptionMenuItemSlider
+{
+	String mTooltip;
+
+	OptionMenuItemDyDuSlider Init(String label, String tooltip, Name command, double min, double max, double step, int showval = 1)
+	{
+		mTooltip = tooltip;
+		Super.Init(label, command, min, max, step, showval);
+		return self;
+	}
+}
+
+class OptionMenuItemDyDuSubmenu : OptionMenuItemSubmenu
+{
+	String mTooltip;
+
+	OptionMenuItemDyDuSubmenu Init(String label, String tooltip, Name command, int param = 0, bool centered = false)
+	{
+		mTooltip = tooltip;
+		Super.init(label, command, centered);
+		mParam = param;
+		return self;
+	}
+}
+
+class DyDuMenu : OptionMenu
+{
+	override void Drawer ()
+	{
+		Super.Drawer();
+
+		String tt;
+
+		if (mDesc.mSelectedItem > -1)
+		{
+			if (mDesc.mItems[mDesc.mSelectedItem] is "OptionMenuItemDyDuSubmenu")
+			{
+				tt = StringTable.Localize(OptionMenuItemDyDuSubmenu(mDesc.mItems[mDesc.mSelectedItem]).mTooltip);
+				if (dydudebug_menutooltipdisplays) Console.Printf("Submenu (selection# %d): '%s' (%d)", mDesc.mSelectedItem, tt, tt.Length());
+			}
+
+			if (mDesc.mItems[mDesc.mSelectedItem] is "OptionMenuItemDyDuOption")
+			{
+				tt = StringTable.Localize(OptionMenuItemDyDuOption(mDesc.mItems[mDesc.mSelectedItem]).mTooltip);
+				if (dydudebug_menutooltipdisplays) Console.Printf("Option (selection# %d): '%s' (%d)", mDesc.mSelectedItem, tt, tt.Length());
+			}
+
+			if (mDesc.mItems[mDesc.mSelectedItem] is "OptionMenuItemDyDuSlider")
+			{
+				tt = StringTable.Localize(OptionMenuItemDyDuSlider(mDesc.mItems[mDesc.mSelectedItem]).mTooltip);
+				if (dydudebug_menutooltipdisplays) Console.Printf("Slider (selection# %d): '%s' (%d)", mDesc.mSelectedItem, tt, tt.Length());
+			}
+
+			if (mDesc.mItems[mDesc.mSelectedItem] is "OptionMenuItemDyDuTextField")
+			{
+				tt = StringTable.Localize(OptionMenuItemDyDuTextField(mDesc.mItems[mDesc.mSelectedItem]).mTooltip);
+				if (dydudebug_menutooltipdisplays) Console.Printf("TextField (selection# %d): '%s' (%d)", mDesc.mSelectedItem, tt, tt.Length());
+			}
+		}
+
+		if (tt.Length() > 0)
+		{
+			font tipfont = OptionFont();
+			let text = tt;
+			int maxlength = (screen.GetWidth() / CleanXfac_1);
+			BrokenLines lines = tipfont.BreakLines(text, maxlength);
+
+			for (int i = 0; i < lines.Count(); ++i)
+			{
+				int fontheight = ((tipfont.GetHeight() * 0.875) * CleanYfac_1);
+				int posx = (Screen.GetWidth() - tipfont.StringWidth(lines.StringAt(i)) * CleanXfac_1) / 2;
+				int posy = ((fontheight * 2) + (i * fontheight));
+
+				Screen.DrawText (tipfont, // font
+					font.CR_GOLD, // OptionMenuSettings.mFontColorValue, // font color
+					posx, // pos.x
+					posy, // pos.y
+					lines.StringAt(i), // string/text
+					DTA_CleanNoMove_1, 
+					true);
+				
+				if (dydudebug_menutooltipdisplays) Console.Printf("i: %d, count: %d, pos.x: %d, pos.y: %d, maxlength: %d", i, lines.Count(), posx, posy, maxlength);
+			}
+		}
+	}
+}

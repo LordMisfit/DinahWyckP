@@ -1,0 +1,650 @@
+class DDPlayerPawn : PlayerPawn
+{
+	bool isvoodoodoll;
+	int neverbleeds;
+	
+	int DashTimer; int MaxDashTimer; 
+	int cooldash; bool sounddash; 
+	int thrudash; bool isdashing;
+	double floordashvel, airdashvel, dashjumpstrength;
+	double dashvelx, dashvely, dashvelz;
+
+	int dashcooldown;
+	int dashcooldownmax;
+
+	int firsttic;
+	int buttons, input;
+	
+	double TotalAirControl;
+	double basexscale, baseyscale;
+	double scalexmulti, scaleymulti;
+
+	default
+	{
+		+CASTSPRITESHADOW;
+		-NOSPRITESHADOW;
+		RenderStyle "Add";
+		Alpha 1.0;
+	}
+	
+	override void PostBeginPlay()
+	{
+		basexscale = scale.x;
+		baseyscale = scale.y;
+		scalexmulti = 1.00;
+		scaleymulti = 1.00;
+
+		// VOODOO Doll Protection
+		if (!player || !player.mo || player.mo != self) 
+		{
+			A_SetSize(16,56,false);
+			if (GetClassName() == "DinahPlayer")
+			{
+				scale.x *= 1.142857142857143;
+				scale.y *= 1.142857142857143;
+			}
+			Mass = 100;
+			//Console.Printf("H: %d, R: %d, M: %d, Sx: %4f, Sy: %4f", height, radius, mass, scale.x, scale.y);
+			Super.PostBeginPlay(); 
+			return;
+		}
+
+		if (bNOBLOOD == 1) 
+		{
+			if (bNOBLOODDECALS == 0) bNOBLOODDECALS == 1;
+			neverbleeds = 1;
+		}
+		if (bNOBLOODDECALS == 1) 
+		{
+			if (bNOBLOOD == 0) bNOBLOOD == 1;
+			neverbleeds = 1;
+		}
+		
+		Super.PostBeginPlay(); // KEEP THIS HERE ELSE OTHER FUNCTIONS RELATED TO PostBeginPlay() BREAK :V
+	}
+
+	override void CheckAirSupply()
+	{
+		if (!isvoodoodoll)
+		{
+			int DrownDmg = 2 + ((level.maptime - player.air_finished) / TICRATE);
+			DrownDmg = ceil(DrownDmg * frandompick(0.625,0.75,0.875,1.000));
+			DrownDmg = clamp(DrownDmg, 0, DrownDmg);
+			// Handle air supply	
+			//if (level.airsupply > 0)
+			{
+				let player = self.player;
+				if (waterlevel < 3 || (bInvulnerable) || 
+					(player.cheats & (CF_GODMODE | CF_NOCLIP2)) || (player.cheats & CF_GODMODE2) || 
+					CountInv("PowerInvulnDD") || CountInv("PowerInvulnerable"))
+				{
+					ResetAirSupply();
+				}
+				else if (player.air_finished <= level.maptime && !(level.maptime & 31))
+				{
+					DamageMobj(NULL, NULL, DrownDmg, 'Drowning');
+				}
+			}
+			int AirTime = max(player.air_finished - level.maptime, 0);
+			if (dydudebug_airmeter) Console.Printf("    WaterLevel: %d, Level.Time: %d, Level.MapTime: %d, Player.AirFinished: %d, \cxAirTime: %d / %d\c- (%d), DrownDmg: %d", waterlevel, level.time, level.maptime, player.air_finished, AirTime, level.airsupply, AirCapacity, DrownDmg);
+		}
+		else
+		{
+			super.CheckAirSupply();
+		}
+	}
+	
+	override void MovePlayer()
+	{
+		if (!isvoodoodoll) 
+		{
+			String nm;
+			int PlayerLevel = CountInv("PlayerLevel");
+			double AirControlBase = frandom(0.2432,0.2436);
+
+			// Level Based AirControl
+			double LVLAirControl = 1.00 + (PlayerLevel * 0.00125);
+
+			// Armor items
+			double ArmorAirControl = 1.00;
+			if (CountInv("KnightGownItem"))			ArmorAirControl += 0.0667;
+			if (CountInv("KnightGownItem2"))		ArmorAirControl += 0.10;
+			if (CountInv("KnightGownItem3"))		ArmorAirControl += 0.1334;
+			if (CountInv("KnightGownItem4"))		ArmorAirControl += 0.18;
+			if (CountInv("PowerWineBuffWeak"))	ArmorAirControl *= frandom(0.98,1.00);
+			if (CountInv("PowerWineBuffStrong"))	ArmorAirControl *= frandom(0.96,1.00);
+			if (CountInv("PowerWineBuffStrongest"))	ArmorAirControl *= frandom(0.93,1.00);
+			if (CountInv("PowerWineBuffStrongestEven"))	ArmorAirControl *= frandom(0.88,1.00);
+
+			// Buffs
+			double BuffAirControl = 1.00;
+			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) BuffAirControl *= 1.334;
+			if (CountInv("PowerRoastBuff")) BuffAirControl *= 1.5;
+			if (CountInv("PowerMealBuff")) BuffAirControl *= 2;
+
+			level.aircontrol = AirControlBase
+											* LVLAirControl
+											* ArmorAirControl
+											* BuffAirControl;
+			level.airfriction = level.aircontrol * -0.0941 + 1.0004;
+
+			if (dydudebug_playermove)
+			{
+				Console.Printf("    \czSV_AirControl:\c- \cz%.8f\c-  \cwTotalAirControl:\c- \cw%.8f\c-, \cyAirControlBase:\c- \cy%.8f\c-, LVLAirControl: %.8f, ArmorAirControl: %.8f, BuffAirControl: %.8f", 
+														sv_aircontrol, level.aircontrol, AirControlBase,
+														LVLAirControl, ArmorAirControl, BuffAirControl);
+				Console.Printf("    \cwTotalFriction:\c- \cw%.8f\c-, \cyLevelAirFriction:\c- \cy%.8f\c-", friction, level.airfriction);
+			}
+		}
+		
+		super.MovePlayer();
+	}
+	
+	Override void Tick()
+	{
+		// VOODOO Doll Protection
+		bool dydudebug_playertick = false;
+		// VOODOO Doll Protection
+		if (!player || !player.mo || player.mo != self) 
+		{
+			isvoodoodoll = true; 
+			Super.Tick();
+			return;
+		}
+		else
+		{
+			if (dydudebug_playertick)
+			{
+				Console.Printf("Player Age [tics]: %d, levelnum: \cx%d\c-, cluster: \cx%d\c-, clusterflags: \cx%d\c-, NextMap: \cy%s\c-, NextSecretMap: \cy%s\c-,\ntime: \cx%d\c-, maptime: \cx%d\c-, totaltime: \cx%d\c-, starttime: \cx%d\c-, partime: \cx%d\c-, sucktime: \cx%d\c-,\nlevelname: \cy%s\c-, mapname: \cy%s\c-, \ngravity: \cx%.8f\c-, aircontrol: \cx%.8f\c-, airfriction: \cx%.8f\c-, \cxTranslation #: %d", 
+												GetAge(),
+												level.levelnum, level.cluster, level.clusterflags, level.NextMap, level.NextSecretMap,
+												level.time, level.maptime, level.totaltime, level.starttime, level.partime, level.sucktime,
+												level.levelname, level.mapname,
+												level.gravity, level.aircontrol, level.airfriction,
+												translation);
+			}
+
+			int armortier = 0;
+			double savepercent = 0.000000;
+
+			let armoritem = BasicArmor(player.mo.FindInventory("BasicArmor"));
+			if (armoritem != null && CountInv("BasicArmor") > 0)
+			{
+				savepercent = armoritem.savepercent;
+				if (savepercent >= 0.00000 && savepercent <= 0.49999) armortier = 0;
+				if (savepercent >= 0.50000 && savepercent <= 0.74999) armortier = 1;
+				if (savepercent >= 0.75000 && savepercent <= 0.87499) armortier = 2;
+				if (savepercent >= 0.87500 && savepercent <= 0.99999) armortier = 3;
+				if (savepercent >= 1.00000) armortier = 4;
+				
+				if (dydudebug_playertick) Console.Printf("Armor SavePercent: %.8f, Tier: %d", savepercent, armortier);
+			}
+			
+			if (armortier == 1) A_SetInventory("KnightGownItem",1); else A_SetInventory("KnightGownItem",0);
+			if (armortier == 2) A_SetInventory("KnightGownItem2",1); else A_SetInventory("KnightGownItem2",0);
+			if (armortier == 3) A_SetInventory("KnightGownItem3",1); else A_SetInventory("KnightGownItem3",0);
+			if (armortier == 4) A_SetInventory("KnightGownItem4",1); else A_SetInventory("KnightGownItem4",0);
+		}
+
+		Super.Tick();
+	}
+
+	void A_CheckNeverBleed(int type, int damage, int flags)
+	{
+		if (type == 0)
+		{
+			if (neverbleeds == 0)
+			{
+				if (bNOBLOOD) bNOBLOOD = 0;
+				if (bNOBLOODDECALS) bNOBLOODDECALS = 1;
+			}
+		}
+		else
+		{
+			//Console.Printf("(A_CheckNeverBleed [player], damage: %d)", damage);
+			if (flags & !DMG_EXPLOSION)
+			{
+				if (neverbleeds == 0)
+				{
+					bNOBLOOD = 1;
+					bNOBLOODDECALS = 1;
+				}
+			}
+		}
+	}
+
+	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
+	{
+		bool dydudebug_playerdamagemobj = false;
+		
+		Actor AttackingActor;
+		Actor UniqueProjectile;
+		FastProjectile UniqueProjectileFast;
+		Actor ailmentproj;
+		FastProjectile ailmentprojfast;
+		Actor singleripproj;
+		FastProjectile singlefastripproj;
+		
+		if (dydudebug_playerdamagemobj)
+		{
+			if (flags & DMG_NO_ARMOR) Console.Printf("    (\cyIgnoresArmor?: yes)");
+			if (flags & DMG_INFLICTOR_IS_PUFF) Console.Printf("    (\cyInflictorIsPuff?: yes)");
+			if (flags & DMG_THRUSTLESS) Console.Printf("    (\cyThrustless?: yes)");
+			if (flags & DMG_FORCED) Console.Printf("    (\cyForcedDamage?: yes)");
+			if (flags & DMG_NO_FACTOR) Console.Printf("    (\cyNoDmgFactor?: yes)");
+			if (flags & DMG_PLAYERATTACK) Console.Printf("    (\cyPlayerAttack?: yes)");
+			if (flags & DMG_FOILINVUL) Console.Printf("    (\cyFoilInvuln?: yes)");
+			if (flags & DMG_FOILBUDDHA) Console.Printf("    (\cyFoilBuddha?: yes)");
+			if (flags & DMG_NO_PROTECT) Console.Printf("    (\cyBypassPowerProtection?: yes)");
+			if (flags & DMG_NO_ENHANCE) Console.Printf("    (\cyBypassPowerDamage?: yes)");
+			if (flags & DMG_USEANGLE) Console.Printf("    (\cyUsesAngle?: yes)");
+			if (flags & DMG_EXPLOSION) Console.Printf("    (\cyIsAoEBurst?: yes)");
+			if (flags & DMG_NO_PAIN) Console.Printf("    (\cyPainless?: yes)");
+		}
+		if (dydudebug_playerdamagemobj) Console.Printf("DamageType: %s", mod);
+		
+		if (source) AttackingActor = Actor(source);
+		if (inflictor) 
+		{
+			UniqueProjectile = Actor(inflictor);
+			UniqueProjectileFast = FastProjectile(inflictor);
+			ailmentproj = Actor(inflictor);
+			ailmentprojfast = FastProjectile(inflictor);
+			singleripproj = Actor(inflictor);
+			singlefastripproj = FastProjectile(inflictor);
+		}
+		
+		string infl, sour, vict;
+		vict = GetClassName();
+		if (inflictor == null) infl = "NONE"; else infl = inflictor.GetClassName();
+		if (source == null) sour = "NONE"; else sour = source.GetClassName();
+		
+		int olddmg;
+		int armortier = 0;
+		double savepercent = 0.000000;
+		
+		int flatdefense;
+		bool useflatdefense;
+		let armoritem = BasicArmor(player.mo.FindInventory("BasicArmor"));
+		if (armoritem != null && CountInv("BasicArmor") > 0)
+		{
+			savepercent = armoritem.savepercent;
+			if (savepercent >= 0.00000 && savepercent <= 0.49999) armortier = 0;
+			if (savepercent >= 0.50000 && savepercent <= 0.74999) armortier = 1;
+			if (savepercent >= 0.75000 && savepercent <= 0.87499) armortier = 2;
+			if (savepercent >= 0.87500 && savepercent <= 0.99999) armortier = 3;
+			if (savepercent >= 1.00000) armortier = 4;
+			
+			if (dydudebug_playerdamagemobj) Console.Printf("Armor SavePercent: %.8f, Tier: %d", savepercent, armortier);
+		}
+		
+		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Step 1] - Base: %d", damage);
+		damage = ceil(damage * 1.125);
+		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Step 1b]: %d", damage);
+		
+		// VOODOO Doll Protection
+		if (!player || !player.mo || player.mo != self) 
+		{
+			//*********************************************************************
+			return super.DamageMobj(inflictor, source, damage, mod, flags, angle); 
+			//*********************************************************************
+			if (dydudebug_playerdamagemobj) Console.Printf("\cyIS A VOODOO DOLL\c-)", damage);
+		}
+
+		// Direct Damage Changes
+		if (flags & DMG_INFLICTOR_IS_PUFF)
+		{
+			if (AttackingActor != self)
+			{
+				if (infl == "BulletPuff")
+				{
+					olddmg = damage;
+					if (dydudebug_playerdamagemobj) Console.Printf("Hit by Doom Bullet");
+					if (armortier == 0) damage = ceil(damage * 0.9375);
+					if (armortier == 1) damage = ceil(damage * 0.875);
+					if (armortier == 2) damage = ceil(damage * 0.75);
+					if (armortier == 3) damage = ceil(damage * 0.625);
+					if (armortier == 4) damage = ceil(damage * 0.5);
+					if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Bullet Buff]: %d (%d)", damage, olddmg);
+				}
+			}
+		}
+		
+		olddmg = damage;
+		if (flags & DMG_EXPLOSION)
+		{
+			if (AttackingActor == self)
+			{
+				if (dydudebug_playerdamagemobj) Console.Printf("Damage Is Own AOE");
+		
+				damage *= 0.25;
+				if (armortier == 1) damage = ceil(damage * 0.9875);
+				if (armortier == 2) damage = ceil(damage * 0.975);
+				if (armortier == 3) damage = ceil(damage * 0.9625);
+				if (armortier == 4) damage = ceil(damage * 0.95);
+				useflatdefense = false;
+			}
+			else
+			{
+				if (dydudebug_playerdamagemobj) Console.Printf("Damage Is Not Own AOE");
+		
+				if (AttackingActor != null)
+				{
+					if (sour == "Cyberdemon") damage = ceil(damage * frandompick(0.875,0.9375,0.9375,0.9375,0.9375,0.9375,1.00));
+					else if (sour == "Archvile" || sour == "ArchvileNew") damage = ceil(damage * frandompick(0.5,0.625,0.625,0.625,0.625,0.625,0.75));
+					else damage = ceil(damage * frandompick(0.75,0.875,0.875,0.875,0.875,0.875,1.00));
+				}
+				else
+				{
+					damage = ceil(damage * frandompick(0.75,0.875,0.875,0.875,0.875,0.875,1.00));
+				}
+				useflatdefense = true;
+			}
+			if (CountInv("CricketBatGuard")) damage = ceil(damage * frandompick(0.334,0.5,0.5,0.5,0.5,0.5,0.667));
+
+			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [AOE]: %d (%d)", damage, olddmg);
+		}
+		
+		olddmg = damage;
+		if (inflictor != null)
+		{
+			if (infl == "RevenantTracer")
+			{
+				damage *= (frandompick(0.5,0.625,0.625,0.75,0.75,0.75,0.875,0.875,1.00) - 0.125);
+				if (armortier == 1) damage *= 0.975;
+				if (armortier == 2) damage *= 0.95;
+				if (armortier == 3) damage *= 0.90;
+				if (armortier == 4) damage *= 0.80;
+				if (dydudebug_playerdamagemobj) Console.Printf("PDamage [RevMissile]: %d (%d)", damage, olddmg);
+			}
+		}
+		
+		// Check FRIGHTENED/FRIENDLY flags
+		if (damage > 0)
+		{
+			if (AttackingActor)
+			{
+				if (AttackingActor != self)
+				{
+					if (AttackingActor.bFRIENDLY)
+					{
+						damage = 0;
+						if (dydudebug_playerdamagemobj) Console.Printf("END DAMAGE ATTEMPT (FRIENDLY)");
+						return 0;
+					}
+					else
+					{
+						if (AttackingActor.bFRIGHTENED) // Attacker is frightened, AND the Player is the one that is doing the frightening
+						{
+							if (player.cheats & CF_FRIGHTENING || bFRIGHTENING) damage = ceil(damage * frandompick(0.625,0.6875,0.75)); else damage = ceil(damage * frandompick(0.9375,0.95,0.9625));
+						}
+					}
+					if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Friendly/Frighten Check]: %d (%d)", damage, olddmg);
+				}
+			}
+		}
+		
+		// Armor Checks
+		if (armortier)
+		{
+			if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Drowning' || mod == 'Falling'))
+			{
+				olddmg = damage;
+				if (mod == 'Crush')
+				{
+					if (useflatdefense)
+					{
+						if (armortier == 1) damage -= randompick(0,0,0,0,1);
+						if (armortier == 2) damage -= randompick(0,0,0,1,1);
+						if (armortier == 3) damage -= randompick(0,0,1,1,2);
+						if (armortier >= 4) damage -= randompick(1,1,2,2,3);
+					}
+					if (damage <= 0)
+					{
+						if (armortier == 1) damage = 1;
+						if (armortier == 2 && random(1,32) > 1) damage = 1;
+						if (armortier == 3 && random(1,32) > 2) damage = 1;
+						if (armortier >= 4 && random(1,32) > 4) damage = 1;
+					}
+				}
+				else
+				{
+					if (useflatdefense)
+					{
+						if (armortier == 1) damage -= random(0,1);
+						if (armortier == 2) damage -= random(1,2);
+						if (armortier == 3) damage -= random(2,3);
+						if (armortier >= 4) damage -= random(4,5);
+					}
+					if (damage <= 0)
+					{
+						if (armortier == 1) damage = 1;
+						if (armortier == 2 && random(1,8) > 1) damage = 1;
+						if (armortier == 3 && random(1,8) > 2) damage = 1;
+						if (armortier >= 4 && random(1,8) > 4) damage = 1;
+					}
+				}
+				if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Raw Armor Def]: %d", damage, olddmg);
+			}
+			else
+			{
+				if (useflatdefense)
+				{
+					if (armortier == 1) damage -= randompick(0,0,0,0,0,0,0,0,0,0,0,0,1);
+					if (armortier == 2) damage -= randompick(0,0,0,0,0,0,0,0,0,0,0,1,1);
+					if (armortier == 3) damage -= randompick(0,0,0,0,0,0,0,0,0,0,1,1,2);
+					if (armortier >= 4) damage -= randompick(0,0,0,0,0,0,0,0,1,1,2,2,3);
+				}
+			}
+		}
+		
+		// Berserk Effects
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+		{
+			olddmg = damage;
+			if (mod == 'Falling') damage = ceil(damage * frandom(0.625,0.75));
+			if (mod == 'Crush') damage = ceil(damage * frandom(0.75,0.875));
+			if (mod == 'Drowning') damage = ceil(damage * frandom(0.875,1.000));
+			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Berserk Effects]: %d", damage, olddmg);
+		}
+		
+		if (CountInv("PlayerDashing"))
+		{
+			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Dashing Avoids Damage]");
+			return 0;
+		}
+
+		if (CountInv("PowerTimeFreezer") || CountInv("TimePotionTimeFreezer"))
+		{
+			if (mod == 'Slime' || mod == 'Magma')
+			{
+				if (dydudebug_playerdamagemobj) Console.Printf("PDamage [TimeFreeze on Slime abort]");
+				return 0;
+			}
+		}
+		
+		int armoramt = CountInv("BasicArmor");
+		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Final] - Final Damage: %d", damage);
+		
+		if (dydudebug_playerdamagemobj && armoramt) Console.Printf("Armor Amount: %d", armoramt);
+		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
+		int armdmg = (armoramt - CountInv("BasicArmor"));
+		if (armdmg <= 0) armdmg = 0;
+		if (dydudebug_playerdamagemobj && armdmg) Console.Printf("Armor Damage: %d", armdmg);
+		if (ret || armdmg)
+		{
+			if (dydu_playerdmglog)
+			{
+				if (armdmg && !ret) Console.Printf("\c[darkgreen]%d AP\c- of damage taken! [%s]", armdmg, mod);
+				else if (armdmg && ret) Console.Printf("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- of damage taken! [%s]", ret, armdmg, mod);
+				else Console.Printf("\c[darkred]%d HP\c- of damage taken! [%s]", ret, mod);
+			}
+		}
+		return ret;
+	}
+
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		if (!isvoodoodoll)
+		{
+			// Non-passive means the one moving into the other is performing the checks.
+			if (!passive)
+			{
+				// Pass through different species of select types.
+				if (other.bFRIENDLY == 1)
+					return false;
+			}
+		}
+		// We don't really care about others making the check.
+		return true;
+	}
+	
+	void A_APPPain()
+	{
+		if (GetClassName() == "DinahPlayer")
+		{
+			double MaxHealthTrue = CountInv("PlayerMaxHP");
+			double HealthRatio = health / MaxHealthTrue;
+			// Console.Printf("%.8f", HealthRatio);
+			if (health > 0)
+			{
+				if (HealthRatio >= 0.667) A_StartSound("Dinah/Pain1",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+				else if (HealthRatio >= 0.334 && HealthRatio < 0.667) A_StartSound("Dinah/Pain2",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+				else if (HealthRatio < 0.334) A_StartSound("Dinah/Pain3",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+			}
+		}
+	}
+}
+
+class DinahPlayer : DDPlayerPawn // HereticPlayer
+{
+	default
+	{
+		Player.DisplayName "Dinah Wyck";
+		Player.SoundClass "DinahPlayer";
+		Player.StartItem "PlayerStatItem";
+		//Player.StartItem "DynamicMusic";
+		Player.StartItem "PlayerDashJump";
+		Player.StartItem "CricketBat";
+		Player.StartItem "HandToHand";
+		Player.StartItem "MalletAmmo", 10;
+		Player.Weaponslot 1, "HandToHand";
+		Player.Weaponslot 2, "CricketBat";
+		Player.Weaponslot 3, "Blundaxe", "Scrambler";
+		Player.Weaponslot 4, "AppleJack";
+		Player.Weaponslot 5, "WizardPike";
+		Player.Weaponslot 6, "SuperVac";
+		Player.Weaponslot 7, "Grimophone";
+		Player.ForwardMove 0.75, 0.75; // 0.75
+		Player.SideMove 0.65, 0.65; // 0.65
+		Player.ViewBob 0.5;
+		Player.AttackZOffset 8;
+		Player.AirCapacity 1;
+		Player.JumpZ 9;
+		//Player.GruntSpeed 12;
+		Player.ViewHeight 37;
+		Player.InvulnerabilityMode "Reflective";
+		Species "Players";
+		Health 80; // 100
+		Player.MaxHealth 80;
+		Player.MugShotMaxHealth -1; // 100
+		Scale 0.875;
+		Mass 64;
+		Height 50;
+		Radius 12;
+		Tag "Dinah Wyck";
+		+NOBLOOD
+		+PLAYERPAWN.NOTHRUSTWHENINVUL
+	}
+
+	/*
+	override void Tick()
+	{
+		super.Tick(); // KEEP THIS HERE ELSE OTHER FUNCTIONS RELATED TO THIS BREAK :V
+	}
+	*/
+
+	States
+	{
+		Spawn:
+			DINA A -1;
+			Loop;
+		See:
+			DINA BCDE 4;
+			Loop;
+		Pain:
+			DINA H 6 A_APPPain();
+			Goto Spawn;
+		Missile:
+			DINA FG 6;
+			Goto Spawn;
+		Melee:
+			DINA FG 6;
+			Goto Spawn;
+		Death:
+			DINA H 9 A_PlayerScream;
+			DINA I 9 A_NoBlocking;
+			DINA JK 9;
+			DINA K -1;
+			Stop;
+		XDeath:
+			DINA H 9 A_PlayerScream;
+			DINA I 9 A_NoBlocking;
+			DINA JK 9;
+			DINA K -1;
+			Stop;
+		Burn:
+			DINA H 9 A_PlayerScream;
+			DINA I 9 A_NoBlocking;
+			DINA JK 9;
+			DINA K -1;
+			Stop;
+		AltSkinDeath:
+			DINA H 9 A_PlayerScream;
+			DINA I 9 A_NoBlocking;
+			DINA JK 9;
+			DINA K -1;
+			Stop;
+		AltSkinXDeath:
+			DINA H 9 A_PlayerScream;
+			DINA I 9 A_NoBlocking;
+			DINA JK 9;
+			DINA K -1;
+			Stop;
+  }
+}
+
+class RavenPlayer : DDPlayerPawn
+{
+	default
+	{
+		Health 30;
+		ReactionTime 0;
+		PainChance 255;
+		Radius 16;
+		Height 32;
+		Speed 0.5;
+		+NoSkin
+		-PickUp
+		+NoTarget
+		Player.Viewheight 32;
+		Player.DisplayName "Raven";
+		Player.MorphWeapon "RavenWeapon";
+	}
+	States
+	{
+		Spawn:
+			RVPL A 0;
+			RVPL ABCD 5 A_GiveInventory("RavenPowerups", 1);
+			Loop;
+		See:
+			RVPL ABCD 5 A_GiveInventory("RavenPowerups", 1);
+			Loop;
+		Pain:
+			RVPL C 4 A_Pain;
+			Goto Spawn;
+		Death:
+			TNT1 A -1;
+			Stop;
+	}
+}

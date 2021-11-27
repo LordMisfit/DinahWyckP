@@ -1,0 +1,795 @@
+class RandomSpawner2 : RandomSpawner
+{
+	default
+	{
+		+DONTGIB
+		+NOTIMEFREEZE
+		-BLOCKEDBYSOLIDACTORS
+	}
+}
+
+class CustomInventoryExt : CustomInventory
+{
+	int user_type;
+	
+	action void A_UseAppleWine()
+	{
+		int currenthealth = player.mo.health;
+		int maxhealth = (player.mo.maxhealth + player.mo.stamina);
+		bool willheal;
+		bool useitem;
+		
+		if (player.mo.CountInv("AppleWine"))
+		{
+			if (!player.mo.CountInv("PowerWineBuffStrongestEven"))
+			{
+				if (!player.mo.CountInv("PowerWineBuffStrongest"))
+				{
+					if (!player.mo.CountInv("PowerWineBuffStrong"))
+					{
+						if (!player.mo.CountInv("PowerWineBuffWeak"))
+						{
+							player.mo.A_SetInventory("PowerWineBuffWeak",1);
+							player.mo.A_SetInventory("PowerWineBuffStrong",0);
+							player.mo.A_SetInventory("PowerWineBuffStrongest",0);
+							player.mo.A_SetInventory("PowerWineBuffStrongestEven",0);
+							A_Log("\c[purple]Defense Weakly Buffed (-18.75% damage taken for 5 seconds)!");
+							if (random(1,4) <= 1) { A_StartSound("Dinah/giggle",CHAN_VOICE); }
+							willheal = true;
+							useitem = true;
+						}
+						else
+						{
+							player.mo.A_SetInventory("PowerWineBuffStrong",1);
+							player.mo.A_SetInventory("PowerWineBuffWeak",0);
+							player.mo.A_SetInventory("PowerWineBuffStrongest",0);
+							player.mo.A_SetInventory("PowerWineBuffStrongestEven",0);
+							A_Log("\c[purple]Defense Moderately Buffed (-37.5% damage taken for 7 seconds)!");
+							if (random(1,4) <= 2) { A_StartSound("Dinah/giggle",CHAN_VOICE); }
+							willheal = true;
+							useitem = true;
+						}
+					}
+					else
+					{
+						player.mo.A_SetInventory("PowerWineBuffStrongest",1);
+						player.mo.A_SetInventory("PowerWineBuffStrongestEven",0);
+						player.mo.A_SetInventory("PowerWineBuffStrong",0);
+						player.mo.A_SetInventory("PowerWineBuffWeak",0);
+						A_Log("\c[purple]Defense Greatly Buffed (-56.25% damage taken for 9 seconds)!");
+						if (random(1,4) <= 3) { A_StartSound("Dinah/giggle",CHAN_VOICE); }
+						willheal = true;
+						useitem = true;
+					}
+				}
+				else
+				{
+					player.mo.A_SetInventory("PowerWineBuffStrongestEven",1);
+					player.mo.A_SetInventory("PowerWineBuffStrongest",0);
+					player.mo.A_SetInventory("PowerWineBuffStrong",0);
+					player.mo.A_SetInventory("PowerWineBuffWeak",0);
+					A_Log("\c[purple]Defense Immensely Buffed (-75% damage taken for 12 seconds)!");
+					A_StartSound("Dinah/giggle",CHAN_VOICE);
+					willheal = true;
+					useitem = true;
+				}
+			}
+			
+			if (useitem)
+			{
+				if (willheal)
+				{
+					if (currenthealth < maxhealth)
+					{
+						currenthealth += (maxhealth * frandom(0.18,0.22));
+						if (currenthealth > maxhealth) currenthealth = maxhealth;
+						player.health = player.mo.health = currenthealth;
+					}
+					else
+					{
+						currenthealth += (maxhealth * frandom(0.045,0.055));
+						if (currenthealth > (maxhealth*3)) currenthealth = (maxhealth*3);
+						player.health = player.mo.health = currenthealth;
+					}
+					let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+					if (MiscItem) MiscItem.HPRegenBoostTimer += randompick(50,55,60,65);
+				}
+				
+				player.mo.A_StartSound("Dinah/drink",CHAN_BODY);
+				player.mo.A_TakeInventory("AppleWine",1);
+			}
+			else
+			{
+				A_Log("\c[red]You can't drink any more Apple Wine for now!");
+				player.mo.A_StartSound("Dinah/what",CHAN_VOICE);
+			}
+		}
+	}
+	
+	action void A_UsePartyPopper()
+	{
+		invoker.A_FireBullets(15,2,8,10,"PopperPuff1");
+		invoker.A_FireBullets(8,2,4,15,"PopperPuff2");
+	}
+}
+
+// Used for a base item for all the items that don't do anything themselves but are used for/as detecting flags.
+class PlaceholderItem : CustomInventoryExt
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 1;
+		+INVENTORY.KEEPDEPLETED 
+	}
+
+	States
+	{
+		Use:
+			TNT1 A 0;
+			Stop;
+	}
+}
+
+class PlaceholderItemMax : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+
+	States
+	{
+		Use:
+			TNT1 A 0;
+			Stop;
+	}
+}
+
+class CricketBatGuard : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.625;
+		DamageFactor "Melee", 0.125;
+		Inventory.Icon "SPBTA0";
+		Powerup.Duration 2147483646; // 8
+		Powerup.Color "00 00 00", 0.00;
+	}
+	string texname;
+	
+	override void Tick()
+	{
+		Super.Tick();
+		if (dydudebug_showbufficons) 
+		{
+			texname = "SPBTA0";
+			icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		}
+		else 
+		{
+			texname = "";
+			icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		}
+	}
+}
+
+class CricketBatSwingDEF : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.8125;
+		DamageFactor "Melee", 0.5625;
+		Inventory.Icon "";
+		Powerup.Duration 2147483646; // 8
+		Powerup.Color "00 00 00", 0.00;
+	}
+	string texname;
+	
+	override void Tick()
+	{
+		Super.Tick();
+		if (dydudebug_showbufficons) 
+		{
+			texname = "SPBTA0";
+			icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		}
+		else 
+		{
+			texname = "";
+			icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		}
+	}
+}
+
+
+// Placeholder for Armor Class :V
+class KnightGownItem : PlaceholderItem { default { Inventory.MaxAmount 1; } }
+class KnightGownItem2 : PlaceholderItem { default { Inventory.MaxAmount 1; } }
+class KnightGownItem3 : PlaceholderItem { default { Inventory.MaxAmount 1; } }
+class KnightGownItem4 : PlaceholderItem { default { Inventory.MaxAmount 1; } }
+
+class PowerWineBuffWeak : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.8125;
+		Inventory.Icon "GBL1A0";
+		Powerup.Duration -5;
+		Powerup.Color "70 2c 52", 0.250;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+}
+
+class PowerWineBuffStrong : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.625;
+		Inventory.Icon "GBL2A0";
+		Powerup.Duration -7;
+		Powerup.Color "70 2c 52", 0.325;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+}
+
+class PowerWineBuffStrongest : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.4375;
+		Inventory.Icon "GBL3A0";
+		Powerup.Duration -9;
+		Powerup.Color "70 2c 52", 0.400;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+}
+
+class PowerWineBuffStrongestEven : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.25;
+		Inventory.Icon "GBL4A0";
+		Powerup.Duration -12;
+		Powerup.Color "70 2c 52", 0.450;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+}
+
+class PowerRoastBuff : PowerDamage
+{
+	default
+	{
+		DamageFactor "Normal", 2;
+		Inventory.Icon "FOODAA";
+		Powerup.Duration -12;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+}
+
+class PowerMealBuff : PowerDamage
+{
+	default
+	{
+		DamageFactor "Normal", 2.5;
+		Inventory.Icon "FOODYA";
+		Powerup.Duration -30;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+}
+
+class PowerMealBuff2 : PowerProtection
+{
+	default
+	{
+		DamageFactor "Normal", 0.4;
+		Inventory.Icon "FOODYD";
+		Powerup.Duration -30;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+}
+
+class VacAmmoCounter : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+
+class KillsCount : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+class ExpPts : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+class ExpPtsNeeded : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+class ExpPtsLeft : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+class PlayerLevel : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED
+	}
+}
+
+class PlayerMaxHP : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED
+	}
+}
+
+
+class TimeFreezeTimer : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+// Keeps Sounds/Music active during time Freeze powerups
+class TimeFreezerKeepSound : PowerTimeFreezer
+{
+	override void InitEffect()
+	{
+		Super.InitEffect();
+		S_ResumeSound(false);
+	}
+	
+	override void DoEffect()
+	{
+		Super.DoEffect();
+	}
+	
+	override void Tick()
+	{
+		Super.Tick();
+		S_ResumeSound(false);
+		EffectTics = 350;
+	}
+}
+
+class DDMiscTimeFreezer : TimeFreezerKeepSound
+{
+	int timer;
+	default
+	{
+		+NOTIMEFREEZE
+		Powerup.Duration 51;
+	}
+	
+	/*
+	override void PostBeginPlay()
+	{
+		timer = 50;
+		Super.DoEffect();
+	}
+	
+	override void DoEffect()
+	{
+		timer--;
+		Console.Printf("Timer: %d", timer);
+		if (timer <= 0) { owner.A_SetInventory("DDMiscTimeFreezer",0); Level.SetFrozen(false); }
+		Super.DoEffect();
+	}
+	*/
+}
+
+class TimePotionTimeFreezer : TimeFreezerKeepSound
+{
+	default
+	{
+		Inventory.Icon "TIMPI0";
+		Powerup.Color "8f 8f 8f", 0.5;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+
+	override bool HandlePickup (Inventory item)
+	{
+		if (item.GetClass() == GetClass())
+		{ // Setting EffectTics to 0 will force Powerup's HandlePickup()
+		  // method to reset the tic count so you get the red flash again.
+			EffectTics = 0;
+		}
+		return Super.HandlePickup (item);
+	}
+
+	int EffectTics2;
+	int Dire;
+
+	override void Tick ()
+	{
+		PowerTimeFreezer.Tick();
+		S_ResumeSound(false);
+		int Point1 = 128; // 32
+		int Point2 = Point1 + 256; // 96
+		int increment = (randompick(20,22,24,26,28) / 2);
+		if (Dire == 0)
+		{
+			if (EffectTics <= Point1) { EffectTics = Point1; Dire = 1; }
+			else if (EffectTics >= Point2) { EffectTics = Point2; Dire = 2; }
+			else { Dire = random(1,2); }
+		}
+		//Console.Printf("EffectTics: %d, Dire: %d, increment: %d", EffectTics, Dire, increment);
+
+		if (Dire == 1)
+		{
+			EffectTics += increment;
+			if (EffectTics >= Point2) { EffectTics = Point2; Dire = 2; }
+		}
+		else
+		if (Dire == 2)
+		{
+			EffectTics -= increment;
+			if (EffectTics <= Point1) { EffectTics = Point1; Dire = 1; }
+		}
+
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		if (EffectTics <= 0) Destroy();
+	}
+
+	override color GetBlend()
+	{
+		// slowly fade the tint out
+		int cnt = 128 - (EffectTics>>3);
+
+		//Console.Printf("cnt: %d / 256, BlendColor.a: %d", cnt, BlendColor.a*cnt/256);
+		if (cnt > 0)
+		{
+			return Color(BlendColor.a*cnt/256,
+				BlendColor.r, BlendColor.g, BlendColor.b);
+		}
+		return 0;
+	}
+}
+
+class DashTimeFreezer : TimeFreezerKeepSound
+{
+	default
+	{
+		Inventory.Icon "";
+		Powerup.Color "8f 8f 8f", 0.0;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+
+	override bool HandlePickup (Inventory item)
+	{
+		if (item.GetClass() == GetClass())
+		{ // Setting EffectTics to 0 will force Powerup's HandlePickup()
+		  // method to reset the tic count so you get the red flash again.
+			EffectTics = 0;
+		}
+		return Super.HandlePickup (item);
+	}
+
+	int EffectTics2;
+	int Dire;
+
+	override void Tick ()
+	{
+		PowerTimeFreezer.Tick();
+		S_ResumeSound(false);
+		int Point1 = 128; // 32
+		int Point2 = Point1 + 256; // 96
+		int increment = (randompick(20,22,24,26,28) / 2);
+		if (Dire == 0)
+		{
+			if (EffectTics <= Point1) { EffectTics = Point1; Dire = 1; }
+			else if (EffectTics >= Point2) { EffectTics = Point2; Dire = 2; }
+			else { Dire = random(1,2); }
+		}
+		//Console.Printf("EffectTics: %d, Dire: %d, increment: %d", EffectTics, Dire, increment);
+
+		if (Dire == 1)
+		{
+			EffectTics += increment;
+			if (EffectTics >= Point2) { EffectTics = Point2; Dire = 2; }
+		}
+		else
+		if (Dire == 2)
+		{
+			EffectTics -= increment;
+			if (EffectTics <= Point1) { EffectTics = Point1; Dire = 1; }
+		}
+
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		if (EffectTics <= 0) Destroy();
+	}
+
+	override color GetBlend()
+	{
+		// slowly fade the tint out
+		int cnt = 128 - (EffectTics>>3);
+
+		//Console.Printf("cnt: %d / 256, BlendColor.a: %d", cnt, BlendColor.a*cnt/256);
+		if (cnt > 0)
+		{
+			return Color(BlendColor.a*cnt/256,
+				BlendColor.r, BlendColor.g, BlendColor.b);
+		}
+		return 0;
+	}
+}
+
+class FullHealth : PlaceholderItem { }
+class NormalHealth : PlaceholderItem { }
+class DecentHealth : PlaceholderItem { }
+class LowHealth : PlaceholderItem { } 
+class CriticalHealth : PlaceholderItem { }
+class PlayerIsDead : PlaceholderItem { }
+class PlayerDeathFadeOut : PlaceholderItem { }
+
+class PlayingDoom : PlaceholderItem { } // This works as an inventory flag to indicate the game mode
+class PlayingHeretic : PlaceholderItem { } // This works as an inventory flag to indicate the game mode
+class PlayingHexen : PlaceholderItem { } // This works as an inventory flag to indicate the game mode
+class PlayingStrife : PlaceholderItem { } // This works as an inventory flag to indicate the game mode
+
+class PowerInvulnDD : PowerInvulnerable
+{
+	default
+	{
+		inventory.icon "PDIVA0";
+		Powerup.Duration -30;
+		Powerup.Color "78447E", 0.334; // "3F00DF", "D0AFD5"
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+}
+
+class PowerStrengthDD : PowerStrength
+{
+	default
+	{
+		inventory.icon "PDBSA0";
+		Powerup.Duration -150;
+		Powerup.Color "FF0000", 0.5;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+	double fadeintensity;
+
+/*
+	override bool HandlePickup (Inventory item)
+	{
+		fadeintensity = 1.00;
+		if (item.GetClass() == GetClass())
+		{ // Setting EffectTics to 0 will force Powerup's HandlePickup()
+		  // method to reset the tic count so you get the red flash again.
+			EffectTics = 0;
+			EffectTics2 = 0;
+		}
+		return Super.HandlePickup (item);
+	}
+*/
+
+	//===========================================================================
+	//
+	// APowerStrength :: DoEffect
+	//
+	//===========================================================================
+	int EffectTics2;
+	int Dire;
+
+	override void Tick ()
+	{
+		bool debugtick = false;
+
+		int Point1 = 225;
+		int Point2 = 450;
+		int increment = random(6,8) * random(3,4);
+		
+		
+		if (debugtick) Console.Printf("EffectTics: %d (%d), Dire: %d, Increment: %d", EffectTics2, EffectTics, Dire, Increment);
+
+		if (Dire == 0)
+		{
+			if (EffectTics2 <= Point1) { EffectTics2 = Point1; Dire = 1; }
+			else if (EffectTics2 >= Point2) { EffectTics2 = Point2; Dire = 2; }
+			else { Dire = random(1,2); }
+		}
+
+		if (Dire == 1)
+		{
+			if (owner && owner.CountInv("TimePotionTimeFreezer") <= 0) EffectTics2 += increment;
+			if (EffectTics2 >= Point2) Dire = 2;
+		}
+		else
+		if (Dire == 2)
+		{
+			if (owner && owner.CountInv("TimePotionTimeFreezer") <= 0) EffectTics2 -= increment;
+			if (EffectTics2 <= Point1) Dire = 1;
+		}
+
+		// Strength counts up to diminish the fade.
+		EffectTics--;
+		
+		// Begin fading when 15 seconds remain
+		fadeintensity = 1.0 * ((EffectTics * 1.0) / 525.0);
+		if (fadeintensity >= 1.00) fadeintensity = 1.00;
+
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		if (EffectTics <= 0) Destroy();
+	}
+	//===========================================================================
+	//
+	// APowerStrength :: GetBlend
+	//
+	//===========================================================================
+
+	override color GetBlend()
+	{
+		bool debugblend = false;
+		// slowly fade the berserk out
+		int cnt = 128 - (EffectTics2>>3);
+		cnt *= fadeintensity;
+		int blendclr = BlendColor.a*cnt/256;
+		if (debugblend) Console.Printf("cnt: %d, blendclr: %d, fade: %.2f", cnt, blendclr, fadeintensity);
+
+		if (cnt > 0)
+		{
+			return Color(blendclr,
+				BlendColor.r, BlendColor.g, BlendColor.b);
+		}
+		if (debugblend) Console.Printf("EffectTics2: %d, cnt: %d / 256, BlendColor.a: %d, fadeintensity: %.2f", EffectTics2, cnt, BlendColor.a*cnt/256, fadeintensity);
+		return 0;
+	}
+}
+
+// Dash Trails
+
+class PlayerDashing : PowerSpeed // Used to create trails behind the player for dashing
+{
+	default
+	{
+		Speed 1.0;
+		inventory.icon "";
+		Powerup.Duration 2147483646;
+	}
+}
+
+// Dash Effects
+class DashPuff : PhoenixPuff { default { +NOINTERACTION } }
+
+class UsingBoxingGloves : PlaceholderItem { }
+class IsUnconscious : PlaceholderItem { } // This works as an inventory flag to indicate the game mode
+
+class DashGauge : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+class DashReady : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+class DashCharges : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+class DashMaxCharge : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+class DashCharge : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+
+class DashTics : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
+
+class DashCost : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED 
+	}
+}
