@@ -69,7 +69,10 @@ class DDBaseZSC : Actor
 // Base Projectile Class
 class DDProjectile : DDBaseZSC
 {
-	
+	bool hitawall;
+	bool hitaceiling;
+	bool hitafloor;
+
 	override void Tick()
 	{
 		if (target)
@@ -101,6 +104,12 @@ class DDProjectile : DDBaseZSC
 			}
 		}
 		Super.Tick();
+	}
+	
+	void A_CheckHitCeiling()
+	{
+		if (pos.Z + height >= ceilingz) hitaceiling = true;
+		//Console.Printf("pos.z: %d, height: %d, ceilingz: %d, hitceiling: %d", pos.z, height, ceilingz, hitaceiling);
 	}
 }
 
@@ -338,13 +347,33 @@ class DDPuff : DDBaseZSC
 	
 	override void Tick()
 	{
-		if (!bNOTIMEFREEZE)
+		if (target)
 		{
-			if (target && target.bNOTIMEFREEZE) bNOTIMEFREEZE = true;
-		}
-		else
-		{
-			if (target && !target.bNOTIMEFREEZE) bNOTIMEFREEZE = false;
+			if (target.GetClassName() == "DinahPlayer")
+			{
+				if (target.CountInv("DDMiscTimeFreezer") ||
+						target.CountInv("TimePotionTimeFreezer") ||
+						target.CountInv("DashTimeFreezer") ||
+						!target.player.timefreezer)
+				{
+					if (!bNOTIMEFREEZE) bNOTIMEFREEZE = true;
+				}
+				else
+				{
+					if (bNOTIMEFREEZE) bNOTIMEFREEZE = false;
+				}
+			}
+			else
+			{
+				if (!bNOTIMEFREEZE)
+				{
+					if (target && target.bNOTIMEFREEZE) bNOTIMEFREEZE = true;
+				}
+				else
+				{
+					if (target && !target.bNOTIMEFREEZE) bNOTIMEFREEZE = false;
+				}
+			}
 		}
 		Super.Tick();
 	}
