@@ -9,17 +9,18 @@ class DD_EventHandler : EventHandler
 
 	override void WorldThingDamaged(WorldEvent e)
 	{
+		int blundebuff = 0;
 		if (e.thing)
 		{
+			int user_type;
+			string AttackName = "NONE";
+			string AttackerName = "NONE";
+			if (e.inflictor) AttackName = e.inflictor.GetClassName();
+			if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
+
 			if (!(e.thing.GetClassName() == "DinahPlayer") || e.thing.bCOUNTKILL)
 			{
-				int user_type;
-				string AttackName = "NONE";
-				string AttackerName = "NONE";
-				if (e.inflictor) AttackName = e.inflictor.GetClassName();
-				if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
 				if (dydudebug_worlddamaged) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", AttackName, AttackerName);
-				
 				
 				if (e.thing.health > 0)
 				{
@@ -33,6 +34,36 @@ class DD_EventHandler : EventHandler
 						if (random(1,(baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 						if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 						if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						
+						int basedebuffchance = 8;
+						if (e.thing.bBOSS) basedebuffchance = 64;
+						if (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD") )
+						{
+							basedebuffchance *= 0.6;
+						}
+						
+						if (random(1,basedebuffchance) <= 1) 
+						{
+							if (e.thing.CountInv("BlunderHelmSplitter2"))
+							{
+								blundebuff = 3;
+							}
+							else
+							{
+								if (e.thing.CountInv("BlunderHelmSplitter"))
+								{
+									e.thing.A_SetInventory("BlunderHelmSplitter2",1);
+									e.thing.A_SetInventory("BlunderHelmSplitter",0);
+									blundebuff = 2;
+								}
+								else
+								{
+									e.thing.A_SetInventory("BlunderHelmSplitter2",0);
+									e.thing.A_SetInventory("BlunderHelmSplitter",1);
+									blundebuff = 1;
+								}
+							}
+						}
 					}
 				}
 			}
@@ -58,6 +89,13 @@ class DD_EventHandler : EventHandler
 				else
 				{
 					Console.Printf("\c[red]%s\c- took \c[purple]no damage\c- from \c[gold]%s\c-! [\c[lightblue]%s\c-]", dname, atkrname, dmgtype);
+				}
+				if (blundebuff && (e.thing.health > 0))
+				{
+					if (blundebuff >= 3) Console.Printf("\c[red]%s's\c- defense has already been dropped as much as it can!", dname);
+					if (blundebuff == 2) Console.Printf("\c[red]%s's\c- defense dropped by another 20%!", dname);
+					if (blundebuff == 1) Console.Printf("\c[red]%s's\c- defense dropped by 20%!", dname);
+					if (blundebuff <= 2 && AttackerName == "DinahPlayer") e.inflictor.target.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
 				}
 			}
 		}
