@@ -1,220 +1,5 @@
 //INVENTORY
 
-ACTOR Firetrail
-{
-	Radius 2
-	Height 2
-	Speed 0
-	Scale 0.5
-	renderstyle "Add"
-	Alpha 0.6
-	PROJECTILE
-	+CLIENTSIDEONLY
-	+NOINTERACTION
-	States
-	{
-		Spawn:
-			FX09 GHIJK 4 BRIGHT
-			Stop
-	}
-}
-
-//Bottle Rocket
-ACTOR BRocketPickup : CustomInventory 12017
-{
-	//$Category RPFireworks
-	Inventory.Amount 1
-	Inventory.MaxAmount 4 // 2
-	Inventory.InterHubAmount 4 // 2
-	Inventory.PickupSound "Dinah/giggle"
-	Inventory.PickupMessage "A Bottle Rocket!"
-	Inventory.Icon BROKI0
-	Tag "Bottle Rocket: Shot forward and will create a cluster of explosions around it's impact point. Can deal self-damage via AOE."
-	Scale 1
-	+INVENTORY.INVBAR
-	+INVENTORY.HUBPOWER
-	+INVENTORY.PERSISTENTPOWER
-	+INVENTORY.KEEPDEPLETED
-	+FLOATBOB
-	+DONTGIB
-	States
-	{
-		Spawn:
-			BROK P -1
-			Stop
-		Use:
-			TNT1 A 0 A_FireProjectile ("BRocketShot", 0)
-			Stop
-	} 
-}
-
-ACTOR BRocketShot : DDProjectile
-{
-	Tag "Bottle Rocket"
-	Radius 8
-	Height 8
-	Speed 60
-	Damage 20
-	DamageType "BRocket"
-	Projectile
-	renderstyle "Normal"
-	+RANDOMIZE
-	+DEHEXPLOSION
-	+ROCKETTRAIL
-	//+NOEXTREMEDEATH
-	SeeSound "weapons/rocketfire"
-	DeathSound "weapons/cherryboom"
-	States
-	{
-		Spawn:
-			BROK A 0 A_AlertMonsters
-			BROK ABCD 2 Bright A_PlaySoundEx("weapons/spinnerfire", "SoundSlot7", 1)
-			Loop
-		Death:
-			TNT1 A 0 A_StopSoundEx("SoundSlot7")
-			TNT1 A 0 A_AlertMonsters
-			BMX1 A 5 Bright A_Explode
-			BMX1 B 5 Bright
-			BMX1 C 8 Bright A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0) 
-			BMX1 D 8 Bright A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0) 
-			BMX1 E 8 Bright A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0) 
-			TNT1 A 8 Bright A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0)
-			Stop
-	}
-}
-
-ACTOR BigBRocketShot : DDProjectile
-{
-	Tag "Big Bottle Rocket"
-	var int user_explosion;
-	Radius 12
-	Height 12
-	Speed 60
-	Damage 100
-	DamageType "BRocket"
-	Scale 1.5
-	Projectile
-	renderstyle "Normal"
-	+RANDOMIZE
-	+DEHEXPLOSION
-	+ROCKETTRAIL
-	//+NOEXTREMEDEATH
-	SeeSound "weapons/rocketfire"
-	DeathSound "weapons/cherryboom"
-	States
-	{
-		Death:
-			TNT1 A 0 A_StopSoundEx("SoundSlot7")
-			TNT1 A 0 A_AlertMonsters
-			BMX1 AABBB 2 Bright 
-			{
-				A_Explode;
-			}
-			BMX1 CCCCC 2 Bright 
-			{
-				if (user_explosion % 2 == 1) { A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0); }
-																else { A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0); }
-				user_explosion++;
-			}
-			BMX1 DDDDD 2 Bright
-			{
-				if (user_explosion % 2 == 1) { A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0); }
-																else { A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0); }
-				user_explosion++;
-			}
-			BMX1 EEEEE 2 Bright
-			{
-				if (user_explosion % 2 == 1) { A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0); }
-																else { A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0); }
-				user_explosion++;
-			}
-			TNT1 AAAAA 2 Bright
-			{
-				if (user_explosion % 2 == 1) { A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0); }
-																else { A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0); }
-				user_explosion++;
-			}
-			Stop
-	}
-}
-
-ACTOR MultiBRocketShot : BigBRocketShot
-{
-	Radius 18
-	Height 18
-	Scale 2.25
-	Damage 400
-	Tag "Multi-Bottle Rocket"
-}
-
-ACTOR BadBrocketShot : BrocketShot
-{
-	Speed 30
-	DONTHURTSHOOTER
-	States
-	{
-		Death:
-			TNT1 A 0 A_StopSoundEx("SoundSlot7")
-			TNT1 A 0 A_AlertMonsters
-			BMX1 A 5 Bright A_Explode
-			BMX1 B 5 Bright
-			BMX1 C 8 Bright A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0) 
-			BMX1 D 8 Bright A_CustomMissile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),0) 
-			BMX1 E 8 Bright A_CustomMissile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),0)  
-			Stop
-	}
-}
-
-actor BRocketBoom1
-{
-	radius 10
-	height 12
-	DamageType "BRocket"
-	speed 0
-	Scale 2
-	renderstyle "Add"
-	Alpha 0.80
-	seesound "weapons/cherryboom"
-	PROJECTILE
-	+NOCLIP
-	+DONTSPLASH
-	+SPAWNSOUNDSOURCE
-	states
-	{
-		Spawn:
-			TNT1 A 0 A_Die
-		Death:
-			CBAL C 6 Bright A_Explode
-			CBAL DEF 6 Bright
-			stop
-	}
-}
-
-actor BRocketBoom2
-{
-	radius 10
-	height 12
-	DamageType "BRocket"
-	speed 0
-	Scale 2
-	renderstyle "Add"
-	Alpha 0.80
-	seesound "weapons/cherryboom"
-	PROJECTILE
-	+NOCLIP
-	+DONTSPLASH
-	+SPAWNSOUNDSOURCE
-	states
-	{
-		Spawn:
-			TNT1 A 0 A_Die
-		Death:
-			BROX A 6 Bright A_Explode
-			BROX BCD 6 Bright
-			stop
-	}
-}
-
 //Spinner
 ACTOR SpinnerPickup : CustomInventory 12018
 {
@@ -224,7 +9,7 @@ ACTOR SpinnerPickup : CustomInventory 12018
 	Inventory.InterHubAmount 16 // 8
 	Inventory.PickupSound "Dinah/giggle"
 	Inventory.PickupMessage "A Spinner-Chaser!"
-	Inventory.Icon SPINI0
+	Inventory.Icon "SPINI0"
 	Tag "Spinner-Chaser: Shot forward and will seek a close target and explode on impact. Can deal self-damage via AOE."
 	Scale 1
 	+INVENTORY.INVBAR
@@ -277,72 +62,6 @@ actor Spinnershot
 			BMX1 BCDE 2 Bright
 			Stop
 	}
-}
-
-//Party Popper
-ACTOR PopperPickup : CustomInventoryExt 13019
-{
-	//$Category RPFireworks
-	Inventory.Amount 1
-	Inventory.MaxAmount 2
-	Inventory.InterHubAmount 2
-	Inventory.PickupSound "Dinah/giggle"
-	Inventory.PickupMessage "A Scatter-Popper!"
-	Inventory.Icon POPRI0
-	Tag "Scatter-Popper"
-	Scale 1
-	+INVENTORY.INVBAR
-	+INVENTORY.HUBPOWER
-	+INVENTORY.PERSISTENTPOWER
-	+INVENTORY.KEEPDEPLETED
-	+FLOATBOB
-	+DONTGIB
-	States
-	{
-		Spawn:
-			POPR P -1
-			Stop
-		Use:
-			TNT1 A 0 A_PlaySound("popper/toot",CHAN_WEAPON)
-			TNT1 A 0 Bright 
-			{
-				A_UsePartyPopper();
-			}
-			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
-			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
-			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
-			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
-			TNT1 A 0 A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
-			TNT1 A 0 A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0)
-			TNT1 A 0
-			{
-				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1)) { A_Recoil(frandom(0.96,1.44)); } else { A_Recoil(frandom(4.8,7.2)); }
-			}
-			Stop
-	} 
 }
 
 ACTOR StreamerShot : DDProjectile
@@ -436,7 +155,7 @@ ACTOR SnakePickup : CustomInventory 12091
 	Inventory.InterHubAmount 2
 	Inventory.PickupSound "Dinah/giggle"
 	Inventory.PickupMessage "A King Sugar Snake!"
-	Inventory.Icon FSNKI0
+	Inventory.Icon "FSNKI0"
 	Tag "Sugar Snake: Summons a King Sugar Snake ally when used."
 	Scale 1
 	+INVENTORY.INVBAR
@@ -863,7 +582,7 @@ actor Hammerduck 3118
 			HDUK GHI 8 A_FaceTarget
 			HDUK JK 4
 			HDUK L 4 A_Playsound("croquet/ballfire")
-			HDUK M 4 A_CustomMissile("CroquetBall",40)
+			HDUK M 4 A_SpawnProjectile("CroquetBall",40)
 			HDUK N 3
 			HDUK O 8
 			Goto See
@@ -981,7 +700,7 @@ actor PlanterBird : Planter 3129
 		Missile:
 			GARD P 0 //ACS_Execute(102,0,0,0,0)
 			GARD PQRS 4 A_FaceTarget
-			GARD Q 6 A_CustomMissile("BirdBall",48,random(-5,5)) 
+			GARD Q 6 A_SpawnProjectile("BirdBall",48,random(-5,5)) 
 			GARD QP 6 A_Feathers
 			Goto See
 	}
@@ -1192,7 +911,7 @@ actor CentaurionSgt : Centaurion 4121
 			C2NZ A 6 bright
 			C2NZ B 6 bright A_FaceTarget
 			C2NZ C 0 bright A_PlaySound("zappo",CHAN_BODY)
-			C2NZ C 6 bright A_CustomMissile("BadZapshot",48,0)
+			C2NZ C 6 bright A_SpawnProjectile("BadZapshot",48,0)
 			C2NZ D 6 bright //ACS_Execute(102,0,0,0,0)
 			C2NZ E 6 bright
 			Goto See
@@ -1489,7 +1208,7 @@ actor Vitriola 10305
 			VIRT C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1))
 			VIRT D 2 A_FaceTarget
 			VIRT C 4 A_Playsound("virtuoso/musicfire")
-			VIRT D 4 A_CustomMissile("MusicBall",40)
+			VIRT D 4 A_SpawnProjectile("MusicBall",40)
 			Goto See
 		Pain:
 			VIRT E 3 A_Pain
@@ -1662,7 +1381,7 @@ actor Muddernaut 21305
 			CLOP E 0 A_PlaySound("muddy/sight",CHAN_BODY)
 			CLOP S 0 //ACS_Execute(102,0,0,0,0)
 			CLOP STU 3 A_FaceTarget
-			CLOP H 6 A_CustomMissile("BadCherrybomb",48,0,random(-3,3),0,90)
+			CLOP H 6 A_SpawnProjectile("BadCherrybomb",48,0,random(-3,3),0,90)
 			CLOP H 6
 			Goto See
 		Pain:
@@ -1903,29 +1622,29 @@ actor ReelHeel 11306
 			SLOT GHGHGHGH 2 Bright A_FaceTarget
 			SLOT K 6
 			SLOT L 0 A_Playsound("slots/burp")
-			SLOT L 0 A_CustomMissile("SeedBall",40,0,random(-9,9))
-			SLOT L 0 A_CustomMissile("SeedBall",40,0,random(-9,9))
-			SLOT L 12 A_CustomMissile("SeedBall",40,0,random(-6,6))
+			SLOT L 0 A_SpawnProjectile("SeedBall",40,0,random(-9,9))
+			SLOT L 0 A_SpawnProjectile("SeedBall",40,0,random(-9,9))
+			SLOT L 12 A_SpawnProjectile("SeedBall",40,0,random(-6,6))
 			SLOT A 3
 			Goto See
 		SlotBomb:
 			SLOT IJIJIJIJ 2 Bright A_FaceTarget
 			SLOT K 6
 			SLOT L 0 A_Playsound("slots/burp")
-			SLOT L 12 A_CustomMissile("BadCherryBomb",40,0,random(-6,6))
+			SLOT L 12 A_SpawnProjectile("BadCherryBomb",40,0,random(-6,6))
 			SLOT A 3
 			Goto See
 		SlotCherry:
 			SLOT EFEFEFEF 2 Bright A_FaceTarget
 			SLOT K 6
 			SLOT L 0 A_Playsound("slots/burp")
-			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
-			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
-			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
-			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
-			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
-			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
-			SLOT L 4 A_CustomMissile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_SpawnProjectile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_SpawnProjectile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_SpawnProjectile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_SpawnProjectile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_SpawnProjectile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_SpawnProjectile("CoinShot",40,0,random(-6,6))
+			SLOT L 4 A_SpawnProjectile("CoinShot",40,0,random(-6,6))
 			SLOT A 3
 			Goto See
 		Pain:
@@ -2010,7 +1729,7 @@ actor Spidercenser 5229
 			SPCN E 3 //ACS_Execute(102,0,0,0,0)
 			SPCN FG 3 bright A_FaceTarget
 			SPCN H 0 A_Playsound("Weapons/SpinnerFire",CHAN_BODY)
-			SPCN H 5 bright A_CustomMissile("IncenseBall",40,0)
+			SPCN H 5 bright A_SpawnProjectile("IncenseBall",40,0)
 			SPCN K 5 bright 
 			SPCN M 5 bright
 			SPCN G 3 bright
@@ -2020,10 +1739,10 @@ actor Spidercenser 5229
 			SPCN E 3 //ACS_Execute(102,0,0,0,0)
 			SPCN FG 3 bright A_FaceTarget
 			SPCN H 0 A_Playsound("Weapons/SpinnerFire",CHAN_BODY)
-			SPCN H 0 bright A_CustomMissile("IncenseBall",48,24)
-			SPCN H 5 bright A_CustomMissile("IncenseBall",48,-24)
+			SPCN H 0 bright A_SpawnProjectile("IncenseBall",48,24)
+			SPCN H 5 bright A_SpawnProjectile("IncenseBall",48,-24)
 			SPCN I 5 bright 
-			SPCN J 5 bright A_CustomMissile("IncenseBall",48,0)
+			SPCN J 5 bright A_SpawnProjectile("IncenseBall",48,0)
 			SPCN K 5 bright 
 			SPCN L 5 bright 
 			SPCN M 5 bright 
@@ -2117,7 +1836,7 @@ actor Galgoyle 5230
 			GGRF A 4 //ACS_Execute(102,0,0,0,0)
 			GGRF BC 5 A_FaceTarget
 			GGRF D 0 A_Playsound("galgoyle/fire",CHAN_BODY)
-			GGRF D 4 A_CustomMissile("Jellyball",48,0)
+			GGRF D 4 A_SpawnProjectile("Jellyball",48,0)
 			GGRF E 3
 			Goto See
 		Takeoff: 
@@ -2251,23 +1970,23 @@ actor Knucklehead 5231
 			KHEY B 0 A_PlaySound("muddy/sight",CHAN_BODY)
 			KHEY B 0 //ACS_Execute(102,0,0,0,0)
 			KHEY B 8
-			KHED F 6 A_CustomMissile("croquetball",48,0,0,0,90)
+			KHED F 6 A_SpawnProjectile("croquetball",48,0,0,0,90)
 			KHED F 6
 			Goto See
 		ThrowbackLead:
 			KHEY C 0 A_PlaySound("muddy/sight",CHAN_BODY)
 			KHEY C 0 //ACS_Execute(102,0,0,0,0)
 			KHEY C 8
-			KHED F 0 A_CustomMissile("badblundershot",48,0,random(-3,3),0,0)
-			KHED F 0 A_CustomMissile("badblundershot",48,0,random(-5,5),0,0)
-			KHED F 6 A_CustomMissile("badblundershot",48,0,random(-7,7),0,0)
+			KHED F 0 A_SpawnProjectile("badblundershot",48,0,random(-3,3),0,0)
+			KHED F 0 A_SpawnProjectile("badblundershot",48,0,random(-5,5),0,0)
+			KHED F 6 A_SpawnProjectile("badblundershot",48,0,random(-7,7),0,0)
 			KHED F 6
 			Goto See
 		ThrowbackCherry:
 			KHEY D 0 A_PlaySound("muddy/sight",CHAN_BODY)
 			KHEY D 0 //ACS_Execute(102,0,0,0,0)
 			KHEY DEDE 2 Bright A_FaceTarget 
-			KHED F 6 A_CustomMissile("badCherryBomb",48,0,random(-3,3),0,90)
+			KHED F 6 A_SpawnProjectile("badCherryBomb",48,0,random(-3,3),0,90)
 			KHED F 6
 			Goto See
 		Pain:
@@ -2318,7 +2037,7 @@ actor Knucklehead 5231
 			Stop
 		Death.CherryBomb:
 			KHEY DEDEDEDE 2 Bright
-			KHEX A 0 Bright A_CustomMissile("BossBoom",48,0,0,0) 
+			KHEX A 0 Bright A_SpawnProjectile("BossBoom",48,0,0,0) 
 			KHEX A 7 A_Explode
 			KHED H 5 A_Scream
 			KHED IJK 2
@@ -2511,7 +2230,7 @@ actor RoseMother 5119
 			RMOT A 0 //ACS_Execute(102,0,0,0,0)
 			RMOT C 0 A_Jump(208,"Spreadshot")
 			RMOT CDA 4 A_FaceTarget
-			RMOT B 6 A_CustomMissile("BadCherrybomb",48,0,random(-3,3),0,90)
+			RMOT B 6 A_SpawnProjectile("BadCherrybomb",48,0,random(-3,3),0,90)
 			RMOT CD 4
 			RMOT F 4
 			Goto Idle
@@ -2519,14 +2238,14 @@ actor RoseMother 5119
 			RMOT E 0 //ACS_Execute(102,0,0,0,0)
 			RMOT E 4 A_FaceTarget
 			RMOT G 4
-			RMOT H 4 A_CustomMissile("SeedBall",48,0,-15)
-			RMOT H 4 A_CustomMissile("SeedBall",48,0,-11)
-			RMOT I 4 A_CustomMissile("SeedBall",48,0,-7)
-			RMOT I 4 A_CustomMissile("SeedBall",48,0,-3)
-			RMOT J 4 A_CustomMissile("SeedBall",48,0,3)
-			RMOT J 4 A_CustomMissile("SeedBall",48,0,7)
-			RMOT K 4 A_CustomMissile("SeedBall",48,0,11)
-			RMOT K 4 A_CustomMissile("SeedBall",48,0,15)
+			RMOT H 4 A_SpawnProjectile("SeedBall",48,0,-15)
+			RMOT H 4 A_SpawnProjectile("SeedBall",48,0,-11)
+			RMOT I 4 A_SpawnProjectile("SeedBall",48,0,-7)
+			RMOT I 4 A_SpawnProjectile("SeedBall",48,0,-3)
+			RMOT J 4 A_SpawnProjectile("SeedBall",48,0,3)
+			RMOT J 4 A_SpawnProjectile("SeedBall",48,0,7)
+			RMOT K 4 A_SpawnProjectile("SeedBall",48,0,11)
+			RMOT K 4 A_SpawnProjectile("SeedBall",48,0,15)
 			RMOT L 4
 			RMOT F 4
 			Goto Idle
@@ -2649,11 +2368,11 @@ actor GameMother 5121
 			CMOT J 4 //ACS_Execute(102,0,0,0,0)
 			CMOT KLM 4 A_FaceTarget
 			CMOT N 0 A_Playsound("Weapons/cherryboom",CHAN_BODY)
-			CMOT N 0 A_CustomMissile("BadCherryBomb",40,0,random(-12,12),0,random(-5,-15))
-			CMOT N 4 A_CustomMissile("BadCherryBomb",40,0,random(-12,12),0,random(-5,-15))
-			CMOT O 0 A_CustomMissile("FastCroquetBall",40,0,random(-12,12))
-			CMOT O 0 A_CustomMissile("FastCroquetBall",40,0,random(-12,12))
-			CMOT O 4 Bright A_CustomMissile("FastCroquetBall",48,0,0,0)
+			CMOT N 0 A_SpawnProjectile("BadCherryBomb",40,0,random(-12,12),0,random(-5,-15))
+			CMOT N 4 A_SpawnProjectile("BadCherryBomb",40,0,random(-12,12),0,random(-5,-15))
+			CMOT O 0 A_SpawnProjectile("FastCroquetBall",40,0,random(-12,12))
+			CMOT O 0 A_SpawnProjectile("FastCroquetBall",40,0,random(-12,12))
+			CMOT O 4 Bright A_SpawnProjectile("FastCroquetBall",48,0,0,0)
 			CMOT P 0 A_Jump(127,2)
 			CMOT P 0 A_SpawnItemEX("malletammo",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
 			CMOT P 4 Bright
@@ -2780,7 +2499,7 @@ ACTOR GlobeMother : Dragon 5528
 		See:
 			GMOT ABC 5 bright
 			GMOT A 5 bright A_DragonInitFlight
-			GMOT B 5 bright A_CustomMissile("StarBall",random(0,40),random(-32,32))
+			GMOT B 5 bright A_SpawnProjectile("StarBall",random(0,40),random(-32,32))
 			GMOT A 0 //ACS_Execute(102,0,0,0,0)
 			GMOT BCCAABBCCAAB 5 bright A_DragonFlight
 			GMOT A 0 //ACS_Execute(102,0,0,0,0)
@@ -2947,7 +2666,7 @@ ACTOR MossMother 5529
 			TNT1 A 0 A_ChangeFlag("NOTARGET",0)
 			TNT1 A 0 A_UnsetInvulnerable
 			MMRS DC 6
-			MMRS C 6 A_CustomMissile("mossball",40,0,random(-8,8))
+			MMRS C 6 A_SpawnProjectile("mossball",40,0,random(-8,8))
 			MMRS CD 6
 			Goto Walk
 		Melee:
@@ -2955,15 +2674,15 @@ ACTOR MossMother 5529
 			TNT1 A 0 //ACS_Execute(102,0,0,0,0)
 			TNT1 A 0 A_ChangeFlag("NOTARGET",0)
 			TNT1 A 0 A_UnsetInvulnerable
-			MMRS DCBA 4 A_CustomMissile("Geyserball",40,random(-32,32),0,0,random(0,10))
+			MMRS DCBA 4 A_SpawnProjectile("Geyserball",40,random(-32,32),0,0,random(0,10))
 			MMAT ABC 4 A_FaceTarget
-			MMAT D 0 A_CustomMissile("mossballmini",40,0,random(-8,8))
-			MMAT D 0 A_CustomMissile("mossballmini",40,0,random(-8,8))
-			MMAT D 4 A_CustomMissile("mossball",40,0,random(-8,8))
+			MMAT D 0 A_SpawnProjectile("mossballmini",40,0,random(-8,8))
+			MMAT D 0 A_SpawnProjectile("mossballmini",40,0,random(-8,8))
+			MMAT D 4 A_SpawnProjectile("mossball",40,0,random(-8,8))
 			MMAT EFG 4 A_FaceTarget
-			MMAT H 0 A_CustomMissile("mossballmini",40,0,random(-8,8))
-			MMAT H 0 A_CustomMissile("mossballmini",40,0,random(-8,8))
-			MMAT H 4 A_CustomMissile("mossball",40,0,random(-8,8))
+			MMAT H 0 A_SpawnProjectile("mossballmini",40,0,random(-8,8))
+			MMAT H 0 A_SpawnProjectile("mossballmini",40,0,random(-8,8))
+			MMAT H 4 A_SpawnProjectile("mossball",40,0,random(-8,8))
 			MMRS ABCD 2
 			Goto Walk
 		Pain:
@@ -3093,12 +2812,12 @@ actor SphinxMother 9230
 			SMOT F 4 //ACS_Execute(102,0,0,0,0)
 			SMOT GHH 5 A_FaceTarget
 			SMOT J 0 A_Playsound("galgoyle/fire",CHAN_BODY)
-			SMOT I 4 bright A_CustomMissile("SphinxBall1",48,0)
-			SMOT I 0 bright A_CustomMissile("SphinxBall2",48,0,random(0,4))
-			SMOT I 4 bright A_CustomMissile("SphinxBall2",48,0,random(0,-4))
-			SMOT J 4 bright A_CustomMissile("SphinxBall1",48,0)
-			SMOT J 0 bright A_CustomMissile("SphinxBall2",48,0,random(0,4))
-			SMOT J 4 bright A_CustomMissile("SphinxBall2",48,0,random(0,-4))
+			SMOT I 4 bright A_SpawnProjectile("SphinxBall1",48,0)
+			SMOT I 0 bright A_SpawnProjectile("SphinxBall2",48,0,random(0,4))
+			SMOT I 4 bright A_SpawnProjectile("SphinxBall2",48,0,random(0,-4))
+			SMOT J 4 bright A_SpawnProjectile("SphinxBall1",48,0)
+			SMOT J 0 bright A_SpawnProjectile("SphinxBall2",48,0,random(0,4))
+			SMOT J 4 bright A_SpawnProjectile("SphinxBall2",48,0,random(0,-4))
 			SMOT KKLMK 3
 			Goto Idle
 		Melee:
@@ -3130,16 +2849,16 @@ actor SphinxMother 9230
 			SMOF A 0 A_FaceTarget
 			SMOF A 0 A_Recoil(-4)
 			SMOF E 0 A_Playsound("galgoyle/fire",CHAN_BODY)
-			SMOF E 4 bright A_CustomMissile("SphinxBall2",16,0,random(-9,9))
-			SMOF B 4 bright A_CustomMissile("SphinxBall2",16,0,random(-9,9))
-			SMOF G 4 bright A_CustomMissile("SphinxBall2",16,0,random(-9,9))
+			SMOF E 4 bright A_SpawnProjectile("SphinxBall2",16,0,random(-9,9))
+			SMOF B 4 bright A_SpawnProjectile("SphinxBall2",16,0,random(-9,9))
+			SMOF G 4 bright A_SpawnProjectile("SphinxBall2",16,0,random(-9,9))
 			SMOF D 4 A_Stop
 			goto Land
 		Land:
 			SMOF AA 4 ThrustThingZ(0,-20,0,0)
 			SMOF E 1 A_CheckFloor("Idle")
 			SMOF E 0 A_Playsound("galgoyle/fire",CHAN_BODY)
-			SMOF E 4 bright A_CustomMissile("SphinxBall1",16,0,random(-9,9))
+			SMOF E 4 bright A_SpawnProjectile("SphinxBall1",16,0,random(-9,9))
 			SMOF BCD 4 
 			SMOF E 1 A_CheckFloor("Idle")
 			Goto Hover
@@ -3309,24 +3028,24 @@ actor HandMotherVac 5129
 			BMOT G 0 A_Playsound("Handmother/Vacon",CHAN_BODY)
 			BMOT GHIJGHIJGHIJKLMNKLMNKLMNKLMN 1 A_FaceTarget
 			BMOT O 0 A_Playsound("Weapons/spinnerfire")
-			BMOT O 1 A_CustomMissile("DustBall",80,0,random(-12,12))
-			BMOT O 1 A_CustomMissile("DustBall",72,0,random(-12,12))
-			BMOT O 1 A_CustomMissile("DustBall",96,0,random(-12,12))
-			BMOT O 1 A_CustomMissile("DustBall",64,0,random(-12,12))
-			BMOT O 1 A_CustomMissile("DustBall",80,0,random(-12,12))
-			BMOT O 1 A_CustomMissile("DustBall",72,0,random(-12,12))
-			BMOT O 1 A_CustomMissile("DustBall",96,0,random(-12,12))
-			BMOT O 1 A_CustomMissile("DustBall",64,0,random(-12,12))
-			BMOT P 6 A_CustomMissile("BigDustBall",80,0,0)
+			BMOT O 1 A_SpawnProjectile("DustBall",80,0,random(-12,12))
+			BMOT O 1 A_SpawnProjectile("DustBall",72,0,random(-12,12))
+			BMOT O 1 A_SpawnProjectile("DustBall",96,0,random(-12,12))
+			BMOT O 1 A_SpawnProjectile("DustBall",64,0,random(-12,12))
+			BMOT O 1 A_SpawnProjectile("DustBall",80,0,random(-12,12))
+			BMOT O 1 A_SpawnProjectile("DustBall",72,0,random(-12,12))
+			BMOT O 1 A_SpawnProjectile("DustBall",96,0,random(-12,12))
+			BMOT O 1 A_SpawnProjectile("DustBall",64,0,random(-12,12))
+			BMOT P 6 A_SpawnProjectile("BigDustBall",80,0,0)
 			BMOT Q 7 A_Playsound("Handmother/Vacoff",CHAN_BODY)
 			Goto Idle
 		MissileCherry:
 			BMOT R 0 //ACS_Execute(102,0,0,0,0)
 			BMOT R 7 A_FaceTarget
 			BMOT S 5 A_CheckSight("idle")
-			BMOT T 0 A_CustomMissile("BadCherryBomb",80,0,random(-12,12),0,random(-5,-15))
-			BMOT T 0 A_CustomMissile("BadCherryBomb",76,0,random(-12,12),0,random(-5,-15))
-			BMOT T 7 A_CustomMissile("BadCherryBomb",64,0,random(-12,12),0,random(-5,-15))
+			BMOT T 0 A_SpawnProjectile("BadCherryBomb",80,0,random(-12,12),0,random(-5,-15))
+			BMOT T 0 A_SpawnProjectile("BadCherryBomb",76,0,random(-12,12),0,random(-5,-15))
+			BMOT T 7 A_SpawnProjectile("BadCherryBomb",64,0,random(-12,12),0,random(-5,-15))
 			Goto Missile+3
 		Melee:
 			BMOT T 0 //ACS_Execute(102,0,0,0,0)
@@ -3480,30 +3199,30 @@ actor HandMotherPhaseB 6131
 			BMO2 E 8
 			BMO2 F 0 A_Playsound("Handmother/Zap",CHAN_BODY)
 			BMO2 HIHIHIHIHIHIH 1 A_FaceTarget
-			BMO2 H 1 A_CustomMissile("badzapshot",80,0,0)
-			BMO2 I 0 A_CustomMissile("badzapshot",72,0,12)
-			BMO2 I 1 A_CustomMissile("badzapshot",96,0,-12)
-			BMO2 I 1 A_CustomMissile("badzapshot",80,0,0)
-			BMO2 H 0 A_CustomMissile("badzapshot",72,0,12)
-			BMO2 H 1 A_CustomMissile("badzapshot",96,0,-12)
-			BMO2 I 1 A_CustomMissile("badzapshot",80,0,0)
-			BMO2 H 0 A_CustomMissile("badzapshot",72,0,12)
-			BMO2 H 1 A_CustomMissile("badzapshot",96,0,-12)
+			BMO2 H 1 A_SpawnProjectile("badzapshot",80,0,0)
+			BMO2 I 0 A_SpawnProjectile("badzapshot",72,0,12)
+			BMO2 I 1 A_SpawnProjectile("badzapshot",96,0,-12)
+			BMO2 I 1 A_SpawnProjectile("badzapshot",80,0,0)
+			BMO2 H 0 A_SpawnProjectile("badzapshot",72,0,12)
+			BMO2 H 1 A_SpawnProjectile("badzapshot",96,0,-12)
+			BMO2 I 1 A_SpawnProjectile("badzapshot",80,0,0)
+			BMO2 H 0 A_SpawnProjectile("badzapshot",72,0,12)
+			BMO2 H 1 A_SpawnProjectile("badzapshot",96,0,-12)
 			BMO2 V 8
 			Goto Idle
 		MissileCherry:
 			BMO2 R 0 //ACS_Execute(102,0,0,0,0)
 			BMO2 R 7 A_FaceTarget
 			BMO2 S 5
-			BMO2 T 0 A_CustomMissile("BadCherryBomb",80,0,random(-12,12),0,random(-5,-15))
-			BMO2 T 0 A_CustomMissile("BadCherryBomb",76,0,random(-12,12),0,random(-5,-15))
-			BMO2 T 7 A_CustomMissile("BadCherryBomb",64,0,random(-12,12),0,random(-5,-15))
+			BMO2 T 0 A_SpawnProjectile("BadCherryBomb",80,0,random(-12,12),0,random(-5,-15))
+			BMO2 T 0 A_SpawnProjectile("BadCherryBomb",76,0,random(-12,12),0,random(-5,-15))
+			BMO2 T 7 A_SpawnProjectile("BadCherryBomb",64,0,random(-12,12),0,random(-5,-15))
 			Goto Missile+3
 		MissileSpinner:
 			BMO2 R 0 //ACS_Execute(102,0,0,0,0)
 			BMO2 R 7 A_FaceTarget
 			BMO2 S 5 A_CheckSight("idle")
-			BMO2 T 0 A_CustomMissile("SpinnerShot",80,0,random(-12,12),0,random(-5,-15))
+			BMO2 T 0 A_SpawnProjectile("SpinnerShot",80,0,random(-12,12),0,random(-5,-15))
 			BMO2 V 0 A_SpawnItemEX("SpinnerPickup",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
 			BMO2 V 0
 			Goto Idle
@@ -3606,14 +3325,14 @@ actor HandMotherPhaseC 6132
 			BMO3 F 9 A_FaceTarget
 			BMO3 G 0 A_CheckSight("idle")
 			BMO3 G 0 A_Playsound("Weapons/brocketfire")
-			BMO3 G 5 bright A_CustomMissile("badbrocketshot",80,0,0)
+			BMO3 G 5 bright A_SpawnProjectile("badbrocketshot",80,0,0)
 			BMO3 HI 3 bright
 			Goto Idle
 		MissileSpinner:
 			BMO3 R 0 //ACS_Execute(102,0,0,0,0)
 			BMO3 R 7 A_FaceTarget
 			BMO3 S 5 A_CheckSight("idle")
-			BMO3 T 0 A_CustomMissile("SpinnerShot",80,0,random(-12,12),0,random(-5,-15))
+			BMO3 T 0 A_SpawnProjectile("SpinnerShot",80,0,random(-12,12),0,random(-5,-15))
 			BMO3 V 0 A_Jump(192,"Idle")
 			BMO3 V 0 A_SpawnItemEX("cherrybombpickup",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION)
 			Goto Idle
@@ -3821,7 +3540,7 @@ actor SugarSnake
 			FSNK B 5 //ACS_Execute(102,0,0,0,0)
 			FSNK B 5 A_FaceTarget
 			FSNK B 0 A_AlertMonsters(1024,0)
-			FSNK BBB 4 A_CustomMissile("SnakeFireball",40)
+			FSNK BBB 4 A_SpawnProjectile("SnakeFireball",40)
 			Goto See
 		Pain:
 			FSNK A 6 A_Pain
@@ -3875,9 +3594,9 @@ actor MiniSugarSnake
 			FSNK B 5 //ACS_Execute(102,0,0,0,0)
 			FSNK B 5 A_FaceTarget
 			FSNK B 0 A_AlertMonsters(1024,0)
-			FSNK B 4 A_CustomMissile("SnakeMiniFireball",32)
-			FSNK B 4 A_CustomMissile("SnakeMiniFireball",32)
-			FSNK B 4 A_CustomMissile("SnakeMiniFireball",32)
+			FSNK B 4 A_SpawnProjectile("SnakeMiniFireball",32)
+			FSNK B 4 A_SpawnProjectile("SnakeMiniFireball",32)
+			FSNK B 4 A_SpawnProjectile("SnakeMiniFireball",32)
 			Goto See
 		Pain:
 			FSNK A 6 A_Pain
@@ -5588,11 +5307,11 @@ ACTOR HoganTarget_Bad 10714
 		Missile:
 			HOGN E 3 bright A_FaceTarget
 			HOGN E 0 A_Playsound("BlunderFire",CHAN_BODY)
-			HOGN E 3 bright A_CustomMissile("BadBlundershot",40,0,0)
+			HOGN E 3 bright A_SpawnProjectile("BadBlundershot",40,0,0)
 			HOGN E 0 A_Playsound("BlunderFire",CHAN_BODY)
-			HOGN E 3 bright A_CustomMissile("BadBlundershot",40,0,0)
+			HOGN E 3 bright A_SpawnProjectile("BadBlundershot",40,0,0)
 			HOGN E 0 A_Playsound("BlunderFire",CHAN_BODY)
-			HOGN E 3 bright A_CustomMissile("BadBlundershot",40,0,0)
+			HOGN E 3 bright A_SpawnProjectile("BadBlundershot",40,0,0)
 			HOGN E 1 bright A_Die("timeout")
 			Goto Death
 		Death.Timeout:
@@ -5736,7 +5455,29 @@ ACTOR BlueGlitterMaker : TeleGlitterGenerator2
 	}
 }
 
-ACTOR Confetti_B : Feather
+ACTOR DDFeather : DDProjectile
+{
+	Radius 2
+	Height 4
+	+MISSILE
+	+DROPOFF
+	+NOTELEPORT
+	+CANNOTPUSH
+	+WINDTHRUST
+	+DONTSPLASH
+	Gravity 0.125
+	States
+	{
+		Spawn:
+			CHKN MNOPQPON 3
+			Loop
+		Death:
+			CHKN N 6
+			Stop
+	}
+}
+
+ACTOR Confetti_B : DDFeather
 {
 	Scale 0.5
 	States
@@ -5750,7 +5491,7 @@ ACTOR Confetti_B : Feather
 	}
 }
 
-ACTOR Confetti_P : Feather
+ACTOR Confetti_P : DDFeather
 {
 	Scale 0.5
 	States
@@ -5764,7 +5505,7 @@ ACTOR Confetti_P : Feather
 	}
 }
 
-ACTOR Confetti_Y : Feather
+ACTOR Confetti_Y : DDFeather
 {
 	Scale 0.5
 }
@@ -5811,7 +5552,7 @@ actor MiniTank_Green
 		Missile:
 			TANG A 5 //ACS_Execute(102,0,0,0,0)
 			TANG A 5 A_FaceTarget
-			TANG A 4 A_CustomMissile("TankShell",12,0,random(-3,3))
+			TANG A 4 A_SpawnProjectile("TankShell",12,0,random(-3,3))
 			Goto See
 		Pain:
 			TANG A 6 A_Pain
@@ -5860,11 +5601,11 @@ actor MiniTank_Green_Scout : Minitank_Green
 		Missile:
 			TANG A 5 //ACS_Execute(102,0,0,0,0)
 			TANG A 5 A_FaceTarget
-			TANG A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANG A 3 A_SpawnProjectile("TankBullet",6,0,random(-3,3))
 			TANG A 3 A_FaceTarget
-			TANG A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANG A 3 A_SpawnProjectile("TankBullet",6,0,random(-3,3))
 			TANG A 3 A_FaceTarget
-			TANG A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANG A 3 A_SpawnProjectile("TankBullet",6,0,random(-3,3))
 			TANG A 3 A_Jump(208,"Retreat")
 			Goto See
 		Pain:
@@ -5911,13 +5652,13 @@ actor MiniTank_Green_Battery : Minitank_Green
 			TANG A 5 //ACS_Execute(102,0,0,0,0)
 			TANG A 0 A_Jump(108,"Rocket")
 			TANG A 5 A_FaceTarget
-			TANG A 0 A_CustomMissile("TankShell",12,0,random(-7,7))
-			TANG A 0 A_CustomMissile("TankShell",12,0,random(-7,7))
-			TANG A 4 A_CustomMissile("TankShell",12,0,random(-7,7))
+			TANG A 0 A_SpawnProjectile("TankShell",12,0,random(-7,7))
+			TANG A 0 A_SpawnProjectile("TankShell",12,0,random(-7,7))
+			TANG A 4 A_SpawnProjectile("TankShell",12,0,random(-7,7))
 			Goto See
 		Rocket:
 			TANG A 5 A_FaceTarget
-			TANG A 4 A_CustomMissile("TankMissile",12)
+			TANG A 4 A_SpawnProjectile("TankMissile",12)
 			TANG A 40
 			Goto See
 		Pain:
@@ -5971,7 +5712,7 @@ actor MiniTank_Brown
 		Missile:
 			TANK A 5 //ACS_Execute(102,0,0,0,0)
 			TANK A 5 A_FaceTarget
-			TANK A 4 A_CustomMissile("TankShell",12,0,random(-3,3))
+			TANK A 4 A_SpawnProjectile("TankShell",12,0,random(-3,3))
 			Goto See
 		Pain:
 			TANK A 6 A_Pain
@@ -6024,11 +5765,11 @@ actor MiniTank_Brown_Scout : MiniTank_Brown
 		Missile:
 			TANK A 5 //ACS_Execute(102,0,0,0,0)
 			TANK A 5 A_FaceTarget
-			TANK A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANK A 3 A_SpawnProjectile("TankBullet",6,0,random(-3,3))
 			TANK A 3 A_FaceTarget
-			TANK A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANK A 3 A_SpawnProjectile("TankBullet",6,0,random(-3,3))
 			TANK A 3 A_FaceTarget
-			TANK A 3 A_CustomMissile("TankBullet",6,0,random(-3,3))
+			TANK A 3 A_SpawnProjectile("TankBullet",6,0,random(-3,3))
 			TANK A 3 A_Jump(208,"Retreat")
 			Goto See
 		Pain:
@@ -6079,13 +5820,13 @@ actor MiniTank_Brown_Battery : Minitank_Brown
 			TANK A 5 //ACS_Execute(102,0,0,0,0)
 			TANK A 0 A_Jump(108,"Rocket")
 			TANK A 5 A_FaceTarget
-			TANK A 0 A_CustomMissile("TankShell",12,0,random(-7,7))
-			TANK A 0 A_CustomMissile("TankShell",12,0,random(-7,7))
-			TANK A 4 A_CustomMissile("TankShell",12,0,random(-7,7))
+			TANK A 0 A_SpawnProjectile("TankShell",12,0,random(-7,7))
+			TANK A 0 A_SpawnProjectile("TankShell",12,0,random(-7,7))
+			TANK A 4 A_SpawnProjectile("TankShell",12,0,random(-7,7))
 			Goto See
 		Rocket:
 			TANK A 5 A_FaceTarget
-			TANK A 4 A_CustomMissile("TankMissile",12)
+			TANK A 4 A_SpawnProjectile("TankMissile",12)
 			TANK A 40
 			Goto See
 		Pain:
@@ -6321,18 +6062,18 @@ actor Teacher_Krag 10831
 			MKRG K 0 A_JumpIfHealthLower(800,"MissileFast")
 			MKRG K 0 A_PlaySound("krag/throw",CHAN_VOICE)
 			MKRG KL 4 A_FaceTarget
-			MKRG M 6 A_CustomMissile("KragBall",40,0,random(-3,3))
+			MKRG M 6 A_SpawnProjectile("KragBall",40,0,random(-3,3))
 			MKRG N 6
 			Goto See
 		MissileFast:
 			MKRG K 0 A_PlaySound("krag/throw",CHAN_VOICE)
 			MKRG K 0 //ACS_Execute(102,0,0,0,0)
 			MKRG KL 3 A_FaceTarget
-			MKRG M 4 A_CustomMissile("KragBall",40,0,random(-3,3))
+			MKRG M 4 A_SpawnProjectile("KragBall",40,0,random(-3,3))
 			MKRG N 4
 			MKRG Q 0 A_PlaySound("krag/throw",CHAN_VOICE)
 			MKRG QR 3 A_FaceTarget
-			MKRG S 4 A_CustomMissile("KragBall",40,0,random(-3,3))
+			MKRG S 4 A_SpawnProjectile("KragBall",40,0,random(-3,3))
 			MKRG T 4
 			Goto See
 		Pain:
@@ -6465,19 +6206,19 @@ actor Teacher_Quis 10832
 			MQIS E 8 A_FaceTarget
 			MQIS FGFGFG 2 bright
 			MQIS H 0 A_Playsound("teacher/chargeup",CHAN_BODY)
-			MQIS H 6 bright A_CustomMissile("CheeseFX",40,0)
-			MQIS H 6 bright A_CustomMissile("CheeseFX",40,0,45)
-			MQIS H 6 bright A_CustomMissile("CheeseFX",40,0-45)
+			MQIS H 6 bright A_SpawnProjectile("CheeseFX",40,0)
+			MQIS H 6 bright A_SpawnProjectile("CheeseFX",40,0,45)
+			MQIS H 6 bright A_SpawnProjectile("CheeseFX",40,0-45)
 			Goto See3
 		MissileZap:
 			MQIS H 0 A_PlaySound("Handmother/Zap")
 			MQIS EE 3 bright 
-			MQIS H 3 bright A_CustomMissile("badZapshot",40)
+			MQIS H 3 bright A_SpawnProjectile("badZapshot",40)
 			MQIS H 3 bright
-			MQIS H 0 bright A_CustomMissile("badZapshot",40,-48)
-			MQIS H 3 bright A_CustomMissile("badZapshot",40,48)
+			MQIS H 0 bright A_SpawnProjectile("badZapshot",40,-48)
+			MQIS H 3 bright A_SpawnProjectile("badZapshot",40,48)
 			MQIS H 3 bright 
-			MQIS H 3 bright A_CustomMissile("badZapshot",40)
+			MQIS H 3 bright A_SpawnProjectile("badZapshot",40)
 			MQIS HH 3 bright
 			Goto See3
 		Pain:
@@ -6554,7 +6295,7 @@ Actor QuisFake
 			MQIS E 0 A_Playsound("quisling/sight",CHAN_VOICE)
 			MQIS E 8 A_FaceTarget
 			MQIS H 0 bright A_PlaySound("zappo",CHAN_BODY)
-			MQIS H 8 bright A_CustomMissile("BadZapshot",48,0)
+			MQIS H 8 bright A_SpawnProjectile("BadZapshot",48,0)
 			MQIS H 6
 			Goto See2
 		Pain:
@@ -6609,9 +6350,9 @@ actor Teacher_Lauritz 10833
 		MLTZ G 6 A_FaceTarget
 		MLTZ H 6
 		MLTZ I 0 A_Playsound("lauritz/tuba",CHAN_BODY)
-		MLTZ I 3 A_CustomMissile("MusicBall",random(40,48),0,-35)
-		MLTZ I 3 A_CustomMissile("MusicBall",random(40,48),0,35)
-		MLTZ I 3 A_CustomMissile("MusicBall",random(40,48))
+		MLTZ I 3 A_SpawnProjectile("MusicBall",random(40,48),0,-35)
+		MLTZ I 3 A_SpawnProjectile("MusicBall",random(40,48),0,35)
+		MLTZ I 3 A_SpawnProjectile("MusicBall",random(40,48))
 		MLTZ J 6
         Goto See
 	Escape:
@@ -6694,11 +6435,11 @@ actor Teacher_Jorg 10834
 		JORG E 0 //ACS_Execute(102,0,0,0,0)
 		JORG EN 4 A_FaceTarget
 		JORG N 0 A_Jump(96,"DeathSong")
-		JORG O 6 A_CustomMissile("JorgTeeth",40)
+		JORG O 6 A_SpawnProjectile("JorgTeeth",40)
 		JORG PQ 6
         Goto See
 	DeathSong:
-		JORG OOOOOOOOOOOO 1 A_CustomMissile("JorgSong",40)
+		JORG OOOOOOOOOOOO 1 A_SpawnProjectile("JorgSong",40)
 		JORG PQ 6
         Goto See
 	Pain:
@@ -6740,7 +6481,7 @@ actor Teacher_Jorg 10834
        TNT1 AAAAAAAA 1 A_Wander
        TNT1 AAAAAAAA 1 A_Wander
 	   TNT1 A 0 A_Facetarget
-	   TNT1 A 0 A_CustomMissile("JorgTeeth",40)
+	   TNT1 A 0 A_SpawnProjectile("JorgTeeth",40)
 	   TNT1 A 0 A_SpawnItemEx("TeleportFog")
 	   TNT1 AAAAAAAA 1 A_Wander
        TNT1 AAAAAAAA 1 A_Wander
@@ -6908,12 +6649,12 @@ actor Teacher_Vokter 10835
 			VOKT F 4 A_FaceTarget
 			VOKT H 0 A_PlaySound("Handmother/Zap")
 			VOKT HIJKHI 3 bright 
-			VOKT J 3 bright A_CustomMissile("badZapshot",40)
+			VOKT J 3 bright A_SpawnProjectile("badZapshot",40)
 			VOKT K 3 bright
-			VOKT J 0 bright A_CustomMissile("badZapshot",40,-48)
-			VOKT J 3 bright A_CustomMissile("badZapshot",40,48)
+			VOKT J 0 bright A_SpawnProjectile("badZapshot",40,-48)
+			VOKT J 3 bright A_SpawnProjectile("badZapshot",40,48)
 			VOKT K 3 bright 
-			VOKT J 3 bright A_CustomMissile("badZapshot",40)
+			VOKT J 3 bright A_SpawnProjectile("badZapshot",40)
 			VOKT KH 3 bright
 			Goto See
 		Pain:
@@ -9175,14 +8916,14 @@ ACTOR VokterCannon 11787
 		Missile:
 			CANN BB 4 A_Facetarget
 			CANN B 0 A_Playsound("jorg/spit",CHAN_WEAPON)
-			CANN C 0 bright A_CustomMissile("BadZapshot",16,32)
-			CANN C 6 bright A_CustomMissile("BadZapshot",16,-32)
+			CANN C 0 bright A_SpawnProjectile("BadZapshot",16,32)
+			CANN C 6 bright A_SpawnProjectile("BadZapshot",16,-32)
 			CANN D 4 bright
 			CANN B 0 //ACS_Execute(102,0,0,0,0)
 			CANN B 2 A_Jump(128,"see")
 			CANN B 0 A_Playsound("jorg/spit",CHAN_WEAPON)
-			CANN C 0 bright A_CustomMissile("BadZapshot",16,32)
-			CANN C 6 bright A_CustomMissile("BadZapshot",16,-32)
+			CANN C 0 bright A_SpawnProjectile("BadZapshot",16,32)
+			CANN C 6 bright A_SpawnProjectile("BadZapshot",16,-32)
 			CANN D 4 bright
 			Goto See
 		Pain:
@@ -9263,17 +9004,17 @@ ACTOR JorgSphereCannon 11789
 			JCAN F 0 //ACS_Execute(102,0,0,0,0)
 			JCAN FFF 4 A_Facetarget
 			JCAN F 0 A_Playsound("jorg/spit",CHAN_WEAPON)
-			JCAN B 0 bright A_CustomMissile("BadZapshot",64,80)
-			JCAN B 6 bright A_CustomMissile("BadZapshot",32,80)
+			JCAN B 0 bright A_SpawnProjectile("BadZapshot",64,80)
+			JCAN B 6 bright A_SpawnProjectile("BadZapshot",32,80)
 			JCAN C 0 A_Playsound("jorg/spit",CHAN_WEAPON)
-			JCAN C 0 bright A_CustomMissile("BadZapshot",64,-80)
-			JCAN C 6 bright A_CustomMissile("BadZapshot",32,-80)
+			JCAN C 0 bright A_SpawnProjectile("BadZapshot",64,-80)
+			JCAN C 6 bright A_SpawnProjectile("BadZapshot",32,-80)
 			JCAN F 0 A_Playsound("jorg/spit",CHAN_WEAPON)
-			JCAN B 0 bright A_CustomMissile("BadZapshot",64,80)
-			JCAN B 6 bright A_CustomMissile("BadZapshot",32,80)
+			JCAN B 0 bright A_SpawnProjectile("BadZapshot",64,80)
+			JCAN B 6 bright A_SpawnProjectile("BadZapshot",32,80)
 			JCAN C 0 A_Playsound("jorg/spit",CHAN_WEAPON)
-			JCAN C 0 bright A_CustomMissile("BadZapshot",64,-80)
-			JCAN C 6 bright A_CustomMissile("BadZapshot",32,-80)
+			JCAN C 0 bright A_SpawnProjectile("BadZapshot",64,-80)
+			JCAN C 6 bright A_SpawnProjectile("BadZapshot",32,-80)
 			JCAN FA 4
 			Goto See
 		Pain:

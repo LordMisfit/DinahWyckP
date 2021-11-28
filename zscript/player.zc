@@ -454,7 +454,10 @@ class DDPlayerPawn : PlayerPawn
 			return 0;
 		}
 
-		if (CountInv("PowerTimeFreezer") || CountInv("TimePotionTimeFreezer"))
+		if (CountInv("PowerTimeFreezer") || 
+				CountInv("DDMiscTimeFreezer") || 
+				CountInv("TimePotionTimeFreezer") || 
+				CountInv("DashTimeFreezer"))
 		{
 			if (mod == 'Slime' || mod == 'Magma')
 			{
@@ -463,6 +466,16 @@ class DDPlayerPawn : PlayerPawn
 			}
 		}
 		
+		bool isinvuln = false;
+		// If Invulnerable
+		{
+			if (bINVULNERABLE || player.cheats & CF_GODMODE2 || player.cheats & CF_GODMODE || CountInv("PowerInvulnDD") || CountInv("PowerInvulnerable"))
+			{ 
+				A_StartSound("Player/TookNoDamageInvuln",199,CHANF_DEFAULT,frandom(0.5,0.75),ATTN_NORM);
+				isinvuln = true;
+			}
+		}
+
 		int armoramt = CountInv("BasicArmor");
 		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Final] - Final Damage: %d", damage);
 		
@@ -471,13 +484,18 @@ class DDPlayerPawn : PlayerPawn
 		int armdmg = (armoramt - CountInv("BasicArmor"));
 		if (armdmg <= 0) armdmg = 0;
 		if (dydudebug_playerdamagemobj && armdmg) Console.Printf("Armor Damage: %d", armdmg);
-		if (ret || armdmg)
+		if (dydu_playerdmglog)
 		{
-			if (dydu_playerdmglog)
+			if (mod == 'NONE') mod = 'Typeless';
+			if (ret || armdmg)
 			{
 				if (armdmg && !ret) Console.Printf("\c[darkgreen]%d AP\c- of damage taken! [%s]", armdmg, mod);
 				else if (armdmg && ret) Console.Printf("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- of damage taken! [%s]", ret, armdmg, mod);
 				else Console.Printf("\c[darkred]%d HP\c- of damage taken! [%s]", ret, mod);
+			}
+			else
+			{
+				if (isinvuln) Console.Printf("Invulnerable! No Damage Suffered! [%s]", mod);
 			}
 		}
 		return ret;

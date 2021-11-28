@@ -62,6 +62,8 @@ class PlayerStatItem : Inventory
 	int CricketBatBuffTimer;
 	int CricketBatSwingBuffTimer;
 	
+	int GrimophoneDebuffTimer;
+	
 	double atkfct, deffct, spdfct, jmpfct, suvfct;
 
 	default 
@@ -85,6 +87,7 @@ class PlayerStatItem : Inventory
 			if (playeractor.GetClassName() == "DinahPlayer") CharacterClass == 10;
 			if (!owner.CountInv("HandToHand")) owner.A_SetInventory("HandToHand",1); // Prevents your "fists/hand-to-hand" from being removed by inventory removing events.
 			if (owner.CountInv("PowerStrength") || owner.CountInv("PowerStrengthDD")) berserked = true;
+			else berserked = false;
 			
 			ClassicDoomType = gameinfo.gametype; // 0 = Unknown, 1 = Doom [any], 2 = Heretic, 4 = Hexen, 8 = Strife
 			//Console.Printf("%d", ClassicDoomType);					if (ClassicDoomType == 0) { owner.A_SetInventory("PlayingDoom2",1); } // Doom 2
@@ -848,12 +851,59 @@ class PlayerStatItem : Inventory
 			{
 				owner.A_SetInventory("CricketBatSwingDEF",0);
 			}
-
+			
+			// Grimophone Debuff
+			int DashTics = owner.CountInv("DashTics");
+			int gdebuffbase = 90;
+			if (GrimophoneDebuffTimer)
+			{
+				if (GrimophoneDebuffTimer >= (gdebuffbase*27)) 
+				{
+					owner.A_SetInventory("GrimophoneDEFDown4",1);
+					owner.A_SetInventory("GrimophoneDEFDown3",0);
+					owner.A_SetInventory("GrimophoneDEFDown2",0);
+					owner.A_SetInventory("GrimophoneDEFDown1",0);
+				}
+				else if (GrimophoneDebuffTimer >= (gdebuffbase*9)) 
+				{
+					owner.A_SetInventory("GrimophoneDEFDown4",0);
+					owner.A_SetInventory("GrimophoneDEFDown3",1);
+					owner.A_SetInventory("GrimophoneDEFDown2",0);
+					owner.A_SetInventory("GrimophoneDEFDown1",0);
+				}
+				else if (GrimophoneDebuffTimer >= (gdebuffbase*3))
+				{
+					owner.A_SetInventory("GrimophoneDEFDown4",0);
+					owner.A_SetInventory("GrimophoneDEFDown3",0);
+					owner.A_SetInventory("GrimophoneDEFDown2",1);
+					owner.A_SetInventory("GrimophoneDEFDown1",0);
+				}
+				else
+				if (GrimophoneDebuffTimer >= (gdebuffbase)) 
+				{
+					owner.A_SetInventory("GrimophoneDEFDown4",0);
+					owner.A_SetInventory("GrimophoneDEFDown3",0);
+					owner.A_SetInventory("GrimophoneDEFDown2",0);
+					owner.A_SetInventory("GrimophoneDEFDown1",1);
+				}
+				owner.bFORCERADIUSDMG = true;
+				GrimophoneDebuffTimer--;
+				if (dydudebug_grimophonealtfire) Console.Printf("GrimophoneDebuffTimer %d", GrimophoneDebuffTimer);
+			}
+			else
+			{
+				owner.A_SetInventory("GrimophoneDEFDown4",0);
+				owner.A_SetInventory("GrimophoneDEFDown3",0);
+				owner.A_SetInventory("GrimophoneDEFDown2",0);
+				owner.A_SetInventory("GrimophoneDEFDown1",0);
+				if (berserked && DashTics) owner.bFORCERADIUSDMG = true;
+				else owner.bFORCERADIUSDMG = false;
+			}
+			
 			// RenderStyle Stuff [Dashing, Invisibility, etc]
 			int InvisPulseTimer = level.totaltime % 40;
 			double InvisPulseAlpha = 1.00;
 			double DashAlpha = 1.00;
-			int DashTics = owner.CountInv("DashTics");
 
 			int InvisibilityTimer;
 			let MiscItem = PowerInvisibility(owner.FindInventory("PowerInvisibility",true));
@@ -1149,6 +1199,8 @@ class PlayerDashJump : Inventory
 		int debugdashing = false;
 		if (!Owner || Owner && (!Owner.Player || Owner.Health < 1)) Return;
 		if (Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD")) berserked = true;
+		else berserked = false;
+
 		PlayerInfo PlayDash = Owner.Player;
 		Int BTInput = PlayDash.cmd.buttons;
 		dashgruntchance = randompick(66,66,67);
@@ -1255,6 +1307,10 @@ class PlayerDashJump : Inventory
 		}
 		if (DashTics)
 		{
+			let MiscItem = PlayerStatItem(Owner.FindInventory("PlayerStatItem"));
+			if (MiscItem.GrimophoneDebuffTimer) { }
+			else { owner.bFORCERADIUSDMG = false; }
+
 			//if (PlayDash.OnGround) { PlayDash.OnGround = False; Owner.AddZ(1); }
 			if (PlayDash.OnGround && DashTics % 2) 
 			{
@@ -1283,14 +1339,24 @@ class PlayerDashJump : Inventory
 			Owner.bTHRUACTORS = true;
 			DashTics--;
 
+			Owner.A_SetInventory("DashTimeFreezer",0);
 			Owner.VelFromAngle(DashSpeed, DashDir);
 			if (berserked)
 			{
-				if (PlayDash.OnGround && DashTics % 4 <= 2) Owner.A_SetInventory("DashTimeFreezer",1);
-																							 else Owner.A_SetInventory("DashTimeFreezer",0);
+				if (PlayDash.OnGround && DashTics % 4 <= 2) 
+				{
+					if (!owner.player.timefreezer) Owner.A_SetInventory("DashTimeFreezer",1);
+				}
 				if (DashTics > (MaxDashTics * 0.75)) DashSpeed *= 1.025;
 
-				if (DashTics % 2) Owner.A_Explode((random(8,12)*random(1,3)),(radius*3),XF_NOTMISSILE,false,(radius*1.5),0,0,"","Dashing");
+				if (DashTics % 2) 
+				{
+					let MiscItem = PlayerStatItem(Owner.FindInventory("PlayerStatItem"));
+					if (MiscItem.GrimophoneDebuffTimer) { }
+					else { owner.bFORCERADIUSDMG = true; }
+
+					Owner.A_Explode((random(8,12)*random(1,3)),(radius*3),XF_NOTMISSILE,false,(radius*1.5),0,0,"","Dashing");
+				}
 				/*
 				if (DashTics % 4)
 				{
@@ -1308,8 +1374,10 @@ class PlayerDashJump : Inventory
 			}
 			else
 			{
-				if (PlayDash.OnGround && DashTics % 4 <= 1) Owner.A_SetInventory("DashTimeFreezer",1);
-																							 else Owner.A_SetInventory("DashTimeFreezer",0);
+				if (PlayDash.OnGround && DashTics % 4 <= 1) 
+				{
+					if (!owner.player.timefreezer) Owner.A_SetInventory("DashTimeFreezer",1);
+				}
 			}
 			
 			if (DashTics <= (MaxDashTics * 0.25))
@@ -1349,6 +1417,10 @@ class PlayerDashJump : Inventory
 			slownthres1 = false;
 			slownthres2 = false;
 			slownthres3 = false;
+
+			let MiscItem = PlayerStatItem(Owner.FindInventory("PlayerStatItem"));
+			if (MiscItem.GrimophoneDebuffTimer) { }
+			else { owner.bFORCERADIUSDMG = false; }
 		}
 /*
 		if (PlayDash.onGround)

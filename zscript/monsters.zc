@@ -284,7 +284,7 @@ class KilletanteSoloist : Killetante
 		Radius 18; // 20
 		Height 60; // 64
 		Speed 12;
-		Mass 125;
+		Mass 250;
 		MeleeRange 68;
 		PainChance 64;
 		DamageFactor 0.4375;
@@ -339,7 +339,7 @@ class KilletanteSoloist : Killetante
 		{
 			if (!bNOTIMEFREEZE)
 			{
-				mass1 *= random(4,5);
+				mass *= random(4,5);
 				if (random(1,1024) <= 16)
 				{
 					bNOTIMEFREEZE = true;
@@ -469,7 +469,7 @@ class KilletanteSoloist : Killetante
 				A_SetInventory("KilletanteBuffDEF",1);
 				spdc *= 1.625;
 				Speed = spdc;
-
+				
 				if (
 					InStateSequence(curstate,ResolveState("Pain")) || 
 					InStateSequence(curstate,ResolveState("Pain.Bonk")) || 
@@ -544,7 +544,6 @@ class KilletanteSoloist : Killetante
 			damage *= frandompick(0.20,0.25);
 			Console.Printf("%s resists your damage due to being frozen in time!", GetTag());
 			A_StartSound("misc/ResistanceHit",21,CHANF_DEFAULT,frandom(1.25,1.334),ATTN_NORM,frandom(0.875,1.125));
-			if (damage <= 0) return 0;
 		}
 		return super.DamageMobj(inflictor, source, damage, mod, flags, angle); 
 	}
@@ -777,6 +776,62 @@ class KilletanteSoloist : Killetante
 				A_CustomMeleeAttack((mldmg*frandom(0.95,1.05)), "mallethit", "malletswing", "", 1);
 			}
 			Goto See;
+		Pain.Beats:
+			DAKS K 1 A_FaceTarget;
+			DAKS L 0 
+			{
+				if (random(1,32) <= 3)
+				{
+					ThrustThingZ (0, randompick(2,3,4), 0, 0);
+					ThrustThing (((angle*256/360)+(180*frandom(0.75,1.25))), frandompick(0.5,0.75,1), 0, 0);
+				}
+			}
+			DAKS L 3 
+			{
+				A_Pain();
+				int f = randompick(0,0,0,1,1,2) * randompick(1,1,1,1,1,1,2,2,2,3);
+				A_SetTics(randompick(1,2,2,3));
+				if (health < (spawnhealth()*0.75)) 
+				{
+					f *= frandom(1.15,1.25);
+				}
+				if (health < (spawnhealth()*0.5)) 
+				{
+					f *= frandom(1.25,1.45);
+				}
+				if (health < (spawnhealth()*0.25)) 
+				{
+					A_SetTics(randompick(0,1,1,2));
+					f *= frandom(1.35,1.65);
+				}
+				reactive1 += f;
+			}
+			DAKS L 3 
+			{
+				A_SetTics(randompick(1,2,2,3));
+			}
+			DAKS K 0; //ACS_Execute(102,0,0,0,0)
+			DAKS KK 3
+			{
+				A_SetTics(randompick(1,2,2,3));
+			}
+			DAKS K 0
+			{
+				if (random(1,32) == 1) 
+				{ 
+					if (random(1,32) <= 3) 
+					{
+						return resolvestate("Dodge"); 
+					}
+					else
+					{
+						return resolvestate("Melee"); 
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+			Goto See;
 		Pain.Suck:
 			DAKS K 2 A_FaceTarget;
 			DAKS L 0
@@ -923,12 +978,6 @@ class KilletanteSoloist : Killetante
 				return resolvestate(null);
 			}
 			Goto See;
-			/*
-		Death.Suck:
-			DAKS K 5 A_StartSound("VacDed",CHAN_BODY);
-			DAKS K 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4);
-			Stop;
-			*/
 		Death:
 			DAKS K 3 A_FaceTarget;
 			DAKS L 0 
