@@ -1122,7 +1122,11 @@ class PlayerStatItem : Inventory
 		if (debugspeed) Console.Printf("SpeedX [Armor]: %.8f", Speed);
 		
 		// Weapon Checks
-		if (weapon is "HandToHand") Speed *= 1.125;
+		if (weapon is "HandToHand")
+		{
+			if (berserked) Speed *= 1.1625;
+			else Speed *= 1.125;
+		}
 		if (weapon is "CricketBat") Speed *= 1.00;
 		if (weapon is "BlunderAxe") Speed *= 0.95;
 		if (weapon is "AppleJack") Speed *= 1.05;
@@ -1198,6 +1202,7 @@ class PlayerDashJump : Inventory
 		Super.Tick();
 		int debugdashing = false;
 		if (!Owner || Owner && (!Owner.Player || Owner.Health < 1)) Return;
+		let weapon = owner.player.ReadyWeapon;
 		if (Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD")) berserked = true;
 		else berserked = false;
 
@@ -1232,6 +1237,20 @@ class PlayerDashJump : Inventory
 		DashCost = 35;
 		if (owner.CountInv("PowerRoastBuff")) DashCost -= 1;
 		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashCost -= 2;
+		if (weapon is "HandToHand")
+		{
+			if (berserked) DashCost -= 4;
+								else DashCost -= 3;
+		}
+		if (weapon is "SuperVac")
+		{
+			if (!berserked) DashCost += 1;
+		}
+		if (weapon is "Grimophone")
+		{
+			if (berserked) DashCost += 1;
+								else DashCost += 2;
+		}
 
 		if (dydudebug_dashmeter) Console.Printf("DashMaxCharge: %d (%d, %d, %d), DashCost: %d", DashMaxCharge, BaseDashChargeMax, AddDashLevel, ExtraDashCharge, DashCost);
 		
