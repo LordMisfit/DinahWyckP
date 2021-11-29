@@ -1046,7 +1046,7 @@ class BlunderHelmSplitter : PowerProtection
 		DamageFactor "Boiling", 1.25;
 
 		Inventory.Icon "";
-		Powerup.Duration -10;
+		Powerup.Duration -30;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
@@ -1077,9 +1077,105 @@ class BlunderHelmSplitter2 : PowerProtection
 		DamageFactor "Fire", 1.666666666666667;
 		DamageFactor "Boiling", 1.666666666666667;
 		Inventory.Icon "";
-		Powerup.Duration -15;
+		Powerup.Duration -30;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
 	}
+}
+
+// Scrambler Confusion/Fear Debuff Item
+class ScramblerConfusion : PowerProtection
+{
+	bool firsttic;
+	int debufftimer;
+	int debufftimermax;
+	int enemyalreadyfrightened;
+	int enemyisnoinfight;
+	int enemyisquickretaliate;
+	int enemyismissilemore;
+	int enemyismissileevenmore;
+	int enemydontharmclass;
+	int enemydontharmspecies;
+	int enemyharmfriends;
+	int enemydoharmspecies;
+	string victimname;
+	
+	default
+	{
+		DamageFactor "Normal", 1.0;
+		Powerup.Duration -15;
+	}
+	
+	override void Tick()
+	{
+		if (owner && !firsttic)
+		{
+			if (owner.bFRIGHTENED) enemyalreadyfrightened = 1;
+			if (owner.bNOINFIGHTING) enemyisnoinfight = 1;
+			if (owner.bQUICKTORETALIATE) enemyisquickretaliate = 1;
+			if (owner.bMISSILEMORE) enemyismissilemore = 1;
+			if (owner.bMISSILEEVENMORE) enemyismissileevenmore = 1;
+			if (owner.bDONTHARMCLASS) enemydontharmclass = 1;
+			if (owner.bDONTHARMSPECIES) enemydontharmspecies = 1;
+
+			if (owner.bHARMFRIENDS) enemyharmfriends = 1;
+			if (owner.bDOHARMSPECIES) enemydoharmspecies = 1;
+			owner.A_StopSound(121);
+			owner.A_StartSound("debuffs/confuse2",121,CHANF_DEFAULT,frandom(1.25,1.50),ATTN_NORM,frandom(0.67,1.33));
+			if (dydu_combatlog) Console.Printf("%s was given confusion by the Scrambler's Bash!", owner.GetClassName());
+
+			victimname = owner.GetClassName();
+		}
+		
+		if (EffectTics > 1 && firsttic)
+		{
+			owner.bNOFEAR = false;
+			owner.bNOINFIGHTING = false;
+			owner.bQUICKTORETALIATE = false;
+			owner.bMISSILEMORE = false;
+			owner.bMISSILEEVENMORE = false;
+			owner.bFRIGHTENED = true;
+			owner.bDONTHARMSPECIES = false;
+			owner.bDONTHARMCLASS = false;
+
+			owner.bHARMFRIENDS = true;
+			owner.bDOHARMSPECIES = true;
+		}
+		
+		EffectTics--;
+		firsttic = true;
+		//Console.Printf("ScramblerFear [%s]: %d", victimname, EffectTics);
+
+		if (EffectTics <= 1)
+		{
+			if (!enemyalreadyfrightened) owner.bFRIGHTENED = false;
+			if (enemyismissileevenmore && !owner.bMISSILEEVENMORE) owner.bMISSILEEVENMORE = true;
+			if (enemyismissilemore && !owner.bMISSILEMORE) owner.bMISSILEMORE = true;
+			if (enemyisquickretaliate && !owner.bQUICKTORETALIATE) owner.bQUICKTORETALIATE = true;
+			if (enemyisnoinfight && !owner.bNOINFIGHTING) owner.bNOINFIGHTING = true;
+			if (enemydontharmclass && !owner.bDONTHARMCLASS) owner.bDONTHARMCLASS = true;
+			if (enemydontharmspecies && !owner.bDONTHARMSPECIES) owner.bDONTHARMSPECIES = true;
+
+			if (enemyharmfriends && !owner.bHARMFRIENDS) owner.bHARMFRIENDS = true;
+			else if (owner.bHARMFRIENDS) owner.bHARMFRIENDS = false;
+			if (enemydoharmspecies && !owner.bDOHARMSPECIES) owner.bDOHARMSPECIES = true;
+			else if (owner.bDOHARMSPECIES) owner.bDOHARMSPECIES = false;
+		}
+		if (EffectTics <= 0) Destroy();
+		// Powerups cannot exist outside an inventory
+		if (owner == NULL) Destroy();
+	}
+}
+
+class PowerIronFeet2 : PowerIronFeet
+{
+	default
+	{
+		Inventory.Icon "BIOSA0";
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+	
 }

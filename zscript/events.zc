@@ -10,11 +10,17 @@ class DD_EventHandler : EventHandler
 	override void WorldThingDamaged(WorldEvent e)
 	{
 		int blundebuff = 0;
+		int scramblerdebuff = 0;
 		if (e.thing)
 		{
+			int dmg = e.damage;
+			string dmgtype = e.damagetype;
+			string dname = e.thing.GetTag();
+			string atkrname = "(?)";
 			int user_type;
 			string AttackName = "NONE";
 			string AttackerName = "NONE";
+
 			if (e.inflictor) AttackName = e.inflictor.GetClassName();
 			if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
 
@@ -24,6 +30,26 @@ class DD_EventHandler : EventHandler
 				
 				if (e.thing.health > 0)
 				{
+					// Scrambler = Inflicts confusion/fear on enemies occasionally, causing hestitation in combat
+					if (AttackName == "PanPuff")
+					{
+						//Console.Printf("PanPuff");
+						if (!e.thing.bNOFEAR)
+						{
+							int basedebuffchance = 4;
+							if (e.thing.bBOSS) basedebuffchance *= 4;
+							if (e.inflictor.target.CountInv("PowerStrength") || 
+									e.inflictor.target.CountInv("PowerStrengthDD") )
+							{
+								basedebuffchance *= 0.4;
+								if (basedebuffchance < 1) basedebuffchance = 1;
+							}
+							//Console.Printf("basedebuffchance: 1 / %d", basedebuffchance);
+							if (random(1,basedebuffchance) <= 1) e.thing.A_SetInventory("ScramblerConfusion",1);
+						}
+					}
+
+					// Blunderaxe = Tears off Armor Scraps at times, and occasionally inflicts a "Helm Splitter" style defense debuff
 					if (AttackName == "BlunderPuff")
 					{
 						int baseval = randompick(5,6,6,6,6,7,7,7,7,7,7,7,7,8,8,8,8,9);
@@ -68,10 +94,6 @@ class DD_EventHandler : EventHandler
 				}
 			}
 			
-			int dmg = e.damage;
-			string dmgtype = e.damagetype;
-			string dname = e.thing.GetTag();
-			string atkrname = "(?)";
 			if (!e.thing.GetTag()) dname = e.thing.GetClassName();
 			if (e.inflictor)
 			{
