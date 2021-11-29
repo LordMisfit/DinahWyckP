@@ -12,6 +12,32 @@ class CustomInventoryExt : CustomInventory
 {
 	int user_type;
 	
+	action void A_UseTurkeyDinner()
+	{
+		if (player.mo.CountInv("TurkeyDinner"))
+		{
+			int temp1 = player.mo.health;
+			int temp4 = player.mo.CountInv("PlayerMaxHP");
+			int temp2 = (temp4 * 3.0);
+
+			int temp3 = temp4;
+			temp3 *= 0.50;
+				
+			temp1 += temp3;
+			if (temp1 > temp2) temp1 = temp2;
+			player.mo.health = player.health = temp1;
+			let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+			if (MiscItem) MiscItem.HPRegenBoostTimer += random(75,108);
+			
+			A_StartSound("Dinah/eat",CHAN_VOICE);
+			player.mo.A_TakeInventory("TurkeyDinner",1);
+			A_SetBlend("f1 ff f1",0.1,random(6,9));
+			player.mo.A_GiveInventory("PowerMeal2Buff");
+			player.mo.A_GiveInventory("PowerMeal2Buff2");
+			Console.Printf("\c[red]Ate a delicious Turkey Dinner! \c[green]+%d (Over)HP", temp3);
+		}
+	}
+
 	action void A_UseAppleWine()
 	{
 		int currenthealth = player.mo.health;
@@ -404,6 +430,24 @@ class PowerMealBuff2 : PowerProtection
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
+	}
+}
+
+class PowerMeal2Buff : PowerMealBuff
+{
+	default
+	{
+		Inventory.Icon "FOODDA";
+		Powerup.Duration -15;
+	}
+}
+
+class PowerMeal2Buff2 : PowerMealBuff2
+{
+	default
+	{
+		Inventory.Icon "FOODDD";
+		Powerup.Duration -15;
 	}
 }
 
@@ -1197,3 +1241,35 @@ class MonsterDamageFactorBase : PowerProtection
 		if (owner == NULL) Destroy();
 	}
 }
+
+class FuryBuff : PowerDamage
+{
+	bool firsttic;
+	default
+	{
+		DamageFactor "Normal", 1.0;
+		Powerup.Duration 1;
+	}
+
+	override void Tick()
+	{
+		if (owner)
+		{
+			if (!owner.CountInv("PowerStrengthDD")) 
+			{
+				owner.SetInventory("PowerStrengthDD",1);
+				let BerserkItem = PowerStrengthDD(owner.FindInventory("PowerStrengthDD"));
+				if (BerserkItem) BerserkItem.EffectTics = random(12,18) * 35;
+			}
+			else
+			{
+				let BerserkItem = PowerStrengthDD(owner.FindInventory("PowerStrengthDD"));
+				if (BerserkItem) BerserkItem.EffectTics += random(12,18) * 35;
+			}
+			Destroy();
+		}
+		if (!EffectTics) Destroy ();
+		EffectTics--;
+	}
+}
+
