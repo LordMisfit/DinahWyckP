@@ -137,19 +137,39 @@ class DD_EventHandler : EventHandler
 				if (e.inflictor) AttackName = e.inflictor.GetClassName();
 				if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
 				if (dydudebug_worlddied) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", AttackName, AttackerName);
-				if (e.inflictor && e.inflictor.target && AttackerName == "DinahPlayer" && !e.thing.bFRIENDLY && e.thing.bCOUNTKILL) 
+				if (e.inflictor && ((e.inflictor.target && AttackerName == "DinahPlayer") || (AttackName == "DinahPlayer")) && !e.thing.bFRIENDLY && e.thing.bCOUNTKILL) 
 				{
 					int ExpGain = ((e.thing.spawnhealth()*frandom(0.05,0.125)));
 					if (e.thing.GetClassName() == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
-					if (e.inflictor.target.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
+					if (e.inflictor.target && e.inflictor.target.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
 					if (ExpGain < 1) ExpGain = 1;
 
-					e.inflictor.target.A_GiveInventory("KillsCount",1);
-					e.inflictor.target.A_GiveInventory("ExpPts",ExpGain);
-					int Kills = e.inflictor.target.CountInv("KillsCount"); 
-					int ExpNew = e.inflictor.target.CountInv("ExpPts");
-					int ExpNeeded = e.inflictor.target.CountInv("ExpPtsNeeded");
-					int PlayerLevel = e.inflictor.target.CountInv("PlayerLevel");
+					if (AttackName == "DinahPlayer")
+					{
+						e.inflictor.A_GiveInventory("KillsCount",1);
+						e.inflictor.A_GiveInventory("ExpPts",ExpGain);
+					}
+					else
+					{
+						e.inflictor.target.A_GiveInventory("KillsCount",1);
+						e.inflictor.target.A_GiveInventory("ExpPts",ExpGain);
+					}
+					int Kills;
+					if (AttackName == "DinahPlayer") Kills = e.inflictor.CountInv("KillsCount");
+																			else Kills = e.inflictor.target.CountInv("KillsCount");
+
+					int ExpNew;
+					if (AttackName == "DinahPlayer") ExpNew = e.inflictor.CountInv("ExpPts");
+																			else ExpNew = e.inflictor.target.CountInv("ExpPts");
+
+					int ExpNeeded;
+					if (AttackName == "DinahPlayer") ExpNeeded = e.inflictor.CountInv("ExpPtsNeeded");
+																			else ExpNeeded = e.inflictor.target.CountInv("ExpPtsNeeded");
+
+					int PlayerLevel;
+					if (AttackName == "DinahPlayer") PlayerLevel = e.inflictor.CountInv("PlayerLevel");
+																			else PlayerLevel = e.inflictor.target.CountInv("PlayerLevel");
+
 					Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
 				}
 				
