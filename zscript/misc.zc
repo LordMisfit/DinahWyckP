@@ -1209,7 +1209,7 @@ class PlayerDashJump : Inventory
 	override void Tick()
 	{
 		Super.Tick();
-		int debugdashing = false;
+		int dydudebug_dashing = false;
 		if (!Owner || Owner && (!Owner.Player || Owner.Health < 1)) Return;
 		let weapon = owner.player.ReadyWeapon;
 		if (Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD")) berserked = true;
@@ -1219,17 +1219,29 @@ class PlayerDashJump : Inventory
 		Int BTInput = PlayDash.cmd.buttons;
 		dashgruntchance = randompick(66,66,67);
 		MaxDashes = 1;
-		MaxDashTics = randompick(6,6,7,7,7);
 		double dashsndvol = 0.67;
 		double dashgruntsndvol = 1.0;
 		PlayerLevel = owner.CountInv("PlayerLevel");
-		int AddDashLevel = (PlayerLevel * 1.25);
+		MaxDashTics = randompick(6,6,7,7,7) + (PlayerLevel / 20);
+		int DashLvlTier1Thresh = 25;
+		int DashLvlTier2Thresh = 50;
+		int DashLvlTier3Thresh = 75;
+		int DashLvlTier4Thresh = 100;
+
+		double baseAddDashLevel = 1.25;
+		int AddDashLevel = (PlayerLevel * baseAddDashLevel);
 		double ADashFactor = 1.5;
-		if (skill <= SKILL_VERY_EASY) AddDashLevel = (PlayerLevel * (1.625 * ADashFactor));
-		if (skill == SKILL_EASY) AddDashLevel = (PlayerLevel * (1.5 * ADashFactor));
-		if (skill == SKILL_NORMAL) AddDashLevel = (PlayerLevel * (1.375 * ADashFactor));
-		if (skill == SKILL_HARD) AddDashLevel = (PlayerLevel * (1.25 * ADashFactor));
-		if (skill >= SKILL_VERY_HARD) AddDashLevel = (PlayerLevel * (1.125 * ADashFactor));
+		if (skill <= SKILL_VERY_EASY) baseAddDashLevel = 1.625;
+		if (skill == SKILL_EASY) baseAddDashLevel = 1.5;
+		if (skill == SKILL_NORMAL) baseAddDashLevel = 1.375;
+		if (skill == SKILL_HARD) baseAddDashLevel = 1.25;
+		if (skill >= SKILL_VERY_HARD) baseAddDashLevel = 1.125;
+
+		AddDashLevel = (PlayerLevel * (baseAddDashLevel * ADashFactor));
+		if (PlayerLevel >= DashLvlTier1Thresh) AddDashLevel += ((PlayerLevel - DashLvlTier1Thresh) * ((baseAddDashLevel * 0.5) * ADashFactor));
+		if (PlayerLevel >= DashLvlTier2Thresh) AddDashLevel += ((PlayerLevel - DashLvlTier2Thresh) * ((baseAddDashLevel * 0.25) * ADashFactor));
+		if (PlayerLevel >= DashLvlTier3Thresh) AddDashLevel += ((PlayerLevel - DashLvlTier3Thresh) * ((baseAddDashLevel * 0.125) * ADashFactor));
+		if (PlayerLevel >= DashLvlTier4Thresh) AddDashLevel += ((PlayerLevel - DashLvlTier4Thresh) * ((baseAddDashLevel * 0.0625) * ADashFactor));
 		
 		if (ClassCheck == 0)
 		{
@@ -1261,6 +1273,7 @@ class PlayerDashJump : Inventory
 			if (berserked) DashCost += 1;
 								else DashCost += 2;
 		}
+		if (dydudebug_dashing) Console.Printf("DashCost [start]: %d", DashCost);
 
 		if (dydudebug_dashmeter) Console.Printf("DashMaxCharge: %d (%d, %d, %d), DashCost: %d", DashMaxCharge, BaseDashChargeMax, AddDashLevel, ExtraDashCharge, DashCost);
 		
@@ -1433,7 +1446,7 @@ class PlayerDashJump : Inventory
 					DashSpeed *= 0.95;
 				}
 			}
-			if (debugdashing) Console.Printf("DashTics: %d / %d, Thresh: [1] %d, [2] %d, [3] %d", DashTics, MaxDashTics, slownthres1, slownthres2, slownthres3);
+			if (dydudebug_dashing) Console.Printf("DashTics: %d / %d, Thresh: [1] %d, [2] %d, [3] %d", DashTics, MaxDashTics, slownthres1, slownthres2, slownthres3);
 		}
 		else
 		{
@@ -1475,7 +1488,7 @@ class PlayerDashJump : Inventory
 		{
 			if (!DashTics)
 			{
-				if (debugdashing) Console.Printf("(!DashTics)");
+				if (dydudebug_dashing) Console.Printf("(!DashTics)");
 				if (berserked)
 				{
 					if (level.time % 4) 
@@ -1497,7 +1510,7 @@ class PlayerDashJump : Inventory
 			if (level.time % 16)
 			{
 				/*
-				if (debugdashing) Console.Printf("if (level.time % 16)");
+				if (dydudebug_dashing) Console.Printf("if (level.time % 16)");
 				if (berserked)
 				{
 					if (level.time % 64) 
@@ -1533,7 +1546,7 @@ class PlayerDashJump : Inventory
 				Waiting = False;
 				//Owner.A_StartSound("Player/DashReady",69,CHANF_OVERLAP);
 			}
-			if (debugdashing) Console.Printf("DashCharge: %d / %d", DashCharge, DashMaxCharge);
+			if (dydudebug_dashing) Console.Printf("DashCharge: %d / %d", DashCharge, DashMaxCharge);
 		}
 		else
 		{
@@ -1543,8 +1556,9 @@ class PlayerDashJump : Inventory
 				Waiting = False;
 				//Owner.A_StartSound("Player/DashReady",69,CHANF_OVERLAP);
 			}
-			if (debugdashing) Console.Printf("DashCharge: %d / %d", DashCharge, DashMaxCharge);
+			if (dydudebug_dashing) Console.Printf("DashCharge: %d / %d", DashCharge, DashMaxCharge);
 		}
+		if (dydudebug_dashing) Console.Printf("DashCost [end]: %d", DashCost);
 		
 		int dashcharges = (DashCharge / DashCost);
 		int dashgauge;

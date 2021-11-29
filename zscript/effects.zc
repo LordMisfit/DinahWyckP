@@ -21,7 +21,7 @@ class CustomInventoryExt : CustomInventory
 			int temp2 = (temp4 * 3.0);
 
 			int temp3 = temp4;
-			temp3 *= 0.50;
+			temp3 *= (random(45,55) * 0.01);
 				
 			temp1 += temp3;
 			if (temp1 > temp2) temp1 = temp2;
@@ -1171,7 +1171,11 @@ class ScramblerConfusion : PowerProtection
 			if (owner.bDOHARMSPECIES) enemydoharmspecies = 1;
 			owner.A_StopSound(121);
 			owner.A_StartSound("debuffs/confuse2",121,CHANF_DEFAULT,frandom(1.25,1.50),ATTN_NORM,frandom(0.67,1.33));
-			if (dydu_combatlog) Console.Printf("%s was given confusion by the Scrambler's Bash!", owner.GetClassName());
+			if (dydu_combatlog)
+			{
+				if (owner.GetTag()) Console.Printf("%s was given confusion by the Scrambler's Bash!", owner.GetTag());
+											 else Console.Printf("%s was given confusion by the Scrambler's Bash!", owner.GetClassName());
+			}
 
 			victimname = owner.GetClassName();
 		}
@@ -1217,12 +1221,84 @@ class ScramblerConfusion : PowerProtection
 
 class PowerIronFeet2 : PowerIronFeet
 {
+	string texname;
+	int timer;
 	default
 	{
 		Inventory.Icon "BIOSA0";
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
+	}
+	
+	override void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor, Actor source, int flags)
+	{
+		if ((gameinfo.gametype % 8 && damagetype == 'Fire') || damageType == 'Drowning')
+		{
+			newdamage = 0;
+		}
+	}
+	
+	override void DoEffect()
+	{
+		if (Owner.player != NULL)
+		{
+			Owner.player.mo.ResetAirSupply();
+		}
+		
+		if ((gameinfo.gametype % 8) && !(Level.maptime & 0x3f))
+		{
+			Owner.A_StartSound ("misc/mask", CHAN_AUTO);
+		}
+	}
+
+	override void Tick()
+	{
+		timer++;
+		if (timer % 24 >= 0 && timer % 24 <= 5) texname = "BIOSA0";
+		if (timer % 24 >= 6 && timer % 24 <= 11) texname = "BIOSB0";
+		if (timer % 24 >= 12 && timer % 24 <= 17) texname = "BIOSC0";
+		if (timer % 24 >= 18 && timer % 24 <= 23) texname = "BIOSD0";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+
+		//Console.Printf("EffectTics: %d", EffectTics);
+		int fadeouttic = 75;
+		if (EffectTics > fadeouttic && owner) owner.A_StopSound(203);
+		if (EffectTics == fadeouttic && owner) owner.A_StartSound("buffs/bioshieldfading",203,CHANF_DEFAULT,2.25,ATTN_NORM);
+
+		super.Tick();
+	}
+}
+
+class PowerInvisibility2 : PowerInvisibility
+{
+	string texname;
+	int timer;
+	Default
+	{
+		+SHADOW;
+		Powerup.Duration -60;
+		Powerup.Strength 90;
+		Powerup.Mode "Fuzzy";
+		Inventory.Icon "PINSA0";
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+	
+	override void Tick()
+	{
+		Super.Tick();
+		timer++;
+		if (timer % 24 >= 0 && timer % 24 <= 5) texname = "PINSA0";
+		if (timer % 24 >= 6 && timer % 24 <= 11) texname = "PINSB0";
+		if (timer % 24 >= 12 && timer % 24 <= 17) texname = "PINSC0";
+		if (timer % 24 >= 18 && timer % 24 <= 23) texname = "PINSD0";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+
+		int fadeouttic = 64;
+		if (EffectTics == fadeouttic && owner) owner.A_StartSound("buffs/invisfading",202,CHANF_DEFAULT,2.25,ATTN_NORM);
+		if (EffectTics > fadeouttic && owner) owner.A_StopSound(202);
 	}
 }
 
@@ -1276,4 +1352,3 @@ class FuryBuff : PowerDamage
 		EffectTics--;
 	}
 }
-
