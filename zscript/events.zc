@@ -20,6 +20,7 @@ class DD_EventHandler : EventHandler
 			int user_type;
 			string AttackName = "NONE";
 			string AttackerName = "NONE";
+			int landdamagebonus;
 
 			if (e.inflictor) AttackName = e.inflictor.GetClassName();
 			if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
@@ -30,7 +31,12 @@ class DD_EventHandler : EventHandler
 				
 				if (e.thing.health > 0 && e.thing.bISMONSTER)
 				{
-					// Uppercut
+					if (e.inflictor.target&& AttackerName == "DinahPlayer") //
+					{
+						let MiscItem = PlayerStatItem(e.inflictor.target.FindInventory("PlayerStatItem"));
+						if (MiscItem) landdamagebonus = MiscItem.landdmgbonus;
+						if (dydudebug_worlddamaged) Console.Printf("landdamagebonus: %d", landdamagebonus);
+					}
 					if (AttackName == "UppercutPuff")
 					{
 						double ang;
@@ -48,11 +54,14 @@ class DD_EventHandler : EventHandler
 					// Scrambler = Inflicts confusion/fear on enemies occasionally, causing hestitation in combat
 					if (AttackName == "PanPuff")
 					{
-						//Console.Printf("PanPuff");
 						if (!e.thing.bNOFEAR)
 						{
 							int basedebuffchance = 4;
 							if (e.thing.bBOSS) basedebuffchance *= 4;
+							if (landdamagebonus == 1) basedebuffchance *= 0.875;
+							if (landdamagebonus == 2) basedebuffchance *= 0.700;
+							if (landdamagebonus == 3) basedebuffchance *= 0.475;
+							if (landdamagebonus == 4) basedebuffchance *= 0.200;
 							if (e.inflictor.target.CountInv("PowerStrength") || 
 									e.inflictor.target.CountInv("PowerStrengthDD") )
 							{
@@ -76,32 +85,48 @@ class DD_EventHandler : EventHandler
 						if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 						if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 						
-						int basedebuffchance = 8;
-						if (e.thing.bBOSS) basedebuffchance = 64;
+						int basedebuffchance = 4;
+						if (e.thing.bBOSS) basedebuffchance *= 4;
+						if (landdamagebonus == 1) basedebuffchance *= 0.875;
+						if (landdamagebonus == 2) basedebuffchance *= 0.700;
+						if (landdamagebonus == 3) basedebuffchance *= 0.475;
+						if (landdamagebonus == 4) basedebuffchance *= 0.200;
 						if (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD") )
 						{
-							basedebuffchance *= 0.6;
+							basedebuffchance *= 0.4;
 						}
 						
 						if (random(1,basedebuffchance) <= 1) 
 						{
-							if (e.thing.CountInv("BlunderHelmSplitter2"))
+							if (e.thing.CountInv("BlunderHelmSplitter3"))
 							{
-								blundebuff = 3;
+								blundebuff = 4;
 							}
 							else
 							{
-								if (e.thing.CountInv("BlunderHelmSplitter"))
+								if (e.thing.CountInv("BlunderHelmSplitter2"))
 								{
-									e.thing.A_SetInventory("BlunderHelmSplitter2",1);
+									blundebuff = 3;
+									e.thing.A_SetInventory("BlunderHelmSplitter3",1);
+									e.thing.A_SetInventory("BlunderHelmSplitter2",0);
 									e.thing.A_SetInventory("BlunderHelmSplitter",0);
-									blundebuff = 2;
 								}
 								else
 								{
-									e.thing.A_SetInventory("BlunderHelmSplitter2",0);
-									e.thing.A_SetInventory("BlunderHelmSplitter",1);
-									blundebuff = 1;
+									if (e.thing.CountInv("BlunderHelmSplitter"))
+									{
+										e.thing.A_SetInventory("BlunderHelmSplitter3",0);
+										e.thing.A_SetInventory("BlunderHelmSplitter2",1);
+										e.thing.A_SetInventory("BlunderHelmSplitter",0);
+										blundebuff = 2;
+									}
+									else
+									{
+										e.thing.A_SetInventory("BlunderHelmSplitter3",0);
+										e.thing.A_SetInventory("BlunderHelmSplitter2",0);
+										e.thing.A_SetInventory("BlunderHelmSplitter",1);
+										blundebuff = 1;
+									}
 								}
 							}
 						}
@@ -129,10 +154,11 @@ class DD_EventHandler : EventHandler
 				}
 				if (blundebuff && (e.thing.health > 0))
 				{
-					if (blundebuff >= 3) Console.Printf("\c[red]%s's\c- defense has already been dropped as much as it can!", dname);
+					if (blundebuff >= 4) Console.Printf("\c[red]%s's\c- defense has already been dropped as much as it can!", dname);
+					if (blundebuff == 3) Console.Printf("\c[red]%s's\c- defense dropped by yet another 20%!", dname);
 					if (blundebuff == 2) Console.Printf("\c[red]%s's\c- defense dropped by another 20%!", dname);
 					if (blundebuff == 1) Console.Printf("\c[red]%s's\c- defense dropped by 20%!", dname);
-					if (blundebuff <= 2 && AttackerName == "DinahPlayer") e.inflictor.target.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+					if (blundebuff <= 3 && AttackerName == "DinahPlayer") e.inflictor.target.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
 				}
 			}
 		}
