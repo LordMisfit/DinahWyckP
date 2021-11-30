@@ -9,6 +9,10 @@ class DDStatusBarMain : BaseStatusBar
 	HUDFont mHUDFont;
 	HUDFont mIndexFont;
 	HUDFont mBigFont;
+	HUDFont mSmallFont;
+	HUDFont mDDSFont;
+	HUDFont mDDMFont;
+	HUDFont mDDLFont;
 	InventoryBarState diparms;
 	InventoryBarState diparms_sbar;
 	private int wiggle;
@@ -25,6 +29,15 @@ class DDStatusBarMain : BaseStatusBar
 		mIndexFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
 		fnt = "BIGFONT";
 		mBigFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 2, 2);
+		fnt = "SMALLFONT";
+		mSmallFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
+
+		fnt = "INDEXFONT_DD";
+		mDDSFont = HUDFont.Create(fnt, fnt.GetCharWidth("0") + 1, Mono_CellLeft, 1, 1);
+		fnt = "INDEXFONT_DDM";
+		mDDMFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
+		fnt = "INDEXFONT_DDL";
+		mDDLFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 2, 2);
 		diparms = InventoryBarState.Create(mIndexFont);
 		diparms_sbar = InventoryBarState.CreateNoBox(mIndexFont, boxsize:(31, 31), arrowoffs:(0,-10));
 		mHealthInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
@@ -459,6 +472,11 @@ class DDStatusBarMain : BaseStatusBar
 
 	protected void DrawFullScreenStuff ()
 	{
+		vector2 FontScale = (1.25, 1.25);
+		int FontLineSpace = 4;
+		int FontWrapWidth = -1;
+		double FontAlpha = 0.9;
+
 		int digx, digy, spacing;
 		int valueamt = CPlayer.mo.health;
 		string valueamtS = FormatNumber(valueamt);
@@ -478,8 +496,8 @@ class DDStatusBarMain : BaseStatusBar
 		if (isinvuln) healthcolor = font.CR_Gold;
 		//health
 		DrawImage("ARTIWINE", (64, -4)); // 51, -3
-		DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(PlayerMaxHP, 4), (48, -13), DI_TEXT_ALIGN_RIGHT, healthcolor, 0.90); // 41, -43
-		DrawString(HUDFont.Create("SMALLFONT"), "/", ((24+slashunit), -17), DI_TEXT_ALIGN_RIGHT, healthcolor, 0.90); // 41, -43
+		DrawString(mDDMFont, FormatNumber(PlayerMaxHP, 4), (52, -12), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		DrawString(mDDMFont, "/", ((24+slashunit), -18), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 		double healthalpha = 0.90;
 		double xscal = 1.00;
 		double yscal = 1.00;
@@ -559,8 +577,7 @@ class DDStatusBarMain : BaseStatusBar
 		}
 		//Console.Printf("scal: %.8f / %.8f", xscal, yscal);
 		if (isinvuln) healthcolor = font.CR_Gold;
-		DrawString(HUDFont.Create("BIGFONT"), FormatNumber(mHealthInterpolator.GetValue()), (48, -26), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, -1, 4, (xscal, yscal));
-		xscal = yscal = 1.00;
+		DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), (49, -28), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, FontWrapWidth, FontLineSpace, (xscal*1.25, yscal*1.25));
 
 		//armor
 
@@ -599,14 +616,14 @@ class DDStatusBarMain : BaseStatusBar
 			
 			slashunit = (-6 * (armordigits-2));
 			
-			DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(armormax, 4), (48, -44), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
-			DrawString(HUDFont.Create("SMALLFONT"), "/", ((20+slashunit), -49), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
-			DrawString(HUDFont.Create("BIGFONT"), FormatNumber(mArmorInterpolator.GetValue(), 4), (46, -57), DI_TEXT_ALIGN_RIGHT, armorcolor, 0.90); // 41, -43
+			DrawString(mDDMFont, FormatNumber(armormax, 4), (50, -42), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawString(mDDMFont, "/", ((20+slashunit), -50), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawString(mDDLFont, FormatNumber(mArmorInterpolator.GetValue(), 4), (50, -59), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 		}
 
 		//level
-		DrawString(HUDFont.Create("BIGFONT"), FormatNumber(CPlayer.mo.CountInv("PlayerLevel"), 3), (48, -82), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
-		DrawString(HUDFont.Create("SMALLFONT"), "LVL", (48, -90), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
+		DrawString(mDDLFont, FormatNumber(CPlayer.mo.CountInv("PlayerLevel"), 3), (48, -82), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		DrawString(mSmallFont, "LVL", (48, -91), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 		//EXP
 		int EXPPts = CPlayer.mo.CountInv("ExpPts");
 		int EXPNeeded = CPlayer.mo.CountInv("ExpPtsNeeded");
@@ -619,11 +636,12 @@ class DDStatusBarMain : BaseStatusBar
 		if (EXPNeeded < 1000) digits = 3;
 		if (EXPNeeded < 100) digits = 2;
 		if (EXPNeeded < 10) digits = 1;
-		spacing = 6;
+		spacing = 6; // 6
+		spacing *= 1.25;
 		digx = 64 + (digits * spacing);
-		DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(mEXPInterpolator.GetValue(), digits), (digx, -87), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
-		DrawString(HUDFont.Create("SMALLFONT"), "/", ((digx+(spacing*1.334)), -83), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
-		DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(EXPNeeded, digits), (digx, -79), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, 0.90); // 41, -43
+		DrawString(mDDMFont, FormatNumber(mEXPInterpolator.GetValue(), digits), (digx, -88), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		DrawString(mDDMFont, "/", ((digx+(spacing*1.334)), -84), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		DrawString(mDDMFont, FormatNumber(EXPNeeded, digits), (digx, -78), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 
 		//frags/keys
 		if (deathmatch)
@@ -707,22 +725,22 @@ class DDStatusBarMain : BaseStatusBar
 		{
 			digy = -116;
 			digx = 48;
-			if (candash) DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue);
-							else DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick);
+			if (candash) DrawString(mDDMFont, FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+							else DrawString(mDDMFont, FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 			digy = -124;
 			digx = 48;
-			if (candash) DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue);
-							else DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick);
+			if (candash) DrawString(mDDMFont, FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+							else DrawString(mDDMFont, FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 			digy = -116;
 			digx = 80;
-			if (candash) DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue);
-							else DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick);
+			if (candash) DrawString(mDDMFont, FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+							else DrawString(mDDMFont, FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 			if (dashtics)
 			{
 				digy = -122;
 				digx = 80;
-				if (candash) DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue);
-								else DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick);
+				if (candash) DrawString(mDDMFont, FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+								else DrawString(mDDMFont, FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 			}
 		}
 		
@@ -754,42 +772,26 @@ class DDStatusBarMain : BaseStatusBar
 				}
 			}
 
-			DrawString(HUDFont.Create("SMALLFONT"), FormatNumber(ammo1.MaxAmount, 3), (x+2, y+14), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray);
-			DrawString(HUDFont.Create("SMALLFONT"), "/", (x-27, y+9), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray);
-			DrawString(HUDFont.Create("BIGFONT"), FormatNumber(ammo1.Amount, 3), (x, y+2), DI_TEXT_ALIGN_RIGHT, font.cr_Gray);
+			DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+2, y+13), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			DrawString(mDDMFont, "/", (x-27, y+7), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+2, y-3), DI_TEXT_ALIGN_RIGHT, font.cr_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 			DrawTexture(ammo1.Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (1.0,1.0)); // -17, y
 			y -= 40;
 		}
-		/*
-		if (ammo2 != null)
-		{
-			DrawTexture(ammo2.Icon, (-14, y));
-			DrawString(mHUDFont, FormatNumber(ammo2.Amount, 3), (-3, y+7), DI_TEXT_ALIGN_RIGHT);
-			y -= 40;
-		}
-		*/
 
 		x = -46;
 		x -= 16;
 		y = -1;
 		y -= 8;
-		//if (!isInventoryBarVisible() && !Level.NoInventoryBar && CPlayer.mo.InvSel != null)
-		//{
-			// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
-			// Heretic's ARTIBOX is 30x30 pixels. 
-			DrawImage("ARTIBOXD", (x, y), 0, HX_SHADOW); // -46, -1
-			DrawInventoryIcon(CPlayer.mo.InvSel, (x, y-14), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
-			y += 7;
-			DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.Amount, 3), (x-23, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_LEFT, font.cr_gray);
-			DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x-2, y - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_CENTER, font.cr_gray);
-			DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.MaxAmount, 3), (x+14, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, font.cr_gray);
-			//if (CPlayer.mo.InvSel.Amount > 1)
-			//{
-			//}
-		//}
-		//if (isInventoryBarVisible())
-		//{
+		// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
+		// Heretic's ARTIBOX is 30x30 pixels. 
+		DrawImage("ARTIBOXD", (x, y), 0, HX_SHADOW); // -46, -1
+		DrawInventoryIcon(CPlayer.mo.InvSel, (x, y-14), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
+		y += 7;
+		DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.Amount, 3), (x-23, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_LEFT, font.cr_gray);
+		DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x-2, y - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_CENTER, font.cr_gray);
+		DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.MaxAmount, 3), (x+14, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, font.cr_gray);
+
 		DrawInventoryBar(diparms, (0, 0), 11, DI_SCREEN_CENTER_BOTTOM, HX_SHADOW);
-		//}
 	}
 }
