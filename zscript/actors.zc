@@ -73,6 +73,9 @@ class DDProjectile : DDBaseZSC
 	bool hitaceiling;
 	bool hitafloor;
 
+	int timesrippedoverall;
+	int maxtimesrippedoverall;
+
 	override void Tick()
 	{
 		if (target)
@@ -336,6 +339,134 @@ class DDFastProjectile : DDProjectile
 	}
 }
 
+// Projectiles derived from this class should rip through actors,
+// but not actually hit them more than once.
+class SingleDamageRipper : DDProjectile
+{
+	default
+	{
+		Projectile;
+		+RIPPER;
+	}
+	
+	Array<Actor> ActorsAlreadyHit;
+	
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		DDPlayerPawn playpawn;
+		DDPlayerPawn playpawn2;
+		Actor DDActor;
+		Actor DDActor2;
+		playpawn = DDPlayerPawn(target);
+		playpawn2 = DDPlayerPawn(other);
+		DDActor = Actor(target);
+		DDActor2 = Actor(other);
+
+		// Non-passive means the one moving into the other is performing the checks.
+		if (!passive)
+		{
+			// if fired by a player actor, check for friendliness from the passive actor
+			if (playpawn) 
+			{
+				// Pass through different species of select types.
+				if (other.bFRIENDLY == 1)
+				{
+					//if (A_CheckFriendCollisionProjTypePlayer(self) > 0) return false;
+					//if (A_CheckFriendCollisionProjTypePlayer2(self) > 0) return false;
+				}
+			}
+			else
+			if (DDActor && DDActor.bFRIENDLY)
+			{
+				// Pass through different species of select types or players
+				if (other.bFRIENDLY == 1 || playpawn2)
+				{
+					//if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
+				}
+			}
+			else 
+			{
+				//if (GetClassName() == "HubbleBubbleSmall" || GetClassName() == "HubbleBubbleLarge") return false;
+			}
+		}
+		// We don't really care about others making the check.
+
+		for (let i = 0, size = ActorsAlreadyHit.Size(); i < size; i++)
+				if (other == ActorsAlreadyHit[i])
+						return false;
+		
+		return true;
+	}
+}
+
+class SingleDamageFastRipper : DDFastProjectile
+{
+	default
+	{
+		Projectile;
+		+RIPPER;
+	}
+	
+	Array<Actor> ActorsAlreadyHit;
+	
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		DDPlayerPawn playpawn;
+		DDPlayerPawn playpawn2;
+		Actor DDActor;
+		Actor DDActor2;
+		playpawn = DDPlayerPawn(target);
+		playpawn2 = DDPlayerPawn(other);
+		DDActor = Actor(target);
+		DDActor2 = Actor(other);
+
+		// Non-passive means the one moving into the other is performing the checks.
+		if (!passive)
+		{
+			// if fired by a player actor, check for friendliness from the passive actor
+			if (playpawn) 
+			{
+				// Pass through different species of select types.
+				if (other.bFRIENDLY == 1)
+				{
+					//if (A_CheckFriendCollisionProjTypePlayer(self) > 0) return false;
+					//if (A_CheckFriendCollisionProjTypePlayer2(self) > 0) return false;
+				}
+			}
+			else
+			if (DDActor && DDActor.bFRIENDLY)
+			{
+				// Pass through different species of select types or players
+				if (other.bFRIENDLY == 1 || playpawn2)
+				{
+					//if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
+					//else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
+				}
+			}
+			else 
+			{
+				//if (GetClassName() == "HubbleBubbleSmall" || GetClassName() == "HubbleBubbleLarge") return false;
+			}
+		}
+		// We don't really care about others making the check.
+
+		for (let i = 0, size = ActorsAlreadyHit.Size(); i < size; i++)
+				if (other == ActorsAlreadyHit[i])
+						return false;
+		
+		return true;
+	}
+}
+
 // Base Puff Class
 class DDPuff : DDBaseZSC
 {
@@ -505,7 +636,7 @@ class ShieldPartBase : DDBaseZSC
 					other.GetClassName() == "BRocketBoom2" || 
 					other.GetClassName() == "Spinnershot" || 
 					other.GetClassName() == "StreamerShot" || 
-					other.GetClassName() == "Streamertrail" || 
+					other.GetClassName() == "StreamerTrail" || 
 					other.GetClassName() == "PopperPuff1" || 
 					other.GetClassName() == "PopperPuff2" || 
 					other.GetClassName() == "SnakeGrenade" || 
