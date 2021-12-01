@@ -29,7 +29,7 @@ class DDStatusBarMain : BaseStatusBar
 		mIndexFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
 		fnt = "BIGFONT";
 		mBigFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 2, 2);
-		fnt = "SMALLFONT";
+		fnt = "CONFONT";
 		mSmallFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
 
 		fnt = "INDEXFONT_DD";
@@ -622,26 +622,32 @@ class DDStatusBarMain : BaseStatusBar
 		}
 
 		//level
-		DrawString(mDDLFont, FormatNumber(CPlayer.mo.CountInv("PlayerLevel"), 3), (48, -82), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-		DrawString(mSmallFont, "LVL", (48, -91), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-		//EXP
-		int EXPPts = CPlayer.mo.CountInv("ExpPts");
-		int EXPNeeded = CPlayer.mo.CountInv("ExpPtsNeeded");
-		int digits;
-		if (EXPNeeded < 100000000) digits = 8;
-		if (EXPNeeded < 10000000) digits = 7;
-		if (EXPNeeded < 1000000) digits = 6;
-		if (EXPNeeded < 100000) digits = 5;
-		if (EXPNeeded < 10000) digits = 4;
-		if (EXPNeeded < 1000) digits = 3;
-		if (EXPNeeded < 100) digits = 2;
-		if (EXPNeeded < 10) digits = 1;
-		spacing = 6; // 6
-		spacing *= 1.25;
-		digx = 64 + (digits * spacing);
-		DrawString(mDDMFont, FormatNumber(mEXPInterpolator.GetValue(), digits), (digx, -88), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-		DrawString(mDDMFont, "/", ((digx+(spacing*1.334)), -84), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-		DrawString(mDDMFont, FormatNumber(EXPNeeded, digits), (digx, -78), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		if (dyduhud_showexplevel)
+		{
+			DrawString(mDDLFont, FormatNumber(CPlayer.mo.CountInv("PlayerLevel"), 3), (48, -82), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawString(mSmallFont, "LVL", (48, -91), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		}
+		if (dyduhud_showexperience)
+		{
+			//EXP
+			int EXPPts = CPlayer.mo.CountInv("ExpPts");
+			int EXPNeeded = CPlayer.mo.CountInv("ExpPtsNeeded");
+			int digits;
+			if (EXPNeeded < 100000000) digits = 8;
+			if (EXPNeeded < 10000000) digits = 7;
+			if (EXPNeeded < 1000000) digits = 6;
+			if (EXPNeeded < 100000) digits = 5;
+			if (EXPNeeded < 10000) digits = 4;
+			if (EXPNeeded < 1000) digits = 3;
+			if (EXPNeeded < 100) digits = 2;
+			if (EXPNeeded < 10) digits = 1;
+			spacing = 6; // 6
+			spacing *= 1.25;
+			digx = 64 + (digits * spacing);
+			DrawString(mDDMFont, FormatNumber(mEXPInterpolator.GetValue(), digits), (digx, -88), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawString(mDDMFont, "/", ((digx+(spacing*1.334)), -84), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawString(mDDMFont, FormatNumber(EXPNeeded, digits), (digx, -78), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		}
 
 		//frags/keys
 		if (deathmatch)
@@ -791,7 +797,87 @@ class DDStatusBarMain : BaseStatusBar
 		DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.Amount, 3), (x-23, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_LEFT, font.cr_gray);
 		DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x-2, y - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_CENTER, font.cr_gray);
 		DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.MaxAmount, 3), (x+14, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, font.cr_gray);
+		
+		string tallytemp = "";
+		if (dyduhud_showleveltimes)
+		{
+			// Time Stats
+			tallytemp = "TIME: ";
+			int leveltime = level.time;
+			int leveltimesec = ((leveltime / 35) % 60);
+			int leveltimemin = ((leveltime / 2100) % 3600);
+			int leveltimehrs = ((leveltime / 126000) % 86400);
+			int leveltimedays = (leveltime / 3024000);
 
+			if (leveltimedays) tallytemp.AppendFormat("%dd ", leveltimedays);
+			if (leveltimehrs >= 0 && leveltimehrs <= 9) tallytemp.AppendFormat("0%d:", leveltimehrs);
+																						 else tallytemp.AppendFormat("%d:", leveltimehrs);
+			if (leveltimemin >= 0 && leveltimemin <= 9) tallytemp.AppendFormat("0%d:", leveltimemin);
+																						 else tallytemp.AppendFormat("%d:", leveltimemin);
+			if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
+																						 else tallytemp.AppendFormat("%d", leveltimesec);
+			digy = -40;
+			DrawString(HUDFont.Create("CONFONT"), tallytemp, (-120, digy), DI_TEXT_ALIGN_LEFT|DI_SCREEN_CENTER_BOTTOM, font.cr_darkgray);
+			// Total Time
+			tallytemp = "TOTAL: ";
+			leveltime = level.totaltime;
+			leveltimesec = ((leveltime / 35) % 60);
+			leveltimemin = ((leveltime / 2100) % 3600);
+			leveltimehrs = ((leveltime / 126000) % 86400);
+			leveltimedays = (leveltime / 3024000);
+
+			if (leveltimedays) tallytemp.AppendFormat("%dd ", leveltimedays);
+			if (leveltimehrs >= 0 && leveltimehrs <= 9) tallytemp.AppendFormat("0%d:", leveltimehrs);
+																						 else tallytemp.AppendFormat("%d:", leveltimehrs);
+			if (leveltimemin >= 0 && leveltimemin <= 9) tallytemp.AppendFormat("0%d:", leveltimemin);
+																						 else tallytemp.AppendFormat("%d:", leveltimemin);
+			if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
+																						 else tallytemp.AppendFormat("%d", leveltimesec);
+			digy = -40;
+			DrawString(HUDFont.Create("CONFONT"), tallytemp, (120, digy), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM, font.cr_gray);
+		}
+		
+		if (dyduhud_leveltallies)
+		{
+			// Level Stats
+			digy = -32;
+			if (dyduhud_showleveltimes) digy -= 8;
+			int itemcnt = level.found_items;
+			int maxitemcnt = level.total_items;
+			int scrtcnt = level.found_secrets;
+			int maxscrtcnt = level.total_secrets;
+			if (maxscrtcnt)
+			{
+				digy -= 8;
+				tallytemp = "Secrets: ";
+				tallytemp.AppendFormat("%d", scrtcnt);
+				tallytemp.AppendFormat("/");
+				tallytemp.AppendFormat("%d", maxscrtcnt);
+				DrawString(HUDFont.Create("CONFONT"), tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_gold);
+			}
+			if (maxitemcnt)
+			{
+				digy -= 8;
+				tallytemp = "Items: ";
+				tallytemp.AppendFormat("%d", itemcnt);
+				tallytemp.AppendFormat("/");
+				tallytemp.AppendFormat("%d", maxitemcnt);
+				DrawString(HUDFont.Create("CONFONT"), tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_lightblue);
+			}
+			int killcnt = level.killed_monsters;
+			int maxkillcnt = level.total_monsters;
+			if (maxkillcnt)
+			{
+				digy -= 8;
+				tallytemp = "Kills: ";
+				tallytemp.AppendFormat("%d", killcnt);
+				tallytemp.AppendFormat("/");
+				tallytemp.AppendFormat("%d", maxkillcnt);
+				DrawString(HUDFont.Create("CONFONT"), tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_brick);
+			}
+		}
+		
+		// Inventory Bar
 		DrawInventoryBar(diparms, (0, 0), 11, DI_SCREEN_CENTER_BOTTOM, HX_SHADOW);
 	}
 }
