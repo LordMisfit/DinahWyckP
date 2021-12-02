@@ -11,6 +11,7 @@ class DDWeapon : Weapon
 
 	int kickspeed;
 	int punchspeed;
+	int buttons;
 	
 	default
 	{
@@ -1257,6 +1258,39 @@ class CricketBat : DinahWeapon replaces Pistol
 		if (MiscItem) MiscItem.CricketBatSwingBuffTimer = randompick(3,3,3,3,3,3,4,4,4);
 	}
 	
+	int guardstate;
+	int guardcooldown;
+	
+	action void A_GuardToggleCountdown()
+	{
+		if (invoker.guardcooldown) invoker.guardcooldown--;
+		if (dydudebug_cricketbatguard) Console.Printf("Countdown (CricketBat): %d", invoker.guardcooldown);
+	}
+
+	override void DoEffect()
+	{
+		super.DoEffect();
+		A_GuardToggleCountdown();
+	}
+	
+	action void A_CheckGuardState()
+	{
+		invoker.buttons = GetPlayerInput(INPUT_BUTTONS);
+		if (dydudebug_cricketbatguard) Console.Printf("buttons: %d [GuardState: %d, Cooldown: %d]", invoker.buttons, invoker.guardstate, invoker.guardcooldown);
+		
+		if (invoker.guardcooldown <= 0)
+		{
+			if (invoker.buttons & BT_USER4 || 
+					invoker.buttons & BT_ATTACK || 
+					invoker.buttons & BT_ALTATTACK) 
+			{
+				if (invoker.guardstate == 0) invoker.guardstate = 1;
+																else invoker.guardstate = 0;
+				invoker.guardcooldown = random(6,8);
+			}
+		}
+	}
+	
 	States
 	{
 		Pickup:
@@ -1272,6 +1306,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			DBID A 1 
 			{
 				A_KickDecelerate();
+				A_GuardToggleCountdown();
 				A_WeaponReady(WRF_ALLOWUSER4);
 			}
 			loop;
@@ -1279,6 +1314,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			DBID A 1
 			{
 				A_KickDecelerate();
+				A_GuardToggleCountdown();
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
@@ -1287,6 +1323,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			DBID A 1
 			{
 				A_KickDecelerate();
+				A_GuardToggleCountdown();
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
@@ -1393,13 +1430,46 @@ class CricketBat : DinahWeapon replaces Pistol
 			goto Ready;
 			
 		User4:
+			DBIG A 0
+			{
+				if (dydu_cricketbatguardtype == 1)
+				{
+					if (invoker.guardcooldown) { return resolvestate("Ready"); }
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
 		Guard:
+			DBIG A 0
+			{
+			}
+		GuardHold:
+			DBIG A 0
+			{
+			}
 			DBIG A 1
 			{
+				A_CheckGuardState();
 				A_CricketBatGuard();
+				A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOPRIMARY|WRF_NOSECONDARY|WRF_NOSWITCH);
 				//A_SetTics(random(1,2));
 			}
-			DBIG A 0 A_Refire("User4");
+			DBIG A 0
+			{
+				if (dydu_cricketbatguardtype == 1)
+				{
+					//Console.Printf("type: %d", dydu_cricketbatguardtype);
+					if (invoker.guardstate == 0) { return resolvestate("Ready"); }
+																	else { return resolvestate("GuardHold"); } 
+
+					return resolvestate(null);
+				}
+				else
+				{
+					A_Refire("GuardHold");
+				}
+				return resolvestate(null);
+			}
 			goto Ready;
 	}
 }
