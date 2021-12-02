@@ -25,6 +25,12 @@ class DD_EventHandler : EventHandler
 			if (e.inflictor) AttackName = e.inflictor.GetClassName();
 			if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
 
+			if ((e.thing.GetClassName() == "LostSoul" || e.thing.GetClassName() == "HereticImp") && e.thing.bSKULLFLY)
+			{
+				dmg = e.damage * (frandompick(0.5,0.625,0.75,0.875,1.0));
+				e.thing.DamageMobj(e.inflictor, e.DamageSource, dmg, e.DamageType, e.DamageFlags, e.DamageAngle);
+			}
+
 			if (!(e.thing.GetClassName() == "DinahPlayer") || e.thing.bCOUNTKILL)
 			{
 				if (dydudebug_worlddamaged) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", AttackName, AttackerName);
@@ -58,6 +64,14 @@ class DD_EventHandler : EventHandler
 						{
 							int basedebuffchance = 4;
 							if (e.thing.bBOSS) basedebuffchance *= 4;
+							if (e.thing.GetClassName() == "Cyberdemon") basedebuffchance *= 2;
+							if (e.thing.GetClassName() == "HellKnight" || e.thing.GetClassName() == "BaronOfHell") basedebuffchance *= 1.334;
+							if (e.thing.GetClassName() == "Cacodemon" || e.thing.GetClassName() == "PainElemental") basedebuffchance *= 1.25;
+							if (e.thing.GetClassName() == "Demon" || e.thing.GetClassName() == "Spectre") basedebuffchance *= 1.125;
+							if (e.thing.GetClassName() == "Arachnotron" || e.thing.GetClassName() == "Mancubus") basedebuffchance *= 0.75;
+							if (e.thing.GetClassName() == "Archvile" || e.thing.GetClassName() == "Revenant") basedebuffchance *= 0.667;
+							if (e.thing.GetClassName() == "SpiderMastermind") basedebuffchance *= 0.334;
+							if (e.thing.GetClassName() == "LostSoul") basedebuffchance *= 0.1;
 							if (landdamagebonus == 1) basedebuffchance *= 0.875;
 							if (landdamagebonus == 2) basedebuffchance *= 0.700;
 							if (landdamagebonus == 3) basedebuffchance *= 0.475;
@@ -65,9 +79,10 @@ class DD_EventHandler : EventHandler
 							if (e.inflictor.target.CountInv("PowerStrength") || 
 									e.inflictor.target.CountInv("PowerStrengthDD") )
 							{
-								basedebuffchance *= 0.4;
-								if (basedebuffchance < 1) basedebuffchance = 1;
+								if (e.thing.bBOSS) basedebuffchance *= 0.1;
+															else basedebuffchance *= 0.4;
 							}
+							if (basedebuffchance < 1) basedebuffchance = 1;
 							//Console.Printf("basedebuffchance: 1 / %d", basedebuffchance);
 							if (random(1,basedebuffchance) <= 1) e.thing.A_SetInventory("ScramblerConfusion",1);
 						}
@@ -86,6 +101,14 @@ class DD_EventHandler : EventHandler
 						if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 						
 						int basedebuffchance = 4;
+						if (e.thing.GetClassName() == "LostSoul") basedebuffchance *= 10;
+						if (e.thing.GetClassName() == "Spidermastermind") basedebuffchance *= 2;
+						if (e.thing.GetClassName() == "Archvile" || e.thing.GetClassName() == "Revenant") basedebuffchance *= 1.334;
+						if (e.thing.GetClassName() == "Demon" || e.thing.GetClassName() == "Spectre") basedebuffchance *= 0.75;
+						if (e.thing.GetClassName() == "Cacodemon" || e.thing.GetClassName() == "PainElemental") basedebuffchance *= 0.625;
+						if (e.thing.GetClassName() == "HellKnight" || e.thing.GetClassName() == "BaronOfHell") basedebuffchance *= 0.5;
+						if (e.thing.GetClassName() == "Arachnotron" || e.thing.GetClassName() == "Mancubus") basedebuffchance *= 0.25;
+						if (e.thing.GetClassName() == "Cyberdemon") basedebuffchance *= 0.334;
 						if (e.thing.bBOSS) basedebuffchance *= 4;
 						if (landdamagebonus == 1) basedebuffchance *= 0.875;
 						if (landdamagebonus == 2) basedebuffchance *= 0.700;
@@ -93,8 +116,10 @@ class DD_EventHandler : EventHandler
 						if (landdamagebonus == 4) basedebuffchance *= 0.200;
 						if (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD") )
 						{
-							basedebuffchance *= 0.4;
+							if (e.thing.bBOSS) basedebuffchance *= 0.1;
+														else basedebuffchance *= 0.4;
 						}
+						if (basedebuffchance < 1) basedebuffchance = 1;
 						
 						if (random(1,basedebuffchance) <= 1) 
 						{
@@ -335,10 +360,10 @@ class DD_EventHandler : EventHandler
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 					if (random(1,maxchance) == 1)
 					{
-						user_type = random(1,21);
-						if (user_type >= 1 && user_type <= 15) { e.thing.A_SpawnItemEx("FuryPotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-						if (user_type >= 16 && user_type <= 20) { e.thing.A_SpawnItemEx("TimePotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-						if (user_type == 21) { e.thing.A_SpawnItemEx("DoorBell",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						user_type = random(1,41);
+						if (user_type >= 1 && user_type <= 32) { e.thing.A_SpawnItemEx("FuryPotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type >= 33 && user_type <= 40) { e.thing.A_SpawnItemEx("TimePotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type == 41) { e.thing.A_SpawnItemEx("DoorBell",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
 					}
 					
 					//
