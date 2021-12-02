@@ -1424,6 +1424,253 @@ class CoinShot : DDProjectile
 	}
 }
 
+//SPIDER-CENSER
+class SpiderCenser : DDCreature
+{
+	default
+	{
+		//$Category RPMonsters
+		Health 150;
+		Radius 20;
+		Height 56;
+		Speed 10;
+		PainChance 256;
+		DamageFactor "Bonk", 4;
+		DamageFactor "Chop", 0.5;
+		DamageFactor "Zap", 4;
+		DamageFactor "Bap", 0;
+		PainChance "Bap", 32;
+		MONSTER;
+		+FLOORCLIP
+		+NOINFIGHTING
+		+NOBLOOD
+		MissileType "CroquetBall";
+		SeeSound "spidercen/sight";
+		PainSound "birdy/sight";
+		DeathSound "spidercen/death";
+		ActiveSound "spidercen/sight";
+		Obituary "%o was smothered by a spider-censer.";
+		Tag "Spider-Censer";
+	}
+	
+	States
+	{
+		Spawn:
+			SPHR A 10 A_Look();
+			Loop;
+		See:
+			SPRS AABB 3;
+			Goto Idle;
+		Idle:
+			SPCN AABBCCDD 1 A_Chase();
+			Loop;
+		Melee:
+			SPCN E 3; //ACS_Execute(102,0,0,0,0);
+			SPCN FG 3 bright A_FaceTarget();
+			SPCN H 0 A_StartSound("Weapons/SpinnerFire",CHAN_BODY);
+			SPCN H 5 bright A_SpawnProjectile("IncenseBall",40,0);
+			SPCN K 5 bright;
+			SPCN M 5 bright;
+			SPCN G 3 bright;
+			SPCN FE 3;
+			Goto Idle;
+		Missile:
+			SPCN E 3; //ACS_Execute(102,0,0,0,0);
+			SPCN FG 3 bright A_FaceTarget();
+			SPCN H 0 A_StartSound("Weapons/SpinnerFire",CHAN_BODY);
+			SPCN H 0 bright A_SpawnProjectile("IncenseBall",48,24);
+			SPCN H 5 bright A_SpawnProjectile("IncenseBall",48,-24);
+			SPCN I 5 bright;
+			SPCN J 5 bright A_SpawnProjectile("IncenseBall",48,0);
+			SPCN K 5 bright;
+			SPCN L 5 bright;
+			SPCN M 5 bright;
+			SPCN G 3 bright;
+			SPCN FE 3;
+			Goto Idle;
+		Pain:
+			SPCN N 6 A_Pain();
+			SPCN N 3; //ACS_Execute(102,0,0,0,0);
+			Goto Idle;
+		/*
+		Death.Suck:
+			SPCN N 5 A_StarSound("VacDed",CHAN_BODY);
+			SPCN N 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4);
+			Stop;
+		*/
+		Death:
+			SPCN N 7 bright A_Scream();
+			SPCN OPQR 3 bright;
+			SPCN S 3 bright A_NoBlocking();
+			Stop;
+	}
+}
+
+class IncenseBall : DDProjectile
+{
+	default
+	{
+		Radius 8;
+		Height 12;
+		Speed 18;
+		Damage 3;
+		Scale 0.35;
+		Projectile;
+		+RANDOMIZE
+		+NOEXTREMEDEATH
+		PoisonDamage 15;
+		renderstyle "Add";
+		Alpha 0.7;
+		DeathSound "croquet/ballhit";
+	}
+	
+	States
+	{
+		Spawn:
+			SPBL ABCDE 3 bright;
+			Loop;
+		Death:
+			SPBX ABCDE 4 Bright;
+			Stop;
+	}
+}
+
+//GALGOYLE
+class Galgoyle : DDCreature
+{
+	default
+	{
+		//$Category RPMonsters
+		Health 150;
+		Radius 20;
+		Height 56;
+		Speed 10;
+		Mass 500;
+		Damage 3;
+		PainChance 256;
+		DamageFactor "Lead", 2;
+		DamageFactor "Zap", 2;
+		DamageFactor "Dust", 0;
+		DamageFactor "Bap", 1;
+		PainChance "Bap", 200;
+		MONSTER;
+		+FLOORCLIP
+		+NOINFIGHTING
+		+NOBLOOD
+		SeeSound "galgoyle/swoop";
+		PainSound "hduck/pain";
+		DeathSound "virtuoso/death";
+		ActiveSound "galgoyle/swoop";
+		Obituary "%o was prey for a galgoyle.";
+		DropItem "jackammo", 96;
+		Tag "Galgoyle";
+	}
+	States
+	{
+		Spawn:
+			GGRL A 10 A_Look();
+			Loop;
+		See:
+			TNT1 A 0 
+			{
+				bFLOAT = false;
+				bNOGRAVITY = false;
+				bDROPOFF = false;
+			}
+			GGRL AABBCCDD 3 A_Chase();
+			GGRL A 0 A_Jump(208,1);
+			GGRL A 0 A_CheckSight("Takeoff");
+			Loop;
+		Missile:
+			GGRF A 0 A_Jump(96,"Takeoff");
+			GGRF A 4; //ACS_Execute(102,0,0,0,0);
+			GGRF BC 5 A_FaceTarget();
+			GGRF D 0 A_StartSound("galgoyle/fire",CHAN_BODY);
+			GGRF D 4 A_SpawnProjectile("Jellyball",48,0);
+			GGRF E 3;
+			Goto See;
+		Takeoff: 
+			TNT1 A 0 A_JumpIf(pos.Z + height + 64 >= CeilingZ, "See");
+			TNT1 A 0 
+			{
+				bFLOAT = true;
+				bNOGRAVITY = true;
+				bDROPOFF = true;
+			}
+			Goto Fly;
+		Fly:
+			GGRL E 0 ThrustThingZ(0,15,0,0);
+			GGRL EEFFGGHH 2 A_Chase(null,"MissileF");
+			Goto Hover;
+		MissileF:
+			GGRL E 0 A_Jump(64,"Land");
+			GGRL E 0; //ACS_Execute(102,0,0,0,0);
+			GGRL E 0 A_FaceTarget();
+			GGRL E 0 A_StartSound("galgoyle/swoop",CHAN_VOICE);
+			GGRL E 0 A_SkullAttack();
+			GGRL EFGH 4;
+			goto MissileF+5;
+		Land:
+			GGRL EE 4 ThrustThingZ(0,-20,0,0);
+			GGRL E 1 A_CheckFloor("See");
+			GGRL EEFFGGHH 2;
+			GGRL E 1 A_CheckFloor("See");
+			Goto Hover;
+		Hover:
+			GGRL EEFFGGHH 2 A_Chase(null,"MissileF");
+			GGRL E 0 A_Jump(64,"Fly");
+			GGRL E 0 A_Jump(32,"Land");
+			Loop;
+		Pain:
+			GGRX B 6 A_Pain();
+			GGRX A 3; //ACS_Execute(102,0,0,0,0);
+			Goto See;
+		Death.Suck:
+			GGRX B 5 A_StartSound("VacDed",CHAN_BODY);
+			GGRX B 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,4);
+			Stop;
+		Death:
+			GGRX A 5 bright A_Scream();
+			GGRX BCDEF 3 bright;
+			GGRX G 3 bright A_NoBlocking();
+			GGRX HIJKLMNOP 2 bright;
+			Stop;
+	}
+}
+
+class Galgoyle_Hide : DDCreature
+{
+	default
+	{
+		//$Category RPMonsters
+		Height 56;
+		Radius 24;
+		Mass 500;
+		Health 200;
+		PainChance 256;
+		MONSTER;
+		+NOBLOOD;
+		Tag "Galgoyle (Hiding)";
+	}
+	
+	States
+	{
+		Spawn:
+			STGR A 10 A_Look();
+			Loop;
+		See:
+			STGR A 1 A_Die();
+			Goto Death;
+		Pain:
+			STGR A 1 A_Die();
+			Goto Death;
+		Death:
+			TNT1 A 1 A_SpawnItemEX("Galgoyle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+			TNT1 A 0 A_NoBlocking();
+			Stop;
+	}
+}
+
 //********************
 // * NEW DD MONSTERS *
 //********************
