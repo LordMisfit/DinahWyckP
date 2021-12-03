@@ -1,3 +1,277 @@
+class QuisSpawnCookie : Inventory
+{
+	default
+	{
+		inventory.amount 1;
+		inventory.maxamount 1;
+	}
+}
+class QuisSpawnCookie2 : QuisSpawnCookie
+{
+}
+
+//MEISTER QUISLING
+class Teacher_Quis : DDCreature
+{
+	default
+	{
+		//$Category RPTeachers
+		Health 1200;
+		Radius 20;
+		Height 80;
+		Speed 18;
+		PainChance 200;
+		DamageFactor "Fire", 0.5;
+		Painchance "Suck", 64;
+		DamageFactor "Bonk", 2;
+		DamageFactor "Chop", 2;
+		DamageFactor "Zap", 0.25;
+		DamageFactor "suck", 0;
+		Alpha 0.75;
+		renderstyle "Add";
+		Mass 5000;
+		Scale 1;
+		MONSTER;
+		+FLOORCLIP
+		+NOBLOOD
+		+NOINFIGHTING
+		+DONTHARMCLASS
+		+NOTARGET
+		SeeSound "quisling/sight";
+		PainSound "quisling/pain";
+		DeathSound "quisling/death";
+		Obituary "%o was flunked by Meister Quisling.";
+		Tag "Meister Quisling";
+		Species "Quisling";
+	}
+	
+	States
+	{
+		Spawn:
+			MQIS E 10 A_Look();
+			Loop;
+		See:
+			TNT1 A 0 A_JumpIfInventory("QuisSpawnCookie2", 1, "See3");
+			TNT1 A 0 A_GiveInventory("QuisSpawnCookie2");
+			MQIS E 3 A_SetTranslucent(0.2,0);
+			MQIS E 3 A_SetTranslucent(0.4,0);
+			MQIS E 3 A_SetTranslucent(0.6,0);
+			MQIS E 3 A_SetTranslucent(0.8,0);
+			MQIS E 3 A_SetTranslucent(1,0);
+			MQIS E 0 { bINVULNERABLE = false; }
+			goto See3;
+		See3:
+			MQIS AABBCCDD 3 A_Chase();
+			loop;
+		SpawnClones:
+			MQIS A 0 A_KillChildren();
+			MQIS A 0 { bINVULNERABLE = true; }
+			MQIS E 3 A_SetTranslucent(0.8,0);
+			MQIS E 3 A_SetTranslucent(0.6,0);
+			MQIS E 3 A_SetTranslucent(0.4,0);
+			MQIS E 3 A_SetTranslucent(0.2,0);
+			MQIS E 3 A_SetTranslucent(0,0);
+			MQIS AAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_Wander();
+			MQIS A 0 A_SpawnItemEx ("QuisFake",0,0,0,0,0,0,0,48);
+			MQIS AAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_Wander();
+			MQIS A 0 A_SpawnItemEx ("QuisFake",0,0,0,0,0,0,0,48);
+			MQIS AAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_Wander();
+			MQIS E 3 A_SetTranslucent(0.2,0);
+			MQIS E 3 A_SetTranslucent(0.4,0);
+			MQIS E 3 A_SetTranslucent(0.6,0);
+			MQIS E 3 A_SetTranslucent(0.8,0);
+			MQIS E 3 A_SetTranslucent(1,0);
+			MQIS A 0 { bINVULNERABLE = false; }
+			goto See3;
+		Missile:
+			MQIS E 0; //ACS_Execute(102,0,0,0,0)
+			MQIS E 0 A_Jump(128,"MissileZap");
+			MQIS E 0 A_StartSound("quisling/sight",CHAN_VOICE);
+			MQIS E 8 A_FaceTarget();
+			MQIS FGFGFG 2 bright;
+			MQIS H 0 A_StartSound("teacher/chargeup",CHAN_BODY);
+			MQIS H 6 bright A_SpawnProjectile("CheeseFX",40,0);
+			MQIS H 6 bright A_SpawnProjectile("CheeseFX",40,0,45);
+			MQIS H 6 bright A_SpawnProjectile("CheeseFX",40,0-45);
+			Goto See3;
+		MissileZap:
+			MQIS H 0 A_StartSound("Handmother/Zap");
+			MQIS EE 3 bright;
+			MQIS H 3 bright A_SpawnProjectile("badZapshot",40);
+			MQIS H 3 bright;
+			MQIS H 0 bright A_SpawnProjectile("badZapshot",40,-48);
+			MQIS H 3 bright A_SpawnProjectile("badZapshot",40,48);
+			MQIS H 3 bright;
+			MQIS H 3 bright A_SpawnProjectile("badZapshot",40);
+			MQIS HH 3 bright;
+			Goto See3;
+		Pain:
+			MQIS I 4 A_Pain;
+			MQIS J 6; //ACS_Execute(102,0,0,0,0);
+			MQIS J 0 A_KillChildren();
+			MQIS J 0 { bINVULNERABLE = true; }
+			MQIS J 3 A_SetTranslucent(0.8,0);
+			MQIS J 3 A_SetTranslucent(0.6,0);
+			MQIS J 3 A_SetTranslucent(0.4,0);
+			MQIS J 3 A_SetTranslucent(0.2,0);
+			MQIS J 3 A_SetTranslucent(0,0);
+			Goto SpawnClones +25;
+		Death:
+			MQIS I 5 A_Scream();
+			MQIS J 5 A_KillChildren();
+			MQIS KL 5 bright;
+			TBUM A 0 A_StartSound("teacher/death");
+			TBUM ABCDEFGH 5 bright;
+			TBUM I 5 bright A_NoBlocking();
+			Stop;
+	}
+}
+
+class QuisFake : DDCreature
+{
+	default
+	{
+		Health 100;
+		Radius 20;
+		Height 80;
+		Speed 18;
+		PainChance 200;
+		Painchance "Suck", 64;
+		DamageFactor "Fire", 2;
+		DamageFactor "Bonk", 2;
+		DamageFactor "Chop", 2;
+		DamageFactor "Zap", 0.25;
+		DamageFactor "suck", 0;
+		Mass 5000;
+		Scale 1;
+		MONSTER;
+		+FLOORCLIP
+		+NOBLOOD
+		+NOINFIGHTING
+		+DONTHARMCLASS
+		SeeSound "quisling/sight";
+		PainSound "quisling/pain";
+		Obituary "%o was flunked by Meister Quisling.";
+		Tag "Meister Quisling (Clone)";
+		Species "Quisling";
+		+LOOKALLAROUND;
+	}
+	States
+	{
+		Spawn:
+			TNT1 A 0 { bINVULNERABLE = true; }
+			TNT1 A 1 A_SetTranslucent(0,0);
+			MQIS A 25;
+			MQIS A 0 { bSOLID = true; }
+		Iseeu:
+			MQIS A 3 A_Look();
+		See:
+			MQIS E 3 A_SetTranslucent(0.2,0);
+			MQIS E 3 A_SetTranslucent(0.4,0);
+			MQIS E 3 A_SetTranslucent(0.6,0);
+			MQIS E 3 A_SetTranslucent(0.8,0);
+			MQIS E 3 A_SetTranslucent(1,0);
+			MQIS E 3 { bINVULNERABLE = false; }
+			goto See2;
+		See2:
+			MQIS AABBCCDD 3 A_Chase();
+			Loop;
+		Missile:
+			MQIS E 0; //ACS_Execute(102,0,0,0,0);
+			MQIS E 0 A_StartSound("quisling/sight",CHAN_VOICE);
+			MQIS E 8 A_FaceTarget();
+			MQIS H 0 bright A_StartSound("zappo",CHAN_BODY);
+			MQIS H 8 bright A_SpawnProjectile("BadZapshot",48,0);
+			MQIS H 6;
+			Goto See2;
+		Pain:
+			MQIS I 4 A_Pain();
+			Goto See2;
+		Death:
+			TBUM ABCDEFGH 5 bright;
+			TBUM I 5 bright A_NoBlocking();
+			Stop;
+	}
+}
+
+//MEISTER LAURITZ
+class Teacher_Lauritz : DDCreature
+{
+	default
+	{
+		//$Category RPTeachers
+		Health 1500;
+		Radius 32;
+		Height 80;
+		Speed 18;
+		PainChance 200;
+		Painchance "Suck", 64;
+		Painchance "Beats", 0;
+		DamageFactor "Fire", 0.5;
+		DamageFactor "Cricket", 2;
+		DamageFactor "suck", 0;
+		Mass 5000;
+		Scale 1;
+		MONSTER;
+		+FLOORCLIP
+		+NOBLOOD
+		+NOINFIGHTING
+		+DONTHARMCLASS
+		SeeSound "lauritz/sight";
+		PainSound "lauritz/pain";
+		DeathSound "lauritz/death";
+		ActiveSound "lauritz/active";
+		Obituary "%o was flunked by Meister Lauritz.";
+		Tag "Meister Lauritz";
+	}
+	
+	States
+	{
+		Spawn:
+			MLTZ E 10 A_Look();
+			Loop;
+		See:
+			MLTZ AABBCCDD 3 A_Chase();
+			Loop;
+		Missile:
+			MLTZ E 0; //ACS_Execute(102,0,0,0,0);
+			MLTZ EF 4 A_FaceTarget();
+			MLTZ G 6 A_FaceTarget();
+			MLTZ H 6;
+			MLTZ I 0 A_StartSound("lauritz/tuba",CHAN_BODY);
+			MLTZ I 3 A_SpawnProjectile("MusicBall",random(40,48),0,-35);
+			MLTZ I 3 A_SpawnProjectile("MusicBall",random(40,48),0,35);
+			MLTZ I 3 A_SpawnProjectile("MusicBall",random(40,48));
+			MLTZ J 6;
+			Goto See;
+		Escape:
+			TNT1 A 0 A_SpawnItemEx("TeleportFog");
+			TNT1 AAAAAAAA 0 A_Wander();
+			TNT1 AAAAAAAA 0 A_Wander();
+			TNT1 A 0 A_SpawnItemEx("TeleportFog");
+			TNT1 A 0 A_UnsetSolid();
+			TNT1 A 0 A_SpawnItemEx("Vitriola", 0,0,0, 0,0,0, 0, SXF_TRANSFERTRANSLATION,0,995);
+			TNT1 AAAAAAAA 0 A_Wander();
+			TNT1 AAAAAAAA 0 A_Wander();
+			TNT1 AAAAAAAA 0 A_Wander();
+			TNT1 AAAAAAAA 0 A_Wander();
+			TNT1 A 4 A_SetSolid();
+			TNT1 A 0 A_SpawnItemEx("TeleportFog");
+			Goto See;
+		Pain:
+			MLTZ J 6 A_Pain();
+			MLTZ J 3 A_Jump(208,"Escape");
+			Goto See;
+		Death:
+			MLTZ J 5 A_Scream();
+			MLTZ KL 5 bright A_KillChildren();
+			TBUM A 0 A_StartSound("teacher/death");
+			TBUM ABCDEFGH 5 bright;
+			TBUM I 5 bright A_NoBlocking();
+			Stop;
+	}
+}
+
 //JUFFRAU JORGENSEN
 class Teacher_Jorg : DDCreature
 {
