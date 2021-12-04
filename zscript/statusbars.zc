@@ -10,6 +10,8 @@ class DDStatusBarMain : BaseStatusBar
 	HUDFont mIndexFont;
 	HUDFont mBigFont;
 	HUDFont mSmallFont;
+	HUDFont mArmSaveFont;
+	HUDFont mConFont;
 	HUDFont mDDSFont;
 	HUDFont mDDMFont;
 	HUDFont mDDLFont;
@@ -31,6 +33,10 @@ class DDStatusBarMain : BaseStatusBar
 		mBigFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 2, 2);
 		fnt = "CONFONT";
 		mSmallFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
+		fnt = "CONFONT";
+		mConFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
+		fnt = "CONFONT";
+		mArmSaveFont = HUDFont.Create(fnt, fnt.GetCharWidth("0") - 1, Mono_CellLeft, 1, 1);
 
 		fnt = "INDEXFONT_DD";
 		mDDSFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 1, 1);
@@ -656,10 +662,19 @@ class DDStatusBarMain : BaseStatusBar
 
 		int armorcolor = font.CR_White; 
 		int armormax;
+		double armorprotect;
 		string armormaxS;
+		string armorsaveamt;
 		let armor = CPlayer.mo.FindInventory("BasicArmor");
 		if (armor != null && armor.Amount > 0)
 		{
+			let armorb = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
+			if (armorb) 
+			{
+				armorprotect = armorb.SavePercent * 100;
+				armorsaveamt = "";
+				armorsaveamt.AppendFormat("%.2f%%", armorprotect);
+			}
 			valueamt = armor.Amount;
 			valueamtS = FormatNumber(valueamt);
 
@@ -689,9 +704,14 @@ class DDStatusBarMain : BaseStatusBar
 			
 			slashunit = (-6 * (armordigits-2));
 			
+			// Amounts
 			DrawString(mDDMFont, FormatNumber(armormax), (49, -42), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 			DrawString(mDDMFont, "/", ((20+slashunit), -50), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 			DrawString(mDDLFont, FormatNumber(mArmorInterpolator.GetValue()), (49, -59), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			
+			// Protect %
+			if (armorprotect) DrawString(mArmSaveFont, armorsaveamt, (79, -50), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			
 		}
 
 		//level
@@ -890,7 +910,7 @@ class DDStatusBarMain : BaseStatusBar
 			if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
 																						 else tallytemp.AppendFormat("%d", leveltimesec);
 			digy = -40;
-			DrawString(HUDFont.Create("CONFONT"), tallytemp, (-120, digy), DI_TEXT_ALIGN_LEFT|DI_SCREEN_CENTER_BOTTOM, font.cr_darkgray);
+			DrawString(mConFont, tallytemp, (-120, digy), DI_TEXT_ALIGN_LEFT|DI_SCREEN_CENTER_BOTTOM, font.cr_darkgray);
 			// Total Time
 			tallytemp = "TOTAL: ";
 			leveltime = level.totaltime;
@@ -907,7 +927,7 @@ class DDStatusBarMain : BaseStatusBar
 			if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
 																						 else tallytemp.AppendFormat("%d", leveltimesec);
 			digy = -40;
-			DrawString(HUDFont.Create("CONFONT"), tallytemp, (120, digy), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM, font.cr_gray);
+			DrawString(mConFont, tallytemp, (120, digy), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM, font.cr_gray);
 		}
 		
 		if (dyduhud_leveltallies)
@@ -926,7 +946,7 @@ class DDStatusBarMain : BaseStatusBar
 				tallytemp.AppendFormat("%d", scrtcnt);
 				tallytemp.AppendFormat("/");
 				tallytemp.AppendFormat("%d", maxscrtcnt);
-				DrawString(HUDFont.Create("CONFONT"), tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_gold);
+				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_gold);
 			}
 			if (maxitemcnt)
 			{
@@ -935,7 +955,7 @@ class DDStatusBarMain : BaseStatusBar
 				tallytemp.AppendFormat("%d", itemcnt);
 				tallytemp.AppendFormat("/");
 				tallytemp.AppendFormat("%d", maxitemcnt);
-				DrawString(HUDFont.Create("CONFONT"), tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_lightblue);
+				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_lightblue);
 			}
 			int killcnt = level.killed_monsters;
 			int maxkillcnt = level.total_monsters;
@@ -946,7 +966,7 @@ class DDStatusBarMain : BaseStatusBar
 				tallytemp.AppendFormat("%d", killcnt);
 				tallytemp.AppendFormat("/");
 				tallytemp.AppendFormat("%d", maxkillcnt);
-				DrawString(HUDFont.Create("CONFONT"), tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_brick);
+				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_brick);
 			}
 		}
 		

@@ -1615,14 +1615,73 @@ class MalletShot : DDProjectile
 		-NOGRAVITY
 		//+NOEXTREMEDEATH
 		+FORCERADIUSDMG
+		+USEBOUNCESTATE
 		RENDERSTYLE "Normal";
 		DeathSound "croquet/ballhit";
+		BounceType "Hexen";
+		BounceCount 0;
+		BounceFactor 0.0;
+		WallBounceFactor 0.0;
+	}
+	
+	int minbouncelvl;
+	double bouncelvlfactor;
+	int nogravtimer;
+
+	override void PostBeginPlay()
+	{
+		super.PostBeginPlay();
+		if (target && target.GetClassName() == "DinahPlayer")
+		{
+			minbouncelvl = 8;
+			bouncelvlfactor = (1.0 / (minbouncelvl * 1.5));
+
+			let MiscItem = PlayerStatItem(target.FindInventory("PlayerStatItem"));
+			if (MiscItem)
+			{
+				if (MiscItem.PlayerLevel >= minbouncelvl)
+				{
+					double extratimes = ((MiscItem.PlayerLevel - minbouncelvl) * bouncelvlfactor);
+					if (dydudebug_attackstuff) Console.Printf("[%s] extratimes: %.8f", GetClassName(), extratimes);
+					if (extratimes < 0) extratimes = 0;
+					bSKYEXPLODE = true;
+					bBOUNCEONWALLS = true;
+					bBOUNCEONFLOORS = true;
+					bBOUNCEONCEILINGS = true;
+					bCANBOUNCEWATER = true;
+					bDONTBOUNCEONSHOOTABLES = true;
+					BounceCount = 2 + extratimes;
+					BounceFactor = 1.00;
+					WallBounceFactor = 1.00;
+				}
+				else
+				{
+					bBOUNCEONWALLS = false;
+					bBOUNCEONFLOORS = false;
+					bBOUNCEONCEILINGS = false;
+					bCANBOUNCEWATER = false;
+					bDONTBOUNCEONSHOOTABLES = true;
+					bALLOWBOUNCEONACTORS = false;
+					BounceCount = 0;
+					BounceFactor = 0;
+					WallBounceFactor = 0;
+				}
+			}
+			if (dydudebug_attackstuff) Console.Printf("[%s] BounceCount: %d", GetClassName(), BounceCount);
+		}
 	}
 	
 	States
 	{
 		Spawn:
-			CBAL AB 3;
+			CBAL AAABBB 1 NoDelay
+			{
+				if (bNOGRAVITY && nogravtimer) 
+				{
+					nogravtimer--;
+					if (!nogravtimer) bNOGRAVITY = false;
+				}
+			}
 			loop;
 		Death:
 			CBAL C 0 
@@ -1644,6 +1703,12 @@ class MalletShot : DDProjectile
 				bNOGRAVITY = true;
 			}
 			stop;
+		Bounce:
+			TNT1 A 0
+			{
+				bNOGRAVITY = false;
+			}
+			goto Spawn;
 	}
 }
 
@@ -1665,31 +1730,56 @@ class MalletShotBerserk : MalletShot
 		DeathSound "croquet/ballhit";
 	}
 	
+	int A_GetImpactAOE(int type = 0)
+	{
+		int result;
+		if (type == 0) result = 16; // Damage
+		if (type == 1) result = 24; // Radius
+		if (target && target.GetClassName() == "DinahPlayer")
+		{
+			let MiscItem = PlayerStatItem(target.FindInventory("PlayerStatItem"));
+			if (MiscItem)
+			{
+				if (type == 0) result += (MiscItem.PlayerLevel * 0.09375);
+				if (type == 1) result += (MiscItem.PlayerLevel * 0.125);
+				if (MiscItem.PlayerLevel >= 50)
+				{
+					if (type == 0) result += (MiscItem.PlayerLevel * 0.046875);
+					if (type == 1) result += (MiscItem.PlayerLevel * 0.0625);
+				}
+				if (MiscItem.PlayerLevel >= 100)
+				{
+					if (type == 0) result += (MiscItem.PlayerLevel * 0.0234375);
+					if (type == 1) result += (MiscItem.PlayerLevel * 0.03125);
+				}
+			}
+		}
+		if (dydudebug_attackstuff) Console.Printf("[%s] result: %d, type: %d", GetClassName(), result, type);
+		return result;
+	}
+	
 	States
 	{
-		Spawn:
-			CBAL AB 3;
-			loop;
 		Death:
 			CBAL C 0 
 			{
 				bNOGRAVITY = true;
-				A_Explode(64,64,0);
+				A_Explode(A_GetImpactAOE(0),A_GetImpactAOE(1),0,0,(A_GetImpactAOE(1)*0.34));
 			}
 			CBAL CDEF 4 Bright;
 			stop;
 		Crash:
 			CBAL C 0 
 			{
+				A_Explode(A_GetImpactAOE(0),A_GetImpactAOE(1),0,0,(A_GetImpactAOE(1)*0.34));
 				bNOGRAVITY = true;
-				A_Explode(64,64,0);
 			}
 			CBAL CDEF 4 Bright;
 			stop;
 		XDeath:
 			TNT1 A 1
 			{
-				A_Explode(64,64,0);
+				A_Explode(A_GetImpactAOE(0),A_GetImpactAOE(1),0,0,(A_GetImpactAOE(1)*0.34));
 				bNOGRAVITY = true;
 			}
 			stop;
