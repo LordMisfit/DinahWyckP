@@ -976,10 +976,10 @@ class PlayerStatItem : Inventory
 		// ******************
 		if (!passive && damage > 0) // If the owner [usually the player] of the item is the ATTACKER
 		{
-			if (dydudebug_defensecalcs) Console.Printf("Damage (!passive): %d", damage);
+			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive): %d", damage);
 			double LVLFactor = (1.00 + (PlayerLevel * 0.0125));
 			if (LVLFactor >= 10.00) LVLFactor = 10.00;
-			if (dydudebug_defensecalcs) Console.Printf("Damage (!passive - Level): %.8f", LVLFactor);
+			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Level): %.8f", LVLFactor);
 
 			double SkillFactor = 1.00;
 			if (Skill == SKILL_VERY_HARD) SkillFactor *= 0.75;
@@ -987,7 +987,7 @@ class PlayerStatItem : Inventory
 			if (Skill == SKILL_NORMAL) SkillFactor *= 1.00;
 			if (Skill == SKILL_EASY) SkillFactor *= 1.125;
 			if (Skill == SKILL_VERY_EASY) SkillFactor *= 1.25;
-			if (dydudebug_defensecalcs) Console.Printf("Damage (!passive - Skill): %.8f", SkillFactor);
+			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Skill): %.8f", SkillFactor);
 
 			// Landing Bonus
 			double LandingFactor = 1.0;
@@ -998,7 +998,7 @@ class PlayerStatItem : Inventory
 				if (landdmgbonus == 2) LandingFactor = 2.25;
 				if (landdmgbonus == 3) LandingFactor = 3.78125;
 				if (landdmgbonus == 4) LandingFactor = 7.47265625;
-				if (dydudebug_defensecalcs) Console.Printf("Damage (!passive - Landing): %.8f", LandingFactor);
+				if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Landing): %.8f", LandingFactor);
 			}
 
 			// Dashing Bonus
@@ -1007,6 +1007,7 @@ class PlayerStatItem : Inventory
 			{
 				if (damageType == 'Melee' || damageType == 'Trample' || damageType == 'Stomp' || damageType == 'Fist' || damageType == 'Kick' || damageType == 'Chainsaw' ||
 						damageType == 'Bonk' || damageType == 'Bap') DashingFactor = frandompick(1.25,1.334,1.425,1.5);
+				if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Dashing): %.8f", DashingFactor);
 			}
 			
 			double BuffFactor = 1.00;
@@ -1016,7 +1017,18 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerWineBuffStrong")) BuffFactor *= frandompick(0.955,1.045);
 			if (Owner.CountInv("PowerWineBuffStrongest")) BuffFactor *= frandompick(0.91,1.09);
 			if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandompick(0.85,1.15);
-			if (dydudebug_defensecalcs) Console.Printf("Damage (!passive - Buff): %.8f", BuffFactor);
+			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Buff): %.8f", BuffFactor);
+			
+			double SigilFactor = 1.00;
+			if (damageType == 'Sigil' || damageType == 'SpectralLow')
+			{
+				let Sigl = SigilDD(owner.FindInventory("SigilDD"));
+				if (Sigl)
+				{
+					SigilFactor = (0.8 + ((Sigl.health - 1) * 0.0375));
+				}
+				if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Sigil): %.8f", SigilFactor);
+			}
 			
 			double CrisisFactor = 1.0;
 			if (owner.CountInv("MysteryItem"))
@@ -1032,11 +1044,12 @@ class PlayerStatItem : Inventory
 													 * LandingFactor
 													 * BuffFactor
 													 * CrisisFactor
+													 * SigilFactor
 													 * atkfct;
-			if (dydudebug_defensecalcs) Console.Printf("Damage (!passive - Total): %.8f", TOTALFactor);
+			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Total): %.8f", TOTALFactor);
 
 			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
-			if (dydudebug_defensecalcs) Console.Printf("FDamage (!passive): %d", newdamage);
+			if (dydudebug_attackcalcs) Console.Printf("FDamage (!passive): %d", newdamage);
 		}
 		
 		// ******************
@@ -1046,10 +1059,10 @@ class PlayerStatItem : Inventory
 		// ******************
 		if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 		{
-			if (dydudebug_attackcalcs) Console.Printf("FDamage (passive[pre]): %d", damage);
+			if (dydudebug_defensecalcs) Console.Printf("FDamage (passive[pre]): %d", damage);
 			double LVLFactor = (1.00 - (PlayerLevel * 0.0125));
 			if (LVLFactor <= 0.10) LVLFactor = 0.10;
-			if (dydudebug_attackcalcs) Console.Printf("Damage (passive - Level): %.8f", LVLFactor);
+			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Level): %.8f", LVLFactor);
 
 			// Difficulty Level
 			double SkillFactor = 1.00;
@@ -1058,7 +1071,7 @@ class PlayerStatItem : Inventory
 			if (Skill == SKILL_NORMAL) SkillFactor *= 1.00;
 			if (Skill == SKILL_HARD) SkillFactor *= 1.125;
 			if (Skill == SKILL_VERY_HARD) SkillFactor *= 1.25;
-			if (dydudebug_attackcalcs) Console.Printf("Damage (passive - Skill): %.8f", SkillFactor);
+			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Skill): %.8f", SkillFactor);
 			
 			// Buffs
 			double BuffFactor = 1.00;
@@ -1069,7 +1082,7 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerWineBuffStrong")) BuffFactor *= frandompick(0.985,1.015);
 			if (Owner.CountInv("PowerWineBuffStrongest")) BuffFactor *= frandompick(0.97,1.03);
 			if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandompick(0.95,1.05);
-			if (dydudebug_attackcalcs) Console.Printf("Damage (passive - Buff): %.8f", SkillFactor);
+			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Buff): %.8f", SkillFactor);
 			
 			// Weapons
 			double WeaponFactor = 1.00;
@@ -1081,7 +1094,7 @@ class PlayerStatItem : Inventory
 			if (weapon is "WizardPike") WeaponFactor = 0.875;
 			if (weapon is "SuperVac") WeaponFactor = 1.125;
 			if (weapon is "Grimophone") WeaponFactor = 1.25;
-			if (dydudebug_attackcalcs) Console.Printf("Damage (passive - WeaponEquipped): %.8f", WeaponFactor);
+			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - WeaponEquipped): %.8f", WeaponFactor);
 
 			double CrisisFactor = 1.0;
 			if (owner.CountInv("MysteryItem"))
@@ -1089,7 +1102,7 @@ class PlayerStatItem : Inventory
 				if (owner.CountInv("DecentHealth")) CrisisFactor = 0.975;
 				if (owner.CountInv("LowHealth")) CrisisFactor = 0.75;
 				if (owner.CountInv("CriticalHealth")) CrisisFactor = 0.375;
-				if (dydudebug_attackcalcs) Console.Printf("Damage (passive - Crisis): %.8f", CrisisFactor);
+				if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Crisis): %.8f", CrisisFactor);
 			}
 
 			double TOTALFactor = 1.0
@@ -1098,10 +1111,10 @@ class PlayerStatItem : Inventory
 													 * BuffFactor
 													 * CrisisFactor
 													 * deffct;
-			if (dydudebug_attackcalcs) Console.Printf("Damage (passive - Total): %.8f", TOTALFactor);
+			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Total): %.8f", TOTALFactor);
 
 			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
-			if (dydudebug_attackcalcs) Console.Printf("FDamage (passive - Final): %d", newdamage);
+			if (dydudebug_defensecalcs) Console.Printf("FDamage (passive - Final): %d", newdamage);
 		}
 	}
 	
