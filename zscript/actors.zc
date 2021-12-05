@@ -2,6 +2,7 @@
 class DDBaseZSC : Actor
 {
 	mixin DmgCalc;
+	mixin CollisionChecker;
 
 	// General
 	const SKILL_VERY_EASY = 0;
@@ -75,6 +76,10 @@ class DDProjectile : DDBaseZSC
 
 	int timesrippedoverall;
 	int maxtimesrippedoverall;
+	
+	default
+	{
+	}
 
 	override void Tick()
 	{
@@ -107,6 +112,53 @@ class DDProjectile : DDBaseZSC
 			}
 		}
 		Super.Tick();
+	}
+	
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		DDPlayerPawn playpawn;
+		DDPlayerPawn playpawn2;
+		Actor DDActor;
+		Actor DDActor2;
+		playpawn = DDPlayerPawn(target);
+		playpawn2 = DDPlayerPawn(other);
+		DDActor = Actor(target);
+		DDActor2 = Actor(other);
+
+		// Non-passive means the one moving into the other is performing the checks.
+		if (!passive)
+		{
+			// if fired by a player actor, check for friendliness from the passive actor
+			if (playpawn) 
+			{
+				// Pass through different species of select types.
+				if (other.bFRIENDLY == 1)
+				{
+					if (A_CheckFriendCollisionProjTypePlayer(self)) return false;
+					if (A_CheckFriendCollisionProjTypePlayer2(self)) return false;
+				}
+			}
+			else
+			if (DDActor && DDActor.bFRIENDLY)
+			{
+				// Pass through different species of select types or players
+				if (other.bFRIENDLY == 1 || playpawn2)
+				{
+					if (A_CheckFriendCollisionProjTypeFriendlyDoom()) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHeretic()) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHexen()) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyStrife()) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyOthers()) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendly1()) return false;
+				}
+			}
+			else 
+			{
+			}
+		}
+		
+		// We don't really care about others making the check.
+		return true;
 	}
 	
 	void A_CheckHitCeiling()
@@ -371,8 +423,8 @@ class SingleDamageRipper : DDProjectile
 				// Pass through different species of select types.
 				if (other.bFRIENDLY == 1)
 				{
-					//if (A_CheckFriendCollisionProjTypePlayer(self) > 0) return false;
-					//if (A_CheckFriendCollisionProjTypePlayer2(self) > 0) return false;
+					if (A_CheckFriendCollisionProjTypePlayer(self)) return false;
+					if (A_CheckFriendCollisionProjTypePlayer2(self)) return false;
 				}
 			}
 			else
@@ -381,17 +433,16 @@ class SingleDamageRipper : DDProjectile
 				// Pass through different species of select types or players
 				if (other.bFRIENDLY == 1 || playpawn2)
 				{
-					//if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
+					if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
 				}
 			}
 			else 
 			{
-				//if (GetClassName() == "HubbleBubbleSmall" || GetClassName() == "HubbleBubbleLarge") return false;
 			}
 		}
 		// We don't really care about others making the check.
@@ -434,8 +485,8 @@ class SingleDamageFastRipper : DDFastProjectile
 				// Pass through different species of select types.
 				if (other.bFRIENDLY == 1)
 				{
-					//if (A_CheckFriendCollisionProjTypePlayer(self) > 0) return false;
-					//if (A_CheckFriendCollisionProjTypePlayer2(self) > 0) return false;
+					if (A_CheckFriendCollisionProjTypePlayer(self)) return false;
+					if (A_CheckFriendCollisionProjTypePlayer2(self)) return false;
 				}
 			}
 			else
@@ -444,17 +495,16 @@ class SingleDamageFastRipper : DDFastProjectile
 				// Pass through different species of select types or players
 				if (other.bFRIENDLY == 1 || playpawn2)
 				{
-					//if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
-					//else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
+					if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
 				}
 			}
 			else 
 			{
-				//if (GetClassName() == "HubbleBubbleSmall" || GetClassName() == "HubbleBubbleLarge") return false;
 			}
 		}
 		// We don't really care about others making the check.
@@ -720,7 +770,7 @@ class ShieldPart : ShieldPartBase // The Main segment of the sceptre-shield whic
 			TNT1 A 0 bright 
 			{
 				A_StartSound("CricketBat/ShieldHit", CHAN_WEAPON);
-				Console.Printf("#$G#");
+				//Console.Printf("#$G#");
 			}
 			stop;
 		Death:

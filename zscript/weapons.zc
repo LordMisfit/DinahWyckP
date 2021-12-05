@@ -1101,7 +1101,7 @@ class CricketSwingShieldPart : ShieldPart
 	states
 	{
 		Spawn:
-			HEXA C 4 bright NoDelay
+			HEXA C 3 bright NoDelay
 			{
 				//A_SetTics(randompick(1,2,2,2,3));
 				//if (CountInv("PlayingDoom64")) { A_SetSize(19,19); }
@@ -1127,7 +1127,7 @@ class CricketSwingPartNoReflect : ShieldPartNoReflect
 	states
 	{
 		Spawn:
-			HEXA A 2 bright NoDelay
+			HEXA A 3 bright NoDelay
 			{
 				//A_SetTics(randompick(1,2,2,2,3));
 				//if (CountInv("PlayingDoom64")) { A_SetSize(19,19); }
@@ -2130,6 +2130,62 @@ class BlunderAmmoBig : BlunderAmmo
 //*************
 //* Scrambler *
 //*************
+class ScramblerShieldPart : ShieldPart
+{
+	default
+	{
+		-AIMREFLECT
+		+DEFLECT
+		Radius 8; // out of 32
+		Height 16; // out of 32
+		Scale 0.5;
+	}
+	
+	states
+	{
+		Spawn:
+			HEXA C 3 bright NoDelay
+			{
+				//A_SetTics(randompick(1,2,2,2,3));
+				//if (CountInv("PlayingDoom64")) { A_SetSize(19,19); }
+			}
+			stop;
+		Pain:
+			TNT1 A 1 bright 
+			{
+				//A_StartSound("CricketBat/ShieldHit", CHAN_WEAPON);
+			}
+			stop;
+	}
+}
+
+class ScramblerSwingPartNoReflect : ShieldPartNoReflect
+{
+	default
+	{
+		Radius 8; // out of 32
+		Height 16; // out of 32
+		Scale 0.5;
+	}
+	
+	states
+	{
+		Spawn:
+			HEXA A 3 bright NoDelay
+			{
+				//A_SetTics(randompick(1,2,2,2,3));
+				//if (CountInv("PlayingDoom64")) { A_SetSize(19,19); }
+			}
+			stop;
+		Pain:
+			TNT1 A 1 bright 
+			{
+				//A_StartSound("CricketBat/ShieldHit", CHAN_WEAPON);
+			}
+			stop;
+	}
+}
+
 class Scrambler : DinahWeapon replaces SuperShotgun
 {
 	default
@@ -2151,6 +2207,114 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		inventory.pickupsound "misc/w_pkup"; //"Dinah/marvelous"
 		Tag "Scrambler";
 		Obituary "%k scored a point with %o.";
+	}
+	
+	action void A_ScramblerSwingShield(int type = 0, double dist = 80.0)
+	{
+		string vispart = "ScramblerSwingPartNoReflect";
+		if (random(1,32) <= random(10,12)) vispart = "ScramblerSwingShieldPart";
+
+		double yoffset = frandompick(-0.1625,0,0.1625);
+
+		double distx, disty, distz;
+		double heightmulti = 0.5;
+		double heightmultivari = 0.125;
+		double yseperation = -5.2;
+		double sa = sin(angle);
+		double ca = cos(angle);
+		if (dydudebug_cricketbatguard) Console.Printf("angle sine: %.3f, angle cosine: %.3f", sa, ca);
+		double sp = sin(pitch);
+		double cp = cos(pitch);
+		if (dydudebug_cricketbatguard) Console.Printf("pitch sine: %.3f, pitch cosine: %.3f", sp, cp);
+		int m = dist;
+
+		if (type == 1) m *= 1.334;
+
+		distx = (m * frandom(0.95,1.05));
+		disty = 0.0;
+		distz = (height * heightmulti) + yoffset;
+		A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+		distx = (m * frandom(0.90,0.95));
+		disty = (yseperation * 2);
+		distz = (height * heightmulti) + yoffset;
+		A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+		disty *= -1;
+		distz = (height * heightmulti) + yoffset;
+		A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+		disty = yseperation;
+		distz = (height * (heightmulti - heightmultivari)) + yoffset;
+		A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+		disty *= -1;
+		distz = (height * (heightmulti - heightmultivari)) + yoffset;
+		A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+		disty = yseperation;
+		distz = (height * (heightmulti + heightmultivari)) + yoffset;
+		A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+		disty *= -1;
+		distz = (height * (heightmulti + heightmultivari)) + yoffset;
+		A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+
+		if ((random (1,64) <= 63) || (type == 1 && (random (1,512) <= 511)))
+		{
+			m *= 0.667;
+
+			distx = (m * frandom(0.95,1.05));
+			disty = 0.0;
+			distz = (height * heightmulti) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			distx = (m * frandom(0.90,0.95));
+			disty = (yseperation * 2);
+			distz = (height * heightmulti) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty *= -1;
+			distz = (height * heightmulti) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty = yseperation;
+			distz = (height * (heightmulti - heightmultivari)) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty *= -1;
+			distz = (height * (heightmulti - heightmultivari)) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty = yseperation;
+			distz = (height * (heightmulti + heightmultivari)) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty *= -1;
+			distz = (height * (heightmulti + heightmultivari)) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+		}
+
+
+		if ((random (1,32) <= 27) || (type == 1 && (random (1,256) <= 253)))
+		{
+			m *= 0.334;
+
+			distx = (m * frandom(0.95,1.05));
+			disty = 0.0;
+			distz = (height * heightmulti) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			distx = (m * frandom(0.90,0.95));
+			disty = (yseperation * 2);
+			distz = (height * heightmulti) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty *= -1;
+			distz = (height * heightmulti) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty = yseperation;
+			distz = (height * (heightmulti - heightmultivari)) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty *= -1;
+			distz = (height * (heightmulti - heightmultivari)) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty = yseperation;
+			distz = (height * (heightmulti + heightmultivari)) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+			disty *= -1;
+			distz = (height * (heightmulti + heightmultivari)) + yoffset;
+			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+		}
+
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		if (MiscItem) MiscItem.CricketBatSwingBuffTimer = randompick(3,3,3,3,3,3,4,4,4);
 	}
 	
 	States
@@ -2194,21 +2358,43 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			}
 			FPAN C 2 
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					A_SetTics(1); 
+					A_ScramblerSwingShield(1);
+				}
+				else
+				{
+					A_ScramblerSwingShield(0);
+				}
 			}
 			FPAN D 2 
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
 					A_SetTics(1);
+					A_ScramblerSwingShield(1);
 					A_CustomPunch ((Random(10, 12)*10), FALSE, 0, "PanPuff", 72);
 				}
 				else
 				{
+					A_ScramblerSwingShield(0);
 					A_CustomPunch (Random(10, 12), FALSE, 0, "PanPuff", 72);
 				}
 			}
-			FPAN EFG 2 
+			FPAN E 2 
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					A_SetTics(1); 
+					A_ScramblerSwingShield(1);
+				}
+				else
+				{
+					A_ScramblerSwingShield(0);
+				}
+			}
+			FPAN FG 2 
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
 			}
@@ -2234,7 +2420,15 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			}
 			FPAN C 2 
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					A_SetTics(1); 
+					A_ScramblerSwingShield(1);
+				}
+				else
+				{
+					A_ScramblerSwingShield(0);
+				}
 			}
 			FPAN D 2 
 			{
@@ -2242,14 +2436,28 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
 					A_SetTics(1);
+					A_ScramblerSwingShield(1);
 					A_FireProjectile("EggShotBerserk",0,1,0,0);
 				}
 				else
 				{
+					A_ScramblerSwingShield(0);
 					A_FireProjectile("EggShot",0,1,0,0);
 				}
 			}
-			FPAN EFG 2 
+			FPAN E 2 
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					A_SetTics(1); 
+					A_ScramblerSwingShield(1);
+				}
+				else
+				{
+					A_ScramblerSwingShield(0);
+				}
+			}
+			FPAN FG 2 
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
 			}
