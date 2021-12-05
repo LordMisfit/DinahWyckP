@@ -12,6 +12,7 @@ class PlayerStatItem : Inventory
 	int landdmgbonus;
 	int RenderStyleType;
 	int tempalpha;
+	int SuperVacAmmo;
 
 	int InitEXPTables;
 	int PrevTimeFreezeTimer;
@@ -255,6 +256,7 @@ class PlayerStatItem : Inventory
 				}
 			}
 
+			SuperVacAmmo = owner.CountInv("VacAmmo");
 			//
 			// Leveling Up
 			//
@@ -659,8 +661,8 @@ class PlayerStatItem : Inventory
 			}
 			if (weapon is "SuperVac")
 			{
-				if (berserked) WeaponJumpZ *= 0.984375;
-				else WeaponJumpZ *= 0.9375;
+				if (berserked) WeaponJumpZ *= (0.984375 - (SuperVacAmmo * 0.000651042));
+				else WeaponJumpZ *= (0.9375 - (SuperVacAmmo * 0.002604167));
 			}
 			if (weapon is "Grimophone") 
 			{
@@ -1140,25 +1142,65 @@ class PlayerStatItem : Inventory
 		if (Owner.CountInv("PowerWineBuffStrongestEven")) Speed *= frandom(0.69,0.75);
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Buffs]: %.8f", Speed);
 
-		if (owner.CountInv("KnightGownItem")) Speed *= 0.99;
-		if (owner.CountInv("KnightGownItem2")) Speed *= 0.97;
-		if (owner.CountInv("KnightGownItem3")) Speed *= 0.94;
-		if (owner.CountInv("KnightGownItem4")) Speed *= 0.90;
+		if (owner.CountInv("KnightGownItem")) 
+		{
+			if (berserked) Speed *= 0.995;
+								else Speed *= 0.99;
+		}
+		if (owner.CountInv("KnightGownItem2")) 
+		{
+			if (berserked) Speed *= 0.985;
+								else Speed *= 0.97;
+		}
+		if (owner.CountInv("KnightGownItem3")) 
+		{
+			if (berserked) Speed *= 0.97;
+								else Speed *= 0.94;
+		}
+		if (owner.CountInv("KnightGownItem4")) 
+		{
+			if (berserked) Speed *= 0.95;
+								else Speed *= 0.90;
+		}
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Armor]: %.8f", Speed);
 		
 		// Weapon Checks
 		if (weapon is "HandToHand")
 		{
-			if (berserked) Speed *= 1.1625;
-			else Speed *= 1.125;
+			if (berserked) Speed *= 1.25;
+								else Speed *= 1.125;
 		}
 		if (weapon is "CricketBat") Speed *= 1.00;
-		if (weapon is "BlunderAxe") Speed *= 0.95;
-		if (weapon is "AppleJack") Speed *= 1.05;
-		if (weapon is "Scrambler") Speed *= 1.125;
-		if (weapon is "WizardPike") Speed *= 1.125;
-		if (weapon is "SuperVac") Speed *= 0.875;
-		if (weapon is "Grimophone") Speed *= 0.875;
+		if (weapon is "BlunderAxe") 
+		{
+			if (berserked) Speed *= 0.975;
+								else Speed *= 0.95;
+		}
+		if (weapon is "AppleJack") 
+		{
+			if (berserked) Speed *= 1.075;
+								else Speed *= 1.05;
+		}
+		if (weapon is "Scrambler") 
+		{
+			if (berserked) Speed *= 1.1875;
+								else Speed *= 1.125;
+		}
+		if (weapon is "WizardPike") 
+		{
+			if (berserked) Speed *= 1.1875;
+								else Speed *= 1.125;
+		}
+		if (weapon is "SuperVac") 
+		{
+			if (berserked) Speed *= (0.9375 - (SuperVacAmmo * 0.002604167));
+								else Speed *= (0.875 - (SuperVacAmmo * 0.005208333));
+		}
+		if (weapon is "Grimophone") 
+		{
+			if (berserked) Speed *= 0.90625;
+								else Speed *= 0.8125;
+		}
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [WeaponEquipped]: %.8f", Speed);
 		
 		if (owner.CountInv("MysteryItem"))
@@ -1220,7 +1262,7 @@ class PlayerDashJump : Inventory
 	int PlayerLevel;
 	int BaseDashChargeMax;
 	int ExtraDashCharge;
-	
+	int SuperVacAmmo;
 	int ClassCheck;
 	
 	Default
@@ -1238,7 +1280,8 @@ class PlayerDashJump : Inventory
 		let weapon = owner.player.ReadyWeapon;
 		if (Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD")) berserked = true;
 		else berserked = false;
-
+		
+		SuperVacAmmo = owner.CountInv("VacAmmo");
 		PlayerInfo PlayDash = Owner.Player;
 		Int BTInput = PlayDash.cmd.buttons;
 		dashgruntchance = randompick(66,66,67);
@@ -1290,7 +1333,8 @@ class PlayerDashJump : Inventory
 		}
 		if (weapon is "SuperVac")
 		{
-			if (!berserked) DashCost += 1;
+			if (!berserked) DashCost += (1 + (SuperVacAmmo * 0.041666667));
+								 else DashCost += (0 + (SuperVacAmmo * 0.027777775));
 		}
 		if (weapon is "Grimophone")
 		{
