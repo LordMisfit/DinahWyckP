@@ -43,6 +43,18 @@ class DD_EventHandler : EventHandler
 						if (MiscItem) landdamagebonus = MiscItem.landdmgbonus;
 						if (dydudebug_worlddamaged) Console.Printf("landdamagebonus: %d", landdamagebonus);
 					}
+					if (AttackName == "PlayerWhistle")
+					{
+						double ang;
+						if (e.inflictor.target) ang = e.inflictor.target.angle;
+						else if (e.inflictor) ang = e.inflictor.angle;
+						double force = frandompick(13.75,15,16.25);
+						force *= 0.25;
+						if (e.inflictor && (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD"))) force *= frandompick(1.5,2,2.5);
+
+						e.thing.Vel.Z += force;
+						e.thing.thrust(force, (ang + frandompick(-3,-1.5,-1.5,0,0,0,0,0,1.5,1.5,3)));
+					}
 					if (AttackName == "UppercutPuff")
 					{
 						double ang;
@@ -221,6 +233,7 @@ class DD_EventHandler : EventHandler
 				if (e.inflictor && ((e.inflictor.target && AttackerName == "DinahPlayer") || (AttackName == "DinahPlayer")) && !e.thing.bFRIENDLY && e.thing.bCOUNTKILL) 
 				{
 					int ExpGain = ((e.thing.spawnhealth()*frandom(0.05,0.125)));
+					if (AttackName == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
 					if (e.thing.GetClassName() == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
 					if (e.inflictor.target && e.inflictor.target.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
 					if (ExpGain < 1) ExpGain = 1;
@@ -360,10 +373,12 @@ class DD_EventHandler : EventHandler
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 					if (random(1,maxchance) == 1)
 					{
-						user_type = random(1,41);
-						if (user_type >= 1 && user_type <= 32) { e.thing.A_SpawnItemEx("FuryPotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-						if (user_type >= 33 && user_type <= 40) { e.thing.A_SpawnItemEx("TimePotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-						if (user_type == 41) { e.thing.A_SpawnItemEx("DoorBell",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						user_type = random(1,336);
+						if (user_type >= 1 && user_type <= 140) { e.thing.A_SpawnItemEx("FuryPotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type >= 141 && user_type <= 256) { e.thing.A_SpawnItemEx("CrazyBallDD",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type >= 257 && user_type <= 320) { e.thing.A_SpawnItemEx("TimePotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type >= 321 && user_type <= 334) { e.thing.A_SpawnItemEx("BlunderAxeSchematic",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+						if (user_type >= 335) { e.thing.A_SpawnItemEx("DoorBell",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
 					}
 					
 					//
@@ -492,7 +507,18 @@ class DD_EventHandler : EventHandler
 			[key1, key2] = Bindings.GetKeysForCommand("Whistl");
 			if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
 			{
-				player.A_SpawnItemEx("PlayerWhistle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+				
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				if (MiscItem)
+				{
+					if (MiscItem.whistlecooldown == 0)
+					{
+						player.A_SpawnItemEx("PlayerWhistle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+						if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) MiscItem.whistlecooldown = random(28,33);
+																																									 else MiscItem.whistlecooldown = random(42,49);
+					}
+				}
+				
 			}
 		}
 	}
