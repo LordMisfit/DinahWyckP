@@ -185,9 +185,60 @@ class DDPlayerPawn : PlayerPawn
 			if (armortier == 2) A_SetInventory("KnightGownItem2",1); else A_SetInventory("KnightGownItem2",0);
 			if (armortier == 3) A_SetInventory("KnightGownItem3",1); else A_SetInventory("KnightGownItem3",0);
 			if (armortier == 4) A_SetInventory("KnightGownItem4",1); else A_SetInventory("KnightGownItem4",0);
+			
+			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+			if (MiscItem)
+			{
+				MiscItem.GetSpeedFactor();
+			}
 		}
 
 		Super.Tick();
+	}
+
+	override void CheckJump()
+	{
+		let player = self.player;
+		// [RH] check for jump
+		if (player.cmd.buttons & BT_JUMP)
+		{
+			if (player.crouchoffset != 0)
+			{
+				// Jumping while crouching will force an un-crouch but not jump
+				player.crouching = 1;
+			}
+			else if (waterlevel >= 2)
+			{
+				Vel.Z = 4 * Speed;
+			}
+			else if (bNoGravity)
+			{
+				Vel.Z = 3.;
+			}
+			else if (level.IsJumpingAllowed() && player.onground && player.jumpTics == 0)
+			{
+				double jumpvelz = JumpZ * 35 / TICRATE;
+				double jumpfac = 0;
+
+				// [BC] If the player has the high jump power, double his jump velocity.
+				// (actually, pick the best factors from all active items.)
+				for (let p = Inv; p != null; p = p.Inv)
+				{
+					let pp = PowerHighJump(p);
+					if (pp)
+					{
+						double f = pp.Strength;
+						if (f > jumpfac) jumpfac = f;
+					}
+				}
+				if (jumpfac > 0) jumpvelz *= jumpfac;
+
+				Vel.Z += jumpvelz;
+				bOnMobj = false;
+				player.jumpTics = -1;
+				if (!(player.cheats & CF_PREDICTING)) A_StartSound("*jump", CHAN_BODY);
+			}
+		}
 	}
 
 	void A_CheckNeverBleed(int type, int damage, int flags)
@@ -454,10 +505,10 @@ class DDPlayerPawn : PlayerPawn
 				{
 					if (useflatdefense)
 					{
-						if (armortier == 1) damage -= random(0,1);
-						if (armortier == 2) damage -= random(1,2);
-						if (armortier == 3) damage -= random(2,3);
-						if (armortier >= 4) damage -= random(4,5);
+						if (armortier == 1) damage -= (random(0,1) + (CountInv("PlayerLevel") * 0.025));
+						if (armortier == 2) damage -= (random(1,2) + (CountInv("PlayerLevel") * 0.050));
+						if (armortier == 3) damage -= (random(2,3) + (CountInv("PlayerLevel") * 0.075));
+						if (armortier >= 4) damage -= (random(4,5) + (CountInv("PlayerLevel") * 0.125));
 					}
 					if (damage <= 0)
 					{

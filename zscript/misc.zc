@@ -65,6 +65,10 @@ class PlayerStatItem : Inventory
 	
 	int GrimophoneDebuffTimer;
 	
+	int actualjumpheight;
+	double actualjumpheight2;
+	int TrueJumpHeight;
+	
 	double atkfct, deffct, spdfct, jmpfct, suvfct;
 
 	default 
@@ -602,13 +606,12 @@ class PlayerStatItem : Inventory
 			//*********
 			//* JumpZ *
 			//*********
-			bool debugjumpz = false;
 			double CharacterJumpZ = 8.25;
 
 			// Level
 			double LevelJumpZ = 1.00;
 			LevelJumpZ += (PlayerLevel * 0.0025);
-			if (debugjumpz) Console.Printf("JumpZ [Level]: %.8f", LevelJumpZ);
+			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Level]: %.8f", LevelJumpZ);
 			
 			// Buffs
 			double BuffJumpZ = 1.00;
@@ -618,7 +621,7 @@ class PlayerStatItem : Inventory
 			if (owner.CountInv("PowerWineBuffStrong")) BuffJumpZ *= frandom(0.96,1.00);
 			if (owner.CountInv("PowerWineBuffStrongest")) BuffJumpZ *= frandom(0.93,1.00);
 			if (owner.CountInv("PowerWineBuffStrongestEven")) BuffJumpZ *= frandom(0.88,1.00);
-			if (debugjumpz) Console.Printf("JumpZ [Buffs]: %.8f", BuffJumpZ);
+			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Buffs]: %.8f", BuffJumpZ);
 
 			// Armor
 			double ArmorJumpZ = 1.00;
@@ -626,7 +629,7 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("KnightGownItem2"))				ArmorJumpZ -= 0.025;
 			if (Owner.CountInv("KnightGownItem3"))				ArmorJumpZ -= 0.0475;
 			if (Owner.CountInv("KnightGownItem4"))				ArmorJumpZ -= 0.0875;
-			if (debugjumpz) Console.Printf("JumpZ [Armor]: %.8f", ArmorJumpZ);
+			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Armor]: %.8f", ArmorJumpZ);
 
 			// Weapon Checks
 			double WeaponJumpZ = 1.00;
@@ -669,7 +672,7 @@ class PlayerStatItem : Inventory
 				if (berserked) WeaponJumpZ *= 0.996875;
 				else WeaponJumpZ *= 0.875;
 			}
-			if (debugjumpz) Console.Printf("JumpZ [WeaponEquipped]: %.8f", WeaponJumpZ);
+			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [WeaponEquipped]: %.8f", WeaponJumpZ);
 
 			double TotalJumpZ = CharacterJumpZ
 												* LevelJumpZ
@@ -678,8 +681,11 @@ class PlayerStatItem : Inventory
 												* WeaponJumpZ
 												* jmpfct;
 
-			if (debugjumpz) Console.Printf("%.8f (%.8f, %.8f, %.8f, %.8f)", TotalJumpZ, CharacterJumpZ, LevelJumpZ, BuffJumpZ, ArmorJumpZ);
 			PlayerPawn(Owner).JumpZ = TotalJumpZ;
+			actualjumpheight = ((TotalJumpZ * 35 / TICRATE) * 18);
+			actualjumpheight2 = (((TotalJumpZ*2)**2)/2+owner.maxstepheight)/((TotalJumpZ**2)/2+owner.maxstepheight);
+			TrueJumpHeight = ((TotalJumpZ * (TotalJumpZ + 1.0)) / 2) + owner.maxstepheight;
+			if (dydudebug_jumpingcalcs) Console.Printf("%.8f [\c[gold]%d\c- / \c[fire]%d\c-x / \c[blue]%d\c-] (%.8f, %.8f, %.8f, %.8f)", TotalJumpZ, actualjumpheight, actualjumpheight2, TrueJumpHeight, CharacterJumpZ, LevelJumpZ, BuffJumpZ, ArmorJumpZ);
 			
 			
 			// SuperVac Ammo
@@ -1118,6 +1124,7 @@ class PlayerStatItem : Inventory
 		}
 	}
 	
+	double HUDSpeed;
 	override double GetSpeedFactor()
 	{
 		let weapon = owner.player.ReadyWeapon;
@@ -1125,10 +1132,12 @@ class PlayerStatItem : Inventory
 		MaxHealthTrue = (owner.player.mo.maxhealth + owner.player.mo.stamina);
 
 		Speed = 1.00;
+		HUDSpeed = Speed;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [base]: %.8f", Speed);
 
 		Speed *= (1.00 + (PlayerLevel * 0.0075));
 		if (Speed >= 2.5) Speed = 2.5;
+		HUDSpeed = Speed;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [level]: %.8f", Speed);
 
 		if (CurrentHealth >= (MaxHealthTrue * 3)) Speed *= 1.25;
@@ -1143,16 +1152,26 @@ class PlayerStatItem : Inventory
 		else if (CurrentHealth >= (MaxHealthTrue * 0.5)) Speed *= 0.9375;
 		else if (CurrentHealth >= (MaxHealthTrue * 0.25)) Speed *= 0.875;
 		else Speed *= 0.8125;
+		HUDSpeed = Speed;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [health]: %.8f", Speed);
 
-		if (berserked) Speed *= 1.125;
+		if (berserked) 
+		{
+			Speed *= 1.125;
+			HUDSpeed = Speed;
+		}
 		
-		if (Owner.CountInv("CricketBatGuard")) Speed *= frandom(0.95,0.975);
+		if (Owner.CountInv("CricketBatGuard")) 
+		{
+			Speed *= frandom(0.95,0.975);
+			HUDSpeed = Speed;
+		}
 
 		if (Owner.CountInv("PowerWineBuffWeak")) Speed *= frandom(0.965,0.975);
 		if (Owner.CountInv("PowerWineBuffStrong")) Speed *= frandom(0.89,0.91);
 		if (Owner.CountInv("PowerWineBuffStrongest")) Speed *= frandom(0.80,0.84);
 		if (Owner.CountInv("PowerWineBuffStrongestEven")) Speed *= frandom(0.69,0.75);
+		HUDSpeed = Speed;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Buffs]: %.8f", Speed);
 
 		if (owner.CountInv("KnightGownItem")) 
@@ -1175,6 +1194,7 @@ class PlayerStatItem : Inventory
 			if (berserked) Speed *= 0.95;
 								else Speed *= 0.90;
 		}
+		HUDSpeed = Speed;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Armor]: %.8f", Speed);
 		
 		// Weapon Checks
@@ -1223,10 +1243,11 @@ class PlayerStatItem : Inventory
 			if (owner.CountInv("CriticalHealth")) Speed *= 1.3125;
 			if (dydudebug_speedcalcs) Console.Printf("SpeedX [Crisis]: %.8f", Speed);
 		}
+		HUDSpeed = Speed;
 
 		Speed *= spdfct;
 
-		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Final]: %.8f", Speed);
+		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Final]: %.8f, HUDSpeed: %.2f", Speed, HUDSpeed);
 		return Speed; 
 	}
 }

@@ -78,6 +78,7 @@ class DDStatusBarMain : BaseStatusBar
 			if (CPlayer.mo.CountInv("KnightGownItem")) armortick = 250 * tickinc;
 			if (CPlayer.mo.CountInv("KnightGownItem2")) armortick = 500 * tickinc;
 			if (CPlayer.mo.CountInv("KnightGownItem3")) armortick = 1000 * tickinc;
+			if (CPlayer.mo.CountInv("KnightGownItem4")) armortick = 2000 * tickinc;
 			if (armortick < 1) armortick = 1;
 			if (armortick != prevarmortick) mArmorInterpolator = DynamicValueInterpolator.Create(armor.Amount, 0.25, 1, armortick);
 		}
@@ -395,6 +396,11 @@ class DDStatusBarMain : BaseStatusBar
 				armorcolor = font.CR_Gold;
 				armormax = 1000;
 			}
+			if (CPlayer.mo.CountInv("KnightGownItem4"))
+			{
+				armorcolor = font.CR_Gold;
+				armormax = 2000;
+			}
 			if (armormax)
 			{
 				DrawInventoryIcon(armor, (x-22, y+10), DI_TEXT_ALIGN_CENTER, 0.75, (-1, -1), (0.5,0.5)); // 58, -24
@@ -658,8 +664,29 @@ class DDStatusBarMain : BaseStatusBar
 		if (isinvuln) healthcolor = font.CR_Gold;
 		DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), (49, -28), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, FontWrapWidth, FontLineSpace, (xscal*1.25, yscal*1.25));
 
-		//armor
+		//misc [speed]
+		double basespeed = 1.0;
+		int jumpheight = 64;
+		string speedval = "";
+		string jumpval = "";
+		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+		if (MiscItem) 
+		{
+			FontScale = (1.0, 1.0);
+			basespeed = MiscItem.HUDSpeed * 100;
+			int speedclr = font.cr_white;
+			if (basespeed > 100.0000) speedclr = font.cr_blue;
+			if (basespeed < 100.0000) speedclr = font.cr_red;
+			speedval.AppendFormat("%.2f%% MoveSpeed", basespeed);
+			DrawString(mArmSaveFont, speedval, (79, -21), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 
+			JumpHeight = MiscItem.TrueJumpHeight;
+			jumpval.AppendFormat("%d Jump Height", JumpHeight);
+			DrawString(mArmSaveFont, jumpval, (79, -15), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			FontScale = (1.25, 1.25);
+		}
+
+		//armor
 		int armorcolor = font.CR_White; 
 		int armormax;
 		double armorprotect;
@@ -674,6 +701,7 @@ class DDStatusBarMain : BaseStatusBar
 				armorprotect = armorb.SavePercent * 100;
 				armorsaveamt = "";
 				armorsaveamt.AppendFormat("%.2f%%", armorprotect);
+				armorsaveamt.AppendFormat(" damage resist");
 			}
 			valueamt = armor.Amount;
 			valueamtS = FormatNumber(valueamt);
@@ -694,6 +722,11 @@ class DDStatusBarMain : BaseStatusBar
 				armorcolor = font.CR_Gold;
 				armormax = 1000;
 			}
+			if (CPlayer.mo.CountInv("KnightGownItem4"))
+			{
+				armorcolor = font.CR_Gold;
+				armormax = 2000;
+			}
 			valueamtS = FormatNumber(valueamt);
 			armormaxS = FormatNumber(armormax);
 
@@ -711,7 +744,18 @@ class DDStatusBarMain : BaseStatusBar
 			
 			FontScale = (1.0, 1.0);
 			// Protect %
-			if (armorprotect) DrawString(mArmSaveFont, armorsaveamt, (79, -50), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			if (armorprotect) DrawString(mArmSaveFont, armorsaveamt, (79, -53), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			// + Defense
+			int ArmorFlatDefValue = 0;
+			string ArmorFlatDef = "";
+			if (CPlayer.mo.CountInv("KnightGownItem")) ArmorFlatDefValue = (1 + (CPlayer.mo.CountInv("PlayerLevel") * 0.025));
+			if (CPlayer.mo.CountInv("KnightGownItem2")) ArmorFlatDefValue = (2 + (CPlayer.mo.CountInv("PlayerLevel") * 0.050));
+			if (CPlayer.mo.CountInv("KnightGownItem3")) ArmorFlatDefValue = (3 + (CPlayer.mo.CountInv("PlayerLevel") * 0.075));
+			if (CPlayer.mo.CountInv("KnightGownItem4")) ArmorFlatDefValue = (5 + (CPlayer.mo.CountInv("PlayerLevel") * 0.125));
+			ArmorFlatDef.AppendFormat("-");
+			ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
+			ArmorFlatDef.AppendFormat("flat damage");
+			if (armor.Amount > 0) DrawString(mArmSaveFont, ArmorFlatDef, (79, -47), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 			FontScale = (1.25, 1.25);
 		}
 
@@ -743,33 +787,78 @@ class DDStatusBarMain : BaseStatusBar
 			DrawString(mDDMFont, FormatNumber(EXPNeeded, digits), (digx, -78), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 		}
 
-		//frags/keys
-		if (deathmatch)
+		//keys
+		Vector2 keypos = (256, -6); // (-10, 24)
+		int rowsize = 6;
+		Vector2 keyscale = (1.0, 1.0);
+		if (gameinfo.gametype == GAME_Doom) 
 		{
-			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (70, -16));
+			keypos = (256, -6);
+			rowsize = 3;
+			keyscale = (1.5, 1.5);
 		}
-		else
+		if (gameinfo.gametype == GAME_Heretic) 
 		{
-			Vector2 keypos = (86, -7); // 60, -1
-			int rowc = 0;
-			double roww = 0;
+			keypos = (256, -6);
+			rowsize = 3;
+			keyscale = (1.5, 1.5);
+		}
+		if (gameinfo.gametype == GAME_Hexen) 
+		{ 
+			keypos = (224, -8); // 256, -6
+			//keypos = (10, -100);
+			rowsize = 2; // Hexen's key icons are far and away the largest, so this is capped to 11, the number of keys Hexen uses.
+			keyscale = (0.667, 0.667);
+		}
+		if (gameinfo.gametype == GAME_Strife) 
+		{
+			keypos = (208, -5); // 256, -6
+			//keypos = (8, -68); // 8, -68
+			rowsize = 3; // Strife has an absurd TWENTY-EIGHT key types, at least the ones that the HUD normally shows. :V
+			keyscale = (0.6, 0.6);
+		}
+		int basexpos = keypos.x;
+		int baseypos = keypos.y;
+
+		int rowc = 0;
+		double roww = 0;
+		bool showkeys = true;
+		/*
+		if (!automapactive)
+		{
+			if (gameinfo.gametype == GAME_Hexen) showkeys = false;
+			if (gameinfo.gametype == GAME_Strife) showkeys = false;
+		}
+		*/
+		
+		if (showkeys)
+		{
 			for(let i = CPlayer.mo.Inv; i != null; i = i.Inv)
 			{
 				if (i is "Key" && i.Icon.IsValid())
 				{
-					DrawTexture(i.Icon, keypos, DI_ITEM_LEFT_BOTTOM);
+					//Console.Printf("x: %d, y: %d, type: %s", keypos.x, keypos.y, i.GetClassName());
+					DrawTexture(i.Icon, keypos, DI_SCREEN_LEFT_BOTTOM|DI_ITEM_CENTER, 1.0, (-1, -1), keyscale);
 					Vector2 size = TexMan.GetScaledSize(i.Icon);
-					keypos.Y -= size.Y + 2;
+					size.x *= keyscale.x;
+					size.y *= keyscale.y;
+					keypos.Y -= size.Y + 2; // + = down, - = up
 					roww = max(roww, size.X);
-					if (++rowc == 3)
+					if (++rowc == rowsize)
 					{
-						keypos.Y = -1;
+						keypos.Y = baseypos;
 						keypos.X += roww + 2;
 						roww = 0;
 						rowc = 0;
 					}
 				}
 			}
+		}
+
+		//frags
+		if (deathmatch)
+		{
+			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (70, -16));
 		}
 		
 		// dash
