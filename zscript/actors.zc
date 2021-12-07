@@ -32,6 +32,14 @@ class DDBaseZSC : Actor
 		
 		super.Tick();
 	}
+	
+	override int DoSpecialDamage(Actor target, int damage, Name damagetype)
+	{
+		//Console.Printf("DoSpecialDamage: DDBaseZSC");
+		damage = super.DoSpecialDamage(target, damage, damagetype);
+		// New Code goes here
+		return damage;
+	}
 
 	action state A_CheckSolidFooting(StateLabel label, int flags = CSF_ALL)
 	{
@@ -163,6 +171,14 @@ class DDProjectile : DDBaseZSC
 		return true;
 	}
 	
+	override int DoSpecialDamage(Actor target, int damage, Name damagetype)
+	{
+		//Console.Printf("DoSpecialDamage: DDProjectile");
+		damage = super.DoSpecialDamage(target, damage, damagetype);
+		// New Code goes here
+		return damage;
+	}
+	
 	void A_CheckHitCeiling()
 	{
 		if (pos.Z + height >= ceilingz) hitaceiling = true;
@@ -178,7 +194,6 @@ class DDFastProjectile : DDProjectile
 		Projectile;
 		MissileHeight 0;
 	}
-	
 	
 	virtual void Effect()
 	{
@@ -560,6 +575,14 @@ class DDPuff : DDBaseZSC
 		}
 		Super.Tick();
 	}
+	
+	override int DoSpecialDamage(Actor target, int damage, Name damagetype)
+	{
+		//Console.Printf("DoSpecialDamage: DDPuff");
+		damage = super.DoSpecialDamage(target, damage, damagetype);
+		// New Code goes here
+		return damage;
+	}
 }
 
 class DDVisualAImage : DDBaseZSC
@@ -672,38 +695,8 @@ class ShieldPartBase : DDBaseZSC
 		if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart [%s] (gametic %d):\c- other: %s", GetClassName(), gametic, other.GetClassName());
 		if (passive)
 		{
-			if (other.GetClassName() == "MalletShot" || 
-					other.GetClassName() == "MalletShotBerserk" || 
-					other.GetClassName() == "BlunderShot" || 
-					other.GetClassName() == "EggShot" || 
-					other.GetClassName() == "EggShotBerserk" || 
-					other.GetClassName() == "EggGrenade" || 
-					other.GetClassName() == "EggGrenadeBerserk" || 
-					other.GetClassName() == "EggMini" || 
-					other.GetClassName() == "EggMiniBerserk" || 
-					other.GetClassName() == "ZapShot" || 
-					other.GetClassName() == "MiniZapShot" || 
-					other.GetClassName() == "JackShot" || 
-					other.GetClassName() == "JackShotBerserk" || 
-					other.GetClassName() == "RecordShot" || 
-					other.GetClassName() == "VacShot" || 
-					other.GetClassName() == "VacShot2" || 
-					other.GetClassName() == "CherryBombShot" || 
-					other.GetClassName() == "CherryBombShotBerserk" || 
-					other.GetClassName() == "BRocketShot" || 
-					other.GetClassName() == "BRocketBoom1" || 
-					other.GetClassName() == "BRocketBoom2" || 
-					other.GetClassName() == "Spinnershot" || 
-					other.GetClassName() == "StreamerShot" || 
-					other.GetClassName() == "StreamerTrail" || 
-					other.GetClassName() == "PopperPuff1" || 
-					other.GetClassName() == "PopperPuff2" || 
-					other.GetClassName() == "SnakeGrenade" || 
-					other.GetClassName() == "SnakeMiniGrenade" || 
-					other.GetClassName() == "") 
-			{
-					return false;
-			}
+			if (A_CheckCollisionProjShieldExemption(other)) return false;
+
 			if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart (gametic %d):\c- passive: %s", gametic, GetClassName());
 			// Pass through different species of select types.
 			if (playpawn) return false; // Player Checking
@@ -782,6 +775,43 @@ class ShieldPart : ShieldPartBase // The Main segment of the sceptre-shield whic
 
 class SwingShieldPart : ShieldPart // For swinging based shields [used as a general branch that allows monsters to pass through them]
 {
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		PlayerPawn playpawn;
+		PlayerPawn playpawn2;
+		playpawn = PlayerPawn(other);
+
+		if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart [%s] (gametic %d):\c- other: %s", GetClassName(), gametic, other.GetClassName());
+		if (passive)
+		{
+			if (A_CheckCollisionProjShieldExemption(other)) return false;
+
+			if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart (gametic %d):\c- passive: %s", gametic, GetClassName());
+			// Pass through different species of select types.
+			if (playpawn) return false; // Player Checking
+
+			if (other && other.bISMONSTER)
+			{
+				return false;
+			}
+
+			playpawn = PlayerPawn(other.target);
+			playpawn2 = PlayerPawn(master);
+			if (playpawn && playpawn2) return false;
+		}
+		else // Non-passive means the one moving into the other is performing the checks.
+		{
+			if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart (gametic %d):\c- non-passive: %s", gametic, GetClassName());
+			playpawn = PlayerPawn(other.target);
+			playpawn2 = PlayerPawn(master);
+			if (playpawn && playpawn2) return false;
+
+			return true;
+		}
+
+		// We don't really care about others making the check.
+		return true;
+	}
 }
 
 class ShieldPartNoReflect : ShieldPart
@@ -804,6 +834,43 @@ class ShieldPartNoReflect : ShieldPart
 
 class SwingShieldPartNoReflect : ShieldPartNoReflect // For swinging based shields [used as a general branch that allows monsters to pass through them]
 {
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		PlayerPawn playpawn;
+		PlayerPawn playpawn2;
+		playpawn = PlayerPawn(other);
+
+		if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart [%s] (gametic %d):\c- other: %s", GetClassName(), gametic, other.GetClassName());
+		if (passive)
+		{
+			if (A_CheckCollisionProjShieldExemption(other)) return false;
+
+			if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart (gametic %d):\c- passive: %s", gametic, GetClassName());
+			// Pass through different species of select types.
+			if (playpawn) return false; // Player Checking
+
+			if (other && other.bISMONSTER)
+			{
+				return false;
+			}
+
+			playpawn = PlayerPawn(other.target);
+			playpawn2 = PlayerPawn(master);
+			if (playpawn && playpawn2) return false;
+		}
+		else // Non-passive means the one moving into the other is performing the checks.
+		{
+			if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart (gametic %d):\c- non-passive: %s", gametic, GetClassName());
+			playpawn = PlayerPawn(other.target);
+			playpawn2 = PlayerPawn(master);
+			if (playpawn && playpawn2) return false;
+
+			return true;
+		}
+
+		// We don't really care about others making the check.
+		return true;
+	}
 }
 
 class PlayerWhistle : DDBaseZSC
