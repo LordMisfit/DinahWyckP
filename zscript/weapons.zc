@@ -1194,8 +1194,21 @@ class CricketBat : DinahWeapon replaces Pistol
 		Obituary "%k scored a point with %o.";
 	}
 	
+	action void A_GiveGuardBuff()
+	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		if (MiscItem) MiscItem.CricketBatBuffTimer = randompick(1,1,1,1,1,1,1,1,1,2);
+	}
+
+	action void A_BarGuardDashOff()
+	{
+		A_SetInventory("IsInBatGuardFrame",0);
+	}
+
 	action void A_CricketBatGuard()
 	{
+		A_SetInventory("IsInBatGuardFrame",1);
+
 		string vispart = "CricketShieldPartNoReflect";
 		if (random(1,16) <= 5) vispart = "CricketShieldPart";
 
@@ -1254,13 +1267,13 @@ class CricketBat : DinahWeapon replaces Pistol
 			distz = ((height * heightmulti) - 5.0) + yoffset;
 			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
 		}
-
-		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		if (MiscItem) MiscItem.CricketBatBuffTimer = randompick(1,1,1,1,1,1,1,1,1,2);
+		
+		A_GiveGuardBuff();
 	}
 
 	action void A_CricketBatSwing(int type = 0, double dist = 112.0)
 	{
+		A_BarGuardDashOff();
 		string vispart = "CricketSwingPartNoReflect";
 		if (random(1,16) <= 5) vispart = "CricketSwingShieldPart";
 
@@ -1362,9 +1375,8 @@ class CricketBat : DinahWeapon replaces Pistol
 			distz = (height * (heightmulti + heightmultivari)) + yoffset;
 			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
 		}
-
-		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		if (MiscItem) MiscItem.CricketBatSwingBuffTimer = randompick(3,3,3,3,3,3,4,4,4);
+		
+		A_GiveGuardBuff();
 	}
 	
 	int guardstate;
@@ -1395,7 +1407,8 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				if (invoker.guardstate == 0) invoker.guardstate = 1;
 																else invoker.guardstate = 0;
-				invoker.guardcooldown = random(6,8);
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) invoker.guardcooldown = random(6,8);
+																																 else invoker.guardcooldown = random(9,11);
 			}
 		}
 	}
@@ -1414,16 +1427,16 @@ class CricketBat : DinahWeapon replaces Pistol
 		Ready:
 			DBID A 1 
 			{
+				A_BarGuardDashOff();
 				A_KickDecelerate();
-				A_GuardToggleCountdown();
 				A_WeaponReady(WRF_ALLOWUSER4);
 			}
 			loop;
 		Deselect:
 			DBID A 1
 			{
+				A_BarGuardDashOff();
 				A_KickDecelerate();
-				A_GuardToggleCountdown();
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
@@ -1431,8 +1444,8 @@ class CricketBat : DinahWeapon replaces Pistol
 		Select: 
 			DBID A 1
 			{
+				A_BarGuardDashOff();
 				A_KickDecelerate();
-				A_GuardToggleCountdown();
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
@@ -1440,6 +1453,7 @@ class CricketBat : DinahWeapon replaces Pistol
 		Fire:
 			DBID A 1
 			{
+				A_BarGuardDashOff();
 			}
 			DBID B 1
 			{
@@ -1486,6 +1500,7 @@ class CricketBat : DinahWeapon replaces Pistol
 		AltFire:
 			DBID A 1
 			{
+				A_BarGuardDashOff();
 			}
 			DBID B 1 
 			{
@@ -1549,25 +1564,40 @@ class CricketBat : DinahWeapon replaces Pistol
 				return resolvestate(null);
 			}
 		Guard:
-			DBIG A 0
+			DBGR A 1
 			{
+				if (random(1,4) == 1) { A_GiveGuardBuff(); }
+				A_CheckGuardState();
+				A_BarGuardDashOff();
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+			}
+			DBGR B 1
+			{
+				if (random(1,2) == 1) { A_GiveGuardBuff(); }
+				A_CheckGuardState();
+				A_BarGuardDashOff();
+			}
+			DBGR C 1
+			{
+				if (random(1,4) <= 3) { A_GiveGuardBuff(); }
+				A_CheckGuardState();
+				A_BarGuardDashOff();
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
 			}
 		GuardHold:
-			DBIG A 0
-			{
-			}
-			DBIG A 1
+			DBGR D 1
 			{
 				A_CheckGuardState();
 				A_CricketBatGuard();
 				A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOPRIMARY|WRF_NOSECONDARY|WRF_NOSWITCH);
+				// Possible Dash "attack idea" here? V:
 			}
-			DBIG A 0
+			DBGR D 0
 			{
 				if (dydu_cricketbatguardtype == 1)
 				{
 					if (dydudebug_cricketbatguard) Console.Printf("guardtype: %d", dydu_cricketbatguardtype);
-					if (invoker.guardstate == 0) { return resolvestate("Ready"); }
+					if (invoker.guardstate == 0) { return resolvestate("UnGuard"); }
 																	else { return resolvestate("GuardHold"); } 
 
 					return resolvestate(null);
@@ -1577,6 +1607,28 @@ class CricketBat : DinahWeapon replaces Pistol
 					A_Refire("GuardHold");
 				}
 				return resolvestate(null);
+			}
+			goto Unguard;
+		UnGuard:
+			DBGR C 1
+			{
+				if (random(1,4) <= 3) { A_GiveGuardBuff(); }
+				A_CheckGuardState();
+				A_BarGuardDashOff();
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+			}
+			DBGR B 1
+			{
+				if (random(1,2) == 1) { A_GiveGuardBuff(); }
+				A_CheckGuardState();
+				A_BarGuardDashOff();
+			}
+			DBGR A 1
+			{
+				if (random(1,4) == 1) { A_GiveGuardBuff(); }
+				A_CheckGuardState();
+				A_BarGuardDashOff();
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
 			}
 			goto Ready;
 	}
