@@ -1120,6 +1120,8 @@ class BRocketBoom2 : DDProjectile
 class PopperPickup : CustomInventoryExt
 {
 	int debris1amt, debris2amt, debris3amt, debris4amt;
+	int basedmg, baseradi;
+	double basevol;
 
 	default
 	{
@@ -1149,30 +1151,56 @@ class PopperPickup : CustomInventoryExt
 			TNT1 A 0 Bright 
 			{
 				A_UsePartyPopper();
-				A_StartSound("popper/toot",CHAN_WEAPON);
-				A_Explode(randompick(32,48,64),256,0,0,randompick(96,128,160),0,0,"","Beats");
+				invoker.basedmg = randompick(32,48,64);
+				invoker.baseradi = randompick(96,128,160);
+				invoker.basevol = 1.0;
+				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1))
+				{
+					invoker.basedmg *= frandom(9,11);
+					invoker.baseradi = frandom(4.5,5.5);
+					invoker.basevol = 1.2;
+				}
+				bFORCERADIUSDMG = true; // Forces the Popper's soundwave(s) to damage AOE immune enemies/bosses
+				A_StartSound("popper/toot",70,CHANF_DEFAULT,(frandom(0.95,1.1)*invoker.basevol),ATTN_NORM,frandom(0.8,1.2));
+				A_Explode(invoker.basedmg,256,0,0,invoker.baseradi,0,0,"","Beats");
 				invoker.debris1amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 25));
 				invoker.debris2amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
 				invoker.debris3amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
 				invoker.debris4amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+				if (random(1,4) <= 3) 
+				{
+					A_StartSound("popper/toot",71,CHANF_DEFAULT,(frandom(0.85,1.0)*invoker.basevol),ATTN_NORM,frandom(0.85,1.15));
+					A_Explode(invoker.basedmg,256,0,0,invoker.baseradi,0,0,"","Beats"); 
+					invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 25));
+					invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+					invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+					invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+					if (random(1,12) <= 3) 
+					{
+						A_StartSound("popper/toot",72,CHANF_DEFAULT,(frandom(0.75,0.9)*invoker.basevol),ATTN_NORM,frandom(0.9,1.1));
+						A_Explode(invoker.basedmg,256,0,0,invoker.baseradi,0,0,"","Beats"); 
+						invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 25));
+						invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+						invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+						invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+						if (random(1,36) <= 3) 
+						{
+							A_StartSound("popper/toot",73,CHANF_DEFAULT,(frandom(0.65,0.8)*invoker.basevol),ATTN_NORM,frandom(0.95,1.05));
+							A_Explode(invoker.basedmg,256,0,0,invoker.baseradi,0,0,"","Beats"); 
+							invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 25));
+							invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+							invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+							invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / 16));
+						}
+					}
+				}
+				bFORCERADIUSDMG = false; // now turn of forced AOE damage, just in case :V
 				//Console.Printf("D1Amt: %d, D2Amt: %d, D3Amt: %d, D4Amt: %d", invoker.debris1amt, invoker.debris2amt, invoker.debris3amt, invoker.debris4amt);
 
-				for (int i; i < (5 + invoker.debris1amt); i++)
-				{
-					A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0);
-				}
-				for (int i; i < (8 + invoker.debris2amt); i++)
-				{
-					A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0);
-				}
-				for (int i; i < (8 + invoker.debris3amt); i++)
-				{
-					A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0);
-				}
-				for (int i; i < (8 + invoker.debris4amt); i++)
-				{
-					A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0);
-				}
+				for (int i; i < (5 + invoker.debris1amt); i++) { A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0); }
+				for (int i; i < (8 + invoker.debris2amt); i++) { A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0); }
+				for (int i; i < (8 + invoker.debris3amt); i++) { A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0); }
+				for (int i; i < (8 + invoker.debris4amt); i++) { A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0); }
 
 				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1)) 
 				{ 

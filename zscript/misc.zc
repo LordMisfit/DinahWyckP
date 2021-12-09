@@ -61,7 +61,7 @@ class PlayerStatItem : Inventory
 	int StrifeStamLvl;
 	int StrifeAccuLvl;
 	
-	int CricketBatBuffTimer;
+	int CricketBatBuffTimer, CricketBatBuffTimer2;
 	int CricketBatSwingBuffTimer;
 	
 	int GrimophoneDebuffTimer;
@@ -552,11 +552,22 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerWineBuffStrongestEven")) SurvivalRate += 1250;
 			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Buffs]: %d", SurvivalRate);
 			
+			int buddhatype = 0;
 			if (Owner.CountInv("CricketBatGuard")) 
 			{
-				SurvivalRate += ((10000 - SurvivalRate) * frandompick(0.25,0.375,0.375,0.50,0.50,0.50,0.50,0.625,0.625,0.75));
-				if (SurvivalRate > 9375) SurvivalRate = 9375;
-				if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/ CricketBat]: %d", SurvivalRate);
+				if (Owner.CountInv("CricketBatGuard2"))
+				{
+					SurvivalRate += ((10000 - SurvivalRate) * frandompick(0.75,0.875,0.875,0.875,1.0,1.0,1.0,1.0));
+					if (SurvivalRate > 10000) SurvivalRate = 10000;
+					if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/ CricketBat (super)]: %d", SurvivalRate);
+					buddhatype = 1; // Sets BUDDHA2 instead of normal BUDDHA if the super Bat Guard frames kick in :V
+				}
+				else
+				{
+					SurvivalRate += ((10000 - SurvivalRate) * frandompick(0.25,0.375,0.375,0.50,0.50,0.50,0.50,0.625,0.625,0.75));
+					if (SurvivalRate > 9375) SurvivalRate = 9375;
+					if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/ CricketBat]: %d", SurvivalRate);
+				}
 			}
 			else
 			{
@@ -564,7 +575,16 @@ class PlayerStatItem : Inventory
 				if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o CricketBat]: %d", SurvivalRate);
 			}
 			int SurviveRNGVal = random[statitem](1,10000); // Based on 0.01% to 100.00%
-			if (SurviveRNGVal <= SurvivalRate) owner.player.cheats |= CF_BUDDHA; else owner.player.cheats &= ~CF_BUDDHA;
+			if (SurviveRNGVal <= SurvivalRate) 
+			{
+				owner.player.cheats |= CF_BUDDHA;
+				if (buddhatype) owner.player.cheats |= CF_BUDDHA2;
+			}
+			else
+			{
+				owner.player.cheats &= ~CF_BUDDHA;
+				if (buddhatype) owner.player.cheats &= ~CF_BUDDHA2;
+			}
 
 			if (dydudebug_survivalrate)
 			{
@@ -846,22 +866,33 @@ class PlayerStatItem : Inventory
 			owner.player.health = owner.player.mo.health = CurrentHealth;
 			owner.A_SetInventory("PlayerMaxHP",MaxHealthTrue);
 			
-			bool debugcricketguard = false;
+			if (CricketBatBuffTimer2)
+			{
+				CricketBatBuffTimer2--;
+				owner.A_SetInventory("CricketBatGuard2",1);
+				if (dydudebug_cricketbatguard) Console.Printf("CricketBatBuffTimer2: %d", CricketBatBuffTimer2);
+			}
+			else
+			{
+				owner.A_SetInventory("CricketBatGuard2",0);
+			}
+
 			if (CricketBatBuffTimer)
 			{
 				CricketBatBuffTimer--;
 				owner.A_SetInventory("CricketBatGuard",1);
-				if (debugcricketguard) Console.Printf("timer: %d", CricketBatBuffTimer);
+				if (dydudebug_cricketbatguard) Console.Printf("CricketBatBuffTimer: %d", CricketBatBuffTimer);
 			}
 			else
 			{
 				owner.A_SetInventory("CricketBatGuard",0);
 			}
+
 			if (CricketBatSwingBuffTimer)
 			{
 				CricketBatSwingBuffTimer--;
 				owner.A_SetInventory("CricketBatSwingDEF",1);
-				if (debugcricketguard) Console.Printf("timer: %d", CricketBatSwingBuffTimer);
+				if (dydudebug_cricketbatguard) Console.Printf("timer: %d", CricketBatSwingBuffTimer);
 			}
 			else
 			{
@@ -1371,6 +1402,37 @@ class PlayerDashJump : Inventory
 		{
 			if (berserked) DashCost -= 4;
 								else DashCost -= 3;
+		}
+		if (weapon is "CricketBat" && owner.CountInv("IsInBatGuardFrame"))
+		{
+			if (PlayerLevel >= DashLvlTier4Thresh)
+			{
+				if (!berserked) DashCost *= 1.125;
+									 else DashCost *= 1.03125;
+			}
+			else
+			if (PlayerLevel >= DashLvlTier3Thresh)
+			{
+				if (!berserked) DashCost *= 1.1875;
+									 else DashCost *= 1.046875;
+			}
+			else
+			if (PlayerLevel >= DashLvlTier2Thresh)
+			{
+				if (!berserked) DashCost *= 1.1875;
+									 else DashCost *= 1.0625;
+			}
+			else
+			if (PlayerLevel >= DashLvlTier1Thresh)
+			{
+				if (!berserked) DashCost *= 1.25;
+									 else DashCost *= 1.0625;
+			}
+			else
+			{
+				if (!berserked) DashCost *= 1.25;
+									 else DashCost *= 1.125;
+			}
 		}
 		if (weapon is "SuperVac")
 		{
