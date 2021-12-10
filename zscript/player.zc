@@ -581,7 +581,7 @@ class DDPlayerPawn : PlayerPawn
 		int armoramt = CountInv("BasicArmor");
 		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Final] - Final Damage: %d", damage);
 		
-		string combatlogmsg = "";
+		string combatlogmsg = "\c[sapphire]*\c- ";
 		if (dydudebug_playerdamagemobj && armoramt) Console.Printf("Armor Amount: %d", armoramt);
 		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
 		int armdmg = (armoramt - CountInv("BasicArmor"));
@@ -592,21 +592,35 @@ class DDPlayerPawn : PlayerPawn
 			if (mod == 'NONE') mod = 'Typeless';
 			if (ret || armdmg)
 			{
-				if (armdmg && !ret) Console.Printf("\c[darkgreen]%d AP\c- of damage taken! [%s]", armdmg, mod);
-				else if (armdmg && ret) Console.Printf("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- of damage taken! [%s]", ret, armdmg, mod);
-				else Console.Printf("\c[darkred]%d HP\c- of damage taken! [%s]", ret, mod);
+				if (armdmg && !ret) combatlogmsg.AppendFormat("\c[darkgreen]%d AP\c- of damage taken ", armdmg);
+				else if (armdmg && ret) combatlogmsg.AppendFormat("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- of damage taken ", ret, armdmg);
+				else combatlogmsg.AppendFormat("\c[darkred]%d HP\c- of damage taken ", ret);
 			}
 			else
 			{
 				if (isinvuln) 
 				{
-					Console.Printf("\c[green]Invulnerable! No Damage Suffered!\c- [%s]", mod);
+					combatlogmsg.AppendFormat("\c[green]Invulnerable! No Damage Suffered ");
 				}
 				else
 				{
-					Console.Printf("\c[white]No Damage Received!\c- [%s]", mod);
+					combatlogmsg.AppendFormat("\c[white]No Damage Received \c-");
 				}
 			}
+			if (source) // Has a source
+			{
+				combatlogmsg.AppendFormat("from \c[red]%s\c-", source.GetTag());
+				if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[red]'s\c- \c[brick]%s\c-", inflictor.GetTag());
+			}
+			else
+			if (inflictor) // No source, but has an inflictor
+			{
+				combatlogmsg.AppendFormat("from %s", inflictor.GetTag());
+			}
+			combatlogmsg.AppendFormat("!");
+			combatlogmsg.AppendFormat(" [%s]", mod);
+			if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-", mod);
+			if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
 			Console.Printf(combatlogmsg);
 		}
 		return ret;
