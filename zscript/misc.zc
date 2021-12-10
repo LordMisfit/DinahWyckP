@@ -899,7 +899,9 @@ class PlayerStatItem : Inventory
 				owner.A_SetInventory("CricketBatSwingDEF",0);
 			}
 			
-			// Grimophone Debuff
+			//*********************
+			//* Grimophone Debuff *
+			//*********************
 			int DashTics = owner.CountInv("DashTics");
 			int gdebuffbase = 90;
 			if (GrimophoneDebuffTimer)
@@ -947,7 +949,9 @@ class PlayerStatItem : Inventory
 				else owner.bFORCERADIUSDMG = false;
 			}
 			
-			// RenderStyle Stuff [Dashing, Invisibility, etc]
+			//**************************************************
+			//* RenderStyle Stuff [Dashing, Invisibility, etc] *
+			//**************************************************
 			int InvisPulseTimer = level.totaltime % 40;
 			double InvisPulseAlpha = 1.00;
 			double DashAlpha = 1.00;
@@ -995,7 +999,9 @@ class PlayerStatItem : Inventory
 			{
 			}
 			
-			// Inventory Limits [to be coded later?]
+			//********************
+			//* Inventory Limits *
+			//********************
 			int dropamt;
 			string itemname;
 			int baseholdamount;
@@ -1003,6 +1009,7 @@ class PlayerStatItem : Inventory
 			int itemsmax;
 			int itemid;
 			double baselvlfactor = 50.0;
+			if (owner.CountInv("PlayingHexen")) baselvlfactor = 33.4;
 			let currentitemtype = owner.FindInventory("AppleWine");
 			if (currentitemtype)
 			{
@@ -1557,6 +1564,17 @@ class PlayerDashJump : Inventory
 		DashMaxCharge = BaseDashChargeMax + AddDashLevel + ExtraDashCharge;
 		if (berserked) DashMaxCharge *= 1.125;
 
+		double DashSpdMul = 1.00;
+		DashSpeed = (25 * (PlayerLevel * 0.125));
+		if (owner.CountInv("PowerRoastBuff")) DashSpdMul += 0.04;
+		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashSpdMul += 0.08;
+		if (owner.CountInv("PowerMeal2Buff") || owner.CountInv("PowerMeal2Buff2")) DashSpdMul += 0.08;
+		if (weapon is "HandToHand") DashSpdMul += 0.0925;
+		if (weapon is "SuperVac") DashSpdMul -= (0.0925 + (SuperVacAmmo * (0.0925 / 24)));
+		if (weapon is "Grimophone") DashSpdMul -= 0.185;
+		DashSpeed *= DashSpdMul;
+		if (berserked) DashSpeed *= 1.2;
+
 		DashCost = 35;
 		if (owner.CountInv("PowerRoastBuff")) DashCost -= 1;
 		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashCost -= 2;
@@ -1645,19 +1663,20 @@ class PlayerDashJump : Inventory
 				Waiting = True;
 				DashCharge = 0;
 			}
-
+			
+			// Dash "Speed"
+			
 			if (PlayDash.OnGround)
 			{
-				DashSpeed = 25; // 35 
 				DashTics = MaxDashTics;
 				dashtype = 0;
 				Owner.A_StartSound("player/dash",CHAN_BODY,CHANF_OVERLAP,dashsndvol);
 			}
 			else
 			{
-				if (airdashtype == 1) DashSpeed = 25;
-												 else DashSpeed = 20; // 35
-				DashVSpeed = 5;
+				if (airdashtype != 1) DashSpeed *= 0.8;
+				DashVSpeed = (5 * (PlayerLevel * 0.025));
+				if (berserked) DashVSpeed *= 1.04;
 				DashTics = MaxDashTics;
 				dashtype = 1; // Airdash
 				Owner.A_StartSound("player/airjump",CHAN_BODY,CHANF_OVERLAP,dashsndvol);
@@ -1821,7 +1840,7 @@ class PlayerDashJump : Inventory
 					DashSpeed *= 0.95;
 				}
 			}
-			if (dydudebug_dashing) Console.Printf("DashTics: %d / %d, Thresh: [1] %d, [2] %d, [3] %d", DashTics, MaxDashTics, slownthres1, slownthres2, slownthres3);
+			if (dydudebug_dashing) Console.Printf("DashTics: %d / %d, Thresh: [1] %d, [2] %d, [3] %d, DashSpeed: %.8f, DashSpdMul: %.8f", DashTics, MaxDashTics, slownthres1, slownthres2, slownthres3, DashSpeed, DashSpdMul);
 		}
 		else
 		{
