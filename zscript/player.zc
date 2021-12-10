@@ -11,6 +11,9 @@ class DDPlayerPawn : PlayerPawn
 
 	int dashcooldown;
 	int dashcooldownmax;
+	
+	int deadtimer;
+	int fadetime;
 
 	int firsttic;
 	int buttons, input;
@@ -144,8 +147,6 @@ class DDPlayerPawn : PlayerPawn
 	Override void Tick()
 	{
 		// VOODOO Doll Protection
-		bool dydudebug_playertick = false;
-		// VOODOO Doll Protection
 		if (!player || !player.mo || player.mo != self) 
 		{
 			isvoodoodoll = true; 
@@ -154,15 +155,39 @@ class DDPlayerPawn : PlayerPawn
 		}
 		else
 		{
-			if (dydudebug_playertick)
+			if (dydudebug_mapinfo)
 			{
-				Console.Printf("Player Age [tics]: %d, levelnum: \cx%d\c-, cluster: \cx%d\c-, clusterflags: \cx%d\c-, NextMap: \cy%s\c-, NextSecretMap: \cy%s\c-,\ntime: \cx%d\c-, maptime: \cx%d\c-, totaltime: \cx%d\c-, starttime: \cx%d\c-, partime: \cx%d\c-, sucktime: \cx%d\c-,\nlevelname: \cy%s\c-, mapname: \cy%s\c-, \ngravity: \cx%.8f\c-, aircontrol: \cx%.8f\c-, airfriction: \cx%.8f\c-, \cxTranslation #: %d", 
+				Console.Printf("Player Age [tics]: %d, levelnum: \cx%d\c-, cluster: \cx%d\c-, clusterflags: \cx%d\c-, NextMap: \cy%s\c-, NextSecretMap: \cy%s\c-,\ntime: \cx%d\c-, maptime: \cx%d\c-, totaltime: \cx%d\c-, starttime: \cx%d\c-, partime: \cx%d\c-, sucktime: \cx%d\c-,\nlevelname: \cy%s\c-, mapname: \cy%s\c-, \ngravity: \cx%.8f\c-, aircontrol: \cx%.8f\c-, airfriction: \cx%.8f\c-, \cxTranslation #:\c- %d, \cyMapCheckSum:\cx %s", 
 												GetAge(),
 												level.levelnum, level.cluster, level.clusterflags, level.NextMap, level.NextSecretMap,
 												level.time, level.maptime, level.totaltime, level.starttime, level.partime, level.sucktime,
 												level.levelname, level.mapname,
 												level.gravity, level.aircontrol, level.airfriction,
-												translation);
+												translation, level.GetChecksum());
+			}
+			
+			double fademax = 1.00;
+			if (health <= 0)
+			{
+				if (deadtimer <= 0) 
+				{
+					fadetime = int(TICRATE*frandom(2.1667,2.8334));
+					A_SetBlend("00 00 00",0.00, fadetime, "00 00 00",fademax);
+				}
+				if (deadtimer > (fadetime-2)) A_SetInventory("BlackScreenHUD",1);
+				deadtimer++;
+				//Console.Printf("DeadTimer: %d, FadeTime: %d", deadtimer, fadetime);
+			}
+			else 
+			{
+				if (deadtimer > 0) 
+				{
+					fadetime *= 0.25;
+					A_SetBlend("00 00 00",fademax, fadetime, "00 00 00",0.00);
+					A_SetInventory("BlackScreenHUD",0);
+					//Console.Printf("DeadTimer: %d, FadeTime: %d", deadtimer, fadetime);
+				}
+				deadtimer = 0;
 			}
 
 			int armortier = 0;
