@@ -666,23 +666,43 @@ class DDStatusBarMain : BaseStatusBar
 
 		//misc [speed]
 		double basespeed = 1.0;
+		double basehpregen = 1.0;
 		int jumpheight = 64;
 		string speedval = "";
 		string jumpval = "";
+		string regenval = "";
 		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+		int exty = 0;
 		if (MiscItem && CPlayer.mo.health > 0) 
 		{
+			if (CPlayer.mo.health != MiscItem.MaxHealthTrue) exty = -3;
 			FontScale = (1.0, 1.0);
 			basespeed = MiscItem.HUDSpeed * 100;
 			int speedclr = font.cr_white;
 			if (basespeed > 100.0000) speedclr = font.cr_blue;
 			if (basespeed < 100.0000) speedclr = font.cr_red;
 			speedval.AppendFormat("%.2f%% MoveSpeed", basespeed);
-			DrawString(mArmSaveFont, speedval, (79, -21), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawString(mArmSaveFont, speedval, (79, (-21+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 
 			JumpHeight = MiscItem.TrueJumpHeight;
 			jumpval.AppendFormat("%d Jump Height", JumpHeight);
-			DrawString(mArmSaveFont, jumpval, (79, -15), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawString(mArmSaveFont, jumpval, (79, (-15+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+
+			basehpregen = MiscItem.baseregenmulti * 100;
+			int regenclr = font.cr_white;
+			if (CPlayer.mo.health < MiscItem.MaxHealthTrue) 
+			{
+				if (basehpregen > 100.0000) regenclr = font.cr_blue;
+				if (basehpregen < 100.0000) regenclr = font.cr_red;
+				regenval.AppendFormat("%.2f%% Regen Speed", basehpregen);
+			}
+			if (CPlayer.mo.health > MiscItem.MaxHealthTrue) 
+			{
+				if (basehpregen > 100.0000) regenclr = font.cr_red;
+				if (basehpregen < 100.0000) regenclr = font.cr_blue;
+				regenval.AppendFormat("%.2f%% Degen Speed", basehpregen);
+			}
+			DrawString(mArmSaveFont, regenval, (79, (-9+exty)), DI_TEXT_ALIGN_LEFT, regenclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 			FontScale = (1.25, 1.25);
 		}
 
@@ -1042,38 +1062,46 @@ class DDStatusBarMain : BaseStatusBar
 			// Level Stats
 			digy = -32;
 			if (dyduhud_showleveltimes) digy -= 8;
-			int itemcnt = level.found_items;
-			int maxitemcnt = level.total_items;
+			int tallyfontclr;
+			int flashinterval = 24;
 			int scrtcnt = level.found_secrets;
 			int maxscrtcnt = level.total_secrets;
 			if (maxscrtcnt)
 			{
+				tallyfontclr = font.cr_gold;
+				if (scrtcnt >= maxscrtcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_darkgreen;
 				digy -= 8;
 				tallytemp = "Secrets: ";
 				tallytemp.AppendFormat("%d", scrtcnt);
 				tallytemp.AppendFormat("/");
 				tallytemp.AppendFormat("%d", maxscrtcnt);
-				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_gold);
+				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
 			}
+			int itemcnt = level.found_items;
+			int maxitemcnt = level.total_items;
 			if (maxitemcnt)
 			{
+				tallyfontclr = font.cr_lightblue;
+				if (itemcnt >= maxitemcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_brick;
 				digy -= 8;
 				tallytemp = "Items: ";
 				tallytemp.AppendFormat("%d", itemcnt);
 				tallytemp.AppendFormat("/");
 				tallytemp.AppendFormat("%d", maxitemcnt);
-				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_lightblue);
+				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
 			}
 			int killcnt = level.killed_monsters;
 			int maxkillcnt = level.total_monsters;
 			if (maxkillcnt)
 			{
+				tallyfontclr = font.cr_brick;
+				if (killcnt >= maxkillcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_lightblue;
 				digy -= 8;
 				tallytemp = "Kills: ";
 				tallytemp.AppendFormat("%d", killcnt);
 				tallytemp.AppendFormat("/");
 				tallytemp.AppendFormat("%d", maxkillcnt);
-				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_brick);
+				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
 			}
 		}
 		

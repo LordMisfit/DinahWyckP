@@ -1182,7 +1182,7 @@ class CricketBat : DinahWeapon replaces Pistol
 		Weapon.Kickback 50;
 		Weapon.AmmoType2 "MalletAmmo";
 		Weapon.AmmoGive2 5;
-		Weapon.AmmoUse2 1;
+		//Weapon.AmmoUse2 0;
 		+WEAPON.NOALERT
 		+WEAPON.MELEEWEAPON
 		+PUFFONACTORS
@@ -1510,6 +1510,11 @@ class CricketBat : DinahWeapon replaces Pistol
 			}
 			goto Ready;
 		AltFire:
+			DBID A 0
+			{
+				if (!CountInv("MalletAmmo")) { return resolvestate("Fire"); }
+				return resolvestate(null);
+			}
 			DBID A 1
 			{
 				A_BarGuardDashOff();
@@ -1550,6 +1555,7 @@ class CricketBat : DinahWeapon replaces Pistol
 					A_FireProjectile("MalletShot",0,1,0,0);
 					A_CricketBatSwing(0);
 				}
+				A_TakeInventory("MalletAmmo",1);
 			}
 			DBID H 1 
 			{
@@ -2591,7 +2597,7 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		Weapon.Kickback 75;
 		Weapon.AmmoType2 "EggAmmo";
 		Weapon.AmmoGive2 3;
-		Weapon.AmmoUse2 1;
+		//Weapon.AmmoUse2 1;
 		+WEAPON.NOALERT
 		+WEAPON.MELEEWEAPON
 		+PUFFONACTORS
@@ -2803,6 +2809,11 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			}
 			goto Ready;
 		AltFire:
+			FPAN A 0
+			{
+				if (!CountInv("EggAmmo")) { return resolvestate("Fire"); }
+				return resolvestate(null);
+			}
 			FPAN A 2
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
@@ -2841,6 +2852,7 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 					A_CustomPunch (Random(10, 12), FALSE, 0, "PanPuff", 72);
 					A_FireProjectile("EggShot",0,1,0,0);
 				}
+				A_TakeInventory("EggAmmo",1);
 			}
 			FPAN E 2 
 			{
@@ -3431,7 +3443,7 @@ class AppleJack : DinahWeapon replaces Chaingun
 		Weapon.Kickback 75;
 		Weapon.AmmoType2 "JackAmmo";
 		Weapon.AmmoGive2 12;
-		Weapon.AmmoUse2 1;
+		//Weapon.AmmoUse2 1;
 		+WEAPON.NOALERT
 		+WEAPON.MELEEWEAPON
 		+PUFFONACTORS
@@ -3440,7 +3452,7 @@ class AppleJack : DinahWeapon replaces Chaingun
 		Inventory.Pickupsound "DinahWeap";
 		Inventory.PickupMessage "Apple Jack";
 		inventory.pickupsound "misc/w_pkup"; //"Dinah/marvelous"
-		Tag "Apple Jack: Normal attack is a melee swing that hit twice. Alt attack is a ranged toss of an aggro-apple. Swings can also affect enemy projectiles.";
+		Tag "Apple Jack: Normal attack is a melee swing that hit twice. Alt attack is a ranged toss of an aggro-apple that can usually block incoming projectiles. Swings can also affect enemy projectiles.";
 		Obituary "%k kept the doctor away from %o.";
 	}
 	
@@ -3640,6 +3652,11 @@ class AppleJack : DinahWeapon replaces Chaingun
 			}
 			goto Ready;
 		AltFire:
+			AJAF C 0
+			{
+				if (!CountInv("JackAmmo")) { return resolvestate("Fire"); }
+				return resolvestate(null);
+			}
 			AJAF CDE 2
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
@@ -3656,6 +3673,7 @@ class AppleJack : DinahWeapon replaces Chaingun
 				{
 					A_FireProjectile("JackShot",0,1,0,0);
 				}
+				A_TakeInventory("JackAmmo",1);
 			}
 			AJAF GHI 2 
 			{
@@ -3720,6 +3738,58 @@ class ApplePuff : BatPuff
 	}
 }
 
+class JackShotShieldPart : ShieldPartNoReflect
+{
+	default
+	{
+		Radius 9;
+		Height 9;
+		Scale 1.5;
+		RenderStyle "Add"; // Add
+		Alpha 0.375; // 0.003125
+	}
+
+	States
+	{
+		Spawn:
+			ABAL A 0 NoDelay;
+		Idle:
+			ABAL AA 1
+			{
+				A_SetTics(randompick(1,1,2));
+				A_FadeOut(0.125);
+				A_SetScale(scale.x*0.5,scale.y*0.5);
+			}
+			Stop;
+	}
+}
+
+class JackShotShieldPartBerserk : ShieldPartNoReflect
+{
+	default
+	{
+		Radius 12;
+		Height 12;
+		Scale 2;
+		RenderStyle "Add"; // Add
+		Alpha 0.4375; // 0.003125
+	}
+
+	States
+	{
+		Spawn:
+			ABAL A 0 NoDelay;
+		Idle:
+			ABAL AAA 1
+			{
+				A_SetTics(randompick(1,1,2));
+				A_FadeOut(0.109375);
+				A_SetScale(scale.x*0.67,scale.y*0.67);
+			}
+			Stop;
+	}
+}
+
 class JackShot : DDProjectile
 {
 	default
@@ -3742,7 +3812,10 @@ class JackShot : DDProjectile
 	States
 	{
 		Spawn:
-			ABAL AB 2;
+			ABAL AABB 1 NoDelay
+			{
+				A_SpawnItemEx("JackShotShieldPart",0,0,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+			}
 			Loop;
 		Death:
 			BASH ABC 4 Bright;
@@ -3763,7 +3836,10 @@ class JackShotBerserk : JackShot
 	States
 	{
 		Spawn:
-			ABAL AB 2;
+			ABAL AABB 1 NoDelay
+			{
+				A_SpawnItemEx("JackShotShieldPartBerserk",0,0,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+			}
 			Loop;
 		Death:
 			BASH A 0
