@@ -419,6 +419,7 @@ class PlayerStatItem : Inventory
 						if (HPRegenBoostTimer) inc *= 2.5;
 						
 						if (Owner.CountInv("CricketBatGuard")) inc = floor(inc * frandom(1.334,1.667)); 
+						if (Owner.CountInv("CricketBatGuard2")) inc = floor(inc * frandom(1.334,1.667)); 
 						
 						if (owner.CountInv("KnightGownItem")) inc = floor(inc * 1.05);
 						if (owner.CountInv("KnightGownItem2")) inc = floor(inc * 1.10);
@@ -478,6 +479,7 @@ class PlayerStatItem : Inventory
 						if (HPRegenBoostTimer) inc *= 0.4;
 						
 						if (Owner.CountInv("CricketBatGuard")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
+						if (Owner.CountInv("CricketBatGuard2")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
 
 						if (owner.CountInv("KnightGownItem")) inc = ceil(inc * 0.95);
 						if (owner.CountInv("KnightGownItem2")) inc = ceil(inc * 0.90);
@@ -606,9 +608,21 @@ class PlayerStatItem : Inventory
 			// Buffs
 			if ((owner.bINVULNERABLE || owner.player.cheats & CF_GODMODE2 || owner.player.cheats & CF_GODMODE) || 
 					owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")) TotalMass *= 128; 
-			if (berserked) TotalMass *= 1.111; 
+			if (berserked) 
+			{
+				if (PlayerLevel >= 200) TotalMass *= 2.003;
+				else if (PlayerLevel >= 175) TotalMass *= 1.891;
+				else if (PlayerLevel >= 150) TotalMass *= 1.779;
+				else if (PlayerLevel >= 125) TotalMass *= 1.667;
+				else if (PlayerLevel >= 100) TotalMass *= 1.556;
+				else if (PlayerLevel >= 75) TotalMass *= 1.445;
+				else if (PlayerLevel >= 50) TotalMass *= 1.334;
+				else if (PlayerLevel >= 25) TotalMass *= 1.222;
+				else TotalMass *= 1.111;
+			}
 
-			if (Owner.CountInv("CricketBatGuard")) TotalMass *= frandom(1.334,1.667);
+			if (Owner.CountInv("CricketBatGuard")) TotalMass *= frandompick(1.334,1.5,1.667);
+			if (Owner.CountInv("CricketBatGuard2")) TotalMass *= frandompick(2.667,3.000,3.334);
 			
 			if (Owner.CountInv("PowerWineBuffWeak")) TotalMass *= 1.125;
 			if (Owner.CountInv("PowerWineBuffStrong")) TotalMass *= 1.25;
@@ -634,12 +648,13 @@ class PlayerStatItem : Inventory
 
 			// Level
 			double LevelJumpZ = 1.00;
-			LevelJumpZ += (PlayerLevel * 0.0025);
+			LevelJumpZ += (PlayerLevel * (0.0025 * 1.75));
 			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Level]: %.8f", LevelJumpZ);
 			
 			// Buffs
 			double BuffJumpZ = 1.00;
 			if (Owner.CountInv("CricketBatGuard")) BuffJumpZ *= frandom(0.95,0.975);
+			if (Owner.CountInv("CricketBatGuard2")) BuffJumpZ *= frandom(0.85,0.925);
 			if (berserked) BuffJumpZ *= 1.34;
 			if (owner.CountInv("PowerWineBuffWeak")) BuffJumpZ *= frandom(0.98,1.00);
 			if (owner.CountInv("PowerWineBuffStrong")) BuffJumpZ *= frandom(0.96,1.00);
@@ -1372,6 +1387,12 @@ class PlayerStatItem : Inventory
 			HUDSpeed = Speed;
 		}
 
+		if (Owner.CountInv("CricketBatGuard2")) 
+		{
+			Speed *= frandom(0.85,0.925);
+			HUDSpeed = Speed;
+		}
+
 		if (Owner.CountInv("PowerWineBuffWeak")) Speed *= frandom(0.965,0.975);
 		if (Owner.CountInv("PowerWineBuffStrong")) Speed *= frandom(0.89,0.91);
 		if (Owner.CountInv("PowerWineBuffStrongest")) Speed *= frandom(0.80,0.84);
@@ -1515,7 +1536,6 @@ class PlayerDashJump : Inventory
 	override void Tick()
 	{
 		Super.Tick();
-		int dydudebug_dashing = false;
 		if (!Owner || Owner && (!Owner.Player || Owner.Health < 1)) Return;
 		let weapon = owner.player.ReadyWeapon;
 		if (Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD")) berserked = true;
@@ -1566,7 +1586,7 @@ class PlayerDashJump : Inventory
 		if (berserked) DashMaxCharge *= 1.125;
 
 		double DashSpdMul = 1.00;
-		DashSpeed = (25 * (PlayerLevel * 0.125));
+		DashSpeed = (25 + (PlayerLevel * 0.125));
 		if (owner.CountInv("PowerRoastBuff")) DashSpdMul += 0.04;
 		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashSpdMul += 0.08;
 		if (owner.CountInv("PowerMeal2Buff") || owner.CountInv("PowerMeal2Buff2")) DashSpdMul += 0.08;
@@ -1574,7 +1594,8 @@ class PlayerDashJump : Inventory
 		if (weapon is "SuperVac") DashSpdMul -= (0.0925 + (SuperVacAmmo * (0.0925 / 24)));
 		if (weapon is "Grimophone") DashSpdMul -= 0.185;
 		DashSpeed *= DashSpdMul;
-		if (berserked) DashSpeed *= 1.2;
+		if (berserked) DashSpeed *= 1.125;
+		if (dydudebug_dashing) Console.Printf("DashSpeed: %.8f", DashSpeed);
 
 		DashCost = 35;
 		if (owner.CountInv("PowerRoastBuff")) DashCost -= 1;
