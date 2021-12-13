@@ -1,3 +1,26 @@
+// An global variables thinker [attempting to get around ACS use for certain things >.>]
+class DDGlobalVariables : Thinker
+{
+	int ClassCheck;
+
+	DDGlobalVariables Init()
+	{
+		ChangeStatNum(STAT_STATIC); // Change this to STAT_STATIC if persisting between maps is desired.
+		return self;
+	}
+
+	static DDGlobalVariables Get()
+	{
+		ThinkerIterator it = ThinkerIterator.Create("DDGlobalVariables",STAT_STATIC); // Change this to STAT_STATIC if persisting between maps is desired.
+		let p = DDGlobalVariables(it.Next());
+		if (p == null)
+		{
+			p = new("DDGlobalVariables").Init();
+		}
+		return p;
+	}
+}
+
 class PlayerStatItem : Inventory
 {
 	const SKILL_VERY_EASY = 0;
@@ -92,6 +115,10 @@ class PlayerStatItem : Inventory
 		else
 		if (playeractor) // Otherwise, Keep
 		{
+			let globalvars = DDGlobalVariables.Get();
+			if (globalvars)
+			{
+			}
 			let weapon = owner.player.ReadyWeapon;
 			if (playeractor.GetClassName() == "DinahPlayer") CharacterClass == 10;
 			if (!owner.CountInv("HandToHand")) owner.A_SetInventory("HandToHand",1); // Prevents your "fists/hand-to-hand" from being removed by inventory removing events.
@@ -305,20 +332,21 @@ class PlayerStatItem : Inventory
 						int HPMaxGain;
 						int HPRandomizer1;
 						
-						if (PlayerLevel >= 151 && PlayerLevel <= 200)				HPMaxGain += floor(PlayerLevel * frandompick(0.105,0.12));
-						else if (PlayerLevel >= 101 && PlayerLevel <= 150)	HPMaxGain += floor(PlayerLevel * frandompick(0.09,0.105));
-						else if (PlayerLevel >= 51 && PlayerLevel <= 100)		HPMaxGain += floor(PlayerLevel * frandompick(0.075,0.09));
-						else if (PlayerLevel <= 50)													HPMaxGain += floor(PlayerLevel * frandompick(0.06,0.075));
+						if (PlayerLevel >= 151 && PlayerLevel <= 200)				HPMaxGain += floor(PlayerLevel * frandompick(0.0525,0.06));
+						else if (PlayerLevel >= 101 && PlayerLevel <= 150)	HPMaxGain += floor(PlayerLevel * frandompick(0.045,0.0525));
+						else if (PlayerLevel >= 51 && PlayerLevel <= 100)		HPMaxGain += floor(PlayerLevel * frandompick(0.0375,0.045));
+						else if (PlayerLevel <= 50)													HPMaxGain += floor(PlayerLevel * frandompick(0.03,0.0375));
 						
-						HPMaxGain += 													randompick(1,1,1,1,1,1,1,1,1,2,2,2,2,3);
-						if (levelbonustype == 0) HPMaxGain += randompick(1,1,1,1,1,2,2,2,2,2,2,3,3,3);
-						if (levelbonustype == 1) HPMaxGain += randompick(0,1,1,1,1,1,1,2,2,2,2,2,3,3);
-						if (levelbonustype == 2) HPMaxGain += randompick(0,0,0,0,0,0,0,1,1,1,1,1,1,2);
-						if (TrueGameSkill <= SKILL_VERY_EASY) HPMaxGain += (MaxHealthTrue / 144); // 288
-						if (TrueGameSkill == SKILL_EASY) HPMaxGain += (MaxHealthTrue / 180); // 360
-						if (TrueGameSkill == SKILL_NORMAL) HPMaxGain += (MaxHealthTrue / 216); // 432
-						if (TrueGameSkill == SKILL_HARD) HPMaxGain += (MaxHealthTrue / 252); // 504
-						if (TrueGameSkill == SKILL_VERY_HARD) HPMaxGain += (MaxHealthTrue / 288); // 576
+						HPMaxGain += 													randompick(0,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,3);
+						if (levelbonustype == 0) HPMaxGain += randompick(1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,3,3,3,3);
+						if (levelbonustype == 1) HPMaxGain += randompick(0,0,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3);
+						if (levelbonustype == 2) HPMaxGain += randompick(0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,2);
+						if (TrueGameSkill <= SKILL_VERY_EASY) HPMaxGain += (MaxHealthTrue / 216); // 288
+						if (TrueGameSkill == SKILL_EASY) HPMaxGain += (MaxHealthTrue / 270); // 360
+						if (TrueGameSkill == SKILL_NORMAL) HPMaxGain += (MaxHealthTrue / 324); // 432
+						if (TrueGameSkill == SKILL_HARD) HPMaxGain += (MaxHealthTrue / 378); // 504
+						if (TrueGameSkill == SKILL_VERY_HARD) HPMaxGain += (MaxHealthTrue / 432); // 576
+						if (HPMaxGain < 1) HPMaxGain = 1;
 						owner.player.mo.stamina += HPMaxGain;
 						owner.player.mo.health += HPMaxGain;
 						MaxHealthTrue = (owner.player.mo.maxhealth + owner.player.mo.stamina);
@@ -1189,6 +1217,10 @@ class PlayerStatItem : Inventory
 			}
 			
 			ClassCheck++;
+			if (globalvars)
+			{
+			}
+			if (dydudebug_miscitemdebug) Console.Printf("ClassCheck: %d", ClassCheck);
 			super.DoEffect();
 		}
 	}
@@ -1362,121 +1394,125 @@ class PlayerStatItem : Inventory
 		HUDSpeed = Speed;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [base]: %.8f", Speed);
 
-		Speed *= (1.00 + (PlayerLevel * (0.0075 * 2.5)));
-		if (Speed >= 3.75) Speed = 3.75;
-		HUDSpeed = Speed;
-		if (dydudebug_speedcalcs) Console.Printf("SpeedX [level]: %.8f", Speed);
+		double LevelFactor = 1.0;
+		LevelFactor *= (1.00 + (PlayerLevel * (0.0075 * 2.5)));
+		if (LevelFactor >= 3.75) LevelFactor = 3.75;
+		Speed *= LevelFactor;
+		if (dydudebug_speedcalcs) Console.Printf("SpeedX [level]: %.8f", LevelFactor);
 
-		if (CurrentHealth >= (MaxHealthTrue * 3)) Speed *= 1.25;
-		else if (CurrentHealth >= (MaxHealthTrue * 2.75)) Speed *= 1.21875;
-		else if (CurrentHealth >= (MaxHealthTrue * 2.5)) Speed *= 1.1875;
-		else if (CurrentHealth >= (MaxHealthTrue * 2.25)) Speed *= 1.15625;
-		else if (CurrentHealth >= (MaxHealthTrue * 2.0)) Speed *= 1.125;
-		else if (CurrentHealth >= (MaxHealthTrue * 1.75)) Speed *= 1.09375;
-		else if (CurrentHealth >= (MaxHealthTrue * 1.5)) Speed *= 1.0625;
-		else if (CurrentHealth >= (MaxHealthTrue * 1.25)) Speed *= 1.03125;
-		else if (CurrentHealth >= (MaxHealthTrue * 0.75)) Speed *= 1.00;
-		else if (CurrentHealth >= (MaxHealthTrue * 0.5)) Speed *= 0.9375;
-		else if (CurrentHealth >= (MaxHealthTrue * 0.25)) Speed *= 0.875;
-		else Speed *= 0.8125;
-		HUDSpeed = Speed;
-		if (dydudebug_speedcalcs) Console.Printf("SpeedX [health]: %.8f", Speed);
+		double HealthFactor = 1.0;
+		if (CurrentHealth >= (MaxHealthTrue * 3)) HealthFactor *= 1.25;
+		else if (CurrentHealth >= (MaxHealthTrue * 2.75)) HealthFactor *= 1.21875;
+		else if (CurrentHealth >= (MaxHealthTrue * 2.5)) HealthFactor *= 1.1875;
+		else if (CurrentHealth >= (MaxHealthTrue * 2.25)) HealthFactor *= 1.15625;
+		else if (CurrentHealth >= (MaxHealthTrue * 2.0)) HealthFactor *= 1.125;
+		else if (CurrentHealth >= (MaxHealthTrue * 1.75)) HealthFactor *= 1.09375;
+		else if (CurrentHealth >= (MaxHealthTrue * 1.5)) HealthFactor *= 1.0625;
+		else if (CurrentHealth >= (MaxHealthTrue * 1.25)) HealthFactor *= 1.03125;
+		else if (CurrentHealth >= (MaxHealthTrue * 0.75)) HealthFactor *= 1.00;
+		else if (CurrentHealth >= (MaxHealthTrue * 0.5)) HealthFactor *= 0.9375;
+		else if (CurrentHealth >= (MaxHealthTrue * 0.25)) HealthFactor *= 0.875;
+		else HealthFactor *= 0.8125;
+		Speed *= HealthFactor;
+		HUDSpeed *= HealthFactor;
+		if (dydudebug_speedcalcs) Console.Printf("SpeedX [health]: %.8f", HealthFactor);
 
+		double BerserkFactor = 1.0;
 		if (berserked) 
 		{
-			Speed *= 1.125;
-			HUDSpeed = Speed;
+			BerserkFactor = 1.125;
+			Speed *= BerserkFactor;
+			HUDSpeed *= BerserkFactor;
 		}
 		
-		if (Owner.CountInv("CricketBatGuard")) 
-		{
-			Speed *= frandom(0.95,0.975);
-			HUDSpeed = Speed;
-		}
+		double BuffFactor = 1.0;
+		if (Owner.CountInv("CricketBatGuard")) BuffFactor *= frandom(0.95,0.975);
+		if (Owner.CountInv("CricketBatGuard2")) BuffFactor *= frandom(0.85,0.925);
+		if (Owner.CountInv("PowerWineBuffWeak")) BuffFactor *= frandom(0.965,0.975);
+		if (Owner.CountInv("PowerWineBuffStrong")) BuffFactor *= frandom(0.89,0.91);
+		if (Owner.CountInv("PowerWineBuffStrongest")) BuffFactor *= frandom(0.80,0.84);
+		if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandom(0.69,0.75);
+		Speed *= BuffFactor;
+		HUDSpeed *= BuffFactor;
+		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Buffs]: %.8f", BuffFactor);
 
-		if (Owner.CountInv("CricketBatGuard2")) 
-		{
-			Speed *= frandom(0.85,0.925);
-			HUDSpeed = Speed;
-		}
-
-		if (Owner.CountInv("PowerWineBuffWeak")) Speed *= frandom(0.965,0.975);
-		if (Owner.CountInv("PowerWineBuffStrong")) Speed *= frandom(0.89,0.91);
-		if (Owner.CountInv("PowerWineBuffStrongest")) Speed *= frandom(0.80,0.84);
-		if (Owner.CountInv("PowerWineBuffStrongestEven")) Speed *= frandom(0.69,0.75);
-		HUDSpeed = Speed;
-		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Buffs]: %.8f", Speed);
-
+		double ArmorFactor = 1.0;
 		if (owner.CountInv("KnightGownItem")) 
 		{
-			if (berserked) Speed *= 0.995;
-								else Speed *= 0.99;
+			if (berserked) ArmorFactor *= 0.995;
+								else ArmorFactor *= 0.99;
 		}
 		if (owner.CountInv("KnightGownItem2")) 
 		{
-			if (berserked) Speed *= 0.985;
-								else Speed *= 0.97;
+			if (berserked) ArmorFactor *= 0.985;
+								else ArmorFactor *= 0.97;
 		}
 		if (owner.CountInv("KnightGownItem3")) 
 		{
-			if (berserked) Speed *= 0.97;
-								else Speed *= 0.94;
+			if (berserked) ArmorFactor *= 0.97;
+								else ArmorFactor *= 0.94;
 		}
 		if (owner.CountInv("KnightGownItem4")) 
 		{
-			if (berserked) Speed *= 0.95;
-								else Speed *= 0.90;
+			if (berserked) ArmorFactor *= 0.95;
+								else ArmorFactor *= 0.90;
 		}
-		HUDSpeed = Speed;
-		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Armor]: %.8f", Speed);
+		Speed *= ArmorFactor;
+		HUDSpeed *= ArmorFactor;
+		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Armor]: %.8f", ArmorFactor);
 		
+		double WeaponFactor = 1.0;
 		// Weapon Checks
 		if (weapon is "HandToHand")
 		{
-			if (berserked) Speed *= 1.25;
-								else Speed *= 1.125;
+			if (berserked) WeaponFactor *= 1.25;
+								else WeaponFactor *= 1.125;
 		}
-		if (weapon is "CricketBat") Speed *= 1.00;
+		if (weapon is "CricketBat") WeaponFactor *= 1.00;
 		if (weapon is "BlunderAxe") 
 		{
-			if (berserked) Speed *= 0.975;
-								else Speed *= 0.95;
+			if (berserked) WeaponFactor *= 0.975;
+								else WeaponFactor *= 0.95;
 		}
 		if (weapon is "AppleJack") 
 		{
-			if (berserked) Speed *= 1.075;
-								else Speed *= 1.05;
+			if (berserked) WeaponFactor *= 1.075;
+								else WeaponFactor *= 1.05;
 		}
 		if (weapon is "Scrambler") 
 		{
-			if (berserked) Speed *= 1.1875;
-								else Speed *= 1.125;
+			if (berserked) WeaponFactor *= 1.1875;
+								else WeaponFactor *= 1.125;
 		}
-		if (weapon is "WizardPike") 
+		if (weapon is "WizardPike")
 		{
-			if (berserked) Speed *= 1.1875;
-								else Speed *= 1.125;
+			if (berserked) WeaponFactor *= 1.1875;
+								else WeaponFactor *= 1.125;
 		}
-		if (weapon is "SuperVac") 
+		if (weapon is "SuperVac")
 		{
-			if (berserked) Speed *= (0.9375 - (SuperVacAmmo * 0.002604167));
-								else Speed *= (0.875 - (SuperVacAmmo * 0.005208333));
+			if (berserked) WeaponFactor *= (0.9375 - (SuperVacAmmo * 0.002604167));
+								else WeaponFactor *= (0.875 - (SuperVacAmmo * 0.005208333));
 		}
-		if (weapon is "Grimophone") 
+		if (weapon is "Grimophone")
 		{
-			if (berserked) Speed *= 0.90625;
-								else Speed *= 0.8125;
+			if (berserked) WeaponFactor *= 0.90625;
+								else WeaponFactor *= 0.8125;
 		}
-		if (dydudebug_speedcalcs) Console.Printf("SpeedX [WeaponEquipped]: %.8f", Speed);
+		Speed *= WeaponFactor;
+		HUDSpeed *= WeaponFactor;
+		if (dydudebug_speedcalcs) Console.Printf("SpeedX [WeaponEquipped]: %.8f", WeaponFactor);
 		
+		double MystItemFactor = 1.0;
 		if (owner.CountInv("MysteryItem"))
 		{
-			if (owner.CountInv("DecentHealth")) Speed *= 1.0125;
-			if (owner.CountInv("LowHealth")) Speed *= 1.0625;
-			if (owner.CountInv("CriticalHealth")) Speed *= 1.3125;
-			if (dydudebug_speedcalcs) Console.Printf("SpeedX [Crisis]: %.8f", Speed);
+			if (owner.CountInv("DecentHealth")) MystItemFactor *= 1.0125;
+			if (owner.CountInv("LowHealth")) MystItemFactor *= 1.0625;
+			if (owner.CountInv("CriticalHealth")) MystItemFactor *= 1.3125;
+			if (dydudebug_speedcalcs) Console.Printf("SpeedX [Crisis]: %.8f", MystItemFactor);
 		}
-		HUDSpeed = Speed;
+		Speed *= MystItemFactor;
+		HUDSpeed *= MystItemFactor;
 
 		Speed *= spdfct;
 
