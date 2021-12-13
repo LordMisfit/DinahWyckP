@@ -3,7 +3,8 @@ class DDBaseZSC : Actor abstract
 {
 	mixin DmgCalc;
 	mixin CollisionChecker;
-
+	int CharacterClass;
+	
 	// General
 	const SKILL_VERY_EASY = 0;
 	const SKILL_EASY = 1;
@@ -18,6 +19,7 @@ class DDBaseZSC : Actor abstract
 	double oldVelZ;
 	int user_randompain;
 	int finaldamagedealt;
+	int finaldamagedealt2;
 	
 	default
 	{
@@ -109,6 +111,13 @@ class DDProjectile : DDBaseZSC abstract
 	int timesrippedoverall;
 	int maxtimesrippedoverall;
 	
+	int BaseSigilMaxHealth;
+	int MaxHealthTrue;
+	int stamdamagefactor;
+	int accudamagefactor;
+	
+	private class<Inventory> iDTech1Check, iDTech1Check2, iDTech1Check3, iDTech1Check4, iDTech1Check5, iDTech1Check6, iDTech1Check7, iDTech1Check8;
+
 	default
 	{
 	}
@@ -214,6 +223,363 @@ class DDProjectile : DDBaseZSC abstract
 		if (pos.Z + height >= ceilingz) hitaceiling = true;
 		//Console.Printf("pos.z: %d, height: %d, ceilingz: %d, hitceiling: %d", pos.z, height, ceilingz, hitaceiling);
 	}
+	
+	int A_GetSigilDamage(int attacktype = 0, int radiustype = 0)
+	{
+		bool debugsigilatkinfo;
+		int result, extradmg1, extradmg2, extradmg3, extradmg4, extradmg5, extradmg6, prefinaldmg, finaldmg;
+		int rand1, rand2;
+		int perkfactor = 10000;
+		PlayerPawn playpawn;
+		if (target) playpawn = PlayerPawn(target);
+		if (playpawn)
+		{
+			let MiscItem = PlayerStatItem(playpawn.FindInventory("PlayerStatItem"));
+			if (MiscItem)
+			{
+				BaseSigilMaxHealth = MiscItem.BaseStartMaxHealth;
+				MaxHealthTrue =  MiscItem.MaxHealthTrue;
+			}
+			else return 32;
+		}
+		else
+		{
+			return 32;
+		}
+		
+		if (attacktype == 0) // SpectralLightningBaseNew's A_Explode [this affects the explosive-damage/radius of most Sigil attacks]
+		{
+			if (radiustype == 0) // Damage Calculation
+			{
+				result = 32;
+			}
+			else // Radius Calculation
+			{
+				result = 32; 
+			}
+		}
+		
+		if (attacktype == 1) // SpectralLightningBall1New [shots from the Player's Sigil 3 fire mode]
+		{
+			if (radiustype == 0) // Damage Calculation
+			{
+				result = 175 + random(-87,87); // 88 to 242
+			}
+			else // Radius Calculation
+			{
+				result = 32; 
+			}
+		}
+		
+		if (attacktype == 2) // SpectralLightningBall2New [shots from monsters' Sigil 3 fire mode]
+		{
+			if (radiustype == 0) // Damage Calculation
+			{
+				result = 50 + random(-25,25); // 25 to 75
+			}
+			else // Radius Calculation
+			{
+				result = 32; 
+			}
+		}
+		
+		if (attacktype == 3) // SpectralLightningV1New [from the player's Sigil 1 node]
+		{
+			if (radiustype == 0) // Damage Calculation
+			{
+				result = 300 + random(-150,150); // 150 to 450
+			}
+			else // Radius Calculation
+			{
+				result = 32; 
+			}
+		}
+		
+		if (attacktype == 4) // SpectralLightningV2New [from the player's Sigil 1 node]
+		{
+			if (radiustype == 0) // Damage Calculation
+			{
+				result = 150 + random(-75,75); // 75 to 225
+			}
+			else // Radius Calculation
+			{
+				result = 32; 
+			}
+		}
+		
+		if (attacktype == 5) // SpectralLightningH1New [from the Player's Sigil 2 mode]
+		{
+			if (radiustype == 0) // Damage Calculation
+			{
+				result = 175 + random(-87,87); // 88 to 242
+			}
+			else // Radius Calculation
+			{
+				result = 32; 
+			}
+		}
+		
+		if (attacktype == 6) // SpectralLightningH2New
+		{
+			if (radiustype == 0) // Damage Calculation
+			{
+				result = 50 + random(-25,25); // 25 to 75
+			}
+			else // Radius Calculation
+			{
+				result = 32; 
+			}
+		}
+		
+		if (attacktype == 7) // SpectralLightningH3New [from the side/ahead shots of the player's Sigil 5 main shot]
+		{
+			if (radiustype == 0) // Damage Calculation
+			{
+				result = 25 + random(-12,12); // 13 to 37
+			}
+			else // Radius Calculation
+			{
+				result = 32; 
+			}
+		}
+		
+		if (attacktype == 8) // SpectralLightningBigBall1New [the main shot of the Player's Sigil 5 mode]
+		{
+			if (radiustype == 0) // Damage Calculation
+			{
+				result = 325 + random(-162,162); // 163 to 387
+			}
+			else // Radius Calculation
+			{
+				result = 32; 
+			}
+		}
+		
+		// Final Calculations
+		string AttackerName = "NONE";
+		if (target) AttackerName = target.GetClassName();
+		String nm, nn, no, np;
+		double minerror = 0.67;
+		double maxerror = 1.34;
+
+		if (radiustype == 0) // Direct Damage is randomized a lot
+		{
+			minerror = 0.67;
+			maxerror = 1.34;
+			if (playpawn) // if (IsPointerEqual(AAPTR_TARGET, AAPTR_PLAYER1) == TRUE) // AAPTR_TARGET - the being who fires the shot
+			{
+				if (debugsigilatkinfo) Console.Printf("Player Sigil Shot [damage] (%s), %d", AttackerName, attacktype);
+				
+				rand1 = floor((extradmg1 + extradmg2 + extradmg3 + extradmg4 + extradmg5 + extradmg6) * minerror);
+				rand2 = floor((extradmg1 + extradmg2 + extradmg3 + extradmg4 + extradmg5 + extradmg6) * maxerror);
+				finaldmg = result + random(rand1,rand2);
+				
+				if (stamdamagefactor == 1) finaldmg = floor(finaldmg * 1.125); // +12.5% damage
+				if (stamdamagefactor == 2) finaldmg = floor(finaldmg * 1.275); // +27.5% damage
+				if (stamdamagefactor == 3) finaldmg = floor(finaldmg * 1.45); // +45% damage
+				if (stamdamagefactor == 4) finaldmg = floor(finaldmg * 1.65); // +65% damage
+				if (stamdamagefactor == 5) finaldmg = floor(finaldmg * 1.875); // +87.5% damage
+				if (stamdamagefactor == 6) finaldmg = floor(finaldmg * 2.125); // +112.5% damage
+				if (stamdamagefactor == 7) finaldmg = floor(finaldmg * 2.4); // +140% damage
+				if (stamdamagefactor == 8) finaldmg = floor(finaldmg * 2.7); // +170% damage
+				if (stamdamagefactor == 9) finaldmg = floor(finaldmg * 3.025); // +202.5% damage
+				if (stamdamagefactor == 10) finaldmg = floor(finaldmg * 3.375); // +237.5% damage
+			
+				if (accudamagefactor == 1) finaldmg = floor(finaldmg * 1.0625); // +6.25% damage
+				if (accudamagefactor == 2) finaldmg = floor(finaldmg * 1.1375); // +13.75% damage
+				if (accudamagefactor == 3) finaldmg = floor(finaldmg * 1.225); // +22.5% damage
+				if (accudamagefactor == 4) finaldmg = floor(finaldmg * 1.325); // +32.5% damage
+				if (accudamagefactor == 5) finaldmg = floor(finaldmg * 1.4375); // +43.75% damage
+				if (accudamagefactor == 6) finaldmg = floor(finaldmg * 1.5625); // +56.25% damage
+				if (accudamagefactor == 7) finaldmg = floor(finaldmg * 1.70); // +70% damage
+				if (accudamagefactor == 8) finaldmg = floor(finaldmg * 1.85); // +85% damage
+				if (accudamagefactor == 9) finaldmg = floor(finaldmg * 2.0125); // +101.25% damage
+				if (accudamagefactor == 10) finaldmg = floor(finaldmg * 2.1875); // +118.75% damage
+				
+				int prefinaldmg = finaldmg;
+				int hpextradmg = 100;
+				int hpextradmgfactor = (MaxHealthTrue * 100);
+				int hpextradmg2 = (hpextradmgfactor / BaseSigilMaxHealth) / 5;
+				int hpextradmg3 = (hpextradmg + hpextradmg2);
+				finaldmg = (finaldmg * hpextradmg3) / 100;
+			
+				if (debugsigilatkinfo) Console.Printf("\cy(%s) (attacktype: %d)\c- (radiustype: %d): BaseDmg: %d, Extra1: %d, Extra2: %d, Extra3: %d, Extra4: %d, Extra5: %d, Extra6: %d, Original Max HP: %d, Current Max HP: %d, hpextradmg: %d, hpextradmgfactor: %d, hpextradmg2: %d, hpextradmg3: %d, Random: %d - %d, PerkFactor: %d, Total [Pre Max HP Check] %d, \cxTotal [Post Max HP Check]: %d\c-", 
+																GetClassName(), attacktype, radiustype, result, extradmg1, extradmg2, extradmg3, extradmg4, extradmg5, extradmg6, 
+																BaseSigilMaxHealth, MaxHealthTrue, hpextradmg, hpextradmgfactor, hpextradmg2, hpextradmg3, 
+																rand1, rand2, perkfactor, prefinaldmg, finaldmg);
+			}
+			else // If something that's NOT the player shoots it...
+			{
+				if (debugsigilatkinfo) Console.Printf("Non-Player/Spectre/Entity Sigil Shot (%s), %d", AttackerName, attacktype);
+
+				prefinaldmg = result;
+				finaldmg = result;
+				if (attacktype != 0) finaldmg = floor(finaldmg * random(1,4)); // +STRIFEDAMAGE calculation
+				nm = "EntityBoss"; iDTech1Check = nm; if (AttackerName == iDTech1Check) finaldmg = floor(finaldmg * 1.5);
+				nm = "EntityBossNew"; iDTech1Check = nm; if (AttackerName == iDTech1Check) finaldmg = floor(finaldmg * 1.5);
+				nm = "EntitySecond"; iDTech1Check = nm; if (AttackerName == iDTech1Check) finaldmg = floor(finaldmg * 1.5);
+				nm = "EntitySecondNew"; iDTech1Check = nm; if (AttackerName == iDTech1Check) finaldmg = floor(finaldmg * 1.5);
+				nm = "EntityAscended"; iDTech1Check = nm; if (AttackerName == iDTech1Check) finaldmg = floor(finaldmg * 2.25);
+
+				if (debugsigilatkinfo) Console.Printf("[non-player] \cy(%s)\c-: BaseDmg: %d, PreTotal: %d, \cxTotal: %d\c-", GetClassName(), result, prefinaldmg, finaldmg);
+			}
+		}
+		else // Radius is not randomized nearly as much
+		{
+			minerror = 0.925;
+			maxerror = 1.075;
+			if (playpawn)
+			{
+				if (debugsigilatkinfo) Console.Printf("Player Sigil Shot [radius] (%s), %d", AttackerName, attacktype);
+				
+				if (attacktype != 0)
+				{
+					if (attacktype == 1) // SpectralLightningBall1New [shots from the Player's Sigil 3 fire mode]
+					{
+						result *= 1.125;
+						extradmg1 *= 1.125;
+						extradmg2 *= 1.125;
+						extradmg3 *= 1.125;
+						extradmg4 *= 1.125;
+						extradmg5 *= 1.125;
+						extradmg6 *= 1.125;
+					}
+					if (attacktype == 2) // SpectralLightningBall2New [shots from monsters' Sigil 3 fire mode]
+					{
+						result *= 1.125;
+						extradmg1 *= 1.125;
+						extradmg2 *= 1.125;
+						extradmg3 *= 1.125;
+						extradmg4 *= 1.125;
+						extradmg5 *= 1.125;
+						extradmg6 *= 1.125;
+					}
+					if (attacktype == 3) // SpectralLightningV1New [from the player's Sigil 1 node]
+					{
+						result *= 1.25;
+						extradmg1 *= 1.25;
+						extradmg2 *= 1.25;
+						extradmg3 *= 1.25;
+						extradmg4 *= 1.25;
+						extradmg5 *= 1.25;
+						extradmg6 *= 1.25;
+					}
+					if (attacktype == 4) // SpectralLightningV2New [from the player's Sigil 1 node]
+					{
+						result *= 1.25;
+						extradmg1 *= 1.25;
+						extradmg2 *= 1.25;
+						extradmg3 *= 1.25;
+						extradmg4 *= 1.25;
+						extradmg5 *= 1.25;
+						extradmg6 *= 1.25;
+					}
+					if (attacktype == 5) // SpectralLightningH1New [from the Player's Sigil 2 mode]
+					{
+						result *= 1.5;
+						extradmg1 *= 1.5;
+						extradmg2 *= 1.5;
+						extradmg3 *= 1.5;
+						extradmg4 *= 1.5;
+						extradmg5 *= 1.5;
+						extradmg6 *= 1.5;
+					}
+					if (attacktype == 6) // SpectralLightningH2New
+					{
+						result *= 1.125;
+						extradmg1 *= 1.125;
+						extradmg2 *= 1.125;
+						extradmg3 *= 1.125;
+						extradmg4 *= 1.125;
+						extradmg5 *= 1.125;
+						extradmg6 *= 1.125;
+					}
+					if (attacktype == 7) // SpectralLightningH3New [from the side/ahead shots of the player's Sigil 5 main shot]
+					{
+						result *= 0.75;
+						extradmg1 *= 0.75;
+						extradmg2 *= 0.75;
+						extradmg3 *= 0.75;
+						extradmg4 *= 0.75;
+						extradmg5 *= 0.75;
+						extradmg6 *= 0.75;
+					}
+					if (attacktype == 8) // SpectralLightningBigBall1New [the main shot of the Player's Sigil 5 mode]
+					{
+						result *= 2.5;
+						extradmg1 *= 2.5;
+						extradmg2 *= 2.5;
+						extradmg3 *= 2.5;
+						extradmg4 *= 2.5;
+						extradmg5 *= 2.5;
+						extradmg6 *= 2.5;
+					}
+				}
+
+				rand1 = floor((extradmg1 + extradmg2 + extradmg3 + extradmg4 + extradmg5 + extradmg6) * minerror);
+				rand2 = floor((extradmg1 + extradmg2 + extradmg3 + extradmg4 + extradmg5 + extradmg6) * maxerror);
+				finaldmg = result + random(rand1,rand2);
+
+				
+				if (stamdamagefactor == 1) finaldmg = floor(finaldmg * 1.03125);
+				if (stamdamagefactor == 2) finaldmg = floor(finaldmg * 1.06875);
+				if (stamdamagefactor == 3) finaldmg = floor(finaldmg * 1.1125);
+				if (stamdamagefactor == 4) finaldmg = floor(finaldmg * 1.1625);
+				if (stamdamagefactor == 5) finaldmg = floor(finaldmg * 1.21875); 
+				if (stamdamagefactor == 6) finaldmg = floor(finaldmg * 1.28125); 
+				if (stamdamagefactor == 7) finaldmg = floor(finaldmg * 1.35);
+				if (stamdamagefactor == 8) finaldmg = floor(finaldmg * 1.425);
+				if (stamdamagefactor == 9) finaldmg = floor(finaldmg * 1.50625); 
+				if (stamdamagefactor == 10) finaldmg = floor(finaldmg * 1.59375);
+			
+				if (accudamagefactor == 1) finaldmg = floor(finaldmg * 1.015625);
+				if (accudamagefactor == 2) finaldmg = floor(finaldmg * 1.034375);
+				if (accudamagefactor == 3) finaldmg = floor(finaldmg * 1.05625);
+				if (accudamagefactor == 4) finaldmg = floor(finaldmg * 1.08125);
+				if (accudamagefactor == 5) finaldmg = floor(finaldmg * 1.109375);
+				if (accudamagefactor == 6) finaldmg = floor(finaldmg * 1.140625);
+				if (accudamagefactor == 7) finaldmg = floor(finaldmg * 1.175);
+				if (accudamagefactor == 8) finaldmg = floor(finaldmg * 1.2125);
+				if (accudamagefactor == 9) finaldmg = floor(finaldmg * 1.253125);
+				if (accudamagefactor == 10) finaldmg = floor(finaldmg * 1.296875);
+				
+				if (CharacterClass == 0) finaldmg = floor(finaldmg * 1.09375);
+				if (CharacterClass == 1) finaldmg = floor(finaldmg * 1.03125);
+				if (CharacterClass == 2) finaldmg = floor(finaldmg * 1.15625);
+				if (CharacterClass == 8) finaldmg = floor(finaldmg * 1.125);
+				if (CharacterClass == 9) finaldmg = floor(finaldmg * 1.0625);
+
+				int prefinaldmg = finaldmg;
+				int hpextradmg = 100;
+				int hpextradmgfactor = (MaxHealthTrue * 100);
+				int hpextradmg2 = (hpextradmgfactor / BaseSigilMaxHealth) / 20;
+				int hpextradmg3 = (hpextradmg + hpextradmg2);
+				finaldmg = (finaldmg * hpextradmg3) / 100;
+
+				if (debugsigilatkinfo) Console.Printf("\cy(%s) (attacktype: %d)\c- (radiustype: %d): BaseDmg: %d, Extra1: %d, Extra2: %d, Extra3: %d, Extra4: %d, Extra5: %d, Extra6: %d, Original Max HP: %d, Current Max HP: %d, hpextradmg: %d, hpextradmgfactor: %d, hpextradmg2: %d, hpextradmg3: %d, Random: %d - %d, PerkFactor: %d, Total [Pre Max HP Check] %d, \cxTotal [Post Max HP Check]: %d\c-", 
+																GetClassName(), attacktype, radiustype, result, extradmg1, extradmg2, extradmg3, extradmg4, extradmg5, extradmg6, 
+																BaseSigilMaxHealth, MaxHealthTrue, hpextradmg, hpextradmgfactor, hpextradmg2, hpextradmg3, 
+																rand1, rand2, perkfactor, prefinaldmg, finaldmg);
+			}
+			else // If something that's NOT the player shoots it...
+			{
+				if (debugsigilatkinfo) Console.Printf("[non-player] \cy(%s)\c-: BaseDmg: %d, PreTotal: %d, \cxTotal: %d\c-", GetClassName(), result, prefinaldmg, finaldmg);
+			}
+		}
+
+		if (radiustype == 0) 
+		{
+			if (debugsigilatkinfo) Console.Printf("\cxSigil Damage Total: %d\c-", finaldmg);
+			return finaldmg;
+		}
+		if (radiustype == 1) 
+		{
+			if (debugsigilatkinfo) Console.Printf("\cxSigil Radius Total: %d\c-", finaldmg);
+			return finaldmg;
+		}
+		return 32;
+	}
+	
 }
 
 // Base FastProjectile Class

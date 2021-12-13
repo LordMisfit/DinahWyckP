@@ -902,6 +902,10 @@ class DDStatusBarMain : BaseStatusBar
 		vector2 unitscale = (1, 1);
 		if (DashMaxCharge >= dashcost)
 		{
+			for (int i; i < (100 * dashmeterlength); i++)
+			{
+				DrawImage("BLAKUNIT", (digx+i, digy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+			}
 			for (int i; i < dashbarunits; i++) 
 			{
 				if (candash)
@@ -1164,6 +1168,8 @@ class DDStatusBarMain : BaseStatusBar
 		[ammo1, ammo2] = GetCurrentAmmo();
 		x = -4;
 		y = -22;
+		int barx = -42;
+		int bary = -48;
 		if (ammo1 != null)
 		{
 			if (cplayer.ReadyWeapon is "Grimophone")
@@ -1182,8 +1188,40 @@ class DDStatusBarMain : BaseStatusBar
 					recordpercent = recordenergy * 100 / recordenergymax;
 					int recordbarunits = recordpercent * recordmeterlength;
 					//Console.Printf("recordpercent: %d, recordbarunits: %d", recordpercent, recordbarunits);
-					for (int i; i < recordbarunits; i++) DrawImage(dun, (-40+i, -48), 0, HX_SHADOW); // -46, -1
-					//for (int i; i < recordbarunits; i++) DrawImage(dun, (-42, -2-(i*2)), 0, HX_SHADOW); // -46, -1
+					for (int i; i < (100 * recordmeterlength); i++) DrawImage("BLAKUNIT", (barx+i, bary), 0, HX_SHADOW); // -46, -1
+					for (int i; i < recordbarunits; i++) DrawImage(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+				}
+			}
+			if (cplayer.ReadyWeapon is "SuperVac")
+			{
+				int VacBagUnits = CPlayer.mo.CountInv("VacAmmoCounter");
+				int VacBagPercent;
+				double VacBagMeterLength = 0.4; // 0.2 vertical, 0.4 horizontal
+				if (VacBagMeterLength > 1.5) VacBagMeterLength = 1.5;
+				string dun = "VBAGUNIT";
+				int revbagunits = 100;
+
+				wsammoname = "VacAmmo";
+				ammotype = CPlayer.mo.FindInventory(wsammoname);
+				if (ammotype.Amount >= ammotype.MaxAmount) 
+				{
+					DrawString(mConFont, "FULL!", (barx+21, bary-8), DI_TEXT_ALIGN_CENTER, font.cr_sapphire); // -46, -1
+				}
+				else
+				{
+					let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+					if (MiscItem && MiscItem.SuperVacBagSize)
+					{
+						VacBagPercent = VacBagUnits * 100 / MiscItem.SuperVacBagSize;
+						//Console.Printf("%d / %d", VacBagUnits, MiscItem.SuperVacBagSize);
+						int VacBagBarUnits = VacBagPercent * VacBagMeterLength;
+						revbagunits -= VacBagBarUnits;
+						if (revbagunits < 0) revbagunits = 0;
+						if (revbagunits >= 100) revbagunits = 100;
+						//Console.Printf("%d, (%d) [%d%%]", revbagunits, VacBagBarUnits, VacBagPercent);
+						for (int i; i < (100 * VacBagMeterLength); i++) DrawImage("BLAKUNIT", (barx+i, bary), 0, HX_SHADOW); // -46, -1
+						for (int i; i < VacBagBarUnits; i++) DrawImage(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+					}
 				}
 			}
 			if (cplayer.ReadyWeapon is "BlunderAxe")

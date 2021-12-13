@@ -34,6 +34,7 @@ class PlayerStatItem : Inventory
 	int PrevHealthRatio;
 	int HealthRatio;
 	int CurrentHealth;
+	int BaseStartMaxHealth;
 	int MaxHealthTrue;
 	int MaxHealthLimit;
 
@@ -190,6 +191,7 @@ class PlayerStatItem : Inventory
 					owner.player.mo.stamina = 0;
 					owner.player.health = owner.player.mo.health = owner.player.mo.maxhealth = CurrentHealth = MaxHealthTrue;
 					owner.A_SetInventory("PlayerMaxHP",MaxHealthTrue);
+					BaseStartMaxHealth = MaxHealthTrue; // Sets the original Max Health as at the start of a game [for various checks, including Sigil damage]
 					if (debugstartup) Console.Printf("MaxHP: %d", MaxHealthTrue);
 					
 					owner.A_SetInventory("PlayerLevel",PlayerLevel);
@@ -332,7 +334,7 @@ class PlayerStatItem : Inventory
 			//*********************
 			//* Super Vac Bagging *
 			//*********************
-			if (SuperVacBagSize <= 0) 
+			if (SuperVacBagSize <= 0)
 			{ 
 				if (TrueGameSkill == SKILL_VERY_EASY) SuperVacBagSize = 240;
 				if (TrueGameSkill == SKILL_EASY) SuperVacBagSize = 320;
@@ -765,6 +767,11 @@ class PlayerStatItem : Inventory
 				owner.A_StopSound(CHAN_VOICE);
 				owner.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT);
 				owner.A_Log("The SuperVac's Alt-Fire Has THREE Charges now!", vacgiveammo);
+			}
+			if (vacammoprev >= 24)
+			{
+				vacammocounter = 0;
+				owner.A_SetInventory("VacAmmoCounter",0);
 			}
 			
 			// TimeFreeze Handler
@@ -1308,18 +1315,18 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerWineBuffStrong")) BuffFactor *= frandompick(0.985,1.015);
 			if (Owner.CountInv("PowerWineBuffStrongest")) BuffFactor *= frandompick(0.97,1.03);
 			if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandompick(0.95,1.05);
-			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Buff): %.8f", SkillFactor);
+			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Buff): %.8f", BuffFactor);
 			
 			// Weapons
 			double WeaponFactor = 1.00;
-			if (weapon is "HandToHand") WeaponFactor = 1.125;
-			if (weapon is "CricketBat") WeaponFactor = 1.00;
-			if (weapon is "BlunderAxe") WeaponFactor = 1.0625;
-			if (weapon is "AppleJack") WeaponFactor = 0.9375;
-			if (weapon is "Scrambler") WeaponFactor = 0.75;
-			if (weapon is "WizardPike") WeaponFactor = 0.875;
-			if (weapon is "SuperVac") WeaponFactor = 1.125;
-			if (weapon is "Grimophone") WeaponFactor = 1.25;
+			if (weapon is "HandToHand")		WeaponFactor = 1.125;
+			if (weapon is "CricketBat")		WeaponFactor = 1.00;
+			if (weapon is "BlunderAxe")		WeaponFactor = 1.0625;
+			if (weapon is "AppleJack")		WeaponFactor = 0.9375;
+			if (weapon is "Scrambler")		WeaponFactor = 0.75;
+			if (weapon is "WizardPike")		WeaponFactor = 0.875;
+			if (weapon is "SuperVac")			WeaponFactor = 1.125;
+			if (weapon is "Grimophone")		WeaponFactor = 1.25;
 			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - WeaponEquipped): %.8f", WeaponFactor);
 
 			double CrisisFactor = 1.0;
