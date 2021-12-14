@@ -68,7 +68,9 @@ class DDStatusBarMain : BaseStatusBar
 	override void Tick()
 	{
 		Super.Tick();
+		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
 		double tickinc = 0.1;
+		if (MiscItem && MiscItem.itemtimer <= 2) tickinc = 1.0;
 		healthtick = CPlayer.mo.CountInv("PlayerMaxHP") * tickinc;
 		if (healthtick < 1) healthtick = 1;
 		if (healthtick != prevhealthtick) mHealthInterpolator = DynamicValueInterpolator.Create(CPlayer.health, 0.25, 1, healthtick);
@@ -899,7 +901,8 @@ class DDStatusBarMain : BaseStatusBar
 		string dun = "DASHUNI2";
 		if (candash) dun = "DASHUNIT";
 		int dashcost = CPlayer.mo.CountInv("DashCost");
-		int dashcostunit = dashcost * 100 / dashmaxcharge;
+		int dashcostunit;
+		if (dashmaxcharge) dashcostunit = dashcost * 100 / dashmaxcharge;
 		dashcostunit *= dashmeterlength;
 		int ix;
 		vector2 unitscale = (1, 1);
@@ -1243,18 +1246,21 @@ class DDStatusBarMain : BaseStatusBar
 			y -= 40;
 		}
 
-		x = -46;
-		x -= 16;
-		y = -1;
-		y -= 8;
-		// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
-		// Heretic's ARTIBOX is 30x30 pixels. 
-		DrawImage("ARTIBOXD", (x, y), 0, HX_SHADOW); // -46, -1
-		DrawInventoryIcon(CPlayer.mo.InvSel, (x, y-14), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
-		y += 7;
-		DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.Amount, 3), (x-23, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_LEFT, font.cr_gray);
-		DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x-2, y - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_CENTER, font.cr_gray);
-		DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.MaxAmount, 3), (x+14, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, font.cr_gray);
+		if (CPlayer.mo.InvSel != null)
+		{
+			x = -46;
+			x -= 16;
+			y = -1;
+			y -= 8;
+			// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
+			// Heretic's ARTIBOX is 30x30 pixels. 
+			DrawImage("ARTIBOXD", (x, y), 0, HX_SHADOW); // -46, -1
+			DrawInventoryIcon(CPlayer.mo.InvSel, (x, y-14), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
+			y += 7;
+			DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.Amount, 3), (x-23, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_LEFT, font.cr_gray);
+			DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x-2, y - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_CENTER, font.cr_gray);
+			DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.MaxAmount, 3), (x+14, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, font.cr_gray);
+		}
 		
 		string tallytemp = "";
 		if (dyduhud_showleveltimes)
