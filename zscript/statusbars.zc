@@ -22,7 +22,8 @@ class DDStatusBarMain : BaseStatusBar
 	override void Init()
 	{
 		Super.Init();
-		SetSize(42, 320, 200); // 42, 320, 200
+		SetSize(0, 320, 200); // This sets the pixel height of the status bar and the base resolution
+		//SetSize(42, 320, 200); // 42, 320, 200
 
 		// Create the font used for the fullscreen HUD
 		Font fnt = "HUDFONT_RAVEN";
@@ -60,9 +61,9 @@ class DDStatusBarMain : BaseStatusBar
 	override void NewGame ()
 	{
 		Super.NewGame();
-		mHealthInterpolator.Reset (0);
-		mArmorInterpolator.Reset (0);
-		mEXPInterpolator.Reset (0);
+		mHealthInterpolator.Reset(0);
+		mArmorInterpolator.Reset(0);
+		mEXPInterpolator.Reset(0);
 	}
 
 	override void Tick()
@@ -332,6 +333,7 @@ class DDStatusBarMain : BaseStatusBar
 	{
 		Super.Draw (state, TicFrac);
 
+		/*
 		if (state == HUD_StatusBar)
 		{
 			BeginStatusBar();
@@ -342,6 +344,9 @@ class DDStatusBarMain : BaseStatusBar
 			BeginHUD();
 			DrawFullScreenStuff ();
 		}
+		*/
+		BeginHUD();
+		DrawFullScreenStuff ();
 	}
 
 	protected void DrawMainBar (double TicFrac)
@@ -563,806 +568,809 @@ class DDStatusBarMain : BaseStatusBar
 		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
 		if (MiscItem) PlayerLevel = MiscItem.PlayerLevel;
 
-		vector2 FontScale = (1.25, 1.25);
-		int FontLineSpace = 4;
-		int FontWrapWidth = -1;
-		double FontAlpha = 0.9;
-
-		int digx, digy, spacing;
-		int valueamt = CPlayer.mo.health;
-		string valueamtS = FormatNumber(valueamt);
-		int PlayerMaxHP = CPlayer.mo.CountInv("PlayerMaxHP");
-		string PlayerMaxHPS = FormatNumber(PlayerMaxHP);
-
-		int healthdigits = 2;
-		healthdigits = PlayerMaxHPS.Length();
-		if (valueamt > PlayerMaxHP) healthdigits = valueamtS.Length();
-
-		int slashunit = (-6 * (healthdigits-2));
-		int healthcolor = font.CR_brick;
-		bool isinvuln = false;
-		if (CPlayer.mo.bINVULNERABLE || 
-				 CPlayer.mo.CountInv("PowerInvulnerable") || CPlayer.mo.CountInv("PowerInvulnDD") || 
-				 CPlayer.cheats & CF_GODMODE2 || CPlayer.cheats & CF_GODMODE) isinvuln = true;
-		if (isinvuln) healthcolor = font.CR_Gold;
-		//health
-		DrawImage("ARTIWINE", (64, -4)); // 51, -3
-		DrawString(mDDMFont, FormatNumber(PlayerMaxHP), (49, -12), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-		DrawString(mDDMFont, "/", ((24+slashunit), -18), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-		double healthalpha = 0.90;
-		double xscal = 1.00;
-		double yscal = 1.00;
-		int direction = 1;
-		int scalerbase, scaler, scaler2, scalerdiv;
-		double scaleincamt;
-		double scaleamtbase = 1.334;
-		if (CPlayer.mo.CountInv("PlayerIsDead") || valueamt <= 0)
+		if (screenblocks < 12)
 		{
-			healthalpha *= 0.1;
-			healthcolor = font.CR_black;
-		}
-		else
-		{
-			if (CPlayer.mo.CountInv("CriticalHealth") && level.time % 6 >= 3) 
+			vector2 FontScale = (1.25, 1.25);
+			int FontLineSpace = 4;
+			int FontWrapWidth = -1;
+			double FontAlpha = 0.9;
+
+			int digx, digy, spacing;
+			int valueamt = CPlayer.mo.health;
+			string valueamtS = FormatNumber(valueamt);
+			int PlayerMaxHP = CPlayer.mo.CountInv("PlayerMaxHP");
+			string PlayerMaxHPS = FormatNumber(PlayerMaxHP);
+
+			int healthdigits = 2;
+			healthdigits = PlayerMaxHPS.Length();
+			if (valueamt > PlayerMaxHP) healthdigits = valueamtS.Length();
+
+			int slashunit = (-6 * (healthdigits-2));
+			int healthcolor = font.CR_brick;
+			bool isinvuln = false;
+			if (CPlayer.mo.bINVULNERABLE || 
+					 CPlayer.mo.CountInv("PowerInvulnerable") || CPlayer.mo.CountInv("PowerInvulnDD") || 
+					 CPlayer.cheats & CF_GODMODE2 || CPlayer.cheats & CF_GODMODE) isinvuln = true;
+			if (isinvuln) healthcolor = font.CR_Gold;
+			//health
+			DrawImage("ARTIWINE", (64, -4)); // 51, -3
+			DrawString(mDDMFont, FormatNumber(PlayerMaxHP), (49, -12), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawString(mDDMFont, "/", ((24+slashunit), -18), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			double healthalpha = 0.90;
+			double xscal = 1.00;
+			double yscal = 1.00;
+			int direction = 1;
+			int scalerbase, scaler, scaler2, scalerdiv;
+			double scaleincamt;
+			double scaleamtbase = 1.334;
+			if (CPlayer.mo.CountInv("PlayerIsDead") || valueamt <= 0)
 			{
-				healthalpha = 0.125;
+				healthalpha *= 0.1;
+				healthcolor = font.CR_black;
 			}
-			else if (CPlayer.mo.CountInv("LowHealth") && level.time % 18 >= 9) 
+			else
 			{
-				healthalpha *= 0.25;
-			}
-			else if (CPlayer.mo.CountInv("DecentHealth") && level.time % 36 >= 18) 
-			{
-				healthalpha *= 0.5;
-			}
-			else 
-			{
-				if (valueamt > PlayerMaxHP)
+				if (CPlayer.mo.CountInv("CriticalHealth") && level.time % 6 >= 3) 
 				{
-					scalerbase = 192;
-					scaleincamt = 0.00166667;
-					scaleamtbase = 1.0;
-					healthcolor = font.CR_Teal;
-					if (valueamt >= (PlayerMaxHP * 1.334))
+					healthalpha = 0.125;
+				}
+				else if (CPlayer.mo.CountInv("LowHealth") && level.time % 18 >= 9) 
+				{
+					healthalpha *= 0.25;
+				}
+				else if (CPlayer.mo.CountInv("DecentHealth") && level.time % 36 >= 18) 
+				{
+					healthalpha *= 0.5;
+				}
+				else 
+				{
+					if (valueamt > PlayerMaxHP)
 					{
-						scalerbase = 128;
-						scaleincamt = 0.0025;
-						scaleamtbase = 1.0625;
-						healthcolor = font.CR_Cyan;
-						if (valueamt >= (PlayerMaxHP * 1.667))
+						scalerbase = 192;
+						scaleincamt = 0.00166667;
+						scaleamtbase = 1.0;
+						healthcolor = font.CR_Teal;
+						if (valueamt >= (PlayerMaxHP * 1.334))
 						{
-							scalerbase = 96;
-							scaleincamt = 0.0033334;
-							scaleamtbase = 1.125;
-							healthcolor = font.CR_Sapphire;
-							if (valueamt >= (PlayerMaxHP * 2))
+							scalerbase = 128;
+							scaleincamt = 0.0025;
+							scaleamtbase = 1.0625;
+							healthcolor = font.CR_Cyan;
+							if (valueamt >= (PlayerMaxHP * 1.667))
 							{
-								scalerbase = 64;
-								scaleincamt = 0.005;
-								scaleamtbase = 1.1875;
-								healthcolor = font.CR_LightBlue;
-								if (valueamt >= (PlayerMaxHP * 2.5))
+								scalerbase = 96;
+								scaleincamt = 0.0033334;
+								scaleamtbase = 1.125;
+								healthcolor = font.CR_Sapphire;
+								if (valueamt >= (PlayerMaxHP * 2))
 								{
-									scalerbase = 32;
-									scaleincamt = 0.01;
-									scaleamtbase = 1.25;
-									healthcolor = font.CR_Purple;
-									if (valueamt >= (PlayerMaxHP * 3.0))
+									scalerbase = 64;
+									scaleincamt = 0.005;
+									scaleamtbase = 1.1875;
+									healthcolor = font.CR_LightBlue;
+									if (valueamt >= (PlayerMaxHP * 2.5))
 									{
-										scalerbase = 16;
-										scaleincamt = 0.02;
-										scaleamtbase = 1.3125;
-										healthcolor = font.CR_Gold;
+										scalerbase = 32;
+										scaleincamt = 0.01;
+										scaleamtbase = 1.25;
+										healthcolor = font.CR_Purple;
+										if (valueamt >= (PlayerMaxHP * 3.0))
+										{
+											scalerbase = 16;
+											scaleincamt = 0.02;
+											scaleamtbase = 1.3125;
+											healthcolor = font.CR_Gold;
+										}
 									}
 								}
 							}
 						}
+						scaler = (level.time % scalerbase);
+						if (scaler >= (scalerbase*0.5) && scaler <= (scalerbase-1)) scaler2 = (scalerbase - scaler);
+																																	else scaler2 = scaler;
+						xscal = yscal = 1.0 + (scaler2 * (scaleincamt * scaleamtbase)); // 4
+						//Console.Printf("Scaler2: %d (%d), scaleincamt: %.8f (%d)", scaler2, scaler, scaleincamt, scalerbase);
 					}
-					scaler = (level.time % scalerbase);
-					if (scaler >= (scalerbase*0.5) && scaler <= (scalerbase-1)) scaler2 = (scalerbase - scaler);
-																																else scaler2 = scaler;
-					xscal = yscal = 1.0 + (scaler2 * (scaleincamt * scaleamtbase)); // 4
-					//Console.Printf("Scaler2: %d (%d), scaleincamt: %.8f (%d)", scaler2, scaler, scaleincamt, scalerbase);
 				}
 			}
-		}
-		//Console.Printf("scal: %.8f / %.8f", xscal, yscal);
-		if (isinvuln) healthcolor = font.CR_Gold;
-		DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), (49, -28), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, FontWrapWidth, FontLineSpace, (xscal*1.25, yscal*1.25));
+			//Console.Printf("scal: %.8f / %.8f", xscal, yscal);
+			if (isinvuln) healthcolor = font.CR_Gold;
+			DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), (49, -28), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, FontWrapWidth, FontLineSpace, (xscal*1.25, yscal*1.25));
 
-		//misc [speed]
-		double basespeed = 1.0;
-		double basehpregen = 1.0;
-		int jumpheight = 64;
-		string speedval = "";
-		string jumpval = "";
-		string regenval = "";
-		int exty = 0;
-		if (MiscItem && CPlayer.mo.health > 0) 
-		{
-			if (CPlayer.mo.health != MiscItem.MaxHealthTrue) exty = -3;
-			FontScale = (1.0, 1.0);
-			basespeed = MiscItem.HUDSpeed * 100;
-			int speedclr = font.cr_white;
-			if (basespeed > 100.0000) speedclr = font.cr_blue;
-			if (basespeed < 100.0000) speedclr = font.cr_red;
-			speedval.AppendFormat("%.2f%% MoveSpeed", basespeed);
-			DrawString(mArmSaveFont, speedval, (79, (-21+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-
-			JumpHeight = MiscItem.TrueJumpHeight;
-			jumpval.AppendFormat("%d Jump Height", JumpHeight);
-			DrawString(mArmSaveFont, jumpval, (79, (-15+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-
-			basehpregen = MiscItem.baseregenmulti * 100;
-			int regenclr = font.cr_white;
-			if (CPlayer.mo.health < MiscItem.MaxHealthTrue) 
+			//misc [speed]
+			double basespeed = 1.0;
+			double basehpregen = 1.0;
+			int jumpheight = 64;
+			string speedval = "";
+			string jumpval = "";
+			string regenval = "";
+			int exty = 0;
+			if (MiscItem && CPlayer.mo.health > 0) 
 			{
-				if (basehpregen > 100.0000) regenclr = font.cr_blue;
-				if (basehpregen < 100.0000) regenclr = font.cr_red;
-				regenval.AppendFormat("%.2f%% Regen Speed", basehpregen);
-			}
-			if (CPlayer.mo.health > MiscItem.MaxHealthTrue) 
-			{
-				if (basehpregen > 100.0000) regenclr = font.cr_red;
-				if (basehpregen < 100.0000) regenclr = font.cr_blue;
-				regenval.AppendFormat("%.2f%% Degen Speed", basehpregen);
-			}
-			DrawString(mArmSaveFont, regenval, (79, (-9+exty)), DI_TEXT_ALIGN_LEFT, regenclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			FontScale = (1.25, 1.25);
-		}
+				if (CPlayer.mo.health != MiscItem.MaxHealthTrue) exty = -3;
+				FontScale = (1.0, 1.0);
+				basespeed = MiscItem.HUDSpeed * 100;
+				int speedclr = font.cr_white;
+				if (basespeed > 100.0000) speedclr = font.cr_blue;
+				if (basespeed < 100.0000) speedclr = font.cr_red;
+				speedval.AppendFormat("%.2f%% MoveSpeed", basespeed);
+				DrawString(mArmSaveFont, speedval, (79, (-21+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 
-		//armor
-		int armorcolor = font.CR_White; 
-		int armormax;
-		double armorprotect;
-		string armormaxS;
-		string armorsaveamt;
-		let armor = CPlayer.mo.FindInventory("BasicArmor");
-		if (armor != null && armor.Amount > 0)
-		{
-			let armorb = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
-			if (armorb) 
-			{
-				armorprotect = armorb.SavePercent * 100;
-				armorsaveamt = "";
-				armorsaveamt.AppendFormat("%.2f%%", armorprotect);
-				armorsaveamt.AppendFormat(" damage resist");
-			}
-			valueamt = armor.Amount;
-			valueamtS = FormatNumber(valueamt);
+				JumpHeight = MiscItem.TrueJumpHeight;
+				jumpval.AppendFormat("%d Jump Height", JumpHeight);
+				DrawString(mArmSaveFont, jumpval, (79, (-15+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 
-			DrawInventoryIcon(armor, (64, -32)); // 58, -24
-			if (CPlayer.mo.CountInv("KnightGownItem"))
-			{
-				armorcolor = font.CR_Purple;
-				armormax = 250;
-			}
-			if (CPlayer.mo.CountInv("KnightGownItem2"))
-			{
-				armorcolor = font.CR_Cyan;
-				armormax = 500;
-			}
-			if (CPlayer.mo.CountInv("KnightGownItem3"))
-			{
-				armorcolor = font.CR_Gold;
-				armormax = 1000;
-			}
-			if (CPlayer.mo.CountInv("KnightGownItem4"))
-			{
-				armorcolor = font.CR_Gold;
-				armormax = 2000;
-			}
-			valueamtS = FormatNumber(valueamt);
-			armormaxS = FormatNumber(armormax);
-
-			int armordigits = 2;
-			
-			armordigits = armormaxS.Length();
-			if (valueamt > armormax) armordigits = valueamtS.Length();
-			
-			slashunit = (-6 * (armordigits-2));
-			
-			// Amounts
-			DrawString(mDDMFont, FormatNumber(armormax), (49, -42), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			DrawString(mDDMFont, "/", ((20+slashunit), -50), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			DrawString(mDDLFont, FormatNumber(mArmorInterpolator.GetValue()), (49, -59), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			
-			FontScale = (1.0, 1.0);
-			// Protect %
-			if (armorprotect) DrawString(mArmSaveFont, armorsaveamt, (79, -53), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			// + Defense
-			int ArmorFlatDefValue = 0;
-			string ArmorFlatDef = "";
-			if (CPlayer.mo.CountInv("KnightGownItem")) ArmorFlatDefValue = (1 + (PlayerLevel * 0.025));
-			if (CPlayer.mo.CountInv("KnightGownItem2")) ArmorFlatDefValue = (2 + (PlayerLevel * 0.050));
-			if (CPlayer.mo.CountInv("KnightGownItem3")) ArmorFlatDefValue = (3 + (PlayerLevel * 0.075));
-			if (CPlayer.mo.CountInv("KnightGownItem4")) ArmorFlatDefValue = (5 + (PlayerLevel * 0.125));
-			ArmorFlatDef.AppendFormat("-");
-			ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
-			ArmorFlatDef.AppendFormat("flat damage");
-			if (armor.Amount > 0) DrawString(mArmSaveFont, ArmorFlatDef, (79, -47), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			FontScale = (1.25, 1.25);
-		}
-
-		//level
-		if (dyduhud_showexplevel)
-		{
-			DrawString(mDDLFont, FormatNumber(PlayerLevel, 3), (48, -82), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			DrawString(mSmallFont, "LVL", (48, -91), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-		}
-		if (dyduhud_showexperience)
-		{
-			//EXP
-			int EXPPts = CPlayer.mo.CountInv("ExpPts");
-			int EXPNeeded = CPlayer.mo.CountInv("ExpPtsNeeded");
-			int digits;
-			if (EXPNeeded < 100000000) digits = 8;
-			if (EXPNeeded < 10000000) digits = 7;
-			if (EXPNeeded < 1000000) digits = 6;
-			if (EXPNeeded < 100000) digits = 5;
-			if (EXPNeeded < 10000) digits = 4;
-			if (EXPNeeded < 1000) digits = 3;
-			if (EXPNeeded < 100) digits = 2;
-			if (EXPNeeded < 10) digits = 1;
-			spacing = 6; // 6
-			spacing *= 1.25;
-			digx = 64 + (digits * spacing);
-			DrawString(mDDMFont, FormatNumber(mEXPInterpolator.GetValue(), digits), (digx, -88), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			DrawString(mDDMFont, "/", ((digx+(spacing*1.334)), -84), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			DrawString(mDDMFont, FormatNumber(EXPNeeded, digits), (digx, -78), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-		}
-
-		//keys
-		Vector2 keypos = (256, -6); // (-10, 24)
-		int rowsize = 6;
-		Vector2 keyscale = (1.0, 1.0);
-		if (gameinfo.gametype == GAME_Doom) 
-		{
-			keypos = (256, -6);
-			rowsize = 3;
-			keyscale = (1.5, 1.5);
-		}
-		if (gameinfo.gametype == GAME_Heretic) 
-		{
-			keypos = (256, -6);
-			rowsize = 3;
-			keyscale = (1.5, 1.5);
-		}
-		if (gameinfo.gametype == GAME_Hexen) 
-		{ 
-			keypos = (224, -8); // 256, -6
-			//keypos = (10, -100);
-			rowsize = 2; // Hexen's key icons are far and away the largest, so this is capped to 11, the number of keys Hexen uses.
-			keyscale = (0.667, 0.667);
-		}
-		if (gameinfo.gametype == GAME_Strife) 
-		{
-			keypos = (208, -5); // 256, -6
-			//keypos = (8, -68); // 8, -68
-			rowsize = 3; // Strife has an absurd TWENTY-EIGHT key types, at least the ones that the HUD normally shows. :V
-			keyscale = (0.6, 0.6);
-		}
-		int basexpos = keypos.x;
-		int baseypos = keypos.y;
-
-		int rowc = 0;
-		double roww = 0;
-		bool showkeys = true;
-		/*
-		if (!automapactive)
-		{
-			if (gameinfo.gametype == GAME_Hexen) showkeys = false;
-			if (gameinfo.gametype == GAME_Strife) showkeys = false;
-		}
-		*/
-		
-		if (showkeys)
-		{
-			for(let i = CPlayer.mo.Inv; i != null; i = i.Inv)
-			{
-				if (i is "Key" && i.Icon.IsValid())
+				basehpregen = MiscItem.baseregenmulti * 100;
+				int regenclr = font.cr_white;
+				if (CPlayer.mo.health < MiscItem.MaxHealthTrue) 
 				{
-					//Console.Printf("x: %d, y: %d, type: %s", keypos.x, keypos.y, i.GetClassName());
-					DrawTexture(i.Icon, keypos, DI_SCREEN_LEFT_BOTTOM|DI_ITEM_CENTER, 1.0, (-1, -1), keyscale);
-					Vector2 size = TexMan.GetScaledSize(i.Icon);
-					size.x *= keyscale.x;
-					size.y *= keyscale.y;
-					keypos.Y -= size.Y + 2; // + = down, - = up
-					roww = max(roww, size.X);
-					if (++rowc == rowsize)
-					{
-						keypos.Y = baseypos;
-						keypos.X += roww + 2;
-						roww = 0;
-						rowc = 0;
-					}
+					if (basehpregen > 100.0000) regenclr = font.cr_blue;
+					if (basehpregen < 100.0000) regenclr = font.cr_red;
+					regenval.AppendFormat("%.2f%% Regen Speed", basehpregen);
 				}
+				if (CPlayer.mo.health > MiscItem.MaxHealthTrue) 
+				{
+					if (basehpregen > 100.0000) regenclr = font.cr_red;
+					if (basehpregen < 100.0000) regenclr = font.cr_blue;
+					regenval.AppendFormat("%.2f%% Degen Speed", basehpregen);
+				}
+				DrawString(mArmSaveFont, regenval, (79, (-9+exty)), DI_TEXT_ALIGN_LEFT, regenclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				FontScale = (1.25, 1.25);
 			}
-		}
 
-		//frags
-		if (deathmatch)
-		{
-			DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (70, -16));
-		}
-		
-		// dash
-		int candash = CPlayer.mo.CountInv("DashReady");
-		int dash = CPlayer.mo.CountInv("DashGauge");
-		int dashcharges = CPlayer.mo.CountInv("DashCharges");
-		int dashcharge = CPlayer.mo.CountInv("DashCharge");
-		int dashtics = CPlayer.mo.CountInv("DashTics");
-		int dashmaxcharge = CPlayer.mo.CountInv("DashMaxCharge");
-		double dashmeterlength = (0.75 + (PlayerLevel * 0.01));
-		if (dashmeterlength > 1.5) dashmeterlength = 1.5;
-		int dashbarunits = dash * dashmeterlength;
-		digy = -100;
-		digx = 18;
-		string dun = "DASHUNI2";
-		if (candash) dun = "DASHUNIT";
-		int dashcost = CPlayer.mo.CountInv("DashCost");
-		int dashcostunit;
-		if (dashmaxcharge) dashcostunit = dashcost * 100 / dashmaxcharge;
-		dashcostunit *= dashmeterlength;
-		int ix;
-		vector2 unitscale = (1, 1);
-		if (DashMaxCharge >= dashcost)
-		{
-			for (int i; i < (100 * dashmeterlength); i++)
+			//armor
+			int armorcolor = font.CR_White; 
+			int armormax;
+			double armorprotect;
+			string armormaxS;
+			string armorsaveamt;
+			let armor = CPlayer.mo.FindInventory("BasicArmor");
+			if (armor != null && armor.Amount > 0)
 			{
-				DrawImage("BLAKUNIT", (digx+i, digy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
-			}
-			for (int i; i < dashbarunits; i++) 
-			{
-				if (candash)
+				let armorb = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
+				if (armorb) 
 				{
-					dun = "DASHUNI1";
-					unitscale = (1, 1);
-					ix = (i % dashcostunit);
-					if (i != 0 && ix == 0) 
-					{
-						unitscale = (1.125, 1.125);
-						dun = "DASHUNI3";
-					}
+					armorprotect = armorb.SavePercent * 100;
+					armorsaveamt = "";
+					armorsaveamt.AppendFormat("%.2f%%", armorprotect);
+					armorsaveamt.AppendFormat(" damage resist");
 				}
-				else
+				valueamt = armor.Amount;
+				valueamtS = FormatNumber(valueamt);
+
+				DrawInventoryIcon(armor, (64, -32)); // 58, -24
+				if (CPlayer.mo.CountInv("KnightGownItem"))
 				{
-					dun = "DASHUNI2";
-					ix = (i % dashcostunit);
-					if (i != 0 && ix == 0) 
-					{
-						unitscale = (1.125, 1.125);
-						dun = "DASHUNI4";
-					}
+					armorcolor = font.CR_Purple;
+					armormax = 250;
 				}
+				if (CPlayer.mo.CountInv("KnightGownItem2"))
+				{
+					armorcolor = font.CR_Cyan;
+					armormax = 500;
+				}
+				if (CPlayer.mo.CountInv("KnightGownItem3"))
+				{
+					armorcolor = font.CR_Gold;
+					armormax = 1000;
+				}
+				if (CPlayer.mo.CountInv("KnightGownItem4"))
+				{
+					armorcolor = font.CR_Gold;
+					armormax = 2000;
+				}
+				valueamtS = FormatNumber(valueamt);
+				armormaxS = FormatNumber(armormax);
+
+				int armordigits = 2;
 				
-				DrawImage(dun, (digx+i, digy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+				armordigits = armormaxS.Length();
+				if (valueamt > armormax) armordigits = valueamtS.Length();
+				
+				slashunit = (-6 * (armordigits-2));
+				
+				// Amounts
+				DrawString(mDDMFont, FormatNumber(armormax), (49, -42), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mDDMFont, "/", ((20+slashunit), -50), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mDDLFont, FormatNumber(mArmorInterpolator.GetValue()), (49, -59), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				
+				FontScale = (1.0, 1.0);
+				// Protect %
+				if (armorprotect) DrawString(mArmSaveFont, armorsaveamt, (79, -53), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				// + Defense
+				int ArmorFlatDefValue = 0;
+				string ArmorFlatDef = "";
+				if (CPlayer.mo.CountInv("KnightGownItem")) ArmorFlatDefValue = (1 + (PlayerLevel * 0.025));
+				if (CPlayer.mo.CountInv("KnightGownItem2")) ArmorFlatDefValue = (2 + (PlayerLevel * 0.050));
+				if (CPlayer.mo.CountInv("KnightGownItem3")) ArmorFlatDefValue = (3 + (PlayerLevel * 0.075));
+				if (CPlayer.mo.CountInv("KnightGownItem4")) ArmorFlatDefValue = (5 + (PlayerLevel * 0.125));
+				ArmorFlatDef.AppendFormat("-");
+				ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
+				ArmorFlatDef.AppendFormat("flat damage");
+				if (armor.Amount > 0) DrawString(mArmSaveFont, ArmorFlatDef, (79, -47), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				FontScale = (1.25, 1.25);
 			}
-		}
+
+			//level
+			if (dyduhud_showexplevel)
+			{
+				DrawString(mDDLFont, FormatNumber(PlayerLevel, 3), (48, -82), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mSmallFont, "LVL", (48, -91), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
+			if (dyduhud_showexperience)
+			{
+				//EXP
+				int EXPPts = CPlayer.mo.CountInv("ExpPts");
+				int EXPNeeded = CPlayer.mo.CountInv("ExpPtsNeeded");
+				int digits;
+				if (EXPNeeded < 100000000) digits = 8;
+				if (EXPNeeded < 10000000) digits = 7;
+				if (EXPNeeded < 1000000) digits = 6;
+				if (EXPNeeded < 100000) digits = 5;
+				if (EXPNeeded < 10000) digits = 4;
+				if (EXPNeeded < 1000) digits = 3;
+				if (EXPNeeded < 100) digits = 2;
+				if (EXPNeeded < 10) digits = 1;
+				spacing = 6; // 6
+				spacing *= 1.25;
+				digx = 64 + (digits * spacing);
+				DrawString(mDDMFont, FormatNumber(mEXPInterpolator.GetValue(), digits), (digx, -88), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mDDMFont, "/", ((digx+(spacing*1.334)), -84), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mDDMFont, FormatNumber(EXPNeeded, digits), (digx, -78), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
+
+			//keys
+			Vector2 keypos = (256, -6); // (-10, 24)
+			int rowsize = 6;
+			Vector2 keyscale = (1.0, 1.0);
+			if (gameinfo.gametype == GAME_Doom) 
+			{
+				keypos = (256, -6);
+				rowsize = 3;
+				keyscale = (1.5, 1.5);
+			}
+			if (gameinfo.gametype == GAME_Heretic) 
+			{
+				keypos = (256, -6);
+				rowsize = 3;
+				keyscale = (1.5, 1.5);
+			}
+			if (gameinfo.gametype == GAME_Hexen) 
+			{ 
+				keypos = (224, -8); // 256, -6
+				//keypos = (10, -100);
+				rowsize = 2; // Hexen's key icons are far and away the largest, so this is capped to 11, the number of keys Hexen uses.
+				keyscale = (0.667, 0.667);
+			}
+			if (gameinfo.gametype == GAME_Strife) 
+			{
+				keypos = (208, -5); // 256, -6
+				//keypos = (8, -68); // 8, -68
+				rowsize = 3; // Strife has an absurd TWENTY-EIGHT key types, at least the ones that the HUD normally shows. :V
+				keyscale = (0.6, 0.6);
+			}
+			int basexpos = keypos.x;
+			int baseypos = keypos.y;
+
+			int rowc = 0;
+			double roww = 0;
+			bool showkeys = true;
+			/*
+			if (!automapactive)
+			{
+				if (gameinfo.gametype == GAME_Hexen) showkeys = false;
+				if (gameinfo.gametype == GAME_Strife) showkeys = false;
+			}
+			*/
 		
-		if (dydudebug_dashmeter)
-		{
-			digy = -116;
-			digx = 48;
-			if (candash) DrawString(mDDMFont, FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-							else DrawString(mDDMFont, FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-			digy = -124;
-			digx = 48;
-			if (candash) DrawString(mDDMFont, FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-							else DrawString(mDDMFont, FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-			digy = -116;
-			digx = 80;
-			if (candash) DrawString(mDDMFont, FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-							else DrawString(mDDMFont, FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-			if (dashtics)
+			if (showkeys)
 			{
-				digy = -122;
-				digx = 80;
-				if (candash) DrawString(mDDMFont, FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-								else DrawString(mDDMFont, FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-			}
-		}
-		
-		//weapon slots
-		int x;
-		int y;
-		int wsspace = 15;
-		double wsalpha = 0.9;
-		vector2 wsscale = (1.125, 1.125);
-		int wsfontclr = font.cr_gray;
-		int startposx = -220;
-		int wsflags = DI_TEXT_ALIGN_LEFT;
-		let wsweapon = CPlayer.ReadyWeapon;
-		string wsname;
-		string wsammoname;
-		int wsnum;
-
-		x = startposx;
-		y = -34;
-		wsname = "HandToHand";
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			wsfontclr = font.cr_gray;
-			wsnum = 1;
-			if (wsweapon is wsname) wsfontclr = font.cr_gold;
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x += wsspace;
-		wsname = "CricketBat";
-		wsammoname = "MalletAmmo";
-		let ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-			else wsfontclr = font.cr_gray;
-
-			wsnum = 2;
-			if (wsweapon is wsname) 
-			{
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
-				else wsfontclr = font.cr_gold;
-			}
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x += wsspace;
-
-		x -= 1;
-		y -= 1;
-		wsname = "BlunderAxe";
-		wsammoname = "BlunderAmmo";
-		ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-			else wsfontclr = font.cr_gray;
-
-			wsnum = 3;
-			if (wsweapon is wsname) 
-			{
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
-				else wsfontclr = font.cr_gold;
-			}
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x += 2;
-		y += 2;
-		wsname = "Scrambler";
-		wsammoname = "EggAmmo";
-		ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-			else wsfontclr = font.cr_gray;
-
-			wsnum = 3;
-			if (wsweapon is wsname) 
-			{
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
-				else wsfontclr = font.cr_gold;
-			}
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x -= 1;
-		y -= 1;
-
-		x += wsspace;
-		wsname = "AppleJack";
-		wsammoname = "JackAmmo";
-		ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-			else wsfontclr = font.cr_gray;
-
-			wsnum = 4;
-			if (wsweapon is wsname) 
-			{
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
-				else wsfontclr = font.cr_gold;
-			}
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x += wsspace;
-		wsname = "WizardPike";
-		wsammoname = "PikeAmmo";
-		ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-			else wsfontclr = font.cr_gray;
-
-			wsnum = 5;
-			if (wsweapon is wsname) 
-			{
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
-				else wsfontclr = font.cr_gold;
-			}
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x = startposx;
-		y += wsspace;
-		wsname = "SuperVac";
-		wsammoname = "VacAmmo";
-		ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-			else wsfontclr = font.cr_gray;
-
-			wsnum = 6;
-			if (wsweapon is wsname) 
-			{
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
-				else wsfontclr = font.cr_gold;
-			}
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x += wsspace;
-		wsname = "Grimophone";
-		wsammoname = "MusicAmmo";
-		ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-			else wsfontclr = font.cr_gray;
-
-			wsnum = 7;
-			if (wsweapon is wsname) 
-			{
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
-				else wsfontclr = font.cr_gold;
-			}
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x += wsspace;
-		wsname = "SigilDD";
-		wsammoname = "";
-		//ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			wsfontclr = font.cr_gray;
-			wsnum = 8;
-			if (wsweapon is wsname) wsfontclr = font.cr_gold;
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x += wsspace;
-		wsname = "CrazyBallDD";
-		wsammoname = "CzBall";
-		ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-			else wsfontclr = font.cr_gray;
-
-			wsnum = 9;
-			if (wsweapon is wsname) 
-			{
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
-				else wsfontclr = font.cr_gold;
-			}
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		x += wsspace;
-		wsname = "";
-		//ammotype = CPlayer.mo.FindInventory(wsammoname);
-		if (CPlayer.mo.CountInv(wsname))
-		{
-			wsfontclr = font.cr_gray;
-			wsnum = 0;
-			if (wsweapon is wsname) wsfontclr = font.cr_gold;
-			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-		}
-		
-		//ammo
-		Ammo ammo1, ammo2;
-		[ammo1, ammo2] = GetCurrentAmmo();
-		x = -4;
-		y = -22;
-		int barx = -42;
-		int bary = -48;
-		if (ammo1 != null)
-		{
-			if (cplayer.ReadyWeapon is "Grimophone")
-			{
-				int recordenergy;
-				int recordenergymax = 42;
-				int recordpercent;
-				double recordmeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
-				if (recordmeterlength > 1.5) recordmeterlength = 1.5;
-				string dun = "GRIMUNIT";
-				let Grim = Grimophone(cplayer.mo.FindInventory("Grimophone"));
-				if (Grim) recordenergy = Grim.recordenergy;
-				//Console.Printf("recordenergy: %d / 42", recordenergy);
-				if (recordenergymax) 
+				for(let i = CPlayer.mo.Inv; i != null; i = i.Inv)
 				{
-					recordpercent = recordenergy * 100 / recordenergymax;
-					int recordbarunits = recordpercent * recordmeterlength;
-					//Console.Printf("recordpercent: %d, recordbarunits: %d", recordpercent, recordbarunits);
-					for (int i; i < (100 * recordmeterlength); i++) DrawImage("BLAKUNIT", (barx+i, bary), 0, HX_SHADOW); // -46, -1
-					for (int i; i < recordbarunits; i++) DrawImage(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
-				}
-			}
-			if (cplayer.ReadyWeapon is "SuperVac")
-			{
-				int VacBagUnits = CPlayer.mo.CountInv("VacAmmoCounter");
-				int VacBagPercent;
-				double VacBagMeterLength = 0.4; // 0.2 vertical, 0.4 horizontal
-				if (VacBagMeterLength > 1.5) VacBagMeterLength = 1.5;
-				string dun = "VBAGUNIT";
-				int revbagunits = 100;
-
-				wsammoname = "VacAmmo";
-				ammotype = CPlayer.mo.FindInventory(wsammoname);
-				if (ammotype.Amount >= ammotype.MaxAmount) 
-				{
-					DrawString(mConFont, "FULL!", (barx+21, bary-8), DI_TEXT_ALIGN_CENTER, font.cr_sapphire); // -46, -1
-				}
-				else
-				{
-					if (MiscItem && MiscItem.SuperVacBagSize)
+					if (i is "Key" && i.Icon.IsValid())
 					{
-						VacBagPercent = VacBagUnits * 100 / MiscItem.SuperVacBagSize;
-						//Console.Printf("%d / %d", VacBagUnits, MiscItem.SuperVacBagSize);
-						int VacBagBarUnits = VacBagPercent * VacBagMeterLength;
-						revbagunits -= VacBagBarUnits;
-						if (revbagunits < 0) revbagunits = 0;
-						if (revbagunits >= 100) revbagunits = 100;
-						//Console.Printf("%d, (%d) [%d%%]", revbagunits, VacBagBarUnits, VacBagPercent);
-						for (int i; i < (100 * VacBagMeterLength); i++) DrawImage("BLAKUNIT", (barx+i, bary), 0, HX_SHADOW); // -46, -1
-						for (int i; i < VacBagBarUnits; i++) DrawImage(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+						//Console.Printf("x: %d, y: %d, type: %s", keypos.x, keypos.y, i.GetClassName());
+						DrawTexture(i.Icon, keypos, DI_SCREEN_LEFT_BOTTOM|DI_ITEM_CENTER, 1.0, (-1, -1), keyscale);
+						Vector2 size = TexMan.GetScaledSize(i.Icon);
+						size.x *= keyscale.x;
+						size.y *= keyscale.y;
+						keypos.Y -= size.Y + 2; // + = down, - = up
+						roww = max(roww, size.X);
+						if (++rowc == rowsize)
+						{
+							keypos.Y = baseypos;
+							keypos.X += roww + 2;
+							roww = 0;
+							rowc = 0;
+						}
 					}
 				}
 			}
-			if (cplayer.ReadyWeapon is "BlunderAxe")
+			
+			//frags
+			if (deathmatch)
 			{
-				int upgrades = cplayer.mo.CountInv("BlunderShotUpgrade");
-				if (upgrades)
+				DrawString(mHUDFont, FormatNumber(CPlayer.FragCount, 3), (70, -16));
+			}
+			
+			// dash
+			int candash = CPlayer.mo.CountInv("DashReady");
+			int dash = CPlayer.mo.CountInv("DashGauge");
+			int dashcharges = CPlayer.mo.CountInv("DashCharges");
+			int dashcharge = CPlayer.mo.CountInv("DashCharge");
+			int dashtics = CPlayer.mo.CountInv("DashTics");
+			int dashmaxcharge = CPlayer.mo.CountInv("DashMaxCharge");
+			double dashmeterlength = (0.75 + (PlayerLevel * 0.01));
+			if (dashmeterlength > 1.5) dashmeterlength = 1.5;
+			int dashbarunits = dash * dashmeterlength;
+			digy = -100;
+			digx = 18;
+			string dun = "DASHUNI2";
+			if (candash) dun = "DASHUNIT";
+			int dashcost = CPlayer.mo.CountInv("DashCost");
+			int dashcostunit;
+			if (dashmaxcharge) dashcostunit = dashcost * 100 / dashmaxcharge;
+			dashcostunit *= dashmeterlength;
+			int ix;
+			vector2 unitscale = (1, 1);
+			if (DashMaxCharge >= dashcost)
+			{
+				for (int i; i < (100 * dashmeterlength); i++)
 				{
-					DrawImage("BSHMA0", (-22, -40), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
-					DrawString(mDDLFont, FormatNumber(upgrades, 1), (-3, -64), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+					DrawImage("BLAKUNIT", (digx+i, digy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+				}
+				for (int i; i < dashbarunits; i++) 
+				{
+					if (candash)
+					{
+						dun = "DASHUNI1";
+						unitscale = (1, 1);
+						ix = (i % dashcostunit);
+						if (i != 0 && ix == 0) 
+						{
+							unitscale = (1.125, 1.125);
+							dun = "DASHUNI3";
+						}
+					}
+					else
+					{
+						dun = "DASHUNI2";
+						ix = (i % dashcostunit);
+						if (i != 0 && ix == 0) 
+						{
+							unitscale = (1.125, 1.125);
+							dun = "DASHUNI4";
+						}
+					}
+					
+					DrawImage(dun, (digx+i, digy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
 				}
 			}
-
-			DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+2, y+13), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-			DrawString(mDDMFont, "/", (x-27, y+7), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-			DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+2, y-3), DI_TEXT_ALIGN_RIGHT, font.cr_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-			DrawTexture(ammo1.Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (1.0,1.0)); // -17, y
-			y -= 40;
-		}
-
-		if (CPlayer.mo.InvSel != null)
-		{
-			x = -46;
-			x -= 16;
-			y = -1;
-			y -= 8;
-			// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
-			// Heretic's ARTIBOX is 30x30 pixels. 
-			DrawImage("ARTIBOXD", (x, y), 0, HX_SHADOW); // -46, -1
-			DrawInventoryIcon(CPlayer.mo.InvSel, (x, y-14), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
-			y += 7;
-			DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.Amount, 3), (x-23, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_LEFT, font.cr_gray);
-			DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x-2, y - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_CENTER, font.cr_gray);
-			DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.MaxAmount, 3), (x+14, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, font.cr_gray);
-		}
-		
-		string tallytemp = "";
-		if (dyduhud_showleveltimes)
-		{
-			int timeTicks =
-					hud_showtime < 4
-						? Level.maptime
-						: (hud_showtime < 6
-							? Level.time
-							: Level.totaltime);
-							// Time Stats
-			tallytemp = "TIME: ";
-			int leveltime = level.time;
-			int rawseconds = Thinker.Tics2Seconds(leveltime);
-			int leveltimesec = (rawseconds % 60);
-			int leveltimemin = ((rawseconds % 3600) / 60);
-			int leveltimehrs = ((rawseconds % 86400) / 3600);
-			int leveltimedays = ((rawseconds / 86400));
-
-			if (leveltimedays) tallytemp.AppendFormat("%dd ", leveltimedays);
-			if (leveltimehrs >= 0 && leveltimehrs <= 9) tallytemp.AppendFormat("0%d:", leveltimehrs);
-																						 else tallytemp.AppendFormat("%d:", leveltimehrs);
-			if (leveltimemin >= 0 && leveltimemin <= 9) tallytemp.AppendFormat("0%d:", leveltimemin);
-																						 else tallytemp.AppendFormat("%d:", leveltimemin);
-			if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
-																						 else tallytemp.AppendFormat("%d", leveltimesec);
-			digy = -40;
-			DrawString(mConFont, tallytemp, (-120, digy), DI_TEXT_ALIGN_LEFT|DI_SCREEN_CENTER_BOTTOM, font.cr_darkgray);
-			// Total Time
-			tallytemp = "TOTAL: ";
-			leveltime = level.totaltime;
-			rawseconds = Thinker.Tics2Seconds(leveltime);
-			leveltimesec = (rawseconds % 60);
-			leveltimemin = ((rawseconds % 3600) / 60);
-			leveltimehrs = ((rawseconds % 86400) / 3600);
-			leveltimedays = ((rawseconds / 86400));
-
-			if (leveltimedays) tallytemp.AppendFormat("%dd ", leveltimedays);
-			if (leveltimehrs >= 0 && leveltimehrs <= 9) tallytemp.AppendFormat("0%d:", leveltimehrs);
-																						 else tallytemp.AppendFormat("%d:", leveltimehrs);
-			if (leveltimemin >= 0 && leveltimemin <= 9) tallytemp.AppendFormat("0%d:", leveltimemin);
-																						 else tallytemp.AppendFormat("%d:", leveltimemin);
-			if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
-																						 else tallytemp.AppendFormat("%d", leveltimesec);
-			digy = -40;
-			DrawString(mConFont, tallytemp, (120, digy), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM, font.cr_gray);
-		}
-		
-		if (dyduhud_leveltallies)
-		{
-			// Level Stats
-			digy = -32;
-			if (dyduhud_showleveltimes) digy -= 8;
-			int tallyfontclr;
-			int flashinterval = 24;
-			int scrtcnt = level.found_secrets;
-			int maxscrtcnt = level.total_secrets;
-			if (maxscrtcnt)
+			
+			if (dydudebug_dashmeter)
 			{
-				tallyfontclr = font.cr_gold;
-				if (scrtcnt >= maxscrtcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_darkgreen;
-				digy -= 8;
-				tallytemp = "Secrets: ";
-				tallytemp.AppendFormat("%d", scrtcnt);
-				tallytemp.AppendFormat("/");
-				tallytemp.AppendFormat("%d", maxscrtcnt);
-				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
+				digy = -116;
+				digx = 48;
+				if (candash) DrawString(mDDMFont, FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+								else DrawString(mDDMFont, FormatNumber(dash, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				digy = -124;
+				digx = 48;
+				if (candash) DrawString(mDDMFont, FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+								else DrawString(mDDMFont, FormatNumber(dashcharge, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				digy = -116;
+				digx = 80;
+				if (candash) DrawString(mDDMFont, FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+								else DrawString(mDDMFont, FormatNumber(dashcharges, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				if (dashtics)
+				{
+					digy = -122;
+					digx = 80;
+					if (candash) DrawString(mDDMFont, FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+									else DrawString(mDDMFont, FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				}
 			}
-			int itemcnt = level.found_items;
-			int maxitemcnt = level.total_items;
-			if (maxitemcnt)
+			
+			//weapon slots
+			int x;
+			int y;
+			int wsspace = 15;
+			double wsalpha = 0.9;
+			vector2 wsscale = (1.125, 1.125);
+			int wsfontclr = font.cr_gray;
+			int startposx = -220;
+			int wsflags = DI_TEXT_ALIGN_LEFT;
+			let wsweapon = CPlayer.ReadyWeapon;
+			string wsname;
+			string wsammoname;
+			int wsnum;
+
+			x = startposx;
+			y = -34;
+			wsname = "HandToHand";
+			if (CPlayer.mo.CountInv(wsname))
 			{
-				tallyfontclr = font.cr_lightblue;
-				if (itemcnt >= maxitemcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_brick;
-				digy -= 8;
-				tallytemp = "Items: ";
-				tallytemp.AppendFormat("%d", itemcnt);
-				tallytemp.AppendFormat("/");
-				tallytemp.AppendFormat("%d", maxitemcnt);
-				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
+				wsfontclr = font.cr_gray;
+				wsnum = 1;
+				if (wsweapon is wsname) wsfontclr = font.cr_gold;
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
 			}
-			int killcnt = level.killed_monsters;
-			int maxkillcnt = level.total_monsters;
-			if (maxkillcnt)
+			x += wsspace;
+			wsname = "CricketBat";
+			wsammoname = "MalletAmmo";
+			let ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
 			{
-				tallyfontclr = font.cr_brick;
-				if (killcnt >= maxkillcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_lightblue;
-				digy -= 8;
-				tallytemp = "Kills: ";
-				tallytemp.AppendFormat("%d", killcnt);
-				tallytemp.AppendFormat("/");
-				tallytemp.AppendFormat("%d", maxkillcnt);
-				DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 2;
+				if (wsweapon is wsname) 
+				{
+					if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
+					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
+					else wsfontclr = font.cr_gold;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
 			}
-		}
-		
-		// Inventory Bar
-		DrawInventoryBar(diparms, (0, 0), 11, DI_SCREEN_CENTER_BOTTOM, HX_SHADOW);
-		
-		if (CPlayer.mo.CountInv("BlackScreenHUD"))
-		{
-			DrawImage("BLAKSCRN", (0, 540), DI_SCREEN_CENTER); // -46, -1
+			x += wsspace;
+
+			x -= 1;
+			y -= 1;
+			wsname = "BlunderAxe";
+			wsammoname = "BlunderAmmo";
+			ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 3;
+				if (wsweapon is wsname) 
+				{
+					if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
+					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
+					else wsfontclr = font.cr_gold;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			}
+			x += 2;
+			y += 2;
+			wsname = "Scrambler";
+			wsammoname = "EggAmmo";
+			ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 3;
+				if (wsweapon is wsname) 
+				{
+					if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
+					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
+					else wsfontclr = font.cr_gold;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			}
+			x -= 1;
+			y -= 1;
+
+			x += wsspace;
+			wsname = "AppleJack";
+			wsammoname = "JackAmmo";
+			ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 4;
+				if (wsweapon is wsname) 
+				{
+					if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
+					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
+					else wsfontclr = font.cr_gold;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			}
+			x += wsspace;
+			wsname = "WizardPike";
+			wsammoname = "PikeAmmo";
+			ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 5;
+				if (wsweapon is wsname) 
+				{
+					if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
+					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
+					else wsfontclr = font.cr_gold;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			}
+			x = startposx;
+			y += wsspace;
+			wsname = "SuperVac";
+			wsammoname = "VacAmmo";
+			ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 6;
+				if (wsweapon is wsname) 
+				{
+					if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
+					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
+					else wsfontclr = font.cr_gold;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			}
+			x += wsspace;
+			wsname = "Grimophone";
+			wsammoname = "MusicAmmo";
+			ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 7;
+				if (wsweapon is wsname) 
+				{
+					if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
+					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
+					else wsfontclr = font.cr_gold;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			}
+			x += wsspace;
+			wsname = "SigilDD";
+			wsammoname = "";
+			//ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				wsfontclr = font.cr_gray;
+				wsnum = 8;
+				if (wsweapon is wsname) wsfontclr = font.cr_gold;
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			}
+			x += wsspace;
+			wsname = "CrazyBallDD";
+			wsammoname = "CzBall";
+			ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 9;
+				if (wsweapon is wsname) 
+				{
+					if (ammotype.Amount <= 0) wsfontclr = font.cr_brick;
+					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_blue;
+					else wsfontclr = font.cr_gold;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			}
+			x += wsspace;
+			wsname = "";
+			//ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				wsfontclr = font.cr_gray;
+				wsnum = 0;
+				if (wsweapon is wsname) wsfontclr = font.cr_gold;
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			}
+			
+			//ammo
+			Ammo ammo1, ammo2;
+			[ammo1, ammo2] = GetCurrentAmmo();
+			x = -4;
+			y = -22;
+			int barx = -42;
+			int bary = -48;
+			if (ammo1 != null)
+			{
+				if (cplayer.ReadyWeapon is "Grimophone")
+				{
+					int recordenergy;
+					int recordenergymax = 42;
+					int recordpercent;
+					double recordmeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
+					if (recordmeterlength > 1.5) recordmeterlength = 1.5;
+					string dun = "GRIMUNIT";
+					let Grim = Grimophone(cplayer.mo.FindInventory("Grimophone"));
+					if (Grim) recordenergy = Grim.recordenergy;
+					//Console.Printf("recordenergy: %d / 42", recordenergy);
+					if (recordenergymax) 
+					{
+						recordpercent = recordenergy * 100 / recordenergymax;
+						int recordbarunits = recordpercent * recordmeterlength;
+						//Console.Printf("recordpercent: %d, recordbarunits: %d", recordpercent, recordbarunits);
+						for (int i; i < (100 * recordmeterlength); i++) DrawImage("BLAKUNIT", (barx+i, bary), 0, HX_SHADOW); // -46, -1
+						for (int i; i < recordbarunits; i++) DrawImage(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+					}
+				}
+				if (cplayer.ReadyWeapon is "SuperVac")
+				{
+					int VacBagUnits = CPlayer.mo.CountInv("VacAmmoCounter");
+					int VacBagPercent;
+					double VacBagMeterLength = 0.4; // 0.2 vertical, 0.4 horizontal
+					if (VacBagMeterLength > 1.5) VacBagMeterLength = 1.5;
+					string dun = "VBAGUNIT";
+					int revbagunits = 100;
+
+					wsammoname = "VacAmmo";
+					ammotype = CPlayer.mo.FindInventory(wsammoname);
+					if (ammotype.Amount >= ammotype.MaxAmount) 
+					{
+						DrawString(mConFont, "FULL!", (barx+21, bary-8), DI_TEXT_ALIGN_CENTER, font.cr_sapphire); // -46, -1
+					}
+					else
+					{
+						if (MiscItem && MiscItem.SuperVacBagSize)
+						{
+							VacBagPercent = VacBagUnits * 100 / MiscItem.SuperVacBagSize;
+							//Console.Printf("%d / %d", VacBagUnits, MiscItem.SuperVacBagSize);
+							int VacBagBarUnits = VacBagPercent * VacBagMeterLength;
+							revbagunits -= VacBagBarUnits;
+							if (revbagunits < 0) revbagunits = 0;
+							if (revbagunits >= 100) revbagunits = 100;
+							//Console.Printf("%d, (%d) [%d%%]", revbagunits, VacBagBarUnits, VacBagPercent);
+							for (int i; i < (100 * VacBagMeterLength); i++) DrawImage("BLAKUNIT", (barx+i, bary), 0, HX_SHADOW); // -46, -1
+							for (int i; i < VacBagBarUnits; i++) DrawImage(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+						}
+					}
+				}
+				if (cplayer.ReadyWeapon is "BlunderAxe")
+				{
+					int upgrades = cplayer.mo.CountInv("BlunderShotUpgrade");
+					if (upgrades)
+					{
+						DrawImage("BSHMA0", (-22, -40), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
+						DrawString(mDDLFont, FormatNumber(upgrades, 1), (-3, -64), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+					}
+				}
+
+				DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+2, y+13), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				DrawString(mDDMFont, "/", (x-27, y+7), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+2, y-3), DI_TEXT_ALIGN_RIGHT, font.cr_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				DrawTexture(ammo1.Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (1.0,1.0)); // -17, y
+				y -= 40;
+			}
+
+			if (CPlayer.mo.InvSel != null)
+			{
+				x = -46;
+				x -= 16;
+				y = -1;
+				y -= 8;
+				// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
+				// Heretic's ARTIBOX is 30x30 pixels. 
+				DrawImage("ARTIBOXD", (x, y), 0, HX_SHADOW); // -46, -1
+				DrawInventoryIcon(CPlayer.mo.InvSel, (x, y-14), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
+				y += 7;
+				DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.Amount, 3), (x-23, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_LEFT, font.cr_gray);
+				DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x-2, y - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_CENTER, font.cr_gray);
+				DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.MaxAmount, 3), (x+14, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, font.cr_gray);
+			}
+			
+			string tallytemp = "";
+			if (dyduhud_showleveltimes)
+			{
+				int timeTicks =
+						hud_showtime < 4
+							? Level.maptime
+							: (hud_showtime < 6
+								? Level.time
+								: Level.totaltime);
+								// Time Stats
+				tallytemp = "TIME: ";
+				int leveltime = level.time;
+				int rawseconds = Thinker.Tics2Seconds(leveltime);
+				int leveltimesec = (rawseconds % 60);
+				int leveltimemin = ((rawseconds % 3600) / 60);
+				int leveltimehrs = ((rawseconds % 86400) / 3600);
+				int leveltimedays = ((rawseconds / 86400));
+
+				if (leveltimedays) tallytemp.AppendFormat("%dd ", leveltimedays);
+				if (leveltimehrs >= 0 && leveltimehrs <= 9) tallytemp.AppendFormat("0%d:", leveltimehrs);
+																							 else tallytemp.AppendFormat("%d:", leveltimehrs);
+				if (leveltimemin >= 0 && leveltimemin <= 9) tallytemp.AppendFormat("0%d:", leveltimemin);
+																							 else tallytemp.AppendFormat("%d:", leveltimemin);
+				if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
+																							 else tallytemp.AppendFormat("%d", leveltimesec);
+				digy = -40;
+				DrawString(mConFont, tallytemp, (-120, digy), DI_TEXT_ALIGN_LEFT|DI_SCREEN_CENTER_BOTTOM, font.cr_darkgray);
+				// Total Time
+				tallytemp = "TOTAL: ";
+				leveltime = level.totaltime;
+				rawseconds = Thinker.Tics2Seconds(leveltime);
+				leveltimesec = (rawseconds % 60);
+				leveltimemin = ((rawseconds % 3600) / 60);
+				leveltimehrs = ((rawseconds % 86400) / 3600);
+				leveltimedays = ((rawseconds / 86400));
+
+				if (leveltimedays) tallytemp.AppendFormat("%dd ", leveltimedays);
+				if (leveltimehrs >= 0 && leveltimehrs <= 9) tallytemp.AppendFormat("0%d:", leveltimehrs);
+																							 else tallytemp.AppendFormat("%d:", leveltimehrs);
+				if (leveltimemin >= 0 && leveltimemin <= 9) tallytemp.AppendFormat("0%d:", leveltimemin);
+																							 else tallytemp.AppendFormat("%d:", leveltimemin);
+				if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
+																							 else tallytemp.AppendFormat("%d", leveltimesec);
+				digy = -40;
+				DrawString(mConFont, tallytemp, (120, digy), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM, font.cr_gray);
+			}
+			
+			if (dyduhud_leveltallies)
+			{
+				// Level Stats
+				digy = -32;
+				if (dyduhud_showleveltimes) digy -= 8;
+				int tallyfontclr;
+				int flashinterval = 24;
+				int scrtcnt = level.found_secrets;
+				int maxscrtcnt = level.total_secrets;
+				if (maxscrtcnt)
+				{
+					tallyfontclr = font.cr_gold;
+					if (scrtcnt >= maxscrtcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_darkgreen;
+					digy -= 8;
+					tallytemp = "Secrets: ";
+					tallytemp.AppendFormat("%d", scrtcnt);
+					tallytemp.AppendFormat("/");
+					tallytemp.AppendFormat("%d", maxscrtcnt);
+					DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
+				}
+				int itemcnt = level.found_items;
+				int maxitemcnt = level.total_items;
+				if (maxitemcnt)
+				{
+					tallyfontclr = font.cr_lightblue;
+					if (itemcnt >= maxitemcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_brick;
+					digy -= 8;
+					tallytemp = "Items: ";
+					tallytemp.AppendFormat("%d", itemcnt);
+					tallytemp.AppendFormat("/");
+					tallytemp.AppendFormat("%d", maxitemcnt);
+					DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
+				}
+				int killcnt = level.killed_monsters;
+				int maxkillcnt = level.total_monsters;
+				if (maxkillcnt)
+				{
+					tallyfontclr = font.cr_brick;
+					if (killcnt >= maxkillcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_lightblue;
+					digy -= 8;
+					tallytemp = "Kills: ";
+					tallytemp.AppendFormat("%d", killcnt);
+					tallytemp.AppendFormat("/");
+					tallytemp.AppendFormat("%d", maxkillcnt);
+					DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
+				}
+			}
+			
+			// Inventory Bar
+			DrawInventoryBar(diparms, (0, 0), 11, DI_SCREEN_CENTER_BOTTOM, HX_SHADOW);
+			
+			if (CPlayer.mo.CountInv("BlackScreenHUD"))
+			{
+				DrawImage("BLAKSCRN", (0, 540), DI_SCREEN_CENTER); // -46, -1
+			}
 		}
 	}
 }

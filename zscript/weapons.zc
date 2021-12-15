@@ -23,6 +23,106 @@ class DDWeapon : Weapon
 		self.Destroy();
 	}
 	
+	action double A_LRCheck(double movespeed)
+	{
+		double bufffactor = 1.0;
+		if (player.mo)
+		{
+			let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+			if (MiscItem) movespeed *= (1.0 + (MiscItem.PlayerLevel * 0.025));
+			if (player.mo.CountInv("PowerRoastBuff")) bufffactor += 0.125;
+			if (player.mo.CountInv("PowerMealBuff") || player.mo.CountInv("PowerMealBuff2")) bufffactor += 0.25;
+			if (player.mo.CountInv("PowerMeal2Buff") || player.mo.CountInv("PowerMeal2Buff2")) bufffactor += 0.25;
+			if (player.ReadyWeapon is "HandToHand") bufffactor += 0.25;
+			if (player.ReadyWeapon is "SuperVac") bufffactor -= (0.25 + (player.mo.CountInv("VacAmmo") * (0.25 / 24)));
+			if (player.ReadyWeapon is "Grimophone") bufffactor -= 0.50;
+			movespeed *= bufffactor;
+			if (player.mo.CountInv("PowerStrength") || player.mo.CountInv("PowerStrengthDD")) movespeed *= 2.0;
+		}
+		return movespeed;
+	}
+	
+	action void A_Lower(int movespeed = 6)
+	{
+		movespeed = A_LRCheck(movespeed);
+		if (dydudebug_weaponstatdisplays) Console.Printf("A_Lower: (%d)", movespeed);
+		let player = player;
+
+		if (null == player)
+		{
+			return;
+		}
+		if (null == player.ReadyWeapon)
+		{
+			player.mo.BringUpWeapon();
+			return;
+		}
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (!psp) return;
+		if (player.morphTics || player.cheats & CF_INSTANTWEAPSWITCH)
+		{
+			psp.y = WEAPONBOTTOM;
+		}
+		else
+		{
+			psp.y += movespeed;
+		}
+		if (psp.y < WEAPONBOTTOM)
+		{ // Not lowered all the way yet
+			return;
+		}
+		ResetPSprite(psp);
+		
+		if (player.playerstate == PST_DEAD)
+		{ // Player is dead, so don't bring up a pending weapon
+			// Player is dead, so keep the weapon off screen
+			player.SetPsprite(PSP_FLASH, null);
+			psp.SetState(player.ReadyWeapon.FindState('DeadLowered'));
+			return;
+		}
+		// [RH] Clear the flash state. Only needed for Strife.
+		player.SetPsprite(PSP_FLASH, null);
+		player.mo.BringUpWeapon ();
+		return;
+	}
+	
+	action void A_Raise(int movespeed = 6)
+	{
+		movespeed = A_LRCheck(movespeed);
+		if (dydudebug_weaponstatdisplays) Console.Printf("A_Lower: (%d)", movespeed);
+		let player = player;
+
+		if (null == player)
+		{
+			return;
+		}
+		if (player.PendingWeapon != WP_NOCHANGE)
+		{
+			player.mo.DropWeapon();
+			return;
+		}
+		if (player.ReadyWeapon == null)
+		{
+			return;
+		}
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (!psp) return;
+
+		if (psp.y <= WEAPONBOTTOM)
+		{
+			ResetPSprite(psp);
+		}
+		psp.y -= movespeed;
+		if (psp.y > WEAPONTOP)
+		{ // Not raised all the way yet
+			return;
+		}
+		psp.y = WEAPONTOP;
+		
+		psp.SetState(player.ReadyWeapon.GetReadyState());
+		return;
+	}
+
 	action double A_SetShieldPieceDist(double basedist = 32.0)
 	{
 		double result = basedist;
@@ -170,7 +270,7 @@ class DDWeapon : Weapon
 	{
 		if (CountInv("IsUnconscious"))
 		{
-			if (dydudebug_weaponstatdisplays) Console.Printf("Flags (Pre [Base]): %d", flags);
+			if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (Pre [Base]): %d", flags);
 			// Enforces Various Locks on weapons if the player is "Unconscious"
 			if (!(flags & WRF_NOBOB)) flags |= WRF_NOBOB; // Turns on WRF_NOBOB
 			if (!(flags & WRF_NOFIRE)) flags |= WRF_NOFIRE; // Turns on WRF_NOFIRE
@@ -185,7 +285,7 @@ class DDWeapon : Weapon
 			if ((flags & WRF_ALLOWUSER2)) flags &= ~WRF_ALLOWUSER2; // Turns off WRF_ALLOWUSER2
 			if ((flags & WRF_ALLOWUSER3)) flags &= ~WRF_ALLOWUSER3; // Turns off WRF_ALLOWUSER3
 			if ((flags & WRF_ALLOWUSER4)) flags &= ~WRF_ALLOWUSER4; // Turns off WRF_ALLOWUSER4
-			if (dydudebug_weaponstatdisplays) Console.Printf("Flags (post [Base]): %d", flags);
+			if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (post [Base]): %d", flags);
 		}
 
 		if (!player) return;
@@ -196,7 +296,7 @@ class DDWeapon : Weapon
 		A_Overlay(-1000,"GrandControlLayer",true);
 		player.WeaponState |= GetButtonStateFlags(flags);
 		DoReadyWeaponDisableSwitch(player, flags & WRF_DisableSwitch);
-		if (dydudebug_weaponstatdisplays) Console.Printf("Flags (final [Base]): %d", flags);
+		if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (final [Base]): %d", flags);
 	}
 	
 	States
@@ -225,7 +325,7 @@ class DinahWeapon : DDWeapon
 	{
 		if (CountInv("IsUnconscious"))
 		{
-			if (dydudebug_weaponstatdisplays) Console.Printf("Flags (Pre [QuickMelee]): %d", flags);
+			if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (Pre [QuickMelee]): %d", flags);
 			// Enforces Various Locks on weapons if the player is "Unconscious"
 			if (!(flags & WRF_NOBOB)) flags |= WRF_NOBOB; // Turns on WRF_NOBOB
 			if (!(flags & WRF_NOFIRE)) flags |= WRF_NOFIRE; // Turns on WRF_NOFIRE
@@ -240,7 +340,7 @@ class DinahWeapon : DDWeapon
 			if ((flags & WRF_ALLOWUSER2)) flags &= ~WRF_ALLOWUSER2; // Turns off WRF_ALLOWUSER2
 			if ((flags & WRF_ALLOWUSER3)) flags &= ~WRF_ALLOWUSER3; // Turns off WRF_ALLOWUSER3
 			if ((flags & WRF_ALLOWUSER4)) flags &= ~WRF_ALLOWUSER4; // Turns off WRF_ALLOWUSER4
-			if (dydudebug_weaponstatdisplays) Console.Printf("Flags (post [QuickMelee]): %d", flags);
+			if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (post [QuickMelee]): %d", flags);
 		}
 
 		if (!player) return;
@@ -251,7 +351,7 @@ class DinahWeapon : DDWeapon
 		A_Overlay(-1000,"GrandControlLayer",true);
 		player.WeaponState |= GetButtonStateFlags(flags);														
 		DoReadyWeaponDisableSwitch(player, flags & WRF_DisableSwitch);
-		if (dydudebug_weaponstatdisplays) Console.Printf("Flags (final [QuickMelee]): %d", flags);
+		if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (final [QuickMelee]): %d", flags);
 	}
 	
 	states
@@ -262,7 +362,7 @@ class DinahWeapon : DDWeapon
 				let weapon = player.ReadyWeapon;
 				if (player.mo.health > 0)
 				{
-					if (dydudebug_weaponstatdisplays) Console.Printf("GrandControlLayer - 2a");
+					if (dydudebug_weaponstatdisplays2) Console.Printf("GrandControlLayer - 2a");
 					if (GetPlayerInput(INPUT_BUTTONS) & BT_USER1)
 					{
 						if (CountInv("IsUnconscious"))
@@ -277,7 +377,7 @@ class DinahWeapon : DDWeapon
 				}
 				else
 				{
-					if (dydudebug_weaponstatdisplays) Console.Printf("GrandControlLayer - 2b");
+					if (dydudebug_weaponstatdisplays2) Console.Printf("GrandControlLayer - 2b");
 					A_ClearOverlays(-2,-2,true);
 					A_ClearOverlays(8,8,true);
 				}
@@ -411,7 +511,7 @@ class DDBeak : DDWeapon
 			BEAK A 1 A_WeaponReady;
 			Loop;
 		Deselect:
-			BEAK A 1 A_Lower;
+			BEAK A 1 A_Lower(12);
 			Loop;
 		Select:
 			BEAK A 1 A_BeakRaise;
@@ -504,7 +604,6 @@ class HandToHand : DinahWeapon replaces Fist
 			DHND A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
 			loop;
@@ -512,7 +611,6 @@ class HandToHand : DinahWeapon replaces Fist
 			DHND A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
 			loop;
@@ -1419,7 +1517,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				if (invoker.guardstate == 0) invoker.guardstate = 1;
 																else invoker.guardstate = 0;
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) invoker.guardcooldown = random(3,5);
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) invoker.guardcooldown = random(5,7);
 																																 else invoker.guardcooldown = random(6,8);
 			}
 		}
@@ -1449,7 +1547,6 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				A_BarGuardDashOff();
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
 			loop;
@@ -1458,7 +1555,6 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				A_BarGuardDashOff();
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
 			loop;
@@ -2024,7 +2120,6 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 			BLAX A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
 			loop;
@@ -2032,7 +2127,6 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 			BLAX A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
 			loop;
@@ -2754,7 +2848,6 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			FPAN A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
 			loop;
@@ -2762,7 +2855,6 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			FPAN A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
 			loop;
@@ -3603,7 +3695,6 @@ class AppleJack : DinahWeapon replaces Chaingun
 			AJAK A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
 			loop;
@@ -3611,7 +3702,6 @@ class AppleJack : DinahWeapon replaces Chaingun
 			AJAK A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
 			loop;
@@ -3977,7 +4067,6 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 			SCEP A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
 			loop;
@@ -3985,7 +4074,6 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 			SCEP A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
 			loop;
@@ -4372,7 +4460,6 @@ class SuperVac : DinahWeapon replaces PlasmaRifle
 			VACM A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
 			loop;
@@ -4380,7 +4467,6 @@ class SuperVac : DinahWeapon replaces PlasmaRifle
 			VACM A 1
 			{
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
 			loop;
@@ -4691,7 +4777,6 @@ class Grimophone : DinahWeapon replaces BFG9000
 			{
 				A_GrimophoneAltReset();
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Raise(12); }
 				A_Raise(12);
 			}
 			Loop;
@@ -4700,7 +4785,6 @@ class Grimophone : DinahWeapon replaces BFG9000
 			{
 				A_GrimophoneAltReset();
 				A_KickDecelerate();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Lower(12); }
 				A_Lower(12);
 			}
 			TNT1 A 0 A_StopSound(65);
@@ -5117,12 +5201,14 @@ class RatNose : DDBeak
 		Deselect:
 			RATW A 1
 			{
-				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1)) { A_Lower(12); }
 				A_Lower(12);
 			}
 			Loop;
 		Select:
-			RATW A 0 A_Raise();
+			RATW A 1 
+			{
+				A_Raise(12);
+			}
 			Loop;
 		Fire:
 			RATW A 0 A_StartSound("Rat/Attack", CHAN_WEAPON);
@@ -5159,7 +5245,6 @@ class RavenWeapon : DDBeak
 		Deselect:
 			TNT1 A 1
 			{
-				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1)) { A_Lower(12); }
 				A_Lower(12);
 			}
 			Loop;

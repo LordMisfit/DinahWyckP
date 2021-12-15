@@ -116,6 +116,7 @@ class PlayerStatItem : Inventory
 					globalvars.suvfct = suvfct = 1.0;
 					globalvars.HealthLevelAdd = HealthLevelAdd = 0;
 					globalvars.HealthBonusAdd = HealthBonusAdd = 0;
+					globalvars.TotalSecretsFound = 0;
 					if (itemtimer == 0 && deathexitdebug) Console.Printf("dydu_deathexitaffectsstats: YES", dydu_deathexitaffectsstats);
 				}
 				else
@@ -1276,6 +1277,7 @@ class PlayerStatItem : Inventory
 	{
 		if (owner && (Owner.CountInv("PowerStrength") || owner.CountInv("PowerStrengthDD"))) berserked = true;
 
+		let globalvars = DDGlobalVariables.Get();
 		let weapon = owner.player.ReadyWeapon;
 		TrueGameSkill = skill;
 		
@@ -1340,6 +1342,14 @@ class PlayerStatItem : Inventory
 				if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Sigil): %.8f", SigilFactor);
 			}
 			
+			double SecretFactor = 1.0;
+			if (globalvars.TotalSecretsFound)
+			{
+				SecretFactor = (1.0 + (globalvars.TotalSecretsFound * 0.01));
+				if (SecretFactor > 4) SecretFactor = 4;
+				if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - SecretsFound): %.8f (%d)", SecretFactor, globalvars.TotalSecretsFound);
+			}
+			
 			double CrisisFactor = 1.0;
 			if (owner.CountInv("MysteryItem"))
 			{
@@ -1353,6 +1363,7 @@ class PlayerStatItem : Inventory
 													 * SkillFactor
 													 * LandingFactor
 													 * BuffFactor
+													 * SecretFactor
 													 * CrisisFactor
 													 * SigilFactor
 													 * atkfct;
@@ -1370,7 +1381,7 @@ class PlayerStatItem : Inventory
 		if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 		{
 			if (dydudebug_defensecalcs) Console.Printf("FDamage (passive[pre]): %d", damage);
-			double LVLFactor = (1.00 - (PlayerLevel * 0.0125));
+			double LVLFactor = (1.00 - (PlayerLevel * 0.0025));
 			if (LVLFactor <= 0.10) LVLFactor = 0.10;
 			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Level): %.8f", LVLFactor);
 
@@ -1406,6 +1417,14 @@ class PlayerStatItem : Inventory
 			if (weapon is "Grimophone")		WeaponFactor = 1.25;
 			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - WeaponEquipped): %.8f", WeaponFactor);
 
+			double SecretFactor = 1.0;
+			if (globalvars.TotalSecretsFound)
+			{
+				SecretFactor = (1.0 - (globalvars.TotalSecretsFound * 0.005));
+				if (SecretFactor < 0.25) SecretFactor = 0.25;
+				if (dydudebug_attackcalcs) Console.Printf("Damage (passive - SecretsFound): %.8f (%d)", SecretFactor, globalvars.TotalSecretsFound);
+			}
+			
 			double CrisisFactor = 1.0;
 			if (owner.CountInv("MysteryItem"))
 			{
@@ -1419,6 +1438,7 @@ class PlayerStatItem : Inventory
 													 * LVLFactor
 													 * SkillFactor
 													 * BuffFactor
+													 * SecretFactor
 													 * CrisisFactor
 													 * deffct;
 			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Total): %.8f", TOTALFactor);
