@@ -377,30 +377,39 @@ class DDPlayerPawn : PlayerPawn
 				mod != 'Sigil' || 
 				mod != 'SpectralLow')
 		{
-			damage = ceil(damage * 1.125);
+			if (mod == 'Beats' && flags & DMG_EXPLOSION && AttackingActor == self)
+			{
+				flags |= DMG_NO_ARMOR;
+				flags |= DMG_THRUSTLESS;
+				damage = ceil(damage * frandompick(1.0,1.0,1.0,1.125,1.125));
+				if (dydudebug_playerdamagemobj) Console.Printf("Grimophone Alt-Fire (%d)", damage);
+				if (damage >= health) return 0;
+			}
+			else
+			{
+				damage = ceil(damage * 1.125);
+			}
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Step 1b]: %d", damage);
 		}
 		else
+		if (mod == 'Magic' || 
+				mod == 'Poison' || 
+				mod == 'PoisonCloud' || 
+				mod == 'Eldritch' || 
+				mod == 'Sigil' || 
+				mod == 'SpectralLow')
 		{
-			if (mod == 'Slime' || 
-					mod == 'Magma' ||
-					mod == 'Crush' || 
-					mod == 'Falling')
-			{
-				damage = ceil(damage * frandompick(0.75,0.875,0.875,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.125,1.125,1.25));
-				if (dydudebug_playerdamagemobj) Console.Printf("PDamage (misc base) [Step 1b]: %d", damage);
-			}
-
-			if (mod == 'Magic' || 
-					mod == 'Poison' || 
-					mod == 'PoisonCloud' || 
-					mod == 'Eldritch' || 
-					mod == 'Sigil' || 
-					mod == 'SpectralLow')
-			{
-				damage = ceil(damage * 0.875);
-				if (dydudebug_playerdamagemobj) Console.Printf("PDamage (non-normal base) [Step 1b]: %d", damage);
-			}
+			damage = ceil(damage * 0.875);
+			if (dydudebug_playerdamagemobj) Console.Printf("PDamage (non-normal base) [Step 1b]: %d", damage);
+		}
+		else
+		if (mod == 'Slime' || 
+				mod == 'Magma' ||
+				mod == 'Crush' || 
+				mod == 'Falling')
+		{
+			damage = ceil(damage * frandompick(0.75,0.875,0.875,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.125,1.125,1.25));
+			if (dydudebug_playerdamagemobj) Console.Printf("PDamage (misc base) [Step 1b]: %d", damage);
 		}
 		
 		// VOODOO Doll Protection
@@ -437,13 +446,19 @@ class DDPlayerPawn : PlayerPawn
 			if (AttackingActor == self)
 			{
 				if (dydudebug_playerdamagemobj) Console.Printf("Damage Is Own AOE");
-		
-				damage *= 0.25;
-				if (armortier == 1) damage = ceil(damage * 0.9875);
-				if (armortier == 2) damage = ceil(damage * 0.975);
-				if (armortier == 3) damage = ceil(damage * 0.9625);
-				if (armortier == 4) damage = ceil(damage * 0.95);
-				useflatdefense = false;
+				
+				if (mod == 'Beats')
+				{
+				}
+				else
+				{
+					damage *= 0.25;
+					if (armortier == 1) damage = ceil(damage * 0.9875);
+					if (armortier == 2) damage = ceil(damage * 0.975);
+					if (armortier == 3) damage = ceil(damage * 0.9625);
+					if (armortier == 4) damage = ceil(damage * 0.95);
+					useflatdefense = false;
+				}
 			}
 			else
 			{
@@ -614,7 +629,7 @@ class DDPlayerPawn : PlayerPawn
 		int armdmg = (armoramt - CountInv("BasicArmor"));
 		if (armdmg <= 0) armdmg = 0;
 		if (dydudebug_playerdamagemobj && armdmg) Console.Printf("Armor Damage: %d", armdmg);
-		if (dydu_playerdmglog)
+		if (exex_playerdmglog)
 		{
 			if (mod == 'NONE') mod = 'Typeless';
 			if (ret || armdmg)
@@ -706,7 +721,7 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 		Player.Weaponslot 5, "WizardPike";
 		Player.Weaponslot 6, "SuperVac";
 		Player.Weaponslot 7, "Grimophone";
-		Player.WeaponSlot 8, "SigilDD";
+		Player.WeaponSlot 8, "SigilDD", "CandleWhip";
 		Player.WeaponSlot 9, "CrazyBallDD";
 		Player.ForwardMove 0.75, 0.75; // 0.75
 		Player.SideMove 0.65, 0.65; // 0.65
