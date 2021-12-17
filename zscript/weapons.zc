@@ -4732,7 +4732,7 @@ class Grimophone : DinahWeapon replaces BFG9000
 		Weapon.Ammotype1 "MusicAmmo";
 		Weapon.Ammouse1 1;
 		Weapon.Ammotype2 "";
-		Weapon.Ammouse2 0;
+		//Weapon.Ammouse2 0;
 		Weapon.Ammogive1 20;
 		Weapon.Ammogive2 0;
 		Weapon.SlotNumber 7;
@@ -5343,6 +5343,7 @@ class WhipShieldPartNoReflect : ShieldPartNoReflect
 class CandleWhip : DinahWeapon
 {
 	int range, rangebase;
+	int dmg;
 	default
 	{
 		//$Category RPWeapons
@@ -5351,7 +5352,7 @@ class CandleWhip : DinahWeapon
 		Weapon.Kickback 0;
 		Weapon.AmmoType2 "CandleAmmo";
 		Weapon.AmmoGive2 20;
-		//Weapon.AmmoUse2 0;
+		Weapon.AmmoUse2 0;
 		+WEAPON.MELEEWEAPON
 		+WEAPON.NOALERT
 		+PUFFONACTORS
@@ -5383,7 +5384,6 @@ class CandleWhip : DinahWeapon
 		if (dydudebug_cricketbatguard) Console.Printf("pitch sine: %.3f, pitch cosine: %.3f", sp, cp);
 		int m = dist;
 
-		if (type == 1) m *= 1.2;
 		int m2 = m;
 
 		distx = (m * frandom(0.95,1.05));
@@ -5434,8 +5434,6 @@ class CandleWhip : DinahWeapon
 			distz = (height * heightmulti) + yoffset;
 			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
 		}
-		
-		//A_GiveGuardBuff(0);
 	}
 
 	States
@@ -5527,15 +5525,40 @@ class CandleWhip : DinahWeapon
 			RCAN H 4 bright
 			{
 				invoker.range = (invoker.rangebase * 1.0);
+				invoker.dmg = (random(8,12) * randompick(1,2,2,2,3,3,3,3,3,4,4,4,5));
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					invoker.dmg *= 10;
+					invoker.range *= frandompick(1.0,1.0,1.0,1.125,1.125,1.25);
+				}
+				invoker.dmg *= frandompick(0.2,0.3,0.3,0.3,0.3,0.4);
+				//Console.Printf("%d",invoker.dmg);
+				
+
+				A_SetAngle(angle-37.5);
+				A_CustomPunch((invoker.dmg), false, CPF_NOTURN, "WhipPuff", (invoker.range*0.85));
+				//A_RailAttack((invoker.dmg),0,0,"","",RGF_SILENT,0,"WhipPuff",0,0,(invoker.range*0.86),0,0,0,"",0);
+				A_SetAngle(angle+18.75);
+				A_CustomPunch((invoker.dmg), false, CPF_NOTURN, "WhipPuff", (invoker.range*0.94));
+				//A_RailAttack((invoker.dmg),0,0,"","",RGF_SILENT,0,"WhipPuff",0,0,(invoker.range*0.94),0,0,0,"",0);
+				A_SetAngle(angle+18.75);
+				A_CustomPunch((invoker.dmg), false, CPF_NOTURN, "WhipPuff", (invoker.range*1.0));
+				//A_RailAttack((invoker.dmg),0,0,"","",RGF_SILENT,0,"WhipPuff",0,0,(invoker.range*1.0),0,0,0,"",0);
+				A_SetAngle(angle+18.75);
+				A_CustomPunch((invoker.dmg), false, CPF_NOTURN, "WhipPuff", (invoker.range*0.94));
+				//A_RailAttack((invoker.dmg),0,0,"","",RGF_SILENT,0,"WhipPuff",0,0,(invoker.range*0.94),0,0,0,"",0);
+				A_SetAngle(angle+18.75);
+				A_CustomPunch((invoker.dmg), false, CPF_NOTURN, "WhipPuff", (invoker.range*0.85));
+				//A_RailAttack((invoker.dmg),0,0,"","",RGF_SILENT,0,"WhipPuff",0,0,(invoker.range*0.86),0,0,0,"",0);
+				A_SetAngle(angle-37.5);
+
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
-					A_CustomPunch((Random(8, 12)*10), false, 0, "WhipPuff", invoker.range);
 					A_CandleWhipCrack(1,invoker.range);
 					A_SetTics(randompick(2,2,2,2,2,3));
 				}
 				else
 				{
-					A_CustomPunch(Random(8, 12), false, 0, "WhipPuff", invoker.range);
 					A_CandleWhipCrack(0,invoker.range);
 					A_SetTics(randompick(3,4,4,4,4,4));
 				}
@@ -5600,7 +5623,7 @@ class CandleWhip : DinahWeapon
 		AltFire:
 			RCAN A 0
 			{
-				if (!CountInv("EggAmmo")) { return resolvestate("Fire"); }
+				if (!CountInv("CandleAmmo")) { return resolvestate("Fire"); }
 				return resolvestate(null);
 			}
 			RCAN A 0 
@@ -5632,19 +5655,33 @@ class CandleWhip : DinahWeapon
 
 class WhipPuff : DDPuff
 {
+	int basechance;
 	default
 	{
 		Tag "Roman CandleWhiplash";
+		//+ALWAYSPUFF
 		+NOBLOCKMAP
 		+NOGRAVITY
 		//+NOEXTREMEDEATH
 		+PUFFONACTORS
+		+PUFFGETSOWNER
 		RenderStyle "Translucent";
 		Alpha 0.6;
 		SeeSound "MalletHit";
 		AttackSound "MalletWall";
-		VSpeed 1;
+		VSpeed 0.25;
 		DamageType "Fire";
+	}
+	
+	void A_CheckFPain()
+	{
+		basechance = 4;
+		if (target && target.GetClassName() == "DinahWick" && (target.CountInv("PowerStrength") || target.CountInv("PowerStrengthDD"))) basechance /= 2;
+		if (random(1,basechance) <= 1)
+		{
+			bFORCEPAIN = true; 
+			//Console.Printf("bFORCEPAIN");
+		}
 	}
 	
 	States
@@ -5652,21 +5689,21 @@ class WhipPuff : DDPuff
 		Spawn:
 			TNT1 A 0 NoDelay
 			{
-				if (random(1,3) == 1) { bFORCEPAIN = true; }
+				A_CheckFPain();
 			}
 			CHOP ABC 4 Bright;
 			Stop;
 		Melee:
 			TNT1 A 0
 			{
-				if (random(1,3) == 1) { bFORCEPAIN = true; }
+				A_CheckFPain();
 			}
 			CHOP ABC 4 Bright;
 			Stop;
 		Crash:
 			TNT1 A 0
 			{
-				if (random(1,3) == 1) { bFORCEPAIN = true; }
+				A_CheckFPain();
 			}
 			CHOP ABC 4 Bright;
 			Stop;
@@ -5675,12 +5712,14 @@ class WhipPuff : DDPuff
 
 class CandlePuff : DDPuff
 {
+	int basechance;
 	default
 	{
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+NOEXTREMEDEATH
 		+PUFFONACTORS
+		+PUFFGETSOWNER
 		RenderStyle "Translucent";
 		Alpha 0.8;
 		Scale 0.5;
@@ -5690,9 +5729,23 @@ class CandlePuff : DDPuff
 		DamageType "Fire";
 	}
 	
+	void A_CheckFPain()
+	{
+		basechance = 8;
+		if (random(1,basechance) <= 1)
+		{
+			bFORCEPAIN = true; 
+			//Console.Printf("bFORCEPAIN");
+		}
+	}
+	
 	States
 	{
 		Spawn:
+			CANX ABC 0 NoDelay
+			{
+				A_CheckFPain();
+			}
 			CANX ABC 4 Bright;
 			CANX DE 3 bright;
 			Stop;
