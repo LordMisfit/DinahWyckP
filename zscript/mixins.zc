@@ -92,7 +92,7 @@ mixin class CollisionChecker
 		
 		int type;
 		
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyDoom:\c- %s [type: %d]", infl, type);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyDoom:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
 	}
 
@@ -102,7 +102,7 @@ mixin class CollisionChecker
 		
 		int type;
 		
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyHeretic:\c- %s [type: %d]", infl, type);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyHeretic:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
 	}
 	
@@ -112,7 +112,7 @@ mixin class CollisionChecker
 		
 		int type;
 		
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyHexen:\c- %s [type: %d]", infl, type);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyHexen:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
 	}
 
@@ -122,7 +122,7 @@ mixin class CollisionChecker
 		
 		int type;
 		
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyStrife:\c- %s [type: %d]", infl, type);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyStrife:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
 	}
 	
@@ -132,7 +132,7 @@ mixin class CollisionChecker
 		
 		int type;
 		
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyOthers:\c- %s [type: %d]", infl, type);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendlyOthers:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
 	}
 
@@ -142,7 +142,7 @@ mixin class CollisionChecker
 		
 		int type;
 		
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendly1:\c- %s [type: %d]", infl, type);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypeFriendly1:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
 	}
 
@@ -153,7 +153,7 @@ mixin class CollisionChecker
 		
 		int type;
 		
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypePlayer:\c- %s [type: %d]", infl, type);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypePlayer:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
 	}
 
@@ -183,7 +183,7 @@ mixin class CollisionChecker
 				infl == "CrazyBallDD"
 			 ) type = 1;
 		
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypePlayer2:\c- %s [type: %d]", infl, type);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypePlayer2:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
 	}
 	
@@ -223,7 +223,62 @@ mixin class CollisionChecker
 				infl == "SnakeMiniGrenade" 
 			 ) type = 1;
 	
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]A_CheckCollisionProjShieldExemption:\c- %s [type: %d]", infl, type);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]A_CheckCollisionProjShieldExemption:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
+	}
+}
+
+mixin class MonsterCollider
+{
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		ShieldPart shieldpiece;
+		shieldpiece = ShieldPart(other);
+
+		// Non-passive means the one moving into the other is performing the checks.
+		if (!passive)
+		{
+			if (dydudebug_generalcollisions) Console.Printf("\c[brick]Collision:\c- NotPassive - %s vs (%s) {gametic: %d}", other.GetClassName(), GetClassName(), gametic); 
+			
+			// Pass through certain shield parts, ones that would normally cause a monster to be bumped around by running into them
+			if (shieldpiece)
+			{
+				if (dydudebug_generalcollisions) Console.Printf("\c[sapphire]Collision:  Passive - %s [ShieldPiece] vs (%s) {gametic: %d}", GetClassName(), other.GetClassName(), gametic);
+				if (shieldpiece.GetClassName() == "CricketShieldPart" || shieldpiece.GetClassName() == "CricketShieldPartNoReflect")
+				{
+					if (dydudebug_generalcollisions) Console.Printf("\c[sapphire]Collision:  Passive - %s [CricketShieldPart] vs (%s) {gametic: %d}", GetClassName(), other.GetClassName(), gametic);
+					return true;
+				}
+				return false;
+			}
+
+			// Pass through players, if the calling monster is Friendly
+			if (bFRIENDLY == 1 && other.GetSpecies() == "Players")
+			{
+				if (dydudebug_generalcollisions) Console.Printf("\c[lightblue]Collision:\c- NotPassive - %s [Friendly] vs (%s) [PlayerType] = False/No Collision {gametic: %d}", other.GetClassName(), GetClassName(), gametic); 
+				return false; 
+			}
+
+			// Pass through other actors, if the calling monster is Friendly
+			if (bFRIENDLY == 1 && other.bFRIENDLY == 1)
+			{
+				if (dydudebug_generalcollisions) Console.Printf("\c[lightblue]Collision:\c- NotPassive - %s [Friendly] vs (%s) [Friendly] = False/No Collision {gametic: %d}", other.GetClassName(), GetClassName(), gametic); 
+				return false; 
+			}
+		}
+		else
+		{
+			if (dydudebug_generalcollisions) Console.Printf("\c[red]Collision:\c- Passive - (%s) vs %s {gametic: %d}", GetClassName(), other.GetClassName(), gametic);
+			
+			if (shieldpiece)
+			{
+				if (dydudebug_generalcollisions) Console.Printf("\c[lightblue]Collision:\c- NotPassive - %s [Friendly] vs (%s) [Friendly] = False/No Collision {gametic: %d}", other.GetClassName(), GetClassName(), gametic); 
+				return false;
+			}
+			return true; 
+		}
+
+		// We don't really care about others making the check.
+		return true;
 	}
 }
