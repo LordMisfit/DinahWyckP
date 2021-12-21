@@ -1519,6 +1519,8 @@ class CricketBat : DinahWeapon replaces Pistol
 	int guardtimer;
 	int guardcooldown;
 	
+	int spintimes;
+	
 	action void A_GuardToggleCountdown()
 	{
 		if (invoker.guardcooldown) invoker.guardcooldown--;
@@ -1589,6 +1591,19 @@ class CricketBat : DinahWeapon replaces Pistol
 			DBID A 1
 			{
 				A_BatGuardDashOff();
+				int PlayerLevel;
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+				if (MiscItem) PlayerLevel = MiscItem.PlayerLevel;
+				if (PlayerLevel >= 16)
+				{
+					if (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT)
+					{
+						return resolvestate("SpinAttackStart");
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
 			}
 			DBID B 1
 			{
@@ -1695,6 +1710,114 @@ class CricketBat : DinahWeapon replaces Pistol
 			DBID BA 3
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(random(1,2)); }
+			}
+			goto Ready;
+		SpinAttackStart:
+			DBID B 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+			}
+			DBID C 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+			}
+			DBID D 1
+			{
+				A_StartSound("MalletSwing",CHAN_WEAPON);
+				if (random(1,32) <= 1 && !CountInv("PlayingStrife",AAPTR_PLAYER1)) { A_AlertMonsters(); }
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+			}
+			DBID E 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+			}
+			DBID F 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+			}
+			goto SpinAttack;
+		SpinAttackPre:
+			DBID G 0
+			{
+				A_StartSound("MalletSwing",CHAN_WEAPON);
+				if (random(1,32) <= 1 && !CountInv("PlayingStrife",AAPTR_PLAYER1)) { A_AlertMonsters(); }
+			}
+		SpinAttack:
+			DBID G 1
+			{
+				int dmg = random(6,8) * random(1,8);
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
+				dmg /= random(4,6);
+				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+				int range = 112;
+
+				int maxspintimes = 5;
+				for (int i = 0; i < maxspintimes; i++)
+				{
+					//A_SetAngle(angle+22.5);
+					//A_FireBullets(0,0,1,dmg,"BatPuff",FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
+					//if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1); } else { A_CricketBatSwing(0); }
+					A_SetAngle(angle+22.5);
+					A_FireBullets(0,0,1,dmg,"BatPuff",FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
+					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1); } else { A_CricketBatSwing(0); }
+					A_SetAngle(angle-45);
+					A_FireBullets(0,0,1,dmg,"BatPuff",FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
+					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1); } else { A_CricketBatSwing(0); }
+					A_SetAngle(angle+22.5);
+					A_FireBullets(0,0,1,dmg,"BatPuff",FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
+					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1); } else { A_CricketBatSwing(0); }
+					//A_SetAngle(angle+22.5);
+					//A_FireBullets(0,0,1,dmg,"BatPuff",FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
+					//if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1); } else { A_CricketBatSwing(0); }
+					
+					A_SetAngle(angle+6);
+				}
+				invoker.spintimes += 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+			}
+			DBID G 0
+			{
+				int maxspintimes = 6;
+				if (invoker.spintimes >= maxspintimes)
+				{
+					invoker.spintimes = 0;
+					int PlayerLevel;
+					int buttons = GetPlayerInput(INPUT_BUTTONS);
+					let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+					if (MiscItem) PlayerLevel = MiscItem.PlayerLevel;
+					if (PlayerLevel >= 16)
+					{
+						if (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT && buttons & BT_ATTACK)
+						{
+							return resolvestate("SpinAttackPre");
+						}
+						return resolvestate("SpinAttackEnd");
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+			loop;
+		SpinAttackEnd:
+			DBID H 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+			}
+			DBID I 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+			}
+			DBID J 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+			}
+			TNT1 A 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+			}
+			TNT1 A 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
 			}
 			goto Ready;
 			
