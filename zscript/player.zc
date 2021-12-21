@@ -30,7 +30,7 @@ class DDPlayerPawn : PlayerPawn
 		Alpha 1.0;
 	}
 	
-	override void PostBeginPlay()
+	override void BeginPlay()
 	{
 		basexscale = scale.x;
 		baseyscale = scale.y;
@@ -40,6 +40,7 @@ class DDPlayerPawn : PlayerPawn
 		// VOODOO Doll Protection
 		if (!player || !player.mo || player.mo != self) 
 		{
+			isvoodoodoll = true;
 			A_SetSize(16,56,false);
 			if (GetClassName() == "DinahPlayer")
 			{
@@ -47,7 +48,34 @@ class DDPlayerPawn : PlayerPawn
 				scale.y *= 1.142857142857143;
 			}
 			Mass = 100;
-			//Console.Printf("H: %d, R: %d, M: %d, Sx: %4f, Sy: %4f", height, radius, mass, scale.x, scale.y);
+			vel.x = vel.y = vel.z = 0;
+			if (dydudebug_showvoodoodoll) Console.Printf("VoodooDoll [BeginPlay] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
+			Super.BeginPlay();
+			return;
+		}
+		
+		Super.BeginPlay(); 
+	}
+
+	override void PostBeginPlay()
+	{
+		basexscale = scale.x;
+		baseyscale = scale.y;
+		scalexmulti = 1.00;
+		scaleymulti = 1.00;
+
+		// VOODOO Doll Protection
+		if ((!player || !player.mo || player.mo != self) && !isvoodoodoll) 
+		{
+			isvoodoodoll = true;
+			A_SetSize(16,56,false);
+			if (GetClassName() == "DinahPlayer")
+			{
+				scale.x *= 1.142857142857143;
+				scale.y *= 1.142857142857143;
+			}
+			Mass = 100;
+			if (dydudebug_showvoodoodoll) Console.Printf("VoodooDoll [PostBeginPlay] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
 			Super.PostBeginPlay(); 
 			return;
 		}
@@ -150,9 +178,18 @@ class DDPlayerPawn : PlayerPawn
 	Override void Tick()
 	{
 		// VOODOO Doll Protection
-		if (!player || !player.mo || player.mo != self) 
+		if ((!player || !player.mo || player.mo != self) && !isvoodoodoll) 
 		{
 			isvoodoodoll = true; 
+			A_SetSize(16,56,false);
+			if (GetClassName() == "DinahPlayer")
+			{
+				scale.x *= 1.142857142857143;
+				scale.y *= 1.142857142857143;
+			}
+			Mass = 100;
+			if (dydudebug_showvoodoodoll) Console.Printf("VoodooDoll [Tick] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
+
 			Super.Tick();
 			return;
 		}
@@ -413,7 +450,7 @@ class DDPlayerPawn : PlayerPawn
 		}
 		
 		// VOODOO Doll Protection
-		if (!player || !player.mo || player.mo != self) 
+		if (isvoodoodoll) 
 		{
 			//*********************************************************************
 			return super.DamageMobj(inflictor, source, damage, mod, flags, angle); 
@@ -651,8 +688,8 @@ class DDPlayerPawn : PlayerPawn
 			}
 			if (source) // Has a source
 			{
-				combatlogmsg.AppendFormat("from \c[red]%s\c-", source.GetTag());
-				if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[red]'s\c- \c[brick]%s\c-", inflictor.GetTag());
+				combatlogmsg.AppendFormat("from \c[purple]%s\c-", source.GetTag());
+				if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[purple]'s\c- \c[brick]%s\c-", inflictor.GetTag());
 			}
 			else
 			if (inflictor) // No source, but has an inflictor

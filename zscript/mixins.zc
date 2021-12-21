@@ -230,6 +230,50 @@ mixin class CollisionChecker
 
 mixin class MonsterCollider
 {
+	// Resurrections
+	override bool CanResurrect(Actor other, bool passive)
+	{
+		bool ResSucceed = true;
+		if (!passive) // Monster is the one REVIVING...
+		{
+			if (other != self)
+			{
+				let Vile = Archvile(self);
+				if (Vile) 
+				{
+					if (Vile.health > (Vile.SpawnHealth() >> 2)) //
+					{
+						ResSucceed = true;
+						if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Vile's Health is High Enough to resurrect anything");
+					}
+					else
+					{
+						if (other.SpawnHealth() <= 150)
+						{
+							ResSucceed = true;
+							if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Resurrectee's max health is low enough");
+						}
+						else
+						{
+							ResSucceed = false;
+							if (dydudebug_ressurrectdisplays) Console.Printf("Failed: Vile's Health Too Low");
+						}
+					}
+				}
+				if (exex_combatlog) Console.Printf("\c[red]*\c- \c[brick]%s\c- is resurrecting \c[purple]%s\c-! [%d]", GetTag(), other.GetTag(), gametic);
+			}
+			else
+			{
+				if (exex_combatlog) Console.Printf("\c[red]*\c- \c[brick]%s\c- is self resurrecting! [%d]", GetTag(), gametic);
+			}
+		}
+		else // Monster is the one BEING REVIVED...
+		{
+			//if (exex_combatlog) Console.Printf("\c[red]*\c- \c[purple]%s\c- is being resurrected by \c[brick]%s\c-! [%d]", GetTag(), other.GetTag(), gametic);
+		}
+		return ResSucceed;
+	}
+
 	// Collisions
 	override bool CanCollideWith(Actor other, bool passive)
 	{

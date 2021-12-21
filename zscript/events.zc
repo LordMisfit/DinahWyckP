@@ -177,24 +177,46 @@ class DD_EventHandler : EventHandler
 				}
 			}
 			
+			string attkernam;
 			if (!e.thing.GetTag()) dname = e.thing.GetClassName();
+			if (e.inflictor.target)
+			{
+				if (e.inflictor.target.GetTag()) attkernam = e.inflictor.target.GetTag();
+																		else attkernam = e.inflictor.target.GetClassName();
+			}
 			if (e.inflictor)
 			{
 				if (e.inflictor.GetTag()) atkrname = e.inflictor.GetTag();
 														 else atkrname = e.inflictor.GetClassName();
 			}
+			string comblog = "";
+			comblog.AppendFormat("\c[gray*\c- ");
 			if (exex_combatlog && !(dname == "DinahPlayer" || dname == "Dinah Wyck") && e.thing.bCOUNTKILL)
 			{
 				if (dmgtype == 'NONE') dmgtype = 'Typeless';
 				if (dmg) 
 				{
-					if (e.thing.health <= 0) Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-] \c[brick]%s dies!", dmg, dname, atkrname, dmgtype, dname);
-					else Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-]", dmg, dname, atkrname, dmgtype);
+					comblog.AppendFormat("\c[brick]%d\c- damage dealt to \c[red]%s\c- by", dmg, dname);
+					if (e.inflictor && e.inflictor.target && (e.inflictor != e.inflictor.target)) comblog.AppendFormat(" \c[purple]%s's", attkernam);
+					if (e.inflictor) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
+					comblog.AppendFormat(" [\c[lightblue]%s\c-]", dmgtype);
+					if (e.thing.health <= 0) comblog.AppendFormat(" \c[brick]%s dies!\c-", dname);
+
+					//if (e.thing.health <= 0) Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-] \c[brick]%s dies!", dmg, dname, atkrname, dmgtype, dname);
+					//else Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-]", dmg, dname, atkrname, dmgtype);
 				}
 				else
 				{
-					Console.Printf("\c[red]%s\c- took \c[purple]no damage\c- from \c[gold]%s\c-! [\c[lightblue]%s\c-]", dname, atkrname, dmgtype);
+					comblog.AppendFormat("\c[red]%s\c- took \c[purple]no damage\c- from ", dname);
+					if (e.inflictor && e.inflictor.target && (e.inflictor != e.inflictor.target)) comblog.AppendFormat("\c[purple]%s's", attkernam);
+					if (e.inflictor) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
+					comblog.AppendFormat(" [\c[lightblue]%s\c-]", dmgtype);
+
+					//Console.Printf("\c[red]%s\c- took \c[purple]no damage\c- from \c[gold]%s\c-! [\c[lightblue]%s\c-]", dname, atkrname, dmgtype);
 				}
+				comblog.AppendFormat(" [%d]", gametic);
+
+				Console.Printf(comblog);
 				if (blundebuff && (e.thing.health > 0))
 				{
 					if (blundebuff >= 4) Console.Printf("\c[red]%s's\c- defense has already been dropped as much as it can!", dname);
