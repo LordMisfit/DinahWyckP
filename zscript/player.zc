@@ -40,7 +40,6 @@ class DDPlayerPawn : PlayerPawn
 		// VOODOO Doll Protection
 		if (!player || !player.mo || player.mo != self) 
 		{
-			isvoodoodoll = true;
 			A_SetSize(16,56,false);
 			if (GetClassName() == "DinahPlayer")
 			{
@@ -65,9 +64,8 @@ class DDPlayerPawn : PlayerPawn
 		scaleymulti = 1.00;
 
 		// VOODOO Doll Protection
-		if ((!player || !player.mo || player.mo != self) && !isvoodoodoll) 
+		if (!player || !player.mo || player.mo != self)
 		{
-			isvoodoodoll = true;
 			A_SetSize(16,56,false);
 			if (GetClassName() == "DinahPlayer")
 			{
@@ -96,7 +94,11 @@ class DDPlayerPawn : PlayerPawn
 
 	override void CheckAirSupply()
 	{
-		if (!isvoodoodoll)
+		if (!player || !player.mo || player.mo != self)
+		{
+			super.CheckAirSupply();
+		}
+		else
 		{
 			int DrownDmg = 2 + ((level.maptime - player.air_finished) / TICRATE);
 			DrownDmg = ceil(DrownDmg * frandompick(0.625,0.75,0.875,1.000));
@@ -119,15 +121,14 @@ class DDPlayerPawn : PlayerPawn
 			int AirTime = max(player.air_finished - level.maptime, 0);
 			if (dydudebug_airmeter) Console.Printf("    WaterLevel: %d, Level.Time: %d, Level.MapTime: %d, Player.AirFinished: %d, \cxAirTime: %d / %d\c- (%d), DrownDmg: %d", waterlevel, level.time, level.maptime, player.air_finished, AirTime, level.airsupply, AirCapacity, DrownDmg);
 		}
-		else
-		{
-			super.CheckAirSupply();
-		}
 	}
 	
 	override void MovePlayer()
 	{
-		if (!isvoodoodoll) 
+		if (!player || !player.mo || player.mo != self)
+		{
+		}
+		else
 		{
 			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 			String nm;
@@ -178,18 +179,8 @@ class DDPlayerPawn : PlayerPawn
 	Override void Tick()
 	{
 		// VOODOO Doll Protection
-		if ((!player || !player.mo || player.mo != self) && !isvoodoodoll) 
+		if ((!player || !player.mo || player.mo != self)) 
 		{
-			isvoodoodoll = true; 
-			A_SetSize(16,56,false);
-			if (GetClassName() == "DinahPlayer")
-			{
-				scale.x *= 1.142857142857143;
-				scale.y *= 1.142857142857143;
-			}
-			Mass = 100;
-			if (dydudebug_showvoodoodoll) Console.Printf("VoodooDoll [Tick] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
-
 			Super.Tick();
 			return;
 		}
@@ -450,12 +441,12 @@ class DDPlayerPawn : PlayerPawn
 		}
 		
 		// VOODOO Doll Protection
-		if (isvoodoodoll) 
+		if (!player || !player.mo || player.mo != self)  
 		{
+			if (dydudebug_playerdamagemobj) Console.Printf("\cyIS A VOODOO DOLL\c-)", damage);
 			//*********************************************************************
 			return super.DamageMobj(inflictor, source, damage, mod, flags, angle); 
 			//*********************************************************************
-			if (dydudebug_playerdamagemobj) Console.Printf("\cyIS A VOODOO DOLL\c-)", damage);
 		}
 
 		// Direct Damage Changes
@@ -707,7 +698,20 @@ class DDPlayerPawn : PlayerPawn
 
 	override bool CanCollideWith(Actor other, bool passive)
 	{
-		if (!isvoodoodoll)
+		if (!player || !player.mo || player.mo != self)
+		{
+			if (!passive)
+			{
+				if (dydudebug_generalcollisions) Console.Printf("\c[brick]Collision:\c- NotPassive - %s vs (%s) [PPawnVoodoo] {gametic: %d}", other.GetClassName(), GetClassName(), gametic); 
+				return true;
+			}
+			else
+			{
+				if (dydudebug_generalcollisions) Console.Printf("\c[red]Collision:\c- Passive - (%s) [PPawnVoodoo] vs %s {gametic: %d}", GetClassName(), other.GetClassName(), gametic); 
+				return true;
+			}
+		}
+		else
 		{
 			// Non-passive means the one moving into the other is performing the checks.
 			if (!passive)
@@ -726,19 +730,6 @@ class DDPlayerPawn : PlayerPawn
 				return true;
 			}
 		}
-		else
-		{
-			if (!passive)
-			{
-				if (dydudebug_generalcollisions) Console.Printf("\c[brick]Collision:\c- NotPassive - %s vs (%s) [PPawnVoodoo] {gametic: %d}", other.GetClassName(), GetClassName(), gametic); 
-				return true;
-			}
-			else
-			{
-				if (dydudebug_generalcollisions) Console.Printf("\c[red]Collision:\c- Passive - (%s) [PPawnVoodoo] vs %s {gametic: %d}", GetClassName(), other.GetClassName(), gametic); 
-				return true;
-			}
-		}
 
 		// We don't really care about others making the check.
 		return true;
@@ -749,7 +740,7 @@ class DDPlayerPawn : PlayerPawn
 		if (GetClassName() == "DinahPlayer")
 		{
 			double MaxHealthTrue = CountInv("PlayerMaxHP");
-			if (isvoodoodoll || !MaxHealthTrue) MaxHealthTrue = SpawnHealth();
+			if ((!player || !player.mo || player.mo != self) || !MaxHealthTrue) MaxHealthTrue = SpawnHealth();
 			double HealthRatio = health / MaxHealthTrue;
 			// Console.Printf("%.8f", HealthRatio);
 			if (health > 0)
