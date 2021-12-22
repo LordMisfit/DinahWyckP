@@ -14,6 +14,9 @@ class DDPlayerPawn : PlayerPawn
 	
 	int deadtimer;
 	int fadetime;
+	int originalheight;
+	int originalradius;
+	int originalmass;
 
 	int firsttic;
 	int buttons, input;
@@ -37,45 +40,43 @@ class DDPlayerPawn : PlayerPawn
 		scalexmulti = 1.00;
 		scaleymulti = 1.00;
 
-		// VOODOO Doll Protection
-		if (!player || !player.mo || player.mo != self) 
-		{
-			A_SetSize(16,56,false);
-			if (GetClassName() == "DinahPlayer")
-			{
-				scale.x *= 1.142857142857143;
-				scale.y *= 1.142857142857143;
-			}
-			Mass = 100;
-			vel.x = vel.y = vel.z = 0;
-			if (dydudebug_showvoodoodoll) Console.Printf("VoodooDoll [BeginPlay] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
-			Super.BeginPlay();
-			return;
-		}
-		
+		// Player is always considered a Voodoo Doll during BeginPlay, so height/radius have to be saved before the initial change and then reverted back to it for PostBeginPlay/etc when proper doll detection actually works >____>;
+		// Also 'isvoodoodoll' CAN'T be set right now, has to be done in PostBeginPlay/Tick as well <____<;
+		originalheight = height;
+		originalradius = radius;
+		originalmass = mass;
+
+		A_SetSize(16,56,false);
+		scale.x = 1.0;
+		scale.y = 1.0;
+		Mass = 100;
+		vel.x = vel.y = vel.z = 0;
+		if (dydudebug_showvoodoodoll) Console.Printf("VoodooDoll [BeginPlay] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
+
 		Super.BeginPlay(); 
 	}
 
 	override void PostBeginPlay()
 	{
-		basexscale = scale.x;
-		baseyscale = scale.y;
-		scalexmulti = 1.00;
-		scaleymulti = 1.00;
-
 		// VOODOO Doll Protection
 		if (!player || !player.mo || player.mo != self)
 		{
 			A_SetSize(16,56,false);
-			if (GetClassName() == "DinahPlayer")
-			{
-				scale.x *= 1.142857142857143;
-				scale.y *= 1.142857142857143;
-			}
+			scale.x = 1.0;
+			scale.y = 1.0;
 			Mass = 100;
+			isvoodoodoll = true;
 			if (dydudebug_showvoodoodoll) Console.Printf("VoodooDoll [PostBeginPlay] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
 			Super.PostBeginPlay(); 
 			return;
+		}
+		else
+		{
+			A_SetSize(originalradius,originalheight,false);
+			Mass = originalmass;
+			scale.x = basexscale;
+			scale.y = baseyscale;
+			if (dydudebug_showvoodoodoll) Console.Printf("Player [PostBeginPlay] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
 		}
 
 		if (bNOBLOOD == 1) 
@@ -181,11 +182,14 @@ class DDPlayerPawn : PlayerPawn
 		// VOODOO Doll Protection
 		if ((!player || !player.mo || player.mo != self)) 
 		{
+			if (dydudebug_showvoodoodoll) Console.Printf("VoodooDoll [Tick] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
+			isvoodoodoll = true;
 			Super.Tick();
 			return;
 		}
 		else
 		{
+			if (dydudebug_showvoodoodoll) Console.Printf("Player [Tick] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
 			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 			if (dydudebug_mapinfo)
 			{
@@ -197,6 +201,7 @@ class DDPlayerPawn : PlayerPawn
 												level.gravity, level.aircontrol, level.airfriction,
 												translation, level.GetChecksum());
 			}
+			Console.Printf("H: %d, R: %d", height, radius);
 			
 			double fademax = 1.00;
 			if (health <= 0)
@@ -787,16 +792,16 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 		Player.AirCapacity 1;
 		Player.JumpZ 9;
 		//Player.GruntSpeed 12;
-		Player.ViewHeight 37;
+		Player.ViewHeight 36;
 		Player.InvulnerabilityMode "Reflective";
 		Species "Players";
 		Health 80; // 100
 		Player.MaxHealth 80;
 		Player.MugShotMaxHealth -1; // 100
-		Scale 0.875;
-		Mass 64;
-		Height 50;
-		Radius 12;
+		Scale 0.8572;
+		Mass 60;
+		Height 48; // Slightly Shorter than Flora in Aetherius
+		Radius 12; // Dinah is actually SLIGHTLY thinner than even Flora is in Aetherius
 		Tag "Dinah Wyck";
 		+NOBLOOD
 		+PLAYERPAWN.NOTHRUSTWHENINVUL
