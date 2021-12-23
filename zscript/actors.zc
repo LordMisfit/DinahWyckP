@@ -1367,3 +1367,59 @@ class PlayerWhistle : DDBaseZSC
 			stop;
 	}
 }
+
+class BatNew : DDBaseZSC replaces Bat
+{
+	Default
+	{
+		Speed 5;
+		Radius 3;
+		Height 3;
+		+NOBLOCKMAP +NOGRAVITY +MISSILE
+		+NOTELEPORT +CANPASS
+	}
+
+	States
+	{
+		Spawn:
+			ABAT ABC 2 A_BatMove;
+			Loop;
+		Death:
+			ABAT A 2;
+			Stop;
+	}
+	
+	void A_BatMove()
+	{
+		if (special2 < 0)
+		{
+			SetStateLabel ("Death");
+		}
+		special2 -= 2;		// Called every 2 tics
+
+		double newangle;
+		if (random[BatMove]() < 128)
+		{
+			newangle = Angle + args[4];
+		}
+		else
+		{
+			newangle = Angle - args[4];
+		}
+
+		// Adjust velocity vector to new direction
+		VelFromAngle(Speed, newangle);
+
+		if (random[BatMove]() < 15)
+		{
+			A_StartSound ("BatScream", CHAN_VOICE, CHANF_DEFAULT, 1, ATTN_IDLE);
+		}
+
+		// Handle Z movement
+		if (target)
+		{
+			SetZ(target.pos.Z + 2 * BobSin(args[0]));
+			args[0] = (args[0] + 3) & 63;	
+		}
+	}
+}
