@@ -75,100 +75,103 @@ class DD_EventHandler : EventHandler
 						e.thing.thrust(force, (ang + frandompick(-6,-3,-3,0,0,0,0,0,3,3,6)));
 					}
 
-					// Scrambler = Inflicts confusion/fear on enemies occasionally, causing hestitation in combat
-					if (AttackName == "PanPuff")
+					if (!e.thing.bINVULNERABLE)
 					{
-						if (!e.thing.bNOFEAR)
+						// Scrambler = Inflicts confusion/fear on enemies occasionally, causing hestitation in combat
+						if (AttackName == "PanPuff")
 						{
+							if (!e.thing.bNOFEAR)
+							{
+								int basedebuffchance = 4;
+								if (e.thing.bBOSS) basedebuffchance *= 4;
+								if (e.thing.GetClassName() == "Cyberdemon") basedebuffchance *= 2;
+								if (e.thing.GetClassName() == "HellKnight" || e.thing.GetClassName() == "BaronOfHell") basedebuffchance *= 1.334;
+								if (e.thing.GetClassName() == "Cacodemon" || e.thing.GetClassName() == "PainElemental") basedebuffchance *= 1.25;
+								if (e.thing.GetClassName() == "Demon" || e.thing.GetClassName() == "Spectre") basedebuffchance *= 1.125;
+								if (e.thing.GetClassName() == "Arachnotron" || e.thing.GetClassName() == "Mancubus") basedebuffchance *= 0.75;
+								if (e.thing.GetClassName() == "Archvile" || e.thing.GetClassName() == "Revenant") basedebuffchance *= 0.667;
+								if (e.thing.GetClassName() == "SpiderMastermind") basedebuffchance *= 0.334;
+								if (e.thing.GetClassName() == "LostSoul") basedebuffchance *= 0.1;
+								if (landdamagebonus == 1) basedebuffchance *= 0.875;
+								if (landdamagebonus == 2) basedebuffchance *= 0.700;
+								if (landdamagebonus == 3) basedebuffchance *= 0.475;
+								if (landdamagebonus == 4) basedebuffchance *= 0.200;
+								if (e.inflictor.target.CountInv("PowerStrength") || 
+										e.inflictor.target.CountInv("PowerStrengthDD") )
+								{
+									if (e.thing.bBOSS) basedebuffchance *= 0.1;
+																else basedebuffchance *= 0.4;
+								}
+								if (basedebuffchance < 1) basedebuffchance = 1;
+								//Console.Printf("basedebuffchance: 1 / %d", basedebuffchance);
+								if (random(1,basedebuffchance) <= 1) e.thing.A_SetInventory("ScramblerConfusion",1);
+							}
+						}
+
+						// Blunderaxe = Tears off Armor Scraps at times, and occasionally inflicts a "Helm Splitter" style defense debuff
+						if (AttackName == "BlunderPuff")
+						{
+							int baseval = randompick(5,6,6,6,6,7,7,7,7,7,7,7,7,8,8,8,8,9);
+							if (dydudebug_worlddamaged) Console.Printf("%d", baseval);
+							if (random(1,(baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							
 							int basedebuffchance = 4;
+							if (e.thing.GetClassName() == "LostSoul") basedebuffchance *= 10;
+							if (e.thing.GetClassName() == "Spidermastermind") basedebuffchance *= 2;
+							if (e.thing.GetClassName() == "Archvile" || e.thing.GetClassName() == "Revenant") basedebuffchance *= 1.334;
+							if (e.thing.GetClassName() == "Demon" || e.thing.GetClassName() == "Spectre") basedebuffchance *= 0.75;
+							if (e.thing.GetClassName() == "Cacodemon" || e.thing.GetClassName() == "PainElemental") basedebuffchance *= 0.625;
+							if (e.thing.GetClassName() == "HellKnight" || e.thing.GetClassName() == "BaronOfHell") basedebuffchance *= 0.5;
+							if (e.thing.GetClassName() == "Arachnotron" || e.thing.GetClassName() == "Mancubus") basedebuffchance *= 0.25;
+							if (e.thing.GetClassName() == "Cyberdemon") basedebuffchance *= 0.334;
 							if (e.thing.bBOSS) basedebuffchance *= 4;
-							if (e.thing.GetClassName() == "Cyberdemon") basedebuffchance *= 2;
-							if (e.thing.GetClassName() == "HellKnight" || e.thing.GetClassName() == "BaronOfHell") basedebuffchance *= 1.334;
-							if (e.thing.GetClassName() == "Cacodemon" || e.thing.GetClassName() == "PainElemental") basedebuffchance *= 1.25;
-							if (e.thing.GetClassName() == "Demon" || e.thing.GetClassName() == "Spectre") basedebuffchance *= 1.125;
-							if (e.thing.GetClassName() == "Arachnotron" || e.thing.GetClassName() == "Mancubus") basedebuffchance *= 0.75;
-							if (e.thing.GetClassName() == "Archvile" || e.thing.GetClassName() == "Revenant") basedebuffchance *= 0.667;
-							if (e.thing.GetClassName() == "SpiderMastermind") basedebuffchance *= 0.334;
-							if (e.thing.GetClassName() == "LostSoul") basedebuffchance *= 0.1;
 							if (landdamagebonus == 1) basedebuffchance *= 0.875;
 							if (landdamagebonus == 2) basedebuffchance *= 0.700;
 							if (landdamagebonus == 3) basedebuffchance *= 0.475;
 							if (landdamagebonus == 4) basedebuffchance *= 0.200;
-							if (e.inflictor.target.CountInv("PowerStrength") || 
-									e.inflictor.target.CountInv("PowerStrengthDD") )
+							if (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD") )
 							{
 								if (e.thing.bBOSS) basedebuffchance *= 0.1;
 															else basedebuffchance *= 0.4;
 							}
 							if (basedebuffchance < 1) basedebuffchance = 1;
-							//Console.Printf("basedebuffchance: 1 / %d", basedebuffchance);
-							if (random(1,basedebuffchance) <= 1) e.thing.A_SetInventory("ScramblerConfusion",1);
-						}
-					}
-
-					// Blunderaxe = Tears off Armor Scraps at times, and occasionally inflicts a "Helm Splitter" style defense debuff
-					if (AttackName == "BlunderPuff")
-					{
-						int baseval = randompick(5,6,6,6,6,7,7,7,7,7,7,7,7,8,8,8,8,9);
-						if (dydudebug_worlddamaged) Console.Printf("%d", baseval);
-						if (random(1,(baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						
-						int basedebuffchance = 4;
-						if (e.thing.GetClassName() == "LostSoul") basedebuffchance *= 10;
-						if (e.thing.GetClassName() == "Spidermastermind") basedebuffchance *= 2;
-						if (e.thing.GetClassName() == "Archvile" || e.thing.GetClassName() == "Revenant") basedebuffchance *= 1.334;
-						if (e.thing.GetClassName() == "Demon" || e.thing.GetClassName() == "Spectre") basedebuffchance *= 0.75;
-						if (e.thing.GetClassName() == "Cacodemon" || e.thing.GetClassName() == "PainElemental") basedebuffchance *= 0.625;
-						if (e.thing.GetClassName() == "HellKnight" || e.thing.GetClassName() == "BaronOfHell") basedebuffchance *= 0.5;
-						if (e.thing.GetClassName() == "Arachnotron" || e.thing.GetClassName() == "Mancubus") basedebuffchance *= 0.25;
-						if (e.thing.GetClassName() == "Cyberdemon") basedebuffchance *= 0.334;
-						if (e.thing.bBOSS) basedebuffchance *= 4;
-						if (landdamagebonus == 1) basedebuffchance *= 0.875;
-						if (landdamagebonus == 2) basedebuffchance *= 0.700;
-						if (landdamagebonus == 3) basedebuffchance *= 0.475;
-						if (landdamagebonus == 4) basedebuffchance *= 0.200;
-						if (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD") )
-						{
-							if (e.thing.bBOSS) basedebuffchance *= 0.1;
-														else basedebuffchance *= 0.4;
-						}
-						if (basedebuffchance < 1) basedebuffchance = 1;
-						
-						if (random(1,basedebuffchance) <= 1) 
-						{
-							if (e.thing.CountInv("BlunderHelmSplitter3"))
+							
+							if (random(1,basedebuffchance) <= 1) 
 							{
-								blundebuff = 4;
-							}
-							else
-							{
-								if (e.thing.CountInv("BlunderHelmSplitter2"))
+								if (e.thing.CountInv("BlunderHelmSplitter3"))
 								{
-									blundebuff = 3;
-									e.thing.A_SetInventory("BlunderHelmSplitter3",1);
-									e.thing.A_SetInventory("BlunderHelmSplitter2",0);
-									e.thing.A_SetInventory("BlunderHelmSplitter",0);
+									blundebuff = 4;
 								}
 								else
 								{
-									if (e.thing.CountInv("BlunderHelmSplitter"))
+									if (e.thing.CountInv("BlunderHelmSplitter2"))
 									{
-										e.thing.A_SetInventory("BlunderHelmSplitter3",0);
-										e.thing.A_SetInventory("BlunderHelmSplitter2",1);
+										blundebuff = 3;
+										e.thing.A_SetInventory("BlunderHelmSplitter3",1);
+										e.thing.A_SetInventory("BlunderHelmSplitter2",0);
 										e.thing.A_SetInventory("BlunderHelmSplitter",0);
-										blundebuff = 2;
 									}
 									else
 									{
-										e.thing.A_SetInventory("BlunderHelmSplitter3",0);
-										e.thing.A_SetInventory("BlunderHelmSplitter2",0);
-										e.thing.A_SetInventory("BlunderHelmSplitter",1);
-										blundebuff = 1;
+										if (e.thing.CountInv("BlunderHelmSplitter"))
+										{
+											e.thing.A_SetInventory("BlunderHelmSplitter3",0);
+											e.thing.A_SetInventory("BlunderHelmSplitter2",1);
+											e.thing.A_SetInventory("BlunderHelmSplitter",0);
+											blundebuff = 2;
+										}
+										else
+										{
+											e.thing.A_SetInventory("BlunderHelmSplitter3",0);
+											e.thing.A_SetInventory("BlunderHelmSplitter2",0);
+											e.thing.A_SetInventory("BlunderHelmSplitter",1);
+											blundebuff = 1;
+										}
 									}
 								}
 							}
@@ -252,48 +255,53 @@ class DD_EventHandler : EventHandler
 		{
 			if (!(e.thing.GetClassName() == "DinahPlayer") || e.thing.bCOUNTKILL)
 			{
+				actor Player = players[0].mo;
+				bool giveexp;
 				int user_type;
 				string AttackName = "NONE";
 				string AttackerName = "NONE";
+				string VictimName = e.thing.GetClassName();
 				if (e.inflictor) AttackName = e.inflictor.GetClassName();
 				if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
 				if (e.inflictor && !e.inflictor.target && e.inflictor.master) AttackerName = e.inflictor.master.GetClassName();
 				if (dydudebug_worlddied) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", AttackName, AttackerName);
-				if (e.inflictor && (((e.inflictor.target || e.inflictor.master) && AttackerName == "DinahPlayer") || (AttackName == "DinahPlayer")) && !e.thing.bFRIENDLY && e.thing.bCOUNTKILL)
+				if (e.thing.bCOUNTKILL && !e.thing.bFRIENDLY && e.inflictor)
 				{
+					if (e.inflictor) 
+					{
+						if (e.inflictor.bFRIENDLY || e.inflictor.GetClassName() == "DinahWyck") giveexp = true;
+						//Console.Printf("inflictor: %s  [%d]", e.inflictor.GetClassName(), e.inflictor.bFRIENDLY);
+					}
+					if (e.inflictor.target) 
+					{
+						if (e.inflictor.target.bFRIENDLY || e.inflictor.target.GetClassName() == "DinahWyck") giveexp = true;
+						//Console.Printf("inflictor.target: %s [%d]", e.inflictor.target.GetClassName(), e.inflictor.target.bFRIENDLY);
+					}
+					if (e.inflictor.master) 
+					{
+						if (e.inflictor.master.bFRIENDLY || e.inflictor.master.GetClassName() == "DinahWyck") giveexp = true;
+						//Console.Printf("inflictor.master: %s [%d]", e.inflictor.master.GetClassName(), e.inflictor.master.bFRIENDLY);
+					}
+
 					int ExpGain = ((e.thing.spawnhealth()*frandom(0.05,0.125)));
-					if (AttackName == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
-					if (e.thing.GetClassName() == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
 					if (e.inflictor.target && e.inflictor.target.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
-					if (ExpGain < 1) ExpGain = 1;
-
-					if (AttackName == "DinahPlayer")
+					if (e.inflictor && e.inflictor.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
+					if (AttackerName == "DinahPlayer" && AttackName == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
+					if (e.thing.GetClassName() == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
+					if (giveexp)
 					{
-						e.inflictor.A_GiveInventory("KillsCount",1);
-						e.inflictor.A_GiveInventory("ExpPts",ExpGain);
+						Actor player = players[0].mo;
+						if (ExpGain < 1) ExpGain = 1;
+
+						Player.A_GiveInventory("KillsCount",1);
+						Player.A_GiveInventory("ExpPts",ExpGain);
+						int Kills = Player.CountInv("KillsCount");
+						int ExpNew = Player.CountInv("ExpPts");
+						int ExpNeeded = Player.CountInv("ExpPtsNeeded");
+						int PlayerLevel = Player.CountInv("PlayerLevel");
+
+						if (exex_showexpgains) Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
 					}
-					else
-					{
-						e.inflictor.target.A_GiveInventory("KillsCount",1);
-						e.inflictor.target.A_GiveInventory("ExpPts",ExpGain);
-					}
-					int Kills;
-					if (AttackName == "DinahPlayer") Kills = e.inflictor.CountInv("KillsCount");
-																			else Kills = e.inflictor.target.CountInv("KillsCount");
-
-					int ExpNew;
-					if (AttackName == "DinahPlayer") ExpNew = e.inflictor.CountInv("ExpPts");
-																			else ExpNew = e.inflictor.target.CountInv("ExpPts");
-
-					int ExpNeeded;
-					if (AttackName == "DinahPlayer") ExpNeeded = e.inflictor.CountInv("ExpPtsNeeded");
-																			else ExpNeeded = e.inflictor.target.CountInv("ExpPtsNeeded");
-
-					int PlayerLevel;
-					if (AttackName == "DinahPlayer") PlayerLevel = e.inflictor.CountInv("PlayerLevel");
-																			else PlayerLevel = e.inflictor.target.CountInv("PlayerLevel");
-
-					if (exex_showexpgains) Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
 				}
 				
 				// Drop Tables
@@ -316,8 +324,221 @@ class DD_EventHandler : EventHandler
 						if (MiscItem && MiscItem.PlayerLevel >= 35) droptimes += (MiscItem.PlayerLevel / 35);
 					}
 					if (e.thing.bBOSS) droptimes *= 4;
+
 					for (int i; i < droptimes; i++)
 					{
+						// Specific Drops from Specific Monsters
+						let monsterp = Actor(e.thing);
+						if (monsterp = FireDemon(e.thing))
+						{
+							if (random(1,256) <= 8) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 1) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = Ettin(e.thing))
+						{
+							if (random(1,256) <= 32) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 4) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = Centaur(e.thing))
+						{
+							if (random(1,256) <= 24) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 3) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = CentaurLeader(e.thing))
+						{
+							if (random(1,256) <= 48) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 6) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = Serpent(e.thing))
+						{
+							if (random(1,256) <= 32) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 4) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = SerpentLeader(e.thing))
+						{
+							if (random(1,256) <= 48) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 6) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = Bishop(e.thing))
+						{
+							if (random(1,256) <= 16) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 2) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = Wraith(e.thing))
+						{
+							if (random(1,256) <= 24) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 3) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = Demon1(e.thing))
+						{
+							if (random(1,256) <= 32) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 4) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = Demon2(e.thing))
+						{
+							if (random(1,256) <= 32) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 4) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+						if (monsterp = IceGuy(e.thing))
+						{
+							if (random(1,256) <= 80) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+							if (random(1,256) <= 10) 
+							{
+								user_type = random(1,4);
+								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							}
+						}
+
 						// Heal Items
 						basechance = 256;
 						maxchance = basechance;
