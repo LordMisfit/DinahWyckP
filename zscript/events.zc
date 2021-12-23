@@ -37,8 +37,19 @@ class DD_EventHandler : EventHandler
 				e.thing.DamageMobj(e.inflictor, e.DamageSource, dmg, e.DamageType, e.DamageFlags, e.DamageAngle);
 			}
 
-			if (!(e.thing.GetClassName() == "DinahPlayer") || e.thing.bCOUNTKILL)
+			bool showdmglog;
+			bool practicetarget;
+			if (e.thing.bCOUNTKILL) showdmglog = true;
+			if (e.thing.GetClassName() == "PracticeTarget" || e.thing.GetClassName() == "PracticeTarget2") 
 			{
+				practicetarget = true;
+				showdmglog = true;
+			}
+			if (e.thing.GetClassName() == "DinahPlayer") showdmglog = false;
+			if (showdmglog)
+			{
+				//Console.Printf("showdmglog");
+
 				if (dydudebug_worlddamaged) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", AttackName, AttackerName);
 				
 				if (e.thing.health > 0 && e.thing.bISMONSTER)
@@ -49,33 +60,36 @@ class DD_EventHandler : EventHandler
 						if (MiscItem) landdamagebonus = MiscItem.landdmgbonus;
 						if (dydudebug_worlddamaged) Console.Printf("landdamagebonus: %d", landdamagebonus);
 					}
-					if (AttackName == "PlayerWhistle")
+					if (!practicetarget)
 					{
-						double ang;
-						if (e.inflictor.target) ang = e.inflictor.target.angle;
-						else if (e.inflictor) ang = e.inflictor.angle;
-						double force = frandompick(13.75,15,16.25);
-						force *= 0.25;
-						if (e.inflictor && (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD"))) force *= frandompick(1.5,2,2.5);
+						if (AttackName == "PlayerWhistle")
+						{
+							double ang;
+							if (e.inflictor.target) ang = e.inflictor.target.angle;
+							else if (e.inflictor) ang = e.inflictor.angle;
+							double force = frandompick(13.75,15,16.25);
+							force *= 0.25;
+							if (e.inflictor && (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD"))) force *= frandompick(1.5,2,2.5);
 
-						e.thing.Vel.Z += force;
-						e.thing.thrust(force, (ang + frandompick(-3,-1.5,-1.5,0,0,0,0,0,1.5,1.5,3)));
+							e.thing.Vel.Z += force;
+							e.thing.thrust(force, (ang + frandompick(-3,-1.5,-1.5,0,0,0,0,0,1.5,1.5,3)));
+						}
+						if (AttackName == "UppercutPuff")
+						{
+							double ang;
+							if (e.inflictor.target) ang = e.inflictor.target.angle;
+							else if (e.inflictor) ang = e.inflictor.angle;
+							double force = frandompick(27.5,30,32.5);
+							force *= 0.25;
+							if (e.inflictor && (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD"))) force *= frandompick(1.125,1.25,1.375);
+
+							if (random(1,8) <= 1) force *= 1.5;
+							e.thing.Vel.Z += force;
+							e.thing.thrust(force, (ang + frandompick(-6,-3,-3,0,0,0,0,0,3,3,6)));
+						}
 					}
-					if (AttackName == "UppercutPuff")
-					{
-						double ang;
-						if (e.inflictor.target) ang = e.inflictor.target.angle;
-						else if (e.inflictor) ang = e.inflictor.angle;
-						double force = frandompick(27.5,30,32.5);
-						force *= 0.25;
-						if (e.inflictor && (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD"))) force *= frandompick(1.125,1.25,1.375);
 
-						if (random(1,8) <= 1) force *= 1.5;
-						e.thing.Vel.Z += force;
-						e.thing.thrust(force, (ang + frandompick(-6,-3,-3,0,0,0,0,0,3,3,6)));
-					}
-
-					if (!e.thing.bINVULNERABLE)
+					if (!e.thing.bINVULNERABLE || !practicetarget)
 					{
 						// Scrambler = Inflicts confusion/fear on enemies occasionally, causing hestitation in combat
 						if (AttackName == "PanPuff")
@@ -194,8 +208,13 @@ class DD_EventHandler : EventHandler
 			}
 			string comblog = "";
 			comblog.AppendFormat("\c[gray*\c- ");
-			if (exex_combatlog && !(dname == "DinahPlayer" || dname == "Dinah Wyck") && e.thing.bCOUNTKILL)
+			showdmglog = false;
+			if (e.thing.bCOUNTKILL) showdmglog = true;
+			if (e.thing.GetClassName() == "PracticeTarget" || e.thing.GetClassName() == "PracticeTarget2") showdmglog = true;
+			if (dname == "DinahPlayer" || dname == "Dinah Wyck") showdmglog = false;
+			if (exex_combatlog && showdmglog)
 			{
+				//Console.Printf("showdmglog 2");
 				if (dmgtype == 'NONE') dmgtype = 'Typeless';
 				if (dmg) 
 				{
@@ -815,7 +834,7 @@ class DD_EventHandler : EventHandler
 	
 	override void PlayerDied(PlayerEvent e) 
 	{
-		S_ChangeMusic("GAMOVR", 0, false, true);
+		if (exex_deathmusic) S_ChangeMusic("GAMOVR", 0, false, true);
 		Super.PlayerDied(e);
 	}
 	
