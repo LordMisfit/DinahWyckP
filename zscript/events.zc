@@ -22,7 +22,8 @@ class DD_EventHandler : EventHandler
 		actor inflicter = e.inflictor;
 		int dmg = e.damage;
 		int initdmg = e.damage;
-		string dmgtype = e.damagetype;
+		string mod = e.damagetype;
+		int flags = e.DamageFlags;
 		
 		if (victim)
 		{
@@ -218,26 +219,24 @@ class DD_EventHandler : EventHandler
 			if (exex_combatlog && showdmglog)
 			{
 				//Console.Printf("showdmglog 2");
-				if (dmgtype == 'NONE') dmgtype = 'Typeless';
+				if (mod == 'NONE') mod = 'Typeless';
 				if (dmg)
 				{
 					comblog.AppendFormat("\c[brick]%d\c- damage dealt to \c[red]%s\c- by", dmg, victname);
 					if (inflicter && source && (inflicter != source)) comblog.AppendFormat(" \c[purple]%s's", attkernam);
 					if (inflicter) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
-					comblog.AppendFormat(" [\c[lightblue]%s\c-]", dmgtype);
+					comblog.AppendFormat(" [\c[lightblue]%s\c-]", mod);
 					if (victim.health <= 0) comblog.AppendFormat(" \c[brick]%s dies!\c-", victname);
 
-					//if (victim.health <= 0) Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-] \c[brick]%s dies!", dmg, victname, atkrname, dmgtype, victname);
-					//else Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-]", dmg, victname, atkrname, dmgtype);
+					//if (victim.health <= 0) Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-] \c[brick]%s dies!", dmg, victname, atkrname, mod, victname);
+					//else Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-]", dmg, victname, atkrname, mod);
 				}
 				else
 				{
 					comblog.AppendFormat("\c[red]%s\c- took \c[purple]no damage\c- from ", victname);
 					if (inflicter && source && (inflicter != source)) comblog.AppendFormat("\c[purple]%s's", attkernam);
 					if (inflicter) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
-					comblog.AppendFormat(" [\c[lightblue]%s\c-]", dmgtype);
-
-					//Console.Printf("\c[red]%s\c- took \c[purple]no damage\c- from \c[gold]%s\c-! [\c[lightblue]%s\c-]", victname, atkrname, dmgtype);
+					comblog.AppendFormat(" [\c[lightblue]%s\c-]", mod);
 				}
 				if (dydudebug_showgametic) comblog.AppendFormat(" [%d]", gametic);
 
@@ -252,10 +251,85 @@ class DD_EventHandler : EventHandler
 				}
 			}
 			
-			//
+			bool makesound;
 			string playedsound = "";
 			PlayerPawn playpawn;
 			Actor othermon;
+			int playweaksound = 0;
+			//*******************
+			//* Weakness Sounds *
+			//*******************
+			int tempdmgval = 10000;
+			double tempdmgfactor = victim.damagefactor;
+			victim.damagefactor = 1.0;
+			int moddedDMG = victim.ApplyDamageFactor(mod, tempdmgval);
+			victim.damagefactor = tempdmgfactor;
+			double outputdmgfactor = 1.0;
+			outputdmgfactor *= moddedDMG;
+			outputdmgfactor /= tempdmgval;
+			if (vict != "PracticeTarget" || vict != "PracticeTarget2")
+			{
+				if (dmg > 0 && !(flags & DMG_NO_FACTOR)) 
+				{
+					if (!(mod == '' || mod == 'Normal' || mod == 'Crush' || mod == 'Falling' || mod == 'Drowning'))
+					{
+						if (moddedDMG <= (tempdmgval * 0.25)) playweaksound = -3;
+						if (moddedDMG >= (tempdmgval * 0.25) && moddedDMG <= (tempdmgval * 0.3999999)) playweaksound = -2;
+						if (moddedDMG >= (tempdmgval * 0.4) && moddedDMG <= (tempdmgval * 0.6666667)) playweaksound = -1;
+						if (moddedDMG >= (tempdmgval * 1.5) && moddedDMG <= (tempdmgval * 2.4999999)) playweaksound = 1;
+						if (moddedDMG >= (tempdmgval * 2.5) && moddedDMG <= (tempdmgval * 3.9999999)) playweaksound = 2;
+						if (moddedDMG >= (tempdmgval * 4.0)) playweaksound = 3;
+						//if (playweaksound > 0) victim.A_SetInventory("TookWeaknessHit",playweaksound);
+						//else if (playweaksound < 0) victim.A_SetInventory("TookResistanceHit",(playweaksound*-1));
+						if (dydudebug_hitsounds) Console.Printf("moddedDMG: %d (%.8f) (%s), playweaksound: %d, damagefactor: %.8f", moddedDMG, outputdmgfactor, mod, playweaksound, victim.damagefactor);
+					}
+				}
+				if (dydudebug_hitsounds) Console.Printf("playweaksound: %d", playweaksound);
+
+				string weakplayedsound = "";
+				if (exex_hitweaksounds && playweaksound != 0 && level.time >= victim.args[3])
+				{
+					victim.args[3] = (level.time + exex_q3aqchitsounddelay);
+					if (dydudebug_hitsounds) Console.Printf("ws - %d [%d]", victim.args[3], level.time);
+		
+					if (playweaksound == -3) weakplayedsound = "Misc/ResistanceHitHigh";
+					if (playweaksound == -2) weakplayedsound = "Misc/ResistanceHitMid";
+					if (playweaksound == -1) weakplayedsound = "Misc/ResistanceHit";
+					if (playweaksound == 1) weakplayedsound = "Misc/WeaknessHit";
+					if (playweaksound == 2) weakplayedsound = "Misc/WeaknessHitMid";
+					if (playweaksound == 3) weakplayedsound = "Misc/WeaknessHitHigh";
+		
+					if (initdmg > 0) makesound = true;
+					//if (oldhealth > 0 && oldhealth > health) makesound = true;
+					if (makesound)
+					{
+						if (source) 
+						{
+							if (dydudebug_hitsounds) Console.Printf("[weaksounds] source: %s", source.GetClassName());
+							playpawn = PlayerPawn(source);
+							if (victim.bFRIENDLY)
+							{
+								victim.A_StartSound(weakplayedsound, 11, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+							}
+							else
+							if (playpawn) 
+							{
+								if (dydudebug_hitsounds) Console.Printf("[weaksounds] playpawn: %s", playpawn.GetClassName());
+								if (!victim.bFRIENDLY) victim.A_StartSound(weakplayedsound, 11, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 1.0);
+							}
+							else
+							{
+								othermon = Actor(source);
+								if (othermon) 
+								{
+									if (dydudebug_hitsounds) Console.Printf("[weaksounds] othermon: %s", othermon.GetClassName());
+									if (othermon.bFRIENDLY && !victim.bFRIENDLY) victim.A_StartSound(weakplayedsound, 11, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 1.5);
+								}
+							}
+						}
+					}
+				}
+			}
 			if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && victim.bCOUNTKILL)
 			{
 				if (source) 
