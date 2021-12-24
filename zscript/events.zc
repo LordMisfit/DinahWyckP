@@ -17,173 +17,176 @@ class DD_EventHandler : EventHandler
 	{
 		int blundebuff = 0;
 		int scramblerdebuff = 0;
-		if (e.thing)
+		actor victim = e.Thing;
+		actor source = e.DamageSource;
+		actor inflicter = e.inflictor;
+		int dmg = e.damage;
+		int initdmg = e.damage;
+		string dmgtype = e.damagetype;
+		
+		if (victim)
 		{
-			int dmg = e.damage;
-			string dmgtype = e.damagetype;
-			string dname = e.thing.GetTag();
+			int oldhealth = victim.health;
+
+			string victname = victim.GetTag();
 			string atkrname = "(?)";
 			int user_type;
-			string AttackName = "NONE";
-			string AttackerName = "NONE";
+			string vict = "NONE";
+			string infl = "NONE";
+			string sour = "NONE";
 			int landdamagebonus;
 
-			if (e.inflictor) AttackName = e.inflictor.GetClassName();
-			if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
-
-			if ((e.thing.GetClassName() == "LostSoul" || e.thing.GetClassName() == "HereticImp") && e.thing.bSKULLFLY)
-			{
-				dmg = e.damage * (frandompick(0.5,0.625,0.75,0.875,1.0));
-				e.thing.DamageMobj(e.inflictor, e.DamageSource, dmg, e.DamageType, e.DamageFlags, e.DamageAngle);
-			}
+			if (victim) vict = victim.GetClassName();
+			if (inflicter) infl = inflicter.GetClassName();
+			if (source) sour = source.GetClassName();
 
 			bool showdmglog;
 			bool practicetarget;
-			if (e.thing.bCOUNTKILL) showdmglog = true;
-			if (e.thing.GetClassName() == "PracticeTarget" || e.thing.GetClassName() == "PracticeTarget2") 
+			if (victim.bCOUNTKILL) showdmglog = true;
+			if (vict == "PracticeTarget" || vict == "PracticeTarget2") 
 			{
 				practicetarget = true;
 				showdmglog = true;
 			}
-			if (e.thing.GetClassName() == "DinahPlayer") showdmglog = false;
+			if (vict == "DinahPlayer") showdmglog = false;
 			if (showdmglog)
 			{
 				//Console.Printf("showdmglog");
 
-				if (dydudebug_worlddamaged) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", AttackName, AttackerName);
+				if (dydudebug_worlddamaged) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", infl, sour);
 				
-				if (e.thing.health > 0 && e.thing.bISMONSTER)
+				if (victim.health > 0 && victim.bISMONSTER)
 				{
-					if (e.inflictor && e.inflictor.target && AttackerName == "DinahPlayer") //
+					if (source && sour == "DinahPlayer") //
 					{
-						let MiscItem = PlayerStatItem(e.inflictor.target.FindInventory("PlayerStatItem"));
+						let MiscItem = PlayerStatItem(source.FindInventory("PlayerStatItem"));
 						if (MiscItem) landdamagebonus = MiscItem.landdmgbonus;
 						if (dydudebug_worlddamaged) Console.Printf("landdamagebonus: %d", landdamagebonus);
 					}
 					if (!practicetarget)
 					{
-						if (AttackName == "PlayerWhistle")
+						if (infl == "PlayerWhistle")
 						{
 							double ang;
-							if (e.inflictor.target) ang = e.inflictor.target.angle;
-							else if (e.inflictor) ang = e.inflictor.angle;
+							if (source) ang = source.angle;
+							else if (inflicter) ang = inflicter.angle;
 							double force = frandompick(13.75,15,16.25);
 							force *= 0.25;
-							if (e.inflictor && (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD"))) force *= frandompick(1.5,2,2.5);
+							if (inflicter && (source.CountInv("PowerStrength") || source.CountInv("PowerStrengthDD"))) force *= frandompick(1.5,2,2.5);
 
-							e.thing.Vel.Z += force;
-							e.thing.thrust(force, (ang + frandompick(-3,-1.5,-1.5,0,0,0,0,0,1.5,1.5,3)));
+							victim.Vel.Z += force;
+							victim.thrust(force, (ang + frandompick(-3,-1.5,-1.5,0,0,0,0,0,1.5,1.5,3)));
 						}
-						if (AttackName == "UppercutPuff")
+						if (infl == "UppercutPuff")
 						{
 							double ang;
-							if (e.inflictor.target) ang = e.inflictor.target.angle;
-							else if (e.inflictor) ang = e.inflictor.angle;
+							if (source) ang = source.angle;
+							else if (inflicter) ang = inflicter.angle;
 							double force = frandompick(27.5,30,32.5);
 							force *= 0.25;
-							if (e.inflictor && (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD"))) force *= frandompick(1.125,1.25,1.375);
+							if (inflicter && (source.CountInv("PowerStrength") || source.CountInv("PowerStrengthDD"))) force *= frandompick(1.125,1.25,1.375);
 
 							if (random(1,8) <= 1) force *= 1.5;
-							e.thing.Vel.Z += force;
-							e.thing.thrust(force, (ang + frandompick(-6,-3,-3,0,0,0,0,0,3,3,6)));
+							victim.Vel.Z += force;
+							victim.thrust(force, (ang + frandompick(-6,-3,-3,0,0,0,0,0,3,3,6)));
 						}
 					}
 
-					if (!e.thing.bINVULNERABLE || !practicetarget)
+					if (!victim.bINVULNERABLE || !practicetarget)
 					{
 						// Scrambler = Inflicts confusion/fear on enemies occasionally, causing hestitation in combat
-						if (AttackName == "PanPuff")
+						if (infl == "PanPuff")
 						{
-							if (!e.thing.bNOFEAR)
+							if (!victim.bNOFEAR)
 							{
 								int basedebuffchance = 4;
-								if (e.thing.bBOSS) basedebuffchance *= 4;
-								if (e.thing.GetClassName() == "Cyberdemon") basedebuffchance *= 2;
-								if (e.thing.GetClassName() == "HellKnight" || e.thing.GetClassName() == "BaronOfHell") basedebuffchance *= 1.334;
-								if (e.thing.GetClassName() == "Cacodemon" || e.thing.GetClassName() == "PainElemental") basedebuffchance *= 1.25;
-								if (e.thing.GetClassName() == "Demon" || e.thing.GetClassName() == "Spectre") basedebuffchance *= 1.125;
-								if (e.thing.GetClassName() == "Arachnotron" || e.thing.GetClassName() == "Mancubus") basedebuffchance *= 0.75;
-								if (e.thing.GetClassName() == "Archvile" || e.thing.GetClassName() == "Revenant") basedebuffchance *= 0.667;
-								if (e.thing.GetClassName() == "SpiderMastermind") basedebuffchance *= 0.334;
-								if (e.thing.GetClassName() == "LostSoul") basedebuffchance *= 0.1;
+								if (victim.bBOSS) basedebuffchance *= 4;
+								if (vict == "Cyberdemon") basedebuffchance *= 2;
+								if (vict == "HellKnight" || vict == "BaronOfHell") basedebuffchance *= 1.334;
+								if (vict == "Cacodemon" || vict == "PainElemental") basedebuffchance *= 1.25;
+								if (vict == "Demon" || vict == "Spectre") basedebuffchance *= 1.125;
+								if (vict == "Arachnotron" || vict == "Mancubus") basedebuffchance *= 0.75;
+								if (vict == "Archvile" || vict == "Revenant") basedebuffchance *= 0.667;
+								if (vict == "SpiderMastermind") basedebuffchance *= 0.334;
+								if (vict == "LostSoul") basedebuffchance *= 0.1;
 								if (landdamagebonus == 1) basedebuffchance *= 0.875;
 								if (landdamagebonus == 2) basedebuffchance *= 0.700;
 								if (landdamagebonus == 3) basedebuffchance *= 0.475;
 								if (landdamagebonus == 4) basedebuffchance *= 0.200;
-								if (e.inflictor.target.CountInv("PowerStrength") || 
-										e.inflictor.target.CountInv("PowerStrengthDD") )
+								if (source.CountInv("PowerStrength") || 
+										source.CountInv("PowerStrengthDD") )
 								{
-									if (e.thing.bBOSS) basedebuffchance *= 0.1;
+									if (victim.bBOSS) basedebuffchance *= 0.1;
 																else basedebuffchance *= 0.4;
 								}
 								if (basedebuffchance < 1) basedebuffchance = 1;
 								//Console.Printf("basedebuffchance: 1 / %d", basedebuffchance);
-								if (random(1,basedebuffchance) <= 1) e.thing.A_SetInventory("ScramblerConfusion",1);
+								if (random(1,basedebuffchance) <= 1) victim.A_SetInventory("ScramblerConfusion",1);
 							}
 						}
 
 						// Blunderaxe = Tears off Armor Scraps at times, and occasionally inflicts a "Helm Splitter" style defense debuff
-						if (AttackName == "BlunderPuff")
+						if (infl == "BlunderPuff")
 						{
 							int baseval = randompick(5,6,6,6,6,7,7,7,7,7,7,7,7,8,8,8,8,9);
 							if (dydudebug_worlddamaged) Console.Printf("%d", baseval);
-							if (random(1,(baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-							if (random(1,(baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-							if (random(1,(baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-							if (random(1,(baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-							if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-							if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+							if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							
 							int basedebuffchance = 4;
-							if (e.thing.GetClassName() == "LostSoul") basedebuffchance *= 10;
-							if (e.thing.GetClassName() == "Spidermastermind") basedebuffchance *= 2;
-							if (e.thing.GetClassName() == "Archvile" || e.thing.GetClassName() == "Revenant") basedebuffchance *= 1.334;
-							if (e.thing.GetClassName() == "Demon" || e.thing.GetClassName() == "Spectre") basedebuffchance *= 0.75;
-							if (e.thing.GetClassName() == "Cacodemon" || e.thing.GetClassName() == "PainElemental") basedebuffchance *= 0.625;
-							if (e.thing.GetClassName() == "HellKnight" || e.thing.GetClassName() == "BaronOfHell") basedebuffchance *= 0.5;
-							if (e.thing.GetClassName() == "Arachnotron" || e.thing.GetClassName() == "Mancubus") basedebuffchance *= 0.25;
-							if (e.thing.GetClassName() == "Cyberdemon") basedebuffchance *= 0.334;
-							if (e.thing.bBOSS) basedebuffchance *= 4;
+							if (vict == "LostSoul") basedebuffchance *= 10;
+							if (vict == "Spidermastermind") basedebuffchance *= 2;
+							if (vict == "Archvile" || vict == "Revenant") basedebuffchance *= 1.334;
+							if (vict == "Demon" || vict == "Spectre") basedebuffchance *= 0.75;
+							if (vict == "Cacodemon" || vict == "PainElemental") basedebuffchance *= 0.625;
+							if (vict == "HellKnight" || vict == "BaronOfHell") basedebuffchance *= 0.5;
+							if (vict == "Arachnotron" || vict == "Mancubus") basedebuffchance *= 0.25;
+							if (vict == "Cyberdemon") basedebuffchance *= 0.334;
+							if (victim.bBOSS) basedebuffchance *= 4;
 							if (landdamagebonus == 1) basedebuffchance *= 0.875;
 							if (landdamagebonus == 2) basedebuffchance *= 0.700;
 							if (landdamagebonus == 3) basedebuffchance *= 0.475;
 							if (landdamagebonus == 4) basedebuffchance *= 0.200;
-							if (e.inflictor.target.CountInv("PowerStrength") || e.inflictor.target.CountInv("PowerStrengthDD") )
+							if (source.CountInv("PowerStrength") || source.CountInv("PowerStrengthDD") )
 							{
-								if (e.thing.bBOSS) basedebuffchance *= 0.1;
+								if (victim.bBOSS) basedebuffchance *= 0.1;
 															else basedebuffchance *= 0.4;
 							}
 							if (basedebuffchance < 1) basedebuffchance = 1;
 							
 							if (random(1,basedebuffchance) <= 1) 
 							{
-								if (e.thing.CountInv("BlunderHelmSplitter3"))
+								if (victim.CountInv("BlunderHelmSplitter3"))
 								{
 									blundebuff = 4;
 								}
 								else
 								{
-									if (e.thing.CountInv("BlunderHelmSplitter2"))
+									if (victim.CountInv("BlunderHelmSplitter2"))
 									{
 										blundebuff = 3;
-										e.thing.A_SetInventory("BlunderHelmSplitter3",1);
-										e.thing.A_SetInventory("BlunderHelmSplitter2",0);
-										e.thing.A_SetInventory("BlunderHelmSplitter",0);
+										victim.A_SetInventory("BlunderHelmSplitter3",1);
+										victim.A_SetInventory("BlunderHelmSplitter2",0);
+										victim.A_SetInventory("BlunderHelmSplitter",0);
 									}
 									else
 									{
-										if (e.thing.CountInv("BlunderHelmSplitter"))
+										if (victim.CountInv("BlunderHelmSplitter"))
 										{
-											e.thing.A_SetInventory("BlunderHelmSplitter3",0);
-											e.thing.A_SetInventory("BlunderHelmSplitter2",1);
-											e.thing.A_SetInventory("BlunderHelmSplitter",0);
+											victim.A_SetInventory("BlunderHelmSplitter3",0);
+											victim.A_SetInventory("BlunderHelmSplitter2",1);
+											victim.A_SetInventory("BlunderHelmSplitter",0);
 											blundebuff = 2;
 										}
 										else
 										{
-											e.thing.A_SetInventory("BlunderHelmSplitter3",0);
-											e.thing.A_SetInventory("BlunderHelmSplitter2",0);
-											e.thing.A_SetInventory("BlunderHelmSplitter",1);
+											victim.A_SetInventory("BlunderHelmSplitter3",0);
+											victim.A_SetInventory("BlunderHelmSplitter2",0);
+											victim.A_SetInventory("BlunderHelmSplitter",1);
 											blundebuff = 1;
 										}
 									}
@@ -195,74 +198,184 @@ class DD_EventHandler : EventHandler
 			}
 			
 			string attkernam;
-			if (!e.thing.GetTag()) dname = e.thing.GetClassName();
-			if (e.inflictor && e.inflictor.target)
+			if (!victim.GetTag()) victname = vict;
+			if (source)
 			{
-				if (e.inflictor.target.GetTag()) attkernam = e.inflictor.target.GetTag();
-																		else attkernam = e.inflictor.target.GetClassName();
+				if (source.GetTag()) attkernam = source.GetTag();
+												else attkernam = source.GetClassName();
 			}
-			if (e.inflictor)
+			if (inflicter)
 			{
-				if (e.inflictor.GetTag()) atkrname = e.inflictor.GetTag();
-														 else atkrname = e.inflictor.GetClassName();
+				if (inflicter.GetTag()) atkrname = inflicter.GetTag();
+													 else atkrname = inflicter.GetClassName();
 			}
 			string comblog = "";
 			comblog.AppendFormat("\c[gray*\c- ");
 			showdmglog = false;
-			if (e.thing.bCOUNTKILL) showdmglog = true;
-			if (e.thing.GetClassName() == "PracticeTarget" || e.thing.GetClassName() == "PracticeTarget2") showdmglog = true;
-			if (dname == "DinahPlayer" || dname == "Dinah Wyck") showdmglog = false;
+			if (victim.bCOUNTKILL) showdmglog = true;
+			if (vict == "PracticeTarget" || vict == "PracticeTarget2") showdmglog = true;
+			if (victname == "DinahPlayer" || victname == "Dinah Wyck") showdmglog = false;
 			if (exex_combatlog && showdmglog)
 			{
 				//Console.Printf("showdmglog 2");
 				if (dmgtype == 'NONE') dmgtype = 'Typeless';
-				if (dmg) 
+				if (dmg)
 				{
-					comblog.AppendFormat("\c[brick]%d\c- damage dealt to \c[red]%s\c- by", dmg, dname);
-					if (e.inflictor && e.inflictor.target && (e.inflictor != e.inflictor.target)) comblog.AppendFormat(" \c[purple]%s's", attkernam);
-					if (e.inflictor) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
+					comblog.AppendFormat("\c[brick]%d\c- damage dealt to \c[red]%s\c- by", dmg, victname);
+					if (inflicter && source && (inflicter != source)) comblog.AppendFormat(" \c[purple]%s's", attkernam);
+					if (inflicter) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
 					comblog.AppendFormat(" [\c[lightblue]%s\c-]", dmgtype);
-					if (e.thing.health <= 0) comblog.AppendFormat(" \c[brick]%s dies!\c-", dname);
+					if (victim.health <= 0) comblog.AppendFormat(" \c[brick]%s dies!\c-", victname);
 
-					//if (e.thing.health <= 0) Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-] \c[brick]%s dies!", dmg, dname, atkrname, dmgtype, dname);
-					//else Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-]", dmg, dname, atkrname, dmgtype);
+					//if (victim.health <= 0) Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-] \c[brick]%s dies!", dmg, victname, atkrname, dmgtype, victname);
+					//else Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-]", dmg, victname, atkrname, dmgtype);
 				}
 				else
 				{
-					comblog.AppendFormat("\c[red]%s\c- took \c[purple]no damage\c- from ", dname);
-					if (e.inflictor && e.inflictor.target && (e.inflictor != e.inflictor.target)) comblog.AppendFormat("\c[purple]%s's", attkernam);
-					if (e.inflictor) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
+					comblog.AppendFormat("\c[red]%s\c- took \c[purple]no damage\c- from ", victname);
+					if (inflicter && source && (inflicter != source)) comblog.AppendFormat("\c[purple]%s's", attkernam);
+					if (inflicter) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
 					comblog.AppendFormat(" [\c[lightblue]%s\c-]", dmgtype);
 
-					//Console.Printf("\c[red]%s\c- took \c[purple]no damage\c- from \c[gold]%s\c-! [\c[lightblue]%s\c-]", dname, atkrname, dmgtype);
+					//Console.Printf("\c[red]%s\c- took \c[purple]no damage\c- from \c[gold]%s\c-! [\c[lightblue]%s\c-]", victname, atkrname, dmgtype);
 				}
 				if (dydudebug_showgametic) comblog.AppendFormat(" [%d]", gametic);
 
 				Console.Printf(comblog);
-				if (blundebuff && (e.thing.health > 0))
+				if (blundebuff && (victim.health > 0))
 				{
-					if (blundebuff >= 4) Console.Printf("\c[red]%s's\c- defense has already been dropped as much as it can!", dname);
-					if (blundebuff == 3) Console.Printf("\c[red]%s's\c- defense dropped by yet another 20%!", dname);
-					if (blundebuff == 2) Console.Printf("\c[red]%s's\c- defense dropped by another 20%!", dname);
-					if (blundebuff == 1) Console.Printf("\c[red]%s's\c- defense dropped by 20%!", dname);
-					if (blundebuff <= 3 && AttackerName == "DinahPlayer") e.inflictor.target.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+					if (blundebuff >= 4) Console.Printf("\c[red]%s's\c- defense has already been dropped as much as it can!", victname);
+					if (blundebuff == 3) Console.Printf("\c[red]%s's\c- defense dropped by yet another 20%!", victname);
+					if (blundebuff == 2) Console.Printf("\c[red]%s's\c- defense dropped by another 20%!", victname);
+					if (blundebuff == 1) Console.Printf("\c[red]%s's\c- defense dropped by 20%!", victname);
+					if (blundebuff <= 3 && sour == "DinahPlayer") source.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+				}
+			}
+			
+			//
+			string playedsound = "";
+			PlayerPawn playpawn;
+			Actor othermon;
+			if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && victim.bCOUNTKILL)
+			{
+				if (source) 
+				{
+					if (dydudebug_hitsounds) Console.Printf("[deathsound] source: %s", source.GetClassName());
+					playpawn = PlayerPawn(source);
+					if (victim.bFRIENDLY)
+					{
+						if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsndAlly";
+						if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDEDAlly";
+						if (exex_q3aqckillsoundtype >= 0) 
+						{
+							victim.A_StopSound(12);
+							victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+						}
+					}
+					else
+					if (playpawn) 
+					{
+						if (dydudebug_hitsounds) Console.Printf("[deathsound] playpawn: %s", playpawn.GetClassName());
+						if (!victim.bFRIENDLY)
+						{
+							if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsnd";
+							if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDED";
+							if (exex_q3aqckillsoundtype >= 0) 
+							{
+								victim.A_StopSound(12);
+								victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+							}
+						}
+					}
+					else
+					{
+						othermon = Actor(source);
+						if (othermon) 
+						{
+							if (dydudebug_hitsounds) Console.Printf("[deathsound] othermon: %s", othermon.GetClassName());
+							if (othermon.bFRIENDLY && !victim.bFRIENDLY)
+							{
+								if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsnd2";
+								if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDED2";
+								if (exex_q3aqckillsoundtype >= 0) 
+								{
+									victim.A_StopSound(12);
+									victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+								}
+							}
+						}
+					}
+				}
+			}
+			if (exex_q3aqchitsounds2 && victim.bISMONSTER && victim.bCOUNTKILL) // && hitsoundtimer <= 0) 
+			{
+				if (source) 
+				{
+					if (dydudebug_hitsounds) Console.Printf("[hitsound] source: %s", source.GetClassName());
+					playpawn = PlayerPawn(source);
+					if (victim.bFRIENDLY)
+					{
+						//hitsoundtimer += exex_q3aqchitsounddelay;
+						if (exex_q3aqchitsoundtype == 0) playedsound = "misc/hitally";
+						if (exex_q3aqchitsoundtype == 1) playedsound = "misc/hitpally";
+						if (exex_q3aqchitsoundtype >= 0) 
+						{
+							victim.A_StopSound(13);
+							victim.A_StartSound(playedsound, 13, CHANF_DEFAULT, (exex_q3aqchitsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+						}
+					}
+					else
+					if (playpawn) 
+					{
+						if (dydudebug_hitsounds) Console.Printf("[hitsound] playpawn: %s", playpawn.GetClassName());
+						if (!victim.bFRIENDLY)
+						{
+							//hitsoundtimer += exex_q3aqchitsounddelay;
+							if (exex_q3aqchitsoundtype == 0) playedsound = "misc/hit";
+							if (exex_q3aqchitsoundtype == 1) playedsound = "misc/hitpunch";
+							if (exex_q3aqchitsoundtype >= 0) 
+							{
+								victim.A_StopSound(13);
+								victim.A_StartSound(playedsound, 13, CHANF_DEFAULT, (exex_q3aqchitsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+							}
+						}
+					}
+					else
+					{
+						othermon = Actor(source);
+						if (othermon) 
+						{
+							if (dydudebug_hitsounds) Console.Printf("[hitsound] othermon: %s", othermon.GetClassName());
+							if (othermon.bFRIENDLY && !victim.bFRIENDLY)
+							{
+								//hitsoundtimer += exex_q3aqchitsounddelay;
+								if (exex_q3aqchitsoundtype == 0) playedsound = "misc/hit2";
+								if (exex_q3aqchitsoundtype == 1) playedsound = "misc/hitpunch2";
+								if (exex_q3aqchitsoundtype >= 0) 
+								{
+									victim.A_StopSound(13);
+									victim.A_StartSound(playedsound, 13, CHANF_DEFAULT, (exex_q3aqchitsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+								}
+							}
+						}
+					}
 				}
 			}
 		}
 		
 		// Adding in Argv's SingleDamageRipper code :V
-		if (e.Inflictor is "SingleDamageRipper")
+		if (inflicter is "SingleDamageRipper")
 		{
-			SingleDamageRipper(e.Inflictor).ActorsAlreadyHit.Push(e.Thing);
-			SingleDamageRipper(e.Inflictor).timesrippedoverall++;
-			if (SingleDamageRipper(e.Inflictor).timesrippedoverall < 0) SingleDamageFastRipper(e.Inflictor).timesrippedoverall = 0;
+			SingleDamageRipper(inflicter).ActorsAlreadyHit.Push(victim);
+			SingleDamageRipper(inflicter).timesrippedoverall++;
+			if (SingleDamageRipper(inflicter).timesrippedoverall < 0) SingleDamageFastRipper(inflicter).timesrippedoverall = 0;
 		}
 
-		if (e.Inflictor is "SingleDamageFastRipper")
+		if (inflicter is "SingleDamageFastRipper")
 		{
-			SingleDamageFastRipper(e.Inflictor).ActorsAlreadyHit.Push(e.Thing);
-			SingleDamageFastRipper(e.Inflictor).timesrippedoverall++;
-			if (SingleDamageFastRipper(e.Inflictor).timesrippedoverall < 0) SingleDamageFastRipper(e.Inflictor).timesrippedoverall = 0;
+			SingleDamageFastRipper(inflicter).ActorsAlreadyHit.Push(victim);
+			SingleDamageFastRipper(inflicter).timesrippedoverall++;
+			if (SingleDamageFastRipper(inflicter).timesrippedoverall < 0) SingleDamageFastRipper(inflicter).timesrippedoverall = 0;
 		}
 
 		Super.WorldThingDamaged(e);
@@ -270,43 +383,53 @@ class DD_EventHandler : EventHandler
 	
 	override void WorldThingDied(WorldEvent e)
 	{
-		if (e.thing)
+		actor victim = e.Thing;
+		actor inflicter = e.inflictor;
+		actor source;
+		actor mastor;
+		if (inflicter.target) source = inflicter.target;
+		if (inflicter.master) mastor = inflicter.master;
+		string vict = "NONE";
+		string infl = "NONE";
+		string sour = "NONE";
+		string mast = "NONE";
+		if (victim) vict = victim.GetClassName();
+		if (inflicter) infl = inflicter.GetClassName();
+		if (source) sour = source.GetClassName();
+		if (mastor) mast = mastor.GetClassName();
+
+		if (victim)
 		{
-			if (!(e.thing.GetClassName() == "DinahPlayer") || e.thing.bCOUNTKILL)
+			if (!(vict == "DinahPlayer") || victim.bCOUNTKILL)
 			{
 				actor Player = players[0].mo;
 				bool giveexp;
 				int user_type;
-				string AttackName = "NONE";
-				string AttackerName = "NONE";
-				string VictimName = e.thing.GetClassName();
-				if (e.inflictor) AttackName = e.inflictor.GetClassName();
-				if (e.inflictor && e.inflictor.target) AttackerName = e.inflictor.target.GetClassName();
-				if (e.inflictor && !e.inflictor.target && e.inflictor.master) AttackerName = e.inflictor.master.GetClassName();
-				if (dydudebug_worlddied) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", AttackName, AttackerName);
-				if (e.thing.bCOUNTKILL && !e.thing.bFRIENDLY && e.inflictor)
+				
+				if (dydudebug_worlddied) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", infl, sour);
+				if (victim.bCOUNTKILL && !victim.bFRIENDLY && inflicter)
 				{
-					if (e.inflictor) 
+					if (inflicter) 
 					{
-						if (e.inflictor.bFRIENDLY || e.inflictor.GetClassName() == "DinahWyck") giveexp = true;
-						//Console.Printf("inflictor: %s  [%d]", e.inflictor.GetClassName(), e.inflictor.bFRIENDLY);
+						if (inflicter.bFRIENDLY || infl == "DinahWyck") giveexp = true;
+						//Console.Printf("inflictor: %s  [%d]", infl, inflicter.bFRIENDLY);
 					}
-					if (e.inflictor.target) 
+					if (source) 
 					{
-						if (e.inflictor.target.bFRIENDLY || e.inflictor.target.GetClassName() == "DinahWyck") giveexp = true;
-						//Console.Printf("inflictor.target: %s [%d]", e.inflictor.target.GetClassName(), e.inflictor.target.bFRIENDLY);
+						if (source.bFRIENDLY || sour == "DinahWyck") giveexp = true;
+						//Console.Printf("inflictor.target: %s [%d]", sour, source.bFRIENDLY);
 					}
-					if (e.inflictor.master) 
+					if (mastor) 
 					{
-						if (e.inflictor.master.bFRIENDLY || e.inflictor.master.GetClassName() == "DinahWyck") giveexp = true;
-						//Console.Printf("inflictor.master: %s [%d]", e.inflictor.master.GetClassName(), e.inflictor.master.bFRIENDLY);
+						if (mastor.bFRIENDLY || mast == "DinahWyck") giveexp = true;
+						//Console.Printf("inflictor.master: %s [%d]", mast, mastor.bFRIENDLY);
 					}
 
-					int ExpGain = ((e.thing.spawnhealth()*frandom(0.05,0.125)));
-					if (e.inflictor.target && e.inflictor.target.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
-					if (e.inflictor && e.inflictor.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
-					if (AttackerName == "DinahPlayer" && AttackName == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
-					if (e.thing.GetClassName() == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
+					int ExpGain = ((victim.spawnhealth()*frandom(0.05,0.125)));
+					if (source && source.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
+					if (inflicter && inflicter.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
+					if (sour == "DinahPlayer" && infl == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
+					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
 					if (giveexp)
 					{
 						Actor player = players[0].mo;
@@ -328,304 +451,304 @@ class DD_EventHandler : EventHandler
 				int basechance;
 				int maxchance;
 				int scraprolls;
-				if (!e.thing.bFRIENDLY && e.thing.bCOUNTKILL)
+				if (!victim.bFRIENDLY && victim.bCOUNTKILL)
 				{
 					droptimes = 1;
-					if (e.inflictor && ((e.inflictor.target && AttackerName == "DinahPlayer")))
+					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
-						let MiscItem = PlayerStatItem(e.inflictor.target.FindInventory("PlayerStatItem"));
+						let MiscItem = PlayerStatItem(source.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= 35) droptimes += (MiscItem.PlayerLevel / 35);
 					}
 					else
-					if (e.inflictor && AttackName == "DinahPlayer")
+					if (inflicter && infl == "DinahPlayer")
 					{
-						let MiscItem = PlayerStatItem(e.inflictor.FindInventory("PlayerStatItem"));
+						let MiscItem = PlayerStatItem(inflicter.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= 35) droptimes += (MiscItem.PlayerLevel / 35);
 					}
-					if (e.thing.bBOSS) droptimes *= 4;
+					if (victim.bBOSS) droptimes *= 4;
 
 					for (int i; i < droptimes; i++)
 					{
 						// Specific Drops from Specific Monsters
-						let monsterp = Actor(e.thing);
-						if (monsterp = FireDemon(e.thing))
+						let monsterp = Actor(victim);
+						if (monsterp = FireDemon(victim))
 						{
 							if (random(1,256) <= 8) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 1) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = Ettin(e.thing))
+						if (monsterp = Ettin(victim))
 						{
 							if (random(1,256) <= 32) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 4) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = Centaur(e.thing))
+						if (monsterp = Centaur(victim))
 						{
 							if (random(1,256) <= 24) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 3) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = CentaurLeader(e.thing))
+						if (monsterp = CentaurLeader(victim))
 						{
 							if (random(1,256) <= 48) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 6) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = Serpent(e.thing))
+						if (monsterp = Serpent(victim))
 						{
 							if (random(1,256) <= 32) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 4) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = SerpentLeader(e.thing))
+						if (monsterp = SerpentLeader(victim))
 						{
 							if (random(1,256) <= 48) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 6) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = Bishop(e.thing))
+						if (monsterp = Bishop(victim))
 						{
 							if (random(1,256) <= 16) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 2) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = Wraith(e.thing))
+						if (monsterp = Wraith(victim))
 						{
 							if (random(1,256) <= 24) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 3) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = Demon1(e.thing))
+						if (monsterp = Demon1(victim))
 						{
 							if (random(1,256) <= 32) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 4) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = Demon2(e.thing))
+						if (monsterp = Demon2(victim))
 						{
 							if (random(1,256) <= 32) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 4) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
-						if (monsterp = IceGuy(e.thing))
+						if (monsterp = IceGuy(victim))
 						{
 							if (random(1,256) <= 80) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("JackAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 							if (random(1,256) <= 10) 
 							{
 								user_type = random(1,4);
-								if (user_type == 1) e.thing.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 2) e.thing.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 3) e.thing.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-								if (user_type == 4) e.thing.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 2) victim.A_SpawnItemEx("PikeAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 3) victim.A_SpawnItemEx("MusicAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
 
 						// Heal Items
 						basechance = 256;
 						maxchance = basechance;
-						if (AttackName == "BatPuff" || AttackName == "BatPuffNoSound") maxchance = (basechance * 0.5);
-						if (AttackName == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (AttackName == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (AttackName == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (AttackName == "VacPuff") maxchance = (basechance * 16);
-						if (random(1,(maxchance)) == 1) e.thing.A_SpawnItemEx("GalaApple",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(maxchance)) == 1) e.thing.A_SpawnItemEx("FoodPlateFruit",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(maxchance*2)) == 1) e.thing.A_SpawnItemEx("AppleWine",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(maxchance*4)) == 1) e.thing.A_SpawnItemEx("TurkeyDinner",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(maxchance*4)) == 1) e.thing.A_SpawnItemEx("PigRoastDishExtra",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-						if (random(1,(maxchance*4)) == 1) e.thing.A_SpawnItemEx("Berserk",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
+						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (infl == "VacPuff") maxchance = (basechance * 16);
+						if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx("GalaApple",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx("FoodPlateFruit",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(maxchance*2)) == 1) victim.A_SpawnItemEx("AppleWine",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(maxchance*4)) == 1) victim.A_SpawnItemEx("TurkeyDinner",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(maxchance*4)) == 1) victim.A_SpawnItemEx("PigRoastDishExtra",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+						if (random(1,(maxchance*4)) == 1) victim.A_SpawnItemEx("Berserk",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [heal]: %d (%d)", maxchance, basechance);
 					}
 					
 					// Armor Items
 					droptimes = 1;
-					if (e.inflictor && ((e.inflictor.target && AttackerName == "DinahPlayer")))
+					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
-						let MiscItem = PlayerStatItem(e.inflictor.target.FindInventory("PlayerStatItem"));
+						let MiscItem = PlayerStatItem(source.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= 35) droptimes += (MiscItem.PlayerLevel / 35);
 					}
 					else
-					if (e.inflictor && AttackName == "DinahPlayer")
+					if (inflicter && infl == "DinahPlayer")
 					{
-						let MiscItem = PlayerStatItem(e.inflictor.FindInventory("PlayerStatItem"));
+						let MiscItem = PlayerStatItem(inflicter.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= 35) droptimes += (MiscItem.PlayerLevel / 35);
 					}
-					if (e.thing.bBOSS) droptimes *= 4;
+					if (victim.bBOSS) droptimes *= 4;
 					for (int i; i < droptimes; i++)
 					{
 						basechance = 512;
 						maxchance = basechance;
-						if (AttackName == "BatPuff" || AttackName == "BatPuffNoSound") maxchance = (basechance * 0.5);
-						if (AttackName == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (AttackName == "BlunderPuff") maxchance = (basechance * 16);
-						if (AttackName == "RecordShot") maxchance = (basechance * 4);
-						if (AttackName == "VacPuff") maxchance = (basechance * 0.125);
+						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
+						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (infl == "BlunderPuff") maxchance = (basechance * 16);
+						if (infl == "RecordShot") maxchance = (basechance * 4);
+						if (infl == "VacPuff") maxchance = (basechance * 0.125);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [armor]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
 							//Full Armor Drops
 							user_type = random(1,100);
-							if (user_type >= 1 || user_type <= 67) { e.thing.A_SpawnItemEx("KnightGown",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION); }
-							else if (user_type >= 68 || user_type <= 89) { e.thing.A_SpawnItemEx("KnightGown2",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION); }
-							else if (user_type >= 90) { e.thing.A_SpawnItemEx("KnightGown3",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION); }
+							if (user_type >= 1 || user_type <= 67) { victim.A_SpawnItemEx("KnightGown",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION); }
+							else if (user_type >= 68 || user_type <= 89) { victim.A_SpawnItemEx("KnightGown2",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION); }
+							else if (user_type >= 90) { victim.A_SpawnItemEx("KnightGown3",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION); }
 						}
 						else
 						{
 							scraprolls = 1;
-							if (AttackName == "BlunderPuff") scraprolls += randompick(0,0,0,0,1,1,1,1,1,1,2,2,3);
-							if (AttackName == "RecordShot") scraprolls += randompick(0,0,0,0,0,0,1,1,1,1,1,2,2);
-							if (AttackName == "VacPuff") scraprolls += (randompick(0,0,0,0,0,0,1,1,1,1,1,2,2) - 1);
+							if (infl == "BlunderPuff") scraprolls += randompick(0,0,0,0,1,1,1,1,1,1,2,2,3);
+							if (infl == "RecordShot") scraprolls += randompick(0,0,0,0,0,0,1,1,1,1,1,2,2);
+							if (infl == "VacPuff") scraprolls += (randompick(0,0,0,0,0,0,1,1,1,1,1,2,2) - 1);
 							//Scrap Drops
 							if (scraprolls)
 							{
 								int baseval = randompick(2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3);
 								for (int i = 0; i < scraprolls; i++)
 								{
-									if (AttackName == "BlunderPuff" && i == 0) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-									if (random(1,(baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-									if (random(1,(baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-									if (random(1,(baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-									if (random(1,(baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-									if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
-									if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) e.thing.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+									if (infl == "BlunderPuff" && i == 0) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+									if (random(1,(baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+									if (random(1,(baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+									if (random(1,(baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+									if (random(1,(baseval*baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+									if (random(1,(baseval*baseval*baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+									if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 									if (dydudebug_worlddiedmonsterdrops) Console.Printf("ScrapRolls: %d / %d", i, scraprolls);
 								}
 							}
@@ -635,90 +758,90 @@ class DD_EventHandler : EventHandler
 					// Random Inventory Item Drops
 					// Primary
 					droptimes = 1;
-					if (e.inflictor && ((e.inflictor.target && AttackerName == "DinahPlayer")))
+					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
-						let MiscItem = PlayerStatItem(e.inflictor.target.FindInventory("PlayerStatItem"));
+						let MiscItem = PlayerStatItem(source.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= 70) droptimes += (MiscItem.PlayerLevel / 70);
 					}
 					else
-					if (e.inflictor && AttackName == "DinahPlayer")
+					if (inflicter && infl == "DinahPlayer")
 					{
-						let MiscItem = PlayerStatItem(e.inflictor.FindInventory("PlayerStatItem"));
+						let MiscItem = PlayerStatItem(inflicter.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= 70) droptimes += (MiscItem.PlayerLevel / 70);
 					}
-					if (e.thing.bBOSS) droptimes *= 2;
+					if (victim.bBOSS) droptimes *= 2;
 					for (int i; i < droptimes; i++)
 					{
 						basechance = 32;
 						maxchance = basechance;
-						if (AttackName == "BatPuff" || AttackName == "BatPuffNoSound") maxchance = (basechance * 0.5);
-						if (AttackName == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (AttackName == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (AttackName == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (AttackName == "VacPuff") maxchance = (basechance * 16);
+						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
+						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (infl == "VacPuff") maxchance = (basechance * 16);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [primaryinv]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
 							user_type = random(1,20);
-							if (user_type == 1) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 2) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 3) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 4) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 5) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 6) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 7) { e.thing.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 8) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 9) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 10) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 11) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 12) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 13) { e.thing.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 14) { e.thing.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 15) { e.thing.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 16) { e.thing.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 17) { e.thing.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 18) { e.thing.A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 19) { e.thing.A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type == 20) { e.thing.A_SpawnItemEx("SnakePickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 1) { victim.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 2) { victim.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 3) { victim.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 4) { victim.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 5) { victim.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 6) { victim.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 7) { victim.A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 8) { victim.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 9) { victim.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 10) { victim.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 11) { victim.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 12) { victim.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 13) { victim.A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 14) { victim.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 15) { victim.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 16) { victim.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 17) { victim.A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 18) { victim.A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 19) { victim.A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type == 20) { victim.A_SpawnItemEx("SnakePickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
 						}
 
 						// Secondary
 						basechance = 256;
 						maxchance = basechance;
-						if (AttackName == "BatPuff" || AttackName == "BatPuffNoSound") maxchance = (basechance * 0.5);
-						if (AttackName == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (AttackName == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (AttackName == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (AttackName == "VacPuff") maxchance = (basechance * 16);
+						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
+						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (infl == "VacPuff") maxchance = (basechance * 16);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
 							user_type = random(1,336);
-							if (user_type >= 1 && user_type <= 140) { e.thing.A_SpawnItemEx("FuryPotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type >= 141 && user_type <= 256) { e.thing.A_SpawnItemEx("CrazyBallDD",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type >= 257 && user_type <= 320) { e.thing.A_SpawnItemEx("TimePotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type >= 321 && user_type <= 334) { e.thing.A_SpawnItemEx("BlunderAxeSchematic",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-							if (user_type >= 335) { e.thing.A_SpawnItemEx("DoorBell",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type >= 1 && user_type <= 140) { victim.A_SpawnItemEx("FuryPotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type >= 141 && user_type <= 256) { victim.A_SpawnItemEx("CrazyBallDD",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type >= 257 && user_type <= 320) { victim.A_SpawnItemEx("TimePotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type >= 321 && user_type <= 334) { victim.A_SpawnItemEx("BlunderAxeSchematic",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+							if (user_type >= 335) { victim.A_SpawnItemEx("DoorBell",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
 						}
 
 						// Rare Powerup Drop
 						basechance = 1024;
 						maxchance = basechance;
-						if (AttackName == "BatPuff" || AttackName == "BatPuffNoSound") maxchance = (basechance * 0.5);
-						if (AttackName == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (AttackName == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (AttackName == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (AttackName == "VacPuff") maxchance = (basechance * 16);
+						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
+						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (infl == "VacPuff") maxchance = (basechance * 16);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
 							if (gameinfo.gametype & 1) // Doom Mode
 							{
 								user_type = random(1,20);
-								if (user_type >= 1 && user_type <= 6) e.thing.A_SpawnItemEx("BlurSphere",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
-								if (user_type >= 7 && user_type <= 12) e.thing.A_SpawnItemEx("Infrared",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
-								if (user_type >= 13 && user_type <= 18) e.thing.A_SpawnItemEx("RadSuit",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
-								if (user_type >= 19) e.thing.A_SpawnItemEx("InvulnerabilitySphere",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
+								if (user_type >= 1 && user_type <= 6) victim.A_SpawnItemEx("BlurSphere",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
+								if (user_type >= 7 && user_type <= 12) victim.A_SpawnItemEx("Infrared",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
+								if (user_type >= 13 && user_type <= 18) victim.A_SpawnItemEx("RadSuit",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
+								if (user_type >= 19) victim.A_SpawnItemEx("InvulnerabilitySphere",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
 							}
 							if (gameinfo.gametype & 2) // Heretic Mode
 							{
@@ -732,28 +855,28 @@ class DD_EventHandler : EventHandler
 						}
 						
 						//
-						if (e.thing.GetClassName() == "KilletanteSoloist")
+						if (vict == "KilletanteSoloist")
 						{
 							string dropname = "GalaApple";
 							if (random(1,2) == 1) dropname = "AppleWine";
-							e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+							victim.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
 							if (random(1,2) == 1)
 							{
 								dropname = "GalaApple";
 								if (random(1,2) == 1) dropname = "AppleWine";
-								e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+								victim.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
 								
 								if (random(1,4) == 1)
 								{
 									dropname = "GalaApple";
 									if (random(1,2) == 1) dropname = "AppleWine";
-									e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+									victim.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
 									
 									if (random(1,8) == 1)
 									{
 										dropname = "GalaApple";
 										if (random(1,2) == 1) dropname = "AppleWine";
-										e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+										victim.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
 									}
 								}
 							}
@@ -762,14 +885,14 @@ class DD_EventHandler : EventHandler
 				}
 				else
 				{
-					if (e.thing.GetClassName() == "ZBell")
+					if (vict == "ZBell")
 					{
 						int typesdrop = 1;
 						string dropname;
-						if ((e.thing.Stamina <= 0) || (e.thing.Stamina <= 2 && ((e.inflictor && (AttackName == "BatPuff" || AttackName == "BatPuffNoSound")))))
+						if ((victim.Stamina <= 0) || (victim.Stamina <= 2 && ((inflicter && (infl == "BatPuff" || infl == "BatPuffNoSound")))))
 						{
-							e.thing.Stamina++;
-							if (e.inflictor && (AttackName == "BatPuff" || AttackName == "BatPuffNoSound")) typesdrop = random(2,5);
+							victim.Stamina++;
+							if (inflicter && (infl == "BatPuff" || infl == "BatPuffNoSound")) typesdrop = random(2,5);
 
 							for(int i = 0; i < typesdrop; i++)
 							{
@@ -800,28 +923,28 @@ class DD_EventHandler : EventHandler
 									if (user_type >= 26 && user_type <= 28) dropname = "TurkeyDinner";
 									if (user_type == 29) dropname = "GourmetMeal";
 								}
-								e.thing.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+								victim.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
 							}
 						}
 					}
 				}
 				
 				// Killed With Certain Weapons
-				if (e.inflictor && AttackerName == "DinahPlayer" && e.thing.bCOUNTKILL)
+				if (inflicter && sour == "DinahPlayer" && victim.bCOUNTKILL)
 				{
-					if (AttackName == "VacPuff")
+					if (infl == "VacPuff")
 					{
-						int vacgive = e.thing.spawnhealth();
+						int vacgive = victim.spawnhealth();
 						vacgive *= frandompick(0.6667,0.8334,1.000,1.1667,1.3334);
 						vacgive *= 0.5;
-						e.inflictor.target.A_GiveInventory("VacAmmoCounter",vacgive);
-						e.inflictor.target.A_StartSound("VacDed",10,CHANF_DEFAULT,frandom(0.75,0.90),ATTN_NORM,frandom(1.8,2.7));
-						if (e.thing.GetClassName() == "CommanderKeen") e.thing.A_KeenDie(); // I forgot to consider Keens use a different "death action" than the other monsters. >.>
-						e.thing.A_BossDeath(); // Makes sure certain monsters do their hardcoded E1M8/MAP07 type effects on death
-						if (e.thing.GetClassName() == "Korax" || e.thing.GetClassName() == "KoraxNew") ACS_Execute(255, 0); // Ensures Korax calls Script 255 is he's somehow absorbed by the Vac [though he should be unable to be killed by it :P]
-						let SubEntity = EntitySecond(e.thing);
+						source.A_GiveInventory("VacAmmoCounter",vacgive);
+						source.A_StartSound("VacDed",10,CHANF_DEFAULT,frandom(0.75,0.90),ATTN_NORM,frandom(1.8,2.7));
+						if (vict == "CommanderKeen") victim.A_KeenDie(); // I forgot to consider Keens use a different "death action" than the other monsters. >.>
+						victim.A_BossDeath(); // Makes sure certain monsters do their hardcoded E1M8/MAP07 type effects on death
+						if (vict == "Korax" || vict == "KoraxNew") ACS_Execute(255, 0); // Ensures Korax calls Script 255 is he's somehow absorbed by the Vac [though he should be unable to be killed by it :P]
+						let SubEntity = EntitySecond(victim);
 						if (SubEntity) SubEntity.A_SubEntityDeath(); // makes sure Strife's game ends once all SubEntities die. V:
-						e.thing.A_FadeOut(1.0,FTF_REMOVE);
+						victim.A_FadeOut(1.0,FTF_REMOVE);
 
 						Console.Printf("+%d Vacuum Bag Units", vacgive);
 					}
