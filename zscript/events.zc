@@ -461,8 +461,8 @@ class DD_EventHandler : EventHandler
 		actor inflicter = e.inflictor;
 		actor source;
 		actor mastor;
-		if (inflicter.target) source = inflicter.target;
-		if (inflicter.master) mastor = inflicter.master;
+		if (inflicter && inflicter.target) source = inflicter.target;
+		if (inflicter && inflicter.master) mastor = inflicter.master;
 		string vict = "NONE";
 		string infl = "NONE";
 		string sour = "NONE";
@@ -1027,6 +1027,33 @@ class DD_EventHandler : EventHandler
 		}
 		
 		Super.WorldThingDied(e);
+	}
+	
+	override void WorldLoaded(WorldEvent e)
+	{
+		bool BatGuardCheck = true;
+		if (e.IsSaveGame) BatGuardCheck = false;
+		if (BatGuardCheck)
+		{
+			actor Player = players[0].mo;
+			let IsPlayer = PlayerPawn(Player);
+			if (IsPlayer)
+			{
+				let weapon = IsPlayer.Player.ReadyWeapon;
+				if (weapon is "CricketBat")
+				{
+					let DDWeap = CricketBat(weapon);
+					if (DDWeap)
+					{
+						if (DDWeap.guardstate) DDWeap.guardstate = 0;
+						if (DDWeap.guardcooldown) DDWeap.guardcooldown = 0;
+						//Console.Printf("BatGuard Check - GuardState: %d, Cooldown: %d", DDWeap.guardstate, DDWeap.guardcooldown);
+					}
+				}
+			}
+		}
+
+		Super.WorldLoaded(e);
 	}
 	
 	override void PlayerDied(PlayerEvent e) 
