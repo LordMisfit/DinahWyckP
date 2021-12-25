@@ -1876,11 +1876,45 @@ class DragonNew : Dragon replaces Dragon
 
 class HeresiarchNew : Heresiarch replaces Heresiarch
 {
+	int hitsoundtimer;
+	int hitweaksoundtimer;
+
 	mixin MonsterCollider;
+	const SORCBALL_INITIAL_SPEED 		= 7;
+	const SORCBALL_TERMINAL_SPEED		= 25;
+	const SORCBALL_SPEED_ROTATIONS 		= 5;
+	const SORC_DEFENSE_TIME				= 255;
+	const SORC_DEFENSE_HEIGHT			= 45;
+	const BOUNCE_TIME_UNIT				= (35/2);
+	const SORCFX4_RAPIDFIRE_TIME		= (6*3);		// 3 seconds
+	const SORCFX4_SPREAD_ANGLE			= 20;
+
+	enum ESorc
+	{
+		SORC_DECELERATE,	
+		SORC_ACCELERATE, 
+		SORC_STOPPING,	
+		SORC_FIRESPELL,	
+		SORC_STOPPED,	
+		SORC_NORMAL,		
+		SORC_FIRING_SPELL
+	}
+
+	const BALL1_ANGLEOFFSET	= 0.;
+	const BALL2_ANGLEOFFSET	= 120.;
+	const BALL3_ANGLEOFFSET	= 240.;
+
+	double BallAngle;
+	class<SorcBall> StopBall; // SorcBallBase
+	Actor ptrheresiarch;
+
 	default
 	{
 		Tag "Heresiarch";
+		Health 5000;
 		Painchance 10;
+		//DamageFactor 0.833;
+		//RadiusDamageFactor 0.833;
 		DamageFactor "Fire", 0.75;
 		Painchance "Fire", 8;
 		DamageFactor "CherryBomb", 0.875;
@@ -1909,6 +1943,196 @@ class HeresiarchNew : Heresiarch replaces Heresiarch
 		Painchance "Spinner", 2;
 		DamageFactor "Beats", 0.25;
 		Painchance "Beats", 3;
+		Speed 16;
+		Radius 40;
+		Height 110;
+		Mass 5000;
+		Damage 9;
+		Monster;
+		+FLOORCLIP
+		+BOSS
+		+DONTMORPH
+		+NOTARGET
+		+NOICEDEATH
+		+DEFLECT
+		+NOBLOOD
+		+AVOIDMELEE
+		SeeSound "SorcererSight";
+		PainSound "SorcererPain";
+		DeathSound "SorcererDeathScream";
+		ActiveSound "SorcererActive";
+		Obituary "$OB_HERESIARCH"; // "%o had %p bones rolled by the Heresiarch."
+	}
+	
+	States
+	{
+		Spawn:
+			SORC A 3;
+			SORC A 2 A_SorcSpinBalls;
+		Idle:
+			SORC A 10 A_Look;
+			Wait;
+		See:
+			SORC ABCD 5 A_Chase;
+			Loop;
+		Pain:
+			SORC G 8;
+			SORC G 8 A_Pain;
+			Goto See;
+		Missile:
+			SORC F 6 Bright A_FaceTarget;
+			SORC F 6 Bright A_SpeedBalls;
+			SORC F 6 Bright A_FaceTarget;
+			Wait;
+		Attack1:
+			SORC E 6 Bright;
+			SORC E 6 Bright A_SpawnFizzle;
+			SORC E 5 Bright A_FaceTarget;
+			Goto Attack1+1;
+		Attack2:
+			SORC E 2 Bright;
+			SORC E 2 Bright A_SorcBossAttack;
+			Goto See;
+		Death:
+			SORC H 5 Bright;
+			SORC I 5 Bright A_FaceTarget;
+			SORC J 5 Bright A_Scream;
+			SORC KLMNOPQRST 5 Bright;
+			SORC U 5 Bright A_NoBlocking;
+			SORC VWXY 5 Bright;
+			SORC Z -1 Bright;
+			Stop;
+	}
+	
+	override void Die (Actor source, Actor inflictor, int dmgflags, Name MeansOfDeath)
+	{
+		// The heresiarch just executes a script instead of a special upon death
+		int script = special;
+		special = 0;
+
+		Super.Die (source, inflictor, dmgflags, MeansOfDeath);
+
+		if (script != 0)
+		{
+			ACS_Execute(script, 0);
+		}
+	}
+	
+	void A_StopBalls()
+	{
+		int chance = random[Heresiarch]();
+		args[3] = SORC_STOPPING;				// stopping mode
+		args[1] = 0;							// Reset rotation counter
+
+		if ((args[0] <= 0) && (chance < 200))
+		{
+			StopBall = "SorcBall2";	// Blue
+		}
+		else if((health < (SpawnHealth() >> 1)) && (chance < 200))
+		{
+			StopBall = "SorcBall3";	// Green
+		}
+		else
+		{
+			StopBall = "SorcBall1";	// Yellow
+		}
+	}
+	
+	//============================================================================
+	//
+	// A_SorcSpinBalls
+	//
+	// Spawn spinning balls above head - actor is sorcerer
+	//============================================================================
+
+	void A_SorcSpinBalls()
+	{
+		A_SlowBalls();
+		args[0] = 0;								// Currently no defense
+		args[3] = SORC_NORMAL;
+		args[4] = SORCBALL_INITIAL_SPEED;		// Initial orbit speed
+		BallAngle = 1.;
+
+		Vector3 ballpos = (pos.xy, -Floorclip + Height);
+		
+		Actor mo = Spawn("SorcBall1", pos, NO_REPLACE);
+		if (mo)
+		{
+			mo.target = self;
+			mo.special2 = SORCFX4_RAPIDFIRE_TIME;
+		}
+		mo = Spawn("SorcBall2", pos, NO_REPLACE);
+		if (mo) mo.target = self;
+		mo = Spawn("SorcBall3", pos, NO_REPLACE);
+		if (mo) mo.target = self;
+	}
+
+
+	//============================================================================
+	//
+	// A_SpeedBalls
+	//
+	// Set balls to speed mode - self is sorcerer
+	//
+	//============================================================================
+
+	void A_SpeedBalls()
+	{
+		args[3] = SORC_ACCELERATE;				// speed mode
+		args[2] = SORCBALL_TERMINAL_SPEED;		// target speed
+	}
+
+
+	//============================================================================
+	//
+	// A_SlowBalls
+	//
+	// Set balls to slow mode - actor is sorcerer
+	//
+	//============================================================================
+
+	void A_SlowBalls()
+	{
+		args[3] = SORC_DECELERATE;				// slow mode
+		args[2] = SORCBALL_INITIAL_SPEED;		// target speed
+	}
+
+	//============================================================================
+	//
+	// A_SorcBossAttack
+	//
+	// Resume ball spinning
+	//
+	//============================================================================
+
+	void A_SorcBossAttack()
+	{
+		args[3] = SORC_ACCELERATE;
+		args[2] = SORCBALL_INITIAL_SPEED;
+	}
+
+	//============================================================================
+	//
+	// A_SpawnFizzle
+	//
+	// spell cast magic fizzle
+	//
+	//============================================================================
+
+	void A_SpawnFizzle()
+	{
+		Vector3 pos = Vec3Angle(5., Angle, -Floorclip + Height / 2. );
+		for (int ix=0; ix<5; ix++)
+		{
+			Actor mo = Spawn("SorcSpark1", pos, ALLOW_REPLACE);
+			if (mo)
+			{
+				double rangle = Angle + random[Heresiarch](0, 4) * (4096 / 360.);
+				mo.Vel.X = random[Heresiarch](0, int(speed) - 1) * cos(rangle);
+				mo.Vel.Y = random[Heresiarch](0, int(speed) - 1) * sin(rangle);
+				mo.Vel.Z = 2;
+			}
+		}
 	}
 }
 
