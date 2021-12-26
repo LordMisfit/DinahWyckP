@@ -43,6 +43,38 @@ class DD_EventHandler : EventHandler
 
 			bool showdmglog;
 			bool practicetarget;
+			
+			/*
+			// Ally Check
+			actor IsRebel;
+			if (vict != "DinahWyck" && sour == "DinahWyck")
+			{
+				if (victim.bFRIENDLY)
+				{
+					if (victim.master && victim.master.GetClassName() == "DinahWyck")
+					{
+						if (e.damage)
+						{
+							e.damage = 0;
+							if (dydudebug_worlddamaged) Console.Printf("Victim is Player's ally! No Damage inflicted!");
+							Super.WorldThingDamaged(e);
+							return;
+						}
+					}
+					else
+					{
+						if (IsRebel = Rebel(victim) && e.damage)
+						{
+							e.damage = 0;
+							if (dydudebug_worlddamaged) Console.Printf("Victim is Strife Rebel! No Damage inflicted!");
+							Super.WorldThingDamaged(e);
+							return;
+						}
+					}
+				}
+			}
+			*/
+			
 			if (victim.bCOUNTKILL) showdmglog = true;
 			if (vict == "PracticeTarget" || vict == "PracticeTarget2") 
 			{
@@ -1079,7 +1111,7 @@ class DD_EventHandler : EventHandler
 	
 	override void PlayerRespawned(PlayerEvent e) 
 	{
-		S_ChangeMusic("*", 0, false, true);
+		S_ChangeMusic("*", 0, true, true);
 		Super.PlayerRespawned(e);
 	}
 	
@@ -1115,6 +1147,131 @@ class DD_EventHandler : EventHandler
 				
 			}
 		}
+	}
+	
+	override void UiTick()
+	{
+		if (Level.MapName == "TITLEMAP")
+		{
+			//Console.Printf("UiTick");
+			if (exex_titlemusic >= 1)
+			{
+				if (exex_titlemusic == 1)
+				{
+					S_ChangeMusic("EE-TITLE",0,true,true); // The unused theme played in the original Dynamite Duchess trailer on Youtube is the mod's "main" theme
+					SetMusicVolume(3.0);
+				}
+				if (exex_titlemusic == 2)
+				{
+					S_ChangeMusic("BGMTHEME",0,true,true); // The titlemusic for Dynamite Duchess
+					SetMusicVolume(1.5);
+				}
+				if (exex_titlemusic >= 3)
+				{
+					S_ChangeMusic("BGMTHEMA",0,true,true); // The titlemusic for Appetite for Detention
+					SetMusicVolume(1.5);
+				}
+			}
+			else
+			if (exex_titlemusic <= 0) // Use the default title music for the gamemode/mapset if viable
+			{
+				SetMusicVolume(1.0);
+				if (gameinfo.GameType == GAME_Doom) 
+				{
+					if (Wads.CheckNumForName("MAP01", Wads.ns_global, -1, false)) S_ChangeMusic("$MUSIC_DM2TTL",0,true,true);
+					if (Wads.CheckNumForName("E1M1", Wads.ns_global, -1, false)) S_ChangeMusic("$MUSIC_INTRO",0,true,true);
+				}
+				if (gameinfo.GameType == GAME_Heretic) S_ChangeMusic("MUS_TITL",0,true,true);
+				if (gameinfo.GameType == GAME_Hexen) S_ChangeMusic("HEXEN",0,true,true);
+				if (gameinfo.GameType == GAME_Strife) S_ChangeMusic("D_LOGO",0,true,true);
+			}
+		}
+		super.UiTick();
+	}
+
+	override void RenderOverlay(RenderEvent e)
+	{
+		if (Level.MapName == "TITLEMAP")
+		{
+			//Console.Printf("RenderOverlay: level.time - %d", level.time);
+			textureid titleimg;
+			string titlenm;
+			int visi;
+			int timer = level.time % 716;
+			textureid titlepic = TexMan.checkForTexture("DEFTITLE");
+			if (exex_titlescreen >= 1)
+			{
+				// Background
+				textureid titlepic = TexMan.checkForTexture("EXEXTILB");
+				if (titlepic) Screen.DrawTexture(titlepic, false, 0, 0, DTA_FullScreen, true);
+				// Title Image
+				titleimg = TexMan.checkForTexture("EXEXT3XS");
+				if (titleimg) Screen.DrawTexture(titleimg, false, 360, 360, DTA_KeepRatio, true);
+				// Dinah
+				titleimg = TexMan.checkForTexture("EXEXDINH");
+				if (titleimg) Screen.DrawTexture(titleimg, false, 800, 180, DTA_KeepRatio, true);
+				// ???
+				visi = 0;
+				if (timer >= 351)
+				{
+					if (timer >= 351 && timer <= 358) visi = 5;
+					if (timer >= 359 && timer <= 366) visi = 10;
+					if (timer >= 367 && timer <= 374) visi = 15;
+					if (timer >= 375 && timer <= 382) visi = 20;
+					if (timer >= 383 && timer <= 390) visi = 25;
+					if (timer >= 391 && timer <= 398) visi = 30;
+					if (timer >= 399 && timer <= 406) visi = 35;
+					if (timer >= 407 && timer <= 414) visi = 40;
+					if (timer >= 415 && timer <= 422) visi = 45;
+					if (timer >= 423 && timer <= 430) visi = 50;
+					if (timer >= 431 && timer <= 438) visi = 55;
+					if (timer >= 439 && timer <= 446) visi = 60;
+					if (timer >= 447 && timer <= 454) visi = 65;
+					if (timer >= 455 && timer <= 462) visi = 70;
+					if (timer >= 463 && timer <= 470) visi = 75;
+					if (timer >= 471 && timer <= 478) visi = 80;
+					if (timer >= 479 && timer <= 486) visi = 85;
+					if (timer >= 487 && timer <= 494) visi = 90;
+					if (timer >= 495 && timer <= 502) visi = 95;
+					if (timer >= 503 && timer <= 677) visi = 100;
+					if (timer >= 678 && timer <= 679) visi = 95;
+					if (timer >= 680 && timer <= 681) visi = 90;
+					if (timer >= 682 && timer <= 683) visi = 85;
+					if (timer >= 684 && timer <= 685) visi = 80;
+					if (timer >= 686 && timer <= 687) visi = 75;
+					if (timer >= 688 && timer <= 689) visi = 70;
+					if (timer >= 690 && timer <= 691) visi = 65;
+					if (timer >= 692 && timer <= 693) visi = 60;
+					if (timer >= 694 && timer <= 695) visi = 55;
+					if (timer >= 696 && timer <= 697) visi = 50;
+					if (timer >= 698 && timer <= 699) visi = 45;
+					if (timer >= 700 && timer <= 701) visi = 40;
+					if (timer >= 702 && timer <= 703) visi = 35;
+					if (timer >= 704 && timer <= 705) visi = 30;
+					if (timer >= 706 && timer <= 707) visi = 25;
+					if (timer >= 708 && timer <= 709) visi = 20;
+					if (timer >= 710 && timer <= 711) visi = 15;
+					if (timer >= 712 && timer <= 713) visi = 10;
+					if (timer >= 714 && timer <= 715) visi = 5;
+				}
+				titlenm = "EXTID";
+				if (visi >= 100) titlenm.AppendFormat("%d", visi);
+				if (visi < 100) titlenm.AppendFormat("0%d", visi);
+				if (visi < 10) titlenm.AppendFormat("00%d", visi);
+				titleimg = TexMan.checkForTexture(titlenm);
+				if (titleimg) Screen.DrawTexture(titleimg, false, 1258, 481, DTA_KeepRatio, true);
+			}
+			else
+			if (exex_titlescreen <= 0)
+			{
+				if (gameinfo.GameType == GAME_Doom) titlepic = TexMan.checkForTexture("TITLEPIC");
+				if (gameinfo.GameType == GAME_Heretic) titlepic = TexMan.checkForTexture("TITLE");
+				if (gameinfo.GameType == GAME_Hexen) titlepic = TexMan.checkForTexture("TITLE");
+				if (gameinfo.GameType == GAME_Strife) titlepic = TexMan.checkForTexture("TITLEPIC");
+				if (titlepic) Screen.DrawTexture(titlepic, false, 0, 0, DTA_FullScreen, true);
+			}
+		}
+		super.RenderOverlay(e);
 	}
 }
 

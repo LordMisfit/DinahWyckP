@@ -85,6 +85,7 @@ mixin class DmgCalc
 mixin class CollisionChecker
 {
 	string infl;
+	actor projowner;
 	// Checks for certain projectiles from charmed/friendly allies to pass through other friendlies instead of colliding
 	int A_CheckFriendCollisionProjTypeFriendlyDoom()
 	{
@@ -150,8 +151,13 @@ mixin class CollisionChecker
 	int A_CheckFriendCollisionProjTypePlayer(Actor type)
 	{
 		infl = type.GetClassName();
+		projowner = type.target;
+		actor PlayPawn = PlayerPawn(projowner);
+		actor ProjD;
+		ProjD = DDProjectile(type);
 		
 		int type;
+		if (ProjD && PlayPawn) type = 1;
 		
 		if (dydudebug_generalcollisions) Console.Printf("\c[brick]CheckFriendCollisionProjTypePlayer:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
@@ -375,6 +381,13 @@ mixin class MonsterCollider
 			if (flags & DMG_NO_ENHANCE) Console.Printf("    (\cyBypassPowerDamage?: yes)");
 			if (flags & DMG_USEANGLE) Console.Printf("    (\cyUsesAngle?: yes)");
 			if (flags & DMG_EXPLOSION) Console.Printf("    (\cyIsAoEBurst?: yes)");
+		}
+		
+		if (bFRIENDLY && (source && PlayerPawn(source)))
+		{
+			damage = 0;
+			if (dydudebug_actordmgdisplays) Console.Printf("    (\czActor Defensive Input [STEP Z]\c-: END DAMAGE ATTEMPT (FRIENDLY)");
+			return 0;
 		}
 
 		bool wasblastedimpact = false;

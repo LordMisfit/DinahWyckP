@@ -1522,6 +1522,58 @@ class CricketBat : DinahWeapon replaces Pistol
 	int spintimes;
 	int spinsoundinc;
 	
+	action int A_BatDamageSet(int type = 0)
+	{
+		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+		int LevelInc = 12;
+
+		int dmg = random(6,8);
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= (LevelInc*12)) dmg *= random(7,14);
+			else if (MiscItem.PlayerLevel >= (LevelInc*11)) dmg *= random(7,13);
+			else if (MiscItem.PlayerLevel >= (LevelInc*10)) dmg *= random(6,13);
+			else if (MiscItem.PlayerLevel >= (LevelInc*9)) dmg *= random(6,12);
+			else if (MiscItem.PlayerLevel >= (LevelInc*8)) dmg *= random(5,12);
+			else if (MiscItem.PlayerLevel >= (LevelInc*7)) dmg *= random(5,11);
+			else if (MiscItem.PlayerLevel >= (LevelInc*6)) dmg *= random(4,11);
+			else if (MiscItem.PlayerLevel >= (LevelInc*5)) dmg *= random(4,10);
+			else if (MiscItem.PlayerLevel >= (LevelInc*4)) dmg *= random(3,10);
+			else if (MiscItem.PlayerLevel >= (LevelInc*3)) dmg *= random(3,9);
+			else if (MiscItem.PlayerLevel >= (LevelInc*2)) dmg *= random(2,9);
+			else if (MiscItem.PlayerLevel >= (LevelInc*1)) dmg *= random(2,8);
+			else dmg *= random(1,8);
+		}
+		else
+		{
+			dmg *= random(1,8);
+		}
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
+		if (type == 1) // type 1 = Spin attack
+		{
+			LevelInc = 24;
+			if (MiscItem)
+			{
+				if (MiscItem.PlayerLevel >= (LevelInc*8)) dmg /= frandom(2.0,4.0);
+				else if (MiscItem.PlayerLevel >= (LevelInc*7)) dmg /= frandom(2.5,4.0);
+				else if (MiscItem.PlayerLevel >= (LevelInc*6)) dmg /= frandom(2.5,4.5);
+				else if (MiscItem.PlayerLevel >= (LevelInc*5)) dmg /= frandom(3.0,4.5);
+				else if (MiscItem.PlayerLevel >= (LevelInc*4)) dmg /= frandom(3.0,5.0);
+				else if (MiscItem.PlayerLevel >= (LevelInc*3)) dmg /= frandom(3.5,5.0);
+				else if (MiscItem.PlayerLevel >= (LevelInc*2)) dmg /= frandom(3.5,5.5);
+				else if (MiscItem.PlayerLevel >= (LevelInc*1)) dmg /= frandom(4,5.5);
+				else dmg /= frandom(4.0,6.0);
+			}
+			else
+			{
+				dmg /= frandom(4.0,6.0); 
+			}
+		}
+		if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+
+		return dmg;
+	}
+	
 	action void A_GuardToggleCountdown()
 	{
 		if (invoker.guardcooldown) invoker.guardcooldown--;
@@ -1636,9 +1688,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			}
 			DBID G 1 
 			{
-				int dmg = random(6,8) * random(1,8);
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+				int dmg = A_BatDamageSet(0);
 				A_CustomPunch(dmg, true, 0, "BatPuff", 112);
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
@@ -1692,9 +1742,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			}
 			DBID G 1 
 			{
-				int dmg = random(6,8) * random(1,8);
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+				int dmg = A_BatDamageSet(0);
 				A_CustomPunch(dmg, true, 0, "BatPuff", 112);
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
@@ -1770,10 +1818,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				A_SetInventory("DoingSpinAttack",1);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int dmg = random(6,8) * random(1,8);
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
-				dmg /= random(4,6);
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+				int dmg = A_BatDamageSet(1);
 				int range = 112 + (random(0,2) * 8);
 				if (MiscItem) { range *= (1.125 + ((MiscItem.PlayerLevel - exex_cricketspinlvlrequirement) * 0.00625)); }
 
