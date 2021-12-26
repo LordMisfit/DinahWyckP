@@ -1,0 +1,60 @@
+// BASE Spawner
+class DDMonsterSpawner : RandomSpawner2 abstract
+{
+	mixin EvolveMonsters;
+	
+	int deathtimer;
+	string MonsterName;
+
+	// This function is needed for handling boss replacers 
+	// [also this is to try to fix the problem of INSTANT effects on the death of spawned "boss" monsters in maps like E2M8/E3M8 so you can try to pick up the bosses' drops before the level ends]
+	override void Tick()
+	{
+		Actor.Tick(); // Actor instead of Super in order to replace the original code added to RandomSpawner instead of adding to it.
+		DDCreature monstertype;
+		if (tracer) monstertype = DDCreature(tracer);
+		if (tracer == null)
+		{
+			A_BossDeath();
+			if (dydudebug_scriptdisplays) Console.Printf("BOSS/BOSSDEATH type RandomSpawner Self-Destroyed/nulled");
+			Destroy();
+		}
+		else
+		{
+			if (monstertype)
+			{
+				MonsterName = monstertype.GetClassName();
+				if (monstertype.bossdeathactivate)
+				{
+					A_BossDeath();
+					if (dydudebug_scriptdisplays) Console.Printf("%s [bossdeathactivate: %d]", MonsterName, monstertype.bossdeathactivate);
+					Destroy();
+				}
+			}
+			else
+			{
+				if (tracer.health <= 0)
+				{
+					A_BossDeath();
+					if (dydudebug_scriptdisplays) Console.Printf("BOSS/BOSSDEATH type RandomSpawner Self-Destroyed/nulled");
+					Destroy();
+				}
+			}
+		}
+	}
+
+	protected bool CanFitHere(Class<Actor> actorClass) 
+	{
+		let actor = Spawn(actorClass, Pos, NO_REPLACE);
+		
+		if (actor == null)
+			return false;
+		else 
+		{
+			let result = actor.TestMobjLocation();
+			actor.ClearCounters();
+			actor.Destroy();
+			return result;
+		}
+	}
+}
