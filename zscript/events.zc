@@ -540,8 +540,23 @@ class DD_EventHandler : EventHandler
 					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
 					if (giveexp)
 					{
-						Actor player = players[0].mo;
 						if (ExpGain < 1) ExpGain = 1;
+
+						let MiscItem = PlayerStatItem(source.FindInventory("PlayerStatItem"));
+						if (MiscItem && MiscItem.NumOfAfasDrops) 
+						{
+							ExpGain *= (1.0 + (MiscItem.NumOfAfasDrops * 0.25));
+							if (sour == "DinahPlayer" && infl == "PlayerWhistle")
+							{
+								ExpGain += (MiscItem.NumOfAfasDrops * randompick(1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,3) * frandom(4.0,5.0));
+							}
+							else
+							{
+								ExpGain += MiscItem.NumOfAfasDrops * randompick(1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,3);
+							}
+						}
+						
+						Actor player = players[0].mo;
 
 						Player.A_GiveInventory("KillsCount",1);
 						Player.A_GiveInventory("ExpPts",ExpGain);
@@ -943,6 +958,11 @@ class DD_EventHandler : EventHandler
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
+							double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+							double raredropsndvol = frandom(1.75,2.25);
+							int raredropsndchannel = randompick(191,192,222,223,264,265);
+							string raredropsndname = "rareitem/spawn";
+							victim.A_StartSound(raredropsndname,raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
 							if (gameinfo.gametype & 1) // Doom Mode
 							{
 								user_type = random(1,20);
@@ -959,6 +979,35 @@ class DD_EventHandler : EventHandler
 							}
 							if (gameinfo.gametype & 8) // Strife Mode
 							{
+							}
+						}
+
+						// Extremely Rare Drops
+						basechance = 2048;
+						maxchance = basechance;
+						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
+						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (infl == "VacPuff") maxchance = (basechance * 16);
+						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [extremerare]: %d (%d)", maxchance, basechance);
+						if (random(1,maxchance) == 1)
+						{
+							double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+							double raredropsndvol = frandom(1.75,2.25);
+							int raredropsndchannel = randompick(193,194,224,225,266,267);
+							string raredropsndname = "ultrarareitem/spawn";
+							victim.A_StartSound(raredropsndname,raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
+
+							if (exex_extraatkdefspd)
+							{
+								user_type = random(1,100);
+								if (user_type >= 1 && user_type <= 50) victim.A_SpawnItemEx("AfasDrop",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
+								if (user_type >= 51 && user_type <= 100) victim.A_SpawnItemEx("LegendaryMedicine",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
+							}
+							else
+							{
+								victim.A_SpawnItemEx("LegendaryMedicine",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
 							}
 						}
 						
