@@ -2,6 +2,7 @@ class DDPlayerPawn : PlayerPawn
 {
 	bool isvoodoodoll;
 	int neverbleeds;
+	bool recalledall;
 	
 	int DashTimer; int MaxDashTimer; 
 	int cooldash; bool sounddash; 
@@ -248,6 +249,58 @@ class DDPlayerPawn : PlayerPawn
 			if (armortier == 4) A_SetInventory("KnightGownItem4",1); else A_SetInventory("KnightGownItem4",0);
 			
 			if (MiscItem) MiscItem.GetSpeedFactor();
+		}
+
+		// Recall All
+		if (recalledall)
+		{
+			if (dydudebug_recalldisplays) Console.Printf("Recall All Attempt");
+
+			actor recalleetarg;
+			recalleetarg = actor(AimTarget());
+
+			int numberrecalled = 0;
+			ActorIterator it = Level.CreateActorIterator(1000);
+			Actor recallee;
+			while (recallee = it.Next())
+			{
+				if (recallee.bISMONSTER && recallee.bFRIENDLY)
+				{
+					if (dydudebug_recalldisplays) Console.Printf("\cx(Recall All)\c- Name: %s (TID: %d)", recallee.GetClassName(), recallee.tid);
+					Vector3 savedpos = (pos.x, pos.y, (pos.z + random(6.0,12.0)));
+					recallee.SetOrigin(savedpos,false);
+					recallee.angle += frandom(0.0,360.0);
+					recallee.vel.x += frandom(-4.0,4.0);
+					recallee.vel.y += frandom(-4.0,4.0);
+					recallee.vel.z += frandom(4.0,8.0);
+					numberrecalled++;
+					if (recalleetarg && recalleetarg.bISMONSTER && !recalleetarg.bFRIENDLY) recallee.target = recalleetarg;
+				}
+			}
+			
+			if (numberrecalled > 0)
+			{
+				//A_StartSound("monstersummon", 161, CHANF_DEFAULT);
+				A_SpawnItemEx("PlayerWhistle",0.0,0.0,32.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
+				Vector3 savedpos2 = (pos.x, pos.y, pos.z+(height*0.25));
+				Actor fog = Spawn("TeleportFog", savedpos2, ALLOW_REPLACE); 
+				if (fog != null)
+				{
+					fog.scale.x *= frandom(0.375, 0.625);
+					fog.scale.y *= frandom(0.375, 0.625);
+					fog.A_SetRenderStyle(frandom(0.375, 0.625),STYLE_Add);
+				}
+				
+				if (recalleetarg && recalleetarg.bISMONSTER && !recalleetarg.bFRIENDLY) A_PrintBold(String.Format("\cfRecalled all allies to your location and gave them a new target!"), frandom(0.685,0.8));
+				else A_PrintBold(String.Format("\cfRecalled all allies to your location!"), frandom(0.685,0.8));
+			}
+			else
+			{
+				A_StartSound("inv_fail",84,CHANF_DEFAULT,1.0,ATTN_NORM);
+				A_PrintBold(String.Format("\cgRecall Failed: No creatures available to recall!"), frandom(0.685,0.8));
+			}
+
+			recalledall = false;
 		}
 
 		Super.Tick();
