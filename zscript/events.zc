@@ -25,6 +25,9 @@ class DD_EventHandler : EventHandler
 		int initdmg = e.damage;
 		string mod = e.damagetype;
 		int flags = e.DamageFlags;
+		int PLuck;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		if (MiscItem) PLuck = MiscItem.PlayerLUCK;
 		
 		if (victim)
 		{
@@ -135,6 +138,7 @@ class DD_EventHandler : EventHandler
 							if (!victim.bNOFEAR)
 							{
 								int basedebuffchance = 4;
+								if (PLuck) basedebuffchance -= (PLuck * frandompick(0,0,0,0.125,0.125,0.25,0.25,0.05,0.10));
 								if (victim.bBOSS) basedebuffchance *= 4;
 								if (vict == "Cyberdemon") basedebuffchance *= 2;
 								if (vict == "HellKnight" || vict == "BaronOfHell") basedebuffchance *= 1.334;
@@ -164,6 +168,7 @@ class DD_EventHandler : EventHandler
 						if (infl == "BlunderPuff")
 						{
 							int baseval = randompick(5,6,6,6,6,7,7,7,7,7,7,7,7,8,8,8,8,9);
+							if (PLuck) baseval -= (PLuck * 0.067);
 							if (dydudebug_worlddamaged) Console.Printf("%d", baseval);
 							if (random(1,(baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							if (random(1,(baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -173,6 +178,7 @@ class DD_EventHandler : EventHandler
 							if (random(1,(baseval*baseval*baseval*baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							
 							int basedebuffchance = 4;
+							if (PLuck) basedebuffchance -= (PLuck * frandompick(0,0,0,0.125,0.125,0.25,0.25,0.05,0.10));
 							if (vict == "LostSoul") basedebuffchance *= 10;
 							if (vict == "Spidermastermind") basedebuffchance *= 2;
 							if (vict == "Archvile" || vict == "Revenant") basedebuffchance *= 1.334;
@@ -507,6 +513,9 @@ class DD_EventHandler : EventHandler
 		if (inflicter) infl = inflicter.GetClassName();
 		if (source) sour = source.GetClassName();
 		if (mastor) mast = mastor.GetClassName();
+		int PLuck;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		if (MiscItem) PLuck = MiscItem.PlayerLUCK;
 
 		if (victim)
 		{
@@ -540,6 +549,7 @@ class DD_EventHandler : EventHandler
 					if (inflicter && inflicter.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
 					if (sour == "DinahPlayer" && infl == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
 					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
+					If (PLuck) ExpGain *= (1.00 + (PLuck * frandompick(0,0.00125,0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02)));
 					if (giveexp)
 					{
 						if (ExpGain < 1) ExpGain = 1;
@@ -572,6 +582,8 @@ class DD_EventHandler : EventHandler
 				}
 				
 				// Drop Tables
+				int basedropdiv;
+				double luckbase;
 				int droptimes;
 				int lvldivider;
 				int basechance;
@@ -580,6 +592,8 @@ class DD_EventHandler : EventHandler
 				if (!victim.bFRIENDLY && victim.bCOUNTKILL)
 				{
 					droptimes = 1;
+					luckbase = 0.0625;
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 35;
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
@@ -597,9 +611,25 @@ class DD_EventHandler : EventHandler
 					{
 						// Specific Drops from Specific Monsters
 						let monsterp = Actor(victim);
+						// Doom Monsters
+						basedropdiv = 256;
+						luckbase = 0.25;
+						if (PLuck) basedropdiv -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
+						
+						
+						// Heretic Monsters
+						basedropdiv = 256;
+						luckbase = 0.25;
+						if (PLuck) basedropdiv -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
+						
+						
+						// Hexen Monsters
+						basedropdiv = 256;
+						luckbase = 0.25;
+						if (PLuck) basedropdiv -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						if (monsterp = FireDemon(victim))
 						{
-							if (random(1,256) <= 8) 
+							if (random(1,basedropdiv) <= 8) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -607,7 +637,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 1) 
+							if (random(1,basedropdiv) <= 1) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -618,7 +648,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = Ettin(victim))
 						{
-							if (random(1,256) <= 32) 
+							if (random(1,basedropdiv) <= 32) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -626,7 +656,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 4) 
+							if (random(1,basedropdiv) <= 4) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -637,7 +667,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = Centaur(victim))
 						{
-							if (random(1,256) <= 24) 
+							if (random(1,basedropdiv) <= 24) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -645,7 +675,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 3) 
+							if (random(1,basedropdiv) <= 3) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -656,7 +686,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = CentaurLeader(victim))
 						{
-							if (random(1,256) <= 48) 
+							if (random(1,basedropdiv) <= 48) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -664,7 +694,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 6) 
+							if (random(1,basedropdiv) <= 6) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -675,7 +705,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = Serpent(victim))
 						{
-							if (random(1,256) <= 32) 
+							if (random(1,basedropdiv) <= 32) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -683,7 +713,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 4) 
+							if (random(1,basedropdiv) <= 4) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -694,7 +724,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = SerpentLeader(victim))
 						{
-							if (random(1,256) <= 48) 
+							if (random(1,basedropdiv) <= 48) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -702,7 +732,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 6) 
+							if (random(1,basedropdiv) <= 6) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -713,7 +743,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = Bishop(victim))
 						{
-							if (random(1,256) <= 16) 
+							if (random(1,basedropdiv) <= 16) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -721,7 +751,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 2) 
+							if (random(1,basedropdiv) <= 2) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -732,7 +762,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = Wraith(victim))
 						{
-							if (random(1,256) <= 24) 
+							if (random(1,basedropdiv) <= 24) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -740,7 +770,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 3) 
+							if (random(1,basedropdiv) <= 3) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -751,7 +781,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = Demon1(victim))
 						{
-							if (random(1,256) <= 32) 
+							if (random(1,basedropdiv) <= 32) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -759,7 +789,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 4) 
+							if (random(1,basedropdiv) <= 4) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -770,7 +800,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = Demon2(victim))
 						{
-							if (random(1,256) <= 32) 
+							if (random(1,basedropdiv) <= 32) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -778,7 +808,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 4) 
+							if (random(1,basedropdiv) <= 4) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -789,7 +819,7 @@ class DD_EventHandler : EventHandler
 						}
 						if (monsterp = IceGuy(victim))
 						{
-							if (random(1,256) <= 80) 
+							if (random(1,basedropdiv) <= 80) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("MalletAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -797,7 +827,7 @@ class DD_EventHandler : EventHandler
 								if (user_type == 3) victim.A_SpawnItemEx("BlunderAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 								if (user_type == 4) victim.A_SpawnItemEx("CandleAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
-							if (random(1,256) <= 10) 
+							if (random(1,basedropdiv) <= 10) 
 							{
 								user_type = random(1,4);
 								if (user_type == 1) victim.A_SpawnItemEx("EggAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -806,10 +836,18 @@ class DD_EventHandler : EventHandler
 								if (user_type == 4) victim.A_SpawnItemEx("VacAmmo",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 							}
 						}
+						
+						
+						// Strife Monsters
+						basedropdiv = 256;
+						luckbase = 0.25;
+						if (PLuck) basedropdiv -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 					}
 					
 					// Ammo/Weapons
 					droptimes = 1;
+					luckbase = 0.0625;
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 50;
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
@@ -826,6 +864,8 @@ class DD_EventHandler : EventHandler
 					for (int i; i < droptimes; i++)
 					{
 						basechance = 128;
+						luckbase = 0.5;
+						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
 						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
@@ -877,6 +917,8 @@ class DD_EventHandler : EventHandler
 					
 					// Heal Items
 					droptimes = 1;
+					luckbase = 0.0625;
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 35;
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
@@ -893,6 +935,8 @@ class DD_EventHandler : EventHandler
 					for (int i; i < droptimes; i++)
 					{
 						basechance = 256;
+						luckbase = 0.25;
+						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
 						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
@@ -909,6 +953,8 @@ class DD_EventHandler : EventHandler
 					}
 
 					droptimes = 1;
+					luckbase = 0.0625;
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 70;
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
@@ -926,6 +972,8 @@ class DD_EventHandler : EventHandler
 					{
 						// Armor Items
 						basechance = 512;
+						luckbase = 0.375;
+						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
 						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
@@ -969,6 +1017,8 @@ class DD_EventHandler : EventHandler
 					// Random Inventory Item Drops
 					// Primary
 					droptimes = 1;
+					luckbase = 0.0625;
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 70;
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
@@ -985,6 +1035,8 @@ class DD_EventHandler : EventHandler
 					for (int i; i < droptimes; i++)
 					{
 						basechance = 32;
+						luckbase = 0.015625;
+						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
 						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
@@ -1032,6 +1084,7 @@ class DD_EventHandler : EventHandler
 
 						// Secondary
 						basechance = 256;
+						luckbase = 0.25;
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
 						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
@@ -1051,6 +1104,8 @@ class DD_EventHandler : EventHandler
 
 						// Rare Powerup Drop
 						basechance = 1024;
+						luckbase = 1.00;
+						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
 						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
@@ -1086,6 +1141,8 @@ class DD_EventHandler : EventHandler
 
 						// Extremely Rare Drops
 						basechance = 2048;
+						luckbase = 2.5;
+						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
 						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
