@@ -10,6 +10,10 @@ class PlayerStatItem : Inventory
 	int afasdroptimer;
 	int NumOfAfasDrops;
 	int NumOfLegendMeds, MedCurrLvl, LegMedCap;
+	
+	bool MercyInvulnOn;
+	int MercyInvulnTimer;
+	int MercyInvulnMod;
 
 	int LevelCap;
 	int StaminaLevel;
@@ -677,6 +681,7 @@ class PlayerStatItem : Inventory
 					if (SurvivalRate > 7500) SurvivalRate = 7500;
 					if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o CricketBat]: %d", SurvivalRate);
 				}
+				if (dydudebug_survivecheat) SurvivalRate = 20000;
 				int SurviveRNGVal = random[statitem](1,10000); // Based on 0.01% to 100.00%
 				if (SurviveRNGVal <= SurvivalRate) owner.player.cheats |= CF_BUDDHA; else owner.player.cheats &= ~CF_BUDDHA;
 
@@ -1082,6 +1087,49 @@ class PlayerStatItem : Inventory
 					else owner.bFORCERADIUSDMG = false;
 				}
 				
+				double MercyFlickerAlpha = 1.0;
+				if (MercyInvulnOn)
+				{
+					if (MercyInvulnTimer > 0)
+					{
+						if (!(owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")))
+						{
+							owner.player.cheats |= CF_GODMODE;
+							owner.bINVULNERABLE = 1;
+						}
+						MercyInvulnMod = MercyInvulnTimer % 120;
+						if (MercyInvulnMod >= 0 && MercyInvulnMod <= 14) MercyFlickerAlpha = 0.25;
+						if (MercyInvulnMod >= 15 && MercyInvulnMod <= 29) MercyFlickerAlpha = 0.3125;
+						if (MercyInvulnMod >= 30 && MercyInvulnMod <= 44) MercyFlickerAlpha = 0.375;
+						if (MercyInvulnMod >= 45 && MercyInvulnMod <= 59) MercyFlickerAlpha = 0.4375;
+						if (MercyInvulnMod >= 60 && MercyInvulnMod <= 74) MercyFlickerAlpha = 0.5;
+						if (MercyInvulnMod >= 75 && MercyInvulnMod <= 89) MercyFlickerAlpha = 0.4375;
+						if (MercyInvulnMod >= 90 && MercyInvulnMod <= 104) MercyFlickerAlpha = 0.375;
+						if (MercyInvulnMod >= 105 && MercyInvulnMod <= 119) MercyFlickerAlpha = 0.3125;
+						if (dydudebug_mercyinvulndisplays) Console.Printf("MercyFlickerAlpha: %.8f, MercyInvulnMod [Timer]: %d [%d]", MercyFlickerAlpha, owner.GetRenderStyle(), MercyInvulnMod, MercyInvulnTimer);
+						MercyInvulnTimer -= 20;
+					}
+					else // Timer at zero
+					{
+						if (!(owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")))
+						{
+							owner.player.cheats &= ~CF_GODMODE;
+							owner.bINVULNERABLE = 0;
+						}
+						MercyInvulnTimer = MercyInvulnMod = 0;
+						MercyInvulnOn = false;
+					}
+				}
+				else
+				{
+					if (!(owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")))
+					{
+						owner.player.cheats &= ~CF_GODMODE;
+						owner.bINVULNERABLE = 0;
+					}
+				}
+				if (dydudebug_mercyinvulndisplays) Console.Printf("MercyInvuln: %d {%d} [%d]", MercyInvulnOn, MercyInvulnMod, MercyInvulnTimer);
+				
 				//**************************************************
 				//* RenderStyle Stuff [Dashing, Invisibility, etc] *
 				//**************************************************
@@ -1145,8 +1193,8 @@ class PlayerStatItem : Inventory
 					if (level.time % 4 <= 1) DashAlpha = frandompick(0.375,0.5,0.625);
 															else DashAlpha = frandompick(0.625,0.75,0.875);
 				}
-				if (DashTics) owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha),STYLE_Add);
-								 else owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha),STYLE_Translucent);
+				if (DashTics) owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha*MercyFlickerAlpha),STYLE_Add);
+								 else owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha*MercyFlickerAlpha),STYLE_Translucent);
 
 				let MiscItem3 = Powerup(owner.FindInventory("PowerInvulnerable",true));
 				if (MiscItem3)

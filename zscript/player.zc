@@ -4,6 +4,8 @@ class DDPlayerPawn : PlayerPawn
 	int neverbleeds;
 	bool recalledall;
 	
+	int lasthealth;
+	
 	int DashTimer; int MaxDashTimer; 
 	int cooldash; bool sounddash; 
 	int thrudash; bool isdashing;
@@ -302,7 +304,24 @@ class DDPlayerPawn : PlayerPawn
 
 			recalledall = false;
 		}
+		
+		//****************************************************
+		//*Flicker the Player when they survive a mortal hit *
+		//****************************************************
+		if (self.health == 1 && (player.cheats & CF_BUDDHA || player.cheats & CF_BUDDHA2) && lasthealth > 1)
+		{
+			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+			if (MiscItem)
+			{
+				MiscItem.MercyInvulnOn = true;
+				MiscItem.MercyInvulnTimer = 1210; // 1.5 Seconds
+				
+				player.health = player.mo.health = 1;
+			}
+		}
 
+		lasthealth = health;
+		
 		Super.Tick();
 	}
 
@@ -752,7 +771,7 @@ class DDPlayerPawn : PlayerPawn
 			}
 			if (source) // Has a source
 			{
-				combatlogmsg.AppendFormat(" from \c[purple]%s\c-", source.GetTag());
+				combatlogmsg.AppendFormat("from \c[purple]%s\c-", source.GetTag());
 				if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[purple]'s\c- \c[brick]%s\c-", inflictor.GetTag());
 			}
 			else
