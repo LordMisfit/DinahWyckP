@@ -36,6 +36,129 @@ class DDPlayerPawn : PlayerPawn
 		Alpha 1.0;
 	}
 	
+	//===========================================================================
+	//
+	// G_PlayerFinishLevel
+	// Called when a player completes a level.
+	//
+	// flags is checked for RESETINVENTORY and RESETHEALTH only.
+	//
+	//===========================================================================
+
+	void PlayerFinishLevel (int mode, int flags)
+	{
+		Console.Printf("PlayerFinishLevel: %d, %d", mode, flags); 
+		Inventory item, next;
+		let p = player;
+
+		if (p.morphTics != 0)
+		{ // Undo morph
+			Unmorph(self, 0, true);
+		}
+		// 'self' will be no longer valid from here on in case of an unmorph
+		let me = p.mo;
+
+		// Strip all current powers, unless moving in a hub and the power is okay to keep.
+		item = me.Inv;
+		while (item != NULL)
+		{
+			next = item.Inv;
+			if (item is 'Powerup')
+			{
+				if (deathmatch || ((mode != FINISH_SameHub || !item.bHUBPOWER) && !item.bPERSISTENTPOWER)) // Keep persistent powers in non-deathmatch games
+				{
+					item.Destroy ();
+				}
+			}
+			item = next;
+		}
+		let ReadyWeapon = p.ReadyWeapon;
+		if (ReadyWeapon != NULL && ReadyWeapon.bPOWERED_UP && p.PendingWeapon == ReadyWeapon.SisterWeapon)
+		{
+			// Unselect powered up weapons if the unpowered counterpart is pending
+			p.ReadyWeapon = p.PendingWeapon;
+		}
+		// reset invisibility to default
+		me.RestoreRenderStyle();
+		p.extralight = 0;					// cancel gun flashes
+		p.fixedcolormap = PlayerInfo.NOFIXEDCOLORMAP;	// cancel ir goggles
+		p.fixedlightlevel = -1;
+		p.damagecount = 0; 				// no palette changes
+		p.bonuscount = 0;
+		p.poisoncount = 0;
+		p.inventorytics = 0;
+
+		if (mode != FINISH_SameHub)
+		{
+			// Take away flight and keys (and anything else with IF_INTERHUBSTRIP set)
+			item = me.Inv;
+			while (item != NULL)
+			{
+				next = item.Inv;
+				if (item.InterHubAmount < 1)
+				{
+					item.DepleteOrDestroy ();
+				}
+				item = next;
+			}
+		}
+
+		if (mode == FINISH_NoHub && !level.KEEPFULLINVENTORY)
+		{ // Reduce all owned (visible) inventory to defined maximum interhub amount
+			Array<Inventory> todelete;
+			for (item = me.Inv; item != NULL; item = item.Inv)
+			{
+				// If the player is carrying more samples of an item than allowed, reduce amount accordingly
+				if (item.bINVBAR && item.Amount > item.InterHubAmount)
+				{
+					item.Amount = item.InterHubAmount;
+					if (level.REMOVEITEMS && !item.bUNDROPPABLE && !item.bUNCLEARABLE)
+					{
+						todelete.Push(item);
+					}
+				}
+			}
+			for (int i = 0; i < toDelete.Size(); i++)
+			{
+				let it = toDelete[i];
+				if (!it.bDestroyed)
+				{
+					item.DepleteOrDestroy();
+				}
+			}
+		}
+
+		let lmp = Wads.FindLump("ARBITER.acs");
+		Console.Printf("lmp: %d", lmp);
+		// Resets player health to default if not dead.
+		if ((flags & CHANGELEVEL_RESETHEALTH) && p.playerstate != PST_DEAD)
+		{
+			if (lmp == -1)
+			{
+				p.health = me.health = me.SpawnHealth();
+			}
+		}
+
+		// Clears the entire inventory and gives back the defaults for starting a game
+		if ((flags & CHANGELEVEL_RESETINVENTORY) && p.playerstate != PST_DEAD)
+		{
+			if (lmp == -1)
+			{
+				me.ClearInventory();
+				me.GiveDefaultInventory();
+			}
+		}
+
+		// [MK] notify self and inventory that we're about to travel
+		// this must be called here so these functions can still have a
+		// chance to alter the world before a snapshot is done in hubs
+		me.PreTravelled();
+		for (item = me.Inv; item != NULL; item = item.Inv)
+		{
+			item.PreTravelled();
+		}
+	}
+
 	override void BeginPlay()
 	{
 		basexscale = scale.x;
@@ -405,6 +528,7 @@ class DDPlayerPawn : PlayerPawn
 
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		int firstdmg = damage;
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		int PlayerLevel;
 		if (MiscItem) PlayerLevel = MiscItem.PlayerLevel;
@@ -786,19 +910,25 @@ class DDPlayerPawn : PlayerPawn
 			if (mod == 'NONE') mod = 'Typeless';
 			if (ret || armdmg)
 			{
-				if (armdmg && !ret) combatlogmsg.AppendFormat("\c[darkgreen]%d AP\c- of damage taken ", armdmg);
-				else if (armdmg && ret) combatlogmsg.AppendFormat("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- of damage taken ", ret, armdmg);
-				else combatlogmsg.AppendFormat("\c[darkred]%d HP\c- of damage taken", ret);
+				if (armdmg && !ret) combatlogmsg.AppendFormat("\c[darkgreen]%d AP\c- ", armdmg);
+				else if (armdmg && ret) combatlogmsg.AppendFormat("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- ", ret, armdmg);
+				else combatlogmsg.AppendFormat("\c[darkred]%d HP\c- ", ret);
+				if (dydudebug_dmgdiffdebug)
+				{
+					if (firstdmg > ret) combatlogmsg.AppendFormat("[\c[lightblue]%d\c-] ", (ret - firstdmg));
+					else if (firstdmg < ret) combatlogmsg.AppendFormat("[\c[brick]+%d\c-] ", (ret - firstdmg));
+				}
+				combatlogmsg.AppendFormat("of damage taken ");
 			}
 			else
 			{
 				if (isinvuln) 
 				{
-					combatlogmsg.AppendFormat("\c[green]Invulnerable!\c- No Damage Suffered \c-");
+					combatlogmsg.AppendFormat("\c[green]Invulnerable!\c- No Damage taken \c-");
 				}
 				else
 				{
-					combatlogmsg.AppendFormat("\c[white]No Damage Received \c-");
+					combatlogmsg.AppendFormat("\c[white]No Damage taken \c-");
 				}
 			}
 			if (source) // Has a source

@@ -100,6 +100,7 @@ class PlayerStatItem : Inventory
 		+Inventory.PERSISTENTPOWER;
 		+Inventory.UNDROPPABLE;
 		+Inventory.UNTOSSABLE;
+		+Inventory.UNCLEARABLE;
 	}
 
 	override void DoEffect()
@@ -112,7 +113,6 @@ class PlayerStatItem : Inventory
 		else
 		if (playeractor) // Otherwise, Keep
 		{
-			bool deathexitdebug;
 			// Load in Globalvars [Start]
 			let globalvars = DDGlobalVariables.Get();
 			if (globalvars)
@@ -131,7 +131,7 @@ class PlayerStatItem : Inventory
 					globalvars.HealthLevelAdd = HealthLevelAdd = 0;
 					globalvars.HealthBonusAdd = HealthBonusAdd = 0;
 					globalvars.TotalSecretsFound = 0;
-					if (itemtimer == 0 && deathexitdebug) Console.Printf("exex_deathexitaffectsstats: YES", exex_deathexitaffectsstats);
+					if (itemtimer == 0 && dydudebug_deathexitdebug) Console.Printf("exex_deathexitaffectsstats: YES", exex_deathexitaffectsstats);
 				}
 				else
 				{
@@ -151,7 +151,7 @@ class PlayerStatItem : Inventory
 					if (itemtimer == 0) 
 					{
 						if (MaxHealthTrue) owner.player.mo.health = MaxHealthTrue;
-						if (deathexitdebug)
+						if (dydudebug_deathexitdebug)
 						{
 							Console.Printf("MaxHealthTrue: %d, HealthLevelAdd: %d, HealthBonusAdd: %d, BaseStartMaxHealth: %d", MaxHealthTrue, HealthLevelAdd, HealthBonusAdd, BaseStartMaxHealth);
 							Console.Printf("exex_deathexitaffectsstats: NO", exex_deathexitaffectsstats);
@@ -519,6 +519,7 @@ class PlayerStatItem : Inventory
 							if (Owner.CountInv("CricketBatGuard")) inc = floor(inc * frandom(1.334,1.667)); 
 							if (Owner.CountInv("CricketBatGuard2")) inc = floor(inc * frandom(1.334,1.667)); 
 							if (Owner.CountInv("DoingSpinAttack")) inc = floor(inc * frandom(0.599880023995201,0.7496251874062969)); 
+							if (Owner.CountInv("FistPlayerBlockItem")) inc = ceil(inc * frandompick(1.2,1.3,1.3,1.4,1.4,1.4,1.5,1.5,1.5,1.5,1.6,1.6,1.6,1.7,1.7,1.8)); 
 							
 							if (owner.CountInv("KnightGownItem")) inc = floor(inc * 1.05);
 							if (owner.CountInv("KnightGownItem2")) inc = floor(inc * 1.10);
@@ -582,6 +583,7 @@ class PlayerStatItem : Inventory
 							if (Owner.CountInv("CricketBatGuard")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
 							if (Owner.CountInv("CricketBatGuard2")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
 							if (Owner.CountInv("DoingSpinAttack")) inc = ceil(inc * frandom(1.334,1.667)); 
+							if (Owner.CountInv("FistPlayerBlockItem")) inc = ceil(inc * frandompick(0.8334,0.7693,0.7693,0.7143,0.7143,0.7143,0.6667,0.6667,0.6667,0.6667,0.625,0.625,0.625,0.5882,0.5882,0.5556));
 
 							if (owner.CountInv("KnightGownItem")) inc = ceil(inc * 0.95);
 							if (owner.CountInv("KnightGownItem2")) inc = ceil(inc * 0.90);
@@ -689,6 +691,28 @@ class PlayerStatItem : Inventory
 					}
 				}
 				else
+				if (Owner.CountInv("FistPlayerBlockItem"))
+				{
+					if (Owner.CountInv("FistPlayerBlock3"))
+					{ 
+						SurvivalRate += ((10000 - SurvivalRate) * frandompick(0.375,0.375,0.375,0.375,0.5625));
+						if (SurvivalRate > 9000) SurvivalRate = 9000;
+						if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o Handed Guard (3)]: %d", SurvivalRate);
+					}
+					else if (Owner.CountInv("FistPlayerBlock2"))
+					{ 
+						SurvivalRate += ((10000 - SurvivalRate) * frandompick(0.25,0.25,0.25,0.25,0.375));
+						if (SurvivalRate > 8500) SurvivalRate = 8500;
+						if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o Handed Guard (2)]: %d", SurvivalRate);
+					}
+					else if (Owner.CountInv("FistPlayerBlock"))
+					{
+						SurvivalRate += ((10000 - SurvivalRate) * frandompick(0.125,0.125,0.125,0.125,0.1875));
+						if (SurvivalRate > 8000) SurvivalRate = 8000;
+						if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o Handed Guard (1)]: %d", SurvivalRate);
+					}
+				}
+				else
 				{
 					if (SurvivalRate > 7500) SurvivalRate = 7500;
 					if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o CricketBat]: %d", SurvivalRate);
@@ -734,6 +758,11 @@ class PlayerStatItem : Inventory
 				if (Owner.CountInv("CricketBatGuard2")) TotalMass *= frandompick(2.667,3.000,3.334);
 				if (Owner.CountInv("DoingSpinAttack")) TotalMass *= frandompick(12,13.5,15);
 				
+				// Fist Blocks
+				if (Owner.CountInv("FistPlayerBlock"))  TotalMass *= 2;
+				if (Owner.CountInv("FistPlayerBlock2")) TotalMass *= 2.667;
+				if (Owner.CountInv("FistPlayerBlock3")) TotalMass *= 4;
+
 				if (Owner.CountInv("PowerWineBuffWeak")) TotalMass *= 1.125;
 				if (Owner.CountInv("PowerWineBuffStrong")) TotalMass *= 1.25;
 				if (Owner.CountInv("PowerWineBuffStrongest")) TotalMass *= 1.5;
@@ -767,6 +796,9 @@ class PlayerStatItem : Inventory
 				if (Owner.CountInv("CricketBatGuard")) BuffJumpZ *= frandom(0.95,0.975);
 				if (Owner.CountInv("CricketBatGuard2")) BuffJumpZ *= frandom(0.85,0.925);
 				if (Owner.CountInv("DoingSpinAttack")) BuffJumpZ *= frandom(0.2125,0.23125);
+				if (Owner.CountInv("FistPlayerBlock")) BuffJumpZ *= frandom(0.625,0.667);
+				if (Owner.CountInv("FistPlayerBlock2")) BuffJumpZ *= frandom(0.667,0.75);
+				if (Owner.CountInv("FistPlayerBlock3")) BuffJumpZ *= frandom(0.75,0.8334);
 				if (berserked) BuffJumpZ *= 1.34;
 				if (owner.CountInv("PowerWineBuffWeak")) BuffJumpZ *= frandom(0.98,1.00);
 				if (owner.CountInv("PowerWineBuffStrong")) BuffJumpZ *= frandom(0.96,1.00);
@@ -1616,6 +1648,7 @@ class PlayerStatItem : Inventory
 		let globalvars = DDGlobalVariables.Get();
 		let weapon = owner.player.ReadyWeapon;
 		TrueGameSkill = skill;
+		double BerserkFactorblock;
 		
 		// ******************
 		// ******************
@@ -1769,9 +1802,39 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandompick(0.95,1.05);
 			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Buff): %.8f", BuffFactor);
 			
+
+			double PlayerFistBlockFactor = 1.00;
+			int UsingFistBlock = 0;
+			BerserkFactorblock = frandompick[statitem2](0.25,0.334,0.5,0.667,0.75);
+			if (Owner.CountInv("FistPlayerBlock")) 
+			{
+				UsingFistBlock++;
+				PlayerFistBlockFactor *= 0.5;
+				if (damageType == 'Melee' || damageType == 'Trample' || damageType == 'Stomp') PlayerFistBlockFactor *= 0.5;
+			}
+			if (Owner.CountInv("FistPlayerBlock2")) 
+			{
+				UsingFistBlock++;
+				PlayerFistBlockFactor *= 0.375;
+				if (damageType == 'Melee' || damageType == 'Trample' || damageType == 'Stomp') PlayerFistBlockFactor *= 0.375;
+			}
+			if (Owner.CountInv("FistPlayerBlock3")) 
+			{
+				UsingFistBlock++;
+				PlayerFistBlockFactor *= 0.25;
+				if (damageType == 'Melee' || damageType == 'Trample' || damageType == 'Stomp') PlayerFistBlockFactor *= 0.25;
+			}
+			if (Owner.CountInv("FistPlayerBlockExtra") && UsingFistBlock) 
+			{
+				PlayerFistBlockFactor *= 0.1;
+				if (damageType == 'Melee' || damageType == 'Trample' || damageType == 'Stomp') PlayerFistBlockFactor *= 0.1;
+			}
+			if (PlayerFistBlockFactor < 1.00 && UsingFistBlock && Owner.CountInv("PowerStrength") || owner.CountInv("PowerStrengthDD")) PlayerFistBlockFactor *= BerserkFactorblock;
+			if (dydudebug_defensecalcs && UsingFistBlock) Console.Printf("Damage (!passive - Fist): %.8f", PlayerFistBlockFactor);
+
 			// Weapons
 			double WeaponFactor = 1.00;
-			if (weapon is "HandToHand")		WeaponFactor = 1.125;
+			if (weapon is "HandToHand" && !UsingFistBlock)		WeaponFactor = 1.125;
 			if (weapon is "CricketBat")		WeaponFactor = 1.00;
 			if (weapon is "BlunderAxe")		WeaponFactor = 1.0625;
 			if (weapon is "AppleJack")		WeaponFactor = 0.9375;
@@ -1805,6 +1868,8 @@ class PlayerStatItem : Inventory
 													 * LUKFactor
 													 * SkillFactor
 													 * BuffFactor
+													 * PlayerFistBlockFactor
+													 * WeaponFactor
 													 * SecretFactor
 													 * CrisisFactor
 													 * deffct;
@@ -1855,12 +1920,24 @@ class PlayerStatItem : Inventory
 		HUDSpeed *= HealthFactor;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [health]: %.8f", HealthFactor);
 
+		double PlayerFistBlockFactor = 1.0;
+		if (Owner.CountInv("FistPlayerBlockItem"))
+		{
+			if (Owner.CountInv("FistPlayerBlock")) PlayerFistBlockFactor *= frandom(0.625,0.667);
+			if (Owner.CountInv("FistPlayerBlock2")) PlayerFistBlockFactor *= frandom(0.667,0.75);
+			if (Owner.CountInv("FistPlayerBlock3")) PlayerFistBlockFactor *= frandom(0.75,0.8334);
+			Speed *= PlayerFistBlockFactor;
+			HUDSpeed *= PlayerFistBlockFactor;
+			if (dydudebug_speedcalcs) Console.Printf("SpeedX [Fist Block]: %.8f", PlayerFistBlockFactor);
+		}
+
 		double BerserkFactor = 1.0;
 		if (berserked) 
 		{
 			BerserkFactor = 1.125;
 			Speed *= BerserkFactor;
 			HUDSpeed *= BerserkFactor;
+			if (dydudebug_speedcalcs) Console.Printf("SpeedX [Berserk]: %.8f", BerserkFactor);
 		}
 		
 		double BuffFactor = 1.0;
@@ -1977,6 +2054,7 @@ class DynamicMusic : Inventory
 		+Inventory.PERSISTENTPOWER;
 		+Inventory.UNDROPPABLE;
 		+Inventory.UNTOSSABLE;
+		+Inventory.UNCLEARABLE;
 	}
 
 	override void Tick()
@@ -2019,6 +2097,7 @@ class PlayerDashJump : Inventory
 		+Inventory.PERSISTENTPOWER
 		+Inventory.UNDROPPABLE
 		+Inventory.UNTOSSABLE
+		+Inventory.UNCLEARABLE;
 	}
 	
 	override void Tick()

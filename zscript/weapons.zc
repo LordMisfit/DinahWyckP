@@ -23,7 +23,7 @@ class DDWeapon : Weapon
 		self.Destroy();
 	}
 	
-	action double A_LRCheck(double movespeed)
+	action double A_LowerRaiseCheck(double movespeed)
 	{
 		double bufffactor = 1.0;
 		if (player.mo)
@@ -44,7 +44,7 @@ class DDWeapon : Weapon
 	
 	action void A_Lower(int movespeed = 6)
 	{
-		movespeed = A_LRCheck(movespeed);
+		movespeed = A_LowerRaiseCheck(movespeed);
 		if (dydudebug_weaponstatdisplays) Console.Printf("A_Lower: (%d)", movespeed);
 		let player = player;
 
@@ -88,7 +88,7 @@ class DDWeapon : Weapon
 	
 	action void A_Raise(int movespeed = 6)
 	{
-		movespeed = A_LRCheck(movespeed);
+		movespeed = A_LowerRaiseCheck(movespeed);
 		if (dydudebug_weaponstatdisplays) Console.Printf("A_Lower: (%d)", movespeed);
 		let player = player;
 
@@ -121,6 +121,34 @@ class DDWeapon : Weapon
 		
 		psp.SetState(player.ReadyWeapon.GetReadyState());
 		return;
+	}
+
+	// Fist Block Function
+	action void A_PFistBlockOn()
+	{
+		A_SetInventory("FistPlayerBlock",0);
+		A_SetInventory("FistPlayerBlock2",0);
+		A_SetInventory("FistPlayerBlock3",0);
+		A_SetInventory("FistPlayerSpeedFactor",0);
+		A_SetInventory("FistPlayerSpeedFactor2",0);
+		A_SetInventory("FistPlayerSpeedFactor3",0);
+		A_SetInventory("FistPlayerBlockExtra",0);
+		A_SetInventory("FistPlayerBlock",1);
+		if (random(1,16) <= 1) { A_SetInventory("FistPlayerBlockExtra",1); }
+	}
+
+	action void A_PFistBlockOff()
+	{
+		A_SetInventory("FistPlayerBlock",0);
+		A_SetInventory("FistPlayerBlock2",0);
+		A_SetInventory("FistPlayerBlock3",0);
+		A_SetInventory("FistPlayerSpeedFactor",0);
+		A_SetInventory("FistPlayerSpeedFactor2",0);
+		A_SetInventory("FistPlayerSpeedFactor3",0);
+		A_SetInventory("FistPlayerBlockExtra",0);
+		A_SetInventory("FistPlayerBlockItem",0);
+		//bREFLECTIVE = 0;
+		//bSHIELDREFLECT = 0;
 	}
 
 	action double A_SetShieldPieceDist(double basedist = 32.0)
@@ -591,7 +619,7 @@ class HandToHand : DinahWeapon replaces Fist
 		+WEAPON.MELEEWEAPON
 		+INVENTORY.UNDROPPABLE
 		+INVENTORY.UNTOSSABLE
-		Tag "Hand to Hand: Normal attack punches, Alt attack uppercuts.";
+		Tag "Hand to Hand: Normal attack punches, Alt attack uppercuts. <USER4> enters a cross-armed guarding stance to heavily reduce most damage, moreso melee types of damage.";
 		Obituary "%o was give a good kick in the arse by %k.";
 	}
 	
@@ -601,7 +629,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DHND A 1
 			{
 				A_KickDecelerate();
-				A_WeaponReady();
+				A_WeaponReady(WRF_ALLOWUSER4);
 			}
 			loop;
 		Deselect:
@@ -767,6 +795,117 @@ class HandToHand : DinahWeapon replaces Fist
 			{
 				A_ReFire();
 				return resolvestate("Ready");
+			}
+			goto Ready;
+			
+		// Crossed-Arm Guard
+		User4:
+			DNGU A 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_PFistBlockOn();
+			}
+			DNGU B 1
+			{
+				A_PFistBlockOn();
+			}
+			DNGU C 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_GiveInventory("FistPlayerBlockItem",1);
+				A_PFistBlockOn();
+			}
+			DNGU D 1
+			{
+				A_PFistBlockOn();
+			}
+			DNGU E 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_PFistBlockOn();
+			}
+			DNGU F 1
+			{
+				A_PFistBlockOn();
+			}
+			DNGU G 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_PFistBlockOn();
+			}
+			DNGU H 1
+			{
+				A_PFistBlockOn();
+			}
+			DNGU I 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_PFistBlockOn();
+			}
+		User4Hold:
+			DNGU J 1
+			{
+				A_PFistBlockOn();
+
+				A_GiveInventory("FistPlayerBlockHold",1);
+				A_WeaponReady(WRF_NOFIRE|WRF_DISABLESWITCH);
+			}
+			DNGU J 0 A_Refire("User4End");
+			loop;
+		User4End:
+			DNGU I 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_PFistBlockOn();
+				A_SetInventory("FistPlayerBlockHold",0);
+			}
+			DNGU H 1
+			{
+				A_PFistBlockOn();
+				A_SetInventory("FistPlayerBlockHold",0);
+			}
+			DNGU G 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_PFistBlockOn();
+				A_SetInventory("FistPlayerBlockHold",0);
+			}
+			DNGU F 1
+			{
+				A_PFistBlockOn();
+				A_SetInventory("FistPlayerBlockHold",0);
+			}
+			DNGU E 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_PFistBlockOn();
+				A_SetInventory("FistPlayerBlockHold",0);
+			}
+			DNGU D 1
+			{
+				A_PFistBlockOn();
+				A_SetInventory("FistPlayerBlockHold",0);
+			}
+			DNGU C 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_PFistBlockOn();
+				A_SetInventory("FistPlayerBlockHold",0);
+			}
+			DNGU B 1
+			{
+				A_PFistBlockOn();
+				A_SetInventory("FistPlayerBlockHold",0);
+			}
+			DNGU A 1
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
+				A_PFistBlockOn();
+				A_SetInventory("FistPlayerBlockHold",0);
+			}
+			DNGU A 0
+			{
+				A_PFistBlockOff();
 			}
 			goto Ready;
 	}
@@ -1923,6 +2062,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			}
 			goto Ready;
 			
+		// Bat Guard
 		User4:
 			DBIG A 0
 			{
@@ -4861,23 +5001,14 @@ class VacPuff : DDPuff
 	States
 	{
 		Spawn:
+		Melee:
+		Crash:
 			TNT1 A 0 NoDelay
 			{
-				if (random(1,12) == 1) { bFORCEPAIN = true; }
-			}
-			BASH DE 3 bright;
-			Stop;
-		Melee:
-			TNT1 A 0
-			{
-				if (random(1,12) == 1) { bFORCEPAIN = true; }
-			}
-			BASH DE 3 bright;
-			Stop;
-		Crash:
-			TNT1 A 0
-			{
-				if (random(1,12) == 1) { bFORCEPAIN = true; }
+				if (random(1,12) <= 1) 
+				{
+					bFORCEPAIN = true; 
+				}
 			}
 			BASH DE 3 bright;
 			Stop;
