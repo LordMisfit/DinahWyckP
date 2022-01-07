@@ -792,6 +792,7 @@ class DDStatusBarMain : BaseStatusBar
 				FontScale = (1.25, 1.25);
 			}
 
+			int digits;
 			//level
 			if (dyduhud_showexplevel)
 			{
@@ -803,7 +804,6 @@ class DDStatusBarMain : BaseStatusBar
 				//EXP
 				int EXPPts = CPlayer.mo.CountInv("ExpPts");
 				int EXPNeeded = CPlayer.mo.CountInv("ExpPtsNeeded");
-				int digits;
 				if (EXPNeeded < 100000000) digits = 8;
 				if (EXPNeeded < 10000000) digits = 7;
 				if (EXPNeeded < 1000000) digits = 6;
@@ -970,6 +970,43 @@ class DDStatusBarMain : BaseStatusBar
 									else DrawString(mDDMFont, FormatNumber(dashtics, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 				}
 			}
+			
+			//IP
+			int IPx;
+			int IPy;
+			let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+			int ItemPoints;
+			string IPPts = "";
+			int IPDigits;
+			int IPdigitcolor = 0;
+			int IPdigittimer = level.time % 32;
+			if (MiscItem.ItemPoints >= MiscItem.MaxItemPoints)
+			{
+				//Console.Printf("IPdigittimer: %d", IPdigittimer);
+				if (IPdigittimer >= 0 && IPdigittimer <= 7) IPdigitcolor = font.cr_red;
+				if (IPdigittimer >= 8 && IPdigittimer <= 15) IPdigitcolor = font.cr_brick;
+				if (IPdigittimer >= 16 && IPdigittimer <= 23) IPdigitcolor = font.cr_orange;
+				if (IPdigittimer >= 24 && IPdigittimer <= 31) IPdigitcolor = font.cr_fire;
+			}
+			else IPdigitcolor = font.cr_red;
+			
+			if (MiscItem) 
+			{
+				ItemPoints = MiscItem.ItemPoints;
+				IPPts.AppendFormat("%.1f", ItemPoints);
+
+				digx = 116 + (digits * spacing); // / 48
+				digy = -82; // -82 / -132
+				DrawString(mDDLFont, FormatNumber(ItemPoints, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				digx += 11;
+				digy += 3;
+				DrawString(mConFont, "%", (digx, digy), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				digx -= 11;
+				digy -= 11;
+				DrawString(mSmallFont, "IP", (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
+
+			
 			
 			//weapon slots
 			int x;

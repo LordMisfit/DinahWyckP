@@ -530,6 +530,8 @@ class DDPlayerPawn : PlayerPawn
 	{
 		int firstdmg = damage;
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+
 		int PlayerLevel;
 		if (MiscItem) PlayerLevel = MiscItem.PlayerLevel;
 		
@@ -569,6 +571,14 @@ class DDPlayerPawn : PlayerPawn
 			singleripproj = Actor(inflictor);
 			singlefastripproj = FastProjectile(inflictor);
 		}
+		
+		int oldhealthratio;
+		int oldhealth = health;
+		if (CountInv("NormalHealth")) oldhealthratio = 0;
+		if (CountInv("DecentHealth")) oldhealthratio = 1;
+		if (CountInv("LowHealth")) oldhealthratio = 2;
+		if (CountInv("CriticalHealth")) oldhealthratio = 3;
+
 		
 		string infl, sour, vict;
 		vict = GetClassName();
@@ -946,6 +956,34 @@ class DDPlayerPawn : PlayerPawn
 			if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-", mod);
 			if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
 			Console.Printf(combatlogmsg);
+		}
+
+		// Item/Ikari Point Gains
+		if (ret && MiscItem && globalvars)
+		{
+			int gain = 0;
+			if (source && source != self) gain += 1;
+			if (inflictor && inflictor != self) gain += 1;
+			if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush')) gain += 1;
+			if (health <= 0) gain = 0;
+			if (gain)
+			{
+				double base = ret * 100.0 / MiscItem.MaxHealthTrue;
+				if (oldhealthratio == 0) base *= 1.0;
+				if (oldhealthratio == 1) base *= 1.125;
+				if (oldhealthratio == 2) base *= 1.25;
+				if (oldhealthratio == 3) base *= 1.5;
+				if (oldhealthratio == 4) base *= 2.25;
+				if (oldhealth > 1 && health == 1) base *= 3.25;
+				base *= (0.125 + (MiscItem.PlayerLevel * 0.00125) + (MiscItem.PlayerLUCK * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
+				if (base <= 0.01) base = 0.01;
+				if (base) 
+				{
+					MiscItem.ItemPoints += base;
+					globalvars.ItemPoints += base;
+					if (exex_playerdmglog) Console.Printf("\c[red]IP Gained!");
+				}
+			}
 		}
 		return ret;
 	}

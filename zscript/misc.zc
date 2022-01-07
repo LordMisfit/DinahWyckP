@@ -47,11 +47,12 @@ class PlayerStatItem : Inventory
 	int HealthRatio;
 	int CurrentHealth;
 	int BaseStartMaxHealth;
-	int ItemPoints;
+	double ItemPoints;
 	int MaxHealthTrue;
 	int HealthLevelAdd;
 	int HealthBonusAdd;
 	int MaxHealthLimit;
+	int MaxItemPoints;
 
 	int TrueGameSkill;
 	int CurrentArmorClass;
@@ -163,7 +164,7 @@ class PlayerStatItem : Inventory
 				}
 				owner.A_SetInventory("PlayerMaxHP",MaxHealthTrue);
 				if (itemtimer <= 2) owner.A_SetInventory("ExpPts",globalvars.Experience);
-
+				
 				let weapon = owner.player.ReadyWeapon;
 				if (playeractor.GetClassName() == "DinahPlayer") CharacterClass == 10;
 				if (!owner.CountInv("HandToHand")) owner.A_SetInventory("HandToHand",1); // Prevents your "fists/hand-to-hand" from being removed by inventory removing events.
@@ -355,6 +356,16 @@ class PlayerStatItem : Inventory
 				}
 
 				SuperVacAmmo = owner.CountInv("VacAmmo");
+				
+				// Ikari/Item Points
+				MaxItemPoints = 100;
+				if (TrueGameSkill == SKILL_VERY_EASY) MaxItemPoints += (PlayerLevel * 0.75);
+				if (TrueGameSkill == SKILL_EASY) MaxItemPoints += (PlayerLevel * 0.625);
+				if (TrueGameSkill == SKILL_NORMAL) MaxItemPoints += (PlayerLevel * 0.5);
+				if (TrueGameSkill == SKILL_HARD) MaxItemPoints += (PlayerLevel * 0.375);
+				if (TrueGameSkill == SKILL_VERY_HARD) MaxItemPoints += (PlayerLevel * 0.25);
+				if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+
 				//
 				// Leveling Up
 				//
@@ -507,6 +518,12 @@ class PlayerStatItem : Inventory
 								PrevHealthRatio = HealthRatio;
 							}
 						}
+					}
+					
+					if (owner.CountInv("ItemPointsAdd")) 
+					{
+						ItemPoints += owner.CountInv("ItemPointsAdd");
+						owner.A_SetInventory("ItemPointsAdd",0);
 					}
 
 					baseregenmulti = 1.0;
@@ -2107,7 +2124,12 @@ class PlayerDashJump : Inventory
 	override void Tick()
 	{
 		Super.Tick();
-		if (!Owner || Owner && (!Owner.Player || Owner.Health < 1)) Return;
+		if (!Owner || Owner && (!Owner.Player || Owner.Health < 1)) 
+		{
+			ItemPoints = 0;
+			Return;
+		}
+
 		let globalvars = DDGlobalVariables.Get();
 		let weapon = owner.player.ReadyWeapon;
 		if (Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD")) berserked = true;

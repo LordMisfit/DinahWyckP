@@ -818,7 +818,42 @@ class CherryBombPickup : CustomInventoryExt replaces RocketAmmo
 		Use:
 			TNT1 A 0 
 			{
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+				let globalvars = DDGlobalVariables.Get();
+				
 				bool wutthis = false;
+				int buttonspressed = 0;
+				if (buttons & BT_USE) buttonspressed++;
+				if (buttons & BT_ZOOM) buttonspressed++;
+				if (buttons & BT_SPEED) buttonspressed++;
+				if (MiscItem && globalvars && buttonspressed >= 2)
+				{
+					double cost;
+					if (skill <= 0) cost = 25.0;
+					if (skill == 1) cost = 27.5;
+					if (skill == 2) cost = 30.0;
+					if (skill == 3) cost = 32.5;
+					if (skill >= 4) cost = 35.0;
+					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+					{
+						MiscItem.ItemPoints -= cost;
+						globalvars.ItemPoints -= cost;
+						wutthis = true;
+						if (random(1,11) <= 4)
+						{
+							int voiceroll = random(1,5);
+							string voiceplay;
+							if (voiceroll == 1) voiceplay = "dinah/ulikethis";
+							if (voiceroll == 2) voiceplay = "dinah/howsthis";
+							if (voiceroll == 3) voiceplay = "dinah/playtimeisover";
+							if (voiceroll == 4) voiceplay = "dinah/thiswillendit";
+							if (voiceroll == 5) voiceplay = "dinah/thiswillhurt";
+							if (exex_dinahextravoices) player.mo.A_StartSound(voiceplay,CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+						}
+					}
+				}
+				//if (CountInv("MysteryItem")) wutthis = true;
 				double shotangle = 0;
 				double shotangleend = 0;
 				double shotangleinc = 0;
