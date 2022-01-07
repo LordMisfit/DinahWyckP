@@ -604,7 +604,16 @@ class DDPlayerPawn : PlayerPawn
 			if (dydudebug_playerdamagemobj) Console.Printf("Armor SavePercent: %.8f, Tier: %d", savepercent, armortier);
 		}
 		
+		bool SigilDrain;
 		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Step 1] - Base: %d", damage);
+		if (mod == 'Sigil' && source == null && inflictor == self && flags & DMG_NO_ARMOR)
+		{
+			flags |= DMG_NO_PROTECT;
+			flags |= DMG_NO_ENHANCE;
+			SigilDrain = true;
+			if (dydudebug_playerdamagemobj) Console.Printf("SigilDrain"); 
+		}
+		
 		if (mod != 'Slime' || 
 				mod != 'Magma' || 
 				mod != 'Crush' || 
@@ -626,9 +635,11 @@ class DDPlayerPawn : PlayerPawn
 			}
 			else
 			{
-				damage = ceil(damage * 1.125);
+				if (SigilDrain) { }
+				else damage = ceil(damage * 1.125);
 			}
-			if (CountInv("DoingSpinAttack")) damage *= 0.25;
+			if (SigilDrain) { }
+			else if (CountInv("DoingSpinAttack")) damage *= 0.25;
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Step 1b]: %d", damage);
 		}
 		else
@@ -636,11 +647,13 @@ class DDPlayerPawn : PlayerPawn
 				mod == 'Poison' || 
 				mod == 'PoisonCloud' || 
 				mod == 'Eldritch' || 
-				mod == 'Sigil' || 
+				mod == 'Sigil' ||
 				mod == 'SpectralLow')
 		{
-			damage = ceil(damage * 0.875);
-			if (CountInv("DoingSpinAttack")) damage *= 0.25;
+			if (SigilDrain) { }
+			else damage = ceil(damage * 0.875);
+			if (SigilDrain) { }
+			else if (CountInv("DoingSpinAttack")) damage *= 0.25;
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage (non-normal base) [Step 1b]: %d", damage);
 		}
 		else
@@ -649,7 +662,8 @@ class DDPlayerPawn : PlayerPawn
 				mod == 'Crush' || 
 				mod == 'Falling')
 		{
-			damage = ceil(damage * frandompick(0.75,0.875,0.875,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.125,1.125,1.25));
+			if (SigilDrain) { }
+			else damage = ceil(damage * frandompick(0.75,0.875,0.875,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.125,1.125,1.25));
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage (misc base) [Step 1b]: %d", damage);
 		}
 		
@@ -862,7 +876,7 @@ class DDPlayerPawn : PlayerPawn
 		}
 		
 		// Berserk Effects
-		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD") && !SigilDrain)
 		{
 			olddmg = damage;
 			if (mod == 'Falling') damage = ceil(damage * frandom(0.625,0.75));
@@ -871,7 +885,7 @@ class DDPlayerPawn : PlayerPawn
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Berserk Effects]: %d", damage, olddmg);
 		}
 		
-		if (CountInv("PlayerDashing"))
+		if (CountInv("PlayerDashing") && !SigilDrain)
 		{
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Dashing Avoids Damage]");
 			return 0;
@@ -895,6 +909,7 @@ class DDPlayerPawn : PlayerPawn
 		{
 			if (bINVULNERABLE || player.cheats & CF_GODMODE2 || player.cheats & CF_GODMODE || CountInv("PowerInvulnDD") || CountInv("PowerInvulnerable"))
 			{ 
+				if (SigilDrain) damage = 0;
 				A_StartSound("Player/TookNoDamageInvuln",199,CHANF_DEFAULT,frandom(0.5,0.75),ATTN_NORM);
 				isinvuln = true;
 			}
@@ -976,11 +991,14 @@ class DDPlayerPawn : PlayerPawn
 				if (oldhealthratio == 4) base *= 2.25;
 				if (oldhealth > 1 && health == 1) base *= 3.25;
 				base *= (0.125 + (MiscItem.PlayerLevel * 0.00125) + (MiscItem.PlayerLUCK * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
+				double basef = base;
+				if (SigilDrain) base *= frandompick(1.5,1.75,1.75,2,2,2,2.25,2.25,2.5);
 				if (base <= 0.01) base = 0.01;
-				if (base) 
+				if (basef <= 0.01) basef = 0.01;
+				if (base)
 				{
-					if (MiscItem.IPTimer1 > 0) MiscItem.IPTimer1 = (-350 * base);
-																else MiscItem.IPTimer1 += (-350 * base);
+					if (MiscItem.IPTimer1 > 0) MiscItem.IPTimer1 = (-350 * basef);
+																else MiscItem.IPTimer1 += (-350 * basef);
 					MiscItem.ItemPoints += base;
 					globalvars.ItemPoints += base;
 					if (exex_playerdmglog) Console.Printf("\c[red]IP Gained!");
