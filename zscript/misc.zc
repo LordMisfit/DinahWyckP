@@ -422,6 +422,13 @@ class PlayerStatItem : Inventory
 					{
 						MedCurrLvl += 1;
 						
+						int oldhealthratio;
+						int oldhealth = owner.health;
+						if (owner.CountInv("NormalHealth")) oldhealthratio = 0;
+						if (owner.CountInv("DecentHealth")) oldhealthratio = 1;
+						if (owner.CountInv("LowHealth")) oldhealthratio = 2;
+						if (owner.CountInv("CriticalHealth")) oldhealthratio = 3;
+						
 						LevelUpProcess();
 						
 						string LevelUpMsg = "";
@@ -439,6 +446,46 @@ class PlayerStatItem : Inventory
 						owner.A_SetBlend("8a e1 01",0.334,random(32,33));
 						owner.health /= 2;
 						if (owner.health < 0) owner.health = 1;
+
+						double base;
+						if (exex_ikaripointscalctype == 1)
+						{
+							base = (oldhealth - owner.health) * 100.0 / oldhealth; // % of remaining HP removed
+							if (base >= 0.001)
+							{
+								if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
+								if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
+								if (base >= 65.001 && base <= 75.000) base *= 0.646154;
+								if (base >= 75.001 && base <= 85.000) base *= 0.76; 
+								if (base >= 85.001 && base <= 90.000) base *= 0.90; 
+								if (base >= 90.001 && base <= 100.000) base *= 1.00; 
+								if (base >= 100.001) base *= 1.25;
+								//if (oldhealth > 1 && owner.health == 1) base += MaxItemPoints;
+							}
+						}
+						else
+						{
+							base = (oldhealth - owner.health) * 100.0 / MaxHealthTrue;
+							if (oldhealthratio == 0) base *= 1.0;
+							if (oldhealthratio == 1) base *= 1.125;
+							if (oldhealthratio == 2) base *= 1.25;
+							if (oldhealthratio == 3) base *= 1.5;
+							if (oldhealthratio == 4) base *= 2.25;
+							if (oldhealth > 1 && owner.health == 1) base *= 3.25;
+							//base *= (0.125 + (MiscItem.PlayerLevel * 0.00125) + (MiscItem.PlayerLUCK * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
+						}
+						double basef = base;
+						if (base <= 0.01) base = 0.01;
+						if (basef <= 0.01) basef = 0.01;
+						if (base)
+						{
+							if (IPTimer1 > 0) IPTimer1 = (-350 * basef);
+													 else IPTimer1 += (-350 * basef);
+							ItemPoints += base;
+							globalvars.ItemPoints += base;
+							if (exex_playerdmglog) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
+						}
+						
 					}
 				}
 
