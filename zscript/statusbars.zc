@@ -118,6 +118,8 @@ class DDStatusBarMain : BaseStatusBar
 	// Except for the placement information this gets all info from the struct that gets passed in.
 	void DrawInventoryBar(InventoryBarState parms, Vector2 position, int numfields, int flags = 0, double bgalpha = 1.)
 	{
+		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+		
 		Font fnt = "INDEXFONT_DD";
 		parms.amountfont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
 		parms.box = TexMan.CheckForTexture("ARTIBOXD", TexMan.TYPE_MiscPatch);
@@ -157,6 +159,7 @@ class DDStatusBarMain : BaseStatusBar
 		cplayerpawn = DDPlayerPawn(CPlayer.mo);
 		for(item = CPlayer.mo.InvFirst; item != NULL && i < numfields; item = item.NextInv())
 		{
+			// Main Icons
 			for(int j = 0; j < 2; j++)
 			{
 				if (j ^ !!(flags & DI_DRAWCURSORFIRST))
@@ -241,6 +244,132 @@ class DDStatusBarMain : BaseStatusBar
 				}
 			}
 			
+			// IP Icons
+			if (exex_ikaripointsenabled)
+			{
+				string ipicon = "IPICONUN";
+				vector2 IPIconPos = (boxsize.X * i, 0) + (324, -25); // (324, -24)
+				bool hasipicon = false;
+				int canuseipatk = 0;
+				int ipicontimer = level.time % 8;
+				int ipiconspeed = 1;
+				int ipiconbuttpressed = 0;
+				if (cplayerpawn)
+				{
+					if (cplayerpawn.buttons & BT_ZOOM) ipiconbuttpressed++;
+					if (cplayerpawn.buttons & BT_USE) ipiconbuttpressed++;
+					if (cplayerpawn.buttons & BT_SPEED) ipiconbuttpressed++;
+					if (ipiconbuttpressed >= 2) ipiconspeed = 2;
+				}
+				if (MiscItem)
+				{
+					if (item is "CherryBombPickup" && item.Amount > 0)
+					{
+						hasipicon = true;
+						canuseipatk = 0;
+						if (skill == 0 && MiscItem.ItemPoints >= 50.0) canuseipatk = 2;
+						else if (skill == 0 && MiscItem.ItemPoints >= 25.0) canuseipatk = 1;
+						else if (skill == 1 && MiscItem.ItemPoints >= 55.0) canuseipatk = 2;
+						else if (skill == 1 && MiscItem.ItemPoints >= 27.5) canuseipatk = 1;
+						else if (skill == 2 && MiscItem.ItemPoints >= 60.0) canuseipatk = 2;
+						else if (skill == 2 && MiscItem.ItemPoints >= 30.0) canuseipatk = 1;
+						else if (skill == 3 && MiscItem.ItemPoints >= 65.0) canuseipatk = 2;
+						else if (skill == 3 && MiscItem.ItemPoints >= 32.5) canuseipatk = 1;
+						else if (skill == 4 && MiscItem.ItemPoints >= 70.0) canuseipatk = 2;
+						else if (skill == 4 && MiscItem.ItemPoints >= 35.0) canuseipatk = 1;
+					}
+					if (item is "SpinnerPickup" && item.Amount > 0)
+					{
+						hasipicon = true;
+						canuseipatk = 0;
+						if (skill == 0 && MiscItem.ItemPoints >= 80.0) canuseipatk = 2;
+						else if (skill == 0 && MiscItem.ItemPoints >= 40.0) canuseipatk = 1;
+						else if (skill == 1 && MiscItem.ItemPoints >= 90.0) canuseipatk = 2;
+						else if (skill == 1 && MiscItem.ItemPoints >= 45.0) canuseipatk = 1;
+						else if (skill == 2 && MiscItem.ItemPoints >= 100.0) canuseipatk = 2;
+						else if (skill == 2 && MiscItem.ItemPoints >= 50.0) canuseipatk = 1;
+						else if (skill == 3 && MiscItem.ItemPoints >= 110.0) canuseipatk = 2;
+						else if (skill == 3 && MiscItem.ItemPoints >= 55.0) canuseipatk = 1;
+						else if (skill == 4 && MiscItem.ItemPoints >= 120.0) canuseipatk = 2;
+						else if (skill == 4 && MiscItem.ItemPoints >= 60.0) canuseipatk = 1;
+					}
+
+					// Shows the Proper Icon if the above meets criteria
+					if (hasipicon) 
+					{
+						if (canuseipatk) 
+						{
+							if (ipiconspeed <= 1) ipicon = "IPICON1U";
+							if (ipiconspeed >= 2) ipicon = "IPICON2U";
+							if (canuseipatk == 1)
+							{
+								if (ipiconspeed == 1)
+								{
+									ipicontimer = level.time % 32;
+									if (ipicontimer >= 0 && ipicontimer <= 7) IPIconPos += (0, 0);
+									if (ipicontimer >= 8 && ipicontimer <= 15) IPIconPos += (1, 0);
+									if (ipicontimer >= 16 && ipicontimer <= 23) IPIconPos += (1, 1);
+									if (ipicontimer >= 24 && ipicontimer <= 31) IPIconPos += (0, 1);
+								}
+								else
+								{
+									ipicontimer = level.time % 24;
+									if (ipicontimer >= 0 && ipicontimer <= 5) IPIconPos += (0, 0);
+									if (ipicontimer >= 6 && ipicontimer <= 11) IPIconPos += (1, 0);
+									if (ipicontimer >= 12 && ipicontimer <= 17) IPIconPos += (1, 1);
+									if (ipicontimer >= 18 && ipicontimer <= 23) IPIconPos += (0, 1);
+								}
+							}
+							if (canuseipatk == 2)
+							{
+								if (ipiconspeed == 1)
+								{
+									ipicontimer = level.time % 16;
+									if (ipicontimer >= 0 && ipicontimer <= 3) IPIconPos += (0, 0);
+									if (ipicontimer >= 4 && ipicontimer <= 7) IPIconPos += (1, 0);
+									if (ipicontimer >= 8 && ipicontimer <= 11) IPIconPos += (1, 1);
+									if (ipicontimer >= 12 && ipicontimer <= 15) IPIconPos += (0, 1);
+								}
+								else
+								{
+									ipicontimer = level.time % 12;
+									if (ipicontimer >= 0 && ipicontimer <= 2) IPIconPos += (0, 0);
+									if (ipicontimer >= 3 && ipicontimer <= 5) IPIconPos += (1, 0);
+									if (ipicontimer >= 6 && ipicontimer <= 8) IPIconPos += (1, 1);
+									if (ipicontimer >= 9 && ipicontimer <= 11) IPIconPos += (0, 1);
+								}
+							}
+							if (canuseipatk >= 3)
+							{
+								if (ipiconspeed == 1)
+								{
+									ipicontimer = level.time % 8;
+									if (ipicontimer >= 0 && ipicontimer <= 1) IPIconPos += (0, 0);
+									if (ipicontimer >= 2 && ipicontimer <= 3) IPIconPos += (1, 0);
+									if (ipicontimer >= 4 && ipicontimer <= 5) IPIconPos += (1, 1);
+									if (ipicontimer >= 6 && ipicontimer <= 7) IPIconPos += (0, 1);
+								}
+								else
+								{
+									ipicontimer = level.time % 4;
+									if (ipicontimer == 0) IPIconPos += (0, 0);
+									if (ipicontimer == 1) IPIconPos += (1, 0);
+									if (ipicontimer == 2) IPIconPos += (1, 1);
+									if (ipicontimer == 3) IPIconPos += (0, 1);
+								}
+							}
+						}
+						else
+						{
+							ipicon = "IPICONUN";
+						}
+						DrawImage(ipicon, IPIconPos, DI_ITEM_CENTER);
+						//Console.Printf("x: %d, y: %d", IPIconPos.x, IPIconPos.y);
+					}
+				}
+			}
+			
+			// Amount & Limits
 			int textsize = 1;
 			if (parms.amountfont != null && (item.Amount >= 0 || (flags & DI_ALWAYSSHOWCOUNTERS)))
 			{
@@ -972,40 +1101,43 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			
 			//IP
-			int IPx;
-			int IPy;
 			let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
-			int ItemPoints;
-			string IPPts = "";
-			int IPDigits;
-			int IPdigitcolor = 0;
-			int IPdigittimer = level.time % 30;
-			if (MiscItem.ItemPoints >= MiscItem.MaxItemPoints)
+			if (exex_ikaripointsenabled)
 			{
-				//Console.Printf("IPdigittimer: %d", IPdigittimer);
-				if (IPdigittimer >= 0 && IPdigittimer <= 4) IPdigitcolor = font.cr_red;
-				if (IPdigittimer >= 5 && IPdigittimer <= 9) IPdigitcolor = font.cr_brick;
-				if (IPdigittimer >= 10 && IPdigittimer <= 14) IPdigitcolor = font.cr_orange;
-				if (IPdigittimer >= 15 && IPdigittimer <= 19) IPdigitcolor = font.cr_fire;
-				if (IPdigittimer >= 20 && IPdigittimer <= 24) IPdigitcolor = font.cr_orange;
-				if (IPdigittimer >= 25 && IPdigittimer <= 29) IPdigitcolor = font.cr_brick;
-			}
-			else IPdigitcolor = font.cr_red;
-			
-			if (MiscItem) 
-			{
-				ItemPoints = MiscItem.ItemPoints;
-				IPPts.AppendFormat("%.1f", ItemPoints);
+				int IPx;
+				int IPy;
+				int ItemPoints;
+				string IPPts = "";
+				int IPDigits;
+				int IPdigitcolor = 0;
+				int IPdigittimer = level.time % 30;
+				if (MiscItem.ItemPoints >= MiscItem.MaxItemPoints)
+				{
+					//Console.Printf("IPdigittimer: %d", IPdigittimer);
+					if (IPdigittimer >= 0 && IPdigittimer <= 4) IPdigitcolor = font.cr_red;
+					if (IPdigittimer >= 5 && IPdigittimer <= 9) IPdigitcolor = font.cr_brick;
+					if (IPdigittimer >= 10 && IPdigittimer <= 14) IPdigitcolor = font.cr_orange;
+					if (IPdigittimer >= 15 && IPdigittimer <= 19) IPdigitcolor = font.cr_fire;
+					if (IPdigittimer >= 20 && IPdigittimer <= 24) IPdigitcolor = font.cr_orange;
+					if (IPdigittimer >= 25 && IPdigittimer <= 29) IPdigitcolor = font.cr_brick;
+				}
+				else IPdigitcolor = font.cr_red;
+				
+				if (MiscItem) 
+				{
+					ItemPoints = MiscItem.ItemPoints;
+					IPPts.AppendFormat("%.1f", ItemPoints);
 
-				digx = 116 + (digits * spacing); // / 48
-				digy = -82; // -82 / -132
-				DrawString(mDDLFont, FormatNumber(ItemPoints, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				digx += 11;
-				digy += 3;
-				DrawString(mConFont, "%", (digx, digy), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				digx -= 11;
-				digy -= 11;
-				DrawString(mSmallFont, "IP", (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					digx = 116 + (digits * spacing); // / 48
+					digy = -82; // -82 / -132
+					DrawString(mDDLFont, FormatNumber(ItemPoints, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					digx += 11;
+					digy += 3;
+					DrawString(mConFont, "%", (digx, digy), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					digx -= 11;
+					digy -= 11;
+					DrawString(mSmallFont, "IP", (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				}
 			}
 
 			
