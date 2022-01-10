@@ -4924,8 +4924,8 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 			SCEP A 1 bright;
 			SCEP B 1
 			{
-				A_FireProjectile("miniZapShot",0,0,48,0);
-				A_FireProjectile("miniZapShot",0,0,-48,0);
+				A_FireProjectile("MiniZapShot",0,0,48,0);
+				A_FireProjectile("MiniZapShot",0,0,-48,0);
 			}
 			SCEP C 1 bright;
 			SCEP B 1 bright 
@@ -4939,9 +4939,9 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 			}
 			SCEP D 6 bright
 			{
-				A_FireProjectile("miniZapShot",0,0,48,0);
-				A_FireProjectile("miniZapShot",0,0,-48,0);
-				A_FireProjectile("miniZapShot",0,0,0,40);
+				A_FireProjectile("MiniZapShot",0,0,48,0);
+				A_FireProjectile("MiniZapShot",0,0,-48,0);
+				A_FireProjectile("MiniZapShot",0,0,0,40);
 				A_FireProjectile("ZapShot",0,0,0,0);
 				A_TakeInventory("PikeAmmo",1);
 			}
@@ -5069,7 +5069,20 @@ class ZapShot : DDFastProjectile
 			ZBUL ABCD 3 Bright;
 			loop;
 		Death:
-			ZBUX A 4 Bright A_Explode;
+			ZBUX A 4 Bright 
+			{
+				int noselfaoecnc = 8;
+				int minfullrad = 32;
+				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+				if (MiscItem)
+				{
+					noselfaoecnc = 8 + (MiscItem.PlayerLevel * 0.6667);
+					minfullrad = 32 + (MiscItem.PlayerLevel * 1.3334);
+				}
+				bool noselfaoe = false;
+				if (random(1,256) <= noselfaoecnc) noselfaoe = true;
+				A_Explode(128,128,noselfaoe,true,minfullrad);
+			}
 			ZBUX BCD 4 Bright;
 			stop;
 	}
@@ -5099,7 +5112,22 @@ class MiniZapShot : DDFastProjectile
 			ZBUL ABCD 3 Bright;
 			loop;
 		Death:
-			ZBUX A 3 Bright;
+			ZBUX A 3 Bright
+			{
+				int noselfaoecnc = 8;
+				int aoechance = 8;
+				int minfullrad = 8;
+				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+				if (MiscItem)
+				{
+					noselfaoecnc = 8 + (MiscItem.PlayerLevel * 0.6667);
+					aoechance = 8 + (MiscItem.PlayerLevel * 0.1667);
+					minfullrad = 8 + (MiscItem.PlayerLevel * 0.3334);
+				}
+				bool noselfaoe = false;
+				if (random(1,256) <= noselfaoecnc) noselfaoe = true;
+				if (random(1,256) <= aoechance) A_Explode(32,32,noselfaoe,true,minfullrad);
+			}
 			ZBUX BCD 3 Bright;
 			stop;
 	}
@@ -5120,7 +5148,7 @@ class BadZapshot : Zapshot
 			ZBUL ABCD 3 Bright;
 			loop;
 		Death:
-			ZBUX A 4 Bright ;
+			ZBUX A 4 Bright;
 			ZBUX BCD 4 Bright;
 			stop;
 	}

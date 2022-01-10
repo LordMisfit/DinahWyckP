@@ -1,5 +1,160 @@
 // The Almighty Sigil from Strife! :V ------------------------------------------------------
 
+class SigilPickup : CustomInventoryExt 
+{
+	bool PlayerHasSigil;
+	int SigilPiecesFound;
+	actor plysigl;
+	default
+	{
+		Scale 0.5;
+		Tag "$TAG_SIGIL"; // "SIGIL"
+		Inventory.Icon "I_SGL1";
+		Inventory.PickupMessage "You've acquired a piece of the \czSigil of The One God\c- \cx[Slot 8]\c-!";
+		Inventory.PickupSound "weapons/sigilcharge";
+		+DONTGIB;
+		+FLOORCLIP;
+		+FLOATBOB;
+	}
+	
+	override void Tick()
+	{
+		PlayerHasSigil = false;
+		plysigl = players[0].mo.FindInventory("SigilDD");
+		if (plysigl) 
+		{
+			PlayerHasSigil = true;
+			SigilPiecesFound = plysigl.health;
+		}
+		super.Tick();
+	}
+	
+	States
+	{
+		Spawn:
+			SIGL B 0 NoDelay;
+			SIGL B 1
+			{
+				if (invoker.SigilPiecesFound == 5) { Thing_Remove(0); }
+				else if (invoker.SigilPiecesFound == 4) { return resolvestate("Piece5"); }
+				else if (invoker.SigilPiecesFound == 3) { return resolvestate("Piece4"); }
+				else if (invoker.SigilPiecesFound == 2) { return resolvestate("Piece3"); }
+				else if (invoker.SigilPiecesFound == 1) { return resolvestate("Piece2"); }
+				else { return resolvestate("Piece1"); }
+				return resolvestate(null);
+			}
+			loop;
+		Piece1:
+			SGLP AAAA 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 0) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			SGPG AAAA 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 0) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			goto Spawn;
+		Piece2:
+			SGLP BBBB 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 1) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			SGPG BBBB 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 1) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			goto Spawn;
+		Piece3:
+			SGLP DDDD 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 2) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			SGPG DDDD 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 2) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			goto Spawn;
+		Piece4:
+			SGLP CCCC 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 3) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			SGPG CCCC 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 3) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			goto Spawn;
+		Piece5:
+			SGLP EEEE 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 4) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			SGPG EEEE 1 bright
+			{
+				A_SetTics(random(2,3));
+				if (invoker.SigilPiecesFound != 4) { return resolvestate("Spawn"); }
+				return resolvestate(null);
+			}
+			goto Spawn;
+		Pickup:
+			TNT1 A 0
+			{
+				if (invoker.SigilPiecesFound == 0)
+				{ 
+					A_SetInventory("Sigil1DD", 1, AAPTR_PLAYER1);
+					return resolvestate("Success");
+				}
+				if (invoker.SigilPiecesFound == 1)
+				{ 
+					A_SetInventory("Sigil2DD", 1, AAPTR_PLAYER1);
+					return resolvestate("Success");
+				}
+				if (invoker.SigilPiecesFound == 2)
+				{ 
+					A_SetInventory("Sigil3DD", 1, AAPTR_PLAYER1);
+					return resolvestate("Success");
+				}
+				if (invoker.SigilPiecesFound == 3)
+				{ 
+					A_SetInventory("Sigil4DD", 1, AAPTR_PLAYER1);
+					return resolvestate("Success");
+				}
+				if (invoker.SigilPiecesFound == 4)
+				{ 
+					A_SetInventory("Sigil5DD", 1, AAPTR_PLAYER1);
+					return resolvestate("Success");
+				}
+				return resolvestate(null);
+			}
+			Fail;
+		Success:
+			TNT1 A 0
+			{
+				A_SetInventory("SigilModeType",(invoker.SigilPiecesFound+1));
+				Thing_Remove(0);
+			}
+			stop;
+	}
+}
+
 class SigilDD : DinahWeapon replaces Sigil
 {
 	// NUmPieces gets stored in 'health', so that it can be quickly accessed by ACS's GetSigilPieces function.
@@ -248,34 +403,34 @@ class SigilDD : DinahWeapon replaces Sigil
 			TNT1 A 0 A_JumpIf(CountInv("SigilModeType",AAPTR_PLAYER1) == 2, "Fire2");
 			TNT1 A 0 A_JumpIf(CountInv("SigilModeType",AAPTR_PLAYER1) <= 1, "Fire1");
 		Fire1:
-			DSGH A 18 Bright A_SigilCharge;
-			DSGH A 3 Bright A_GunFlash;
-			DSGH A 10 A_FireSigil1;
-			DSGH A 5;
+			DSGH A 18 Bright A_SigilCharge(18);
+			DSGH A 3 Bright A_GunFlashSigil(3);
+			DSGH A 10 A_FireSigil1(10);
+			DSGH A 5 A_EndSigilFire(5);
 			Goto Ready;
 		Fire2:
-			DSGH B 18 Bright A_SigilCharge;
-			DSGH B 3 Bright A_GunFlash;
-			DSGH B 10 A_FireSigil2;
-			DSGH B 5;
+			DSGH B 18 Bright A_SigilCharge(18);
+			DSGH B 3 Bright A_GunFlashSigil(3);
+			DSGH B 10 A_FireSigil2(10);
+			DSGH B 5 A_EndSigilFire(5);
 			Goto Ready;
 		Fire3:
-			DSGH C 18 Bright A_SigilCharge;
-			DSGH C 3 Bright A_GunFlash;
-			DSGH C 10 A_FireSigil3;
-			DSGH C 5;
+			DSGH C 18 Bright A_SigilCharge(18);
+			DSGH C 3 Bright A_GunFlashSigil(3);
+			DSGH C 10 A_FireSigil3(10);
+			DSGH C 5 A_EndSigilFire(5);
 			Goto Ready;
 		Fire4:
-			DSGH D 18 Bright A_SigilCharge;
-			DSGH D 3 Bright A_GunFlash;
-			DSGH D 10 A_FireSigil4;
-			DSGH D 5;
+			DSGH D 18 Bright A_SigilCharge(18);
+			DSGH D 3 Bright A_GunFlashSigil(3);
+			DSGH D 10 A_FireSigil4(10);
+			DSGH D 5 A_EndSigilFire(5);
 			Goto Ready;
 		Fire5:
-			DSGH E 18 Bright A_SigilCharge;
-			DSGH E 3 Bright A_GunFlash;
-			DSGH E 10 A_FireSigil5;
-			DSGH E 5;
+			DSGH E 18 Bright A_SigilCharge(18);
+			DSGH E 3 Bright A_GunFlashSigil(3);
+			DSGH E 10 A_FireSigil5(10);
+			DSGH E 5 A_EndSigilFire(5);
 			Goto Ready;
 		Flash:
 			DSGF A 4 Bright A_Light2;
@@ -339,7 +494,7 @@ class SigilDD : DinahWeapon replaces Sigil
 	// many pieces it represents.
 	//
 	//============================================================================
-
+	
 	void A_SelectPiece ()
 	{
 		int pieces = min (health, 5);
@@ -425,13 +580,35 @@ class SigilDD : DinahWeapon replaces Sigil
 		if (pspr) pspr.SetState(pspr.CurState + (4 * invoker.health - 3));
 	}
 
+	//
+	//
+	//
+	action void A_SigilFireTics(int ticduration, double levelfactor = 0.075)
+	{
+		if (Player.mo.FindInventory("PowerStrength") || Player.mo.FindInventory("PowerStrengthDD")) ticduration *= frandompick(0.875,1.0);
+		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+		if (MiscItem) ticduration -= (MiscItem.PlayerLevel * levelfactor);
+		A_SetTics(ticduration);
+	}
+
+	action void A_EndSigilFire(int ticduration)
+	{
+		A_SigilFireTics(ticduration,0.025);
+	}
+	
+	action void A_GunFlashSigil(int ticduration)
+	{
+		A_SigilFireTics(ticduration,0.015);
+		A_GunFlash();
+	}
+
 	//============================================================================
 	//
 	// A_SigilCharge
 	//
 	//============================================================================
 
-	action void A_SigilCharge()
+	action void A_SigilCharge(int ticduration)
 	{
 		invoker.basedrain = (0.03 * Player.mo.CountInv("PlayerMaxHP"));
 		if (invoker.basedrain < 1) invoker.basedrain = 1;
@@ -441,6 +618,8 @@ class SigilDD : DinahWeapon replaces Sigil
 		{
 			player.extralight = 2;
 		}
+		
+		A_SigilFireTics(ticduration,0.125);
 	}
 
 	//============================================================================
@@ -449,7 +628,7 @@ class SigilDD : DinahWeapon replaces Sigil
 	//
 	//============================================================================
 
-	action void A_FireSigil1 ()
+	action void A_FireSigil1(int ticduration)
 	{
 		Actor spot = null;
 		FTranslatedLineTarget t;
@@ -482,6 +661,8 @@ class SigilDD : DinahWeapon replaces Sigil
 			spot.SetFriendPlayer(player);
 			spot.target = self;
 		}
+		
+		A_SigilFireTics(ticduration,0.075);
 	}
 
 	//============================================================================
@@ -490,7 +671,7 @@ class SigilDD : DinahWeapon replaces Sigil
 	//
 	//============================================================================
 
-	action void A_FireSigil2 ()
+	action void A_FireSigil2(int ticduration)
 	{
 		if (player == null || player.ReadyWeapon == null)
 			return;
@@ -498,6 +679,8 @@ class SigilDD : DinahWeapon replaces Sigil
 		DamageMobj (self, null, 2*invoker.basedrain, 'Sigil', DMG_NO_ARMOR);
 		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 		SpawnPlayerMissile ("SpectralLightningH1");
+		
+		A_SigilFireTics(ticduration,0.075);
 	}
 
 	//============================================================================
@@ -506,7 +689,7 @@ class SigilDD : DinahWeapon replaces Sigil
 	//
 	//============================================================================
 
-	action void A_FireSigil3 ()
+	action void A_FireSigil3(int ticduration)
 	{
 		if (player == null || player.ReadyWeapon == null)
 			return;
@@ -525,6 +708,8 @@ class SigilDD : DinahWeapon replaces Sigil
 			}
 		}
 		angle -= 90.;
+		
+		A_SigilFireTics(ticduration,0.075);
 	}
 
 	//============================================================================
@@ -533,7 +718,7 @@ class SigilDD : DinahWeapon replaces Sigil
 	//
 	//============================================================================
 
-	action void A_FireSigil4 ()
+	action void A_FireSigil4(int ticduration)
 	{
 		FTranslatedLineTarget t;
 		
@@ -560,6 +745,8 @@ class SigilDD : DinahWeapon replaces Sigil
 				spot.VelFromAngle(spot.Speed, angle);
 			}
 		}
+		
+		A_SigilFireTics(ticduration,0.075);
 	}
 
 	//============================================================================
@@ -568,7 +755,7 @@ class SigilDD : DinahWeapon replaces Sigil
 	//
 	//============================================================================
 
-	action void A_FireSigil5 ()
+	action void A_FireSigil5(int ticduration)
 	{
 		if (player == null || player.ReadyWeapon == null)
 			return;
@@ -577,6 +764,8 @@ class SigilDD : DinahWeapon replaces Sigil
 		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 
 		SpawnPlayerMissile ("SpectralLightningBigBall1");
+		
+		A_SigilFireTics(ticduration,0.075);
 	}
 
 	//============================================================================
