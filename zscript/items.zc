@@ -3368,50 +3368,150 @@ class KilletanteEffigy : Inventory
 	
 	override bool Use (bool pickup)
 	{
+		int buttons = GetPlayerInput(INPUT_BUTTONS,AAPTR_PLAYER1);
+		let MiscItem = PlayerStatItem(owner.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+				
+		bool wutthis = false;
+		int buttonspressed = 0;
+		if (buttons & BT_USE) buttonspressed++;
+		if (buttons & BT_ZOOM) buttonspressed++;
+		if (buttons & BT_SPEED) buttonspressed++;
+		//Console.Printf("%d, %d", exex_ikaripointsenabled, buttonspressed);
+		if (exex_ikaripointsenabled && MiscItem && globalvars && buttonspressed >= 2)
+		{
+			double cost;
+			if (skill <= 0) cost = 64.0;
+			if (skill == 1) cost = 72.0;
+			if (skill == 2) cost = 80.0;
+			if (skill == 3) cost = 88.0;
+			if (skill == 4) cost = 96.0;
+			If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+			{
+				MiscItem.ItemPoints -= cost;
+				globalvars.ItemPoints -= cost;
+				wutthis = true;
+				if (random(1,10) <= 9)
+				{
+					int voiceroll = random(1,5);
+					string voiceplay;
+					if (voiceroll == 1) 
+					{
+						voiceplay = "dinah/ulikethis";
+						if (exex_dinahextravoices) Console.Printf("\c[gold]'YOU LIKE THIS!?'\c-");
+					}
+					if (voiceroll == 2) 
+					{
+						voiceplay = "dinah/howsthis";
+						if (exex_dinahextravoices) Console.Printf("\c[gold]'HOW'S... THIS!?'\c-");
+					}
+					if (voiceroll == 3) 
+					{
+						voiceplay = "dinah/playtimeisover";
+						if (exex_dinahextravoices) Console.Printf("\c[gold]'PLAYTIME IS OVER!!'\c-");
+					}
+					if (voiceroll == 4) 
+					{
+						voiceplay = "dinah/thiswillendit";
+						Console.Printf("\c[gold]'This will end it!!'\c-");
+					}
+					if (voiceroll == 5) 
+					{
+						voiceplay = "dinah/thiswillhurt";
+						Console.Printf("\c[gold]'This will hurt!!'\c-");
+					}
+					if (exex_dinahextravoices) owner.A_StartSound(voiceplay,CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+				}
+			}
+		}
+		//if (CountInv("MysteryItem")) wutthis = true;
+		double shotangle = 0;
+		double shotangleend = 0;
+		double shotangleinc = 90;
+		double origangle = owner.angle;
+		int maxshots = 1;
+		if (wutthis) // >.> <.<
+		{
+			shotangle = 0;
+			shotangleend = 0;
+			if (random(1,8) <= 1)
+			{
+				shotangleinc = 72;
+				maxshots = 5;
+			}
+			else
+			{
+				shotangleinc = 90;
+				maxshots = 4;
+			}
+		}
 		bool effective = false;
 		bool worked = false;
 		bool success;
 		actor summon;
+		DDCreature IPSummon;
 		KilletanteSoloist summon2;
 		//Console.Printf("Used Incant?");
+		double dist = 0;
+		dist = random(4,6) * random(2,3);
 		
 		actor pp = actor(Owner);
 		if (pp != null && pp.health > 0)
 		{
-			//Console.Printf("Player Use Attempt [Incant]?");
-			[success, summon] = pp.A_SpawnItemEx("KilletanteSoloist",0,0,0,0.0,0.0,0.0,0,SXF_SETMASTER|SXF_SETTRACER|SXF_NOCHECKPOSITION);
-			if (summon && success)
+			if (wutthis) pp.A_SetAngle(angle+shotangle);
+			for (int i = 0; i < maxshots; i++)
 			{
-				//Console.Printf("Player Use Summon Attempt Phase 2 [Incant]?");
-				summon2 = KilletanteSoloist(summon);
-				if (summon2)
+				if (i && wutthis) pp.A_SetAngle(pp.angle+shotangleinc);
+				//Console.Printf("Player Use Attempt [Incant]?");
+				[success, summon] = pp.A_SpawnItemEx("KilletanteSoloist",dist,0,0,0.0,0.0,0.0,0,SXF_SETMASTER|SXF_SETTRACER|SXF_NOCHECKPOSITION);
+				if (summon && success)
 				{
-					//Console.Printf("Player Use Summon Attempt Phase 3 [Incant]?");
-					pp.A_SpawnItemEx("PlayerWhistle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
-					pp.A_SpawnItemEx("MinotaurSmoke",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
-					pp.A_StartSound("monstersummon", 161, CHANF_DEFAULT);
-					summon2.bFRIENDLY = true;
-					summon2.bNOBLOCKMONST = true;
-					summon2.bJUMPDOWN = true;
-					summon2.IncantSummon = true;
-					summon2.IncantSummonTimer = 1575; // summons her with FORTYFIVE seconds of time to exist
-					summon2.reactive1 = random(1312,1313); // summons her with FORTYFIVE seconds of buff to use against enemies
-					summon2.ChangeTID(1000);
-					worked = true;
-				}
-				else
-				{
-					//Console.Printf("Player Use Summon Attempt Fail");
-					summon.Destroy();
-					worked = false;
+					//Console.Printf("Player Use Summon Attempt Phase 2 [Incant]?");
+					summon2 = KilletanteSoloist(summon);
+					if (summon2)
+					{
+						//Console.Printf("Player Use Summon Attempt Phase 3 [Incant]?");
+						if (i == 0) pp.A_SpawnItemEx("PlayerWhistle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+						pp.A_SpawnItemEx("MinotaurSmoke",dist,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+						pp.A_StartSound("monstersummon", 161, CHANF_DEFAULT);
+						summon2.bFRIENDLY = true;
+						summon2.bNOBLOCKMONST = true;
+						summon2.bJUMPDOWN = true;
+						summon2.ChangeTID(1000);
+						summon2.IncantSummon = true;
+						if (wutthis)
+						{
+							summon2.health *= frandompick(0.875,1.0,1.125);
+							summon2.Speed *= frandompick(1.0,1.125,1.25);
+							summon2.Mass *= frandompick(1.25,1.5,1.75);
+							summon2.DamageFactor *= frandompick(0.50,0.625,0.75);
+							summon2.IncantSummonTimer = 15750;
+							summon2.reactive1 = 13125;
+							IPSummon = DDCreature(summon2);
+							if (IPSummon) IPSummon.IPAttackSummon = true;
+						}
+						else
+						{
+							summon2.IncantSummonTimer = 1575; // summons her with FORTYFIVE seconds of time to exist
+							summon2.reactive1 = random(1312,1313); // summons her with FORTYFIVE seconds of buff to use against enemies
+						}
+	
+						worked = true;
+					}
+					else
+					{
+						//Console.Printf("Player Use Summon Attempt Fail");
+						summon.Destroy();
+						worked = false;
+					}
 				}
 			}
-			
+			if (wutthis) pp.A_SetAngle(origangle);
+
 			if (worked)
 			{
 				//Console.Printf("Worked?");
-				pp.A_StartSound("MysticIncant", CHAN_ITEM);
-				pp.A_StartSound("Dinah/There", CHAN_VOICE,CHANF_DEFAULT,frandom(1.125,1.25));
+				if (!wutthis) pp.A_StartSound("Dinah/There", CHAN_VOICE,CHANF_DEFAULT,frandom(1.125,1.25));
 				effective = true;
 			}
 		}
