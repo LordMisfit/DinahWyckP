@@ -1907,7 +1907,94 @@ class SnakePickup : CustomInventoryExt
 			FSNK P -1;
 			Stop;
 		Use:
-			TNT1 A 0 A_ThrowGrenade("SnakeGrenade",4,16,3,0);
+			TNT1 A 0 
+			{
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+				let globalvars = DDGlobalVariables.Get();
+				
+				bool wutthis = false;
+				int buttonspressed = 0;
+				if (buttons & BT_USE) buttonspressed++;
+				if (buttons & BT_ZOOM) buttonspressed++;
+				if (buttons & BT_SPEED) buttonspressed++;
+				if (exex_ikaripointsenabled && MiscItem && globalvars && buttonspressed >= 2)
+				{
+					double cost;
+					if (skill <= 0) cost = 40.0;
+					if (skill == 1) cost = 45.0;
+					if (skill == 2) cost = 50.0;
+					if (skill == 3) cost = 55.0;
+					if (skill == 4) cost = 60.0;
+					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+					{
+						MiscItem.ItemPoints -= cost;
+						globalvars.ItemPoints -= cost;
+						wutthis = true;
+						if (random(1,11) <= 4)
+						{
+							int voiceroll = random(1,5);
+							string voiceplay;
+							if (voiceroll == 1) 
+							{
+								voiceplay = "dinah/ulikethis";
+								if (exex_dinahextravoices) Console.Printf("\c[gold]'YOU LIKE THIS!?'\c-");
+							}
+							if (voiceroll == 2) 
+							{
+								voiceplay = "dinah/howsthis";
+								if (exex_dinahextravoices) Console.Printf("\c[gold]'HOW'S... THIS!?'\c-");
+							}
+							if (voiceroll == 3) 
+							{
+								voiceplay = "dinah/playtimeisover";
+								if (exex_dinahextravoices) Console.Printf("\c[gold]'PLAYTIME IS OVER!!'\c-");
+							}
+							if (voiceroll == 4) 
+							{
+								voiceplay = "dinah/thiswillendit";
+								Console.Printf("\c[gold]'This will end it!!'\c-");
+							}
+							if (voiceroll == 5) 
+							{
+								voiceplay = "dinah/thiswillhurt";
+								Console.Printf("\c[gold]'This will hurt!!'\c-");
+							}
+							if (exex_dinahextravoices) player.mo.A_StartSound(voiceplay,CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+						}
+					}
+				}
+				//if (CountInv("MysteryItem")) wutthis = true;
+				double shotangle = 0;
+				double shotangleend = 0;
+				double shotangleinc = 0;
+				double origangle = angle;
+				int maxshots = 1;
+				if (wutthis) // >.> <.<
+				{
+					shotangle = -180;
+					shotangleend = 180;
+					shotangleinc = 30;
+					maxshots = 10;
+				}
+				if (wutthis) A_SetAngle(angle+shotangle);
+				bool success;
+				actor BombShots;
+				DDProjectile IPCompat;
+				for (int i = 0; i < maxshots; i++)
+				{
+					if (i && wutthis) A_SetAngle(angle+shotangleinc);
+					[success, BombShots] = A_ThrowGrenade("SnakeGrenade",4,16,3,0);
+					
+					if (BombShots && wutthis) 
+					{
+						IPCompat = DDProjectile(BombShots);
+						if (IPCompat) IPCompat.IPattack = true;
+					}
+					//Console.Printf("Angle: %.4f", angle);
+				}
+				if (wutthis) A_SetAngle(origangle);
+			}
 			Stop;
 	} 
 }
@@ -2483,6 +2570,7 @@ class SpinnerShot : DDProjectile
 				A_SpawnItemEx("Firetrail", 0, 0, 0, 0, 0, 0, 180, 128);
 				A_AlertMonsters();
 				A_StartSound("weapons/cherrywick",CHAN_7,CHANF_LOOPING);
+				if (IPAttack && random(1,32) <= 19) bFORCERADIUSDMG = true;
 			}
 			SPNR AABB 1 Bright 
 			{
@@ -2569,6 +2657,7 @@ class SpinnerShotIcy : SpinnerShot
 				A_SpawnItemEx("IceTrail", 0, 0, 0, 0, 0, 0, 180, 128);
 				A_AlertMonsters();
 				A_StartSound("weapons/cherrywick",CHAN_7,CHANF_LOOPING);
+				if (IPAttack && random(1,32) <= 19) bFORCERADIUSDMG = true;
 			}
 			SPNI AABB 1 Bright 
 			{

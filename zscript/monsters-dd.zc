@@ -4251,13 +4251,20 @@ class SugarSnake : DDCreature
 			FSNK A 2 A_Look();
 			Loop;
 		See:
-			FSNK AABBCCDD 3 A_Chase();
+			FSNK AABBCCDD 3 
+			{
+				A_Chase();
+				if (IPAttackSummon) A_SetTics(2);
+			}
 			Loop;
 		Missile:
 			FSNK B 5; //ACS_Execute(102,0,0,0,0);
 			FSNK B 5 A_FaceTarget();
 			FSNK B 0 A_AlertMonsters(1024,0);
-			FSNK BBB 4 A_SpawnProjectile("SnakeFireball",40);
+			FSNK BBB 4
+			{
+				A_SpawnProjectile("SnakeFireball",40);
+			}
 			Goto See;
 		Pain:
 			FSNK A 6 A_Pain();
@@ -4270,7 +4277,18 @@ class SugarSnake : DDCreature
 			CBOX A 6 Bright A_StartSound("weapons/cherryboom");
 			CBOX B 0 A_AlertMonsters();
 			CBOX B 6 Bright A_Explode();
-			CBOX CDE 6 Bright A_ThrowGrenade("SnakeMiniGrenade",2,random(2,6),random(8,16),0);
+			CBOX CDE 6 Bright 
+			{
+				bool success;
+				actor BombShots;
+				DDProjectile IPCompat;
+				[success, BombShots] = A_ThrowGrenade("SnakeMiniGrenade",2,random(2,6),random(8,16),0);
+				if (BombShots && IPAttackSummon) 
+				{
+					IPCompat = DDProjectile(BombShots);
+					if (IPCompat) IPCompat.IPattack = true;
+				}
+			}
 			Stop;
 	}
 }
@@ -4329,7 +4347,10 @@ class MiniSugarSnake : DDCreature
 			FSNK Z 5 A_NoBlocking();
 			CBOX A 6 Bright A_StartSound("weapons/cherryboom");
 			CBOX B 0 A_AlertMonsters();
-			CBOX B 6 Bright A_Explode();
+			CBOX B 6 Bright 
+			{
+				A_Explode();
+			}
 			CBOX CDE 6 Bright;
 			Stop;
 	}
@@ -4420,12 +4441,23 @@ class SnakeGrenade : DDProjectile
 			{
 				bool success;
 				actor summon;
+				DDCreature IPSummon;
 				[success, summon] = A_SpawnItemEX("SugarSnake",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
 				if (summon && success)
 				{
 					summon.bFRIENDLY = true;
 					summon.bNOBLOCKMONST = true;
 					summon.ChangeTID(1000);
+					if (IPAttack)
+					{
+						summon.health *= 2.5;
+						summon.Speed *= 1.25;
+						summon.Mass *= 1.5;
+						summon.DamageFactor *= 0.75;
+						summon.A_SetInventory("SnakeIPBuffAtk",1);
+						IPSummon = DDCreature(summon);
+						if (IPSummon) IPSummon.IPAttackSummon = true;
+					}
 				}
 			}
 			Stop;
@@ -4458,12 +4490,23 @@ class SnakeMiniGrenade : DDProjectile
 			{
 				bool success;
 				actor summon;
+				DDCreature IPSummon;
 				[success, summon] = A_SpawnItemEX("MiniSugarSnake",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
 				if (summon && success)
 				{
 					summon.bFRIENDLY = true;
 					summon.bNOBLOCKMONST = true;
 					summon.ChangeTID(1000);
+					if (IPAttack)
+					{
+						summon.health *= 2.5;
+						summon.Speed *= 1.25;
+						summon.Mass *= 1.5;
+						summon.DamageFactor *= 0.75;
+						summon.A_SetInventory("SnakeIPBuffAtk",1);
+						IPSummon = DDCreature(summon);
+						if (IPSummon) IPSummon.IPAttackSummon = true;
+					}
 				}
 			}
 			Stop;
