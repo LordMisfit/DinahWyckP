@@ -1,5 +1,6 @@
 class DDPlayerPawn : PlayerPawn
 {
+	int ipmodecooldowntimer;
 	bool isvoodoodoll;
 	int neverbleeds;
 	bool recalledall;
@@ -27,7 +28,9 @@ class DDPlayerPawn : PlayerPawn
 	double TotalAirControl;
 	double basexscale, baseyscale;
 	double scalexmulti, scaleymulti;
-
+	
+	mixin IPCostCheck;
+	
 	default
 	{
 		+CASTSPRITESHADOW;
@@ -331,14 +334,31 @@ class DDPlayerPawn : PlayerPawn
 			
 			// Check IP Buttons [general check for quick editing later across all definitions]
 			
+			if (ipmodecooldowntimer) ipmodecooldowntimer--;
 			int IPbuttonspressed = 0;
 			if (buttons & BT_USE) IPbuttonspressed++;
 			if (buttons & BT_ZOOM) IPbuttonspressed++;
 			if (buttons & BT_SPEED) IPbuttonspressed++;
 			if (exex_ikaripointsenabled)
 			{
-				if (IPbuttonspressed >= 2) A_SetInventory("IPUseMode",1);
-															else A_SetInventory("IPUseMode",0);
+				if (exex_ikaripointtechpresstype == 0)
+				{
+					if (IPbuttonspressed >= 2) A_SetInventory("IPUseMode",1);
+																else A_SetInventory("IPUseMode",0);
+				}
+				else
+				if (exex_ikaripointtechpresstype >= 1 && exex_ikaripointtechpresstype <= 2)
+				{
+					if (IPbuttonspressed >= 2) 
+					{
+						if (ipmodecooldowntimer <= 0)
+						{
+							ipmodecooldowntimer = random(9,12);
+							if (CountInv("IPUseMode")) A_SetInventory("IPUseMode",0);
+																		else A_SetInventory("IPUseMode",1);
+						}
+					}
+				}
 			}
 			else
 			{
