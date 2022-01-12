@@ -4,6 +4,7 @@ class DDPlayerPawn : PlayerPawn
 	bool isvoodoodoll;
 	int neverbleeds;
 	bool recalledall;
+	int ipchargesoundtimer;
 	
 	int lasthealth;
 	
@@ -321,6 +322,7 @@ class DDPlayerPawn : PlayerPawn
 			buttons = GetPlayerInput(INPUT_BUTTONS);
 			if (dydudebug_showvoodoodoll) Console.Printf("Player [Tick] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
 			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+			let globalvars = DDGlobalVariables.Get();
 			if (dydudebug_mapinfo)
 			{
 				Console.Printf("Player Age [tics]: %d, levelnum: \cx%d\c-, cluster: \cx%d\c-, clusterflags: \cx%d\c-, NextMap: \cy%s\c-, NextSecretMap: \cy%s\c-,\ntime: \cx%d\c-, maptime: \cx%d\c-, totaltime: \cx%d\c-, starttime: \cx%d\c-, partime: \cx%d\c-, sucktime: \cx%d\c-,\nlevelname: \cy%s\c-, mapname: \cy%s\c-, \ngravity: \cx%.8f\c-, aircontrol: \cx%.8f\c-, airfriction: \cx%.8f\c-, \cxTranslation #:\c- %d, \cyMapCheckSum:\cx %s", 
@@ -343,8 +345,14 @@ class DDPlayerPawn : PlayerPawn
 			{
 				if (exex_ikaripointtechpresstype == 0)
 				{
-					if (IPbuttonspressed >= 2) A_SetInventory("IPUseMode",1);
-																else A_SetInventory("IPUseMode",0);
+					if (IPbuttonspressed >= 2) 
+					{
+						A_SetInventory("IPUseMode",1);
+					}
+					else
+					{
+						A_SetInventory("IPUseMode",0);
+					}
 				}
 				else
 				if (exex_ikaripointtechpresstype >= 1 && exex_ikaripointtechpresstype <= 2)
@@ -364,6 +372,49 @@ class DDPlayerPawn : PlayerPawn
 			{
 				A_SetInventory("IPUseMode",0);
 			}
+			
+			// The "Charge" sound[s] that plays in a loop while IP mode is active and the one that plays when it disperses [thanks to LilWhiteMouse for the sounds from Wolfen, wherever she herself had found them] :V
+			double ipmodevol = 1.0;
+			double basevollvl = 0.25;
+			double ipmodepitch = 1.0;
+			if (MiscItem && globalvars)
+			{
+				ipmodevol = basevollvl + (double(MiscItem.ItemPoints / MiscItem.MaxItemPoints) * (1.0 - basevollvl));
+			}
+			if (dydudebug_ipdisplays) Console.Printf("ipmodevol: %.4f, ipmodepitch: %.4f", ipmodevol, ipmodepitch);
+			if (CountInv("IPUseMode"))
+			{
+				if (ipchargesoundtimer == 0)
+				{
+					if (MiscItem && globalvars)
+					{
+						ipmodevol = basevollvl + (double(MiscItem.ItemPoints / MiscItem.MaxItemPoints) * (1.0 - basevollvl));
+					}
+					A_StopSound(255);
+					A_StartSound("ipmode/start",255,CHANF_NOSTOP,ipmodevol,ATTN_NORM,ipmodepitch);
+				}
+				ipchargesoundtimer++;
+				if (ipchargesoundtimer >= 56)
+				{
+					int ipchargesoundtimer2 = ipchargesoundtimer % 56;
+					if (ipchargesoundtimer2 == 0) 
+					{
+						A_StopSound(255);
+						A_StartSound("ipmode/loop",255,CHANF_NOSTOP|CHANF_LOOPING,ipmodevol,ATTN_NORM,ipmodepitch);
+					}
+					if (dydudebug_ipdisplays) Console.Printf("ipchargesoundtimer2: %d / 55", ipchargesoundtimer2);
+				}
+			}
+			else
+			{
+				if (ipchargesoundtimer != 0)
+				{
+					ipchargesoundtimer = 0;
+					A_StopSound(255);
+					A_StartSound("ipmode/disperse",255,CHANF_DEFAULT,ipmodevol,ATTN_NORM,ipmodepitch);
+				}
+			}
+			if (dydudebug_ipdisplays) Console.Printf("ipchargesoundtimer: %d", ipchargesoundtimer);
 			
 			double fademax = 1.00;
 			if (health <= 0)
