@@ -569,12 +569,62 @@ class PlayerStatItem : Inventory
 					}
 					
 					// Check Item Points
+					int IPTimerInc = level.time % 1;
+					if (berserked)
+					{
+						double berserkIPGain;
+						berserkIPGain = 0.0025;
+						if (ItemPoints <= 100.0000)
+						{
+							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+							{
+								berserkIPGain += 0.0005;
+							}
+							else
+							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+							{
+								berserkIPGain += 0.00125;
+							}
+							else
+							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+							{
+								berserkIPGain += 0.003125;
+							}
+							else
+							if (ItemPoints <= 25.0000)
+							{
+								berserkIPGain += 0.0078125;
+							}
+						}
+						double BerIPMulti = (0.25 + (PlayerLevel * 0.03));
+						if (BerIPMulti >= 1.00 || PlayerLevel >= 25)
+						{
+							BerIPMulti = (1.00 + ((PlayerLevel - 25) * 0.01334));
+							if (BerIPMulti >= 2.00 || PlayerLevel >= 100) BerIPMulti = 2.00;
+						}
+
+						berserkIPGain *= BerIPMulti;
+						if (IPTimer1 < 0) 
+						{
+							if (random(1,16) <= 1) berserkIPGain *= 3;
+							else 
+							{
+								if (random(1,4) <= 1) berserkIPGain *= 2.5;
+								else berserkIPGain *= 2;
+							}
+						}
+						else IPTimerInc = level.time % 10;
+						//Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPTimer1, IPTimerInc, BerIPMulti);
+						ItemPoints += berserkIPGain;
+						globalvars.ItemPoints = ItemPoints;
+					}
+					
 					if (ItemPoints > 0.00)
 					{
 						if (IPTimer1 < -2100) IPTimer1 = -2100;
 						if (IPTimer1 < 2100)
 						{
-							IPTimer1++;
+							if (IPTimerInc == 0) IPTimer1++;
 						}
 						else
 						{
