@@ -14,9 +14,8 @@ class DDWeapon : Weapon
 	int kickspeed;
 	int punchspeed;
 	int buttons;
-	
+	int PlayerLevel;
 	int IPAttackCheck;
-
 	
 	default
 	{
@@ -37,7 +36,56 @@ class DDWeapon : Weapon
 		{
 			if (player.mo && player.mo.CountInv("IPUseMode")) invoker.IPAttackCheck = 1;
 		}
-		
+	}
+	
+	action void A_ConfirmIPAttack(int ipid = 0, int IPVoiceType = 0, int basevoicechance = 0, int maxvoiceroll = 0)
+	{
+		actor player = players[0].mo;
+		if (player)
+		{
+			let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+			let globalvars = DDGlobalVariables.Get();
+			if (exex_ikaripointsenabled && MiscItem && globalvars && invoker.IPAttackCheck)
+			{
+				double cost = invoker.A_GetIPCost(ipid);
+				if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
+				If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+				{
+					MiscItem.ItemPoints -= cost;
+					globalvars.ItemPoints -= cost;
+				}
+				else
+				{
+					invoker.IPAttackCheck = 0;
+				}
+				if (invoker.IPAttackCheck) invoker.A_IPDinahVoiceSelect(IPVoiceType,basevoicechance,maxvoiceroll);
+			}
+		}
+	}
+
+	action void A_ConfirmIPAttackExtra(int ipid = 0, int IPVoiceType = 0, int basevoicechance = 0, int maxvoiceroll = 0, string AmmoType = "", int ammocost = 0)
+	{
+		actor player = players[0].mo;
+		if (player)
+		{
+			let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+			let globalvars = DDGlobalVariables.Get();
+			if (exex_ikaripointsenabled && MiscItem && globalvars && invoker.IPAttackCheck)
+			{
+				double cost = invoker.A_GetIPCost(ipid);
+				if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
+				If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && CountInv(AmmoType) >= ammocost)
+				{
+					MiscItem.ItemPoints -= cost;
+					globalvars.ItemPoints -= cost;
+				}
+				else
+				{
+					invoker.IPAttackCheck = 0;
+				}
+				if (invoker.IPAttackCheck) invoker.A_IPDinahVoiceSelect(IPVoiceType,basevoicechance,maxvoiceroll);
+			}
+		}
 	}
 	
 	action double A_LowerRaiseCheck(double movespeed)
@@ -248,68 +296,6 @@ class DDWeapon : Weapon
 			if (debug) Console.Printf("%d [%d]", invoker.kickspeed, prev);
 		}
 	}
-
-	action void A_KickTicCheck()
-	{
-		if (invoker.kickspeed >= 8 && invoker.kickspeed <= 17)
-		{
-			if (random(1,8) == 1) { A_SetTics(0); }
-		}
-		if (invoker.kickspeed >= 16 && invoker.kickspeed <= 31)
-		{
-			if (random(1,6) == 1) { A_SetTics(0); }
-		}
-		if (invoker.kickspeed >= 32 && invoker.kickspeed <= 47)
-		{
-			if (random(1,4) == 1) { A_SetTics(0); }
-		}
-		if (invoker.kickspeed >= 48 && invoker.kickspeed <= 64)
-		{
-			if (random(1,2) == 1) { A_SetTics(0); }
-		}
-	}
-	
-	action void A_KickTicCheck2(int minrange = 0, int maxrange = 8)
-	{
-		if (random(1,64) <= (random(minrange,maxrange) + invoker.kickspeed)) { A_SetTics(0); }
-	}
-	
-	action void A_KickAccelerate(int minval = 1, int maxval = 1, int limit = 48, int chance = 256)
-	{
-		bool debug = false;
-		int prev = invoker.kickspeed;
-
-		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) chance = floor(chance * frandom(1.125,1.375));
-		if (debug) Console.Printf("chance: %d", chance);
-		int chance2;
-		if (chance > 256) chance2 = (chance % 256);
-		if (random(1,256) <= chance) invoker.kickspeed += random(minval,maxval);
-		if (random(1,256) <= chance2) invoker.kickspeed += random(minval,maxval);
-
-		if (random(1,256) <= chance) { if (invoker.kickspeed == 5) invoker.kickspeed++; }
-		if (random(1,256) <= chance2) { if (invoker.kickspeed == 5) invoker.kickspeed++; }
-		if (random(1,256) <= chance) { if (invoker.kickspeed == 8) invoker.kickspeed++; }
-		if (random(1,256) <= chance2) { if (invoker.kickspeed == 8) invoker.kickspeed++; }
-		if (random(1,256) <= chance) { if (invoker.kickspeed == 10) invoker.kickspeed++; }
-		if (random(1,256) <= chance2) { if (invoker.kickspeed == 10) invoker.kickspeed++; }
-		if (invoker.kickspeed >= 11) 
-		{
-			if (random(1,256) <= chance) invoker.kickspeed++;
-			if (random(1,256) <= chance2) invoker.kickspeed++;
-			if (random(1,256) <= chance) { if (invoker.kickspeed == 17) invoker.kickspeed++; }
-			if (random(1,256) <= chance2) { if (invoker.kickspeed == 17) invoker.kickspeed++; }
-			if (random(1,256) <= chance) { if (invoker.kickspeed == 20) invoker.kickspeed++; }
-			if (random(1,256) <= chance2) { if (invoker.kickspeed == 20) invoker.kickspeed++; }
-			if (random(1,256) <= chance) { if (invoker.kickspeed == 23) invoker.kickspeed++; }
-			if (random(1,256) <= chance2) { if (invoker.kickspeed == 23) invoker.kickspeed++; }
-			if (random(1,256) <= chance) { if (invoker.kickspeed == 25) invoker.kickspeed++; }
-			if (random(1,256) <= chance2) { if (invoker.kickspeed == 25) invoker.kickspeed++; }
-			if (random(1,256) <= chance) { if (invoker.kickspeed >= 26) invoker.kickspeed++; }
-			if (random(1,256) <= chance2) { if (invoker.kickspeed >= 26) invoker.kickspeed++; }
-		}
-		if (invoker.kickspeed > limit) invoker.kickspeed = limit;
-		if (debug) Console.Printf("%d [%d]", invoker.kickspeed, prev);
-	}
 	
 	action void A_WeaponReady(int flags = 0)
 	{
@@ -434,47 +420,124 @@ class DinahWeapon : DDWeapon
 			goto KickStart;
 
 		KickStart:
-			TNT1 A 0 
+			TNT1 A 0
 			{
-				A_KickAccelerate();
 			}
-			TNT1 A 1
+		KickWindUp:
+			TNT1 A 1 // [1]
 			{
-				if (random(1,4) == 1)
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
-					A_SetTics(0);
+					if (random(1,2) <= 1) tic = 0;
 				}
 				else
 				{
-					A_KickTicCheck2();
+					if (CountInv("PlayerLevel") >= 5) tic = 0;
 				}
+				A_SetTics(tic);
 			}
-			TNT1 AAA 1
+			TNT1 A 1 // [2]
 			{
-				A_KickTicCheck2();
-			}
-			TNT1 A 1
-			{
-				if (random(1,4) == 1)
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
-					A_SetTics(0);
+					if (random(1,2) <= 1) tic = 0;
 				}
 				else
 				{
-					A_KickTicCheck2();
+					if (CountInv("PlayerLevel") >= 15) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			TNT1 A 1 // [3]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,2) <= 1) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 25) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			TNT1 A 1 // [4]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,2) <= 1) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 35) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			TNT1 A 1 // [5]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,2) <= 1) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 45) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+		Kicking:
+			DKIC A 1 // [6]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 7) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 15) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			DKIC B 1 // [7]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 2) tic = 0;
+				}
+				else
+				{
+				}
+				A_SetTics(tic);
+				
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+				{
+					if (random(1,4) <= 1) A_StartSound("fistswingheavy0",CHAN_BODY);
+													 else A_StartSound("fistswingmedium0",CHAN_BODY);
+				}
+				else
+				{
+					A_StartSound("fistswingmedium0",CHAN_BODY);
 				}
 			}
-			DKIC A 1
+			DKIC C 1 // [8]
 			{
-				A_KickTicCheck();
-			}
-			DKIC B 1
-			{
-				A_StartSound("fistswingmedium0",CHAN_BODY);
-				A_KickTicCheck();
-			}
-			DKIC C 1
-			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 7) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 45) tic = 0;
+				}
+				A_SetTics(tic);
+				
 				int basechance = 128;
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) basechance *= frandompick(1.5,1.5,1.5,1.625,1.625,1.75);
 				if (random(1,256) <= basechance)
@@ -493,13 +556,59 @@ class DinahWeapon : DDWeapon
 						A_StartSound(voicenm,CHAN_VOICE,CHANF_DEFAULT,voicevol); 
 					}
 				} 
-				A_KickTicCheck();
 			}
-			DKIC DEFG 1
+			DKIC D 1 // [9]
 			{
-				A_KickTicCheck();
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 2) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 35) tic = 0;
+				}
+				A_SetTics(tic);
 			}
-			DKIC H 1
+			DKIC E 1 // [10]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 7) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 60) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			DKIC F 1 // [11]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 2) tic = 0;
+				}
+				else
+				{
+				}
+				A_SetTics(tic);
+			}
+			DKIC G 1 // [12]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 7) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 25) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			DKIC H 1 // 1 [13]
 			{
 				int KPower = (player.mo.Stamina / 10);
 				if (KPower > 10) KPower = 10;
@@ -515,42 +624,166 @@ class DinahWeapon : DDWeapon
 				A_Recoil(recl);
 				A_CustomPunch(dmg,true,CPF_NOTURN,"KickPuff",104,0,0,"","","");
 			}
-			DKIC GFEDCBA 1
+			DKIC G 1 // 1 [14]
 			{
-				A_KickTicCheck();
-			}
-			TNT1 A 1
-			{
-				if (random(1,4) == 1)
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
-					A_SetTics(0);
+					if (random(1,9) <= 7) tic = 0;
 				}
 				else
 				{
-					A_KickTicCheck2();
+					if (CountInv("PlayerLevel") >= 20) tic = 0;
 				}
+				A_SetTics(tic);
 			}
-			TNT1 AAA 1
+			DKIC F 1 // 1 [15]
 			{
-				A_KickTicCheck2();
-			}
-			TNT1 A 1
-			{
-				if (random(1,4) == 1)
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
-					A_SetTics(0);
+					if (random(1,9) <= 2) tic = 0;
 				}
 				else
 				{
-					A_KickTicCheck2();
 				}
+				A_SetTics(tic);
+			}
+			DKIC E 1 // [16]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 7) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 50) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			DKIC D 1 // [17]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 2) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 40) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			DKIC C 1 // [18]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 7) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 55) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			DKIC B 1 // [19]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 2) tic = 0;
+				}
+				else
+				{
+				}
+				A_SetTics(tic);
+			}
+			DKIC A 1 // [20]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,9) <= 7) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 30) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+		KickWindDown:
+			TNT1 A 1 // [21]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,2) <= 1) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 50) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			TNT1 A 1 // [22]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,2) <= 1) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 40) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			TNT1 A 1 // [23]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,2) <= 1) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 30) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			TNT1 A 1 // [24]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,2) <= 1) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 20) tic = 0;
+				}
+				A_SetTics(tic);
+			}
+			TNT1 A 1 // [25]
+			{
+				int tic = 1;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (random(1,2) <= 1) tic = 0;
+				}
+				else
+				{
+					if (CountInv("PlayerLevel") >= 10) tic = 0;
+				}
+				A_SetTics(tic);
 			}
 			goto KickEnd;
 		// KICK END
 		KickEnd:
 			TNT1 A 0
 			{
-				A_KickDecelerate();
 			}
 			stop;
 	}
@@ -657,21 +890,18 @@ class HandToHand : DinahWeapon replaces Fist
 		Ready:
 			DHND A 1
 			{
-				A_KickDecelerate();
 				A_WeaponReady(WRF_ALLOWUSER4);
 			}
 			loop;
 		Deselect:
 			DHND A 1
 			{
-				A_KickDecelerate();
 				A_Lower(12);
 			}
 			loop;
 		Select:
 			DHND A 1
 			{
-				A_KickDecelerate();
 				A_Raise(12);
 			}
 			loop;
@@ -2171,7 +2401,6 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				A_SetInventory("DoingSpinAttack",0);
 				A_BatGuardDashOff();
-				A_KickDecelerate();
 				A_WeaponReady(WRF_ALLOWUSER4);
 			}
 			loop;
@@ -2180,7 +2409,6 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				A_SetInventory("DoingSpinAttack",0);
 				A_BatGuardDashOff();
-				A_KickDecelerate();
 				A_Lower(12);
 			}
 			loop;
@@ -2189,7 +2417,6 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				A_SetInventory("DoingSpinAttack",0);
 				A_BatGuardDashOff();
-				A_KickDecelerate();
 				A_Raise(12);
 			}
 			loop;
@@ -2221,23 +2448,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			DBID B 1
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				let globalvars = DDGlobalVariables.Get();
-				if (exex_ikaripointsenabled && MiscItem && globalvars && invoker.IPAttackCheck)
-				{
-					double cost = invoker.A_GetIPCost(101);
-					if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
-					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
-					{
-						MiscItem.ItemPoints -= cost;
-						globalvars.ItemPoints -= cost;
-					}
-					else
-					{
-						invoker.IPAttackCheck = 0;
-					}
-					if (invoker.IPAttackCheck) invoker.A_IPDinahVoiceSelect(0,3,10);
-				}
+				A_ConfirmIPAttack(101,0,3,10);
 			}
 			DBID C 1
 			{
@@ -2342,24 +2553,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				A_CheckIPState1();
 				A_BatGuardDashOff();
-				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				let globalvars = DDGlobalVariables.Get();
-
-				if (exex_ikaripointsenabled && MiscItem && globalvars && invoker.IPAttackCheck)
-				{
-					double cost = invoker.A_GetIPCost(102);
-					if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
-					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
-					{
-						MiscItem.ItemPoints -= cost;
-						globalvars.ItemPoints -= cost;
-					}
-					else
-					{
-						invoker.IPAttackCheck = 0;
-					}
-					if (invoker.IPAttackCheck) invoker.A_IPDinahVoiceSelect(0,4,10);
-				}
+				A_ConfirmIPAttack(102,0,4,10);
 			}
 			DBID B 1 
 			{
@@ -2496,24 +2690,7 @@ class CricketBat : DinahWeapon replaces Pistol
 				A_CheckIPState1();
 				A_SetInventory("DoingSpinAttack",0);
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
-				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				let globalvars = DDGlobalVariables.Get();
-
-				if (exex_ikaripointsenabled && MiscItem && globalvars && invoker.IPAttackCheck)
-				{
-					double cost = invoker.A_GetIPCost(103);
-					if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
-					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
-					{
-						MiscItem.ItemPoints -= cost;
-						globalvars.ItemPoints -= cost;
-					}
-					else
-					{
-						invoker.IPAttackCheck = 0;
-					}
-					if (invoker.IPAttackCheck) invoker.A_IPDinahVoiceSelect(0,33,40);
-				}
+				A_ConfirmIPAttack(103,0,33,40);
 			}
 			DBID C 1
 			{
@@ -3255,21 +3432,18 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 		Ready:
 			BLAX A 1 
 			{
-				A_KickDecelerate();
 				A_WeaponReady();
 			}
 			loop;
 		Deselect:
 			BLAX A 1
 			{
-				A_KickDecelerate();
 				A_Lower(12);
 			}
 			loop;
 		Select: 
 			BLAX A 1
 			{
-				A_KickDecelerate();
 				A_Raise(12);
 			}
 			loop;
@@ -3277,24 +3451,7 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 			BLAX D 1
 			{
 				A_CheckIPState1();
-				
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				let globalvars = DDGlobalVariables.Get();
-				if (exex_ikaripointsenabled && MiscItem && globalvars && invoker.IPAttackCheck)
-				{
-					double cost = invoker.A_GetIPCost(111);
-					if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
-					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
-					{
-						MiscItem.ItemPoints -= cost;
-						globalvars.ItemPoints -= cost;
-					}
-					else
-					{
-						invoker.IPAttackCheck = 0;
-					}
-					if (invoker.IPAttackCheck) invoker.A_IPDinahVoiceSelect(0,8,11);
-				}
+				A_ConfirmIPAttack(111,0,8,11);
 
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{ 
@@ -3424,24 +3581,7 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 			BLAX A 0 
 			{
 				A_CheckIPState1();
-				
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				let globalvars = DDGlobalVariables.Get();
-				if (exex_ikaripointsenabled && MiscItem && globalvars && invoker.IPAttackCheck)
-				{
-					double cost = invoker.A_GetIPCost(112);
-					if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
-					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && CountInv("BlunderAmmo") >= 3)
-					{
-						MiscItem.ItemPoints -= cost;
-						globalvars.ItemPoints -= cost;
-					}
-					else
-					{
-						invoker.IPAttackCheck = 0;
-					}
-					if (invoker.IPAttackCheck) invoker.A_IPDinahVoiceSelect(0,3,10);
-				}
+				A_ConfirmIPAttackExtra(112,0,3,10,"BlunderAmmo",3);
 				
 				double sndpitch = 1.0;
 				double sndvol = 1.0;
@@ -4282,21 +4422,18 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		Ready:
 			FPAN A 1 
 			{
-				A_KickDecelerate();
 				A_WeaponReady();
 			}
 			loop;
 		Deselect:
 			FPAN A 1
 			{
-				A_KickDecelerate();
 				A_Lower(12);
 			}
 			loop;
 		Select: 
 			FPAN A 1
 			{
-				A_KickDecelerate();
 				A_Raise(12);
 			}
 			loop;
@@ -5104,21 +5241,18 @@ class AppleJack : DinahWeapon replaces Chaingun
 		Ready:
 			AJAK A 1
 			{
-				A_KickDecelerate();
 				A_WeaponReady();
 			}
 			loop;
 		Deselect:
 			AJAK A 1
 			{
-				A_KickDecelerate();
 				A_Lower(12);
 			}
 			loop;
 		Select: 
 			AJAK A 1
 			{
-				A_KickDecelerate();
 				A_Raise(12);
 			}
 			loop;
@@ -5190,22 +5324,77 @@ class AppleJack : DinahWeapon replaces Chaingun
 				if (!CountInv("JackAmmo")) { return resolvestate("Fire"); }
 				return resolvestate(null);
 			}
-			AJAF CDE 2
+			AJAF C 2
+			{
+				A_CheckIPState1();
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+				
+				A_ConfirmIPAttack(132,0,4,9);
+			}
+			AJAF DE 2
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
 			}
 			AJAF F 2 
 			{
+				int spreadtime = 6;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
 				if (random(1,32) <= 31) { A_AlertMonsters(); }
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{ 
-					A_SetTics(1); 
-					A_FireProjectile("JackShotBerserk",0,1,0,0);
-				}
-				else
+
+				int maxshots = 1;
+				actor BombShots;
+				DDProjectile IPCompat;
+				if (invoker.IPAttackCheck) maxshots = 5;
+				for (int i = 0; i < maxshots; i++)
 				{
-					A_FireProjectile("JackShot",0,1,0,0);
+					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+					{ 
+						BombShots = A_FireProjectile("JackShotBerserk",0,1,0,0);
+					}
+					else
+					{
+						BombShots = A_FireProjectile("JackShot",0,1,0,0);
+					}
+					if (BombShots && invoker.IPAttackCheck)
+					{
+						IPCompat = DDProjectile(BombShots);
+						if (IPCompat)
+						{
+							IPCompat.ipprojid = i;
+							IPCompat.IPattack = true;
+							IPCompat.Speed *= 0.667;
+							if (i == 1) IPCompat.zspreadtime = spreadtime;
+							if (i == 2) IPCompat.zspreadtime = -spreadtime;
+							if (i == 3) IPCompat.xyspreadtime = spreadtime;
+							if (i == 4) IPCompat.xyspreadtime = -spreadtime;
+							if (i == 5)
+							{
+								 IPCompat.zspreadtime = spreadtime;
+								 IPCompat.xyspreadtime = spreadtime;
+							}
+							if (i == 6)
+							{
+								 IPCompat.zspreadtime = -spreadtime;
+								 IPCompat.xyspreadtime = spreadtime;
+							}
+							if (i == 7)
+							{
+								 IPCompat.zspreadtime = spreadtime;
+								 IPCompat.xyspreadtime = -spreadtime;
+							}
+							if (i == 8)
+							{
+								 IPCompat.zspreadtime = -spreadtime;
+								 IPCompat.xyspreadtime = -spreadtime;
+							}
+							if (i == 9) IPCompat.zspreadtime = (spreadtime*2);
+							if (i == 10) IPCompat.zspreadtime = (-spreadtime*2);
+							if (i == 11) IPCompat.xyspreadtime = (spreadtime*2);
+							if (i == 12) IPCompat.xyspreadtime = (-spreadtime*2);
+						}
+					}
 				}
+				invoker.A_CheckIPModeOnUse();
 				A_TakeInventory("JackAmmo",1);
 			}
 			AJAF GHI 2 
@@ -5342,12 +5531,76 @@ class JackShot : DDProjectile
 		DeathSound "axe/hit";
 	}
 	
+	void A_JackShotIPPattern()
+	{
+		double ca = cos((angle-90)); // X
+		double sa = sin((angle-90)); // Y
+
+		double basemove = 2.0;
+		if (IPAttack)
+		{
+			if (zspreadtime != 0)
+			{
+				if (zspreadtime > 0) // Goes Up
+				{
+					zspreadtime -= 1;
+					AddZ(basemove,true);
+				}
+				else
+				if (zspreadtime < 0) // Goes Down
+				{
+					zspreadtime += 1; 
+					AddZ(-basemove,true);
+				}
+			}
+			Vector2 dpos = (pos.x, pos.y);
+			if (xyspreadtime != 0)
+			{
+				if (dydudebug_weaponhorizspread)
+				{
+					Console.Printf("\c[sapphire](pre) projid: %d\c-, XVel: %.8f, YVel: %.8f, ZVel: %.8f", ipprojid, vel.x, vel.y, vel.z);
+					Console.Printf("\c[sapphire](pre) projid: %d\c-, xpos: %.8f, ypos: %.8f [tic: %d]", ipprojid, pos.x, pos.y, pos.z, gametic);
+				}
+				if (xyspreadtime > 0) // Goes Left
+				{ 
+					xyspreadtime -= 1;
+					dpos = ((pos.x + (basemove * ca)), (pos.y + (basemove * sa)));
+					TryMove(dpos,true,null); //SetOrigin(dpos,true);
+				}
+				else
+				if (xyspreadtime < 0) // Goes Right
+				{
+					xyspreadtime += 1;
+					dpos = ((pos.x - (basemove * ca)), (pos.y - (basemove * sa)));
+					TryMove(dpos,true,null); //SetOrigin(dpos,true);
+				}
+				if (dydudebug_weaponhorizspread)
+				{
+					Console.Printf("\c[fire](post) projid: %d\c-, XVel: %.8f, YVel: %.8f, ZVel: %.8f", ipprojid, vel.x, vel.y, vel.z);
+					Console.Printf("\c[fire](post) projid: %d\c-, xpos: %.8f, ypos: %.8f, zpos: %.8f, xyspreadtime: %d [tic: %d]", ipprojid, dpos.x, dpos.y, pos.z, xyspreadtime, gametic);
+				}
+			}
+		}
+	}
+	
 	States
 	{
 		Spawn:
-			ABAL AABB 1 NoDelay
+			ABAL A 0 NoDelay;
+		Idle:
+			ABAL AABB 1
 			{
+				A_JackShotIPPattern();
 				A_SpawnItemEx("JackShotShieldPart",0,0,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+				if (IPAttack)
+				{
+					/*
+					A_SpawnItemEx("JackShotShieldPart",0,4.5,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					A_SpawnItemEx("JackShotShieldPart",0,-4.5,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					A_SpawnItemEx("JackShotShieldPart",0,0,4.5,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					A_SpawnItemEx("JackShotShieldPart",0,0,-4.5,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					*/
+				}
 			}
 			Loop;
 		Death:
@@ -5371,7 +5624,15 @@ class JackShotBerserk : JackShot
 		Spawn:
 			ABAL AABB 1 NoDelay
 			{
+				A_JackShotIPPattern();
 				A_SpawnItemEx("JackShotShieldPartBerserk",0,0,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+				if (IPAttack)
+				{
+					A_SpawnItemEx("JackShotShieldPartBerserk",0,4.5,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					A_SpawnItemEx("JackShotShieldPartBerserk",0,-4.5,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					A_SpawnItemEx("JackShotShieldPartBerserk",0,0,4.5,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					A_SpawnItemEx("JackShotShieldPartBerserk",0,0,-4.5,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+				}
 			}
 			Loop;
 		Death:
@@ -5482,21 +5743,18 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 		Ready:
 			SCEP A 1
 			{
-				A_KickDecelerate();
 				A_WeaponReady();
 			}
 			loop;
 		Deselect:
 			SCEP A 1
 			{
-				A_KickDecelerate();
 				A_Lower(12);
 			}
 			loop;
 		Select: 
 			SCEP A 1
 			{
-				A_KickDecelerate();
 				A_Raise(12);
 			}
 			loop;
@@ -5914,21 +6172,18 @@ class SuperVac : DinahWeapon replaces PlasmaRifle
 		Ready:
 			VACM A 1
 			{
-				A_KickDecelerate();
 				A_WeaponReady();
 			}
 			loop;
 		Deselect:
 			VACM A 1
 			{
-				A_KickDecelerate();
 				A_Lower(12);
 			}
 			loop;
 		Select: 
 			VACM A 1
 			{
-				A_KickDecelerate();
 				A_Raise(12);
 			}
 			loop;
@@ -6261,7 +6516,6 @@ class Grimophone : DinahWeapon replaces BFG9000
 			RPLY A 1
 			{
 				A_GrimophoneAltReset();
-				A_KickDecelerate();
 				A_StopSound(65);
 				A_WeaponReady();
 			}
@@ -6270,7 +6524,6 @@ class Grimophone : DinahWeapon replaces BFG9000
 			RPLY A 1
 			{
 				A_GrimophoneAltReset();
-				A_KickDecelerate();
 				A_Raise(12);
 			}
 			Loop;
@@ -6278,7 +6531,6 @@ class Grimophone : DinahWeapon replaces BFG9000
 			RPLY A 1
 			{
 				A_GrimophoneAltReset();
-				A_KickDecelerate();
 				A_Lower(12);
 			}
 			TNT1 A 0 A_StopSound(65);
@@ -7015,7 +7267,6 @@ class CandleWhip : DinahWeapon
 		Ready:
 			RCAN A 1
 			{
-				A_KickDecelerate();
 				if (invoker.shotcountermax <= 0) { A_CandleSetMaxShots(); }
 				A_WeaponReady();
 			}
@@ -7023,7 +7274,6 @@ class CandleWhip : DinahWeapon
 		Deselect:
 			RCAN Z 1 
 			{
-				A_KickDecelerate();
 				if (invoker.shotcountermax <= 0) { A_CandleSetMaxShots(); }
 				A_Lower(12);
 			}
@@ -7031,7 +7281,6 @@ class CandleWhip : DinahWeapon
 		Select: 
 			RCAN Z 1 
 			{
-				A_KickDecelerate();
 				if (invoker.shotcountermax <= 0) { A_CandleSetMaxShots(); }
 				A_Raise(12);
 			}

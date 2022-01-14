@@ -377,32 +377,44 @@ class DDPlayerPawn : PlayerPawn
 			double ipmodevol = 1.0;
 			double basevollvl = 0.25;
 			double ipmodepitch = 1.0;
-			if (MiscItem && globalvars && MiscItem.MaxItemPoints)
+			if (health > 0)
 			{
-				ipmodevol = basevollvl + (double(MiscItem.ItemPoints / MiscItem.MaxItemPoints) * (1.0 - basevollvl));
-			}
-			if (dydudebug_ipdisplays) Console.Printf("ipmodevol: %.4f, ipmodepitch: %.4f", ipmodevol, ipmodepitch);
-			if (CountInv("IPUseMode"))
-			{
-				if (ipchargesoundtimer == 0)
+				if (MiscItem && globalvars && MiscItem.MaxItemPoints)
 				{
-					if (MiscItem && globalvars)
-					{
-						ipmodevol = basevollvl + (double(MiscItem.ItemPoints / MiscItem.MaxItemPoints) * (1.0 - basevollvl));
-					}
-					A_StopSound(255);
-					A_StartSound("ipmode/start",255,CHANF_NOSTOP,ipmodevol,ATTN_NORM,ipmodepitch);
+					ipmodevol = basevollvl + (double(MiscItem.ItemPoints / MiscItem.MaxItemPoints) * (1.0 - basevollvl));
 				}
-				ipchargesoundtimer++;
-				if (ipchargesoundtimer >= 56)
+				if (dydudebug_ipdisplays) Console.Printf("ipmodevol: %.4f, ipmodepitch: %.4f", ipmodevol, ipmodepitch);
+				if (CountInv("IPUseMode"))
 				{
-					int ipchargesoundtimer2 = ipchargesoundtimer % 56;
-					if (ipchargesoundtimer2 == 0) 
+					if (ipchargesoundtimer == 0)
 					{
+						if (MiscItem && globalvars)
+						{
+							ipmodevol = basevollvl + (double(MiscItem.ItemPoints / MiscItem.MaxItemPoints) * (1.0 - basevollvl));
+						}
 						A_StopSound(255);
-						A_StartSound("ipmode/loop",255,CHANF_NOSTOP|CHANF_LOOPING,ipmodevol,ATTN_NORM,ipmodepitch);
+						A_StartSound("ipmode/start",255,CHANF_NOSTOP,ipmodevol,ATTN_NORM,ipmodepitch);
 					}
-					if (dydudebug_ipdisplays) Console.Printf("ipchargesoundtimer2: %d / 55", ipchargesoundtimer2);
+					ipchargesoundtimer++;
+					if (ipchargesoundtimer >= 56)
+					{
+						int ipchargesoundtimer2 = ipchargesoundtimer % 56;
+						if (ipchargesoundtimer2 == 0) 
+						{
+							A_StopSound(255);
+							A_StartSound("ipmode/loop",255,CHANF_NOSTOP|CHANF_LOOPING,ipmodevol,ATTN_NORM,ipmodepitch);
+						}
+						if (dydudebug_ipdisplays) Console.Printf("ipchargesoundtimer2: %d / 55", ipchargesoundtimer2);
+					}
+				}
+				else
+				{
+					if (ipchargesoundtimer != 0)
+					{
+						ipchargesoundtimer = 0;
+						A_StopSound(255);
+						A_StartSound("ipmode/disperse",255,CHANF_DEFAULT,ipmodevol,ATTN_NORM,ipmodepitch);
+					}
 				}
 			}
 			else
@@ -413,6 +425,8 @@ class DDPlayerPawn : PlayerPawn
 					A_StopSound(255);
 					A_StartSound("ipmode/disperse",255,CHANF_DEFAULT,ipmodevol,ATTN_NORM,ipmodepitch);
 				}
+				MiscItem.ItemPoints = 0;
+				globalvars.ItemPoints = 0;
 			}
 			if (dydudebug_ipdisplays) Console.Printf("ipchargesoundtimer: %d", ipchargesoundtimer);
 			
@@ -1064,7 +1078,7 @@ class DDPlayerPawn : PlayerPawn
 		}
 
 		// Item/Ikari Point Gains
-		if (exex_ikaripointsenabled && ret && MiscItem && globalvars)
+		if (exex_ikaripointsenabled && ret && MiscItem && globalvars && health > 0)
 		{
 			int gain = 0;
 			if ((source && source != self) && (inflictor && inflictor != self)) gain += 1;
