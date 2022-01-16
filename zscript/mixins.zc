@@ -709,3 +709,90 @@ mixin class IPCostCheck
 		if (exex_ikaripointtechpresstype >= 2 && player && player.CountInv("IPUseMode")) player.A_SetInventory("IPUseMode",0);
 	}
 }
+
+
+mixin class InvWeaponShare
+{
+	//===========================================================================
+	//
+	// A_ThrowGrenadeAngle
+	//
+	// Throws a grenade (like Hexen's fighter flechette) with the added options to tweak
+	// the randomized angle-range used, and if to use fixed/doubles or ints for the angles.
+	//
+	//===========================================================================
+	action bool, Actor A_ThrowGrenadeAngle(class<Actor> missile, double zheight = 0, double xyvel = 0, double zvel = 0, double angularspreadmin = -4.0, double angularspreadmax = 3.0, bool usefixedangles = false, bool useammo = true)
+	{
+		if (dydudebug_attackstuff) Console.Printf("zheight: %.4f, xyvel: %.4f, zvel: %.4f, angularspreadmin: %.4f, angularspreadmax: %.4f", zheight, xyvel, zvel, angularspreadmin, angularspreadmax);
+		double anglemin = angularspreadmin;
+		double anglemax = angularspreadmax;
+		if (!usefixedangles)
+		{
+			anglemin = int(angularspreadmin); 
+			anglemax = int(angularspreadmax);
+		}
+		else
+		{
+			anglemin = angularspreadmin; 
+			anglemax = angularspreadmax;
+		}
+		if (dydudebug_attackstuff) Console.Printf("anglemin: %.4f, anglemax: %.4f", anglemin, anglemax);
+
+		if (missile == NULL)
+		{
+			return false, null;
+		}
+		if (stateinfo != null && stateinfo.mStateType == STATE_Psprite)
+		{
+			let player = self.player;
+			if (player == null) return false, null;
+			let weapon = player.ReadyWeapon;
+			// Used from a weapon, so use some ammo
+
+			if (weapon == NULL || (useammo && !weapon.DepleteAmmo(weapon.bAltFire)))
+			{
+				return true, null;
+			}
+		}
+
+		let bo = Spawn(missile, pos + (0, 0, (-Floorclip + GetBobOffset() + zheight + 35 + (player? player.crouchoffset : 0.))), ALLOW_REPLACE);
+		if (bo)
+		{
+			self.PlaySpawnSound(bo);
+			if (xyvel != 0)
+				bo.Speed = xyvel;
+			if (usefixedangles) bo.Angle = Angle + (frandom[grenade](anglemin, anglemax) * (360./256.));
+										 else bo.Angle = Angle + (random[grenade](anglemin, anglemax) * (360./256.));
+
+			let pitch = -self.Pitch;
+			let angle = bo.Angle;
+
+			// There are two vectors we are concerned about here: xy and z. We rotate
+			// them separately according to the shooter's pitch and then sum them to
+			// get the final velocity vector to shoot with.
+
+			double xy_xyscale = bo.Speed * cos(pitch);
+			double xy_velz = bo.Speed * sin(pitch);
+			double xy_velx = xy_xyscale * cos(angle);
+			double xy_vely = xy_xyscale * sin(angle);
+
+			pitch = self.Pitch;
+			double z_xyscale = zvel * sin(pitch);
+			double z_velz = zvel * cos(pitch);
+			double z_velx = z_xyscale * cos(angle);
+			double z_vely = z_xyscale * sin(angle);
+
+			bo.Vel.X = xy_velx + z_velx + Vel.X / 2;
+			bo.Vel.Y = xy_vely + z_vely + Vel.Y / 2;
+			bo.Vel.Z = xy_velz + z_velz;
+
+			bo.target = self;
+			if (!bo.CheckMissileSpawn(radius)) bo = null;
+			return true, bo;
+		} 
+		else
+		{
+			return false, null;
+		}
+	}
+}

@@ -832,6 +832,31 @@ class CherryBombPickup : ExExInvBarItem
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
+				double throwpowerxy = frandom(14.0,18.0);
+				double throwpowerz = frandom(2.75,3.25);
+				double throwheightz = -2;
+				double throwmulvelxy = throwpowerxy * 0.01;
+				double throwmulvelz = throwpowerz * 0.01;
+				double throwmulvelext = frandom(1.00,1.125);
+				double throwminangle = -3.5;
+				double throwmaxangle = 3.5;
+				if (MiscItem)
+				{
+					int PlayerLevel = MiscItem.PlayerLevel;
+					int PlayerATK = MiscItem.PlayerATK;
+					throwpowerxy += (((PlayerLevel * throwmulvelxy) + (PlayerATK * throwmulvelxy)) * throwmulvelext);
+					throwpowerz += (((PlayerLevel * throwmulvelz) + (PlayerATK * throwmulvelz)) * throwmulvelext);
+					throwminangle *= (1.0 - (PlayerLevel * 0.01875));
+					throwmaxangle *= (1.0 - (PlayerLevel * 0.01875));
+				}
+				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1))
+				{
+					throwpowerxy *= 2.5;
+					throwpowerz *= 1.75;
+					throwminangle *= 0.625;
+					throwmaxangle *= 0.625;
+				}
+				if (dydudebug_attackstuff) Console.Printf("throwpowerxy: %.4f, throwpowerz: %.4f, throwangles: %.4f/%.4f", throwpowerxy, throwpowerz, throwminangle, throwmaxangle);
 				
 				bool wutthis = false;
 				if (exex_ikaripointsenabled && MiscItem && globalvars && (player.mo && player.mo.CountInv("IPUseMode")))
@@ -866,15 +891,8 @@ class CherryBombPickup : ExExInvBarItem
 				for (int i = 0; i < maxshots; i++)
 				{
 					if (i && wutthis) A_SetAngle(angle+shotangleinc);
-					if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1))
-					{
-						[success, BombShots] = A_ThrowGrenade("CherryBombShotBerserk",-2,(random(14,18) * 2.5),(frandom(2.75,3.25) * 1.75),0);
-					}
-					else
-					{
-						[success, BombShots] = A_ThrowGrenade("CherryBombShot",-2,random(14,18),frandom(2.75,3.25),0);
-					}
 					
+					[success, BombShots] = A_ThrowGrenadeAngle("CherryBombShot",-2,throwpowerxy,throwpowerz,throwminangle,throwmaxangle,true);
 					if (BombShots && wutthis) 
 					{
 						IPCompat = DDProjectile(BombShots);
