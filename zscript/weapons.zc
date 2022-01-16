@@ -3,6 +3,7 @@ class DDWeapon : Weapon
 {
 	mixin DmgCalc;
 	mixin IPCostCheck;
+	double IPCostTemp;
 
 	// Misc
 	const BerserkRecoilMulti = 2.5;
@@ -38,9 +39,11 @@ class DDWeapon : Weapon
 		}
 	}
 	
-	action void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "", string giveammotype = "", int giveammoamt = 0)
+	action void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "", string giveammotype = "", int giveammoamt = 0, bool IPCostOnHit = false)
 	{
 		let player = self.player;
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
 		if (!player) return;
 
 		let weapon = player.ReadyWeapon;
@@ -107,6 +110,17 @@ class DDWeapon : Weapon
 					GiveBody (int(actualdamage * lifesteal), lifestealmax);
 				}
 			}
+			
+			if (IPCostOnHit && invoker.IPCostTemp > 0)
+			{
+				If (MiscItem.ItemPoints >= invoker.IPCostTemp && globalvars.ItemPoints >= invoker.IPCostTemp)
+				{
+					MiscItem.ItemPoints -= invoker.IPCostTemp;
+					globalvars.ItemPoints -= invoker.IPCostTemp;
+				}
+				invoker.IPCostTemp = 0;
+			}
+			
 			if (giveammotype != "" && giveammoamt > 0)
 			{
 				player.mo.A_GiveInventory(giveammotype,giveammoamt);
@@ -128,7 +142,7 @@ class DDWeapon : Weapon
 		}
 	}
 
-	action void A_ConfirmIPAttack(int ipid = 0, int IPVoiceType = 0, int basevoicechance = 0, int maxvoiceroll = 0)
+	action void A_ConfirmIPAttack(int ipid = 0, int IPVoiceType = 0, int basevoicechance = 0, int maxvoiceroll = 0, bool takecost = true)
 	{
 		actor player = players[0].mo;
 		if (player)
@@ -139,21 +153,36 @@ class DDWeapon : Weapon
 			{
 				double cost = invoker.A_GetIPCost(ipid);
 				if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
-				If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+				if (takecost)
 				{
-					MiscItem.ItemPoints -= cost;
-					globalvars.ItemPoints -= cost;
+					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+					{
+						MiscItem.ItemPoints -= cost;
+						globalvars.ItemPoints -= cost;
+					}
+					else
+					{
+						invoker.IPAttackCheck = 0;
+					}
 				}
 				else
 				{
-					invoker.IPAttackCheck = 0;
+					If (MiscItem.ItemPoints < cost && globalvars.ItemPoints < cost)
+					{
+						invoker.IPCostTemp = 0;
+						invoker.IPAttackCheck = 0;
+					}
+					else
+					{
+						invoker.IPCostTemp = cost;
+					}
 				}
 				if (invoker.IPAttackCheck) invoker.A_IPDinahVoiceSelect(IPVoiceType,basevoicechance,maxvoiceroll);
 			}
 		}
 	}
 
-	action void A_ConfirmIPAttackExtra(int ipid = 0, int IPVoiceType = 0, int basevoicechance = 0, int maxvoiceroll = 0, string AmmoType = "", int ammocost = 0)
+	action void A_ConfirmIPAttackExtra(int ipid = 0, int IPVoiceType = 0, int basevoicechance = 0, int maxvoiceroll = 0, string AmmoType = "", int ammocost = 0, bool takecost = true)
 	{
 		actor player = players[0].mo;
 		if (player)
@@ -2538,7 +2567,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			DBID B 1
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
-				A_ConfirmIPAttack(101,0,3,10);
+				A_ConfirmIPAttack(101,0,3,10,false);
 			}
 			DBID C 1
 			{
@@ -2605,7 +2634,7 @@ class CricketBat : DinahWeapon replaces Pistol
 				for (int i = 0; i < maxshots; i++)
 				{
 					if (i && invoker.IPAttackCheck) A_SetAngle(angle+shotangleinc);
-					A_CustomPunch(dmg, true, 0, "BatPuff", atkrange);
+					A_CustomPunch(dmg, true, 0, "BatPuff", atkrange, IPCostOnHit: true);
 					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 					{
 						A_CricketBatSwing(1);
@@ -3541,7 +3570,7 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 			BLAX D 1
 			{
 				A_CheckIPState1();
-				A_ConfirmIPAttack(111,0,8,11);
+				A_ConfirmIPAttack(111,0,8,11,false);
 
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{ 
@@ -3633,7 +3662,7 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 					if (invoker.IPAttackCheck) A_SetTics(1);
 				}
 				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
-				A_CustomPunch(dmg, true, 0, "BlunderPuff", range);
+				A_CustomPunch(dmg, true, 0, "BlunderPuff", range, IPCostOnHit: true);
 				
 				invoker.A_CheckIPModeOnUse();
 			}
@@ -5959,7 +5988,7 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 			SCEP E 1 bright 
 			{
 				A_CheckIPState1();
-				A_ConfirmIPAttack(141,0,2,12);
+				A_ConfirmIPAttack(141,0,2,12,false);
 
 				double sndpitch = 1.0;
 				double sndvol = 1.0;
@@ -6001,8 +6030,8 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 				}
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
 				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
-				if (invoker.IPAttackCheck) A_CustomPunch(dmg, true, 0, "PikePuff", range, giveammotype: "PikeAmmo", giveammoamt: 2);
-															else A_CustomPunch(dmg, true, 0, "PikePuff", range);
+				if (invoker.IPAttackCheck) A_CustomPunch(dmg, true, 0, "PikePuff", range, giveammotype: "PikeAmmo", giveammoamt: 2, IPCostOnHit: true);
+															else A_CustomPunch(dmg, true, 0, "PikePuff", range, IPCostOnHit: true);
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
 					if (invoker.IPAttackCheck) A_SetTics(randompick(1,1,1,1,1,2,2)); 
@@ -6346,7 +6375,7 @@ class ZapShot : DDFastProjectile
 		Radius 3;
 		Height 3;
 		Speed 80;
-		Damage 12;
+		DamageFunction (finaldamagedealt);
 		Scale 1;
 		DamageType "Zap";
 		Projectile;
@@ -6354,6 +6383,18 @@ class ZapShot : DDFastProjectile
 		deathsound "croquet/ballhit";
 		+FORCERADIUSDMG
 		//+NOEXTREMEDEATH
+	}
+	
+	override void PostBeginPlay()
+	{
+		finaldamagedealt = (12 * random(1,8));
+		if (IPAttack) 
+		{
+			finaldamagedealt *= frandompick(1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.5,1.5,1.5);
+		}
+
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		Super.PostBeginPlay();
 	}
 	
 	States
@@ -6419,7 +6460,7 @@ class MiniZapShot : DDFastProjectile
 		Radius 3;
 		Height 3;
 		Speed 80;
-		Damage 8;
+		DamageFunction (finaldamagedealt);
 		Scale 0.5;
 		DamageType "Zap";
 		Projectile;
@@ -6427,6 +6468,18 @@ class MiniZapShot : DDFastProjectile
 		deathsound "croquet/ballhit";
 		+FORCERADIUSDMG
 		//+NOEXTREMEDEATH
+	}
+	
+	override void PostBeginPlay()
+	{
+		finaldamagedealt = (8 * random(1,8));
+		if (IPAttack) 
+		{
+			finaldamagedealt *= frandompick(1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.5,1.5,1.5);
+		}
+
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		Super.PostBeginPlay();
 	}
 	
 	States
@@ -7286,6 +7339,7 @@ class BadMusic : SingleDamageRipper
     Scale 0.06;
 		Obituary "$OB_MPPLASMARIFLE";
 	}
+	
 	States
 	{
 		Spawn:
