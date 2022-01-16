@@ -1631,8 +1631,232 @@ class DD_EventHandler : EventHandler
 	}
 }
 
+class ItemData
+{
+	Inventory savedItem;
+	bool wasUndroppable;
+	bool wasUntossable;
+	int hadAmount;
+}
+
 class DD_StaticEventHandler : StaticEventHandler
 {
+	struct PlayerInvData
+	{
+		Inventory invFirst;
+		Inventory invSel;
+		Inventory ReadyWeapon;
+	}
+
+	private bool isNewGame; // This is a new game, nothing should be done in this situation !
+	private PlayerInvData[MAXPLAYERS] savedInventory; // Inventory backup for players
+	// Items set to undroppable and untossable, once the world is loaded they should go back to their original state
+	private Array<ItemData> dropBlockers;
+	private int[MAXPLAYERS] playerNeedsRestore; // List of players to restore (players in game)
+	private Array<int> playersToResurrect; // List of players to resurrect from a death exit
+	private int prevhealthval;
+
+	private void ResurrectPlayers()
+	{
+		for (int i = 0; i < playersToResurrect.Size(); i++)
+		{
+			PlayerInfo pi = players[playersToResurrect[i]];
+			PlayerPawn p = PlayerPawn(pi.mo);
+
+			if (playeringame[playersToResurrect[i]] && p != null);
+				/* Resurrect the player, this is the only way to keep their inventory intact
+				   during intermission */
+				pi.Resurrect();
+		}
+	}
+
+	private void ManageWeapons()
+	{
+		bool keepWeapons = true; // Defaulting to true if no value is found 
+
+		if (CVar.FindCVar("exex_deathexitkeepweapons") != null)
+			keepWeapons = CVar.FindCVar("exex_deathexitkeepweapons").GetBool();
+
+		if (!keepWeapons)
+		{
+			for (int i = 0; i < MAXPLAYERS; i++)
+			{
+				PlayerInfo pi = players[i];
+				PlayerPawn p = PlayerPawn(pi.mo);
+
+				if (playeringame[i] && p != null && playersToResurrect.Find(i) < playersToResurrect.Size())
+				{
+					Inventory item = p.Inv;
+
+					while (item != null) 
+					{
+						// Not checking for level-specific stuff like keys as this
+						// seems to be automatically invalidated
+						if (item is 'Weapon' || item is 'BasicArmor' ||
+								item is 'HexenArmor' || item is 'Ammo' || 
+								item is 'Backpack' || 
+								item is 'BlunderShotUpgrade' || item is 'SigilPieces' || item is 'SigilModeType') 
+						{
+							p.RemoveInventory(item);
+							item = p.Inv;
+						}
+						else
+							item = item.Inv;
+					}
+					p.GiveDefaultInventory(); // Give the default inventory 
+				}
+			}
+		}
+	}
+
+	private void RestorePlayerInvState(int pNum)
+	{
+		PlayerInfo pi = players[pNum];
+		PlayerPawn p = PlayerPawn(pi.mo);
+
+		if (playeringame[pNum] && p != null && playerNeedsRestore[pNum])
+		{
+			bool keepWeapons = true; // Defaulting to true if no value is found 
+
+			if (CVar.FindCVar("exex_deathexitkeepweapons") != null)
+				keepWeapons = CVar.FindCVar("exex_deathexitkeepweapons").GetBool();
+
+			if (prevhealthval > 0)
+			{
+				p.health = prevhealthval;
+			}
+			else
+			{
+				let MiscItem = PlayerStatItem(p.FindInventory("PlayerStatItem"));
+				if (MiscItem) p.health = MiscItem.MaxHealthTrue;
+			}
+
+			/* We restore the player's inventory state
+			   This is not to give the player back their inventory, they technically
+			   still have it after the resurrection, this is mostly to make sure
+			   the selected inventory item and equipped weapons remain the same
+			   (from tests, these seem to reset on death+resurrect) */
+			p.InvFirst = savedInventory[pNum].invFirst;
+			p.InvSel = savedInventory[pNum].invSel;
+
+			/* We restore the readied weapon only if weapons are kept, otherwise,
+			   the game changing the readied weapons is the effect of losing them on purpose ! */
+			if (keepWeapons)
+				pi.PendingWeapon = Weapon(savedInventory[pNum].readyWeapon);
+		}
+	}
+
+	void BackupInventories()
+	{
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			PlayerInfo pi = players[i];
+			PlayerPawn p = PlayerPawn(pi.mo);
+
+			if (playeringame[i] && p != null)
+			{
+				// This player needs to be restored
+				playerNeedsRestore[i] = true;
+
+				/* Save all important inventory informations (what item was
+				   selected, and what weapon was equipped, these may get unequipped on death) */
+				savedInventory[i].invFirst = p.InvFirst;
+				savedInventory[i].invSel = p.InvSel;
+				savedInventory[i].readyWeapon = pi.ReadyWeapon;
+			}
+		}
+	}
+
+	private void RestoreItemsState() 
+	{
+		for (int i = 0; i < dropBlockers.Size(); i++)
+		{
+			Inventory item = dropBlockers[i].savedItem;
+			if (item != null) 
+			{
+				item.bUndroppable = dropBlockers[i].wasUndroppable;
+				item.bUntossable = dropBlockers[i].wasUntossable;
+
+				/* We don't restore weapons, armors and ammos amount, otherwise on an
+				   inventory reset, the player won't be actually in a pistol start state */
+				if (!(item is 'Weapon' || item is 'BasicArmor' ||
+							item is 'HexenArmor' || item is 'Ammo' || 
+							item is 'Backpack' || 
+							item is 'BlunderShotUpgrade' || item is 'SigilPieces' || item is 'SigilModeType'))
+					item.Amount = dropBlockers[i].hadAmount;
+			}
+		}
+
+		dropBlockers.Clear();
+	}
+
+	private void MakeInventoryUndroppable() 
+	{
+		for (int i = 0; i < MAXPLAYERS; i++) 
+		{
+			if (playeringame[i] && players[i].mo != null) 
+			{
+				for (Inventory item = players[i].mo.Inv; item != null; item = item.Inv) 
+				{
+					bool keepWeapons = true; // Defaulting to true if no value is found
+					bool keepInvBarItems = true; // Defaulting to true if no value is found
+
+					if (CVar.FindCVar("exex_deathexitkeepweapons") != null)
+						keepWeapons = CVar.FindCVar("exex_deathexitkeepweapons").GetBool();
+						
+					if (CVar.FindCVar("exex_deathexitkeepinventoryitems") != null)
+						keepInvBarItems = CVar.FindCVar("exex_deathexitkeepinventoryitems").GetBool();
+						
+					// Save the item's actual UNDROPPABLE and UNTOSSABLE tags
+					ItemData id = new('ItemData');
+					id.savedItem = item;
+					id.wasUndroppable = item.bUndroppable;
+					id.wasUntossable = item.bUntossable;
+					id.hadAmount = item.Amount;
+					dropBlockers.Push(id);
+
+					if (!keepWeapons && (item is 'Weapon' || item is 'BasicArmor' ||
+															 item is 'HexenArmor' || item is 'Ammo' || 
+															 item is 'Backpack' ||
+															 item is 'BlunderShotUpgrade' || item is 'SigilPieces' || item is 'SigilModeType')) 
+					{
+						// Make the weapon/armor/ammo droppable so it will be removed during a map-initiated
+						// inventory reset, we'll restore their actual values at the beginning of the next level
+						// This is done so you actually do a Pistol Start when intended if you decided to not keep weapons !
+						item.bUndroppable = false;
+						item.bUntossable = false;
+					}
+					else
+					{
+						if (!keepInvBarItems && (item is 'ExExInvBarItem' || item is 'KilletanteEffigy'))
+						{
+							item.bUndroppable = false;
+							item.bUntossable = false;
+						}
+						else
+						{
+							// Make the items undroppable so it won't be removed during a map-initiated
+							// inventory reset, we'll restore their actual values at the beginning of the next level
+							item.bUndroppable = true;
+							item.bUntossable = true;
+						}
+					}
+				}
+			}
+		}
+	}
+    
+	// Event functions override
+	override void OnRegister()
+	{
+		isNewGame=true;
+		dropBlockers.Clear();
+ 
+		for (int i = 0; i < MAXPLAYERS; i++)
+			playerNeedsRestore[i] = false;
+	}
+
+	//If any world has loaded, then we're done handling new games case
 	override void WorldLoaded(WorldEvent evt) 
 	{
 		if (gameinfo.gametype & GAME_Raven)
@@ -1643,6 +1867,80 @@ class DD_StaticEventHandler : StaticEventHandler
 				if (level.Sectors[i].damagetype == 'Fire' || level.Sectors[i].damagetype == 'Lava')
 						level.Sectors[i].damagetype = 'Magma';
 			}
+			
+			// This will be done only by the first player entering
+			// Restoring undroppable and untossable stats for all inventory items !
+			// VERY IMPORTANT to keep the intended behaviour of all items/weapons/...
+			RestoreItemsState();
+	
+			// Once we're done loading a level, regardless of what happened beforehand,
+			// this is not a new game anymore ! Also we're done restoring anything, so clear arrays
+			isNewGame = false;
+	
+			// World is loaded, everything is done, no players to restore, safe cleanup in prevision of next level
+			for (int i = 0; i < MAXPLAYERS; i++)
+				playerNeedsRestore[i] = false;
 		}
+	}
+	
+	override void WorldUnloaded(WorldEvent e)
+	{
+		// World is unloaded from save, we don't restore inventory, and this is not a new game
+		if (e.IsSaveGame)
+			isNewGame = false;
+		/* This is a new game, all future world loads are level exits except for saves (above)
+		 and new games (in which case isNewGame will be true again) */
+		else if (!isNewGame) 
+		{
+			/* We manually remove all weapons and give back a default inventory
+			   Later on we give back the correct amount of said inventory, as some mods'
+			   default inventories may include inventory item that will get stacked here */
+			ManageWeapons();
+			
+			/* Manage Health */
+
+			// We make all inventory undroppable so ResetInventory can't do its job
+			MakeInventoryUndroppable();
+
+			/* We resurrect dead players no matter what (EVEN if we did get here from
+			   a new game or savegame the player entity would be replaced by a new one
+			   after the load ! */
+			ResurrectPlayers();
+			BackupInventories();
+		}
+	}
+
+	override void PlayerEntered(PlayerEvent e)
+	{
+		RestorePlayerInvState(e.playerNumber);
+	}
+
+	override void PlayerRespawned(PlayerEvent e)
+	{
+		if (playeringame[e.playerNumber] && players[e.playerNumber].mo != null)
+		{
+			int delIndex = playersToResurrect.Find(e.playerNumber);
+
+			if (delIndex < playersToResurrect.Size())
+			{
+				playersToResurrect.Delete(delIndex);
+				playersToResurrect.ShrinkToFit();
+			}
+		}
+	}
+
+	override void PlayerDied(PlayerEvent e)
+	{
+		if (playeringame[e.playerNumber] && players[e.playerNumber].mo != null)
+			playersToResurrect.Push(e.playerNumber);
+	}
+	
+	override void NewGame()
+	{
+		isNewGame = true;
+		dropBlockers.Clear();
+
+		for (int i = 0; i < MAXPLAYERS; i++)
+			playerNeedsRestore[i] = false;
 	}
 }
