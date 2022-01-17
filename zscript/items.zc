@@ -1929,11 +1929,113 @@ class ArmorScrap : ArmorBonus
 		Inventory.PickupSound "Scrap/Find";
 		Armor.SavePercent 50;
 		Armor.SaveAmount 1;
-		Armor.MaxSaveAmount 1000; //500
+		Armor.MaxSaveAmount 1000;
 		DamageFactor "Melee", 0.8;
 		DamageFactor "Zap", 0.9;
 		+FLOATBOB
 		+DONTGIB
+	}
+	
+	override void PostBeginPlay()
+	{
+		super.PostBeginPlay();
+		if (random(1,128) <= 1)
+		{
+			if (random(1,128) <= 1) 
+			{
+				SaveAmount *= 4;
+				Scale = (1.625, 1.625);
+			}
+			else
+			{
+				SaveAmount *= 2;
+				Scale = (1.25, 1.25);
+			}
+		}
+	}
+	
+	override bool Use (bool pickup)
+	{
+		int PrevArmorType;
+		if (owner.CountInv("KnightGownItem")) PrevArmorType = 1;
+		if (owner.CountInv("KnightGownItem2")) PrevArmorType = 2;
+		if (owner.CountInv("KnightGownItem3")) PrevArmorType = 3;
+		if (owner.CountInv("KnightGownItem4")) PrevArmorType = 4;
+		if (dydudebug_armordisplays) Console.Printf("PrevArmorType: %d", PrevArmorType);
+
+		let armor = BasicArmor(Owner.FindInventory("BasicArmor"));
+		bool result = false;
+
+		// This should really never happen but let's be prepared for a broken inventory.
+		if (armor == null)
+		{
+			armor = BasicArmor(Spawn("BasicArmor"));
+			armor.BecomeItem ();
+			armor.Amount = 0;
+			armor.MaxAmount = MaxSaveAmount;
+			Owner.AddInventory (armor);
+		}
+
+		if (BonusCount > 0 && armor.BonusCount < BonusMax)
+		{
+			armor.BonusCount = min(armor.BonusCount + BonusCount, BonusMax);
+			result = true;
+		}
+
+		int saveAmount = min(GetSaveAmount(), MaxSaveAmount);
+
+		if (saveAmount <= 0)
+		{ // If it can't give you anything, it's as good as used.
+			return BonusCount > 0 ? result : true;
+		}
+
+		// If you already have more armor than this item can give you, you can't
+		// use it.
+		if (armor.Amount >= MaxSaveAmount + armor.BonusCount)
+		{
+			return result;
+		}
+
+		if (armor.Amount <= 0)
+		{ // Should never be less than 0, but might as well check anyway
+			armor.Amount = 0;
+			armor.Icon = Icon;
+			armor.SavePercent = clamp(SavePercent, 0, 100) / 100;
+			armor.MaxAbsorb = MaxAbsorb;
+			armor.ArmorType = GetClassName();
+			armor.MaxFullAbsorb = MaxFullAbsorb;
+			armor.ActualSaveAmount = MaxSaveAmount;
+		}
+		else
+		{
+			if (PrevArmorType == 1)
+			{
+				if (armor.Amount >= 125)
+				{
+					if (armor.Amount > 250)
+					{
+						armor.SavePercent = clamp(75, 0, 100) / 100;
+						armor.Icon = TexMan.checkForTexture("AGWNJ0");
+					}
+					else 
+					{
+						if (armor.Icon != TexMan.checkForTexture("AGWNI0")) armor.Icon = TexMan.checkForTexture("AGWNI0");
+					}
+				}
+			}
+			if (PrevArmorType == 2)
+			{
+				if (armor.Amount > 500)
+				{
+					armor.SavePercent = clamp(87.5, 0, 100) / 100;
+					armor.Icon = TexMan.checkForTexture("AGWNK0");
+				}
+			}
+		}
+
+		armor.Amount = min(armor.Amount + saveAmount, MaxSaveAmount + armor.BonusCount);
+		armor.MaxAmount = max(armor.MaxAmount, MaxSaveAmount);
+		return true;
 	}
 	
 	States
@@ -1941,9 +2043,11 @@ class ArmorScrap : ArmorBonus
 		Spawn:
 			DACL B 0 NoDelay
 			{
-				if (random(1,20) == 1)
+				int basechance = 32;
+				if (bDROPPED) basechance * 4;
+				if (random(1,basechance) <= 1)
 				{
-					user_type = random(1,20);
+					user_type = random(1,36);
 					if (user_type == 1) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
 					if (user_type == 2) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
 					if (user_type == 3) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
@@ -1951,91 +2055,41 @@ class ArmorScrap : ArmorBonus
 					if (user_type == 5) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
 					if (user_type == 6) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
 					if (user_type == 7) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 8) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 9) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 10) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 11) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 12) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 13) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 14) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 15) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 16) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 17) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 18) { A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 19) { A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
-					if (user_type == 20) { A_SpawnItemEx("SnakePickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 8) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 9) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 10) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 11) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 12) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 13) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 14) { A_SpawnItemEx("CherryBombPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 15) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 16) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 17) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 18) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 19) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 20) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 21) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 22) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 23) { A_SpawnItemEx("SpinnerPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 24) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 25) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 26) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 27) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 28) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 29) { A_SpawnItemEx("BRocketPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 30) { A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 31) { A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 32) { A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 33) { A_SpawnItemEx("PopperPickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 34) { A_SpawnItemEx("SnakePickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 35) { A_SpawnItemEx("SnakePickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
+					if (user_type == 36) { A_SpawnItemEx("SnakePickup",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); }
 
 					Thing_Remove(0); 
 				}
 			}
 		Idle:
 			DACL B -1;
-			stop;
-	}
-}
-
-class ArmorScrap2 : ArmorScrap
-{
-	default
-	{
-		Inventory.Icon "DACLC0";
-		Inventory.Pickupmessage "Knight-Gown Scrap! \c[green]+1 Armor";
-		Inventory.PickupSound "Scrap/Find";
-		Armor.SavePercent 75;
-		Armor.SaveAmount 1;
-		Armor.MaxSaveAmount 1000; //500
-		DamageFactor "Melee", 0.6;
-		DamageFactor "Zap", 0.8;
-	}
-	
-	States
-	{
-		Spawn:
-			DACL C -1;
-			stop;
-	}
-}
-
-class ArmorScrap3 : ArmorScrap2
-{
-	default
-	{
-		Inventory.Icon "DACLB0";
-		Inventory.Pickupmessage "Knight-Gown Scrap! \c[green]+1 Armor";
-		Inventory.PickupSound "Scrap/Find";
-		Armor.SavePercent 87.5;
-		Armor.SaveAmount 1;
-		Armor.MaxSaveAmount 1000; //500
-		DamageFactor "Melee", 0.4;
-		DamageFactor "Zap", 0.6;
-	}
-	
-	States
-	{
-		Spawn:
-			DACL D -1;
-			stop;
-	}
-}
-
-class ArmorScrap4 : ArmorScrap3
-{
-	default
-	{
-		Inventory.Icon "DACLB0";
-		Inventory.Pickupmessage "Knight-Gown Scrap! \c[green]+1 Armor";
-		Inventory.PickupSound "Scrap/Find";
-		Armor.SavePercent 93.75;
-		Armor.SaveAmount 1;
-		Armor.MaxSaveAmount 1000; //500
-		DamageFactor "Melee", 0.2;
-		DamageFactor "Zap", 0.3;
-	}
-	
-	States
-	{
-		Spawn:
-			DACL D -1;
 			stop;
 	}
 }
@@ -2083,7 +2137,11 @@ class KnightGown : SilverShield
 			// If you already have more armor than this item gives you, you can't
 			// use it.
 			//Console.Printf("Amt: %d, Max: %d", armor.Amount, maxa);
-			int maxa = ((SaveAmount*2) + (armor.BonusCount*2));
+			int maxa = (250 + (armor.BonusCount*2));
+			if (PrevArmorType == 1) maxa = (250 + (armor.BonusCount*2));
+			if (PrevArmorType == 2) maxa = (500 + (armor.BonusCount*4));
+			if (PrevArmorType == 3) maxa = (1000 + (armor.BonusCount*8));
+			if (PrevArmorType == 4) maxa = (2000 + (armor.BonusCount*16));
 			if (armor.Amount >= maxa)
 			{
 				return false;
@@ -2213,7 +2271,10 @@ class KnightGown2 : EnchantedShield
 			// If you already have more armor than this item gives you, you can't
 			// use it.
 			//Console.Printf("Amt: %d, Max: %d", armor.Amount, maxa);
-			int maxa = ((SaveAmount*2) + (armor.BonusCount*2));
+			int maxa = (500 + (armor.BonusCount*4));
+			if (PrevArmorType <= 2) maxa = (500 + (armor.BonusCount*4));
+			if (PrevArmorType == 3) maxa = (1000 + (armor.BonusCount*8));
+			if (PrevArmorType == 4) maxa = (2000 + (armor.BonusCount*16));
 			if (armor.Amount >= maxa)
 			{
 				return false;
@@ -2317,7 +2378,8 @@ class KnightGown3 : EnchantedShield
 			// If you already have more armor than this item gives you, you can't
 			// use it.
 			//Console.Printf("Amt: %d, Max: %d", armor.Amount, maxa);
-			int maxa = ((SaveAmount*2) + (armor.BonusCount*2));
+			int maxa = (1000 + (armor.BonusCount*8));
+			if (PrevArmorType == 4) maxa = (2000 + (armor.BonusCount*16));
 			if (armor.Amount >= maxa)
 			{
 				return false;
