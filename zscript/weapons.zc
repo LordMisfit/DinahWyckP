@@ -29,17 +29,6 @@ class DDWeapon : Weapon
 		self.Destroy();
 	}
 	
-	action void A_CheckIPState1()
-	{
-		invoker.IPAttackCheck = 0;
-		invoker.buttons = GetPlayerInput(INPUT_BUTTONS);
-		int buttonspressed = 0;
-		if (exex_ikaripointsenabled)
-		{
-			if (player.mo && player.mo.CountInv("IPUseMode")) invoker.IPAttackCheck = 1;
-		}
-	}
-	
 	action void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = 0, sound MissSound = "", string giveammotype = "", int giveammoamt = 0, bool IPCostOnHit = false)
 	{
 		let player = self.player;
@@ -74,7 +63,16 @@ class DDWeapon : Weapon
 
 		Actor puff;
 		[puff, actualdamage] = LineAttack (angle, range, pitch, damage, 'Melee', pufftype, puffFlags, t);
-
+		if (puff)
+		{
+			let IPPuff = DDProjectile(puff);
+			if (IPPuff && invoker.IPAttackCheck) 
+			{
+				IPPuff.IPAttack = true;
+				if (dydudebug_ipdisplays) Console.Printf("IPPuff: %d", IPPuff.IPAttack);
+			}
+		}
+		
 		if (!t.linetarget)
 		{
 			if (MissSound) A_StartSound(MissSound, CHAN_WEAPON);
@@ -142,18 +140,31 @@ class DDWeapon : Weapon
 			if (flags & CPF_DAGGER) t.linetarget.DaggerAlert (self);
 		}
 	}
-
+	
+	action void A_CheckIPState1()
+	{
+		invoker.IPAttackCheck = 0;
+		invoker.buttons = GetPlayerInput(INPUT_BUTTONS);
+		int buttonspressed = 0;
+		if (exex_ikaripointsenabled)
+		{
+			if (player.mo && player.mo.CountInv("IPUseMode")) invoker.IPAttackCheck = 1;
+		}
+	}
+	
 	action void A_ConfirmIPAttack(int ipid = 0, int IPVoiceType = 0, int basevoicechance = 0, int maxvoiceroll = 0, bool takecost = true)
 	{
+		if (dydudebug_ipdisplays) Console.Printf("\c[green][IPUse: %d]", ipid);
 		actor player = players[0].mo;
 		if (player)
 		{
+			if (dydudebug_ipdisplays) Console.Printf("\c[green][IPUse: %d] PlayerCheck", ipid);
 			let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 			let globalvars = DDGlobalVariables.Get();
 			if (exex_ikaripointsenabled && MiscItem && globalvars && invoker.IPAttackCheck)
 			{
 				double cost = invoker.A_GetIPCost(ipid);
-				if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
+				if (dydudebug_ipdisplays) Console.Printf("\c[green][IPUse: %d] Cost: %.4f", ipid, cost);
 				if (takecost)
 				{
 					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
@@ -2422,9 +2433,15 @@ class CricketBat : DinahWeapon replaces Pistol
 	action int A_BatDamageSet(int type = 0)
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int LevelInc = 12;
+		double LevelInc;
+		if (Skill <= 0) LevelInc = 9;
+		if (Skill == 1) LevelInc = 10.5;
+		if (Skill == 2) LevelInc = 12;
+		if (Skill == 3) LevelInc = 13.5;
+		if (Skill >= 4) LevelInc = 15;
+		LevelInc *= 1.5;
 
-		int dmg = random(6,8);
+		double dmg = random(6,8);
 		if (MiscItem)
 		{
 			if (MiscItem.PlayerLevel >= (LevelInc*12)) dmg *= random(7,14);
@@ -2448,7 +2465,13 @@ class CricketBat : DinahWeapon replaces Pistol
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
 		if (type == 1) // type 1 = Spin attack
 		{
-			LevelInc = 24;
+			if (Skill <= 0) LevelInc = 18;
+			if (Skill == 1) LevelInc = 21;
+			if (Skill == 2) LevelInc = 24;
+			if (Skill == 3) LevelInc = 27;
+			if (Skill >= 4) LevelInc = 30;
+			LevelInc *= 1.5;
+
 			if (MiscItem)
 			{
 				if (MiscItem.PlayerLevel >= (LevelInc*8)) dmg /= frandom(2.0,4.0);
@@ -2468,7 +2491,7 @@ class CricketBat : DinahWeapon replaces Pistol
 				if (invoker.IPAttackCheck) dmg *= frandompick(1.05,1.10,1.15);
 			}
 		}
-
+		dmg = int(dmg);
 		if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
 
 		return dmg;
@@ -2658,7 +2681,23 @@ class CricketBat : DinahWeapon replaces Pistol
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(0,1,1,1,1,1)); }
 				A_GiveGuardBuff(0);
 			}
-			DBID JCCBA 2
+			DBID J 2
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(0,1,1,1,1,1)); }
+			}
+			DBID C 2
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(0,1,1,1,1,1)); }
+			}
+			DBID C 2
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(0,1,1,1,1,1)); }
+			}
+			DBID B 2
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(0,1,1,1,1,1)); }
+			}
+			DBID A 2
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(0,1,1,1,1,1)); }
 			}
@@ -2795,11 +2834,19 @@ class CricketBat : DinahWeapon replaces Pistol
 				A_GiveGuardBuff(0);
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
 			}
-			DBID JC 2 
+			DBID J 2 
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
 			}
-			DBID BA 3
+			DBID C 2 
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+			}
+			DBID B 3
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(random(1,2)); }
+			}
+			DBID A 3
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(random(1,2)); }
 			}
@@ -3131,12 +3178,20 @@ class BatPuff : DDPuff
 		VSpeed 1;
 		DamageType "Bonk";
 	}
+	
+	void A_SetPainForcedPain()
+	{
+		int basechance = 4;
+		if (IPAttack) basechance = random(2,3);
+		if (random(1,basechance) <= 1) bFORCEPAIN = true; 
+	}
+	
 	States
 	{
 		Spawn:
 			TNT1 A 0 NoDelay
 			{
-				if (random(1,4) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
@@ -3144,7 +3199,7 @@ class BatPuff : DDPuff
 		Melee:
 			TNT1 A 0
 			{
-				if (random(1,4) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
@@ -3152,7 +3207,7 @@ class BatPuff : DDPuff
 		Crash:
 			TNT1 A 0
 			{
-				if (random(1,4) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
@@ -3182,21 +3237,21 @@ class BatPuffNoSound : BatPuff
 		Spawn:
 			TNT1 A 0 NoDelay
 			{
-				if (random(1,4) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			TNT1 A 1 Bright;
 			Stop;
 		Melee:
 			TNT1 A 0
 			{
-				if (random(1,4) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			TNT1 A 1 Bright;
 			Stop;
 		Crash:
 			TNT1 A 0
 			{
-				if (random(1,4) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			TNT1 A 1 Bright;
 			Stop;
@@ -4166,26 +4221,34 @@ class BlunderPuff : DDPuff
 		VSpeed 1;
 		DamageType "Chop";
 	}
+
+	void A_SetPainForcedPain()
+	{
+		int basechance = 6;
+		if (IPAttack) basechance = randompick(4,4,5);
+		if (random(1,basechance) <= 1) bFORCEPAIN = true; 
+	}
+	
 	States
 	{
 		Spawn:
 			TNT1 A 0 NoDelay
 			{
-				if (random(1,6) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			CHOP ABC 4 Bright;
 			Stop;
 		Melee:
 			TNT1 A 0
 			{
-				if (random(1,6) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			CHOP ABC 4 Bright;
 			Stop;
 		Crash:
 			TNT1 A 0
 			{
-				if (random(1,6) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			CHOP ABC 4 Bright;
 			Stop;
@@ -4716,12 +4779,19 @@ class PanPuff : DDPuff
 		DamageType "Bonk";
 	}
 	
+	void A_SetPainForcedPain()
+	{
+		int basechance = 5;
+		if (IPAttack) basechance = randompick(2,3,3);
+		if (random(1,basechance) <= 1) bFORCEPAIN = true; 
+	}
+	
 	States
 	{
 		Spawn:
 			TNT1 A 0 NoDelay
 			{
-				if (random(1,5) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
@@ -4729,7 +4799,7 @@ class PanPuff : DDPuff
 		Melee:
 			TNT1 A 0
 			{
-				if (random(1,5) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
@@ -4737,7 +4807,7 @@ class PanPuff : DDPuff
 		Crash:
 			TNT1 A 0
 			{
-				if (random(1,5) == 1) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
@@ -6268,6 +6338,7 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 						A_PikeShotIPSetup(BombShots);
 					}
 				}
+				invoker.A_CheckIPModeOnUse();
 			}
 			goto Ready;
 	}
@@ -6298,7 +6369,7 @@ class Pike_Flipped : CustomInventoryExt
 	}
 }
 
-class PikePuff : BatPuff
+class PikePuff : DDPuff
 {
 	default
 	{
@@ -6316,12 +6387,19 @@ class PikePuff : BatPuff
 		DamageType "Bonk";
 	}
 	
+	void A_SetPainForcedPain()
+	{
+		int basechance = 4;
+		if (IPAttack) basechance = randompick(2,2,3);
+		if (random(1,basechance) <= 3) bFORCEPAIN = true; 
+	}
+	
 	States
 	{
 		Spawn:
 			TNT1 A 0 NoDelay
 			{
-				if (random(1,4) <= 3) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
@@ -6329,7 +6407,7 @@ class PikePuff : BatPuff
 		Melee:
 			TNT1 A 0
 			{
-				if (random(1,4) <= 3) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
@@ -6337,7 +6415,7 @@ class PikePuff : BatPuff
 		Crash:
 			TNT1 A 0
 			{
-				if (random(1,4) <= 3) { bFORCEPAIN = true; }
+				A_SetPainForcedPain();
 			}
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
@@ -6716,6 +6794,21 @@ class SuperVac : DinahWeapon replaces PlasmaRifle
 		Obituary "%o sucks.";
 	}
 
+	action void A_VacDustDevilIPSetup(actor BombShots)
+	{
+		if (BombShots && invoker.IPAttackCheck)
+		{
+			DDProjectile IPCompat; 
+			IPCompat = DDProjectile(BombShots);
+			if (IPCompat)
+			{
+				IPCompat.IPattack = true;
+				IPCompat.BounceCount *= 1.5;
+				IPCompat.Speed *= 0.5;
+			}
+		}
+	}
+
 	States
 	{
 		Spawn:
@@ -6766,24 +6859,89 @@ class SuperVac : DinahWeapon replaces PlasmaRifle
 				}
 				return resolvestate(null);
 			}
+		FireLoop:
 			VACM B 0 
 			{
-				A_StartSound("VacSuck");
 				if (random(1,32) <= 29) { A_AlertMonsters(); }
+
+				A_CheckIPState1();
+				A_ConfirmIPAttack(151,0,1,64,false);
+				double sndpitch = 1.0;
+				double sndvol = 1.0;
+				if (invoker.IPAttackCheck) 
+				{
+					sndpitch = frandom(0.75,0.875);
+					sndvol = 1.2;
+				}
+				A_StartSound("VacSuck",CHAN_WEAPON,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				if (invoker.IPAttackCheck) 
+				{
+					sndpitch = frandom(0.75,0.875);
+					sndvol = 1.2;
+					A_StartSound("VacSuck",CHAN_7,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				}
+				if (invoker.IPAttackCheck && random(1,4) <= 1) 
+				{
+					sndpitch = frandom(0.75,0.875);
+					sndvol = 1.2;
+					A_StartSound("VacSuck",8,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				}
+				if (invoker.IPAttackCheck && random(1,16) <= 1) 
+				{
+					sndpitch = frandom(0.75,0.875);
+					sndvol = 1.2;
+					A_StartSound("VacSuck",9,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				}
+				if (random(1,32) <= 1 && !CountInv("PlayingStrife",AAPTR_PLAYER1)) { A_AlertMonsters(); }
 			}
 			VACM BA 2
 			{
+				int PlayerLevel = CountInv("PlayerLevel");
 				int dmg = (random(3,6) * random(1,8));
+				int range = 80 * frandom(1.0,1.05);
+				double drainamt = 0;
+				double drainlimit = 0;
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= frandompick(1.0,1.0,1.125,1.125,1.125,1.125,1.125,1.25,1.25);
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
-				if (random(1,16) <= 1)
+				if (invoker.IPAttackCheck)
 				{
-					A_CustomPunch(dmg, true, 0, "VacPuff", 80, frandompick(0.01,0.05,0.1), (health*0.05));
+					dmg = (random(3,7) * (random(1,4) * 2));
+					range *= frandompick(1.05,1.1,1.15);
+					if (random(1,16) <= (8 + (PlayerLevel * 0.32)))
+					{
+						drainamt = frandompick(0.04,0.2,0.4);
+						drainlimit = (health*(0.20 + (PlayerLevel * 0.004)));
+						if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+						{
+							drainamt *= 1.25;
+							drainlimit *= 1.25;
+						}
+					}
 				}
 				else
 				{
-					A_CustomPunch(dmg, true, 0, "VacPuff", 80);
+					dmg = (random(3,6) * random(1,8));
+					if (random(1,16) <= (1 + (PlayerLevel * 0.04)))
+					{
+						drainamt = frandompick(0.01,0.05,0.1);
+						drainlimit = (health*(0.05 + (PlayerLevel * 0.001)));
+						if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+						{
+							drainamt *= 1.25;
+							drainlimit *= 1.25;
+						}
+					}
 				}
+				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+
+				A_CustomPunch(dmg, true, 0, "VacPuff", range, drainamt, drainlimit, IPCostOnHit: true);
+			}
+			VACM B 0 
+			{
+				A_ReFire();
+			}
+			VACM B 0 
+			{
+				invoker.A_CheckIPModeOnUse();
 			}
 			goto Ready;
 		AltFire:
@@ -6792,68 +6950,111 @@ class SuperVac : DinahWeapon replaces PlasmaRifle
 				if (CountInv("VacAmmo") < 8) { return resolvestate("Fire"); }
 				return resolvestate(null);
 			}
+			VACM A 0
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttackExtra(152,0,20,20,"VacAmmo",8);
+			}
 			VACM A 4
 			{
-				int basechance = 192;
-				if (CountInv("DecentHealth")) basechance *= 1.0625;
-				if (CountInv("LowHealth")) basechance *= 1.125;
-				if (CountInv("CriticalHealth")) basechance *= 1.1875;
-				if (CountInv("PowerWineBuffWeak")) basechance *= 1.0625;
-				if (CountInv("PowerWineBuffStrong")) basechance *= 1.1875;
-				if (CountInv("PowerWineBuffStrongest")) basechance *= 1.375;
-				if (CountInv("PowerWineBuffStrongestEven")) basechance *= 1.875;
-				if (random(1,256) <= basechance)
+				if (invoker.IPAttackCheck <= 0) // Do not play another one-liner if IP attack
 				{
-					string voicenm;
-					double voicevol = frandom(1.25,1.70);
-					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) voicevol *= frandompick(1.125,1.125,1.125,1.25,1.25,1.5);
-					int randvoice = random(1,5);
-					if (randvoice >= 1 && randvoice <= 3) 
+					int basechance = 192;
+					if (CountInv("DecentHealth")) basechance *= 1.0625;
+					if (CountInv("LowHealth")) basechance *= 1.125;
+					if (CountInv("CriticalHealth")) basechance *= 1.1875;
+					if (CountInv("PowerWineBuffWeak")) basechance *= 1.0625;
+					if (CountInv("PowerWineBuffStrong")) basechance *= 1.1875;
+					if (CountInv("PowerWineBuffStrongest")) basechance *= 1.375;
+					if (CountInv("PowerWineBuffStrongestEven")) basechance *= 1.875;
+					if (random(1,256) <= basechance)
 					{
-						voicenm = "dinah/howsthis";
-						if (exex_dinahextravoices) 
+						string voicenm;
+						double voicevol = frandom(1.25,1.70);
+						if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) voicevol *= frandompick(1.125,1.125,1.125,1.25,1.25,1.5);
+						int randvoice = random(1,5);
+						if (randvoice >= 1 && randvoice <= 3) 
 						{
-							A_SetTics(random(2,4)*4);
-							Console.Printf("\c[gold]'How's this?!?!'\c-");
+							voicenm = "dinah/howsthis";
+							if (exex_dinahextravoices) 
+							{
+								A_SetTics(random(2,4)*4);
+								Console.Printf("\c[gold]'How's this?!?!'\c-");
+							}
 						}
-					}
-					if (randvoice == 4) 
-					{
-						if (exex_dinahextravoices) 
+						if (randvoice == 4) 
 						{
-							A_SetTics(random(4,6)*4);
-							voicenm = "dinah/thiswillhurt";
+							if (exex_dinahextravoices) 
+							{
+								A_SetTics(random(4,6)*4);
+								voicenm = "dinah/thiswillhurt";
+							}
+							Console.Printf("\c[gold]'This will hurt!!'\c-");
 						}
-						Console.Printf("\c[gold]'This will hurt!!'\c-");
-					}
-					if (randvoice == 5) 
-					{
-						voicenm = "dinah/thiswillendit";
-						if (exex_dinahextravoices) 
+						if (randvoice == 5) 
 						{
-							A_SetTics(random(5,7)*4);
-							Console.Printf("\c[gold]'This will end it!!'\c-");
+							voicenm = "dinah/thiswillendit";
+							if (exex_dinahextravoices) 
+							{
+								A_SetTics(random(5,7)*4);
+								Console.Printf("\c[gold]'This will end it!!'\c-");
+							}
 						}
-					}
-					if (exex_dinahextravoices)
-					{
-						A_StopSound(CHAN_VOICE);
-						A_StartSound(voicenm,CHAN_VOICE,CHANF_DEFAULT,voicevol); 
-					}
-				} 
-				//dinah/howsthis
+						if (exex_dinahextravoices)
+						{
+							A_StopSound(CHAN_VOICE);
+							A_StartSound(voicenm,CHAN_VOICE,CHANF_DEFAULT,voicevol); 
+						}
+					} 
+				}
 			}
 			VACM B 4 
 			{
-				A_StartSound("VacDed",CHAN_WEAPON);
-				if (random(1,32) <= 21) { A_AlertMonsters(); }
+				double sndpitch = 1.0;
+				double sndvol = 1.0;
+				if (invoker.IPAttackCheck) 
+				{
+					sndpitch = frandom(0.625,0.75);
+					sndvol = 1.4;
+				}
+				A_StartSound("VacDed",CHAN_WEAPON,CHAN_WEAPON,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				if (invoker.IPAttackCheck)
+				{
+					sndpitch = frandom(0.625,0.75);
+					sndvol = 1.4;
+					A_StartSound("VacDed",7,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+					sndpitch = frandom(0.625,0.75);
+					sndvol = 1.4;
+					A_StartSound("VacDed",8,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				}
+				int basealert = 21;
+				if (invoker.IPAttackCheck) basealert += random(7,9);
+				if (random(1,32) <= basealert) { A_AlertMonsters(); }
 			}
 			VACM C 4
 			{
-				A_FireProjectile("VacShot",15,0,0,0);
-				A_FireProjectile("VacShot",0,12,0,0);
-				A_FireProjectile("VacShot",-15,0,0,0);
+				actor BombShots;
+				DDProjectile IPCompat;
+
+				BombShots = A_FireProjectile("VacShot",15,0,0,0);
+				if (invoker.IPAttackCheck) A_VacDustDevilIPSetup(BombShots);
+				if (invoker.IPAttackCheck) 
+				{
+					BombShots = A_FireProjectile("VacShot",7.5,6,0,0);
+					A_VacDustDevilIPSetup(BombShots);
+				}
+				BombShots = A_FireProjectile("VacShot",0,12,0,0);
+				if (invoker.IPAttackCheck) A_VacDustDevilIPSetup(BombShots);
+				if (invoker.IPAttackCheck) 
+				{
+					BombShots = A_FireProjectile("VacShot",-7.5,6,0,0);
+					A_VacDustDevilIPSetup(BombShots);
+				}
+				BombShots = A_FireProjectile("VacShot",-15,0,0,0);
+				if (invoker.IPAttackCheck) A_VacDustDevilIPSetup(BombShots);
+
 				A_TakeInventory("VacAmmo",8);
+				invoker.A_CheckIPModeOnUse();
 			}
 			VACM B 3;
 			VACM A 3;
@@ -6885,10 +7086,9 @@ class VacPuff : DDPuff
 		Crash:
 			TNT1 A 0 NoDelay
 			{
-				if (random(1,12) <= 1) 
-				{
-					bFORCEPAIN = true; 
-				}
+				int basechance = 12;
+				if (IPAttack) basechance = random(4,6);
+				if (random(1,basechance) <= 1) bFORCEPAIN = true; 
 			}
 			BASH DE 3 bright;
 			Stop;
@@ -6905,6 +7105,7 @@ class VacShot : DDProjectile
 		Speed 20;
 		Damage 20;
 		Scale 1;
+		health 1;
 		Projectile;
 		DamageType "Dust";
 		DontHurtShooter;
@@ -6922,6 +7123,7 @@ class VacShot : DDProjectile
 		+SKYEXPLODE
 		+CANBOUNCEWATER
 		+DONTREFLECT
+		+NODAMAGETHRUST
 		BounceType "Hexen";
 		BounceFactor 1.03125;
 		WallBounceFactor 1.03125;
@@ -6934,42 +7136,143 @@ class VacShot : DDProjectile
 	States
 	{
 		Spawn:
-			VSHT ABC 3 Bright A_Explode(41,64,0,0,16);
+			VSHT ABC 3 Bright NoDelay
+			{
+				if (IPAttack) A_SetTics(2);
+
+				int dmg, rad, fullrad;
+				dmg = 41;
+				rad = 64;
+				fullrad = rad * 0.25;
+				if (IPAttack)
+				{
+					dmg *= frandompick(1.0,1.0,1.0,1.125,1.125,1.25);
+					rad = randompick(64,72,72,80,80,80,80,80,88,88,96);
+					fullrad = rad * frandompick(0.25,0.33,0.5,0.67,0.75);
+				}
+				A_Explode(dmg,rad,0,0,fullrad);
+			}
+			VSHT A 0
+			{
+				if (IPAttack)
+				{
+					health--;
+					if (health <= 0)
+					{
+						health = randompick(1,1,1,1,2);
+						actor BombShots;
+						DDProjectile IPCompat;
+						BombShots = A_SpawnProjectile("VacShotMini",0,0,0,CMF_TRACKOWNER);
+						if (BombShots && IPAttack) 
+						{
+							IPCompat = DDProjectile(BombShots);
+							if (IPCompat) 
+							{
+								IPCompat.IPattack = true;
+								IPCompat.vel.z = frandompick(-1,-0.5,-0.5,0,0,0,0,0,0,0.5,0.5,1); // VSpeed = Vel.z
+								IPCompat.health = randompick(3,4,4,5,5,5,6,6,7);
+							}
+						}
+					}
+				}
+			}
 			loop;
 		Death:
-			TNT1 A 4 A_Explode(82,128,0,0,32);
+			TNT1 A 4 
+			{
+				if (IPAttack) A_SetTics(3);
+
+				int dmg, rad, fullrad;
+				dmg = 82;
+				rad = 128;
+				fullrad = (rad * 0.25);
+				if (IPAttack)
+				{
+					dmg *= frandompick(1.0,1.0,1.125,1.125,1.25,1.25);
+					rad = randompick(128,144,144,160,16,16,16,16,176,176,192);
+					fullrad = rad * frandompick(0.25,0.33,0.5,0.67,0.75);
+				}
+				A_Explode(dmg,rad,0,0,fullrad);
+			}
 			stop;
 	}
 }
 
-class VacShot2 : DDProjectile
+class VacShotMini : DDProjectile
 {
 	default
 	{
-		Tag "Dust Devil";
-		Radius 3;
-		Height 8;
-		Speed 20;
-		Damage 20;
-		Scale 1;
+		Tag "Mini Dust Devil";
+		Radius 2;
+		Height 5;
+		Speed 0;
+		Damage 2;
+		health 5;
 		Projectile;
 		DamageType "Dust";
 		DontHurtShooter;
-		RENDERSTYLE "Normal";
-		seesound "Weapons/RocketFire";
-		deathsound "croquet/ballhit";
+		RENDERSTYLE "Add";
+		Scale 0.334;
+		Alpha 0.75;
+		seesound "";
+		deathsound "";
 		+RIPPER
 		+FORCERADIUSDMG
+		+NODAMAGETHRUST
 		//+NOEXTREMEDEATH
+
+		+BOUNCEONWALLS
+		+BOUNCEONFLOORS
+		+BOUNCEONCEILINGS
+		+BOUNCEONACTORS
+		+NOBOUNCESOUND
+		+EXPLODEONWATER
+		+DONTBOUNCEONSHOOTABLES
+		+SKYEXPLODE
+		+CANBOUNCEWATER
+		+DONTREFLECT
+		+NODAMAGETHRUST
+		BounceType "Hexen";
+		BounceFactor 1.03125;
+		WallBounceFactor 1.03125;
+		BounceCount 5;
 	}
 	
 	States
 	{
 		Spawn:
-			VSHT ABC 3 Bright A_Explode(41,64,0,0,16);
+			VSHT ABC 3 Bright 
+			{
+				if (IPAttack) A_SetTics(2);
+
+				int dmg, rad, fullrad;
+				dmg = random(20,21);
+				rad = 32;
+				fullrad = rad * frandompick(0.25,0.33,0.5,0.67,0.75);
+				A_Explode(dmg,rad,0,0,fullrad);
+			}
+			VSHT A 0
+			{
+				health--;
+				A_FadeOut(0.075,FTF_REMOVE);
+				if (health <= 0) { return resolvestate("DeathNoExp"); }
+				return resolvestate(null);
+			}
 			loop;
 		Death:
-			TNT1 A 4 A_Explode(82,128,0,0,32);
+			TNT1 A 4 
+			{
+				if (IPAttack) A_SetTics(3);
+
+				int dmg, rad, fullrad;
+				dmg = 41;
+				rad = 64;
+				fullrad = rad * frandompick(0.25,0.33,0.5,0.67,0.75);
+				A_Explode(dmg,rad,0,0,fullrad);
+			}
+			stop;
+		DeathNoExp:
+			TNT1 A 1;
 			stop;
 	}
 }
@@ -8060,7 +8363,6 @@ class CandleWhip : DinahWeapon
 
 class WhipPuff : DDPuff
 {
-	int basechance;
 	default
 	{
 		Tag "Roman CandleWhiplash";
@@ -8078,15 +8380,11 @@ class WhipPuff : DDPuff
 		DamageType "Fire";
 	}
 	
-	void A_CheckFPain()
+	void A_SetPainForcedPain()
 	{
-		basechance = 4;
-		if (target && target.GetClassName() == "DinahWick" && (target.CountInv("PowerStrength") || target.CountInv("PowerStrengthDD"))) basechance /= 2;
-		if (random(1,basechance) <= 1)
-		{
-			bFORCEPAIN = true; 
-			//Console.Printf("bFORCEPAIN");
-		}
+		int basechance = 4;
+		if (IPAttack) basechance = randompick(2,2,3);
+		if (random(1,basechance) <= 1) bFORCEPAIN = true; 
 	}
 	
 	States
@@ -8094,21 +8392,21 @@ class WhipPuff : DDPuff
 		Spawn:
 			TNT1 A 0 NoDelay
 			{
-				A_CheckFPain();
+				A_SetPainForcedPain();
 			}
 			CHOP ABC 4 Bright;
 			Stop;
 		Melee:
 			TNT1 A 0
 			{
-				A_CheckFPain();
+				A_SetPainForcedPain();
 			}
 			CHOP ABC 4 Bright;
 			Stop;
 		Crash:
 			TNT1 A 0
 			{
-				A_CheckFPain();
+				A_SetPainForcedPain();
 			}
 			CHOP ABC 4 Bright;
 			Stop;
@@ -8117,7 +8415,6 @@ class WhipPuff : DDPuff
 
 class CandlePuff : DDPuff
 {
-	int basechance;
 	default
 	{
 		+NOBLOCKMAP
@@ -8134,14 +8431,12 @@ class CandlePuff : DDPuff
 		DamageType "Fire";
 	}
 	
-	void A_CheckFPain()
+	
+	void A_SetPainForcedPain()
 	{
-		basechance = 8;
-		if (random(1,basechance) <= 1)
-		{
-			bFORCEPAIN = true; 
-			//Console.Printf("bFORCEPAIN");
-		}
+		int basechance = 8;
+		if (IPAttack) basechance = randompick(4,5,6);
+		if (random(1,basechance) <= 1) bFORCEPAIN = true; 
 	}
 	
 	States
@@ -8149,7 +8444,7 @@ class CandlePuff : DDPuff
 		Spawn:
 			CANX ABC 0 NoDelay
 			{
-				A_CheckFPain();
+				A_SetPainForcedPain();
 			}
 			CANX ABC 4 Bright;
 			CANX DE 3 bright;

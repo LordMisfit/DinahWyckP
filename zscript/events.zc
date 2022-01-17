@@ -1,5 +1,15 @@
 class DD_EventHandler : EventHandler
 {
+	const SKILL_VERY_EASY = 0;
+	const SKILL_EASY = 1;
+	const SKILL_NORMAL = 2;
+	const SKILL_HARD = 3;
+	const SKILL_VERY_HARD = 4;
+	const SKILL_EXTREME = 5;
+	const SKILL_HORRIBLE = 6;
+	const SKILL_IMPOSSIBLE = 7;
+	const SKILL_OMEGA = 8;
+
 	override void NewGame()
 	{
 		//Console.Printf("NEWGAME");
@@ -8,21 +18,23 @@ class DD_EventHandler : EventHandler
 	
 	override void WorldThingSpawned(WorldEvent e)
 	{
-		if (e.thing)
+		actor spawnee = e.thing;
+		if (spawnee)
 		{
-			if (e.thing.GetClassName() == "ArchvileFire")
+			if (spawnee.GetClassName() == "ArchvileFire")
 			{
-				e.thing.A_SetRenderStyle(frandom(0.625,0.875),STYLE_Add);
+				spawnee.A_SetRenderStyle(frandom(0.625,0.875),STYLE_Add);
 			}
-			/*
-			if (!ShieldPart(e.thing))
+			//
+			if (spawnee.bISMONSTER)
 			{
-				Console.Printf("\c[blue]thing:\c- %s [%d]", e.thing.GetClassName(), gametic);
-				if (e.thing.target) Console.Printf("  \c[blue]%s\c-.\c[brick]target:\c- %s [%d]", e.thing.GetClassName(), e.thing.target.GetClassName(), gametic);
-				if (e.thing.tracer) Console.Printf("  \c[blue]%s\c-.\c[brick]tracer:\c- %s [%d]", e.thing.GetClassName(), e.thing.tracer.GetClassName(), gametic);
-				if (e.thing.master) Console.Printf("  \c[blue]%s\c-.\c[brick]master:\c- %s [%d]", e.thing.GetClassName(), e.thing.master.GetClassName(), gametic);
+				if (spawnee.bFRIENDLY)
+				{
+				}
+				else
+				{
+				}
 			}
-			*/
 		}
 		Super.WorldThingSpawned(e);
 	}
@@ -535,6 +547,7 @@ class DD_EventHandler : EventHandler
 
 		if (victim)
 		{
+			actor IPAttack;
 			if (!(vict == "DinahPlayer") || victim.bCOUNTKILL)
 			{
 				actor Player = players[0].mo;
@@ -546,23 +559,33 @@ class DD_EventHandler : EventHandler
 				{
 					if (inflicter) 
 					{
-						if (inflicter.bFRIENDLY || infl == "DinahWyck") giveexp = true;
+						if (inflicter.bFRIENDLY || infl == "DinahWyck")
+						{
+							if (IPAttack == null) IPAttack = DDProjectile(inflicter);
+							giveexp = true;
+						}
 						//Console.Printf("inflictor: %s  [%d]", infl, inflicter.bFRIENDLY);
 					}
 					if (source) 
 					{
-						if (source.bFRIENDLY || sour == "DinahWyck") giveexp = true;
+						if (source.bFRIENDLY || sour == "DinahWyck") 
+						{
+							if (IPAttack == null) IPAttack = DDProjectile(source);
+							giveexp = true;
+						}
 						//Console.Printf("inflictor.target: %s [%d]", sour, source.bFRIENDLY);
 					}
 					if (mastor) 
 					{
+						if (IPAttack == null) IPAttack = DDProjectile(mastor);
 						if (mastor.bFRIENDLY || mast == "DinahWyck") giveexp = true;
 						//Console.Printf("inflictor.master: %s [%d]", mast, mastor.bFRIENDLY);
 					}
 
 					int ExpGain = ((victim.spawnhealth()*frandom(0.05,0.125)));
-					if (source && source.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
-					if (inflicter && inflicter.bFRIENDLY) ExpGain *= frandom(0.65,0.90);
+					if (IPAttack) ExpGain = ((victim.spawnhealth()*frandom(0.125,0.25)));
+
+					if ((source && source.bFRIENDLY) || (inflicter && inflicter.bFRIENDLY)) ExpGain *= frandom(0.65,0.90);
 					if (sour == "DinahPlayer" && infl == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
 					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
 					If (PLuck) ExpGain *= (1.00 + (PLuck * frandompick(0,0.00125,0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02)));
@@ -607,6 +630,7 @@ class DD_EventHandler : EventHandler
 							if (basechance > 0)
 							{
 								if (MiscItem) basechance += (MiscItem.ItemPoints * (basechance * 0.01));
+								if (IPAttack) basechance *= frandompick(1.125,1.167,1.25,1.334);
 								if (player.CountInv("DecentHealth")) basechance *= 1.25;
 								if (player.CountInv("LowHealth")) basechance *= 1.5;
 								if (player.CountInv("CriticalHealth")) basechance *= 1.875;
@@ -678,6 +702,9 @@ class DD_EventHandler : EventHandler
 				}
 				
 				// Drop Tables
+				int baseIPLuckMul = frandompick(1.5,1.5,1.5,1.5,1.5,2.0);
+				int baseIPLvlDivider = frandompick(0.8,0.925,0.925,0.925,0.925,0.925);
+				int baseIPBaseChanceMul = frandompick(0.8,0.925,0.925,0.925,0.925,0.925);
 				int basedropdiv;
 				double luckbase;
 				int droptimes;
@@ -689,8 +716,13 @@ class DD_EventHandler : EventHandler
 				{
 					droptimes = 1;
 					luckbase = 0.0625;
-					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 35;
+					if (IPAttack) 
+					{
+						luckbase *= baseIPLuckMul;
+						lvldivider *= baseIPLvlDivider;
+					}
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -710,19 +742,37 @@ class DD_EventHandler : EventHandler
 						// Doom Monsters
 						basedropdiv = 256;
 						luckbase = 0.25;
+						if (IPAttack) 
+						{
+							basedropdiv *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basedropdiv -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
+						// Add Specific Monsters Below :V
 						
 						
 						// Heretic Monsters
 						basedropdiv = 256;
 						luckbase = 0.25;
+						if (IPAttack) 
+						{
+							basedropdiv *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basedropdiv -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
+						// Add Specific Monsters Below :V
 						
 						
 						// Hexen Monsters
 						basedropdiv = 256;
 						luckbase = 0.25;
+						if (IPAttack) 
+						{
+							basedropdiv *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basedropdiv -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
+						// Add Specific Monsters Below :V
 						if (monsterp = FireDemon(victim))
 						{
 							if (random(1,basedropdiv) <= 8) 
@@ -937,14 +987,25 @@ class DD_EventHandler : EventHandler
 						// Strife Monsters
 						basedropdiv = 256;
 						luckbase = 0.25;
+						if (IPAttack) 
+						{
+							basedropdiv *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basedropdiv -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
+						// Add Specific Monsters Below :V
 					}
 					
 					// Ammo/Weapons
 					droptimes = 1;
 					luckbase = 0.0625;
-					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 50;
+					if (IPAttack) 
+					{
+						luckbase *= baseIPLuckMul;
+						lvldivider *= baseIPLvlDivider;
+					}
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -961,6 +1022,11 @@ class DD_EventHandler : EventHandler
 					{
 						basechance = 128;
 						luckbase = 0.5;
+						if (IPAttack) 
+						{
+							basechance *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
@@ -1027,8 +1093,13 @@ class DD_EventHandler : EventHandler
 					// Heal Items
 					droptimes = 1;
 					luckbase = 0.0625;
-					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 35;
+					if (IPAttack) 
+					{
+						luckbase *= baseIPLuckMul;
+						lvldivider *= baseIPLvlDivider;
+					}
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -1045,6 +1116,11 @@ class DD_EventHandler : EventHandler
 					{
 						basechance = 256;
 						luckbase = 0.25;
+						if (IPAttack) 
+						{
+							basechance *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
@@ -1063,8 +1139,13 @@ class DD_EventHandler : EventHandler
 
 					droptimes = 1;
 					luckbase = 0.0625;
-					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 70;
+					if (IPAttack) 
+					{
+						luckbase *= baseIPLuckMul;
+						lvldivider *= baseIPLvlDivider;
+					}
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -1082,6 +1163,11 @@ class DD_EventHandler : EventHandler
 						// Armor Items
 						basechance = 512;
 						luckbase = 0.375;
+						if (IPAttack) 
+						{
+							basechance *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
@@ -1127,8 +1213,13 @@ class DD_EventHandler : EventHandler
 					// Primary
 					droptimes = 1;
 					luckbase = 0.0625;
-					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					lvldivider = 70;
+					if (IPAttack) 
+					{
+						luckbase *= baseIPLuckMul;
+						lvldivider *= baseIPLvlDivider;
+					}
+					if (PLuck) droptimes = floor(droptimes + (PLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
 					if (inflicter && ((source && sour == "DinahPlayer")))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -1145,6 +1236,11 @@ class DD_EventHandler : EventHandler
 					{
 						basechance = 32;
 						luckbase = 0.015625;
+						if (IPAttack) 
+						{
+							basechance *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
@@ -1194,6 +1290,11 @@ class DD_EventHandler : EventHandler
 						// Secondary
 						basechance = 256;
 						luckbase = 0.25;
+						if (IPAttack) 
+						{
+							basechance *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
 						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
@@ -1214,6 +1315,11 @@ class DD_EventHandler : EventHandler
 						// Rare Powerup Drop
 						basechance = 1024;
 						luckbase = 1.00;
+						if (IPAttack) 
+						{
+							basechance *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
@@ -1261,6 +1367,11 @@ class DD_EventHandler : EventHandler
 						// Extremely Rare Drops
 						basechance = 2048;
 						luckbase = 2.5;
+						if (IPAttack) 
+						{
+							basechance *= baseIPBaseChanceMul;
+							luckbase *= baseIPLuckMul;
+						}
 						if (PLuck) basechance -= (PLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (infl == "BatPuff" || infl == "BatPuffNoSound") maxchance = (basechance * 0.5);
@@ -1376,9 +1487,11 @@ class DD_EventHandler : EventHandler
 				{
 					if (infl == "VacPuff")
 					{
+						let IPPuff = DDProjectile(inflicter);
 						int vacgive = victim.spawnhealth();
 						vacgive *= frandompick(0.6667,0.8334,1.000,1.1667,1.3334);
-						vacgive *= 0.5;
+						if (IPPuff) vacgive *= frandompick(0.75,0.75,0.75,0.75,0.875); 
+									 else vacgive *= 0.5;
 						source.A_GiveInventory("VacAmmoCounter",vacgive);
 						source.A_StartSound("VacDed",210,CHANF_DEFAULT,frandom(0.75,0.90),ATTN_NORM,frandom(1.8,2.7));
 						if (vict == "CommanderKeen") victim.A_KeenDie(); // I forgot to consider Keens use a different "death action" than the other monsters. >.>
