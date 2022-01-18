@@ -655,6 +655,31 @@ class DDProjectile : DDBaseZSC abstract
 		return 32;
 	}
 	
+	// Handle Fractal Egg Split Offs
+	void A_EggGrenades(string eggname = "EggGrenade", double zheight = 2, double zheightadd = 35, double xyvelmin = 6, double xyvelmax = 6, double zvelmin = 6, double zvelmax = 12)
+	{
+		bool success;
+		actor EggShots;
+		actor player = players[0].mo;
+		if (hitaceiling) { [success, EggShots] = A_ThrowGrenade(eggname,(-zheight-zheightadd),random(xyvelmin,xyvelmax),random(-zvelmax,-zvelmin),0); }
+								else { [success, EggShots] = A_ThrowGrenade(eggname,zheight,random(xyvelmin,xyvelmax),random(zvelmin,zvelmax),0); }
+		if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
+		if (EggShots) // && success) 
+		{
+			EggShots.target = player; // EggShots.target = self.target;
+			if (IPAttack)
+			{
+				DDProjectile IPCompat; 
+				IPCompat = DDProjectile(EggShots);
+				if (IPCompat)
+				{
+					IPCompat.target = player;
+					IPCompat.IPattack = true;
+				}
+			}
+			if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
+		}
+	}
 }
 
 // Base FastProjectile Class

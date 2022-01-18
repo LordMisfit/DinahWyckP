@@ -414,20 +414,6 @@ class DDWeapon : Weapon
 		}
 	}
 	
-	action void A_KickDecelerate(int minval = 0, int maxval = 2, int chance = 192)
-	{
-		bool debug = false;
-		int prev = invoker.kickspeed;
-		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) chance = ceil(chance * frandom(0.25,0.75));
-		if (debug) Console.Printf("chance: %d", chance);
-		if (random(1,256) <= chance)
-		{
-			invoker.kickspeed -= random(minval,maxval);
-			if (invoker.kickspeed < 0) invoker.kickspeed = 0;
-			if (debug) Console.Printf("%d [%d]", invoker.kickspeed, prev);
-		}
-	}
-	
 	action void A_WeaponReady(int flags = 0)
 	{
 		if (CountInv("IsUnconscious"))
@@ -4597,6 +4583,20 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		if (MiscItem) MiscItem.CricketBatSwingBuffTimer = randompick(3,3,3,3,3,3,4,4,4);
 	}
 	
+	action void A_EggShotIPSetup(actor BombShots)
+	{
+		if (BombShots && invoker.IPAttackCheck)
+		{
+			DDProjectile IPCompat; 
+			IPCompat = DDProjectile(BombShots);
+			if (IPCompat)
+			{
+				IPCompat.IPattack = true;
+				IPCompat.Speed *= 0.875;
+			}
+		}
+	}
+
 	States
 	{
 		Spawn:
@@ -4692,11 +4692,31 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			}
 			FPAN A 2
 			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(122,0,3,11);
+
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
 			}
 			FPAN B 2 
 			{
-				A_StartSound("MalletSwing",CHAN_WEAPON);
+				double sndpitch = 1.0;
+				double sndvol = 1.0;
+				if (invoker.IPAttackCheck) 
+				{
+					sndpitch = frandom(0.625,0.75);
+					sndvol = 1.4;
+				}
+				A_StartSound("MalletSwing",CHAN_WEAPON,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				if (invoker.IPAttackCheck) 
+				{
+					sndpitch = frandom(0.625,0.75);
+					sndvol = 1.4;
+					A_StartSound("MalletSwing",CHAN_7,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+					sndpitch = frandom(0.625,0.75);
+					sndvol = 1.4;
+					A_StartSound("MalletSwing",8,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				}
+
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
 				if (random(1,8) <= 1 && !CountInv("PlayingStrife",AAPTR_PLAYER1)) { A_AlertMonsters(); }
 			}
@@ -4714,24 +4734,54 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			}
 			FPAN D 2 
 			{
-				A_StartSound("panclang",CHAN_WEAPON);
-
+				double sndpitch = 1.0;
+				double sndvol = 1.0;
+				actor BombShots;
+				DDProjectile IPCompat;
+				if (invoker.IPAttackCheck) 
+				{
+					sndpitch = frandom(0.75,0.875);
+					sndvol = 1.4;
+				}
+				A_StartSound("panclang",CHAN_WEAPON,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				if (invoker.IPAttackCheck) 
+				{
+					sndpitch = frandom(0.75,0.875);
+					sndvol = 1.4;
+					A_StartSound("panclang",CHAN_7,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+					sndpitch = frandom(0.75,0.875);
+					sndvol = 1.4;
+					A_StartSound("panclang",8,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				}
+				
+				// Melee Hit
 				int dmg = (random(10,12) * random(1,8));
+				int range = 72;
+				if (invoker.IPAttackCheck)
+				{
+					dmg *= frandompick(1.5,1.5,1.5,1.5,1.5,1.625,1.625,1.75);
+					range = 90;
+				}
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
 				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
-				A_CustomPunch(dmg, true, 0, "PanPuff", 72);
+				A_CustomPunch(dmg, true, 0, "PanPuff", range);
+
+				// Projectiles
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
 					A_SetTics(1);
 					A_ScramblerSwing(1);
-					A_FireProjectile("EggShotBerserk",0,1,0,0);
+					BombShots = A_FireProjectile("EggShotBerserk",0,1,0,0);
 				}
 				else
 				{
 					A_ScramblerSwing(0);
-					A_FireProjectile("EggShot",0,1,0,0);
+					BombShots = A_FireProjectile("EggShot",0,1,0,0);
 				}
+				A_EggShotIPSetup(BombShots);
+
 				A_TakeInventory("EggAmmo",1);
+				invoker.A_CheckIPModeOnUse();
 			}
 			FPAN E 2 
 			{
@@ -4817,8 +4867,6 @@ class PanPuff : DDPuff
 
 class EggShot : DDProjectile
 {
-	bool success;
-	actor EggShots;
 	default
 	{
 		Tag "Large Fractal Egg";
@@ -4835,11 +4883,14 @@ class EggShot : DDProjectile
 		DeathSound "blunderfire";
 		Explosiondamage 96;
 	}
-
+	
 	States
 	{
 		Spawn:
-			EGGM ABCDE 3;
+			EGGM ABCDE 3 NoDelay
+			{
+				if (target != PlayerPawn(players[0].mo)) target = PlayerPawn(players[0].mo);
+			}
 			loop;
 		Death:
 			TNT1 A 0 
@@ -4850,50 +4901,66 @@ class EggShot : DDProjectile
 				target = PlayerPawn(players[0].mo);
 				if (target && dydudebug_eggfractals) Console.Printf("\c[fire]target [%s]:\c- %s", GetClassName(), target.GetClassName());
 			}
-			EGBL A 4 Bright A_Explode(24,96);
-			EGBL B 1 Bright 
+			EGBL A 4 Bright 
 			{
-				if (hitaceiling) { [success, EggShots] = A_Throwgrenade("EggGrenade",-2,random(1,6),random(-12,-6),0); }
-										else { [success, EggShots] = A_Throwgrenade("EggGrenade",2,random(1,6),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShots) // && success) 
+				int dmg = 24;
+				int rad = 96;
+				bool selfaoe = true;
+				if (IPAttack) 
 				{
-					EggShots.target = PlayerPawn(players[0].mo); // EggShots.target = self.target;
-					if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
+					dmg *= 1.5;
+					rad *= 1.5;
+					selfaoe = false;
 				}
-			}
-			EGBL B 1 Bright
-			{
-				if (hitaceiling) { [success, EggShots] = A_Throwgrenade("EggGrenade",-2,random(1,8),random(-12,-6),0); }
-										else { [success, EggShots] = A_Throwgrenade("EggGrenade",2,random(1,8),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShots) // && success) 
-				{
-					EggShots.target = PlayerPawn(players[0].mo); // EggShots.target = self.target;
-					if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
-				}
-			}
-			EGBL B 1 Bright
-			{
-				if (hitaceiling) { [success, EggShots] = A_Throwgrenade("EggGrenade",-2,random(1,8),random(-12,-6),0); }
-										else { [success, EggShots] = A_Throwgrenade("EggGrenade",2,random(1,8),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShots) // && success) 
-				{
-					EggShots.target = PlayerPawn(players[0].mo); // EggShots.target = self.target;
-					if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
-				}
+				A_Explode(dmg,rad,selfaoe);
 			}
 			EGBL B 1 Bright 
 			{
-				if (hitaceiling) { [success, EggShots] = A_Throwgrenade("EggGrenade",-2,random(1,10),random(-12,-6),0); }
-										else { [success, EggShots] = A_Throwgrenade("EggGrenade",2,random(1,10),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShots) // && success) 
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack) maxshots = 4;
+				for (int i = 0; i < maxshots; i++)
 				{
-					EggShots.target = PlayerPawn(players[0].mo); // EggShots.target = self.target;
-					if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
+					A_EggGrenades("EggGrenade",2,35,1,6,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
 				}
+				A_SetAngle(origang);
+			}
+			EGBL B 1 Bright
+			{
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack) maxshots = 4;
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggGrenade",2,35,1,8,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
+			}
+			EGBL B 1 Bright
+			{
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack) maxshots = 4;
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggGrenade",2,35,1,8,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
+			}
+			EGBL B 1 Bright 
+			{
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack) maxshots = 4;
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggGrenade",2,35,1,8,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
 			}
 			EGBL C 4 Bright;
 			Stop;
@@ -4922,7 +4989,10 @@ class EggShotBerserk : EggShot
 	States
 	{
 		Spawn:
-			EGGM ABCDE 3;
+			EGGM ABCDE 3 NoDelay
+			{
+				if (target != PlayerPawn(players[0].mo)) target = PlayerPawn(players[0].mo);
+			}
 			loop;
 		Death:
 			TNT1 A 0 
@@ -4933,50 +5003,66 @@ class EggShotBerserk : EggShot
 				target = PlayerPawn(players[0].mo);
 				if (target && dydudebug_eggfractals) Console.Printf("\c[fire]target [%s]:\c- %s", GetClassName(), target.GetClassName());
 			}
-			EGBL A 4 Bright A_Explode(120,96);
-			EGBL B 1 Bright 
+			EGBL A 4 Bright 
 			{
-				if (hitaceiling) { [success, EggShots] = A_Throwgrenade("EggGrenadeBerserk",-37,random(1,6),random(-12,-6),0); }
-										else { [success, EggShots] = A_Throwgrenade("EggGrenadeBerserk",2,random(1,6),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShots) // && success) 
+				int dmg = 120;
+				int rad = 96;
+				bool selfaoe = true;
+				if (IPAttack) 
 				{
-					EggShots.target = PlayerPawn(players[0].mo); // EggShots.target = self.target;
-					if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
+					dmg *= 1.5;
+					rad *= 1.5;
+					selfaoe = false;
 				}
-			}
-			EGBL B 1 Bright
-			{
-				if (hitaceiling) { [success, EggShots] = A_Throwgrenade("EggGrenadeBerserk",-37,random(1,8),random(-12,-6),0); }
-										else { [success, EggShots] = A_Throwgrenade("EggGrenadeBerserk",2,random(1,8),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShots) // && success) 
-				{
-					EggShots.target = PlayerPawn(players[0].mo); // EggShots.target = self.target;
-					if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
-				}
-			}
-			EGBL B 1 Bright
-			{
-				if (hitaceiling) { [success, EggShots] = A_Throwgrenade("EggGrenadeBerserk",-37,random(1,8),random(-12,-6),0); }
-										else { [success, EggShots] = A_Throwgrenade("EggGrenadeBerserk",2,random(1,8),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShots) // && success) 
-				{
-					EggShots.target = PlayerPawn(players[0].mo); // EggShots.target = self.target;
-					if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
-				}
+				A_Explode(dmg,rad,selfaoe);
 			}
 			EGBL B 1 Bright 
 			{
-				if (hitaceiling) { [success, EggShots] = A_Throwgrenade("EggGrenadeBerserk",-37,random(1,10),random(-12,-6),0); }
-										else { [success, EggShots] = A_Throwgrenade("EggGrenadeBerserk",2,random(1,10),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShots) // && success) 
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack) maxshots = 4;
+				for (int i = 0; i < maxshots; i++)
 				{
-					EggShots.target = PlayerPawn(players[0].mo); // EggShots.target = self.target;
-					if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
+					A_EggGrenades("EggGrenadeBerserk",2,35,1,8,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
 				}
+				A_SetAngle(origang);
+			}
+			EGBL B 1 Bright
+			{
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack) maxshots = 4;
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggGrenadeBerserk",2,35,1,8,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
+			}
+			EGBL B 1 Bright
+			{
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack) maxshots = 4;
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggGrenadeBerserk",2,35,1,8,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
+			}
+			EGBL B 1 Bright 
+			{
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack) maxshots = 4;
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggGrenadeBerserk",2,35,1,8,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
 			}
 			EGBL C 4 Bright;
 			Stop;
@@ -4985,8 +5071,6 @@ class EggShotBerserk : EggShot
 
 class EggGrenade : DDProjectile
 {
-	bool success;
-	actor EggShot;
 	default
 	{
 		Tag "Fractal Egg";
@@ -5005,10 +5089,14 @@ class EggGrenade : DDProjectile
 		ExplosionDamage 64;
 		BounceCount 1;
 	}
+	
 	States
 	{
 		Spawn:
-			EGGM ABCDE 3;
+			EGGM ABCDE 3 NoDelay
+			{
+				if (target != PlayerPawn(players[0].mo)) target = PlayerPawn(players[0].mo);
+			}
 			loop;
 		Death:
 			TNT1 A 0 
@@ -5018,28 +5106,50 @@ class EggGrenade : DDProjectile
 				target = PlayerPawn(players[0].mo);
 				if (target && dydudebug_eggfractals) Console.Printf("\c[fire]target [%s]:\c- %s", GetClassName(), target.GetClassName());
 			}
-			EGBL A 5 Bright A_Explode(64,64);
-			EGBL B 1 Bright 
+			EGBL A 5 Bright
 			{
-				if (hitaceiling) { [success, EggShot] = A_Throwgrenade("EggMini",-37,random(1,8),random(-12,-6),0); }
-										else { [success, EggShot] = A_Throwgrenade("EggMini",2,random(1,8),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShot) // && success) 
+				int dmg = 64;
+				int rad = 64;
+				bool selfaoe = true;
+				if (IPAttack) 
 				{
-					EggShot.target = self.target;
-					if (EggShot.target && dydudebug_eggfractals) Console.Printf("EggShot.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShot.target.GetClassName());
+					dmg *= 1.25;
+					rad *= 1.25;
+					selfaoe = false;
 				}
+				A_Explode(dmg,rad,selfaoe);
 			}
 			EGBL B 1 Bright 
 			{
-				if (hitaceiling) { [success, EggShot] = A_Throwgrenade("EggMini",-37,random(1,10),random(-12,-6),0); }
-										else { [success, EggShot] = A_Throwgrenade("EggMini",2,random(1,10),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShot) // && success) 
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack)
 				{
-					EggShot.target = self.target;
-					if (EggShot.target && dydudebug_eggfractals) Console.Printf("EggShot.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShot.target.GetClassName());
+					maxshots = 4;
+					A_SetAngle(angle+45);
 				}
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggMini",2,35,1,8,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
+			}
+			EGBL B 1 Bright 
+			{
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack)
+				{
+					maxshots = 4;
+					A_SetAngle(angle+45);
+				}
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggMini",2,35,1,10,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
 			}
 			EGBL C 4 Bright;
 			Stop;
@@ -5066,10 +5176,14 @@ class EggGrenadeBerserk : EggGrenade
 		ExplosionDamage 160;
 		BounceCount 1;
 	}
+	
 	States
 	{
 		Spawn:
-			EGGM ABCDE 3;
+			EGGM ABCDE 3 NoDelay
+			{
+				if (target != PlayerPawn(players[0].mo)) target = PlayerPawn(players[0].mo);
+			}
 			loop;
 		Death:
 			TNT1 A 0 
@@ -5079,28 +5193,50 @@ class EggGrenadeBerserk : EggGrenade
 				target = PlayerPawn(players[0].mo);
 				if (target && dydudebug_eggfractals) Console.Printf("\c[fire]target [%s]:\c- %s", GetClassName(), target.GetClassName());
 			}
-			EGBL A 5 Bright A_Explode(160,64);
-			EGBL B 1 Bright 
+			EGBL A 5 Bright
 			{
-				if (hitaceiling) { [success, EggShot] = A_Throwgrenade("EggMiniBerserk",-37,random(1,8),random(-12,-6),0); }
-										else { [success, EggShot] = A_Throwgrenade("EggMiniBerserk",2,random(1,8),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShot) // && success) 
+				int dmg = 160;
+				int rad = 64;
+				bool selfaoe = true;
+				if (IPAttack) 
 				{
-					EggShot.target = self.target;
-					if (EggShot.target && dydudebug_eggfractals) Console.Printf("EggShot.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShot.target.GetClassName());
+					dmg *= 1.25;
+					rad *= 1.25;
+					selfaoe = false;
 				}
+				A_Explode(dmg,rad,selfaoe);
 			}
 			EGBL B 1 Bright 
 			{
-				if (hitaceiling) { [success, EggShot] = A_Throwgrenade("EggMiniBerserk",-37,random(1,10),random(-12,-6),0); }
-										else { [success, EggShot] = A_Throwgrenade("EggMiniBerserk",2,random(1,10),random(6,12),0); }
-				if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
-				if (EggShot) // && success) 
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack)
 				{
-					EggShot.target = self.target;
-					if (EggShot.target && dydudebug_eggfractals) Console.Printf("EggShot.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShot.target.GetClassName());
+					maxshots = 4;
+					A_SetAngle(angle+45);
 				}
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggMiniBerserk",2,35,1,8,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
+			}
+			EGBL B 1 Bright 
+			{
+				double origang = angle;
+				int maxshots = 1;
+				if (IPAttack)
+				{
+					maxshots = 4;
+					A_SetAngle(angle+45);
+				}
+				for (int i = 0; i < maxshots; i++)
+				{
+					A_EggGrenades("EggMiniBerserk",2,35,1,10,6,12);
+					if (IPAttack) A_SetAngle(angle+90);
+				}
+				A_SetAngle(origang);
 			}
 			EGBL C 4 Bright;
 			Stop;
@@ -5130,7 +5266,10 @@ class EggMini : DDProjectile
 	States
 	{
 		Spawn:
-			EGGM ABCDE 3;
+			EGGM ABCDE 3 NoDelay
+			{
+				if (target != PlayerPawn(players[0].mo)) target = PlayerPawn(players[0].mo);
+			}
 			loop;
 		Death:
 			TNT1 A 0 
@@ -5140,7 +5279,19 @@ class EggMini : DDProjectile
 				target = PlayerPawn(players[0].mo);
 				if (target && dydudebug_eggfractals) Console.Printf("\c[fire]target [%s]:\c- %s", GetClassName(), target.GetClassName());
 			}
-			EGBL A 5 Bright A_Explode(32,32);
+			EGBL A 5 Bright
+			{
+				int dmg = 32;
+				int rad = 32;
+				bool selfaoe = true;
+				if (IPAttack) 
+				{
+					dmg *= 1.125;
+					rad *= 1.125;
+					selfaoe = false;
+				}
+				A_Explode(dmg,rad,selfaoe);
+			}
 			EGBL BC 5 Bright;
 			Stop;
 	}
@@ -5169,7 +5320,10 @@ class EggMiniBerserk : EggMini
 	States
 	{
 		Spawn:
-			EGGM ABCDE 3;
+			EGGM ABCDE 3 NoDelay
+			{
+				if (target != PlayerPawn(players[0].mo)) target = PlayerPawn(players[0].mo);
+			}
 			loop;
 		Death:
 			TNT1 A 0 
@@ -5179,7 +5333,19 @@ class EggMiniBerserk : EggMini
 				target = PlayerPawn(players[0].mo);
 				if (target && dydudebug_eggfractals) Console.Printf("\c[fire]target [%s]:\c- %s", GetClassName(), target.GetClassName());
 			}
-			EGBL A 5 Bright A_Explode(48,32);
+			EGBL A 5 Bright
+			{
+				int dmg = 48;
+				int rad = 32;
+				bool selfaoe = true;
+				if (IPAttack) 
+				{
+					dmg *= 1.125;
+					rad *= 1.125;
+					selfaoe = false;
+				}
+				A_Explode(dmg,rad,selfaoe);
+			}
 			EGBL BC 5 Bright;
 			Stop;
 	}
