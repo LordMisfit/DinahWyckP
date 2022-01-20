@@ -816,13 +816,16 @@ class DDStatusBarMain : BaseStatusBar
 			DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), (49, -28), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, FontWrapWidth, FontLineSpace, (xscal*1.25, yscal*1.25));
 
 			//misc [speed]
+			double basemass = 1.0;
 			double basespeed = 1.0;
 			double basehpregen = 1.0;
 			int jumpheight = 64;
 			string speedval = "";
 			string jumpval = "";
 			string regenval = "";
+			string massval = "";
 			int exty = 0;
+			int basey = -27; // -21
 			if (MiscItem && CPlayer.mo.health > 0) 
 			{
 				if (CPlayer.mo.health != MiscItem.MaxHealthTrue) exty = -3;
@@ -832,27 +835,40 @@ class DDStatusBarMain : BaseStatusBar
 				if (basespeed > 100.0000) speedclr = font.cr_blue;
 				if (basespeed < 100.0000) speedclr = font.cr_red;
 				speedval.AppendFormat("%.2f%% MoveSpeed", basespeed);
-				DrawString(mArmSaveFont, speedval, (79, (-21+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mArmSaveFont, speedval, (79, (basey+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 
+				basey += 6;
 				JumpHeight = MiscItem.TrueJumpHeight;
 				jumpval.AppendFormat("%d Jump Height", JumpHeight);
-				DrawString(mArmSaveFont, jumpval, (79, (-15+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mArmSaveFont, jumpval, (79, (basey+exty)), DI_TEXT_ALIGN_LEFT, speedclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 
-				basehpregen = MiscItem.baseregenmulti * 100;
-				int regenclr = font.cr_white;
-				if (CPlayer.mo.health < MiscItem.MaxHealthTrue) 
+				basey += 6;
+				basemass = MiscItem.TotalMass;
+				int massclr = font.cr_white;
+				if (basemass > MiscItem.BaseMass) massclr = font.cr_blue;
+				if (basemass < MiscItem.BaseMass) massclr = font.cr_red;
+				massval.AppendFormat("%d Balance", basemass);
+				DrawString(mArmSaveFont, massval, (79, (basey+exty)), DI_TEXT_ALIGN_LEFT, massclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+
+				if (CPlayer.mo.health != MiscItem.MaxHealthTrue)
 				{
-					if (basehpregen > 100.0000) regenclr = font.cr_blue;
-					if (basehpregen < 100.0000) regenclr = font.cr_red;
-					regenval.AppendFormat("%.2f%% Regen Speed", basehpregen);
+					basey += 6;
+					basehpregen = MiscItem.baseregenmulti * 100;
+					int regenclr = font.cr_white;
+					if (CPlayer.mo.health < MiscItem.MaxHealthTrue) 
+					{
+						if (basehpregen > 100.0000) regenclr = font.cr_blue;
+						if (basehpregen < 100.0000) regenclr = font.cr_red;
+						regenval.AppendFormat("%.2f%% Regen Speed", basehpregen);
+					}
+					if (CPlayer.mo.health > MiscItem.MaxHealthTrue) 
+					{
+						if (basehpregen > 100.0000) regenclr = font.cr_red;
+						if (basehpregen < 100.0000) regenclr = font.cr_blue;
+						regenval.AppendFormat("%.2f%% Degen Speed", basehpregen);
+					}
+					DrawString(mArmSaveFont, regenval, (79, (basey+exty)), DI_TEXT_ALIGN_LEFT, regenclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				}
-				if (CPlayer.mo.health > MiscItem.MaxHealthTrue) 
-				{
-					if (basehpregen > 100.0000) regenclr = font.cr_red;
-					if (basehpregen < 100.0000) regenclr = font.cr_blue;
-					regenval.AppendFormat("%.2f%% Degen Speed", basehpregen);
-				}
-				DrawString(mArmSaveFont, regenval, (79, (-9+exty)), DI_TEXT_ALIGN_LEFT, regenclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				FontScale = (1.25, 1.25);
 			}
 

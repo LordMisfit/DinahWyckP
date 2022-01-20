@@ -5,6 +5,7 @@ class DDPlayerPawn : PlayerPawn
 	int neverbleeds;
 	bool recalledall;
 	int ipchargesoundtimer;
+	double truespeed;
 	
 	int lasthealth;
 	
@@ -173,12 +174,10 @@ class DDPlayerPawn : PlayerPawn
 
 			if (dydudebug_playermove)
 			{
-				Console.Printf("    \czSV_AirControl:\c- \cz%.8f\c-  \cwTotalAirControl:\c- \cw%.8f\c-, \cyAirControlBase:\c- \cy%.8f\c-, LVLAirControl: %.8f, ArmorAirControl: %.8f, BuffAirControl: %.8f", 
-														sv_aircontrol, level.aircontrol, AirControlBase,
-														LVLAirControl, ArmorAirControl, BuffAirControl);
+				Console.Printf("    \czSV_AirControl:\c- \cz%.8f\c-  \cwTotalAirControl:\c- \cw%.8f\c-, \cyAirControlBase:\c- \cy%.8f\c-, LVLAirControl: %.8f, ArmorAirControl: %.8f, BuffAirControl: %.8f", sv_aircontrol, level.aircontrol, AirControlBase, LVLAirControl, ArmorAirControl, BuffAirControl);
 				Console.Printf("    \cwTotalFriction:\c- \cw%.8f\c-, \cyLevelAirFriction:\c- \cy%.8f\c-", friction, level.airfriction);
+				Console.Printf("    \c[blue]Player.ForwardMove: (%.2f, %.2f), Player.SideMove: (%.2f, %.2f), Player.ViewBob: %.2f", ForwardMove1, ForwardMove2, SideMove1, SideMove2, ViewBob);
 			}
-			//Console.Printf("Player.ForwardMove: (%.2f, %.2f), Player.SideMove: (%.2f, %.2f), Player.ViewBob: %.2f", ForwardMove1, ForwardMove2, SideMove1, SideMove2, ViewBob);
 		}
 		
 		super.MovePlayer();
@@ -425,6 +424,22 @@ class DDPlayerPawn : PlayerPawn
 				player.health = player.mo.health = 1;
 			}
 		}
+
+		int basespeedvelsx;
+		int basespeedvelsy;
+		double basespeedvelsxd = 16.66666667;
+		double basespeedvelsyd = 16.66666667;
+
+		basespeedvelsxd *= ForwardMove2;
+		basespeedvelsyd *= SideMove2;
+		basespeedvelsx = (basespeedvelsxd * 65536);
+		basespeedvelsy = (basespeedvelsyd * 65536);
+
+		double newspeedvelsxd = basespeedvelsxd * truespeed;
+		double newspeedvelsyd = basespeedvelsyd * truespeed;
+		int newspeedvelsx = newspeedvelsxd * 65536;
+		int newspeedvelsy = newspeedvelsyd * 65536;
+		if (dydudebug_playermove) Console.Printf("\cz WaterLevel: %d\c-, \cz Angle: %.8f, Pitch: %.8f\c-, \czPosX: %d, PosY: %d, PosZ: %d\c-, VelX: %.8f/\cx%.8f\c- (%d/\cx%d\c-), VelY: %.8f/\cx%.8f\c- (%d/\cx%d\c-), VelZ: %.8f (%d)\c-", waterlevel, (angle % 360), pitch, pos.x, pos.y, pos.z, vel.x, newspeedvelsxd, (vel.x * 65536), newspeedvelsx, vel.y, newspeedvelsyd, (vel.y * 65536), newspeedvelsy, vel.z, (vel.z * 65536));
 
 		lasthealth = health;
 		

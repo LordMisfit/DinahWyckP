@@ -61,7 +61,7 @@ class PlayerStatItem : Inventory
 	int ArmorResistance;
 	int ClassicDoomType;
 	int ModType;
-	int TotalMass;
+	int TotalMass, BaseMass;
 
 	int PlayerLevel;
 	int PlayerATK;
@@ -878,14 +878,19 @@ class PlayerStatItem : Inventory
 				//* Mass *
 				//********
 				TotalMass = 100;
+				BaseMass = TotalMass;
+				double massmulfactor = 0.22223;
 				let playerset = DDPlayerPawn(owner);
 				if (playerset) TotalMass = playerset.originalmass;
+				BaseMass = TotalMass;
 				if (dydudebug_masscalcs) Console.Printf("Mass [Base]: %d", TotalMass);
 
-				TotalMass += (PlayerLevel * 0.022223);
+				TotalMass += (PlayerLevel * massmulfactor);
+				BaseMass = TotalMass;
 				if (dydudebug_masscalcs) Console.Printf("Mass [Level]: %d", TotalMass);
 				
-				TotalMass += (PlayerDEF * 0.022223);
+				TotalMass += (PlayerDEF * massmulfactor);
+				BaseMass = TotalMass;
 				if (dydudebug_masscalcs) Console.Printf("Mass [DEF]: %d", TotalMass);
 				
 				// Buffs
@@ -900,23 +905,29 @@ class PlayerStatItem : Inventory
 					else if (PlayerLevel >= 100) TotalMass *= 1.556;
 					else if (PlayerLevel >= 75) TotalMass *= 1.445;
 					else if (PlayerLevel >= 50) TotalMass *= 1.334;
-					else if (PlayerLevel >= 25) TotalMass *= 1.222;
-					else TotalMass *= 1.111;
+					else if (PlayerLevel >= 25) TotalMass *= 1.223;
+					else TotalMass *= 1.112;
 				}
 
-				if (Owner.CountInv("CricketBatGuard")) TotalMass *= frandompick(1.334,1.5,1.667);
-				if (Owner.CountInv("CricketBatGuard2")) TotalMass *= frandompick(2.667,3.000,3.334);
-				if (Owner.CountInv("DoingSpinAttack")) TotalMass *= frandompick(12,13.5,15);
+				if (Owner.CountInv("CricketBatGuard")) TotalMass *= frandompick(1.334,1.5,1.5,1.5,1.5,1.5,1.667);
+				if (Owner.CountInv("CricketBatGuard2")) TotalMass *= frandompick(2.667,3.000,3.000,3.000,3.000,3.000,3.334);
+				if (Owner.CountInv("DoingSpinAttack")) TotalMass *= frandompick(12,13.5,13.5,13.5,13.5,13.5,15);
 				
 				// Fist Blocks
 				if (Owner.CountInv("FistPlayerBlock"))  TotalMass *= 2;
 				if (Owner.CountInv("FistPlayerBlock2")) TotalMass *= 2.667;
 				if (Owner.CountInv("FistPlayerBlock3")) TotalMass *= 4;
-
+				// Wine
 				if (Owner.CountInv("PowerWineBuffWeak")) TotalMass *= 1.125;
 				if (Owner.CountInv("PowerWineBuffStrong")) TotalMass *= 1.25;
 				if (Owner.CountInv("PowerWineBuffStrongest")) TotalMass *= 1.5;
 				if (Owner.CountInv("PowerWineBuffStrongestEven")) TotalMass *= 2;
+				// Food
+				int MealBuffs = 0;
+				if (Owner.CountInv("PowerRoastBuff")) MealBuffs++;
+				if (Owner.CountInv("PowerMealBuff") || Owner.CountInv("PowerMealBuff2")) MealBuffs++;
+				if (Owner.CountInv("PowerMeal2Buff") || Owner.CountInv("PowerMeal2Buff2")) MealBuffs++;
+				if (MealBuffs) TotalMass *= (1 + (MealBuffs * 0.125));
 				if (dydudebug_masscalcs) Console.Printf("Mass [Buffs]: %d", TotalMass);
 
 				// Armor
@@ -927,7 +938,7 @@ class PlayerStatItem : Inventory
 				if (dydudebug_masscalcs) Console.Printf("Mass [Armor]: %d", TotalMass);
 
 				owner.Mass = TotalMass;
-				if (dydudebug_masscalcs) Console.Printf("    Calculated Mass: %d [Real Mass: %d]", TotalMass, owner.mass);
+				if (dydudebug_masscalcs) Console.Printf("    Calculated Mass: %d (Base Mass: %d) [Real Mass: %d]", TotalMass, BaseMass, owner.mass);
 				
 				
 				//*********
@@ -2047,6 +2058,8 @@ class PlayerStatItem : Inventory
 	override double GetSpeedFactor()
 	{
 		let weapon = owner.player.ReadyWeapon;
+		let playeractor = DDPlayerPawn(owner);
+
 		CurrentHealth = owner.health;
 		MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd + HealthBonusAdd);
 
@@ -2201,6 +2214,7 @@ class PlayerStatItem : Inventory
 		Speed *= spdfct;
 
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Final]: %.8f, HUDSpeed: %.2f", Speed, HUDSpeed);
+		if (playeractor) playeractor.truespeed = Speed;
 		return Speed; 
 	}
 }
