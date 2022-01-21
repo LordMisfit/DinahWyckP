@@ -639,11 +639,9 @@ class DDPlayerPawn : PlayerPawn
 			}
 			else
 			{
-				if (SigilDrain) { }
-				else damage = ceil(damage * 1.125);
+				if (SigilDrain) { } else damage = ceil(damage * 1.125);
 			}
-			if (SigilDrain) { }
-			else if (CountInv("DoingSpinAttack")) damage *= 0.25;
+			if (SigilDrain) { } else if (CountInv("DoingSpinAttack")) damage *= 0.25;
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Step 1b]: %d", damage);
 		}
 		else
@@ -654,10 +652,8 @@ class DDPlayerPawn : PlayerPawn
 				mod == 'Sigil' ||
 				mod == 'SpectralLow')
 		{
-			if (SigilDrain) { }
-			else damage = ceil(damage * 0.875);
-			if (SigilDrain) { }
-			else if (CountInv("DoingSpinAttack")) damage *= 0.25;
+			if (SigilDrain) { } else damage = ceil(damage * 0.875);
+			if (SigilDrain) { } else if (CountInv("DoingSpinAttack")) damage *= 0.25;
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage (non-normal base) [Step 1b]: %d", damage);
 		}
 		else
@@ -715,8 +711,8 @@ class DDPlayerPawn : PlayerPawn
 				}
 				else
 				{
-					damage = ceil(damage * (0.25 - (MiscItem.PlayerLevel * 0.01)));
-					if (MiscItem.PlayerLevel <= 50 && damage < 1) damage = 1;
+					damage = ceil(damage * (0.25 - (MiscItem.PlayerLevel * 0.005)));
+					if (MiscItem.PlayerLevel <= 100 && damage < 1) damage = 1;
 					if (armortier == 1) damage = ceil(damage * 0.975);
 					if (armortier == 2) damage = ceil(damage * 0.9625);
 					if (armortier == 3) damage = ceil(damage * 0.95);
@@ -726,18 +722,33 @@ class DDPlayerPawn : PlayerPawn
 			}
 			else
 			{
+				double set1, set2, set3;
 				if (dydudebug_playerdamagemobj) Console.Printf("Damage Is Not Own AOE");
-		
+				set1 = (0.750 - (MiscItem.PlayerLevel * 0.0150));
+				set2 = (0.875 - (MiscItem.PlayerLevel * 0.0175));
+				set3 = (1.000 - (MiscItem.PlayerLevel * 0.0200));
 				if (AttackingActor != null)
 				{
-					if (sour == "Cyberdemon") damage = ceil(damage * frandompick(0.875,0.9375,0.9375,0.9375,0.9375,0.9375,1.00));
-					else if (sour == "Archvile" || sour == "ArchvileNew") damage = ceil(damage * frandompick(0.5,0.625,0.625,0.625,0.625,0.625,0.75));
-					else damage = ceil(damage * frandompick(0.75,0.875,0.875,0.875,0.875,0.875,1.00));
+					if (sour == "Cyberdemon") 
+					{
+						set1 = (0.875 - (MiscItem.PlayerLevel * 0.0175));
+						set2 = (0.9375 - (MiscItem.PlayerLevel * 0.01875));
+						set3 = (1.0 - (MiscItem.PlayerLevel * 0.02));
+					}
+					else 
+					if (sour == "Archvile" || sour == "ArchvileNew") 
+					{
+						set1 = (0.50 - (MiscItem.PlayerLevel * 0.01));
+						set2 = (0.625 - (MiscItem.PlayerLevel * 0.0125));
+						set3 = (0.75 - (MiscItem.PlayerLevel * 0.015));
+					}
 				}
-				else
-				{
-					damage = ceil(damage * frandompick(0.75,0.875,0.875,0.875,0.875,0.875,1.00));
-				}
+				damage = ceil(damage * frandompick(set1,set1,set2,set2,set2,set2,set2,set2,set3,set3));
+				if (MiscItem.PlayerLevel <= 100 && damage < 1) damage = 1;
+				if (armortier == 1) damage = ceil(damage * 0.9875);
+				if (armortier == 2) damage = ceil(damage * 0.975);
+				if (armortier == 3) damage = ceil(damage * 0.9625);
+				if (armortier == 4) damage = ceil(damage * 0.95);
 				useflatdefense = true;
 			}
 
@@ -837,7 +848,7 @@ class DDPlayerPawn : PlayerPawn
 			{
 				if (flags & DMG_EXPLOSION) // The Crusader's death AOE does very little damage to Dinah (37.5% and dropping)
 				{
-					damage *= (frandompick(0.375,0.375,0.375,0.5,0.5,0.625,0.625,0.75,0.75,0.75) - 0.375);
+					damage = ceil(damage * frandompick(0.375,0.375,0.375,0.5,0.5,0.625,0.625,0.75,0.75,0.75) - 0.375);
 					if (armortier == 1) damage *= 0.90;
 					if (armortier == 2) damage *= 0.80;
 					if (armortier == 3) damage *= 0.60;
@@ -848,7 +859,7 @@ class DDPlayerPawn : PlayerPawn
 				{
 					if (CrusaderMissile(inflictor) || FastFlameMissile(inflictor)) // The Crusader's attacks are very wanting against Dinah overall (37.5% and dropping)
 					{
-						damage *= (frandompick(0.375,0.375,0.375,0.5,0.5,0.625,0.625,0.75,0.75,0.75) - 0.375);
+						damage = ceil(damage * frandompick(0.375,0.375,0.375,0.5,0.5,0.625,0.625,0.75,0.75,0.75) - 0.375);
 						if (armortier == 1) damage *= 0.90;
 						if (armortier == 2) damage *= 0.80;
 						if (armortier == 3) damage *= 0.60;
@@ -864,7 +875,7 @@ class DDPlayerPawn : PlayerPawn
 				{
 					if (RevenantTracer(inflictor))
 					{
-						damage *= (frandompick(0.5,0.5,0.625,0.625,0.75,0.75,0.75,0.875,0.875) - 0.125);
+						damage = ceil(damage * frandompick(0,375,0.5,0.5,0.625,0.625,0.75,0.75,0.875,0.875,1.0) - 0.25);
 						if (armortier == 1) damage *= 0.95;
 						if (armortier == 2) damage *= 0.90;
 						if (armortier == 3) damage *= 0.80;

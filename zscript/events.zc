@@ -118,6 +118,9 @@ class DD_EventHandler : EventHandler
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		if (MiscItem) PLuck = MiscItem.PlayerLUCK;
 		
+		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
+		string nm, nn, no, np;
+		
 		if (victim)
 		{
 			int oldhealth = victim.health;
@@ -176,6 +179,7 @@ class DD_EventHandler : EventHandler
 			}
 			if (vict == "BossBrainNew") showdmglog = true;
 			if (vict == "DinahPlayer" || victname == "Dinah Wyck") showdmglog = false;
+			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) showdmglog = false;
 			if (showdmglog)
 			{
 				//Console.Printf("showdmglog");
@@ -348,6 +352,7 @@ class DD_EventHandler : EventHandler
 			if (vict == "PracticeTarget" || vict == "PracticeTarget2") showdmglog = true;
 			if (vict == "BossBrainNew") showdmglog = true;
 			if (vict == "DinahPlayer" || victname == "Dinah Wyck") showdmglog = false;
+			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) showdmglog = false;
 			if (exex_combatlog && showdmglog)
 			{
 				//Console.Printf("showdmglog 2");
@@ -399,7 +404,11 @@ class DD_EventHandler : EventHandler
 			double outputdmgfactor = 1.0;
 			outputdmgfactor *= moddedDMG;
 			outputdmgfactor /= tempdmgval;
-			if (vict != "PracticeTarget" || vict != "PracticeTarget2")
+			bool playwsounds = false;
+			if (vict != "PracticeTarget" || vict != "PracticeTarget2") playwsounds = true;
+			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playwsounds = false;
+			
+			if (playwsounds)
 			{
 				if (dmg > 0 && !(flags & DMG_NO_FACTOR)) 
 				{
@@ -462,47 +471,37 @@ class DD_EventHandler : EventHandler
 					}
 				}
 			}
-			if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || vict == "BossBrainNew"))
+
+			bool playdmgsounds = false;
+			if (vict != "PracticeTarget" || vict != "PracticeTarget2") playdmgsounds = true;
+			if (vict == "BossBrainNew") playdmgsounds = true;
+			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playdmgsounds = false;
+			if (playdmgsounds)
 			{
-				if (source) 
+				if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && victim.bCOUNTKILL)
 				{
-					if (dydudebug_hitsounds) Console.Printf("[deathsound] source: %s", source.GetClassName());
-					playpawn = PlayerPawn(source);
-					if (victim.bFRIENDLY)
+					if (source) 
 					{
-						if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsndAlly";
-						if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDEDAlly";
-						if (exex_q3aqckillsoundtype >= 0) 
+						if (dydudebug_hitsounds) Console.Printf("[deathsound] source: %s", source.GetClassName());
+						playpawn = PlayerPawn(source);
+						if (victim.bFRIENDLY)
 						{
-							victim.A_StopSound(12);
-							victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE);
-						}
-					}
-					else
-					if (playpawn) 
-					{
-						if (dydudebug_hitsounds) Console.Printf("[deathsound] playpawn: %s", playpawn.GetClassName());
-						if (!victim.bFRIENDLY)
-						{
-							if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsnd";
-							if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDED";
+							if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsndAlly";
+							if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDEDAlly";
 							if (exex_q3aqckillsoundtype >= 0) 
 							{
 								victim.A_StopSound(12);
 								victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE);
 							}
 						}
-					}
-					else
-					{
-						othermon = Actor(source);
-						if (othermon) 
+						else
+						if (playpawn) 
 						{
-							if (dydudebug_hitsounds) Console.Printf("[deathsound] othermon: %s", othermon.GetClassName());
-							if (othermon.bFRIENDLY && !victim.bFRIENDLY)
+							if (dydudebug_hitsounds) Console.Printf("[deathsound] playpawn: %s", playpawn.GetClassName());
+							if (!victim.bFRIENDLY)
 							{
-								if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsnd2";
-								if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDED2";
+								if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsnd";
+								if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDED";
 								if (exex_q3aqckillsoundtype >= 0) 
 								{
 									victim.A_StopSound(12);
@@ -510,57 +509,82 @@ class DD_EventHandler : EventHandler
 								}
 							}
 						}
+						else
+						{
+							othermon = Actor(source);
+							if (othermon) 
+							{
+								if (dydudebug_hitsounds) Console.Printf("[deathsound] othermon: %s", othermon.GetClassName());
+								if (othermon.bFRIENDLY && !victim.bFRIENDLY)
+								{
+									if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsnd2";
+									if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDED2";
+									if (exex_q3aqckillsoundtype >= 0) 
+									{
+										victim.A_StopSound(12);
+										victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+									}
+								}
+							}
+						}
 					}
 				}
 			}
-			if (exex_q3aqchitsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || vict == "BossBrainNew") && level.time >= victim.args[4] && vict != "HeresiarchNew")
+			bool playdthsounds = false;
+			if (vict != "PracticeTarget" || vict != "PracticeTarget2") playdthsounds = true;
+			if (vict == "BossBrainNew") playdthsounds = true;
+			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playdthsounds = false;
+			if (playdthsounds)
 			{
-				victim.args[4] = (level.time + exex_q3aqchitsounddelay);
-				if (dydudebug_hitsounds) Console.Printf("hs - %d [%d]", victim.args[4], level.time);
-				
-				if (source) 
+				if (exex_q3aqchitsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || vict == "BossBrainNew") && level.time >= victim.args[4] && vict != "HeresiarchNew")
 				{
-					if (dydudebug_hitsounds) Console.Printf("[hitsound] source: %s", source.GetClassName());
-					playpawn = PlayerPawn(source);
-					if (victim.bFRIENDLY)
+					victim.args[4] = (level.time + exex_q3aqchitsounddelay);
+					if (dydudebug_hitsounds) Console.Printf("hs - %d [%d]", victim.args[4], level.time);
+					
+					if (source) 
 					{
-						if (exex_q3aqchitsoundtype == 0) playedsound = "misc/hitally";
-						if (exex_q3aqchitsoundtype == 1) playedsound = "misc/hitpally";
-						if (exex_q3aqchitsoundtype >= 0) 
+						if (dydudebug_hitsounds) Console.Printf("[hitsound] source: %s", source.GetClassName());
+						playpawn = PlayerPawn(source);
+						if (victim.bFRIENDLY)
 						{
-							victim.A_StopSound(13);
-							victim.A_StartSound(playedsound, 13, CHANF_DEFAULT, (exex_q3aqchitsoundvol * frandom(0.75,1.25)), ATTN_NONE);
-						}
-					}
-					else
-					if (playpawn) 
-					{
-						if (dydudebug_hitsounds) Console.Printf("[hitsound] playpawn: %s", playpawn.GetClassName());
-						if (!victim.bFRIENDLY)
-						{
-							if (exex_q3aqchitsoundtype == 0) playedsound = "misc/hit";
-							if (exex_q3aqchitsoundtype == 1) playedsound = "misc/hitpunch";
+							if (exex_q3aqchitsoundtype == 0) playedsound = "misc/hitally";
+							if (exex_q3aqchitsoundtype == 1) playedsound = "misc/hitpally";
 							if (exex_q3aqchitsoundtype >= 0) 
 							{
 								victim.A_StopSound(13);
 								victim.A_StartSound(playedsound, 13, CHANF_DEFAULT, (exex_q3aqchitsoundvol * frandom(0.75,1.25)), ATTN_NONE);
 							}
 						}
-					}
-					else
-					{
-						othermon = Actor(source);
-						if (othermon) 
+						else
+						if (playpawn) 
 						{
-							if (dydudebug_hitsounds) Console.Printf("[hitsound] othermon: %s", othermon.GetClassName());
-							if (othermon.bFRIENDLY && !victim.bFRIENDLY)
+							if (dydudebug_hitsounds) Console.Printf("[hitsound] playpawn: %s", playpawn.GetClassName());
+							if (!victim.bFRIENDLY)
 							{
-								if (exex_q3aqchitsoundtype == 0) playedsound = "misc/hit2";
-								if (exex_q3aqchitsoundtype == 1) playedsound = "misc/hitpunch2";
+								if (exex_q3aqchitsoundtype == 0) playedsound = "misc/hit";
+								if (exex_q3aqchitsoundtype == 1) playedsound = "misc/hitpunch";
 								if (exex_q3aqchitsoundtype >= 0) 
 								{
 									victim.A_StopSound(13);
 									victim.A_StartSound(playedsound, 13, CHANF_DEFAULT, (exex_q3aqchitsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+								}
+							}
+						}
+						else
+						{
+							othermon = Actor(source);
+							if (othermon) 
+							{
+								if (dydudebug_hitsounds) Console.Printf("[hitsound] othermon: %s", othermon.GetClassName());
+								if (othermon.bFRIENDLY && !victim.bFRIENDLY)
+								{
+									if (exex_q3aqchitsoundtype == 0) playedsound = "misc/hit2";
+									if (exex_q3aqchitsoundtype == 1) playedsound = "misc/hitpunch2";
+									if (exex_q3aqchitsoundtype >= 0) 
+									{
+										victim.A_StopSound(13);
+										victim.A_StartSound(playedsound, 13, CHANF_DEFAULT, (exex_q3aqchitsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+									}
 								}
 							}
 						}
@@ -607,7 +631,10 @@ class DD_EventHandler : EventHandler
 		int PLuck;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		if (MiscItem) PLuck = MiscItem.PlayerLUCK;
-
+		
+		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
+		string nm, nn, no, np;
+		
 		if (victim)
 		{
 			actor IPAttack;
@@ -644,6 +671,7 @@ class DD_EventHandler : EventHandler
 						if (mastor.bFRIENDLY || mast == "DinahWyck") giveexp = true;
 						//Console.Printf("inflictor.master: %s [%d]", mast, mastor.bFRIENDLY);
 					}
+					nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) giveexp = false;
 
 					int ExpGain = ((victim.spawnhealth()*frandom(0.05,0.125)));
 					if (IPAttack) ExpGain = ((victim.spawnhealth()*frandom(0.125,0.25)));
@@ -683,7 +711,12 @@ class DD_EventHandler : EventHandler
 					}
 					
 					// BUILD-style oneliner for kills [optional]
-					if (inflicter == player || source == player)
+					bool playoneliner = false;
+					if (inflicter == player || source == player) playoneliner = true;
+					if (vict == "PracticeTarget" || vict == "PracticeTarget2") playoneliner = false;
+					nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playoneliner = false;
+					
+					if (playoneliner)
 					{
 						if (dydudebug_worlddied) Console.Printf("Voice Check");
 						if (exex_dinahextravoices && exex_dinahoneliners)
@@ -765,6 +798,7 @@ class DD_EventHandler : EventHandler
 				}
 				
 				// Drop Tables
+				string dropname;
 				int baseIPLuckMul = frandompick(1.5,1.5,1.5,1.5,1.5,2.0);
 				int baseIPLvlDivider = frandompick(0.8,0.925,0.925,0.925,0.925,0.925);
 				int baseIPBaseChanceMul = frandompick(0.8,0.925,0.925,0.925,0.925,0.925);
@@ -775,7 +809,11 @@ class DD_EventHandler : EventHandler
 				int basechance;
 				int maxchance;
 				int scraprolls;
-				if (!victim.bFRIENDLY && victim.bCOUNTKILL)
+				bool candropitems = false;
+				if (!victim.bFRIENDLY && victim.bCOUNTKILL) candropitems = true;
+				if (vict == "PracticeTarget" || vict == "PracticeTarget2") candropitems = false;
+				nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) candropitems = false;
+				if (candropitems)
 				{
 					droptimes = 1;
 					luckbase = 0.0625;
@@ -1474,7 +1512,7 @@ class DD_EventHandler : EventHandler
 						//
 						if (vict == "KilletanteSoloist")
 						{
-							string dropname = "GalaApple";
+							dropname = "GalaApple";
 							if (random(1,2) == 1) dropname = "AppleWine";
 							victim.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
 							if (random(1,2) == 1)
@@ -1500,55 +1538,77 @@ class DD_EventHandler : EventHandler
 						}
 					}
 				}
-				else
+				
+				// Special Actor Conditions
+				if (vict == "ZBell")
 				{
-					if (vict == "ZBell")
+					int typesdrop = 1;
+					if ((victim.Stamina <= 0) || (victim.Stamina <= 2 && ((inflicter && (infl == "BatPuff" || infl == "BatPuffNoSound")))))
 					{
-						int typesdrop = 1;
-						string dropname;
-						if ((victim.Stamina <= 0) || (victim.Stamina <= 2 && ((inflicter && (infl == "BatPuff" || infl == "BatPuffNoSound")))))
+						victim.Stamina++;
+						if (inflicter && (infl == "BatPuff" || infl == "BatPuffNoSound")) typesdrop = random(2,5);
+						
+						for (int i = 0; i < typesdrop; i++)
 						{
-							victim.Stamina++;
-							if (inflicter && (infl == "BatPuff" || infl == "BatPuffNoSound")) typesdrop = random(2,5);
-
-							for(int i = 0; i < typesdrop; i++)
+							user_type = random(1,2);
+							//Console.Printf("#1: %d", user_type);
+							if (user_type == 1) // Weapons
 							{
-								user_type = random(1,2);
-								//Console.Printf("#1: %d", user_type);
-								if (user_type == 1) // Weapons
-								{
-									user_type = random(1,29);
-									//Console.Printf("#2a: %d", user_type);
-									if (user_type >= 1 && user_type <= 4) dropname = "CricketBat";
-									if (user_type >= 5 && user_type <= 8) dropname = "AppleJack";
-									if (user_type >= 9 && user_type <= 12) dropname = "BlunderAxe";
-									if (user_type >= 13 && user_type <= 16) dropname = "Scrambler";
-									if (user_type >= 17 && user_type <= 20) dropname = "WizardPike";
-									if (user_type >= 21 && user_type <= 24) dropname = "SuperVac";
-									if (user_type >= 24 && user_type <= 28) dropname = "CandleWhip";
-									if (user_type == 29) dropname = "Grimophone";
-								}
-								else
-								if (user_type == 2) // Health
-								{
-									user_type = random(1,29);
-									//Console.Printf("#2b: %d", user_type);
-									if (user_type >= 1 && user_type <= 12) dropname = "GalaApple";
-									if (user_type >= 13 && user_type <= 18) dropname = "FoodPlateFruit";
-									if (user_type >= 19 && user_type <= 22) dropname = "AppleWine";
-									if (user_type >= 23 && user_type <= 25) dropname = "PigRoastDish";
-									if (user_type >= 26 && user_type <= 28) dropname = "TurkeyDinner";
-									if (user_type == 29) dropname = "GourmetMeal";
-								}
-								victim.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
+								user_type = random(1,29);
+								//Console.Printf("#2a: %d", user_type);
+								if (user_type >= 1 && user_type <= 4) dropname = "CricketBat";
+								if (user_type >= 5 && user_type <= 8) dropname = "AppleJack";
+								if (user_type >= 9 && user_type <= 12) dropname = "BlunderAxe";
+								if (user_type >= 13 && user_type <= 16) dropname = "Scrambler";
+								if (user_type >= 17 && user_type <= 20) dropname = "WizardPike";
+								if (user_type >= 21 && user_type <= 24) dropname = "SuperVac";
+								if (user_type >= 24 && user_type <= 28) dropname = "CandleWhip";
+								if (user_type == 29) dropname = "Grimophone";
 							}
+							else
+							if (user_type == 2) // Health
+							{
+								user_type = random(1,29);
+								//Console.Printf("#2b: %d", user_type);
+								if (user_type >= 1 && user_type <= 12) dropname = "GalaApple";
+								if (user_type >= 13 && user_type <= 18) dropname = "FoodPlateFruit";
+								if (user_type >= 19 && user_type <= 22) dropname = "AppleWine";
+								if (user_type >= 23 && user_type <= 25) dropname = "PigRoastDish";
+								if (user_type >= 26 && user_type <= 28) dropname = "TurkeyDinner";
+								if (user_type == 29) dropname = "GourmetMeal";
+							}
+							victim.A_SpawnItemEx(dropname,frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),frandom(-5,5),SXF_NOCHECKPOSITION);
 						}
 					}
 				}
 				
-				class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
-				string nm, nn, no, np;
-
+				// Mapset Specific Things
+				nm = "Balloon_Black"; extracheck = nm; 
+				if (vict == extracheck)
+				{
+				}
+				nm = "Balloon"; extracheck = nm; 
+				nn = "BallTarg"; extracheck2 = nn; 
+				no = "Balloon_Red"; extracheck3 = no; 
+				np = "Balloon_Red2"; extracheck4 = np; 
+				if (vict == extracheck || vict == extracheck2 || vict == extracheck3 || vict == extracheck4)
+				{
+				}
+				nm = "Balloon_Yellow"; extracheck = nm; 
+				if (vict == extracheck)
+				{
+				}
+				nm = "Balloon_Green"; extracheck = nm; 
+				nn = "BallGreen"; extracheck2 = nn; 
+				if (vict == extracheck || vict == extracheck2)
+				{
+				}
+				nm = "Balloon_Blue"; extracheck = nm; 
+				if (vict == extracheck)
+				{
+					
+				}
+				
 				// Killed With Certain Weapons
 				if (inflicter && sour == "DinahPlayer" && victim.bCOUNTKILL)
 				{
