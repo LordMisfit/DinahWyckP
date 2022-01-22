@@ -2308,8 +2308,9 @@ class CricketBat : DinahWeapon replaces Pistol
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		if (MiscItem) 
 		{
-			MiscItem.CricketBatBuffTimer = randompick(1,1,1,1,1,1,1,1,1,2);
-			if (type >= 1) MiscItem.CricketBatBuffTimer2 = randompick(1,1,1,1,1,1,1,1,1,2);
+			int val = randompick(2,2,2,2,2,2,2,2,2,3);
+			MiscItem.CricketBatBuffTimer = val;
+			if (type >= 1) MiscItem.CricketBatBuffTimer2 = val;
 		}
 	}
 
@@ -2592,16 +2593,19 @@ class CricketBat : DinahWeapon replaces Pistol
 		invoker.buttons = GetPlayerInput(INPUT_BUTTONS);
 		if (dydudebug_cricketbatguard) Console.Printf("buttons: %d [GuardState: %d, Cooldown: %d, Timer: %d]", invoker.buttons, invoker.guardstate, invoker.guardcooldown, invoker.guardtimer);
 		
-		if (invoker.guardcooldown <= 0)
+		if (exex_cricketbatguardtype == 1)
 		{
-			if (invoker.buttons & BT_USER4 || 
-					invoker.buttons & BT_ATTACK || 
-					invoker.buttons & BT_ALTATTACK) 
+			if (invoker.guardcooldown <= 0)
 			{
-				if (invoker.guardstate == 0) invoker.guardstate = 1;
-																else invoker.guardstate = 0;
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) invoker.guardcooldown = random(5,7);
-																																 else invoker.guardcooldown = random(6,8);
+				if (invoker.buttons & BT_USER4 || 
+						invoker.buttons & BT_ATTACK || 
+						invoker.buttons & BT_ALTATTACK) 
+				{
+					if (invoker.guardstate == 0) invoker.guardstate = 1;
+																	else invoker.guardstate = 0;
+					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) invoker.guardcooldown = random(5,7);
+																																	 else invoker.guardcooldown = random(6,8);
+				}
 			}
 		}
 	}
@@ -3177,11 +3181,6 @@ class CricketBat : DinahWeapon replaces Pistol
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(0); }
 			}
 			goto GuardHold;
-		GuardPreSet:
-			DBGR D 1
-			{
-			}
-			goto GuardHold;
 		GuardHold:
 			DBGR D 1
 			{
@@ -3199,17 +3198,18 @@ class CricketBat : DinahWeapon replaces Pistol
 			}
 			DBGR D 0
 			{
+				if (dydudebug_cricketbatguard) Console.Printf("guardtype: %d", exex_cricketbatguardtype);
 				if (exex_cricketbatguardtype == 1)
 				{
-					if (dydudebug_cricketbatguard) Console.Printf("guardtype: %d", exex_cricketbatguardtype);
 					if (invoker.guardstate == 0) { return resolvestate("UnGuard"); }
 																	else { return resolvestate("GuardHold"); } 
-
 					return resolvestate(null);
 				}
 				else
 				{
-					A_Refire("GuardHold");
+					if (invoker.buttons & BT_USER4) return resolvestate("GuardHold");
+																		 else return resolvestate(null);
+					//A_Refire("GuardHold");
 				}
 				return resolvestate(null);
 			}
