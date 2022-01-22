@@ -2144,7 +2144,7 @@ class DD_StaticEventHandler : StaticEventHandler
 		bool keepHealth = true; // Defaulting to false if no value is found 
 						
 		if (CVar.FindCVar("exex_deathexitkeephealth") != null)
-			keepKeys = CVar.FindCVar("exex_deathexitkeephealth").GetBool();
+			keepHealth = CVar.FindCVar("exex_deathexitkeephealth").GetBool();
 			
 		if (keepHealth)
 		{
@@ -2392,6 +2392,23 @@ class DD_StaticEventHandler : StaticEventHandler
 		}
 	}
     
+	private void ResetResurrectionQueue(int i) 
+	{
+		if (dydudebug_resetinventorydebug) Console.Printf("\c[green]ResetInventory:\c- ResetResurrectionQueue(%d) activated", i);
+		if (playeringame[i] && players[i].mo != null)
+		{
+			if (dydudebug_resetinventorydebug) Console.Printf("\c[green]ResetResurrectionQueue (clear resurrect queue) [2 - playeringame]\c-: %d", i);
+			int delIndex = playersToResurrect.Find(i);
+
+			if (delIndex < playersToResurrect.Size())
+			{
+				if (dydudebug_resetinventorydebug) Console.Printf("\c[green]ResetResurrectionQueue (clear resurrect queue) [3 - delIndex (\c-i: %d\c[green])\c-: %d", i, delindex);
+				playersToResurrect.Delete(delIndex);
+				playersToResurrect.ShrinkToFit();
+			}
+		}
+	}
+
 	// Event functions override
 	override void OnRegister()
 	{
@@ -2448,7 +2465,12 @@ class DD_StaticEventHandler : StaticEventHandler
 			isNewGame = false;
 			if (dydudebug_resetinventorydebug) Console.Printf("\c[green]WorldUnLoaded [2a - IsSaveGame to false]\c-: %d", isNewGame);
 			
-			//
+			// Try to reset the resurrection queue on a save reload (after dying) to circumvent a major issue with the base Universal Keeper mod. - Misfit
+			for (int i = 0; i < MAXPLAYERS; i++) 
+			{
+				if (dydudebug_resetinventorydebug) Console.Printf("\c[green]WorldUnLoaded (clear resurrect queue) [3 - player#]\c-: %d", i);
+				ResetResurrectionQueue(i);
+			}
 		}
 		/* This is a new game, all future world loads are level exits except for saves (above)
 		 and new games (in which case isNewGame will be true again) */
@@ -2460,10 +2482,10 @@ class DD_StaticEventHandler : StaticEventHandler
 			   default inventories may include inventory item that will get stacked here */
 			ManageWeapons();
 
-			///* Key Checking */
-			//ManageKeys();
+			/* Key Checking - Misfit Added :V */
+			ManageKeys();
 			
-			/* Manage Health */
+			/* Manage Health - Misfit Added :V */
 			ManageHealth();
 
 			// We make all inventory undroppable so ResetInventory can't do its job
@@ -2486,18 +2508,7 @@ class DD_StaticEventHandler : StaticEventHandler
 	override void PlayerRespawned(PlayerEvent e)
 	{
 		if (dydudebug_resetinventorydebug) Console.Printf("\c[green]ResetInventory:\c- PlayerRespawned() activated");
-		if (playeringame[e.playerNumber] && players[e.playerNumber].mo != null)
-		{
-			if (dydudebug_resetinventorydebug) Console.Printf("\c[green]PlayerRespawned [2 - playeringame]\c-");
-			int delIndex = playersToResurrect.Find(e.playerNumber);
-
-			if (delIndex < playersToResurrect.Size())
-			{
-				if (dydudebug_resetinventorydebug) Console.Printf("\c[green]PlayerRespawned [3 - delIndex]\c-: %d", delindex);
-				playersToResurrect.Delete(delIndex);
-				playersToResurrect.ShrinkToFit();
-			}
-		}
+		ResetResurrectionQueue(e.playerNumber);
 	}
 
 	override void PlayerDied(PlayerEvent e)
