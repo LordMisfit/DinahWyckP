@@ -176,7 +176,16 @@ class DD_EventHandler : EventHandler
 				specialenemy = true;
 			}
 
-			if (spawnee.GetClassName() == "ArchvileFire")
+			if (Revenant(spawnee))
+			{
+				spawnee.ProjectilePassHeight = 84;
+			}
+			if (Demon1(spawnee) || Demon2(spawnee))
+			{
+				spawnee.ProjectilePassHeight = 92;
+			}
+
+			if (ArchvileFire(spawnee))
 			{
 				spawnee.A_SetRenderStyle(frandom(0.625,0.875),STYLE_Add);
 			}
@@ -2232,28 +2241,34 @@ class DD_StaticEventHandler : StaticEventHandler
 						
 		if (CVar.FindCVar("exex_deathexitkeephealth") != null)
 			keepHealth = CVar.FindCVar("exex_deathexitkeephealth").GetBool();
-			
-		if (keepHealth)
+		
+		for (int i = 0; i < MAXPLAYERS; i++)
 		{
-			if (dydudebug_resetinventorydebug) Console.Printf("ManageHealth [2 - keepHealth is ON]");
-			for (int i = 0; i < MAXPLAYERS; i++)
+			if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]ManageHealth [2 - Player#], i: %d", i);
+			PlayerInfo pi = players[i];
+			PlayerPawn p = PlayerPawn(pi.mo);
+			
+			if (playeringame[i] && p != null)
 			{
-				if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]ManageHealth [3 - Player#], i: %d", i);
-				PlayerInfo pi = players[i];
-				PlayerPawn p = PlayerPawn(pi.mo);
-				
-				if (playeringame[i] && p != null)
+				if (dydudebug_resetinventorydebug) Console.Printf("ManageHealth [3 - playeringame]:\c- i: %d", i);
+				if (keepHealth)
 				{
+					if (dydudebug_resetinventorydebug) Console.Printf("\c[green]ManageHealth [4a - keepHealth is \c[gold]ON\c[green]]");
 					if (p.health > 0)
 					{
 						prevhealthval = p.health;
-						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]HealthHealth [4a - playeringame], i: %d, prevhealthval: %d", i, prevhealthval);
+						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]ManageHealth [5a - playeringame], i: %d, prevhealthval: %d", i, prevhealthval);
 					}
 					else
 					{
 						prevhealthval = 1;
-						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]HealthHealth [4b - playeringame], i: %d, prevhealthval: %d", i, prevhealthval);
+						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]ManageHealth [5b - playeringame], i: %d, prevhealthval: %d", i, prevhealthval);
 					}
+				}
+				else
+				{
+					prevhealthval = p.health;
+					if (dydudebug_resetinventorydebug) Console.Printf("\c[green]ManageHealth [4b - keepHealth is \c[red]OFF\c[green]\c]");
 				}
 			}
 		}
@@ -2286,10 +2301,8 @@ class DD_StaticEventHandler : StaticEventHandler
 						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]ManageWeapons [5 - Item Check]:\c- i: %d, %s", i, item.GetClassName());
 						// Not checking for level-specific stuff like keys as this
 						// seems to be automatically invalidated
-						if (item is 'Weapon' || item is 'BasicArmor' ||
-								item is 'HexenArmor' || item is 'Ammo' || 
-								item is 'Backpack' || 
-								item is 'BlunderShotUpgrade' || item is 'SigilPieces' || item is 'SigilModeType') 
+						if (item is 'Weapon' || item is 'BasicArmor' || item is 'HexenArmor' || item is 'Ammo' || item is 'VacAmmoCounter' ||
+								item is 'Backpack' || item is 'BlunderShotUpgrade' || item is 'SigilPieces' || item is 'SigilModeType')
 						{
 							if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]ManageWeapons [6a - 'Weapon' Type Found]: i: %d, %s", i, item.GetClassName());
 							p.RemoveInventory(item);
@@ -2298,7 +2311,7 @@ class DD_StaticEventHandler : StaticEventHandler
 						else
 							item = item.Inv;
 					}
-					Console.Printf("\c[blue]ManageWeapons [7 - GiveDefaultInventory]: i: %d", i);
+					if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]ManageWeapons [7 - GiveDefaultInventory]: i: %d", i);
 					p.GiveDefaultInventory(); // Give the default inventory 
 				}
 			}
@@ -2376,6 +2389,19 @@ class DD_StaticEventHandler : StaticEventHandler
 
 	private void RestoreItemsState() 
 	{
+		bool keepWeapons = true; // Defaulting to true if no value is found
+		bool keepInvBarItems = true; // Defaulting to true if no value is found
+		bool keepKeys = false; // Defaulting to false if no value is found
+
+		if (CVar.FindCVar("exex_deathexitkeepweapons") != null)
+			keepWeapons = CVar.FindCVar("exex_deathexitkeepweapons").GetBool();
+			
+		if (CVar.FindCVar("exex_deathexitkeepinventoryitems") != null)
+			keepInvBarItems = CVar.FindCVar("exex_deathexitkeepinventoryitems").GetBool();
+			
+		if (CVar.FindCVar("exex_deathexitkeepkeys") != null)
+			keepKeys = CVar.FindCVar("exex_deathexitkeepkeys").GetBool();
+
 		if (dydudebug_resetinventorydebug) Console.Printf("\c[green]ResetInventory:\c- RestoreItemsState() activated");
 		for (int i = 0; i < dropBlockers.Size(); i++)
 		{
@@ -2389,13 +2415,24 @@ class DD_StaticEventHandler : StaticEventHandler
 
 				/* We don't restore weapons, armors and ammos amount, otherwise on an
 				   inventory reset, the player won't be actually in a pistol start state */
-				if (!(item is 'Weapon' || item is 'BasicArmor' ||
-							item is 'HexenArmor' || item is 'Ammo' || 
-							item is 'Backpack' || 
-							item is 'BlunderShotUpgrade' || item is 'SigilPieces' || item is 'SigilModeType'))
+				bool keepinv = true;
+				if (!keepWeapons &&
+					  (item is 'Weapon' || item is 'BasicArmor' || item is 'HexenArmor' || item is 'Ammo' || item is 'VacAmmoCounter' ||
+						item is 'Backpack' || item is 'BlunderShotUpgrade' || item is 'SigilPieces' || item is 'SigilModeType'))
+				{
+					keepinv = false;
+					if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]RestoreItemsState [4a - Weapon Check: \c[red]not saved\c[blue]]:\c- i: %d, %s", i, item.GetClassName());
+				}
+				if (!keepInvBarItems && 
+						(item is 'ExExInvBarItem' || item is 'KilletanteEffigy'))
+				{
+					keepinv = false;
+					if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]RestoreItemsState [4c - EEInvItem Check: \c[red]not saved\c[blue]]:\c- i: %d, %s", i, item.GetClassName());
+				}
+				if (keepinv)
 				{
 					item.Amount = dropBlockers[i].hadAmount;
-					if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]RestoreItemsState [4 - check 'weapons']:\c- i: %d, %s (hadamount: %d)", i, item.GetClassName(), dropBlockers[i].hadAmount);
+					if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]RestoreItemsState [5 - \c[gold]Item Saved\c[blue]]:\c- i: %d, %s (hadamount: %d)", i, item.GetClassName(), dropBlockers[i].hadAmount);
 				}
 			}
 		}
@@ -2436,10 +2473,8 @@ class DD_StaticEventHandler : StaticEventHandler
 					id.hadAmount = item.Amount;
 					dropBlockers.Push(id);
 
-					if (!keepWeapons && (item is 'Weapon' || item is 'BasicArmor' ||
-															 item is 'HexenArmor' || item is 'Ammo' || 
-															 item is 'Backpack' ||
-															 item is 'BlunderShotUpgrade' || item is 'SigilPieces' || item is 'SigilModeType')) 
+					if (!keepWeapons && (item is 'Weapon' || item is 'BasicArmor' || item is 'HexenArmor' || item is 'Ammo' || item is 'VacAmmoCounter' ||
+															 item is 'Backpack' || item is 'BlunderShotUpgrade' || item is 'SigilPieces' || item is 'SigilModeType')) 
 					{
 						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]MakeInventoryUndroppable [5a - KeepWeapons off]: %s", item.GetClassName());
 						// Make the weapon/armor/ammo droppable so it will be removed during a map-initiated
@@ -2448,31 +2483,25 @@ class DD_StaticEventHandler : StaticEventHandler
 						item.bUndroppable = false;
 						item.bUntossable = false;
 					}
+					else if (!keepInvBarItems && (item is 'ExExInvBarItem' || item is 'KilletanteEffigy'))
+					{
+						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]MakeInventoryUndroppable [5b - KeepInvBarItems off]: %s", item.GetClassName());
+						item.bUndroppable = false;
+						item.bUntossable = false;
+					}
+					else if (!KeepKeys && (item is 'Key'))
+					{
+						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]MakeInventoryUndroppable [5c - KeepKeys off]: %s", item.GetClassName());
+						item.bUndroppable = false;
+						item.bUntossable = false;
+					}
 					else
 					{
-						if (!keepInvBarItems && (item is 'ExExInvBarItem' || item is 'KilletanteEffigy'))
-						{
-							if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]MakeInventoryUndroppable [5b - KeepInvBarItems off]: %s", item.GetClassName());
-							item.bUndroppable = false;
-							item.bUntossable = false;
-						}
-						else
-						{
-							if (!KeepKeys && (item is 'Key'))
-							{
-								if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]MakeInventoryUndroppable [5c - KeepKeys off]: %s", item.GetClassName());
-								item.bUndroppable = false;
-								item.bUntossable = false;
-							}
-							else
-							{
-								// Make the items undroppable so it won't be removed during a map-initiated
-								// inventory reset, we'll restore their actual values at the beginning of the next level
-								if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]MakeInventoryUndroppable [5d - make item undroppable/untossable]: %s", item.GetClassName());
-								item.bUndroppable = true;
-								item.bUntossable = true;
-							}
-						}
+						// Make the items undroppable so it won't be removed during a map-initiated
+						// inventory reset, we'll restore their actual values at the beginning of the next level
+						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]MakeInventoryUndroppable [5d - make item undroppable/untossable]: %s", item.GetClassName());
+						item.bUndroppable = true;
+						item.bUntossable = true;
 					}
 				}
 			}
