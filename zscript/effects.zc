@@ -14,6 +14,48 @@ class CustomInventoryExt : CustomInventory
 	mixin IPCostCheck;
 	mixin InvWeaponShare;
 	
+	bool PickupUseVoice;
+	property PickUpVoice: PickupUseVoice;
+	
+	override void PlayPickupSound (Actor toucher)
+	{
+		double atten;
+		int chan;
+		int flags = 0;
+
+		if (bNoAttenPickupSound)
+		{
+			atten = ATTN_NONE;
+		}
+		/*
+		else if ((ItemFlags & IF_FANCYPICKUPSOUND) &&
+			(toucher == NULL || toucher->CheckLocalView()))
+		{
+			atten = ATTN_NONE;
+		}
+		*/
+		else
+		{
+			atten = ATTN_NORM;
+		}
+
+		if (toucher != NULL && toucher.CheckLocalView())
+		{
+			if (PickupUseVoice) chan = CHAN_VOICE;
+										 else chan = CHAN_ITEM;
+			flags = CHANF_NOPAUSE | CHANF_MAYBE_LOCAL;
+		}
+		else
+		{
+			if (PickupUseVoice) chan = CHAN_VOICE;
+										 else chan = CHAN_ITEM;
+			flags = CHANF_MAYBE_LOCAL;
+		}
+		//Console.Printf("Channel: %d", chan);
+		if (PickupUseVoice) toucher.A_StopSound(chan);
+		toucher.A_StartSound(PickupSound, chan, flags, 1, atten);
+	}
+
 	action void A_UseTurkeyDinner()
 	{
 		if (player.mo.CountInv("TurkeyDinner"))
