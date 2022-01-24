@@ -513,10 +513,16 @@ class PlayerStatItem : Inventory
 				//******************
 				//* HP Regen/Degen *
 				//******************
+				if (CurrentHealth <= 0) 
+				{
+					Owner.A_SetInventory("PlayerIsDead",1); 
+				}
+				else
 				if (CurrentHealth > 0)
 				{
 					if (dydudebug_hpregen) Console.Printf("Health: %d / %d", CurrentHealth, MaxHealthTrue);
 					
+					Owner.A_SetInventory("PlayerIsDead",0);
 					//****************************************
 					//*Get Health Ratio & Health Level Checks*
 					//****************************************
@@ -524,52 +530,48 @@ class PlayerStatItem : Inventory
 					{
 						HealthRatio = (CurrentHealth * 1000) / MaxHealthTrue;
 						HealthRatio = clamp(HealthRatio, 0, 2000);
-			
-						if (CurrentHealth <= 0) { Owner.A_SetInventory("PlayerIsDead", 1); }
-						else
+						
+						if (HealthRatio != PrevHealthRatio)
 						{
-							Owner.A_SetInventory("PlayerIsDead", 0);
-							if (HealthRatio != PrevHealthRatio)
+							if (HealthRatio < 625)
 							{
-								if (HealthRatio < 625)
+								if (HealthRatio < 167)
 								{
-									if (HealthRatio < 167)
+									if (HealthRatio < 21)
 									{
-										if (HealthRatio < 21)
-										{
-											Owner.A_SetInventory("CriticalHealth", 1);
-											Owner.A_SetInventory("LowHealth", 0);
-											Owner.A_SetInventory("DecentHealth", 0);
-											Owner.A_SetInventory("NormalHealth", 0);
-										}
-										else 
-										{
-											Owner.A_SetInventory("CriticalHealth", 0);
-											Owner.A_SetInventory("LowHealth", 1);
-											Owner.A_SetInventory("DecentHealth", 0);
-											Owner.A_SetInventory("NormalHealth", 0);
-										}
+										Owner.A_SetInventory("CriticalHealth", 1);
+										Owner.A_SetInventory("LowHealth", 0);
+										Owner.A_SetInventory("DecentHealth", 0);
+										Owner.A_SetInventory("NormalHealth", 0);
 									}
 									else 
 									{
 										Owner.A_SetInventory("CriticalHealth", 0);
-										Owner.A_SetInventory("LowHealth", 0);
-										Owner.A_SetInventory("DecentHealth", 1);
+										Owner.A_SetInventory("LowHealth", 1);
+										Owner.A_SetInventory("DecentHealth", 0);
 										Owner.A_SetInventory("NormalHealth", 0);
 									}
 								}
-								else
+								else 
 								{
 									Owner.A_SetInventory("CriticalHealth", 0);
 									Owner.A_SetInventory("LowHealth", 0);
-									Owner.A_SetInventory("DecentHealth", 0);
-									Owner.A_SetInventory("NormalHealth", 1);
+									Owner.A_SetInventory("DecentHealth", 1);
+									Owner.A_SetInventory("NormalHealth", 0);
 								}
-								if (CurrentHealth >= MaxHealthTrue) Owner.A_SetInventory("FullHealth", 1); else Owner.A_SetInventory("FullHealth", 0);
-								
-								PrevHealthRatio = HealthRatio;
 							}
+							else
+							{
+								Owner.A_SetInventory("CriticalHealth", 0);
+								Owner.A_SetInventory("LowHealth", 0);
+								Owner.A_SetInventory("DecentHealth", 0);
+								Owner.A_SetInventory("NormalHealth", 1);
+							}
+							if (CurrentHealth >= MaxHealthTrue) Owner.A_SetInventory("FullHealth", 1); else Owner.A_SetInventory("FullHealth", 0);
+							
+							PrevHealthRatio = HealthRatio;
 						}
+						
 					}
 					
 					// Check Item Points

@@ -2326,7 +2326,7 @@ class DD_StaticEventHandler : StaticEventHandler
 			if (CVar.FindCVar("exex_deathexitkeepweapons") != null)
 				keepWeapons = CVar.FindCVar("exex_deathexitkeepweapons").GetBool();
 
-			if (p.CountInv("ResetInventory"))
+			if (p.CountInv("ResetInventory") || p.CountInv("PlayerIsDead"))
 			{
 				if (prevhealthval > 0)
 				{
@@ -2400,15 +2400,18 @@ class DD_StaticEventHandler : StaticEventHandler
 			keepKeys = CVar.FindCVar("exex_deathexitkeepkeys").GetBool();
 
 		ResetInventory ResetItem;
+		PlayerIsDead DeadItem;
 		for (int i = 0; i < dropBlockers.Size(); i++)
 		{
 			ResetItem = ResetInventory(dropBlockers[i].savedItem);
-			if (ResetItem) break;
+			DeadItem = PlayerIsDead(dropBlockers[i].savedItem);
+			if (ResetItem || DeadItem) break;
 		}
 		if (dydudebug_resetinventorydebug) 
 		{
-			if (ResetItem) Console.Printf("\c[green]ResetInventory:\c- Found ResetInventory Item!");
-								else Console.Printf("\c[green]ResetInventory:\c- Did NOT find ResetInventory Item!");
+					if (ResetItem) Console.Printf("\c[green]ResetInventory:\c- Found ResetInventory Item!");
+			else if (DeadItem) Console.Printf("\c[green]ResetInventory:\c- Found PlayerIsDead Item!");
+										else Console.Printf("\c[green]ResetInventory:\c- Did NOT find ResetInventory or PlayerIsDead Items!");
 		}
 
 		if (dydudebug_resetinventorydebug) Console.Printf("\c[green]ResetInventory:\c- RestoreItemsState() activated");
@@ -2437,7 +2440,7 @@ class DD_StaticEventHandler : StaticEventHandler
 				{
 					keepinv = false;
 					if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]RestoreItemsState [4c - EEInvItem Check: \c[red]not saved\c[blue]]:\c- i: %d, %s", i, item.GetClassName());
-					if (ResetItem)
+					if (ResetItem || DeadItem)
 					{
 						item.Amount = 0;
 						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]RestoreItemsState [4cb - EEInvItem Check: \c[brick]amount cleared\c[blue]]:\c- i: %d, %s", i, item.GetClassName());
