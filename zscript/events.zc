@@ -938,8 +938,17 @@ class DD_EventHandler : EventHandler
 					if ((source && source.bFRIENDLY) || (inflicter && inflicter.bFRIENDLY)) ExpGain *= frandom(0.65,0.90);
 					if (sour == "DinahPlayer" && infl == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
 					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
-					If (PLuck) ExpGain *= (1.00 + (TrueLuck * frandompick(0,0.00125,0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02)));
-					if (giveexp)
+					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
+					If (PLuck) 
+					{
+						int PLevel = Player.CountInv("PlayerLevel");
+								 if (PLevel <= 11) ExpGain *= (1.00 + (TrueLuck * frandompick(0,0.00125,0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02)));
+						else if (PLevel <= 26) ExpGain *= (1.00 + (TrueLuck * frandompick(0.00125,0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.01,0.02,0.02)));
+						else if (PLevel <= 66) ExpGain *= (1.00 + (TrueLuck * frandompick(0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.4)));
+						else if (PLevel <= 101) ExpGain *= (1.00 + (TrueLuck * frandompick(0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.4,0.4)));
+						else if (PLevel <= 201) ExpGain *= (1.00 + (TrueLuck * frandompick(0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.4,0.4,0.4)));
+					}
+					if (giveexp && exex_expenabled)
 					{
 						if (ExpGain < 1) ExpGain = 1;
 
@@ -958,15 +967,17 @@ class DD_EventHandler : EventHandler
 						}
 						
 						Actor player = players[0].mo;
-
-						Player.A_GiveInventory("KillsCount",1);
-						Player.A_GiveInventory("ExpPts",ExpGain);
-						int Kills = Player.CountInv("KillsCount");
-						int ExpNew = Player.CountInv("ExpPts");
-						int ExpNeeded = Player.CountInv("ExpPtsNeeded");
-						int PlayerLevel = Player.CountInv("PlayerLevel");
-
-						if (exex_showexpgains) Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
+						
+						if (player.health > 0 || !player.CountInv("PlayerIsDead"))
+						{
+							Player.A_GiveInventory("KillsCount",1);
+							Player.A_GiveInventory("ExpPts",ExpGain);
+							int Kills = Player.CountInv("KillsCount");
+							int ExpNew = Player.CountInv("ExpPts");
+							int ExpNeeded = Player.CountInv("ExpPtsNeeded");
+							int PlayerLevel = Player.CountInv("PlayerLevel");
+							if (exex_showexpgains) Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
+						}
 					}
 					
 					// BUILD-style oneliner for kills [optional]
@@ -2401,16 +2412,20 @@ class DD_StaticEventHandler : StaticEventHandler
 
 		ResetInventory ResetItem;
 		PlayerIsDead DeadItem;
+		int ResetItemAmt;
+		int DeadItemAmt;
 		for (int i = 0; i < dropBlockers.Size(); i++)
 		{
 			ResetItem = ResetInventory(dropBlockers[i].savedItem);
 			DeadItem = PlayerIsDead(dropBlockers[i].savedItem);
-			if (ResetItem || DeadItem) break;
+			if (ResetItem) ResetItemAmt = ResetItem.Amount;
+			if (DeadItem) DeadItemAmt = DeadItem.Amount;
+			if ((ResetItem && ResetItemAmt) || (DeadItem && DeadItemAmt)) break;
 		}
 		if (dydudebug_resetinventorydebug) 
 		{
-					if (ResetItem) Console.Printf("\c[green]ResetInventory:\c- Found ResetInventory Item!");
-			else if (DeadItem) Console.Printf("\c[green]ResetInventory:\c- Found PlayerIsDead Item!");
+					if (ResetItem && ResetItemAmt) Console.Printf("\c[green]ResetInventory:\c- Found ResetInventory Item!");
+			else if (DeadItem && DeadItemAmt) Console.Printf("\c[green]ResetInventory:\c- Found PlayerIsDead Item!");
 										else Console.Printf("\c[green]ResetInventory:\c- Did NOT find ResetInventory or PlayerIsDead Items!");
 		}
 
@@ -2440,7 +2455,7 @@ class DD_StaticEventHandler : StaticEventHandler
 				{
 					keepinv = false;
 					if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]RestoreItemsState [4c - EEInvItem Check: \c[red]not saved\c[blue]]:\c- i: %d, %s", i, item.GetClassName());
-					if (ResetItem || DeadItem)
+					if ((ResetItem && ResetItemAmt) || (DeadItem && DeadItemAmt))
 					{
 						item.Amount = 0;
 						if (dydudebug_resetinventorydebug) Console.Printf("\c[blue]RestoreItemsState [4cb - EEInvItem Check: \c[brick]amount cleared\c[blue]]:\c- i: %d, %s", i, item.GetClassName());
