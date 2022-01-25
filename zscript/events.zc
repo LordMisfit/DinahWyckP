@@ -12,7 +12,9 @@ class DD_EventHandler : EventHandler
 
 	override void NewGame()
 	{
-		//Console.Printf("NEWGAME");
+		let globalvars = DDGlobalVariables.Get();
+		if (globalvars.MapsFinished == 0) globalvars.MapsFinished = -1;
+		if (dydudebug_mapfinishcheck) Console.Printf("\c[gold]NewGame() (DD_EventHandler) [%d]", globalvars.MapsFinished);
 		Super.NewGame();
 	}
 	
@@ -1929,8 +1931,14 @@ class DD_EventHandler : EventHandler
 	
 	override void WorldLoaded(WorldEvent e)
 	{
+		let globalvars = DDGlobalVariables.Get();
 		bool BatGuardCheck = true;
 		if (e.IsSaveGame) BatGuardCheck = false;
+		if (!e.IsReopen)
+		{
+			globalvars.MapsFinished++;
+			if (dydudebug_mapfinishcheck) Console.Printf("Not Reopen [%d]", globalvars.MapsFinished);
+		}
 		if (BatGuardCheck)
 		{
 			actor Player = players[0].mo;
