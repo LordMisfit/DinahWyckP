@@ -20,6 +20,7 @@ class DD_EventHandler : EventHandler
 	
 	override void WorldThingSpawned(WorldEvent e)
 	{
+		let globalvars = DDGlobalVariables.Get();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		int PLuck;
@@ -31,6 +32,7 @@ class DD_EventHandler : EventHandler
 		string spawnname = spawnee.GetClassName();
 		int user_base = 0;
 		string usertype = "";
+		double hpmulti, atkmulti, defmulti, spdmulti, massmulti;
 		
 		if (spawnee)
 		{
@@ -124,6 +126,10 @@ class DD_EventHandler : EventHandler
 			}
 			
 			bool specialenemy = false;
+			bool ispeasant = false;
+			// Strife Peasants
+			if (Peasant(spawnee)) ispeasant = true;
+
 			// Eviternity's Archangelus Boss
 			nm = "ArchangelusA"; extracheck = nm;
 			if (spawnee.GetClassName() == extracheck) 
@@ -194,7 +200,12 @@ class DD_EventHandler : EventHandler
 				double origDmgFct = spawnee.DamageFactor;
 				double origHealth = spawnee.health;
 				double origMass = spawnee.Mass;
-				if (exex_enemyscaling && !specialenemy)
+				hpmulti = 0.00;
+				atkmulti = 0.00;
+				defmulti = 0.00;
+				spdmulti = 0.00;
+				massmulti = 0.00;
+				if (!specialenemy || !ispeasant)
 				{
 					double mult;
 					double multbase = 1;
@@ -231,118 +242,294 @@ class DD_EventHandler : EventHandler
 						}
 					}
 					
-					if (spawnee.bFRIENDLY)
+					if (exex_enemyscalingplevel)
 					{
-						if (dydudebug_monsterscaling) Console.Printf("\c[sapphire]%s\c- [multbase: %.8f]", spawnee.GetClassName(), multbase);
-						// Speed
-						if (skill <= 0) mult = 0.00275;
-						if (skill == 1) mult = 0.002625;
-						if (skill == 2) mult = 0.0025;
-						if (skill == 3) mult = 0.002375;
-						if (skill >= 4) mult = 0.00225;
-						mult *= multbase;
-						spawnee.Speed *= (1.0 + (MiscItem.PlayerLevel * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
-						if (dydudebug_monsterscaling) Console.Printf("Speed: %.8f [%.8f]", spawnee.Speed, origSpd);
-						// Attack
-						if (skill <= 0) mult = 0.0055;
-						if (skill == 1) mult = 0.00525;
-						if (skill == 2) mult = 0.005;
-						if (skill == 3) mult = 0.00475;
-						if (skill >= 4) mult = 0.0045;
-						mult *= multbase;
-						spawnee.DamageMultiply *= (1.0 + (MiscItem.PlayerLevel * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
-						if (dydudebug_monsterscaling) Console.Printf("DamageMultiply: %.8f [%.8f]", spawnee.DamageMultiply, origDmgMul);
-						// Defense
-						if (skill <= 0) mult = 0.001375;
-						if (skill == 1) mult = 0.0013125;
-						if (skill == 2) mult = 0.00125;
-						if (skill == 3) mult = 0.0011875;
-						if (skill >= 4) mult = 0.001125;
-						mult *= multbase;
-						spawnee.DamageFactor *= (1.0 - (MiscItem.PlayerLevel * mult) - (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
-						if (dydudebug_monsterscaling) Console.Printf("DamageFactor: %.8f [%.8f]", spawnee.DamageFactor, origDmgFct);
-						// Health
-						if (skill <= 0) mult = 0.0022;
-						if (skill == 1) mult = 0.0021;
-						if (skill == 2) mult = 0.0020;
-						if (skill == 3) mult = 0.0019;
-						if (skill >= 4) mult = 0.0018;
-						mult *= multbase;
-						spawnee.health = floor(spawnee.health * (1.0 + (MiscItem.PlayerLevel * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
-						if (dydudebug_monsterscaling) Console.Printf("Health: %d [%d]", spawnee.health, origHealth);
-						// Mass
-						if (skill <= 0) mult = 0.0055;
-						if (skill == 1) mult = 0.00525;
-						if (skill == 2) mult = 0.005;
-						if (skill == 3) mult = 0.00475;
-						if (skill >= 4) mult = 0.0045;
-						mult *= multbase;
-						spawnee.Mass = floor(spawnee.Mass * (1.0 + (MiscItem.PlayerLevel * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
-						if (dydudebug_monsterscaling) Console.Printf("Mass: %d [%d]", spawnee.Mass, origMass);
-					}
-					else
-					{
-						int LuckRoll;
-						if (MiscItem)
+						if (spawnee.bFRIENDLY)
 						{
-							if (skill <= 0) LuckRoll = random((MiscItem.PlayerLevel*0.25),MiscItem.PlayerLevel);
-							if (skill == 1) LuckRoll = random((MiscItem.PlayerLevel*0.375),MiscItem.PlayerLevel);
-							if (skill == 2) LuckRoll = random((MiscItem.PlayerLevel*0.5),MiscItem.PlayerLevel);
-							if (skill == 3) LuckRoll = random((MiscItem.PlayerLevel*0.625),MiscItem.PlayerLevel);
-							if (skill >= 4) LuckRoll = random((MiscItem.PlayerLevel*0.75),MiscItem.PlayerLevel);
+							// Speed
+							if (skill <= 0) mult = 0.00275;
+							if (skill == 1) mult = 0.002625;
+							if (skill == 2) mult = 0.0025;
+							if (skill == 3) mult = 0.002375;
+							if (skill >= 4) mult = 0.00225;
+							mult *= multbase;
+							spdmulti += ((MiscItem.PlayerLevel * mult) - (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
+							
+							// Attack
+							if (skill <= 0) mult = 0.0055;
+							if (skill == 1) mult = 0.00525;
+							if (skill == 2) mult = 0.005;
+							if (skill == 3) mult = 0.00475;
+							if (skill >= 4) mult = 0.0045;
+							mult *= multbase;
+							atkmulti += ((MiscItem.PlayerLevel * mult) - (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
+							
+							// Defense
+							if (skill <= 0) mult = 0.001375;
+							if (skill == 1) mult = 0.0013125;
+							if (skill == 2) mult = 0.00125;
+							if (skill == 3) mult = 0.0011875;
+							if (skill >= 4) mult = 0.001125;
+							mult *= multbase;
+							defmulti += ((MiscItem.PlayerLevel * mult) - (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
+							
+							// Health
+							if (skill <= 0) mult = 0.0022;
+							if (skill == 1) mult = 0.0021;
+							if (skill == 2) mult = 0.0020;
+							if (skill == 3) mult = 0.0019;
+							if (skill >= 4) mult = 0.0018;
+							mult *= multbase;
+							hpmulti += floor(spawnee.health * ((MiscItem.PlayerLevel * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
+							
+							// Mass
+							if (skill <= 0) mult = 0.0055;
+							if (skill == 1) mult = 0.00525;
+							if (skill == 2) mult = 0.005;
+							if (skill == 3) mult = 0.00475;
+							if (skill >= 4) mult = 0.0045;
+							mult *= multbase;
+							massmulti += floor(spawnee.mass * ((MiscItem.PlayerLevel * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
 						}
-						if (dydudebug_monsterscaling) Console.Printf("\c[fire]%s\c- [multbase: %.8f, LuckRoll: %d]", spawnee.GetClassName(), multbase, LuckRoll);
-						
-						// Speed
-						if (skill <= 0) mult = 0.0015;
-						if (skill == 1) mult = 0.0016875;
-						if (skill == 2) mult = 0.001875;
-						if (skill == 3) mult = 0.0020625;
-						if (skill >= 4) mult = 0.00225;
-						mult *= multbase;
-						spawnee.Speed *= (1.0 + (LuckRoll * mult));
-						if (dydudebug_monsterscaling) Console.Printf("Speed: %.8f [%.8f]", spawnee.Speed, origSpd);
-						// Attack
-						if (skill <= 0) mult = 0.0020;
-						if (skill == 1) mult = 0.00225;
-						if (skill == 2) mult = 0.0025;
-						if (skill == 3) mult = 0.00275;
-						if (skill >= 4) mult = 0.0030;
-						mult *= multbase;
-						spawnee.DamageMultiply *= (1.0 + (LuckRoll * mult));
-						if (dydudebug_monsterscaling) Console.Printf("DamageMultiply: %.8f [%.8f]", spawnee.DamageMultiply, origDmgMul);
-						// Defense
-						if (skill <= 0) mult = 0.0005;
-						if (skill == 1) mult = 0.0005625;
-						if (skill == 2) mult = 0.000625;
-						if (skill == 3) mult = 0.0006875;
-						if (skill >= 4) mult = 0.00075;
-						mult *= multbase;
-						spawnee.DamageFactor *= (1.0 + (LuckRoll * mult));
-						if (dydudebug_monsterscaling) Console.Printf("DamageFactor: %.8f [%.8f]", spawnee.DamageFactor, origDmgFct);
-						// Health
-						if (skill <= 0) mult = 0.0010;
-						if (skill == 1) mult = 0.001125;
-						if (skill == 2) mult = 0.00125;
-						if (skill == 3) mult = 0.001375;
-						if (skill >= 4) mult = 0.0015;
-						mult *= multbase;
-						spawnee.health = ceil(spawnee.health * (1.0 + (LuckRoll * mult)));
-						if (dydudebug_monsterscaling) Console.Printf("Health: %d [%d]", spawnee.health, origHealth);
-						// Mass
-						if (skill <= 0) mult = 0.0025;
-						if (skill == 1) mult = 0.0028125;
-						if (skill == 2) mult = 0.003125;
-						if (skill == 3) mult = 0.0034375;
-						if (skill >= 4) mult = 0.00375;
-						mult *= multbase;
-						spawnee.mass = ceil(spawnee.mass * (1.0 + (MiscItem.PlayerLevel * mult)));
-						if (dydudebug_monsterscaling) Console.Printf("Mass: %d [%d]", spawnee.Mass, origMass);
+						else
+						{
+							int LuckRoll;
+							if (MiscItem)
+							{
+								if (skill <= 0) LuckRoll = random((MiscItem.PlayerLevel*0.25),MiscItem.PlayerLevel);
+								if (skill == 1) LuckRoll = random((MiscItem.PlayerLevel*0.375),MiscItem.PlayerLevel);
+								if (skill == 2) LuckRoll = random((MiscItem.PlayerLevel*0.5),MiscItem.PlayerLevel);
+								if (skill == 3) LuckRoll = random((MiscItem.PlayerLevel*0.625),MiscItem.PlayerLevel);
+								if (skill >= 4) LuckRoll = random((MiscItem.PlayerLevel*0.75),MiscItem.PlayerLevel);
+							}
+							if (dydudebug_monsterscaling) Console.Printf("\c[fire]%s\c- PLevel: [multbase: %.8f, LuckRoll: %d]", spawnee.GetClassName(), multbase, LuckRoll);
+							
+							// Speed
+							if (skill <= 0) mult = 0.0015;
+							if (skill == 1) mult = 0.0016875;
+							if (skill == 2) mult = 0.001875;
+							if (skill == 3) mult = 0.0020625;
+							if (skill >= 4) mult = 0.00225;
+							mult *= multbase;
+							spdmulti += (LuckRoll * mult);
+							
+							// Attack
+							if (skill <= 0) mult = 0.0020;
+							if (skill == 1) mult = 0.00225;
+							if (skill == 2) mult = 0.0025;
+							if (skill == 3) mult = 0.00275;
+							if (skill >= 4) mult = 0.0030;
+							mult *= multbase;
+							atkmulti += (LuckRoll * mult);
+							
+							// Defense
+							if (skill <= 0) mult = 0.0005;
+							if (skill == 1) mult = 0.0005625;
+							if (skill == 2) mult = 0.000625;
+							if (skill == 3) mult = 0.0006875;
+							if (skill >= 4) mult = 0.00075;
+							mult *= multbase;
+							defmulti += (LuckRoll * mult);
+							
+							// Health
+							if (skill <= 0) mult = 0.0010;
+							if (skill == 1) mult = 0.001125;
+							if (skill == 2) mult = 0.00125;
+							if (skill == 3) mult = 0.001375;
+							if (skill >= 4) mult = 0.0015;
+							mult *= multbase;
+							hpmulti += ceil(spawnee.health * (LuckRoll * mult));
+							
+							// Mass
+							if (skill <= 0) mult = 0.0025;
+							if (skill == 1) mult = 0.0028125;
+							if (skill == 2) mult = 0.003125;
+							if (skill == 3) mult = 0.0034375;
+							if (skill >= 4) mult = 0.00375;
+							mult *= multbase;
+							massmulti += ceil(spawnee.mass * (LuckRoll * mult));
+						}
 					}
+
+					multbase = 1;
+					if (random(1,16) <= 1)
+					{
+						if (random(1,16) <= 1)
+						{
+							if (random(1,16) <= 1)
+							{
+								if (random(1,16) <= 1)
+								{
+									if (random(1,16) <= 1)
+									{
+										multbase = 4;
+									}
+									else
+									{
+										multbase = 3;
+									}
+								}
+								else
+								{
+									multbase = 2;
+								}
+							}
+							else
+							{
+								multbase = 1.5;
+							}
+						}
+						else
+						{
+							multbase = 1.25;
+						}
+					}
+					
+					if (exex_enemyscalingmaps)
+					{
+						if (spawnee.bFRIENDLY)
+						{
+							if (dydudebug_monsterscaling) Console.Printf("\c[sapphire]%s\c- Maps:  [multbase: %.8f]", spawnee.GetClassName(), multbase);
+							// Speed
+							if (skill <= 0) mult = 0.0055;
+							if (skill == 1) mult = 0.00525;
+							if (skill == 2) mult = 0.005;
+							if (skill == 3) mult = 0.00475;
+							if (skill >= 4) mult = 0.0045;
+							mult *= multbase;
+							spdmulti += (globalvars.MapsFinished * mult);
+							
+							// Attack
+							if (skill <= 0) mult = 0.011;
+							if (skill == 1) mult = 0.0105;
+							if (skill == 2) mult = 0.010;
+							if (skill == 3) mult = 0.0095;
+							if (skill >= 4) mult = 0.009;
+							mult *= multbase;
+							atkmulti += (globalvars.MapsFinished * mult);
+							
+							// Defense
+							if (skill <= 0) mult = 0.00275;
+							if (skill == 1) mult = 0.002625;
+							if (skill == 2) mult = 0.0025;
+							if (skill == 3) mult = 0.002375;
+							if (skill >= 4) mult = 0.00225;
+							mult *= multbase;
+							defmulti += (globalvars.MapsFinished * mult);
+							// Health
+							if (skill <= 0) mult = 0.0044;
+							if (skill == 1) mult = 0.0042;
+							if (skill == 2) mult = 0.0040;
+							if (skill == 3) mult = 0.0038;
+							if (skill >= 4) mult = 0.0036;
+							mult *= multbase;
+							hpmulti += floor(spawnee.health * ((globalvars.MapsFinished * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
+							
+							// Mass
+							if (skill <= 0) mult = 0.011;
+							if (skill == 1) mult = 0.0105;
+							if (skill == 2) mult = 0.010;
+							if (skill == 3) mult = 0.0095;
+							if (skill >= 4) mult = 0.009;
+							mult *= multbase;
+							massmulti += floor(spawnee.mass * ((globalvars.MapsFinished * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
+						}
+						else
+						{
+							int LuckRoll;
+							if (globalvars)
+							{
+								if (skill <= 0) LuckRoll = random((globalvars.MapsFinished*0.25),globalvars.MapsFinished);
+								if (skill == 1) LuckRoll = random((globalvars.MapsFinished*0.375),globalvars.MapsFinished);
+								if (skill == 2) LuckRoll = random((globalvars.MapsFinished*0.5),globalvars.MapsFinished);
+								if (skill == 3) LuckRoll = random((globalvars.MapsFinished*0.625),globalvars.MapsFinished);
+								if (skill >= 4) LuckRoll = random((globalvars.MapsFinished*0.75),globalvars.MapsFinished);
+							}
+							if (dydudebug_monsterscaling) Console.Printf("\c[fire]%s\c- Maps: [multbase: %.8f, LuckRoll: %d]", spawnee.GetClassName(), multbase, LuckRoll);
+							
+							// Speed
+							if (skill <= 0) mult = 0.0030;
+							if (skill == 1) mult = 0.003375;
+							if (skill == 2) mult = 0.00375;
+							if (skill == 3) mult = 0.004125;
+							if (skill >= 4) mult = 0.0045;
+							mult *= multbase;
+							spdmulti += (LuckRoll * mult);
+							
+							// Attack
+							if (skill <= 0) mult = 0.0040;
+							if (skill == 1) mult = 0.0045;
+							if (skill == 2) mult = 0.005;
+							if (skill == 3) mult = 0.0055;
+							if (skill >= 4) mult = 0.0060;
+							mult *= multbase;
+							atkmulti += (LuckRoll * mult);
+							
+							// Defense
+							if (skill <= 0) mult = 0.0010;
+							if (skill == 1) mult = 0.001125;
+							if (skill == 2) mult = 0.00125;
+							if (skill == 3) mult = 0.001375;
+							if (skill >= 4) mult = 0.0015;
+							mult *= multbase;
+							defmulti += (LuckRoll * mult);
+							
+							// Health
+							if (skill <= 0) mult = 0.0020;
+							if (skill == 1) mult = 0.00225;
+							if (skill == 2) mult = 0.0025;
+							if (skill == 3) mult = 0.00275;
+							if (skill >= 4) mult = 0.0030;
+							mult *= multbase;
+							hpmulti += ceil(spawnee.health * (LuckRoll * mult));
+							
+							// Mass
+							if (skill <= 0) mult = 0.0050;
+							if (skill == 1) mult = 0.005625;
+							if (skill == 2) mult = 0.00625;
+							if (skill == 3) mult = 0.006875;
+							if (skill >= 4) mult = 0.0075;
+							mult *= multbase;
+							massmulti += ceil(spawnee.mass * (LuckRoll * mult));
+						}
+					}
+					// Final Calcs
+					if (spdmulti) spawnee.Speed *= (1.0 + spdmulti);
+					if (dydudebug_monsterscaling) Console.Printf("Speed: %.8f [old: %.8f, multi: %.8f]", spawnee.Speed, origSpd, spdmulti);
+					if (atkmulti) spawnee.DamageMultiply *= (1.0 + atkmulti);
+					if (dydudebug_monsterscaling) Console.Printf("DamageMultiply: %.8f [old: %.8f, multi: %.8f]", spawnee.DamageMultiply, origDmgMul, atkmulti);
+					if (defmulti) spawnee.DamageFactor *= (1.0 + defmulti);
+					if (dydudebug_monsterscaling) Console.Printf("DamageFactor: %.8f [old: %.8f, multi: %.8f]", spawnee.DamageFactor, origDmgFct, defmulti);
+					if (hpmulti) 
+					{
+						spawnee.health += hpmulti;
+						spawnee.Stamina = hpmulti;
+					}
+					if (dydudebug_monsterscaling) Console.Printf("Health: %d [old: %d, diff: %d]", spawnee.health, origHealth, hpmulti);
+					if (massmulti) 
+					{
+						spawnee.mass += massmulti;
+						spawnee.Accuracy = massmulti;
+					}
+					if (dydudebug_monsterscaling) Console.Printf("Mass: %d [old: %d, diff: %d]", spawnee.Mass, origMass, massmulti);
 				}
 			}
 		}
 		Super.WorldThingSpawned(e);
+	}
+
+	override void WorldThingRevived(WorldEvent e)
+	{
+		actor spawnee = e.thing;
+		string spawnname = spawnee.GetClassName();
+		if (spawnee)
+		{
+			if (spawnee.bISMONSTER && spawnee.Stamina > 0)
+			{
+				spawnee.health = spawnee.SpawnHealth() + spawnee.Stamina;
+			}
+		}
+		Super.WorldThingRevived(e);
 	}
 
 	override void WorldThingDamaged(WorldEvent e)
