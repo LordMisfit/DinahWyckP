@@ -56,7 +56,7 @@ class CustomInventoryExt : CustomInventory
 										 else chan = CHAN_ITEM;
 			flags = CHANF_MAYBE_LOCAL;
 		}
-		//Console.Printf("Channel: %d", chan);
+		//Console.Printf("Channel: %d [PUV: %d]", chan, PickupUseVoice);
 		if (PickupUseVoice) toucher.A_StopSound(chan);
 		toucher.A_StartSound(PickupSound, chan, flags, 1, atten);
 	}
@@ -390,6 +390,31 @@ class KnightGownItem4 : PlaceholderItem { default { Inventory.MaxAmount 1; } }
 
 class PowerWine : PowerProtection
 {
+	double ticpiece;
+	
+	override void Tick ()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																						else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		if (EffectTics <= 0) Destroy();
+	}
 }
 class PowerWineBuffWeak : PowerWine
 {
@@ -529,10 +554,60 @@ class PowerWineBuffStrongestEven : PowerWine
 
 class PowerFoodATK : PowerDamage
 {
+	double ticpiece;
+	
+	override void Tick ()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																						else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		if (EffectTics <= 0) Destroy();
+	}
 }
 
 class PowerFoodDEF : PowerProtection
 {
+	double ticpiece;
+	
+	override void Tick ()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																						else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		if (EffectTics <= 0) Destroy();
+	}
 }
 
 class PowerRoastBuff : PowerFoodATK
@@ -933,7 +1008,9 @@ class PowerInvulnDD : PowerInvulnerable
 {
 	int timer;
 	int fadeouttic;
+	double ticpiece;
 	string texname;
+	
 	default
 	{
 		inventory.icon "PDIVA0";
@@ -959,8 +1036,27 @@ class PowerInvulnDD : PowerInvulnerable
 		fadeouttic = 106;
 		if (EffectTics == fadeouttic && owner) owner.A_StartSound("buffs/invulnfading",201,CHANF_DEFAULT,2.25,ATTN_NORM);
 		if (EffectTics > fadeouttic && owner) owner.A_StopSound(201);
-
-		super.Tick();
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																						else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy ();
+		if (EffectTics <= 0) Destroy();
 		//Console.Printf("EffectTics: %d", EffectTics);
 	}
 }
@@ -999,6 +1095,7 @@ class PowerStrengthDD : PowerStrength
 	//===========================================================================
 	int EffectTics2;
 	int Dire;
+	double ticpiece;
 
 	int timer;
 	int fadeouttic;
@@ -1044,13 +1141,27 @@ class PowerStrengthDD : PowerStrength
 			if (owner && owner.CountInv("TimePotionTimeFreezer") <= 0) EffectTics2 -= increment;
 			if (EffectTics2 <= Point1) Dire = 1;
 		}
-
+		
 		int fadeouttic = 48;
 		if (EffectTics > fadeouttic && owner) owner.A_StopSound(204);
 		if (EffectTics == fadeouttic && owner) owner.A_StartSound("buffs/berserkfading",204,CHANF_DEFAULT,2.25,ATTN_NORM);
-
-		// Strength counts up to diminish the fade.
-		EffectTics--;
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																						else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
 		
 		// Begin fading when 15 seconds remain
 		fadeintensity = 1.0 * ((EffectTics * 1.0) / 525.0);
@@ -1495,6 +1606,7 @@ class PowerIronFeet2 : PowerIronFeet
 {
 	string texname;
 	int timer;
+	double ticpiece;
 	default
 	{
 		Inventory.Icon "BIOSA0";
@@ -1537,8 +1649,28 @@ class PowerIronFeet2 : PowerIronFeet
 		int fadeouttic = 75;
 		if (EffectTics > fadeouttic && owner) owner.A_StopSound(203);
 		if (EffectTics == fadeouttic && owner) owner.A_StartSound("buffs/bioshieldfading",203,CHANF_DEFAULT,2.25,ATTN_NORM);
-
-		super.Tick();
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																						else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy ();
+		if (EffectTics <= 0) Destroy();
+		//Console.Printf("EffectTics: %d", EffectTics);
 	}
 }
 
@@ -1546,6 +1678,7 @@ class PowerInvisibility2 : PowerInvisibility
 {
 	string texname;
 	int timer;
+	double ticpiece;
 	Default
 	{
 		+SHADOW;
@@ -1560,7 +1693,6 @@ class PowerInvisibility2 : PowerInvisibility
 	
 	override void Tick()
 	{
-		Super.Tick();
 		timer++;
 		if (timer % 24 >= 0 && timer % 24 <= 2) texname = "PDISA0";
 		if (timer % 24 >= 3 && timer % 24 <= 5) texname = "PDISB0";
@@ -1571,10 +1703,32 @@ class PowerInvisibility2 : PowerInvisibility
 		if (timer % 24 >= 18 && timer % 24 <= 20) texname = "PDISG0";
 		if (timer % 24 >= 21 && timer % 24 <= 23) texname = "PDISH0";
 		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
-
+		
 		int fadeouttic = 64;
 		if (EffectTics == fadeouttic && owner) owner.A_StartSound("buffs/invisfading",202,CHANF_DEFAULT,2.25,ATTN_NORM);
 		if (EffectTics > fadeouttic && owner) owner.A_StopSound(202);
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																						else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy ();
+		if (EffectTics <= 0) Destroy();
+		//Console.Printf("EffectTics: %d", EffectTics);
 	}
 }
 
@@ -1582,6 +1736,7 @@ class PowerGhost2 : PowerGhost
 {
 	string texname;
 	int timer;
+	double ticpiece;
 	Default
 	{
 		+SHADOW;
@@ -1595,7 +1750,6 @@ class PowerGhost2 : PowerGhost
 	
 	override void Tick()
 	{
-		Super.Tick();
 		timer++;
 		if (timer % 36 >= 0 && timer % 36 <= 5) texname = "DIVSA0";
 		if (timer % 24 >= 6 && timer % 24 <= 11) texname = "DIVSB0";
@@ -1604,10 +1758,32 @@ class PowerGhost2 : PowerGhost
 		if (timer % 24 >= 24 && timer % 24 <= 29) texname = "DIVSE0";
 		if (timer % 24 >= 30 && timer % 24 <= 35) texname = "DIVSF0";
 		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
-
+		
 		int fadeouttic = 64;
 		if (EffectTics == fadeouttic && owner) owner.A_StartSound("buffs/invisfading",202,CHANF_DEFAULT,2.25,ATTN_NORM);
 		if (EffectTics > fadeouttic && owner) owner.A_StopSound(202);
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																						else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy ();
+		if (EffectTics <= 0) Destroy();
+		//Console.Printf("EffectTics: %d", EffectTics);
 	}
 }
 
@@ -1775,6 +1951,7 @@ class PowerLightAmp2 : PowerLightAmp
 {
 	string texname;
 	int timer;
+	double ticpiece;
 	Default
 	{
 		+SHADOW;
@@ -1787,7 +1964,6 @@ class PowerLightAmp2 : PowerLightAmp
 	
 	override void Tick()
 	{
-		Super.Tick();
 		timer++;
 		if (timer % 12 >= 0 && timer % 12 <= 5) texname = "PLAMA0";
 		if (timer % 12 >= 6 && timer % 12 <= 11) texname = "PLAMB0";
@@ -1796,6 +1972,28 @@ class PowerLightAmp2 : PowerLightAmp
 		int fadeouttic = 107;
 		if (EffectTics == fadeouttic && owner) owner.A_StartSound("buffs/liteampfading",205,CHANF_DEFAULT,2.25,ATTN_NORM);
 		if (EffectTics > fadeouttic && owner) owner.A_StopSound(205);
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																						else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy ();
+		if (EffectTics <= 0) Destroy();
+		//Console.Printf("EffectTics: %d", EffectTics);
 	}
 }
 

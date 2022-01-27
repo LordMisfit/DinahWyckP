@@ -8,8 +8,8 @@ class ItemSatchel : CustomInventoryExt
 		+INVENTORY.AUTOACTIVATE
 		+INVENTORY.ALWAYSPICKUP
 		Inventory.PickupMessage "Picked up an item satchel with some ammo/goodies!";
-		Inventory.PickupSound "";
-		CustomInventoryExt.PickUpVoice true;
+		Inventory.PickupSound "misc/i_pkup";
+		CustomInventoryExt.PickUpVoice false;
 	}
 	States
 	{
@@ -19,23 +19,23 @@ class ItemSatchel : CustomInventoryExt
 		Pickup:
 			TNT1 A 0
 			{
-				A_GiveInventory("Backpack",AAPTR_PLAYER1);
+				A_GiveInventory("Backpack");
 				if (!CountInv("PlayingHexen")) // You're only given a single pack at the start of Hexen mode and only its extra ammo, nothing else.
 				{
-					A_StartSound("Dinah/there",CHAN_VOICE);
-					if (!CountInv("CandleWhip",AAPTR_PLAYER1)) { A_GiveInventory("CandleWhip",1,AAPTR_PLAYER1); }
-					A_GiveInventory("CherryBombPickup",2,AAPTR_PLAYER1);
-					if (random(1,3) <= 1) { A_GiveInventory("CherryBombPickup",1,AAPTR_PLAYER1); }
-					if (random(1,6) <= 1) { A_GiveInventory("CherryBombPickup",1,AAPTR_PLAYER1); }
-					if (random(1,12) <= 1) { A_GiveInventory("CherryBombPickup",1,AAPTR_PLAYER1); }
+					A_StartSound("Dinah/there",CHAN_VOICE,CHANF_DEFAULT);
+					if (!CountInv("CandleWhip")) { A_GiveInventory("CandleWhip",1); }
+					A_GiveInventory("CherryBombPickup",2);
+					if (random(1,3) <= 1) { A_GiveInventory("CherryBombPickup",1); }
+					if (random(1,6) <= 1) { A_GiveInventory("CherryBombPickup",1); }
+					if (random(1,12) <= 1) { A_GiveInventory("CherryBombPickup",1); }
 					
-					A_GiveInventory("SpinnerPickup",random(1,2),AAPTR_PLAYER1);
-					if (random(1,3) <= 1) { A_GiveInventory("SpinnerPickup",1,AAPTR_PLAYER1); }
-					if (random(1,12) <= 1) { A_GiveInventory("SpinnerPickup",1,AAPTR_PLAYER1); }
+					A_GiveInventory("SpinnerPickup",random(1,2));
+					if (random(1,3) <= 1) { A_GiveInventory("SpinnerPickup",1); }
+					if (random(1,12) <= 1) { A_GiveInventory("SpinnerPickup",1); }
 					
-					if (random(1,3) <= 2) { A_GiveInventory("BRocketPickup",1,AAPTR_PLAYER1); }
-					if (random(1,6) <= 1) { A_GiveInventory("BRocketPickup",1,AAPTR_PLAYER1); }
-					if (random(1,24) <= 1) { A_GiveInventory("BRocketPickup",1,AAPTR_PLAYER1); }
+					if (random(1,3) <= 2) { A_GiveInventory("BRocketPickup",1); }
+					if (random(1,6) <= 1) { A_GiveInventory("BRocketPickup",1); }
+					if (random(1,24) <= 1) { A_GiveInventory("BRocketPickup",1); }
 				}
 			}
 			stop;
@@ -87,7 +87,6 @@ class PortalSatchel : ExExInvBarItem replaces ArtiBoostMana
 			}
 			Stop;
 	}
-	
 }
 
 //Apple
@@ -2015,7 +2014,7 @@ class ArmorScrap : ArmorBonus
 	default
 	{
 		Inventory.Icon "DACLB0";
-		Inventory.Pickupmessage "Knight-Gown Scrap! \c[green]+1 Armor";
+		Inventory.Pickupmessage "Knight-Gown Scrap!";
 		Inventory.PickupSound "Scrap/Find";
 		Armor.SavePercent 50;
 		Armor.SaveAmount 1;
@@ -2026,6 +2025,13 @@ class ArmorScrap : ArmorBonus
 		+DONTGIB
 	}
 	
+	override String PickupMessage()
+	{
+		string msg = PickupMsg;
+		msg.AppendFormat(" \c[green]+1 Armor", SaveAmount);
+		return msg;
+	}
+
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
@@ -2966,7 +2972,11 @@ class TimePotion : ExExInvBarItem
 					}
 				}
 				int timetics = randompick(280,315,350);
-				if (wutthis) timetics *= frandompick(4.5,5,5,5,5,5,5.5);
+				if (wutthis) 
+				{
+					timetics *= frandompick(4.5,5,5,5,5,5,5.5);
+					MiscItem.TimeFreezeIPBuff = true;
+				}
 
 				A_SetInventory("TimePotionTimeFreezer",1,AAPTR_PLAYER1);
 				A_GiveInventory("TimeFreezeTimer",timetics,AAPTR_PLAYER1);

@@ -702,14 +702,23 @@ mixin class IPCostCheck
 			if (skill == 3) cost = 78.75;
 			if (skill >= 4) cost = 82.5;
 		}
-		if (player)
+		if (player) 
 		{
 			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-			if (MiscItem && cost > MiscItem.MaxItemPoints) cost = MiscItem.MaxItemPoints;
+			if (MiscItem) 
+			{
+				if (MiscItem.TimeFreezeTimer && MiscItem.TimeFreezeIPBuff)
+				{
+					if (ipid == 8) cost = ceil(cost * 2.0);
+										else cost = floor(cost * 0.5);
+				}
+
+				if (cost > MiscItem.MaxItemPoints) cost = MiscItem.MaxItemPoints;
+			}
 		}
 		
 		// "Mystery Item" reduces IP Cost by 33.3%
-		if (player.CountInv("MysteryItem")) cost = floor(cost * 0.667);
+		if (player && player.CountInv("MysteryItem")) cost = floor(cost * 0.667);
 		
 		// If Infinite IP Cheat is on, nullify any above cost calculations and set to 0. :V
 		if (dydudebug_infiniteip) cost = 0.0;

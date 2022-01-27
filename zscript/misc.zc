@@ -15,6 +15,8 @@ class PlayerStatItem : Inventory
 	bool MercyInvulnOn;
 	int MercyInvulnTimer;
 	int MercyInvulnMod;
+	
+	bool TimeFreezeIPBuff;
 
 	int LevelCap;
 	int StaminaLevel;
@@ -1160,6 +1162,7 @@ class PlayerStatItem : Inventory
 						{
 							TimeFreezeTimer = 0;
 							TimeFreeze = 0;
+							TimeFreezeIPBuff = false;
 						}
 					}
 					if (dydudebug_timefreeze) Console.Printf("%d Tics of Time Freeze Left", TimeFreezeTimer);
@@ -1811,6 +1814,7 @@ class PlayerStatItem : Inventory
 
 		let globalvars = DDGlobalVariables.Get();
 		let weapon = owner.player.ReadyWeapon;
+		double TimeBuffMulti = frandompick(1.5,1.75);
 		TrueGameSkill = skill;
 		double BerserkFactorblock;
 		
@@ -1876,13 +1880,19 @@ class PlayerStatItem : Inventory
 			
 			double BuffFactor = 1.00;
 			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility")) BuffFactor *= frandompick(1.00,1.00,1.125,1.125,1.25);
-
 			if (Owner.CountInv("PowerWineBuffWeak")) BuffFactor *= frandompick(0.985,1.015);
 			if (Owner.CountInv("PowerWineBuffStrong")) BuffFactor *= frandompick(0.955,1.045);
 			if (Owner.CountInv("PowerWineBuffStrongest")) BuffFactor *= frandompick(0.91,1.09);
 			if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandompick(0.85,1.15);
 			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Buff): %.8f", BuffFactor);
 			
+			double TimeFactor = 1.00;
+			if (TimeFreezeTimer && TimeFreezeIPBuff)
+			{
+				TimeFactor *= TimeBuffMulti;
+				if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - TimeFreezeIPBuff): %.8f", TimeFactor);
+			}
+
 			double SigilFactor = 1.00;
 			if (damageType == 'Sigil' || damageType == 'SpectralLow')
 			{
@@ -1917,6 +1927,7 @@ class PlayerStatItem : Inventory
 													 * SkillFactor
 													 * LandingFactor
 													 * BuffFactor
+													 * TimeFactor
 													 * SecretFactor
 													 * CrisisFactor
 													 * SigilFactor
@@ -1971,14 +1982,19 @@ class PlayerStatItem : Inventory
 			double BuffFactor = 1.00;
 			if (berserked) BuffFactor *= frandompick(0.8,0.9,0.9,0.9,1.0);
 			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility")) BuffFactor *= frandompick(1.00,1.00,0.875,0.875,0.75);
-
 			if (Owner.CountInv("PowerWineBuffWeak")) BuffFactor *= frandompick(0.995,1.005);
 			if (Owner.CountInv("PowerWineBuffStrong")) BuffFactor *= frandompick(0.985,1.015);
 			if (Owner.CountInv("PowerWineBuffStrongest")) BuffFactor *= frandompick(0.97,1.03);
 			if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandompick(0.95,1.05);
 			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Buff): %.8f", BuffFactor);
 			
-
+			double TimeFactor = 1.00;
+			if (TimeFreezeTimer && TimeFreezeIPBuff)
+			{
+				TimeFactor *= (1.0 / TimeBuffMulti);
+				if (dydudebug_attackcalcs) Console.Printf("Damage (passive - TimeFreezeIPBuff): %.8f", TimeFactor);
+			}
+			
 			double PlayerFistBlockFactor = 1.00;
 			int UsingFistBlock = 0;
 			BerserkFactorblock = frandompick[statitem2](0.25,0.334,0.5,0.667,0.75);
@@ -2044,6 +2060,7 @@ class PlayerStatItem : Inventory
 													 * LUKFactor
 													 * SkillFactor
 													 * BuffFactor
+													 * TimeFactor
 													 * PlayerFistBlockFactor
 													 * WeaponFactor
 													 * SecretFactor
@@ -2185,6 +2202,15 @@ class PlayerStatItem : Inventory
 			if (dydudebug_speedcalcs) Console.Printf("SpeedX [Fist Block]: %.8f", PlayerFistBlockFactor);
 		}
 
+		double TimeFactor = 1.00;
+		if (TimeFreezeTimer && TimeFreezeIPBuff)
+		{
+			TimeFactor = frandompick(1.334,1.334,1.334,1.334,1.5);
+			Speed *= TimeFactor;
+			HUDSpeed *= TimeFactor;
+			if (dydudebug_speedcalcs) Console.Printf("SpeedX [Time Freeze IP Buff]: %.8f", TimeFactor);
+		}
+			
 		double BerserkFactor = 1.0;
 		if (berserked) 
 		{
