@@ -1406,8 +1406,68 @@ class GrimophoneDEFDown4 : TempDefenseBuff
 	}
 }
 
+class DefDownDebuff : PowerProtection
+{
+	bool firsttic;
+	string victimname;
+	
+	int qmarkinterval;
+	int qmarktimer;
+	
+	override void Tick()
+	{
+		if (owner && !firsttic)
+		{
+			victimname = owner.GetClassName();
+			qmarkinterval = randompick(28,31,35,39,42);
+			qmarkinterval *= frandompick(0.25,0.33,0.5);
+		}
+				
+		if (qmarktimer % qmarkinterval == 0)
+		{
+			qmarktimer = 0;
+			qmarkinterval = randompick(28,31,35,39,42);
+			qmarkinterval *= frandompick(0.25,0.33,0.5);
+			actor QMark;
+			bool success;
+			double xspeed = frandom(0.5,1.5);
+			double yspeed = frandom(0.5,1.5);
+			double zspeed = frandom(0.5,1.5);
+			double heightspawn = frandom((owner.height*0.5),owner.height);
+			double radiusspawnx = frandom((-owner.radius * 0.5),(owner.radius * 0.5));
+			double radiusspawny = frandom((-owner.radius * 0.5),(owner.radius * 0.5));
+			string iconname;
+			if (GetClassName() == "BlunderHelmSplitter") iconname = "DefDown1Icon";
+			if (GetClassName() == "BlunderHelmSplitter2") iconname = "DefDown2Icon";
+			if (GetClassName() == "BlunderHelmSplitter3") iconname = "DefDown3Icon";
+			[success, QMark] = owner.A_SpawnItemEx(iconname,radiusspawnx,radiusspawny,heightspawn,xspeed,yspeed,zspeed,0.0,SXF_NOCHECKPOSITION);
+			if (success && QMark)
+			{
+				double scalerx = frandompick(0.875,1.0,1.25);
+				double scalery = frandompick(0.875,1.0,1.25);
+				QMark.A_SetScale((QMark.Scale.x * scalerx),(QMark.Scale.y * scalery));
+			}
+		}
+		qmarktimer++;
+		
+		EffectTics--;
+		firsttic = true;
+		//Console.Printf("ScramblerFear [%s]: %d", victimname, EffectTics);
+		if (EffectTics <= 0) 
+		{
+			if (owner && exex_combatlog)
+			{
+				Console.Printf("\c[red]*\c- \c[purple]%s's\c- defense-down has worn off! [%d]", owner.GetTag(), gametic);
+			}
+			Destroy();
+		}
+		// Powerups cannot exist outside an inventory
+		if (owner == NULL) Destroy();
+	}
+}
+
 // Blunderaxe Helm-Splitter Debuff
-class BlunderHelmSplitter : PowerProtection
+class BlunderHelmSplitter : DefDownDebuff
 {
 	default
 	{
@@ -1441,7 +1501,7 @@ class BlunderHelmSplitter : PowerProtection
 	}
 }
 
-class BlunderHelmSplitter2 : PowerProtection
+class BlunderHelmSplitter2 : DefDownDebuff
 {
 	default
 	{
@@ -1475,7 +1535,7 @@ class BlunderHelmSplitter2 : PowerProtection
 }
 
 
-class BlunderHelmSplitter3 : PowerProtection
+class BlunderHelmSplitter3 : DefDownDebuff
 {
 	default
 	{
@@ -1525,6 +1585,9 @@ class ScramblerConfusion : PowerProtection
 	int enemydoharmspecies;
 	string victimname;
 	
+	int qmarkinterval;
+	int qmarktimer;
+	
 	default
 	{
 		DamageFactor "Normal", 1.0;
@@ -1552,9 +1615,35 @@ class ScramblerConfusion : PowerProtection
 				if (owner.GetTag()) Console.Printf("%s was given confusion by the Scrambler's Bash!", owner.GetTag());
 											 else Console.Printf("%s was given confusion by the Scrambler's Bash!", owner.GetClassName());
 			}
-
 			victimname = owner.GetClassName();
+			qmarkinterval = randompick(28,31,35,39,42);
+			qmarkinterval *= frandompick(0.25,0.33,0.5);
 		}
+				
+		if (qmarktimer % qmarkinterval == 0)
+		{
+			qmarktimer = 0;
+			qmarkinterval = randompick(28,31,35,39,42);
+			qmarkinterval *= frandompick(0.25,0.33,0.5);
+			actor QMark;
+			bool success;
+			double xspeed = frandom(0.5,1.5);
+			double yspeed = frandom(0.5,1.5);
+			double zspeed = frandom(0.5,1.5);
+			double heightspawn = frandom((owner.height*0.5),owner.height);
+			double radiusspawnx = frandom((-owner.radius * 0.5),(owner.radius * 0.5));
+			double radiusspawny = frandom((-owner.radius * 0.5),(owner.radius * 0.5));
+			[success, QMark] = owner.A_SpawnItemEx("ConfusionQMark",radiusspawnx,radiusspawny,heightspawn,xspeed,yspeed,zspeed,0.0,SXF_NOCHECKPOSITION);
+			if (success && QMark)
+			{
+				double scalerx = frandom(0.666,1.334);
+				scalerx *= frandom(0.4,0.6);
+				double scalery = frandom(0.666,1.334);
+				scalery *= frandom(0.4,0.6);
+				QMark.A_SetScale((QMark.Scale.x * scalerx),(QMark.Scale.y * scalery));
+			}
+		}
+		qmarktimer++;
 		
 		if (EffectTics > 1 && firsttic)
 		{
@@ -2078,5 +2167,161 @@ class ResetInventory : PlaceholderItem
 		}
 		timer++;
 		super.Tick();
+	}
+}
+
+class DisplayObjectBase : DDBaseZSC
+{
+	double xsize, ysize;
+	int fuse;
+	
+	property fuse: fuse;
+	default
+	{
+		Radius 1;
+		Height 1;
+		Scale 0.25;
+		+BRIGHT
+		+NOBLOCKMAP
+		+NOINTERACTION
+		+NOGRAVITY
+		+FORCEXYBILLBOARD
+		+NOCLIP
+		+NOSPRITESHADOW;
+		-CASTSPRITESHADOW;
+		//+NOTIMEFREEZE
+		Gravity 0.50;
+	}
+}
+
+class ConfusionQMark : DisplayObjectBase
+{
+	default
+	{
+		DisplayObjectBase.Fuse 35;
+		VSpeed 4;
+		+NOTIMEFREEZE;
+	}
+	
+	override void Tick()
+	{
+		if (!fuse) fuse = 35;
+		double factor = 1.0 / fuse;
+		if (stamina == 1) factor *= 2.5;
+		if (stamina == 2) factor *= 0.7;
+		A_Fadeout((factor),FTF_REMOVE); // 70 tics
+		super.Tick();
+	}
+	
+	states
+	{
+		Spawn:
+			CONQ A 0 NoDelay
+			{
+			}
+		Idle:
+			CONQ A 1
+			{
+			}
+			loop;
+	}
+}
+
+class DefDown1Icon : DisplayObjectBase
+{
+	default
+	{
+		DisplayObjectBase.Fuse 35;
+		VSpeed 4;
+		+NOTIMEFREEZE;
+	}
+	
+	override void Tick()
+	{
+		if (!fuse) fuse = 35;
+		double factor = 1.0 / fuse;
+		if (stamina == 1) factor *= 2.5;
+		if (stamina == 2) factor *= 0.7;
+		A_Fadeout((factor),FTF_REMOVE); // 70 tics
+		super.Tick();
+	}
+	
+	states
+	{
+		Spawn:
+			DFDW A 0 NoDelay
+			{
+			}
+		Idle:
+			DFDW A 1
+			{
+			}
+			loop;
+	}
+}
+
+class DefDown2Icon : DisplayObjectBase
+{
+	default
+	{
+		DisplayObjectBase.Fuse 35;
+		VSpeed 4;
+		+NOTIMEFREEZE;
+	}
+	
+	override void Tick()
+	{
+		if (!fuse) fuse = 35;
+		double factor = 1.0 / fuse;
+		if (stamina == 1) factor *= 2.5;
+		if (stamina == 2) factor *= 0.7;
+		A_Fadeout((factor),FTF_REMOVE); // 70 tics
+		super.Tick();
+	}
+	
+	states
+	{
+		Spawn:
+			DFDW B 0 NoDelay
+			{
+			}
+		Idle:
+			DFDW B 1
+			{
+			}
+			loop;
+	}
+}
+
+class DefDown3Icon : DisplayObjectBase
+{
+	default
+	{
+		DisplayObjectBase.Fuse 35;
+		VSpeed 4;
+		+NOTIMEFREEZE;
+	}
+	
+	override void Tick()
+	{
+		if (!fuse) fuse = 35;
+		double factor = 1.0 / fuse;
+		if (stamina == 1) factor *= 2.5;
+		if (stamina == 2) factor *= 0.7;
+		A_Fadeout((factor),FTF_REMOVE); // 70 tics
+		super.Tick();
+	}
+	
+	states
+	{
+		Spawn:
+			DFDW C 0 NoDelay
+			{
+			}
+		Idle:
+			DFDW C 1
+			{
+			}
+			loop;
 	}
 }
