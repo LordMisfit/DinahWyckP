@@ -2546,7 +2546,7 @@ class CricketBat : DinahWeapon replaces Pistol
 		{
 			dmg *= random(1,8);
 		}
-		if (invoker.IPAttackCheck) dmg *= frandompick(1.25,1.5,1.75);
+		if (invoker.IPAttackCheck) dmg *= frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.75);
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
 		if (type == 1) // type 1 = Spin attack
 		{
@@ -5877,6 +5877,56 @@ class AppleJack : DinahWeapon replaces Chaingun
 		Obituary "%k kept the doctor away from %o.";
 	}
 	
+	action void A_AppleMeleeAtk()
+	{
+		int dmg = (random(6,8) * random(1,8));
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
+		if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+		int atkrange = 96;
+		if (invoker.IPAttackCheck) dmg *= frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.75);
+
+		double shotangle = 0;
+		double shotangleend = 0;
+		double shotangleinc = 0;
+		double origangle = angle;
+		int maxshots = 1;
+		if (invoker.IPAttackCheck) // >.> <.<
+		{
+			if (random(1,32) <= 1)
+			{
+				shotangle = -33.75;
+				shotangleend = 33.75;
+				shotangleinc = 11.25;
+				maxshots = 7;
+				atkrange *= 1.5;
+			}
+			else
+			{
+				shotangle = -22.5;
+				shotangleend = 22.5;
+				shotangleinc = 11.25;
+				maxshots = 5;
+				atkrange *= 1.334;
+			}
+		}
+		if (invoker.IPAttackCheck) A_SetAngle(angle+shotangle);
+
+		for (int i = 0; i < maxshots; i++)
+		{
+			if (i && invoker.IPAttackCheck) A_SetAngle(angle+shotangleinc);
+			A_CustomPunch(dmg, true, 0, "ApplePuff", atkrange, IPCostOnHit: true);
+			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+			{
+				A_AppleJackSwingShield(1);
+			}
+			else
+			{
+				A_AppleJackSwingShield(0);
+			}
+		}
+		if (invoker.IPAttackCheck) A_SetAngle(origangle);
+	}
+	
 	action void A_AppleJackSwingShield(int type = 0, double dist = 96.0)
 	{
 		string vispart = "AppleJackSwingPartNoReflect";
@@ -6015,63 +6065,131 @@ class AppleJack : DinahWeapon replaces Chaingun
 		Fire:
 			AJAK B 2
 			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(131,0,9,20,false);
+
+				double sndpitch = 1.0;
+				double sndvol = 1.0;
+				if (invoker.IPAttackCheck) 
+				{
+					sndpitch = frandom(0.625,0.75);
+					sndvol = 1.4;
+				}
+				A_StartSound("MalletSwing",CHAN_WEAPON,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				if (invoker.IPAttackCheck) 
+				{
+					sndpitch = frandom(0.625,0.75);
+					sndvol = 1.4;
+					A_StartSound("MalletSwing",CHAN_7,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				}
 				A_StartSound("MalletSwing",CHAN_WEAPON);
 				if (random(1,32) <= 1 && !CountInv("PlayingStrife",AAPTR_PLAYER1)) { A_AlertMonsters(); }
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					A_SetTics(1);
+				}
+				else
+				{
+					if (invoker.IPAttackCheck) A_SetTics(1);
+				}
 			}
 			AJAK C 2
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					A_SetTics(1);
+				}
+				else
+				{
+					if (invoker.IPAttackCheck) A_SetTics(1);
+				}
 			}
 			AJAK D 2
 			{
-				int dmg = (random(6,8) * random(1,8));
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
-				A_CustomPunch(dmg, true, 0, "ApplePuff", 96);
-
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
-					A_AppleJackSwingShield(1);
 					A_SetTics(1);
 				}
 				else
 				{
-					A_AppleJackSwingShield(0);
+					if (invoker.IPAttackCheck) A_SetTics(1);
 				}
+				A_AppleMeleeAtk();
 			}
 			AJAK E 2 
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
+				if (invoker.IPAttackCheck && random(1,8) <= 1) A_AppleMeleeAtk();
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (invoker.IPAttackCheck) A_SetTics(0);
+																else A_SetTics(1);
+				}
+				else
+				{
+					A_SetTics(1);
+				}
 			}
 			AJAK F 2
 			{
-				int dmg = (random(6,8) * random(1,8));
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
-				A_CustomPunch(dmg, true, 0, "ApplePuff", 96);
-
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
-					A_AppleJackSwingShield(1);
+					if (invoker.IPAttackCheck) A_SetTics(random(0,1));
+																else A_SetTics(1);
+				}
+				else
+				{
+					if (invoker.IPAttackCheck) A_SetTics(1);
+				}
+				A_AppleMeleeAtk();
+				invoker.A_CheckIPModeOnUse();
+			}
+			AJAK G 2 
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
 					A_SetTics(1);
 				}
 				else
 				{
-					A_AppleJackSwingShield(0);
+					if (invoker.IPAttackCheck) A_SetTics(1);
 				}
-			}
-			AJAK G 2 
-			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(1); }
 			}
 			TNT1 A 3
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(random(1,2)); }
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (invoker.IPAttackCheck) A_SetTics(random(0,1));
+																else A_SetTics(random(1,2));
+				}
+				else
+				{
+					A_SetTics(random(1,2));
+				}
 			}
-			AJAK BA 3
+			AJAK B 3
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(random(1,2)); }
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (invoker.IPAttackCheck) A_SetTics(random(0,1));
+																else A_SetTics(random(1,2));
+				}
+				else
+				{
+					A_SetTics(random(1,2));
+				}
+			}
+			AJAK A 3
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (invoker.IPAttackCheck) A_SetTics(1);
+																else A_SetTics(random(1,2));
+				}
+				else
+				{
+					A_SetTics(random(1,2));
+				}
 			}
 			goto Ready;
 		AltFire:
