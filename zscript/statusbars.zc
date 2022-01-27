@@ -2217,11 +2217,37 @@ class DDStatusBarMain : BaseStatusBar
 			{
 				digy = 0;
 				string mapnam = "";
-				int mapnametimer = level.time % 32;
+				int mapnametimerbase = 38;
+				int mapnametimer = level.time % mapnametimerbase;
+				if (mapnametimer == 0)
+				{
+					mapnametimerbase = randompick(23,28,28,32,32,32,35,35,35,35,35,38,38,38,42,42,47);
+					mapnametimer = level.time % mapnametimerbase;
+				}
 				bool mapnameflickermode = 0;
+				int stattallytimerbase = 140;
+				int stattallytimer = level.time % stattallytimerbase;
+				int stattallyshowall = (stattallytimerbase * 0.75);
+				double tallypercent = 100.0;
+				bool showtotaltallies = false;
+				if (dyduhud_leveltallies >= 2)
+				{
+					if (dyduhud_leveltallies == 4) showtotaltallies = true;
+					if (dyduhud_leveltallies == 3)
+					{
+						if (stattallytimer > stattallyshowall && MiscItem) showtotaltallies = false;
+																													else showtotaltallies = true;
+					}
+					if (dyduhud_leveltallies == 2)
+					{
+						if (stattallytimer > stattallyshowall && MiscItem) showtotaltallies = true;
+																													else showtotaltallies = false;
+					}
+				}
+				
 				if (level.AllMap)
 				{
-					if (mapnametimer >= 16 && mapnametimer <= 31) mapnameflickermode = 1;
+					if ((mapnametimerbase * 0.5)) mapnameflickermode = 1;
 				}
 
 				if (mapnameflickermode)
@@ -2303,41 +2329,116 @@ class DDStatusBarMain : BaseStatusBar
 					int flashinterval = 24;
 					int scrtcnt = level.found_secrets;
 					int maxscrtcnt = level.total_secrets;
+					if (showtotaltallies)
+					{
+						scrtcnt = MiscItem.totalsecretsgame;
+						maxscrtcnt = MiscItem.totalmaxsecrets;
+					}
+					if (maxscrtcnt == 0) tallypercent = 100.0;
+					else tallypercent = scrtcnt * 100.0 / maxscrtcnt;
 					if (maxscrtcnt)
 					{
 						tallyfontclr = font.cr_gold;
 						if (scrtcnt >= maxscrtcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_darkgreen;
 						digy -= 8;
 						tallytemp = "Secrets: ";
-						tallytemp.AppendFormat("%d", scrtcnt);
-						tallytemp.AppendFormat("/");
-						tallytemp.AppendFormat("%d", maxscrtcnt);
+						if (showtotaltallies) tallytemp = "Secrets [ALL]: ";
+						if (dyduhud_leveltallypercents != 2)
+						{
+							tallytemp.AppendFormat("%d", scrtcnt);
+							tallytemp.AppendFormat("/");
+							tallytemp.AppendFormat("%d", maxscrtcnt);
+						}
+						if (dyduhud_leveltallypercents == 1)
+						{
+							tallytemp.AppendFormat(" ");
+							tallytemp.AppendFormat("[");
+						}
+						if (dyduhud_leveltallypercents)
+						{
+							tallytemp.AppendFormat("%.2f", tallypercent);
+							tallytemp.AppendFormat("%%");
+						}
+						if (dyduhud_leveltallypercents == 1)
+						{
+							tallytemp.AppendFormat("]");
+						}
 						DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
 					}
 					int itemcnt = level.found_items;
 					int maxitemcnt = level.total_items;
+					if (showtotaltallies)
+					{
+						itemcnt = MiscItem.totalitemsgame;
+						maxitemcnt = MiscItem.totalmaxitems;
+					}
+					if (maxitemcnt == 0) tallypercent = 100.0;
+					else tallypercent = itemcnt * 100.0 / maxitemcnt;
 					if (maxitemcnt)
 					{
 						tallyfontclr = font.cr_lightblue;
 						if (itemcnt >= maxitemcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_brick;
 						digy -= 8;
 						tallytemp = "Items: ";
-						tallytemp.AppendFormat("%d", itemcnt);
-						tallytemp.AppendFormat("/");
-						tallytemp.AppendFormat("%d", maxitemcnt);
+						if (showtotaltallies) tallytemp = "Items [ALL]: ";
+						if (dyduhud_leveltallypercents != 2)
+						{
+							tallytemp.AppendFormat("%d", itemcnt);
+							tallytemp.AppendFormat("/");
+							tallytemp.AppendFormat("%d", maxitemcnt);
+						}
+						if (dyduhud_leveltallypercents == 1)
+						{
+							tallytemp.AppendFormat(" ");
+							tallytemp.AppendFormat("[");
+						}
+						if (dyduhud_leveltallypercents)
+						{
+							tallytemp.AppendFormat("%.2f", tallypercent);
+							tallytemp.AppendFormat("%%");
+						}
+						if (dyduhud_leveltallypercents == 1)
+						{
+							tallytemp.AppendFormat("]");
+						}
 						DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
 					}
 					int killcnt = level.killed_monsters;
 					int maxkillcnt = level.total_monsters;
+					if (showtotaltallies)
+					{
+						killcnt = MiscItem.totalkillsgame;
+						maxkillcnt = MiscItem.totalmaxkills;
+					}
+					if (maxkillcnt == 0) tallypercent = 100.0;
+					else tallypercent = killcnt * 100.0 / maxkillcnt;
 					if (maxkillcnt)
 					{
 						tallyfontclr = font.cr_brick;
 						if (killcnt >= maxkillcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_lightblue;
 						digy -= 8;
 						tallytemp = "Kills: ";
-						tallytemp.AppendFormat("%d", killcnt);
-						tallytemp.AppendFormat("/");
-						tallytemp.AppendFormat("%d", maxkillcnt);
+						if (showtotaltallies) tallytemp = "Kills [ALL]: ";
+						if (dyduhud_leveltallypercents != 2)
+						{
+							tallytemp.AppendFormat("%d", killcnt);
+							tallytemp.AppendFormat("/");
+							tallytemp.AppendFormat("%d", maxkillcnt);
+						}
+						if (dyduhud_leveltallypercents == 1)
+						{
+							tallytemp.AppendFormat(" ");
+							tallytemp.AppendFormat("[");
+						}
+						if (dyduhud_leveltallypercents)
+						{
+							tallytemp.AppendFormat("%.2f", tallypercent);
+							tallytemp.AppendFormat("%%");
+						}
+						if (dyduhud_leveltallypercents == 1)
+						{
+							tallytemp.AppendFormat("]");
+						}
 						DrawString(mConFont, tallytemp, (0, digy), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
 					}
 				}

@@ -23,6 +23,14 @@ class PlayerStatItem : Inventory
 	int AccuracyLevel;
 	int Experience;
 	Array<int> LevelExpRequirement;
+	
+	int totalkillsgame;
+	int totalmaxkills;
+	int totalitemsgame;
+	int totalmaxitems;
+	int totalsecretsgame;
+	int totalmaxsecrets;
+	int totalcompleted;
 
 	int landdmgbonus;
 	int whistlecooldown;
@@ -1593,9 +1601,15 @@ class PlayerStatItem : Inventory
 					if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
 				}
 				
+				// Counters
+				GameStatTracker();
+				
+				//*************************************
+				//*************************************
+				//*************************************
 				ClassCheck++;
 				itemtimer++;
-
+				
 				owner.player.mo.maxhealth = MaxHealthTrue;
 				// Set Global Vars [End]
 				globalvars.ItemPoints = ItemPoints;
@@ -1618,6 +1632,102 @@ class PlayerStatItem : Inventory
 			}
 			if (dydudebug_miscitemdebug) Console.Printf("ClassCheck: %d", ClassCheck);
 			super.DoEffect();
+		}
+	}
+	
+	void GameStatTracker()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		//
+		totalkillsgame = 0;
+		totalmaxkills = 0;
+		totalitemsgame = 0;
+		totalmaxitems = 0;
+		totalsecretsgame = 0;
+		totalmaxsecrets = 0;
+		totalcompleted = 0;
+		int levelnums = level.levelnum;
+		if (dydudebug_gametracker) Console.Printf("MapNo: %d", levelnums);
+		if (level.time >= 1)
+		{
+			for (int i = 0; i <= globalvars.MapsFinished; i++)
+			{
+				if (dydudebug_gametracker) Console.Printf("MapNo: %d vs Ref: %d (i: %d)", levelnums, globalvars.MapNum[i], i);
+				if (levelnums == globalvars.MapNum[i])
+				{
+					if (dydudebug_gametracker) Console.Printf("MapNum Match");
+					globalvars.NumKills[i] = level.killed_monsters;
+					globalvars.MaxKills[i] = level.total_monsters;
+					globalvars.NumItems[i] = level.found_items;
+					globalvars.MaxItems[i] = level.total_items;
+					globalvars.NumSecrets[i] = level.found_secrets;
+					globalvars.MaxSecrets[i] = level.total_secrets;
+				}
+				// Kills
+				if (globalvars.AllKills[i] == false && level.killed_monsters >= level.total_monsters)
+				{
+					globalvars.AllKills[globalvars.MapsFinished] = true;
+				}
+				else
+				if (globalvars.AllKills[i] == true && level.killed_monsters < level.total_monsters)
+				{
+					globalvars.AllKills[globalvars.MapsFinished] = false;
+				}
+				// Items
+				if (globalvars.AllItems[i] == false && level.found_items >= level.total_items) 
+				{
+					globalvars.AllItems[globalvars.MapsFinished] = true;
+				}
+				else
+				if (globalvars.AllItems[i] == true && level.found_items < level.total_items) 
+				{
+					globalvars.AllItems[globalvars.MapsFinished] = false;
+				}
+				// Secrets
+				if (globalvars.AllSecrets[i] == false && level.found_secrets >= level.total_secrets) 
+				{
+					globalvars.AllSecrets[globalvars.MapsFinished] = true;
+				}
+				else
+				if (globalvars.AllSecrets[i] == true && level.found_secrets < level.total_secrets)
+				{
+					globalvars.AllSecrets[globalvars.MapsFinished] = false;
+				}
+				// Full Completion
+				if (globalvars.AllKills[i] &&
+						globalvars.AllItems[i] &&
+						globalvars.AllSecrets[i])
+				{
+					globalvars.AllCompletion[i] = true;
+				}
+				else
+				{
+					globalvars.AllCompletion[i] = false;
+				}
+
+				totalkillsgame += globalvars.NumKills[i];
+				totalmaxkills += globalvars.MaxKills[i];
+				totalitemsgame += globalvars.NumItems[i];
+				totalmaxitems += globalvars.MaxItems[i];
+				totalsecretsgame += globalvars.NumSecrets[i];
+				totalmaxsecrets += globalvars.MaxSecrets[i];
+				if (globalvars.AllCompletion[i]) totalcompleted++;
+				
+				if (dydudebug_gametracker)
+				{
+					Console.Printf("(Map#: %d [queue#: %d]) Kills: %d / %d, [AllKills: %d]", globalvars.MapNum[i], i, globalvars.NumKills[i], globalvars.MaxKills[i], globalvars.AllKills[i]);
+					Console.Printf("(Map#: %d [queue#: %d]) Items: %d / %d, [AllItems: %d]", globalvars.MapNum[i], i, globalvars.NumItems[i], globalvars.MaxItems[i], globalvars.AllItems[i]);
+					Console.Printf("(Map#: %d [queue#: %d]) Secrets: %d / %d, [AllSecrets: %d]", globalvars.MapNum[i], i, globalvars.NumSecrets[i], globalvars.MaxSecrets[i], globalvars.AllSecrets[i]);
+					Console.Printf("(Map#: %d [queue#: %d]) [AllCompletion: %d]", globalvars.MapNum[i], i, globalvars.AllCompletion[i]);
+				}
+			}
+			if (dydudebug_gametracker)
+			{
+				Console.Printf("Total Kills: %d / %d", totalkillsgame, totalmaxkills);
+				Console.Printf("Total Items: %d / %d", totalitemsgame, totalmaxitems);
+				Console.Printf("Total Secrets: %d / %d", totalsecretsgame, totalmaxsecrets);
+				Console.Printf("Total 100%: %d / %d", totalcompleted, (globalvars.MapsFinished+1));
+			}
 		}
 	}
 	
