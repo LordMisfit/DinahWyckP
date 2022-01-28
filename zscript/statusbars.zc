@@ -934,6 +934,114 @@ class DDStatusBarMain : BaseStatusBar
 				}
 				valueamtS = FormatNumber(valueamt);
 				armormaxS = FormatNumber(armormax);
+				
+				if (exex_ikaripointsenabled && MiscItem)
+				{
+					DDPlayerPawn cplayerpawn;
+					cplayerpawn = DDPlayerPawn(CPlayer.mo);
+					bool hasipicon = false;
+					string image = "";
+					double ipcost = 0.0;
+					string ipicon = "IPICONUN";
+					int canuseipatk = 0;
+					int ipicontimer = level.time % 8;
+					int ipiconspeed = 1;
+					vector2 IPIconPos = (0, 0);
+					vector2 ipiconscale = (2.0, 2.0);
+					if (cplayerpawn && cplayerpawn.CountInv("IPUseMode")) ipiconspeed = 2;
+
+					if (CPlayer.mo.CountInv("KnightGownItem"))
+					{
+						hasipicon = true;
+						ipcost = A_GetIPCost(1001);
+					}
+					if (CPlayer.mo.CountInv("KnightGownItem2"))
+					{
+						hasipicon = true;
+						ipcost = A_GetIPCost(1002);
+					}
+					if (CPlayer.mo.CountInv("KnightGownItem3"))
+					{
+						hasipicon = true;
+						ipcost = A_GetIPCost(1003);
+					}
+					if (MiscItem.ItemPoints >= (ipcost*2)) canuseipatk = 2;
+					else if (MiscItem.ItemPoints >= (ipcost*1)) canuseipatk = 1;
+					if (dydudebug_infiniteip) canuseipatk = 3;
+					if (dydudebug_ipdisplays && hasipicon) Console.Printf("\c[blue][SBAR Armor (%s)] Cost: %.4f, ipiconspeed: %d", armor.GetClassName(), ipcost, ipiconspeed);
+
+					// Shows the Proper Icon if the above meets criteria
+					if (hasipicon) 
+					{
+						if (canuseipatk) 
+						{
+							if (ipiconspeed <= 1) ipicon = "IPICON1U";
+							if (ipiconspeed >= 2) ipicon = "IPICON2U";
+							if (canuseipatk == 1)
+							{
+								if (ipiconspeed == 1)
+								{
+									ipicontimer = level.time % 32;
+									if (ipicontimer >= 0 && ipicontimer <= 7) IPIconPos += (0, 0);
+									if (ipicontimer >= 8 && ipicontimer <= 15) IPIconPos += (1, 0);
+									if (ipicontimer >= 16 && ipicontimer <= 23) IPIconPos += (1, 1);
+									if (ipicontimer >= 24 && ipicontimer <= 31) IPIconPos += (0, 1);
+								}
+								else
+								{
+									ipicontimer = level.time % 24;
+									if (ipicontimer >= 0 && ipicontimer <= 5) IPIconPos += (0, 0);
+									if (ipicontimer >= 6 && ipicontimer <= 11) IPIconPos += (1, 0);
+									if (ipicontimer >= 12 && ipicontimer <= 17) IPIconPos += (1, 1);
+									if (ipicontimer >= 18 && ipicontimer <= 23) IPIconPos += (0, 1);
+								}
+							}
+							if (canuseipatk == 2)
+							{
+								if (ipiconspeed == 1)
+								{
+									ipicontimer = level.time % 16;
+									if (ipicontimer >= 0 && ipicontimer <= 3) IPIconPos += (0, 0);
+									if (ipicontimer >= 4 && ipicontimer <= 7) IPIconPos += (1, 0);
+									if (ipicontimer >= 8 && ipicontimer <= 11) IPIconPos += (1, 1);
+									if (ipicontimer >= 12 && ipicontimer <= 15) IPIconPos += (0, 1);
+								}
+								else
+								{
+									ipicontimer = level.time % 12;
+									if (ipicontimer >= 0 && ipicontimer <= 2) IPIconPos += (0, 0);
+									if (ipicontimer >= 3 && ipicontimer <= 5) IPIconPos += (1, 0);
+									if (ipicontimer >= 6 && ipicontimer <= 8) IPIconPos += (1, 1);
+									if (ipicontimer >= 9 && ipicontimer <= 11) IPIconPos += (0, 1);
+								}
+							}
+							if (canuseipatk >= 3)
+							{
+								if (ipiconspeed == 1)
+								{
+									ipicontimer = level.time % 8;
+									if (ipicontimer >= 0 && ipicontimer <= 1) IPIconPos += (0, 0);
+									if (ipicontimer >= 2 && ipicontimer <= 3) IPIconPos += (1, 0);
+									if (ipicontimer >= 4 && ipicontimer <= 5) IPIconPos += (1, 1);
+									if (ipicontimer >= 6 && ipicontimer <= 7) IPIconPos += (0, 1);
+								}
+								else
+								{
+									ipicontimer = level.time % 4;
+									if (ipicontimer == 0) IPIconPos += (0, 0);
+									if (ipicontimer == 1) IPIconPos += (1, 0);
+									if (ipicontimer == 2) IPIconPos += (1, 1);
+									if (ipicontimer == 3) IPIconPos += (0, 1);
+								}
+							}
+						}
+						else
+						{
+							ipicon = "IPICONUN";
+						}
+						DrawImage(ipicon, IPIconPos + (68, -58), DI_ITEM_CENTER, 1.0, (-1, -1), ipiconscale);
+					}
+				}
 
 				int armordigits = 2;
 				
