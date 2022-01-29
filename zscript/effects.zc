@@ -2338,7 +2338,13 @@ class KnightGown1IPItem : ArmorIPItem
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		int timegive = 60 * TICRATE;
-		if (MiscItem) timegive *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+		int fulltimegive = timegive;
+		if (MiscItem) 
+		{
+			timegive *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+			for (int i; i < MiscItem.IPArmorTimesUsed; i++) timegive *= 0.5;
+			if (dydudebug_ipdisplays) Console.Printf("timegive: %d [timesused: %d]", timegive, MiscItem.IPArmorTimesUsed);
+		}
 		let globalvars = DDGlobalVariables.Get();
 		if (exex_ikaripointsenabled && MiscItem && globalvars)
 		{
@@ -2355,14 +2361,15 @@ class KnightGown1IPItem : ArmorIPItem
 						{
 							owner.SetInventory("KnightGownIP1Buff",1);
 							let BuffItem = KnightGownIP1Buff(owner.FindInventory("KnightGownIP1Buff"));
-							if (BuffItem) BuffItem.EffectTics = timegive;
+							if (BuffItem) BuffItem.EffectTics = fulltimegive;
 						}
 						else
 						{
 							let BuffItem = KnightGownIP1Buff(owner.FindInventory("KnightGownIP1Buff"));
-							if (BuffItem) BuffItem.EffectTics += (timegive * 0.5);
+							if (BuffItem) BuffItem.EffectTics += timegive;
 						}
-						owner.A_SetBlend("fc 3c 96",0.4,25);
+						MiscItem.IPArmorTimesUsed++;
+						owner.A_StartSound("ipmode/armoruse",62);
 						Destroy();
 					}
 					else
@@ -2384,7 +2391,13 @@ class KnightGown2IPItem : ArmorIPItem
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		int timegive = 60 * TICRATE;
-		if (MiscItem) timegive *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+		int fulltimegive = timegive;
+		if (MiscItem) 
+		{
+			timegive *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+			for (int i; i < MiscItem.IPArmorTimesUsed; i++) timegive *= 0.5;
+			if (dydudebug_ipdisplays) Console.Printf("timegive: %d [timesused: %d]", timegive, MiscItem.IPArmorTimesUsed);
+		}
 		let globalvars = DDGlobalVariables.Get();
 		if (exex_ikaripointsenabled && MiscItem && globalvars)
 		{
@@ -2401,13 +2414,15 @@ class KnightGown2IPItem : ArmorIPItem
 						{
 							owner.SetInventory("KnightGownIP2Buff",1);
 							let BuffItem = KnightGownIP2Buff(owner.FindInventory("KnightGownIP2Buff"));
-							if (BuffItem) BuffItem.EffectTics = timegive;
+							if (BuffItem) BuffItem.EffectTics = fulltimegive;
 						}
 						else
 						{
 							let BuffItem = KnightGownIP2Buff(owner.FindInventory("KnightGownIP2Buff"));
-							if (BuffItem) BuffItem.EffectTics += (timegive * 0.5);
+							if (BuffItem) BuffItem.EffectTics += timegive;
 						}
+						MiscItem.IPArmorTimesUsed++;
+						owner.A_StartSound("ipmode/armoruse",62);
 						owner.A_SetBlend("fc 3c 96",0.4,25);
 					}
 					else
@@ -2429,7 +2444,13 @@ class KnightGown3IPItem : ArmorIPItem
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
 		int timegive = 60 * TICRATE;
-		if (MiscItem) timegive *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+		int fulltimegive = timegive;
+		if (MiscItem) 
+		{
+			timegive *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+			for (int i; i < MiscItem.IPArmorTimesUsed; i++) timegive *= 0.5;
+			if (dydudebug_ipdisplays) Console.Printf("timegive: %d [timesused: %d]", timegive, MiscItem.IPArmorTimesUsed);
+		}
 		if (exex_ikaripointsenabled && MiscItem && globalvars)
 		{
 			if (owner && player)
@@ -2446,13 +2467,14 @@ class KnightGown3IPItem : ArmorIPItem
 						{
 							owner.SetInventory("KnightGownIP3Buff",1);
 							let BuffItem = KnightGownIP3Buff(owner.FindInventory("KnightGownIP3Buff"));
-							if (BuffItem) BuffItem.EffectTics = timegive;
+							if (BuffItem) BuffItem.EffectTics = fulltimegive;
 						}
 						else
 						{
 							let BuffItem = KnightGownIP3Buff(owner.FindInventory("KnightGownIP3Buff"));
-							if (BuffItem) BuffItem.EffectTics += (timegive * 0.5);
+							if (BuffItem) BuffItem.EffectTics += timegive;
 						}
+						MiscItem.IPArmorTimesUsed++;
 						owner.A_StartSound("ipmode/armoruse",62);
 						owner.A_SetBlend("fc 3c 96",0.4,25);
 					}
@@ -2533,12 +2555,18 @@ class KnightGownIP1Buff : KnightGownIPBuff
 	
 	override void Tick()
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		timer++;
 		if (timer % 20 >= 0 && timer % 20 <= 9) texname = "KNGW1IP1";
 		if (timer % 20 >= 10 && timer % 20 <= 19) texname = "KNGW1IP2";
 		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
 		
-		if (!owner.CountInv("KnightGownItem")) Destroy();
+		if (!owner.CountInv("KnightGownItem")) 
+		{
+			if (MiscItem) MiscItem.IPArmorTimesUsed = 0;
+			Destroy();
+		}
 		Super.Tick();
 	}
 }
@@ -2575,12 +2603,18 @@ class KnightGownIP2Buff : KnightGownIPBuff
 	
 	override void Tick()
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		timer++;
 		if (timer % 20 >= 0 && timer % 20 <= 9) texname = "KNGW2IP1";
 		if (timer % 20 >= 10 && timer % 20 <= 19) texname = "KNGW2IP2";
 		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
 		
-		if (!owner.CountInv("KnightGownItem2")) Destroy();
+		if (!owner.CountInv("KnightGownItem2")) 
+		{
+			if (MiscItem) MiscItem.IPArmorTimesUsed = 0;
+			Destroy();
+		}
 		Super.Tick();
 	}
 }
@@ -2618,12 +2652,18 @@ class KnightGownIP3Buff : KnightGownIPBuff
 	
 	override void Tick()
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		timer++;
 		if (timer % 20 >= 0 && timer % 20 <= 9) texname = "KNGW3IP1";
 		if (timer % 20 >= 10 && timer % 20 <= 19) texname = "KNGW3IP2";
 		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
 		
-		if (!owner.CountInv("KnightGownItem3")) Destroy();
+		if (!owner.CountInv("KnightGownItem3")) 
+		{
+			if (MiscItem) MiscItem.IPArmorTimesUsed = 0;
+			Destroy();
+		}
 		Super.Tick();
 	}
 }
