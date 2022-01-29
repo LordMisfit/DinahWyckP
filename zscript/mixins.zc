@@ -148,13 +148,13 @@ mixin class CollisionChecker
 	}
 
 	// Checks for certain projectiles from players to pass through friendlies instead of colliding
-	int A_CheckFriendCollisionProjTypePlayer(Actor type)
+	int A_CheckFriendCollisionProjTypePlayer(Actor actr)
 	{
-		infl = type.GetClassName();
-		projowner = type.target;
+		infl = actr.GetClassName();
+		projowner = actr.target;
 		actor PlayPawn = PlayerPawn(projowner);
 		actor ProjD;
-		ProjD = DDProjectile(type);
+		ProjD = DDProjectile(actr);
 		
 		int type;
 		if (ProjD && PlayPawn) type = 1;
@@ -164,24 +164,15 @@ mixin class CollisionChecker
 	}
 
 	// Checks for certain projectiles from players to pass through friendlies instead of colliding
-	int A_CheckFriendCollisionProjTypePlayer2(Actor type)
+	int A_CheckFriendCollisionProjTypePlayer2(Actor actr)
 	{
-		infl = type.GetClassName();
+		infl = actr.GetClassName();
 
 		int type;
 		if (
 				// Circus 2 Stuff
 				infl == "Sparkles" ||
-				infl == "CrazyBits1" ||
-				infl == "CrazyBits2" ||
-				infl == "CrazyBits3" ||
-				infl == "CrazyBits4" ||
-				infl == "CrazyBits5" ||
-				infl == "CrazyBits6" ||
-				infl == "CrazyBits7" ||
-				infl == "CrazyBits8" ||
-				infl == "CrazyBits9" ||
-				infl == "CrazyBits10" ||
+				CrazyBits1(actr) ||
 				infl == "Popcorn_Shrap1" ||
 				infl == "Popcorn_Shrap7" ||
 				infl == "CrazyBalls" ||
@@ -194,34 +185,25 @@ mixin class CollisionChecker
 	}
 	
 	// Checks for certain projectiles from players to pass through friendlies instead of colliding
-	int A_CheckCollisionProjShieldExemption(Actor type)
+	int A_CheckCollisionProjShieldExemption(Actor actr)
 	{
-		infl = type.GetClassName();
+		infl = actr.GetClassName();
 
 		int type;
-		if (infl == "MalletShot" || 
-				infl == "MalletShotBerserk" || 
-				infl == "BlunderShot" || 
-				infl == "EggShot" || 
-				infl == "EggShotBerserk" || 
-				infl == "EggGrenade" || 
-				infl == "EggGrenadeBerserk" || 
-				infl == "EggMini" || 
-				infl == "EggMiniBerserk" || 
-				infl == "ZapShot" || 
-				infl == "MiniZapShot" || 
-				infl == "JackShot" || 
-				infl == "JackShotBerserk" || 
-				infl == "RecordShot" || 
-				infl == "VacShot" || 
-				infl == "VacShot2" || 
-				infl == "CherryBombShot" || 
-				infl == "CherryBombShotBerserk" || 
-				infl == "BRocketShot" || 
-				infl == "BRocketBoom1" || 
-				infl == "BRocketBoom2" || 
-				infl == "SpinnerShot" || 
-				infl == "SpinnerShotIcy" || 
+		if (MalletShot(actr) || 
+				BlunderShot(actr) || 
+				EggShot(actr) || 
+				EggGrenade(actr) || 
+				EggMini(actr) || 
+				ZapShot(actr) || 
+				JackShot(actr) || 
+				RecordShot(actr) || 
+				VacShot(actr) || 
+				CherryBombShot(actr) || 
+				BRocketShot(actr) || 
+				BRocketBoom1(actr) || 
+				BRocketBoom2(actr) || 
+				SpinnerShot(actr) || 
 				infl == "StreamerShot" || 
 				infl == "StreamerTrail" || 
 				infl == "PopperPuff1" || 
@@ -906,7 +888,7 @@ mixin class InvWeaponShare
 	// the randomized angle-range used, and if to use fixed/doubles or ints for the angles.
 	//
 	//===========================================================================
-	action bool, Actor A_ThrowGrenadeAngle(class<Actor> missile, double zheight = 0, double zheightoffset = 35, double xyvel = 0, double zvel = 0, double angularspreadmin = -4.0, double angularspreadmax = 3.0, bool usefixedangles = false, bool useammo = true)
+	action bool, Actor A_ThrowGrenadeAngle(class<Actor> missile, double zheight = 0, double zheightoffset = 35, double xyvel = 0, double zvel = 0, double angularspreadmin = -4.0, double angularspreadmax = 3.0, bool usefixedangles = false, bool useammo = true, bool checkspawn = true)
 	{
 		if (dydudebug_attackstuff) Console.Printf("zheight: %.4f, xyvel: %.4f, zvel: %.4f, angularspreadmin: %.4f, angularspreadmax: %.4f", zheight, xyvel, zvel, angularspreadmin, angularspreadmax);
 		double anglemin = angularspreadmin;
@@ -943,6 +925,7 @@ mixin class InvWeaponShare
 		let bo = Spawn(missile, pos + (0, 0, (-Floorclip + GetBobOffset() + zheight + zheightoffset + (player? player.crouchoffset : 0.))), ALLOW_REPLACE);
 		if (bo)
 		{
+			if (dydudebug_attackfuncinfo) Console.Printf("bo [spawned]");
 			self.PlaySpawnSound(bo);
 			if (xyvel != 0)
 				bo.Speed = xyvel;
@@ -972,7 +955,15 @@ mixin class InvWeaponShare
 			bo.Vel.Z = xy_velz + z_velz;
 
 			bo.target = self;
-			if (!bo.CheckMissileSpawn(radius)) bo = null;
+			if (checkspawn) 
+			{
+				if (dydudebug_attackfuncinfo) Console.Printf("bo: checkspawn: %d", checkspawn);
+				if (!bo.CheckMissileSpawn(radius))
+				{
+					if (dydudebug_attackfuncinfo) Console.Printf("bo: null");
+					bo = null;
+				}
+			}
 			return true, bo;
 		} 
 		else

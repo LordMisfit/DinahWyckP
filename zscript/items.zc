@@ -911,11 +911,17 @@ class CherryBombPickup : ExExInvBarItem
 				{
 					if (i && wutthis) A_SetAngle(angle+shotangleinc);
 					
-					[success, BombShots] = A_ThrowGrenadeAngle("CherryBombShot",-2,35,throwpowerxy,throwpowerz,throwminangle,throwmaxangle,true);
-					if (BombShots && wutthis) 
+					[success, BombShots] = A_ThrowGrenadeAngle("CherryBombShot",-2,35,throwpowerxy,throwpowerz,throwminangle,throwmaxangle,true,false,false);
+					if (dydudebug_attackfuncinfo) Console.Printf("Success [i: %d]: %d", i, success);
+					if (BombShots && wutthis)
 					{
+						if (dydudebug_attackfuncinfo) Console.Printf("BombShots [i: %d]", i);
 						IPCompat = DDProjectile(BombShots);
-						if (IPCompat) IPCompat.IPattack = true;
+						if (IPCompat) 
+						{
+							if (dydudebug_attackfuncinfo) Console.Printf("IPCompat [i: %d]", i);
+							IPCompat.IPattack = true;
+						}
 					}
 					//Console.Printf("Angle: %.4f", angle);
 				}
@@ -1050,14 +1056,23 @@ class CherryBombShotBerserk : CherryBombShot
 }
 
 
-class BadCherryBomb : CherryBombShot
+class BadCherryBomb : DDProjectile
 {
 	default
 	{
 		ProjectileKickback 5;
 		Tag "Cherry Bomb";
+		Radius 3;
+		Height 3;
 		Speed 15;
 		Gravity 0.05;
+		Damage 10;
+		DamageType "CherryBomb";
+		Projectile;
+		-NOGRAVITY
+		//+NOEXTREMEDEATH
+		RENDERSTYLE "Normal";
+		SeeSound "weapons/cherrywick";
 	}
 	
 	States
@@ -1065,6 +1080,39 @@ class BadCherryBomb : CherryBombShot
 		Spawn:
 			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
 			loop;
+
+		Death:
+		XDeath:
+		Crash:
+			BMX2 A 2 Bright 
+			{
+				A_Explode(16,32,XF_HURTSOURCE|XF_THRUSTZ,0,4);
+			}
+			BMX2 B 2 Bright 
+			{
+				A_Explode(24,48,XF_HURTSOURCE|XF_THRUSTZ,0,6);
+			}
+			BMX2 C 1 Bright 
+			{
+				A_Explode(32,64,XF_HURTSOURCE|XF_THRUSTZ,0,8);
+			}
+			BMX2 D 2 Bright 
+			{
+				A_Explode(40,80,XF_HURTSOURCE|XF_THRUSTZ,0,10);
+			}
+			BMX2 E 1 Bright 
+			{
+				A_Explode(48,96,XF_HURTSOURCE|XF_THRUSTZ,0,12);
+			}
+			BMX2 F 2 Bright 
+			{
+				A_Explode(56,112,XF_HURTSOURCE|XF_THRUSTZ,0,14);
+			}
+			BMX2 G 1 Bright 
+			{
+				A_Explode(64,128,XF_HURTSOURCE|XF_THRUSTZ,0,16);
+			}
+			stop;
 	}
 }
 
@@ -1201,7 +1249,8 @@ class BRocketShot : DDProjectile
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+								 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1212,7 +1261,8 @@ class BRocketShot : DDProjectile
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+								 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1223,7 +1273,8 @@ class BRocketShot : DDProjectile
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+								 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1234,7 +1285,8 @@ class BRocketShot : DDProjectile
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+								 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1245,9 +1297,10 @@ class BRocketShot : DDProjectile
 	}
 }
 
-class BigBRocketShot : DDProjectile
+class BigBRocketShot : BRocketShot
 {
 	int user_explosion;
+	int expflags;
 	default
 	{
 		ProjectileKickback 15;
@@ -1268,6 +1321,15 @@ class BigBRocketShot : DDProjectile
 		DeathSound "weapons/cherryboom";
 	}
 	
+	override void PostBeginPlay()
+	{
+		IPAttack = true;
+		if (IPAttack && random(1,32) <= 27) bFORCERADIUSDMG = true;
+		expflags = 0;
+		if (dydudebug_attackfuncinfo) Console.Printf("IPAttack: %d, expflags: %d", IPAttack, expflags);
+		super.PostBeginPlay();
+	}
+	
 	States
 	{
 		Spawn:
@@ -1283,20 +1345,17 @@ class BigBRocketShot : DDProjectile
 			{
 				A_StopSound(CHAN_7);
 				A_AlertMonsters();
-				if (IPAttack && random(1,32) <= 27) bFORCERADIUSDMG = true;
 			}
 			BMX1 A 5 Bright 
 			{
-				int expflags = XF_HURTSOURCE;
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 32;
 				if (IPAttack) 
 				{
-					expflags = 0;
 					fulldmgmaxrad = 192;
 					fulldmgminrad = 96;
 				}
-
+				if (dydudebug_attackfuncinfo) Console.Printf("expflags: %d", expflags);
 				A_Explode(640,fulldmgmaxrad,expflags,true,fulldmgminrad);
 			}
 			BMX1 B 5 Bright;
@@ -1304,8 +1363,16 @@ class BigBRocketShot : DDProjectile
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				if (user_explosion % 2 == 1) { BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
-																else { BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
+				if (user_explosion % 2 == 1) 
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
+				else
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1317,8 +1384,16 @@ class BigBRocketShot : DDProjectile
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				if (user_explosion % 2 == 1) { BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
-																else { BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
+				if (user_explosion % 2 == 1) 
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
+				else
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1330,8 +1405,16 @@ class BigBRocketShot : DDProjectile
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				if (user_explosion % 2 == 1) { BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
-																else { BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
+				if (user_explosion % 2 == 1) 
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
+				else
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1343,8 +1426,16 @@ class BigBRocketShot : DDProjectile
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				if (user_explosion % 2 == 1) { BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
-																else { BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
+				if (user_explosion % 2 == 1) 
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
+				else
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1388,7 +1479,6 @@ class MultiBRocketShot : BigBRocketShot
 			}
 			BMX1 A 5 Bright 
 			{
-				int expflags = XF_HURTSOURCE;
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 32;
 				if (IPAttack) 
@@ -1405,8 +1495,16 @@ class MultiBRocketShot : BigBRocketShot
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				if (user_explosion % 2 == 1) { BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
-																else { BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
+				if (user_explosion % 2 == 1) 
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
+				else
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1418,8 +1516,16 @@ class MultiBRocketShot : BigBRocketShot
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				if (user_explosion % 2 == 1) { BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
-																else { BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
+				if (user_explosion % 2 == 1) 
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
+				else
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1431,8 +1537,16 @@ class MultiBRocketShot : BigBRocketShot
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				if (user_explosion % 2 == 1) { BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
-																else { BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
+				if (user_explosion % 2 == 1) 
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
+				else
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1444,8 +1558,16 @@ class MultiBRocketShot : BigBRocketShot
 			{
 				actor BombShots;
 				DDProjectile IPCompat;
-				if (user_explosion % 2 == 1) { BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
-																else { BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); }
+				if (user_explosion % 2 == 1) 
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom1IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
+				else
+				{
+					if (IPAttack) BombShots = A_SpawnProjectile("BRocketBoom2IP",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+									 else BombShots = A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+				}
 				if (BombShots && IPAttack) 
 				{
 					IPCompat = DDProjectile(BombShots);
@@ -1480,6 +1602,7 @@ class BadBrocketShot : BrocketShot
 
 class BRocketBoom1 : DDProjectile
 {
+	int expflags;
 	default
 	{
 		ProjectileKickback 5;
@@ -1513,7 +1636,50 @@ class BRocketBoom1 : DDProjectile
 		Death:
 			CBAL C 6 Bright 
 			{
-				int expflags = XF_HURTSOURCE;
+				expflags = XF_HURTSOURCE;
+				int fulldmgmaxrad = 128;
+				int fulldmgminrad = 128;
+				if (IPAttack) 
+				{
+					expflags = 0;
+					fulldmgmaxrad = 192;
+					fulldmgminrad = 192;
+				}
+
+				A_Explode(128,fulldmgmaxrad,expflags,true,fulldmgminrad);
+			}
+			CBAL DEF 6 Bright;
+			stop;
+	}
+}
+
+class BRocketBoom1IP : BRocketBoom1
+{
+	override void PostBeginPlay()
+	{
+		IPAttack = true;
+		expflags = 0;
+		if (IPAttack && random(1,32) <= 27) bFORCERADIUSDMG = true;
+		if (dydudebug_attackfuncinfo) Console.Printf("IPAttack: %d, expflags: %d", IPAttack, expflags);
+		super.PostBeginPlay();
+	}
+
+	states
+	{
+		Spawn:
+			TNT1 A 0 
+			{
+				A_Die();
+				if (IPAttack)
+				{
+					ProjectileKickback = 1;
+					bDONTTHRUST = 0;
+					if (random(1,32) <= 27) bFORCERADIUSDMG = true;
+				}
+			}
+		Death:
+			CBAL C 6 Bright 
+			{
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 128;
 				if (IPAttack) 
@@ -1532,6 +1698,7 @@ class BRocketBoom1 : DDProjectile
 
 class BRocketBoom2 : DDProjectile
 {
+	int expflags;
 	default
 	{
 		ProjectileKickback 5;
@@ -1548,6 +1715,7 @@ class BRocketBoom2 : DDProjectile
 		+DONTSPLASH
 		+SPAWNSOUNDSOURCE
 	}
+	
 	states
 	{
 		Spawn:
@@ -1565,6 +1733,49 @@ class BRocketBoom2 : DDProjectile
 			BROX A 6 Bright 
 			{
 				int expflags = XF_HURTSOURCE;
+				int fulldmgmaxrad = 128;
+				int fulldmgminrad = 128;
+				if (IPAttack) 
+				{
+					expflags = 0;
+					fulldmgmaxrad = 192;
+					fulldmgminrad = 192;
+				}
+
+				A_Explode(128,fulldmgmaxrad,expflags,true,fulldmgminrad);
+			}
+			BROX BCD 6 Bright;
+			stop;
+	}
+}
+
+class BRocketBoom2IP : BRocketBoom2
+{
+	override void PostBeginPlay()
+	{
+		IPAttack = true;
+		expflags = 0;
+		if (IPAttack && random(1,32) <= 27) bFORCERADIUSDMG = true;
+		if (dydudebug_attackfuncinfo) Console.Printf("IPAttack: %d, expflags: %d", IPAttack, expflags);
+		super.PostBeginPlay();
+	}
+	
+	states
+	{
+		Spawn:
+			TNT1 A 0 
+			{
+				A_Die();
+				if (IPAttack)
+				{
+					ProjectileKickback = 1;
+					bDONTTHRUST = 0;
+					if (random(1,32) <= 27) bFORCERADIUSDMG = true;
+				}
+			}
+		Death:
+			BROX A 6 Bright 
+			{
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 128;
 				if (IPAttack) 
@@ -2698,11 +2909,13 @@ class SpinnerPickup : ExExInvBarItem
 					let player1 = DDPlayerPawn(player.mo);
 					if (player1 && player1.buttons & BT_ZOOM)
 					{
-						BombShots = A_FireProjectile("SpinnerShotIcy", 0); 
+						if (wutthis) BombShots = A_FireProjectile("SpinnerShotIcyIP", 0); 
+										else BombShots = A_FireProjectile("SpinnerShotIcy", 0); 
 					}
 					else 
 					{
-						BombShots = A_FireProjectile("SpinnerShot", 0); 
+						if (wutthis) BombShots = A_FireProjectile("SpinnerShotIP", 0); 
+										else BombShots = A_FireProjectile("SpinnerShot", 0); 
 					}
 					
 					if (BombShots && wutthis) 
@@ -2721,6 +2934,7 @@ class SpinnerPickup : ExExInvBarItem
 
 class SpinnerShot : DDProjectile
 {
+	int expflags;
 	default
 	{
 		Radius 8;
@@ -2759,7 +2973,36 @@ class SpinnerShot : DDProjectile
 			}
 			BMX1 A 2 Bright 
 			{
-				int expflags = XF_HURTSOURCE;
+				expflags = XF_HURTSOURCE;
+				if (IPAttack) expflags = 0;
+				A_Explode(128,128,expflags,true,32);
+			}
+			BMX1 BCDE 2 Bright;
+			Stop;
+	}
+}
+
+class SpinnerShotIP : SpinnerShot
+{
+	override void PostBeginPlay()
+	{
+		IPAttack = true;
+		if (IPAttack && random(1,32) <= 19) bFORCERADIUSDMG = true;
+		expflags = 0;
+		if (dydudebug_attackfuncinfo) Console.Printf("IPAttack: %d, expflags: %d", IPAttack, expflags);
+		super.PostBeginPlay();
+	}
+	
+	States
+	{
+		Death:
+			SPNR C 0 
+			{
+				A_StopSound(CHAN_7);
+				A_AlertMonsters();
+			}
+			BMX1 A 2 Bright 
+			{
 				if (IPAttack) expflags = 0;
 				A_Explode(128,128,expflags,true,32);
 			}
@@ -2822,7 +3065,7 @@ class SpinnerShotIcy : SpinnerShot
 
 		return true;
 	}
-
+	
 	States
 	{
 		Spawn:
@@ -2846,7 +3089,59 @@ class SpinnerShotIcy : SpinnerShot
 			}
 			BMX1 A 2 Bright 
 			{
-				int expflags = XF_HURTSOURCE;
+				expflags = XF_HURTSOURCE;
+				if (IPAttack) 
+				{
+					expflags = 0;
+					A_SetTics(1);
+				}
+				A_Explode(128,128,expflags,true,32);
+			}
+			BMX1 BCDE 2 Bright
+			{
+				if (IPAttack) 
+				{
+					A_SetTics(1);
+				}
+			}
+			Stop;
+	}
+}
+
+class SpinnerShotIcyIP : SpinnerShotIcy
+{
+	override void PostBeginPlay()
+	{
+		IPAttack = true;
+		if (IPAttack && random(1,32) <= 19) bFORCERADIUSDMG = true;
+		expflags = 0;
+		if (dydudebug_attackfuncinfo) Console.Printf("IPAttack: %d, expflags: %d", IPAttack, expflags);
+		super.PostBeginPlay();
+	}
+	
+	States
+	{
+		Spawn:
+			SPNI A 0 Bright NoDelay
+			{
+				A_SpawnItemEx("IceTrail", 0, 0, 0, 0, 0, 0, 180, 128);
+				A_AlertMonsters();
+				A_StartSound("weapons/cherrywick",CHAN_7,CHANF_LOOPING);
+				if (IPAttack && random(1,32) <= 19) bFORCERADIUSDMG = true;
+			}
+			SPNI AABB 1 Bright 
+			{
+				A_SeekerMissile(12,12,SMF_LOOK|SMF_PRECISE);
+			}
+			Loop;
+		Death:
+			SPNI C 0 
+			{
+				A_StopSound(CHAN_7);
+				A_AlertMonsters();
+			}
+			BMX1 A 2 Bright 
+			{
 				if (IPAttack) 
 				{
 					expflags = 0;

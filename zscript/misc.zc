@@ -585,7 +585,8 @@ class PlayerStatItem : Inventory
 					}
 					
 					// Check Item Points
-					int IPTimerInc = level.time % 1;
+					int IPTimerIncMod = 0;
+					int IPTimerInc;
 					if (berserked)
 					{
 						double berserkIPGain;
@@ -628,12 +629,77 @@ class PlayerStatItem : Inventory
 								if (random(1,4) <= 1) berserkIPGain *= 2.5;
 								else berserkIPGain *= 2;
 							}
+							IPTimerIncMod += 1;
 						}
-						else IPTimerInc = level.time % 10;
+						else 
+						{
+							IPTimerIncMod += 10;
+						}
 						//Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPTimer1, IPTimerInc, BerIPMulti);
 						ItemPoints += berserkIPGain;
 						globalvars.ItemPoints = ItemPoints;
 					}
+					// Armor IP Effect Benefits
+					double ArmorIPActive = 0;
+					if (owner.CountInv("KnightGownItem") && owner.CountInv("KnightGownIP1Buff")) ArmorIPActive = (1.0 * 1.5);
+					if (owner.CountInv("KnightGownItem2") && owner.CountInv("KnightGownIP2Buff")) ArmorIPActive = (2.15 * 1.5);
+					if (owner.CountInv("KnightGownItem3") && owner.CountInv("KnightGownIP3Buff")) ArmorIPActive = (3.60 * 1.5);
+					if (ArmorIPActive > 0)
+					{
+						double ArmorIPGain;
+						ArmorIPGain = 0.0025;
+						if (ItemPoints <= 100.0000)
+						{
+							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+							{
+								ArmorIPGain += 0.00125;
+							}
+							else
+							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+							{
+								ArmorIPGain += 0.003125;
+							}
+							else
+							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+							{
+								ArmorIPGain += 0.0078125;
+							}
+							else
+							if (ItemPoints <= 25.0000)
+							{
+								ArmorIPGain += 0.01953125;
+							}
+						}
+						double ArmorIPMulti = (0.25 + (PlayerLevel * 0.03));
+						if (ArmorIPMulti >= 1.00 || PlayerLevel >= 25)
+						{
+							ArmorIPMulti = (1.00 + ((PlayerLevel - 25) * 0.01334));
+							if (ArmorIPMulti >= 2.00 || PlayerLevel >= 100) ArmorIPMulti = 2.00;
+						}
+
+						ArmorIPGain *= ArmorIPMulti;
+						ArmorIPGain *= ArmorIPActive;
+						if (IPTimer1 < 0) 
+						{
+							if (random(1,16) <= 1) ArmorIPGain *= 3;
+							else 
+							{
+								if (random(1,4) <= 1) ArmorIPGain *= 2.5;
+								else ArmorIPGain *= 2;
+							}
+							IPTimerIncMod += 5;
+						}
+						else 
+						{
+							IPTimerIncMod += 25;
+						}
+						//Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPTimer1, IPTimerIncMod, ArmorIPMulti);
+						ItemPoints += ArmorIPGain;
+						globalvars.ItemPoints = ItemPoints;
+					}
+					if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
+														 else IPTimerInc = level.time % 1;
+					
 					
 					if (ItemPoints > 0.00)
 					{
