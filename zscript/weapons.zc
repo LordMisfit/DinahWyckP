@@ -3494,11 +3494,85 @@ class MalletShotBerserk : DDFastProjectile
 		//+NOEXTREMEDEATH
 		RENDERSTYLE "Normal";
 		DeathSound "croquet/ballhit";
+		BounceType "Hexen";
+		BounceCount 0;
+		BounceFactor 0.0;
+		WallBounceFactor 0.0;
 	}
 	
 	int minbouncelvl;
 	double bouncelvlfactor;
 	int nogravtimer;
+
+	override void PostBeginPlay()
+	{
+		super.PostBeginPlay();
+		if (target && target.GetClassName() == "DinahPlayer")
+		{
+			minbouncelvl = 8;
+			if (IPAttack) minbouncelvl *= frandompick(0.20,0.25,0.334);
+			bouncelvlfactor = (1.0 / (minbouncelvl * 1.5));
+			if (IPAttack) bouncelvlfactor = (1.0 / (minbouncelvl * frandompick(1.25,1.375,1.5)));
+
+			let MiscItem = PlayerStatItem(target.FindInventory("PlayerStatItem"));
+			if (MiscItem)
+			{
+				if (MiscItem.PlayerLevel >= minbouncelvl)
+				{
+					double extratimes = ((MiscItem.PlayerLevel - minbouncelvl) * bouncelvlfactor);
+					if (dydudebug_attackstuff) Console.Printf("[%s] extratimes: %.8f", GetClassName(), extratimes);
+					if (extratimes < 0) extratimes = 0;
+					bSKYEXPLODE = true;
+					bBOUNCEONWALLS = true;
+					bBOUNCEONFLOORS = true;
+					bBOUNCEONCEILINGS = true;
+					bCANBOUNCEWATER = true;
+					bDONTBOUNCEONSHOOTABLES = true;
+					if (IPAttack) BounceCount = 4 + extratimes;
+					else BounceCount = 2 + extratimes;
+					BounceFactor = 1.00;
+					WallBounceFactor = 1.00;
+				}
+				else
+				{
+					if (IPAttack)
+					{
+						bSKYEXPLODE = true;
+						bBOUNCEONWALLS = true;
+						bBOUNCEONFLOORS = true;
+						bBOUNCEONCEILINGS = true;
+						bCANBOUNCEWATER = true;
+						bDONTBOUNCEONSHOOTABLES = true;
+						BounceCount = 2;
+						BounceFactor = 1.00;
+						WallBounceFactor = 1.00;
+					}
+					else
+					{
+						bBOUNCEONWALLS = false;
+						bBOUNCEONFLOORS = false;
+						bBOUNCEONCEILINGS = false;
+						bCANBOUNCEWATER = false;
+						bDONTBOUNCEONSHOOTABLES = true;
+						bALLOWBOUNCEONACTORS = false;
+						BounceCount = 0;
+						BounceFactor = 0;
+						WallBounceFactor = 0;
+					}
+				}
+			}
+			if (dydudebug_attackstuff) Console.Printf("[%s] BounceCount: %d", GetClassName(), BounceCount);
+		}
+
+		user_randompain = 16;
+		if (target && target.GetClassName() == "DinahPlayer")
+		{
+			if (IPAttack) user_randompain *= randompick(6,8);
+			let MiscItem = PlayerStatItem(target.player.mo.FindInventory("PlayerStatItem"));
+			if (MiscItem) user_randompain += (MiscItem.PlayerLevel * 0.16);
+		}
+		if (random(1,100) <= user_randompain) { bFORCEPAIN = true; }
+	}
 	
 	int A_GetImpactAOE(int type = 0)
 	{
