@@ -6,6 +6,8 @@ class PlayerStatItem : Inventory
 	const SKILL_HARD = 3;
 	const SKILL_VERY_HARD = 4;
 	
+	int ArmorFlatDefValue;
+	int DoorBellNormalUses;
 	int IPArmorTimesUsed;
 	int itemtimer;
 	int IPTimer1;
@@ -32,6 +34,9 @@ class PlayerStatItem : Inventory
 	int totalsecretsgame;
 	int totalmaxsecrets;
 	int totalcompleted;
+	int totalallkills;
+	int totalallitems;
+	int totalallsecrets;
 
 	int landdmgbonus;
 	int whistlecooldown;
@@ -206,6 +211,7 @@ class PlayerStatItem : Inventory
 					{
 						owner.A_SetInventory("DoorBell",1);
 						owner.A_SetInventory("DoorBell",0);
+						DoorBellNormalUses = 0;
 						owner.A_SetInventory("KilletanteEffigy",1);
 						owner.A_SetInventory("KilletanteEffigy",0);
 						owner.A_SetInventory("DivingHelm",1);
@@ -645,6 +651,7 @@ class PlayerStatItem : Inventory
 					if (owner.CountInv("KnightGownItem") && owner.CountInv("KnightGownIP1Buff")) ArmorIPActive = (1.0 * 1.5);
 					if (owner.CountInv("KnightGownItem2") && owner.CountInv("KnightGownIP2Buff")) ArmorIPActive = (2.15 * 1.5);
 					if (owner.CountInv("KnightGownItem3") && owner.CountInv("KnightGownIP3Buff")) ArmorIPActive = (3.60 * 1.5);
+					if (owner.CountInv("KnightGownItem4") && owner.CountInv("KnightGownIP4Buff")) ArmorIPActive = (5.35 * 1.5);
 					if (ArmorIPActive > 0)
 					{
 						double ArmorIPGain;
@@ -762,7 +769,11 @@ class PlayerStatItem : Inventory
 								if (owner.CountInv("KnightGownIP3Buff")) inc = ceil(inc * 1.75);
 																										else inc = floor(inc * 1.15);
 							}
-							if (owner.CountInv("KnightGownItem4")) inc = floor(inc * 1.20);
+							if (owner.CountInv("KnightGownItem4")) 
+							{
+								if (owner.CountInv("KnightGownIP4Buff")) inc = ceil(inc * 2.00);
+																										else inc = floor(inc * 1.20);
+							}
 
 							if (berserked) inc = floor(inc * frandom(1.5,2.0));
 
@@ -838,7 +849,11 @@ class PlayerStatItem : Inventory
 								if (owner.CountInv("KnightGownIP3Buff")) inc = floor(inc * 0.25);
 																										else inc = ceil(inc * 0.85);
 							}
-							if (owner.CountInv("KnightGownItem4")) inc = ceil(inc * 0.80);
+							if (owner.CountInv("KnightGownItem4")) 
+							{
+								if (owner.CountInv("KnightGownIP4Buff")) inc = floor(inc * 0.0);
+																										else inc = ceil(inc * 0.80);
+							}
 							
 							if (berserked) inc = ceil(inc * frandom(0.5,0.667));
 							
@@ -925,7 +940,11 @@ class PlayerStatItem : Inventory
 					if (owner.CountInv("KnightGownIP3Buff")) SurvivalRate += 1875;
 																							else SurvivalRate += 1250;
 				}
-				if (owner.CountInv("KnightGownItem4")) SurvivalRate += 2500;
+				if (owner.CountInv("KnightGownItem4")) 
+				{
+					if (owner.CountInv("KnightGownIP3Buff")) SurvivalRate += 3750;
+																							else SurvivalRate += 2500;
+				}
 				if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Armor]: %d", SurvivalRate);
 
 				if (berserked) SurvivalRate += 500;
@@ -1079,7 +1098,18 @@ class PlayerStatItem : Inventory
 						TotalMass += 12; TotalMass *= 1.04;
 					}
 				}
-				if (Owner.CountInv("KnightGownItem4"))	{ TotalMass += 16; TotalMass *= 1.08; }
+				if (Owner.CountInv("KnightGownItem4"))
+				{
+					if (owner.CountInv("KnightGownIP4Buff"))
+					{
+						TotalMass += 160; TotalMass *= 1.80;
+					}
+					else
+					{
+						TotalMass += 16; TotalMass *= 1.08;
+					}
+					 
+				}
 				if (dydudebug_masscalcs) Console.Printf("Mass [Armor]: %d", TotalMass);
 
 				owner.Mass = TotalMass;
@@ -1117,7 +1147,7 @@ class PlayerStatItem : Inventory
 				if (Owner.CountInv("KnightGownItem") && !owner.CountInv("KnightGownIP1Buff")) ArmorJumpZ -= 0.0125;
 				if (Owner.CountInv("KnightGownItem2") && !owner.CountInv("KnightGownIP2Buff")) ArmorJumpZ -= 0.025;
 				if (Owner.CountInv("KnightGownItem3") && !owner.CountInv("KnightGownIP3Buff")) ArmorJumpZ -= 0.0475;
-				if (Owner.CountInv("KnightGownItem4")) ArmorJumpZ -= 0.0875;
+				if (Owner.CountInv("KnightGownItem4") && !owner.CountInv("KnightGownIP4Buff")) ArmorJumpZ -= 0.0875;
 				if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Armor]: %.8f", ArmorJumpZ);
 
 				// Weapon Checks
@@ -1551,8 +1581,18 @@ class PlayerStatItem : Inventory
 				if (MiscItem3)
 				{
 				}
-				
+				//
 				if (afasdroptimer) afasdroptimer--;
+				
+				// Track Doorbell Uses [Normal use, not IP]
+				if (owner.CountInv("DoorBell"))
+				{
+					
+				}
+				else
+				{
+					DoorBellNormalUses = 0;
+				}
 				
 				//********************
 				//* Inventory Limits *
@@ -1778,6 +1818,9 @@ class PlayerStatItem : Inventory
 		totalmaxitems = 0;
 		totalsecretsgame = 0;
 		totalmaxsecrets = 0;
+		totalallkills = 0;
+		totalallitems = 0;
+		totalallsecrets = 0;
 		totalcompleted = 0;
 		int levelnums = level.levelnum;
 		if (dydudebug_gametracker) Console.Printf("MapNo: %d", levelnums);
@@ -1844,6 +1887,9 @@ class PlayerStatItem : Inventory
 				totalmaxitems += globalvars.MaxItems[i];
 				totalsecretsgame += globalvars.NumSecrets[i];
 				totalmaxsecrets += globalvars.MaxSecrets[i];
+				if (globalvars.AllKills[i]) totalallkills++;
+				if (globalvars.AllItems[i]) totalallitems++;
+				if (globalvars.AllSecrets[i]) totalallsecrets++;
 				if (globalvars.AllCompletion[i]) totalcompleted++;
 				
 				if (dydudebug_gametracker)

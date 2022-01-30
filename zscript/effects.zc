@@ -2489,6 +2489,59 @@ class KnightGown3IPItem : ArmorIPItem
 	}
 }
 
+class KnightGown4IPItem : ArmorIPItem
+{
+	override void Tick()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+		int timegive = 60 * TICRATE;
+		int fulltimegive = timegive;
+		if (MiscItem) 
+		{
+			timegive *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+			for (int i; i < MiscItem.IPArmorTimesUsed; i++) timegive *= 0.5;
+			if (dydudebug_ipdisplays) Console.Printf("timegive: %d [timesused: %d]", timegive, MiscItem.IPArmorTimesUsed);
+		}
+		if (exex_ikaripointsenabled && MiscItem && globalvars)
+		{
+			if (owner && player)
+			{
+				if (player.CountInv("IPUseMode"))
+				{
+					double cost = A_GetIPCost(1004);
+					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+					{
+						MiscItem.ItemPoints -= cost;
+						globalvars.ItemPoints -= cost;
+						
+						if (!owner.CountInv("KnightGownIP4Buff")) 
+						{
+							owner.SetInventory("KnightGownIP4Buff",1);
+							let BuffItem = KnightGownIP4Buff(owner.FindInventory("KnightGownIP4Buff"));
+							if (BuffItem) BuffItem.EffectTics = fulltimegive;
+						}
+						else
+						{
+							let BuffItem = KnightGownIP3Buff(owner.FindInventory("KnightGownIP3Buff"));
+							if (BuffItem) BuffItem.EffectTics += timegive;
+						}
+						MiscItem.IPArmorTimesUsed++;
+						owner.A_StartSound("ipmode/armoruse",62);
+						owner.A_SetBlend("fc 3c 96",0.4,25);
+					}
+					else
+					{
+						owner.A_StartSound("inv_fail",62);
+					}
+				}
+			}
+		}
+		Destroy();
+	}
+}
+
 class KnightGownIPBuff : PowerProtection
 {
 	double ticpiece;
@@ -2660,6 +2713,54 @@ class KnightGownIP3Buff : KnightGownIPBuff
 		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
 		
 		if (!owner.CountInv("KnightGownItem3")) 
+		{
+			if (MiscItem) MiscItem.IPArmorTimesUsed = 0;
+			Destroy();
+		}
+		Super.Tick();
+	}
+}
+
+class KnightGownIP4Buff : KnightGownIPBuff
+{
+	default
+	{
+		DamageFactor "Normal", 0.0625;
+		DamageFactor "Melee", 0.09375;
+		DamageFactor "BFGSplash", 0.09375;
+		DamageFactor "Bonk", 0.0625;
+		DamageFactor "Cricket", 0.0625;
+		DamageFactor "Chop", 0.0625;
+		DamageFactor "Lead", 0.0625;
+		DamageFactor "Breakfast", 0.0625;
+		DamageFactor "Zap", 0.0625;
+		DamageFactor "Suck", 0.0625;
+		DamageFactor "Dust", 0.0625;
+		DamageFactor "Beats", 0.0625;
+		DamageFactor "Cherrybomb", 0.0625;
+		DamageFactor "BRocket", 0.0625;
+		DamageFactor "Spinner", 0.0625;
+		DamageFactor "Popper", 0.0625;
+		DamageFactor "Dashing", 0.0625;
+		DamageFactor "DashingBG", 0.0625;
+		DamageFactor "Bap", 0.0625;
+		DamageFactor "Fire", 0.0625;
+		DamageFactor "Boiling", 0.0625;
+		Inventory.Icon "KNGW4IP1";
+	}
+	string texname;
+	int timer;
+	
+	override void Tick()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		timer++;
+		if (timer % 20 >= 0 && timer % 20 <= 9) texname = "KNGW4IP1";
+		if (timer % 20 >= 10 && timer % 20 <= 19) texname = "KNGW4IP2";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		
+		if (!owner.CountInv("KnightGownItem4"))
 		{
 			if (MiscItem) MiscItem.IPArmorTimesUsed = 0;
 			Destroy();
