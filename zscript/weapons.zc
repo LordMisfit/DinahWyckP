@@ -80,7 +80,7 @@ class DDWeapon : Weapon
 		{
 			if (MissSound) A_StartSound(MissSound, CHAN_WEAPON);
 		}
-		else
+		else // The attack hits and deals feasible damage
 		{
 			if (lifesteal > 0 && !(t.linetarget.bDontDrain))
 			{
@@ -102,7 +102,7 @@ class DDWeapon : Weapon
 
 							if (!armorbonus.CallTryPickup(self))
 							{
-								armorbonus.Destroy ();
+								armorbonus.Destroy();
 							}
 						}
 					}
@@ -113,6 +113,7 @@ class DDWeapon : Weapon
 				}
 			}
 			
+			// New Section - Makes Melee IP attacks only consume IP cost if they successfully hit a damageable target
 			if (IPCostOnHit && invoker.IPCostTemp > 0)
 			{
 				If (MiscItem.ItemPoints >= invoker.IPCostTemp && globalvars.ItemPoints >= invoker.IPCostTemp)
@@ -123,14 +124,16 @@ class DDWeapon : Weapon
 				invoker.IPCostTemp = 0;
 			}
 			
+			// New Section - For IP attacks like the Pike's Melee which steal two units of ammo to your collection on a hit
 			if (giveammotype != "" && giveammoamt > 0)
 			{
 				player.mo.A_GiveInventory(giveammotype,giveammoamt);
 			}
+			
 			if (weapon != NULL)
 			{
 				if (MeleeSound) A_StartSound(MeleeSound, CHAN_WEAPON);
-				else			A_StartSound(weapon.AttackSound, CHAN_WEAPON);
+				else A_StartSound(weapon.AttackSound, CHAN_WEAPON);
 			}
 
 			if (!(flags & CPF_NOTURN))
@@ -196,12 +199,13 @@ class DDWeapon : Weapon
 
 	action void A_CheckIPState1()
 	{
+		actor player = players[0].mo;
 		invoker.IPAttackCheck = 0;
 		invoker.buttons = GetPlayerInput(INPUT_BUTTONS);
 		int buttonspressed = 0;
 		if (exex_ikaripointsenabled)
 		{
-			if (player.mo && player.mo.CountInv("IPUseMode")) invoker.IPAttackCheck = 1;
+			if (player && player.CountInv("IPUseMode")) invoker.IPAttackCheck = 1;
 		}
 	}
 	
@@ -246,7 +250,49 @@ class DDWeapon : Weapon
 			}
 		}
 	}
-
+	
+	action void A_ConfirmIPAttackSigil(int ipid = 181, int IPVoiceType = 0, int basevoicechance = 1, int maxvoiceroll = 3, bool takecost = true, int sigilcost = 0)
+	{
+		if (dydudebug_ipdisplays) Console.Printf("\c[green][IPUse: %d]", ipid);
+		actor player = players[0].mo;
+		if (player)
+		{
+			if (dydudebug_ipdisplays) Console.Printf("\c[green][IPUse: %d] PlayerCheck", ipid);
+			let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+			let globalvars = DDGlobalVariables.Get();
+			if (exex_ikaripointsenabled && MiscItem && globalvars && invoker.IPAttackCheck)
+			{
+				double cost = invoker.A_GetIPCost(ipid,true,sigilcost);
+				if (dydudebug_ipdisplays) Console.Printf("\c[green][IPUse: %d] Cost: %.4f", ipid, cost);
+				if (takecost)
+				{
+					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+					{
+						MiscItem.ItemPoints -= cost;
+						globalvars.ItemPoints -= cost;
+					}
+					else
+					{
+						invoker.IPAttackCheck = 0;
+					}
+				}
+				else
+				{
+					If (MiscItem.ItemPoints < cost && globalvars.ItemPoints < cost)
+					{
+						invoker.IPCostTemp = 0;
+						invoker.IPAttackCheck = 0;
+					}
+					else
+					{
+						invoker.IPCostTemp = cost;
+					}
+				}
+				if (invoker.IPAttackCheck) invoker.A_IPDinahVoiceSelect(IPVoiceType,basevoicechance,maxvoiceroll);
+			}
+		}
+	}
+	
 	action void A_ConfirmIPAttackExtra(int ipid = 0, int IPVoiceType = 0, int basevoicechance = 0, int maxvoiceroll = 0, string AmmoType = "", int ammocost = 0, bool takecost = true)
 	{
 		actor player = players[0].mo;

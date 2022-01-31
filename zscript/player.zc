@@ -608,7 +608,7 @@ class DDPlayerPawn : PlayerPawn
 		
 		bool SigilDrain;
 		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Step 1] - Base: %d", damage);
-		if (mod == 'Sigil' && source == null && inflictor == self && flags & DMG_NO_ARMOR)
+		if (mod == 'SigilDrain' && source == null && inflictor == self && flags & DMG_NO_ARMOR)
 		{
 			flags |= DMG_NO_FACTOR;
 			flags |= DMG_NO_PROTECT;
@@ -628,6 +628,7 @@ class DDPlayerPawn : PlayerPawn
 				mod != 'Magic' || 
 				mod != 'Eldritch' || 
 				mod != 'Sigil' || 
+				mod != 'SigilDrain' || 
 				mod != 'SpectralLow')
 		{
 			if (mod == 'Beats' && flags & DMG_EXPLOSION && AttackingActor == self)
@@ -651,6 +652,7 @@ class DDPlayerPawn : PlayerPawn
 				mod == 'PoisonCloud' || 
 				mod == 'Eldritch' || 
 				mod == 'Sigil' ||
+				mod == 'SigilDrain' ||
 				mod == 'SpectralLow')
 		{
 			if (SigilDrain) { } else damage = ceil(damage * 0.875);
@@ -1094,7 +1096,8 @@ class DDPlayerPawn : PlayerPawn
 					if (firstdmg > ret) combatlogmsg.AppendFormat("[\c[lightblue]%d\c-] ", (ret - firstdmg));
 					else if (firstdmg < ret) combatlogmsg.AppendFormat("[\c[brick]+%d\c-] ", (ret - firstdmg));
 				}
-				combatlogmsg.AppendFormat("of damage taken ");
+				if (mod == 'SigilDrain') combatlogmsg.AppendFormat("of damage drained ");
+														else combatlogmsg.AppendFormat("of damage taken ");
 			}
 			else
 			{
@@ -1116,9 +1119,9 @@ class DDPlayerPawn : PlayerPawn
 			else
 			if (inflictor) // No source, but has an inflictor
 			{
-				combatlogmsg.AppendFormat(" from %s", inflictor.GetTag());
+				if (mod == 'SigilDrain') combatlogmsg.AppendFormat("by the Sigil!");
+											 else combatlogmsg.AppendFormat("from \c[brick]%s!");
 			}
-			combatlogmsg.AppendFormat("!");
 			combatlogmsg.AppendFormat(" [%s]", mod);
 			if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-", mod);
 			if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
@@ -1163,6 +1166,10 @@ class DDPlayerPawn : PlayerPawn
 						if (base >= 100.001) base *= 1.25;
 						if (oldhealth > 1 && health == 1) base += MiscItem.MaxItemPoints;
 					}
+				}
+				if (mod == 'SigilDrain')
+				{
+					base *= frandompick(0.2,0.25,0.25,0.25,0.25,0.25,0.334);
 				}
 				if (DDOrigCreature(source) || DDOrigCreature(inflictor))
 				{

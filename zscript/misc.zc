@@ -2175,6 +2175,12 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerWineBuffStrongestEven")) BuffFactor *= frandompick(0.85,1.15);
 			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Buff): %.8f", BuffFactor);
 			
+			double ArmorIPFactor = 1.00;
+			if (owner.CountInv("KnightGownItem") && owner.CountInv("KnightGownIP1Buff")) ArmorIPFactor = 1.075;
+			if (owner.CountInv("KnightGownItem2") && owner.CountInv("KnightGownIP2Buff")) ArmorIPFactor = 1.15;
+			if (owner.CountInv("KnightGownItem3") && owner.CountInv("KnightGownIP3Buff")) ArmorIPFactor = 1.375;
+			if (owner.CountInv("KnightGownItem4") && owner.CountInv("KnightGownIP4Buff")) ArmorIPFactor = 1.675;
+			
 			double TimeFactor = 1.00;
 			if (TimeFreezeTimer && TimeFreezeIPBuff)
 			{
@@ -2188,9 +2194,9 @@ class PlayerStatItem : Inventory
 				let Sigl = SigilDD(owner.FindInventory("SigilDD"));
 				if (Sigl)
 				{
-					SigilFactor = (0.875 + ((Sigl.health - 1) * 0.03125));
+					SigilFactor = (0.75 + frandom(0.0000,((Sigl.health - 1) * 0.0625)));
+					if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Sigil): %.8f", SigilFactor);
 				}
-				if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Sigil): %.8f", SigilFactor);
 			}
 			
 			double SecretFactor = 1.0;
@@ -2217,6 +2223,7 @@ class PlayerStatItem : Inventory
 													 * LandingFactor
 													 * BuffFactor
 													 * TimeFactor
+													 * ArmorIPFactor
 													 * SecretFactor
 													 * CrisisFactor
 													 * SigilFactor
@@ -2552,8 +2559,11 @@ class PlayerStatItem : Inventory
 		}
 		if (owner.CountInv("KnightGownItem4")) 
 		{
-			if (berserked) ArmorFactor *= (0.95 + (PlayerLevel * 0.001));
-								else ArmorFactor *= (0.90 + (PlayerLevel * 0.001));
+			if (!owner.CountInv("KnightGownIP4Buff"))
+			{
+				if (berserked) ArmorFactor *= (0.95 + (PlayerLevel * 0.001));
+									else ArmorFactor *= (0.90 + (PlayerLevel * 0.001));
+			}
 		}
 		if (ArmorFactor > 1.00) ArmorFactor = 1.00;
 		Speed *= ArmorFactor;

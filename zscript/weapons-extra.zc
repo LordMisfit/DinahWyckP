@@ -166,6 +166,7 @@ class SigilDD : DinahWeapon replaces Sigil
 	int downpieces;
 	int basedrain;
 	int drainamt;
+	int truedrainamt;
 	
 	Default
 	{
@@ -386,40 +387,68 @@ class SigilDD : DinahWeapon replaces Sigil
 			goto Ready;
 		
 		Fire:
-			TNT1 A 0 A_JumpIf(CountInv("SigilModeType",AAPTR_PLAYER1) >= 5, "Fire5");
-			TNT1 A 0 A_JumpIf(CountInv("SigilModeType",AAPTR_PLAYER1) == 4, "Fire4");
-			TNT1 A 0 A_JumpIf(CountInv("SigilModeType",AAPTR_PLAYER1) == 3, "Fire3");
-			TNT1 A 0 A_JumpIf(CountInv("SigilModeType",AAPTR_PLAYER1) == 2, "Fire2");
-			TNT1 A 0 A_JumpIf(CountInv("SigilModeType",AAPTR_PLAYER1) <= 1, "Fire1");
+			TNT1 A 0
+			{
+				invoker.A_CheckIPState1();
+				invoker.A_ConfirmIPAttackSigil(181,0,1,3,true,(3 * CountInv("SigilModeType")));
+
+				if (CountInv("SigilModeType") >= 5) 
+				{
+					return resolvestate("Fire5");
+				}
+				if (CountInv("SigilModeType") == 4) 
+				{
+					return resolvestate("Fire4");
+				}
+				if (CountInv("SigilModeType") == 3)
+				{
+					return resolvestate("Fire3");
+				}
+				if (CountInv("SigilModeType") == 2)
+				{
+					return resolvestate("Fire2");
+				}
+				if (CountInv("SigilModeType") <= 1) 
+				{
+					return resolvestate("Fire1");
+				}
+				return resolvestate(null);
+			}
 		Fire1:
 			DSGH A 18 Bright A_SigilCharge(18);
 			DSGH A 3 Bright A_GunFlashSigil(3);
 			DSGH A 10 A_FireSigil1(10);
 			DSGH A 5 A_EndSigilFire(5);
-			Goto Ready;
+			Goto FireEnd;
 		Fire2:
 			DSGH B 18 Bright A_SigilCharge(18);
 			DSGH B 3 Bright A_GunFlashSigil(3);
 			DSGH B 10 A_FireSigil2(10);
 			DSGH B 5 A_EndSigilFire(5);
-			Goto Ready;
+			Goto FireEnd;
 		Fire3:
 			DSGH C 18 Bright A_SigilCharge(18);
 			DSGH C 3 Bright A_GunFlashSigil(3);
 			DSGH C 10 A_FireSigil3(10);
 			DSGH C 5 A_EndSigilFire(5);
-			Goto Ready;
+			Goto FireEnd;
 		Fire4:
 			DSGH D 18 Bright A_SigilCharge(18);
 			DSGH D 3 Bright A_GunFlashSigil(3);
 			DSGH D 10 A_FireSigil4(10);
 			DSGH D 5 A_EndSigilFire(5);
-			Goto Ready;
+			Goto FireEnd;
 		Fire5:
 			DSGH E 18 Bright A_SigilCharge(18);
 			DSGH E 3 Bright A_GunFlashSigil(3);
 			DSGH E 10 A_FireSigil5(10);
 			DSGH E 5 A_EndSigilFire(5);
+			Goto FireEnd;
+		FireEnd:
+			TNT1 A 0
+			{
+				invoker.A_CheckIPModeOnUse();
+			}
 			Goto Ready;
 		Flash:
 			DSGF A 4 Bright A_Light2;
@@ -484,9 +513,9 @@ class SigilDD : DinahWeapon replaces Sigil
 	//
 	//============================================================================
 	
-	void A_SelectPiece ()
+	void A_SelectPiece()
 	{
-		int pieces = min (health, 5);
+		int pieces = min(health, 5);
 
 		if (pieces > 1)
 		{
@@ -494,7 +523,7 @@ class SigilDD : DinahWeapon replaces Sigil
 		}
 	}
 
-	action void A_GetSigilDrainAmt()
+	action void A_GetSigilDrainAmt(int usetype = 0)
 	{
 		invoker.drainamt = (0.03 * Player.mo.CountInv("PlayerMaxHP"));
 		if (invoker.drainamt < 1) invoker.drainamt = 1;
@@ -502,6 +531,19 @@ class SigilDD : DinahWeapon replaces Sigil
 		if (bINVULNERABLE || player.cheats & CF_GODMODE2 || player.cheats & CF_GODMODE || CountInv("PowerInvulnDD") || CountInv("PowerInvulnerable"))
 		{
 			invoker.drainamt = 0;
+		}
+		invoker.truedrainamt = invoker.drainamt;
+		if (CountInv("IPUseMode"))
+		{
+			let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+			let globalvars = DDGlobalVariables.Get();
+			double sigilcost = (3.0 * player.mo.CountInv("SigilModeType"));
+			invoker.IPCostTemp = invoker.A_GetIPCost(181,true,sigilcost);
+			If (MiscItem.ItemPoints >= invoker.IPCostTemp && globalvars.ItemPoints >= invoker.IPCostTemp)
+			{
+				invoker.truedrainamt = ceil(int(0.334 * invoker.truedrainamt));
+				if (invoker.truedrainamt < 1) invoker.truedrainamt = 1;
+			}
 		}
 	}
 
@@ -577,6 +619,8 @@ class SigilDD : DinahWeapon replaces Sigil
 		if (Player.mo.FindInventory("PowerStrength") || Player.mo.FindInventory("PowerStrengthDD")) ticduration *= frandompick(0.875,1.0);
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 		if (MiscItem) ticduration -= (MiscItem.PlayerLevel * levelfactor);
+		if (invoker.IPAttackCheck) ticduration = ceil(ticduration * 0.5);
+		if (ticduration < 1) ticduration = 1;
 		A_SetTics(ticduration);
 	}
 
@@ -620,36 +664,76 @@ class SigilDD : DinahWeapon replaces Sigil
 	action void A_FireSigil1(int ticduration)
 	{
 		Actor spot = null;
+		DDProjectile spot2 = null;
 		FTranslatedLineTarget t;
 
 		if (player == null || player.ReadyWeapon == null)
 			return;
+		
+		double draindmg = (1.0 * invoker.basedrain);
+		if (invoker.IPAttackCheck) draindmg = ceil(int(0.334 * draindmg));
+		if (draindmg < 1) draindmg = 1;
 
-		DamageMobj (self, null, 1*invoker.basedrain, 'Sigil', DMG_NO_ARMOR);
+		DamageMobj (self, null, draindmg, 'SigilDrain', DMG_NO_ARMOR);
 		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 
-		BulletSlope (t, ALF_PORTALRESTRICT);
-		if (t.linetarget != null)
+		double shotangle = 0;
+		double shotangleend = 0;
+		double shotangleinc = 0;
+		double origangle = angle;
+		int maxshots = 1;
+		if (invoker.IPAttackCheck) 
 		{
-			spot = Spawn("SpectralLightningSpot", (t.linetarget.pos.xy, t.linetarget.floorz), ALLOW_REPLACE);
-			if (spot != null)
+			if (random(1,8) <= 1)
 			{
-				spot.tracer = t.linetarget;
+				shotangle = 0;
+				shotangleend = 360;
+				shotangleinc = 90;
+				maxshots = 4;
+			}
+			else
+			{
+				shotangle = 0;
+				shotangleend = 360;
+				shotangleinc = 120;
+				maxshots = 3;
 			}
 		}
-		else
+		
+		if (invoker.IPAttackCheck) A_SetAngle(angle+shotangle);
+		for (int i = 0; i < maxshots; i++)
 		{
-			spot = Spawn("SpectralLightningSpot", Pos, ALLOW_REPLACE);
+			BulletSlope (t, ALF_PORTALRESTRICT);
+			if (t.linetarget != null)
+			{
+				spot = Spawn("SpectralLightningSpotNew", (t.linetarget.pos.xy, t.linetarget.floorz), ALLOW_REPLACE);
+				if (spot != null)
+				{
+					spot.tracer = t.linetarget;
+				}
+			}
+			else
+			{
+				if (i && invoker.IPAttackCheck) A_SetAngle(angle+shotangleinc);
+				spot = Spawn("SpectralLightningSpotNew", Pos, ALLOW_REPLACE);
+				if (spot != null)
+				{
+					spot.VelFromAngle(28., angle);
+				}
+			}
 			if (spot != null)
 			{
-				spot.VelFromAngle(28., angle);
+				spot.SetFriendPlayer(player);
+				spot.target = self;
+				if (invoker.IPAttackCheck)
+				{
+					spot.ReactionTime = randompick(70,random(87,88),random(87,88),random(87,88),random(87,88),random(87,88),105);
+					spot2 = DDProjectile(spot);
+					if (spot2) spot2.IPAttack = true;
+				}
 			}
 		}
-		if (spot != null)
-		{
-			spot.SetFriendPlayer(player);
-			spot.target = self;
-		}
+		if (invoker.IPAttackCheck) A_SetAngle(origangle);
 		
 		A_SigilFireTics(ticduration,0.075);
 	}
@@ -662,12 +746,72 @@ class SigilDD : DinahWeapon replaces Sigil
 
 	action void A_FireSigil2(int ticduration)
 	{
+		DDProjectile spot2;
 		if (player == null || player.ReadyWeapon == null)
 			return;
 
-		DamageMobj (self, null, 2*invoker.basedrain, 'Sigil', DMG_NO_ARMOR);
+		double draindmg = (2.0 * invoker.basedrain);
+		if (invoker.IPAttackCheck) draindmg = ceil(int(0.334 * draindmg));
+		if (draindmg < 1) draindmg = 1;
+
+		DamageMobj (self, null, draindmg, 'SigilDrain', DMG_NO_ARMOR);
 		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
-		SpawnPlayerMissile ("SpectralLightningH1");
+		
+		double shotangle = 0;
+		double shotangleend = 0;
+		double shotangleinc = 0;
+		double origangle = angle;
+		int extrabounces = 0;
+		int maxshots = 1;
+		if (invoker.IPAttackCheck) 
+		{
+			if (random(1,8) <= 1)
+			{
+				shotangle = -40;
+				shotangleend = 40;
+				shotangleinc = 20;
+				maxshots = 5;
+				extrabounces = randompick(1,1,1,1,2);
+			}
+			else
+			{
+				shotangle = -30;
+				shotangleend = 30;
+				shotangleinc = 30;
+				maxshots = 3;
+				extrabounces = 0;
+			}
+		}
+		
+		if (invoker.IPAttackCheck) A_SetAngle(angle+shotangle);
+		for (int i = 0; i < maxshots; i++)
+		{
+			if (i && invoker.IPAttackCheck) A_SetAngle(angle+shotangleinc);
+			Actor spot = SpawnPlayerMissile("SpectralLightningH1New");
+			if (spot != null)
+			{
+				spot.target = self;
+				if (invoker.IPAttackCheck)
+				{
+					spot.Speed *= 1.5;
+					spot.BounceFactor = 1.00;
+					spot.WallBounceFactor = 1.00;
+					spot.BounceCount = 2 + extrabounces;
+					spot.bSKYEXPLODE = true;
+					spot.bBOUNCEONWALLS = true;
+					spot.bBOUNCEONFLOORS = true;
+					spot.bBOUNCEONCEILINGS = true;
+					spot.bCANBOUNCEWATER = true;
+					spot.bDONTBOUNCEONSHOOTABLES = true;
+					spot2 = DDProjectile(spot);
+					if (spot2)
+					{
+						spot2.IPAttack = true;
+					}
+				}
+			}
+		}
+		if (invoker.IPAttackCheck) A_SetAngle(origangle);
 		
 		A_SigilFireTics(ticduration,0.075);
 	}
@@ -680,20 +824,44 @@ class SigilDD : DinahWeapon replaces Sigil
 
 	action void A_FireSigil3(int ticduration)
 	{
+		DDProjectile spot2;
 		if (player == null || player.ReadyWeapon == null)
 			return;
 
-		DamageMobj (self, null, 3*invoker.basedrain, 'Sigil', DMG_NO_ARMOR);
+		double draindmg = (3.0 * invoker.basedrain);
+		if (invoker.IPAttackCheck) draindmg = ceil(int(0.334 * draindmg));
+		if (draindmg < 1) draindmg = 1;
+
+		DamageMobj (self, null, draindmg, 'SigilDrain', DMG_NO_ARMOR);
 		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 
 		angle -= 90.;
 		for (int i = 0; i < 20; ++i)
 		{
 			angle += 9.;
-			Actor spot = SpawnSubMissile ("SpectralLightningBall1", self);
+			Actor spot = SpawnSubMissile("SpectralLightningBall1New", self);
 			if (spot != null)
 			{
 				spot.SetZ(pos.z + 32);
+				if (target) spot.target = target;
+				if (invoker.IPAttackCheck)
+				{
+					spot.Speed *= 1.5;
+					spot.BounceFactor = 1.00;
+					spot.WallBounceFactor = 1.00;
+					spot.BounceCount = 2;
+					spot.bSKYEXPLODE = true;
+					spot.bBOUNCEONWALLS = true;
+					spot.bBOUNCEONFLOORS = true;
+					spot.bBOUNCEONCEILINGS = true;
+					spot.bCANBOUNCEWATER = true;
+					spot.bDONTBOUNCEONSHOOTABLES = true;
+					spot2 = DDProjectile(spot);
+					if (spot2)
+					{
+						spot2.IPAttack = true;
+					}
+				}
 			}
 		}
 		angle -= 90.;
@@ -709,18 +877,24 @@ class SigilDD : DinahWeapon replaces Sigil
 
 	action void A_FireSigil4(int ticduration)
 	{
+		DDProjectile spot2;
 		FTranslatedLineTarget t;
 		
 		if (player == null || player.ReadyWeapon == null)
 			return;
 
-		DamageMobj (self, null, 4*invoker.basedrain, 'Sigil', DMG_NO_ARMOR);
-		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
+		double draindmg = (4.0 * invoker.basedrain);
+		if (invoker.IPAttackCheck) draindmg = ceil(int(0.334 * draindmg));
+		if (draindmg < 1) draindmg = 1;
 
+		DamageMobj (self, null, draindmg, 'SigilDrain', DMG_NO_ARMOR);
+		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
+		
+		Actor spot;
 		BulletSlope (t, ALF_PORTALRESTRICT);
 		if (t.linetarget != null)
 		{
-			Actor spot = SpawnPlayerMissile ("SpectralLightningBigV1", angle, pLineTarget: t, aimFlags: ALF_PORTALRESTRICT);
+			spot = SpawnPlayerMissile ("SpectralLightningBigV1New", angle, pLineTarget: t, aimFlags: ALF_PORTALRESTRICT);
 			if (spot != null)
 			{
 				spot.tracer = t.linetarget;
@@ -728,10 +902,32 @@ class SigilDD : DinahWeapon replaces Sigil
 		}
 		else
 		{
-			Actor spot = SpawnPlayerMissile ("SpectralLightningBigV1");
+			spot = SpawnPlayerMissile ("SpectralLightningBigV1New");
 			if (spot != null)
 			{
 				spot.VelFromAngle(spot.Speed, angle);
+			}
+		}
+		if (spot != null)
+		{
+			spot.target = self;
+			if (invoker.IPAttackCheck)
+			{
+				spot.Speed *= 1.5;
+				spot.BounceFactor = 1.00;
+				spot.WallBounceFactor = 1.00;
+				spot.BounceCount = 2;
+				spot.bSKYEXPLODE = true;
+				spot.bBOUNCEONWALLS = true;
+				spot.bBOUNCEONFLOORS = true;
+				spot.bBOUNCEONCEILINGS = true;
+				spot.bCANBOUNCEWATER = true;
+				spot.bDONTBOUNCEONSHOOTABLES = true;
+				spot2 = DDProjectile(spot);
+				if (spot2)
+				{
+					spot2.IPAttack = true;
+				}
 			}
 		}
 		
@@ -749,10 +945,30 @@ class SigilDD : DinahWeapon replaces Sigil
 		if (player == null || player.ReadyWeapon == null)
 			return;
 
-		DamageMobj (self, null, 5*invoker.basedrain, 'Sigil', DMG_NO_ARMOR);
+		double draindmg = (5.0 * invoker.basedrain);
+		if (invoker.IPAttackCheck) draindmg = ceil(int(0.334 * draindmg));
+		if (draindmg < 1) draindmg = 1;
+
+		DamageMobj (self, null, draindmg, 'SigilDrain', DMG_NO_ARMOR);
 		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 
-		SpawnPlayerMissile ("SpectralLightningBigBall1");
+		Actor spot = SpawnPlayerMissile("SpectralLightningBigBall1New");
+		if (spot != null)
+		{
+			if (invoker.IPAttackCheck)
+			{
+				spot.Speed *= 1.5;
+				spot.BounceFactor = 1.00;
+				spot.WallBounceFactor = 1.00;
+				spot.BounceCount = 2;
+				spot.bSKYEXPLODE = true;
+				spot.bBOUNCEONWALLS = true;
+				spot.bBOUNCEONFLOORS = true;
+				spot.bBOUNCEONCEILINGS = true;
+				spot.bCANBOUNCEWATER = true;
+				spot.bDONTBOUNCEONSHOOTABLES = true;
+			}
+		}
 		
 		A_SigilFireTics(ticduration,0.075);
 	}
@@ -882,6 +1098,8 @@ class Sigil5DD : SigilDD replaces Sigil5
 
 // The base class for attacks used by The Sigil of the One God, whether they are the Player's attacks or those of a Spectral Monster. 
 // The base class also has a bit of explosive radius for their impact, although not all of their inheritors use said explosive damage.
+
+// Container for all spectral lightning deaths ------------------------------
 class SpectralLightningBaseNew : DDProjectile // replaces SpectralLightningBase 
 {
 	default
@@ -923,6 +1141,240 @@ class SpectralLightningBaseNew : DDProjectile // replaces SpectralLightningBase
 			{
 			}
 			Stop;
+	}
+}
+
+
+// Spectral Lightning death that does not explode ---------------------------
+class SpectralLightningDeath1New : SpectralLightningBaseNew
+{
+	States
+	{
+		Death:
+			Goto Super::Death+1;
+	}
+}
+
+// Spectral Lightning death that does not alert monsters --------------------
+class SpectralLightningDeath2New : SpectralLightningBaseNew
+{
+	States
+	{
+		Death:
+			Goto Super::Death+2;
+	}
+}
+
+// Spectral Lightning death that is shorter than the rest -------------------
+class SpectralLightningDeathShortNew : SpectralLightningBaseNew
+{
+	States
+	{
+		Death:
+			Goto Super::Death+6;
+	}
+}
+
+// Sigil Lightning Spot (roams around dropping lightning from above) --------
+class SpectralLightningSpotNew : SpectralLightningDeath1New
+{
+	Default
+	{
+		Speed 18;
+		ReactionTime 70;
+		+NOBLOCKMAP
+		+NOBLOCKMONST
+		+NODROPOFF
+		RenderStyle "Translucent";
+		Alpha 0.6;
+	}
+
+	States
+	{
+		Spawn:
+			ZAP5 A 4 Bright A_Countdown;
+			ZAP5 B 4 Bright A_SpectralLightning;
+			ZAP5 CD 4 Bright A_Countdown;
+			Loop;
+	}
+}
+
+// Sigil Lightning (Vertical #1) --------------------------------------------
+class SpectralLightningV1New : SpectralLightningDeathShortNew
+{
+	Default
+	{
+		Speed 22;
+		Radius 8;
+		Height 24;
+		Damage 100;
+		Projectile;
+		DamageType "SpectralLow";
+		+SPECTRAL
+	}
+	States
+	{
+		Spawn:
+			ZOT1 AB 4 Bright;
+			ZOT1 CDE 6 Bright;
+			Loop;
+	}
+}
+
+// Sigil Lightning (Vertical #2 - less damaging) ----------------------------
+class SpectralLightningV2New : SpectralLightningV1New
+{
+	Default
+	{
+		Damage 50;
+	}
+}
+
+// Spectral Lightning (Horizontal #1) -------------------------------------
+class SpectralLightningH1New : SpectralLightningBaseNew
+{
+	Default
+	{
+		Speed 30;
+		Radius 8;
+		Height 16;
+		Damage 70;
+		Projectile;
+		+SPECTRAL
+	}
+	
+	States
+	{
+		Spawn:
+			ZAP6 A 4 Bright;
+			ZAP6 BC 4 Bright A_SpectralLightningTail;
+			Loop;
+	}
+}
+
+// Spectral Lightning (Horizontal #2) -------------------------------------
+class SpectralLightningH2New : SpectralLightningH1New
+{
+	Default
+	{
+		Damage 20;
+	}
+}
+
+// Spectral Lightning (Horizontal #3) -------------------------------------
+class SpectralLightningH3New : SpectralLightningH1New
+{
+	Default
+	{
+		Damage 10;
+	}
+}
+	
+// ASpectralLightningHTail --------------------------------------------------
+class SpectralLightningHTailNew : DDProjectile
+{
+	Default
+	{
+		+NOBLOCKMAP
+		+NOGRAVITY
+		+DROPOFF
+		+ZDOOMTRANS
+		RenderStyle "Add";
+	}
+	States
+	{
+	Spawn:
+		ZAP6 ABC 5 Bright;
+		Stop;
+	}
+}
+	
+// Spectral Lightning (Ball Shaped #1) --------------------------------------
+class SpectralLightningBall1New : SpectralLightningBaseNew
+{
+	Default
+	{
+		Speed 30;
+		Radius 8;
+		Height 16;
+		Damage 70;
+		Projectile;
+		+SPECTRAL
+	}
+	States
+	{
+	Spawn:
+		ZOT3 ABCDE 4 Bright;
+		Loop;
+	}
+}
+
+// Spectral Lightning (Ball Shaped #2) --------------------------------------
+class SpectralLightningBall2New : SpectralLightningBall1New
+{
+	Default
+	{
+		Damage 20;
+	}
+}
+	
+// Sigil Lightning (Big Vertical #1) ----------------------------------------
+class SpectralLightningBigV1New : SpectralLightningDeath1New
+{
+	Default
+	{
+		Speed 28;
+		Radius 8;
+		Height 16;
+		Damage 120;
+		Projectile;
+		+SPECTRAL
+	}
+	States
+	{
+		Spawn:
+			ZOT2 ABCDE 4 Bright A_Tracer2;
+			Loop;
+	}
+}
+
+// Sigil Lightning (Big Vertical #2) ----------------------------------------
+class SpectralLightningBigV2New : SpectralLightningBigV1New
+{
+	Default
+	{
+		Damage 60;
+	}
+}
+
+// Spectral Lightning (Big Ball #1) -----------------------------------------
+class SpectralLightningBigBall1New : SpectralLightningDeath2New
+{
+	Default
+	{
+		Speed 18;
+		Radius 20;
+		Height 40;
+		Damage 130;
+		Projectile;
+		+SPECTRAL
+	}
+	
+	States
+	{
+		Spawn:
+			ZAP7 AB 4 Bright A_SpectralBigBallLightning;
+			ZAP7 CDE 6 Bright A_SpectralBigBallLightning;
+			Loop;
+	}
+}
+
+// Spectral Lightning (Big Ball #2 - less damaging) -------------------------
+class SpectralLightningBigBall2New : SpectralLightningBigBall1New
+{
+	Default
+	{
+		Damage 30;
 	}
 }
 
@@ -1551,3 +2003,4 @@ class Popcorn_Shrap7 : DDProjectile
 			Stop;
 	}
 }
+
