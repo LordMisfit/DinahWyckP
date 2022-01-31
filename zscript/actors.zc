@@ -4,7 +4,6 @@ class DDBaseZSC : Actor abstract
 	mixin DmgCalc;
 	mixin CollisionChecker;
 	mixin InvWeaponShare;
-	int CharacterClass;
 	
 	// General
 	const SKILL_VERY_EASY = 0;
@@ -302,10 +301,8 @@ class DDProjectile : DDBaseZSC abstract
 	
 	int A_GetSigilDamage(int attacktype = 0, int radiustype = 0)
 	{
-		bool debugsigilatkinfo;
 		int result, extradmg1, extradmg2, extradmg3, extradmg4, extradmg5, extradmg6, prefinaldmg, finaldmg;
 		int rand1, rand2;
-		int perkfactor = 10000;
 		PlayerPawn playpawn;
 		if (target) playpawn = PlayerPawn(target);
 		if (playpawn)
@@ -431,6 +428,12 @@ class DDProjectile : DDBaseZSC abstract
 			}
 		}
 		
+		if (dydudebug_sigilatkinfo)
+		{
+			if (radiustype == 0) Console.Printf("Damage Result: %d", result);
+			if (radiustype == 1) Console.Printf("Radius Result: %d", result);
+		}
+		
 		// Final Calculations
 		string AttackerName = "NONE";
 		if (target) AttackerName = target.GetClassName();
@@ -438,13 +441,13 @@ class DDProjectile : DDBaseZSC abstract
 		double minerror = 0.67;
 		double maxerror = 1.34;
 
-		if (radiustype == 0) // Direct Damage is randomized a lot
+		if (radiustype == 0) // Direct Damage is randomized a bit
 		{
-			minerror = 0.67;
-			maxerror = 1.34;
+			minerror = 0.8334;
+			maxerror = 1.1667;
 			if (playpawn) // if (IsPointerEqual(AAPTR_TARGET, AAPTR_PLAYER1) == TRUE) // AAPTR_TARGET - the being who fires the shot
 			{
-				if (debugsigilatkinfo) Console.Printf("Player Sigil Shot [damage] (%s), %d", AttackerName, attacktype);
+				if (dydudebug_sigilatkinfo) Console.Printf("Player Sigil Shot [damage] (%s), %d", AttackerName, attacktype);
 				
 				rand1 = floor((extradmg1 + extradmg2 + extradmg3 + extradmg4 + extradmg5 + extradmg6) * minerror);
 				rand2 = floor((extradmg1 + extradmg2 + extradmg3 + extradmg4 + extradmg5 + extradmg6) * maxerror);
@@ -476,17 +479,17 @@ class DDProjectile : DDBaseZSC abstract
 				int hpextradmg = 100;
 				int hpextradmgfactor = (MaxHealthTrue * 100);
 				int hpextradmg2 = (hpextradmgfactor / BaseSigilMaxHealth) / 5;
-				int hpextradmg3 = (hpextradmg + hpextradmg2);
+				int hpextradmg3 = ((hpextradmg + hpextradmg2) - 20);
 				finaldmg = (finaldmg * hpextradmg3) / 100;
 			
-				if (debugsigilatkinfo) Console.Printf("\cy(%s) (attacktype: %d)\c- (radiustype: %d): BaseDmg: %d, Extra1: %d, Extra2: %d, Extra3: %d, Extra4: %d, Extra5: %d, Extra6: %d, Original Max HP: %d, Current Max HP: %d, hpextradmg: %d, hpextradmgfactor: %d, hpextradmg2: %d, hpextradmg3: %d, Random: %d - %d, PerkFactor: %d, Total [Pre Max HP Check] %d, \cxTotal [Post Max HP Check]: %d\c-", 
+				if (dydudebug_sigilatkinfo) Console.Printf("\cy(%s) (attacktype: %d)\c- (radiustype: %d): BaseDmg: %d, Extra1: %d, Extra2: %d, Extra3: %d, Extra4: %d, Extra5: %d, Extra6: %d, Original Max HP: %d, Current Max HP: %d, hpextradmg: %d, hpextradmgfactor: %d, hpextradmg2: %d, hpextradmg3: %d, Random: %d - %d, Total [Pre Max HP Check] %d, \cxTotal [Post Max HP Check]: %d\c-", 
 																GetClassName(), attacktype, radiustype, result, extradmg1, extradmg2, extradmg3, extradmg4, extradmg5, extradmg6, 
 																BaseSigilMaxHealth, MaxHealthTrue, hpextradmg, hpextradmgfactor, hpextradmg2, hpextradmg3, 
-																rand1, rand2, perkfactor, prefinaldmg, finaldmg);
+																rand1, rand2, prefinaldmg, finaldmg);
 			}
 			else // If something that's NOT the player shoots it...
 			{
-				if (debugsigilatkinfo) Console.Printf("Non-Player/Spectre/Entity Sigil Shot (%s), %d", AttackerName, attacktype);
+				if (dydudebug_sigilatkinfo) Console.Printf("Non-Player/Spectre/Entity Sigil Shot (%s), %d", AttackerName, attacktype);
 
 				prefinaldmg = result;
 				finaldmg = result;
@@ -497,16 +500,16 @@ class DDProjectile : DDBaseZSC abstract
 				nm = "EntitySecondNew"; iDTech1Check = nm; if (AttackerName == iDTech1Check) finaldmg = floor(finaldmg * 1.5);
 				nm = "EntityAscended"; iDTech1Check = nm; if (AttackerName == iDTech1Check) finaldmg = floor(finaldmg * 2.25);
 
-				if (debugsigilatkinfo) Console.Printf("[non-player] \cy(%s)\c-: BaseDmg: %d, PreTotal: %d, \cxTotal: %d\c-", GetClassName(), result, prefinaldmg, finaldmg);
+				if (dydudebug_sigilatkinfo) Console.Printf("[non-player] \cy(%s)\c-: BaseDmg: %d, PreTotal: %d, \cxTotal: %d\c-", GetClassName(), result, prefinaldmg, finaldmg);
 			}
 		}
 		else // Radius is not randomized nearly as much
 		{
-			minerror = 0.925;
-			maxerror = 1.075;
+			minerror = 0.9625;
+			maxerror = 1.0375;
 			if (playpawn)
 			{
-				if (debugsigilatkinfo) Console.Printf("Player Sigil Shot [radius] (%s), %d", AttackerName, attacktype);
+				if (dydudebug_sigilatkinfo) Console.Printf("Player Sigil Shot [radius] (%s), %d", AttackerName, attacktype);
 				
 				if (attacktype != 0)
 				{
@@ -618,39 +621,35 @@ class DDProjectile : DDBaseZSC abstract
 				if (accudamagefactor == 8) finaldmg = floor(finaldmg * 1.2125);
 				if (accudamagefactor == 9) finaldmg = floor(finaldmg * 1.253125);
 				if (accudamagefactor == 10) finaldmg = floor(finaldmg * 1.296875);
-				
-				if (CharacterClass == 0) finaldmg = floor(finaldmg * 1.09375);
-				if (CharacterClass == 1) finaldmg = floor(finaldmg * 1.03125);
-				if (CharacterClass == 2) finaldmg = floor(finaldmg * 1.15625);
-				if (CharacterClass == 8) finaldmg = floor(finaldmg * 1.125);
-				if (CharacterClass == 9) finaldmg = floor(finaldmg * 1.0625);
 
 				int prefinaldmg = finaldmg;
 				int hpextradmg = 100;
 				int hpextradmgfactor = (MaxHealthTrue * 100);
 				int hpextradmg2 = (hpextradmgfactor / BaseSigilMaxHealth) / 20;
-				int hpextradmg3 = (hpextradmg + hpextradmg2);
+				int hpextradmg3 = ((hpextradmg + hpextradmg2) - 5);
 				finaldmg = (finaldmg * hpextradmg3) / 100;
 
-				if (debugsigilatkinfo) Console.Printf("\cy(%s) (attacktype: %d)\c- (radiustype: %d): BaseDmg: %d, Extra1: %d, Extra2: %d, Extra3: %d, Extra4: %d, Extra5: %d, Extra6: %d, Original Max HP: %d, Current Max HP: %d, hpextradmg: %d, hpextradmgfactor: %d, hpextradmg2: %d, hpextradmg3: %d, Random: %d - %d, PerkFactor: %d, Total [Pre Max HP Check] %d, \cxTotal [Post Max HP Check]: %d\c-", 
+				if (dydudebug_sigilatkinfo) Console.Printf("\cy(%s) (attacktype: %d)\c- (radiustype: %d): BaseDmg: %d, Extra1: %d, Extra2: %d, Extra3: %d, Extra4: %d, Extra5: %d, Extra6: %d, Original Max HP: %d, Current Max HP: %d, hpextradmg: %d, hpextradmgfactor: %d, hpextradmg2: %d, hpextradmg3: %d, Random: %d - %d, Total [Pre Max HP Check] %d, \cxTotal [Post Max HP Check]: %d\c-", 
 																GetClassName(), attacktype, radiustype, result, extradmg1, extradmg2, extradmg3, extradmg4, extradmg5, extradmg6, 
 																BaseSigilMaxHealth, MaxHealthTrue, hpextradmg, hpextradmgfactor, hpextradmg2, hpextradmg3, 
-																rand1, rand2, perkfactor, prefinaldmg, finaldmg);
+																rand1, rand2, prefinaldmg, finaldmg);
 			}
 			else // If something that's NOT the player shoots it...
 			{
-				if (debugsigilatkinfo) Console.Printf("[non-player] \cy(%s)\c-: BaseDmg: %d, PreTotal: %d, \cxTotal: %d\c-", GetClassName(), result, prefinaldmg, finaldmg);
+				if (dydudebug_sigilatkinfo) Console.Printf("[non-player] \cy(%s)\c-: BaseDmg: %d, PreTotal: %d, \cxTotal: %d\c-", GetClassName(), result, prefinaldmg, finaldmg);
 			}
 		}
 
 		if (radiustype == 0) 
 		{
-			if (debugsigilatkinfo) Console.Printf("\cxSigil Damage Total: %d\c-", finaldmg);
+			if (dydudebug_sigilatkinfo) Console.Printf("\cxSigil Damage Total: %d\c-", finaldmg);
+			finaldamagedealt = finaldmg;
 			return finaldmg;
 		}
 		if (radiustype == 1) 
 		{
-			if (debugsigilatkinfo) Console.Printf("\cxSigil Radius Total: %d\c-", finaldmg);
+			if (dydudebug_sigilatkinfo) Console.Printf("\cxSigil Radius Total: %d\c-", finaldmg);
+			finaldamagedealt2 = finaldmg;
 			return finaldmg;
 		}
 		return 32;
@@ -732,11 +731,11 @@ class DDProjectile : DDBaseZSC abstract
 		}
 	}
 	
-	void A_SpectralBigBallLightning()
+	void A_SpectralBigBallLightning(string spawntype = "SpectralLightningH3")
 	{
 		Actor foo;
 		DDProjectile foo2;
-		Class<Actor> cls = "SpectralLightningH3New";
+		Class<Actor> cls = spawntype;
 		if (cls)
 		{
 			angle += 90.;
