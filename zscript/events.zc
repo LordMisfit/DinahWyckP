@@ -591,6 +591,15 @@ class DD_EventHandler : EventHandler
 			bool showdmglog;
 			bool practicetarget;
 			
+			int specialtype;
+			nm = "CCardGhostMarker";
+			if (victim.CountInv(nm)) specialtype += 1;
+			nm = "CCardAssassinMarker";
+			if (victim.CountInv(nm)) specialtype += 2;
+			nm = "CCardRespawnedMarker";
+			if (victim.CountInv(nm)) specialtype += 4;
+			if (dydudebug_worlddamaged) Console.Printf("[%s] SpecialType [WorldDamaged]: %d", vict, specialtype);
+
 			/*
 			// Ally Check
 			actor IsRebel;
@@ -622,7 +631,7 @@ class DD_EventHandler : EventHandler
 			}
 			*/
 			
-			if (victim.bCOUNTKILL) showdmglog = true;
+			if (victim.bCOUNTKILL || specialtype) showdmglog = true;
 			if (vict == "PracticeTarget" || vict == "PracticeTarget2") 
 			{
 				practicetarget = true;
@@ -800,7 +809,7 @@ class DD_EventHandler : EventHandler
 			string comblog = "";
 			comblog.AppendFormat("\c[gray*\c- ");
 			showdmglog = false;
-			if (victim.bCOUNTKILL) showdmglog = true;
+			if (victim.bCOUNTKILL || specialtype) showdmglog = true;
 			if (vict == "PracticeTarget" || vict == "PracticeTarget2") showdmglog = true;
 			if (vict == "BossBrainNew") showdmglog = true;
 			if (vict == "DinahPlayer" || victname == "Dinah Wyck") showdmglog = false;
@@ -930,7 +939,7 @@ class DD_EventHandler : EventHandler
 			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playdmgsounds = false;
 			if (playdmgsounds)
 			{
-				if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && victim.bCOUNTKILL)
+				if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype))
 				{
 					if (source) 
 					{
@@ -988,7 +997,7 @@ class DD_EventHandler : EventHandler
 			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playdthsounds = false;
 			if (playdthsounds)
 			{
-				if (exex_q3aqchitsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || vict == "BossBrainNew") && level.time >= victim.args[4] && vict != "HeresiarchNew")
+				if (exex_q3aqchitsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype || vict == "BossBrainNew") && level.time >= victim.args[4] && vict != "HeresiarchNew")
 				{
 					victim.args[4] = (level.time + exex_q3aqchitsounddelay);
 					if (dydudebug_hitsounds) Console.Printf("hs - %d [%d]", victim.args[4], level.time);
@@ -1101,11 +1110,13 @@ class DD_EventHandler : EventHandler
 		if (victim)
 		{
 			int specialtype;
-			nm = "CCards_Actor_Ghost";
+			nm = "CCardGhostMarker";
 			if (victim.CountInv(nm)) specialtype += 1;
-			nm = "CCards_Actor_AssassinBuff";
+			nm = "CCardAssassinMarker";
 			if (victim.CountInv(nm)) specialtype += 2;
-			if (dydudebug_worlddied) Console.Printf("[%s] SpecialType: %d", vict, specialtype);
+			nm = "CCardRespawnedMarker";
+			if (victim.CountInv(nm)) specialtype += 4;
+			if (dydudebug_worlddied) Console.Printf("[%s] SpecialType [WorldDied]: %d", vict, specialtype);
 
 			actor IPAttack;
 			if (!(vict == "DinahPlayer") || (victim.bCOUNTKILL || specialtype))
@@ -1154,6 +1165,7 @@ class DD_EventHandler : EventHandler
 					int ExpGain = (victim.spawnhealth() + victim.Stamina);
 					if (specialtype & 1) ExpGain *= 0.5;
 					if (specialtype & 2) ExpGain *= frandompick(1.8,2.2);
+					if (specialtype & 4) ExpGain *= frandompick(0.625,0.875);
 					if (IPAttack) ExpGain *= frandom(0.125,0.25);
 									 else ExpGain *= frandom(0.05,0.125);
 
@@ -1323,7 +1335,8 @@ class DD_EventHandler : EventHandler
 				int maxchance;
 				int scraprolls;
 				bool candropitems = false;
-				if (!victim.bFRIENDLY && victim.bCOUNTKILL) candropitems = true;
+				if (specialtype) candropitems = true;
+				if (!victim.bFRIENDLY && (victim.bCOUNTKILL || specialtype)) candropitems = true;
 				if (vict == "PracticeTarget" || vict == "PracticeTarget2") candropitems = false;
 				nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) candropitems = false;
 				if (!playerkill)
@@ -2170,9 +2183,9 @@ class DD_EventHandler : EventHandler
 				}
 				
 				// Killed With Certain Weapons
-				if (inflicter && sour == "DinahPlayer" && victim.bCOUNTKILL)
+				if (inflicter && sour == "DinahPlayer" && (victim.bCOUNTKILL || specialtype))
 				{
-					if (VacPuff(inflicter))
+					if (VacPuff(inflicter) && specialtype)
 					{
 						let IPPuff = DDProjectile(inflicter);
 						int vacgive = victim.spawnhealth();
