@@ -1093,14 +1093,22 @@ class DD_EventHandler : EventHandler
 			if (skill == 3) TrueLuck = random((PLuck*0.375),PLuck);
 			if (skill >= 4) TrueLuck = random((PLuck*0.25),PLuck);
 		}
+		if (dydudebug_worlddied) Console.Printf("[%s] WorldThingDied", vict);
 		
 		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
 		string nm, nn, no, np;
 		
 		if (victim)
 		{
+			int specialtype;
+			nm = "CCards_Actor_Ghost";
+			if (victim.CountInv(nm)) specialtype += 1;
+			nm = "CCards_Actor_AssassinBuff";
+			if (victim.CountInv(nm)) specialtype += 2;
+			if (dydudebug_worlddied) Console.Printf("[%s] SpecialType: %d", vict, specialtype);
+
 			actor IPAttack;
-			if (!(vict == "DinahPlayer") || victim.bCOUNTKILL)
+			if (!(vict == "DinahPlayer") || (victim.bCOUNTKILL || specialtype))
 			{
 				actor Player = players[0].mo;
 				bool giveexp;
@@ -1109,7 +1117,7 @@ class DD_EventHandler : EventHandler
 				int user_type;
 				
 				if (dydudebug_worlddied) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", infl, sour);
-				if (victim.bCOUNTKILL && !victim.bFRIENDLY && inflicter)
+				if ((victim.bCOUNTKILL || specialtype) && !victim.bFRIENDLY && inflicter)
 				{
 					if (inflicter) 
 					{
@@ -1144,12 +1152,13 @@ class DD_EventHandler : EventHandler
 					nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) giveexp = false;
 
 					int ExpGain = (victim.spawnhealth() + victim.Stamina);
+					if (specialtype & 1) ExpGain *= 0.5;
+					if (specialtype & 2) ExpGain *= frandompick(1.8,2.2);
 					if (IPAttack) ExpGain *= frandom(0.125,0.25);
 									 else ExpGain *= frandom(0.05,0.125);
 
 					if ((source && source.bFRIENDLY) || (inflicter && inflicter.bFRIENDLY) || (mastor && mastor.bFRIENDLY)) ExpGain *= frandom(0.65,0.90);
 					if (sour == "DinahPlayer" && infl == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
-					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
 					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
 					If (PLuck) 
 					{
