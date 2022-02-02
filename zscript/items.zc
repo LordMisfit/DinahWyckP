@@ -2222,6 +2222,8 @@ class SnakePickup : ExExInvBarItem
 class ArmorScrap : ArmorBonus
 {
 	int user_type;
+	int basespawnchance;
+	int spawntype;
 	default
 	{
 		Inventory.Icon "DACLB0";
@@ -2246,17 +2248,35 @@ class ArmorScrap : ArmorBonus
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
-		if (random(1,128) <= 1)
+		spawntype = 1;
+		basespawnchance = 16;
+		if (bDROPPED) basespawnchance = 64;
+		if (random(1,basespawnchance) <= 1)
 		{
-			if (random(1,128) <= 1) 
+			if (random(1,basespawnchance) <= 1)
 			{
-				SaveAmount *= 4;
-				Scale = (1.625, 1.625);
-			}
-			else
-			{
-				SaveAmount *= 2;
-				Scale = (1.25, 1.25);
+				if (random(1,basespawnchance) <= 1) 
+				{
+					SaveAmount *= 25;
+					Scale = (1.5, 1.5);
+					spawntype = 4;
+					bFLOATBOB = false;
+				}
+				else
+				{
+					if (random(1,32) <= 1) 
+					{
+						SaveAmount *= 10;
+						Scale = (1.3125, 1.3125);
+						spawntype = 3;
+					}
+					else
+					{
+						SaveAmount *= 5;
+						Scale = (1.125, 1.125);
+						spawntype = 2;
+					}
+				}
 			}
 		}
 	}
@@ -2436,7 +2456,24 @@ class ArmorScrap : ArmorBonus
 				}
 			}
 		Idle:
+			DACL B 0
+			{
+				if (spawntype == 4) return resolvestate("Idle4");
+				if (spawntype == 3) return resolvestate("Idle3");
+				if (spawntype == 2) return resolvestate("Idle2");
+				return resolvestate("Idle1");
+			}
+		Idle1:
 			DACL B -1;
+			stop;
+		Idle2:
+			DACL C -1;
+			stop;
+		Idle3:
+			DACL D -1;
+			stop;
+		Idle4:
+			DACL E -1;
 			stop;
 	}
 }

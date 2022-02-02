@@ -677,7 +677,7 @@ class DD_EventHandler : EventHandler
 					if (!victim.bINVULNERABLE || !practicetarget)
 					{
 						// Scrambler = Inflicts confusion/fear on enemies occasionally, causing hestitation in combat
-						if (infl == "PanPuff")
+						if (PanPuff(inflicter))
 						{
 							if (!victim.bNOFEAR)
 							{
@@ -709,7 +709,7 @@ class DD_EventHandler : EventHandler
 						}
 
 						// Blunderaxe = Tears off Armor Scraps at times, and occasionally inflicts a "Helm Splitter" style defense debuff
-						if (infl == "BlunderPuff")
+						if (BlunderPuff(inflicter))
 						{
 							int baseval = randompick(5,6,6,6,6,7,7,7,7,7,7,7,7,8,8,8,8,9);
 							if (PLuck) baseval -= (TrueLuck * 0.067);
@@ -1084,7 +1084,7 @@ class DD_EventHandler : EventHandler
 		int TrueLuck;
 		let globalvars = DDGlobalVariables.Get();
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		if (MiscItem) 
+		if (MiscItem)
 		{
 			PLuck = MiscItem.PlayerLUCK;
 			if (skill <= 0) TrueLuck = random((PLuck*0.75),PLuck);
@@ -1104,6 +1104,8 @@ class DD_EventHandler : EventHandler
 			{
 				actor Player = players[0].mo;
 				bool giveexp;
+				bool playerkill;
+				bool allykill;
 				int user_type;
 				
 				if (dydudebug_worlddied) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", infl, sour);
@@ -1111,6 +1113,8 @@ class DD_EventHandler : EventHandler
 				{
 					if (inflicter) 
 					{
+						if (PlayerPawn(inflicter)) playerkill = true;
+						if (inflicter.bFRIENDLY) allykill = true;
 						if (inflicter.bFRIENDLY || infl == "DinahWyck")
 						{
 							if (IPAttack == null) IPAttack = DDProjectile(inflicter);
@@ -1120,6 +1124,8 @@ class DD_EventHandler : EventHandler
 					}
 					if (source) 
 					{
+						if (PlayerPawn(source)) playerkill = true;
+						if (source.bFRIENDLY) allykill = true;
 						if (source.bFRIENDLY || sour == "DinahWyck") 
 						{
 							if (IPAttack == null) IPAttack = DDProjectile(source);
@@ -1129,6 +1135,8 @@ class DD_EventHandler : EventHandler
 					}
 					if (mastor) 
 					{
+						if (PlayerPawn(mastor)) playerkill = true;
+						if (mastor.bFRIENDLY) allykill = true;
 						if (IPAttack == null) IPAttack = DDProjectile(mastor);
 						if (mastor.bFRIENDLY || mast == "DinahWyck") giveexp = true;
 						//Console.Printf("inflictor.master: %s [%d]", mast, mastor.bFRIENDLY);
@@ -1139,7 +1147,7 @@ class DD_EventHandler : EventHandler
 					if (IPAttack) ExpGain *= frandom(0.125,0.25);
 									 else ExpGain *= frandom(0.05,0.125);
 
-					if ((source && source.bFRIENDLY) || (inflicter && inflicter.bFRIENDLY)) ExpGain *= frandom(0.65,0.90);
+					if ((source && source.bFRIENDLY) || (inflicter && inflicter.bFRIENDLY) || (mastor && mastor.bFRIENDLY)) ExpGain *= frandom(0.65,0.90);
 					if (sour == "DinahPlayer" && infl == "PlayerWhistle") ExpGain *= frandom(4.0,5.0);
 					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
 					if (vict == "KilletanteSoloist") ExpGain *= frandom(3.25,4);
@@ -1193,7 +1201,7 @@ class DD_EventHandler : EventHandler
 					
 					// BUILD-style oneliner for kills [optional]
 					bool playoneliner = false;
-					if (inflicter == player || source == player) playoneliner = true;
+					if (inflicter == player || source == player || mastor == player) playoneliner = true;
 					if (vict == "PracticeTarget" || vict == "PracticeTarget2") playoneliner = false;
 					nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playoneliner = false;
 					
@@ -1217,10 +1225,10 @@ class DD_EventHandler : EventHandler
 								if (player.CountInv("PowerWineBuffStrongestEven")) basechance *= 2.75;
 								if (infl == "FistPuff" || infl == "UppercutPuff" || infl == "KickPuff") basechance *= frandompick(3.5,4,4.5);
 								if (BatPuff(inflicter)) basechance *= frandompick(2.25,2.5,2.75);
-								if (infl == "ApplePuff") basechance *= frandompick(2.25,2.5,2.75);
-								if (infl == "BlunderPuff") basechance *= frandompick(2.25,2.5,2.75);
-								if (infl == "WhipPuff") basechance *= frandompick(2.25,2.5,2.75);
-								if (infl == "VacPuff") basechance *= frandompick(1.125,1.25,1.375);
+								if (ApplePuff(inflicter)) basechance *= frandompick(2.25,2.5,2.75);
+								if (BlunderPuff(inflicter)) basechance *= frandompick(2.25,2.5,2.75);
+								if (WhipPuff(inflicter)) basechance *= frandompick(2.25,2.5,2.75);
+								if (VacPuff(inflicter)) basechance *= frandompick(1.125,1.25,1.375);
 								if (victim.bBOSS) basechance *= 8;
 								if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) basechance *= frandompick(1.25,1.25,1.25,1.5,1.5,2);
 								if (dydudebug_worlddied) Console.Printf("%d / 256", basechance);
@@ -1309,6 +1317,14 @@ class DD_EventHandler : EventHandler
 				if (!victim.bFRIENDLY && victim.bCOUNTKILL) candropitems = true;
 				if (vict == "PracticeTarget" || vict == "PracticeTarget2") candropitems = false;
 				nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) candropitems = false;
+				if (!playerkill)
+				{
+					if (!allykill)
+					{
+						if (random(1,64) <= 1) candropitems = true;
+															else candropitems = false;
+					}
+				}
 				if (candropitems)
 				{
 					droptimes = 1;
@@ -1627,10 +1643,10 @@ class DD_EventHandler : EventHandler
 						if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (BatPuff(inflicter)) maxchance = (basechance * 0.5);
-						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (infl == "VacPuff") maxchance = (basechance * 16);
+						if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (BlunderPuff(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (VacPuff(inflicter)) maxchance = (basechance * 16);
 						if (random(1,maxchance) <= 1) // Main Drop Chance
 						{
 							int temp = 1;
@@ -1721,10 +1737,10 @@ class DD_EventHandler : EventHandler
 						if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (BatPuff(inflicter)) maxchance = (basechance * 0.5);
-						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (infl == "VacPuff") maxchance = (basechance * 16);
+						if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (BlunderPuff(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (VacPuff(inflicter)) maxchance = (basechance * 16);
 						if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx("GalaApple",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 						if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx("FoodPlateFruit",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 						if (random(1,(maxchance*2)) == 1) victim.A_SpawnItemEx("AppleWine",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -1768,10 +1784,10 @@ class DD_EventHandler : EventHandler
 						if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (BatPuff(inflicter)) maxchance = (basechance * 0.5);
-						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (infl == "BlunderPuff") maxchance = (basechance * 16);
-						if (infl == "RecordShot") maxchance = (basechance * 4);
-						if (infl == "VacPuff") maxchance = (basechance * 0.125);
+						if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (BlunderPuff(inflicter)) maxchance = (basechance * 16);
+						if (RecordShot(inflicter)) maxchance = (basechance * 4);
+						if (VacPuff(inflicter)) maxchance = (basechance * 0.125);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [armor]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
@@ -1785,7 +1801,7 @@ class DD_EventHandler : EventHandler
 						else
 						{
 							scraprolls = 1;
-							if (infl == "BlunderPuff") 
+							if (BlunderPuff(inflicter)) 
 							{
 								scraprolls += randompick(0,0,0,0,1,1,1,1,1,1,2,2,3);
 								if (random(1,8) <= 5)
@@ -1824,15 +1840,15 @@ class DD_EventHandler : EventHandler
 									if (MageBoss(victim)) scraprolls += randompick(1,1,1,2,2);
 								}
 							}
-							if (infl == "RecordShot") scraprolls += randompick(0,0,0,0,0,0,1,1,1,1,1,2,2);
-							if (infl == "VacPuff") scraprolls += (randompick(0,0,0,0,0,0,1,1,1,1,1,2,2) - 1);
+							if (RecordShot(inflicter)) scraprolls += randompick(0,0,0,0,0,0,1,1,1,1,1,2,2);
+							if (VacPuff(inflicter)) scraprolls += (randompick(0,0,0,0,0,0,1,1,1,1,1,2,2) - 1);
 							//Scrap Drops
 							if (scraprolls)
 							{
 								int baseval = randompick(2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3);
 								for (int i = 0; i < scraprolls; i++)
 								{
-									if (infl == "BlunderPuff" && i == 0) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+									if (BlunderPuff(inflicter) && i == 0) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 									if (random(1,(baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 									if (random(1,(baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 									if (random(1,(baseval*baseval*baseval)) == 1) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
@@ -1880,10 +1896,10 @@ class DD_EventHandler : EventHandler
 						if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (BatPuff(inflicter)) maxchance = (basechance * 0.5);
-						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (infl == "VacPuff") maxchance = (basechance * 16);
+						if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (BlunderPuff(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (VacPuff(inflicter)) maxchance = (basechance * 16);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [primaryinv]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
@@ -1934,10 +1950,10 @@ class DD_EventHandler : EventHandler
 						if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (BatPuff(inflicter)) maxchance = (basechance * 0.5);
-						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (infl == "VacPuff") maxchance = (basechance * 16);
+						if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (BlunderPuff(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (VacPuff(inflicter)) maxchance = (basechance * 16);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
@@ -1960,10 +1976,10 @@ class DD_EventHandler : EventHandler
 						if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (BatPuff(inflicter)) maxchance = (basechance * 0.5);
-						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (infl == "VacPuff") maxchance = (basechance * 16);
+						if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (BlunderPuff(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (VacPuff(inflicter)) maxchance = (basechance * 16);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
@@ -2012,10 +2028,10 @@ class DD_EventHandler : EventHandler
 						if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 						maxchance = basechance;
 						if (BatPuff(inflicter)) maxchance = (basechance * 0.5);
-						if (infl == "ApplePuff") maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
-						if (infl == "BlunderPuff") maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
-						if (infl == "RecordShot") maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-						if (infl == "VacPuff") maxchance = (basechance * 16);
+						if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+						if (BlunderPuff(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+						if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+						if (VacPuff(inflicter)) maxchance = (basechance * 16);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [extremerare]: %d (%d)", maxchance, basechance);
 						if (random(1,maxchance) == 1)
 						{
@@ -2147,7 +2163,7 @@ class DD_EventHandler : EventHandler
 				// Killed With Certain Weapons
 				if (inflicter && sour == "DinahPlayer" && victim.bCOUNTKILL)
 				{
-					if (infl == "VacPuff")
+					if (VacPuff(inflicter))
 					{
 						let IPPuff = DDProjectile(inflicter);
 						int vacgive = victim.spawnhealth();
@@ -2166,6 +2182,7 @@ class DD_EventHandler : EventHandler
 						nn = "ArchangelusB"; extracheck2 = nn;
 						if (vict == extracheck) victim.A_SpawnItemEx(extracheck2, 8, 0, 0, 0, 0, 0, 0.0, SXF_NOCHECKPOSITION);
 						if (vict == extracheck2) victim.A_BrainDie();
+						victim.A_StopSound(CHAN_VOICE);
 						victim.A_FadeOut(1.0,FTF_REMOVE);
 
 						Console.Printf("+%d Vacuum Bag Units", vacgive);
