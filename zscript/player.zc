@@ -528,6 +528,9 @@ class DDPlayerPawn : PlayerPawn
 
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
+		string nm, nn, no, np;
+		
 		int firstdmg = damage;
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
@@ -578,7 +581,6 @@ class DDPlayerPawn : PlayerPawn
 		if (CountInv("DecentHealth")) oldhealthratio = 1;
 		if (CountInv("LowHealth")) oldhealthratio = 2;
 		if (CountInv("CriticalHealth")) oldhealthratio = 3;
-
 		
 		string infl, sour, vict;
 		vict = GetClassName();
@@ -1060,6 +1062,34 @@ class DDPlayerPawn : PlayerPawn
 			}
 		}
 		
+		olddmg = damage;
+		if (mod == "CCardsPoison")
+		{
+			double dmg1base = 0.00;
+			if (armortier == 1) 
+			{
+				damage *= frandom(0.875,1.000);
+				dmg1base = 6.25;
+			}
+			if (armortier == 2) 
+			{
+				damage *= frandom(0.625,0.875);
+				dmg1base = 12.5;
+			}
+			if (armortier == 3) 
+			{
+				damage *= frandom(0.25,0.625);
+				dmg1base = 43.75;
+			}
+			if (armortier == 4) 
+			{
+				damage *= frandom(0.0,0.25);
+				dmg1base = 87.5;
+			}
+			if (frandom(0.1,100.0) > dmg1base && damage < 1) damage = 1;
+			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [CCards Acid w/ Armor]: %d (%d)", damage, olddmg);
+		}
+
 		bool isinvuln = false;
 		// If Invulnerable
 		{

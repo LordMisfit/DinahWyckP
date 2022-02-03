@@ -3837,6 +3837,8 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 	double rrecoil;
 	int meleetimes;
 	int chopcombo;
+	double horzspread;
+	double vertspread;
 	default
 	{
 		//$Category RPWeapons
@@ -3857,15 +3859,39 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 		Obituary "%k used %o for target practice.";
 	}
 	
-	action void A_BlunderShotIPSetup(actor BombShots)
+	action bool A_BlunderCheckComboLevel()
 	{
-		if (BombShots && invoker.IPAttackCheck)
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		if (invoker.chopcombo && MiscItem && MiscItem.PlayerLevel >= 30) return true;
+		return false;
+	}
+	
+	action void A_BlunderShotAttack(double xyspread = 0.0, double zspread = 0.0, actor BombShots = null)
+	{
+		invoker.horzspread = xyspread;
+		invoker.vertspread = zspread;
+		if (A_BlunderCheckComboLevel())
 		{
-			DDProjectile IPCompat; 
-			IPCompat = DDProjectile(BombShots);
-			if (IPCompat)
+			invoker.horzspread *= frandompick(0.667,1.334);
+			invoker.vertspread *= frandompick(0.667,1.334);
+		}
+		if (random(1,2) == 1) BombShots = A_FireProjectile("BlunderShot",frandom(-invoker.horzspread,invoker.horzspread),0,0,0,0,frandom(-invoker.vertspread,invoker.vertspread));
+										 else BombShots = A_FireProjectile("BlunderShot",random(-invoker.horzspread,invoker.horzspread),0,0,0,0,random(-invoker.vertspread,invoker.vertspread));
+		if (BombShots)
+		{
+			if (A_BlunderCheckComboLevel())
 			{
-				IPCompat.IPattack = true;
+				BombShots.Score = 12;
+				//Console.Printf("rn13");
+			}
+			if (invoker.IPAttackCheck)
+			{
+				DDProjectile IPCompat; 
+				IPCompat = DDProjectile(BombShots);
+				if (IPCompat)
+				{
+					IPCompat.IPattack = true;
+				}
 			}
 		}
 	}
@@ -4240,6 +4266,11 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 					sndpitch = frandom(0.625,0.75);
 					sndvol = 1.4;
 				}
+				if (A_BlunderCheckComboLevel()) 
+				{
+					sndpitch *= frandom(1.125,1.25);
+					sndvol *= 1.125;
+				}
 				A_StartSound("blunderfire",CHAN_WEAPON,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
 				if (invoker.IPAttackCheck)
 				{
@@ -4269,6 +4300,18 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 				{
 					if (random(1,32) <= 31) A_AlertMonsters(1024); 
 				}
+				if (A_BlunderCheckComboLevel()) 
+				{
+					sndpitch *= frandom(1.125,1.25);
+					sndvol *= 1.125;
+					A_StartSound("blunderfire",11,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+					sndpitch *= frandom(1.25,1.375);
+					sndvol *= 1.1875;
+					A_StartSound("blunderfire",12,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+					sndpitch *= frandom(1.375,1.5);
+					sndvol *= 1.25;
+					A_StartSound("blunderfire",13,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				}
 			}
 			BLAX B 3 Bright
 			{
@@ -4280,17 +4323,13 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 				{
 					if (random(1,4) <= 1)
 					{
-						BombShots = A_FireProjectile("BlunderShot",random(-1,1),0,0,0,0,random(-1,1));
-						A_BlunderShotIPSetup(BombShots);
-						BombShots = A_FireProjectile("BlunderShot",random(-3,3),0,0,0,0,random(-1,1));
-						A_BlunderShotIPSetup(BombShots);
+						A_BlunderShotAttack(1.0,1.0,BombShots);
+						A_BlunderShotAttack(3.0,1.0,BombShots);
 					}
 					if (random(1,12) <= 1)
 					{
-						BombShots = A_FireProjectile("BlunderShot",random(-1,1),0,0,0,0,random(-2,2));
-						A_BlunderShotIPSetup(BombShots);
-						BombShots = A_FireProjectile("BlunderShot",random(-7,7),0,0,0,0,random(-2,2));
-						A_BlunderShotIPSetup(BombShots);
+						A_BlunderShotAttack(1.0,2.0,BombShots);
+						A_BlunderShotAttack(7.0,2.0,BombShots);
 					}
 				}
 				else
@@ -4298,17 +4337,13 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 				{
 					if (random(1,8) <= 1)
 					{
-						BombShots = A_FireProjectile("BlunderShot",random(-1,1),0,0,0,0,random(-1,1));
-						A_BlunderShotIPSetup(BombShots);
-						BombShots = A_FireProjectile("BlunderShot",random(-5,5),0,0,0,0,random(-1,1));
-						A_BlunderShotIPSetup(BombShots);
+						A_BlunderShotAttack(1.0,1.0,BombShots);
+						A_BlunderShotAttack(5.0,1.0,BombShots);
 					}
 					if (random(1,16) <= 1)
 					{
-						BombShots = A_FireProjectile("BlunderShot",random(-1,1),0,0,0,0,random(-2,2));
-						A_BlunderShotIPSetup(BombShots);
-						BombShots = A_FireProjectile("BlunderShot",random(-9,9),0,0,0,0,random(-2,2));
-						A_BlunderShotIPSetup(BombShots);
+						A_BlunderShotAttack(1.0,2.0,BombShots);
+						A_BlunderShotAttack(9.0,2.0,BombShots);
 					}
 				}
 				else
@@ -4316,47 +4351,36 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 				{
 					if (random(1,12) <= 1)
 					{
-						BombShots = A_FireProjectile("BlunderShot",random(-1,1),0,0,0,0,random(-2,2));
-						A_BlunderShotIPSetup(BombShots);
-						BombShots = A_FireProjectile("BlunderShot",random(-7,7),0,0,0,0,random(-2,2));
-						A_BlunderShotIPSetup(BombShots);
+						A_BlunderShotAttack(1.0,2.0,BombShots);
+						A_BlunderShotAttack(7.0,2.0,BombShots);
 					}
 				}
 				else
 				{
 					if (random(1,16) <= 1)
 					{
-						BombShots = A_FireProjectile("BlunderShot",random(-1,1),0,0,0,0,random(-2,2));
-						A_BlunderShotIPSetup(BombShots);
-						BombShots = A_FireProjectile("BlunderShot",random(-9,9),0,0,0,0,random(-2,2));
-						A_BlunderShotIPSetup(BombShots);
+						A_BlunderShotAttack(1.0,2.0,BombShots);
+						A_BlunderShotAttack(9.0,2.0,BombShots);
 					}
 				}
 				if (CountInv("BlunderShotUpgrade") >= 3) 
 				{
-					BombShots = A_FireProjectile("BlunderShot",random(-2,2),0,0,0,0,random(-2,2)); 
-					A_BlunderShotIPSetup(BombShots);
+					A_BlunderShotAttack(2.0,2.0,BombShots);
 				}
-				BombShots = A_FireProjectile("BlunderShot",random(-3,3),0,0,0,0,random(-1,1));
-				A_BlunderShotIPSetup(BombShots);
+				A_BlunderShotAttack(3.0,1.0,BombShots);
 				if (CountInv("BlunderShotUpgrade") >= 1) 
 				{
-					BombShots = A_FireProjectile("BlunderShot",random(-4,4),0,0,0,0,random(-1,1)); 
-					A_BlunderShotIPSetup(BombShots);
+					A_BlunderShotAttack(4.0,1.0,BombShots);
 				}
-				BombShots = A_FireProjectile("BlunderShot",random(-5,5),0,0,0,0,random(-1,1));
-				A_BlunderShotIPSetup(BombShots);
+				A_BlunderShotAttack(5.0,1.0,BombShots);
 				if (CountInv("BlunderShotUpgrade") >= 1) 
 				{
-					BombShots = A_FireProjectile("BlunderShot",random(-6,6),0,0,0,0,random(-1,1)); 
-					A_BlunderShotIPSetup(BombShots);
+					A_BlunderShotAttack(6.0,1.0,BombShots);
 				}
-				BombShots = A_FireProjectile("BlunderShot",random(-7,7),0,0,0,0,random(-1,1));
-				A_BlunderShotIPSetup(BombShots);
+				A_BlunderShotAttack(7.0,1.0,BombShots);
 				if (CountInv("BlunderShotUpgrade") >= 3) 
 				{
-					BombShots = A_FireProjectile("BlunderShot",random(-8,8),0,0,0,0,random(-2,2)); 
-					A_BlunderShotIPSetup(BombShots);
+					A_BlunderShotAttack(8.0,2.0,BombShots);
 				}
 				if (invoker.IPAttackCheck)
 				{
@@ -4376,10 +4400,18 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 					for (int i = 0; i < numextshots; i++)
 					{
 						int user_type = random(1,8);
-						if (user_type >= 1 && user_type <= 5) BombShots = A_FireProjectile("BlunderShot",random(-6,6),0,0,0,0,random(-3,3));
-						if (user_type >= 5 && user_type <= 7) BombShots = A_FireProjectile("BlunderShot",random(-4,4),0,0,0,0,random(-2,2));
-						if (user_type == 8) BombShots = A_FireProjectile("BlunderShot",random(-2,2),0,0,0,0,random(-1,1));
-						A_BlunderShotIPSetup(BombShots);
+						if (user_type >= 1 && user_type <= 5)
+						{
+							A_BlunderShotAttack(6.0,3.0,BombShots);
+						}
+						if (user_type >= 5 && user_type <= 7) 
+						{
+							A_BlunderShotAttack(4.0,2.0,BombShots);
+						}
+						if (user_type == 8) 
+						{
+							A_BlunderShotAttack(2.0,1.0,BombShots);
+						}
 					}
 					if (invoker.IPAttackCheck) A_SetAngle(origangle);
 				}
@@ -4898,6 +4930,14 @@ class BlunderShot : DDProjectile
 			rad *= 0.667;
 			hei *= 0.667;
 			finaldamagedealt *= frandompick(1.025,1.025,1.025,1.025,1.025,1.025,1.025,1.025,1.025,1.05);
+		}
+		if (score == 12) 
+		{
+			//Console.Printf("@!$!");
+			if (target.CountInv("BlunderShotUpgrade") >= 3) finaldamagedealt *= 2;  
+			else if (target.CountInv("BlunderShotUpgrade") >= 2) finaldamagedealt *= 1.775; 
+			else if (target.CountInv("BlunderShotUpgrade") >= 1) finaldamagedealt *= 1.625;
+			else finaldamagedealt *= 1.5;
 		}
 		if (rad <= 1) rad = 1;
 		if (hei <= 1) hei = 1;
