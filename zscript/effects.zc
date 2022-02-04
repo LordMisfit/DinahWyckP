@@ -99,17 +99,32 @@ class CustomInventoryExt : CustomInventory
 								else MiscItem.HPRegenBoostTimer += (random(75,108) * 2.5);
 			}
 			
+			int timegive = 15 * TICRATE;
+			if (wutthis) timegive *= 3;
 			A_StartSound("Dinah/eat",CHAN_VOICE);
 			player.mo.A_TakeInventory("TurkeyDinner",1);
 			A_SetBlend("f1 ff f1",0.1,random(6,9));
-			player.mo.A_GiveInventory("PowerMeal2Buff");
-			player.mo.A_GiveInventory("PowerMeal2Buff2");
-			if (wutthis)
+			if (!player.mo.CountInv("PowerMeal2Buff")) 
+			{
+				player.mo.SetInventory("PowerMeal2Buff",1);
+				let Buff1Item = PowerMeal2Buff(player.mo.FindInventory("PowerMeal2Buff"));
+				if (Buff1Item) Buff1Item.EffectTics = timegive;
+			}
+			else
 			{
 				let Buff1Item = PowerMeal2Buff(player.mo.FindInventory("PowerMeal2Buff"));
-				if (Buff1Item) Buff1Item.EffectTics *= 3;
+				if (Buff1Item) Buff1Item.EffectTics += timegive;
+			}
+			if (!player.mo.CountInv("PowerMeal2Buff2")) 
+			{
+				player.mo.SetInventory("PowerMeal2Buff2",1);
 				let Buff2Item = PowerMeal2Buff2(player.mo.FindInventory("PowerMeal2Buff2"));
-				if (Buff2Item) Buff2Item.EffectTics *= 3;
+				if (Buff2Item) Buff2Item.EffectTics = timegive;
+			}
+			else
+			{
+				let Buff2Item = PowerMeal2Buff2(player.mo.FindInventory("PowerMeal2Buff2"));
+				if (Buff2Item) Buff2Item.EffectTics += timegive;
 			}
 			Console.Printf("\c[red]Ate a delicious Turkey Dinner! \c[green]+%d (Over)HP", temp3);
 		}
@@ -140,6 +155,19 @@ class CustomInventoryExt : CustomInventory
 
 		if (player.mo.CountInv("AppleWine") && MiscItem)
 		{
+			if (MiscItem.WineDefTier == 4)
+			{
+				if (wutthis)
+				{
+					player.mo.A_SetInventory("PowerWineBuffIPMaximum",1);
+					A_Log("\c[purple]Defense Expertly Buffed (-99.5% damage taken for 60 seconds)!");
+					MiscItem.WineDefTier = -5;
+					A_StartSound("Dinah/giggle",CHAN_VOICE);
+					willheal = true;
+					useitem = true;
+				}
+			}
+			else
 			if (MiscItem.WineDefTier == 3)
 			{
 				if (wutthis)
@@ -254,9 +282,23 @@ class CustomInventoryExt : CustomInventory
 					useitem = true;
 				}
 			}
+			else
+			if (MiscItem.WineDefTier == -4)
+			{
+				if (wutthis)
+				{
+					player.mo.A_SetInventory("PowerWineBuffIPMaximum",1);
+					A_Log("\c[purple]Defense Expertly Buffed (-99.5% damage taken for 60 seconds)!");
+					MiscItem.WineDefTier = -5;
+					A_StartSound("Dinah/giggle",CHAN_VOICE);
+					willheal = true;
+					useitem = true;
+				}
+			}
 			
 			if (useitem)
 			{
+				player.mo.A_SetInventory("PowerWineBuffIPMaximum",0);
 				player.mo.A_SetInventory("PowerWineBuffIPStrongestEven",0);
 				player.mo.A_SetInventory("PowerWineBuffIPStrongest",0);
 				player.mo.A_SetInventory("PowerWineBuffIPStrong",0);
@@ -265,6 +307,7 @@ class CustomInventoryExt : CustomInventory
 				player.mo.A_SetInventory("PowerWineBuffStrongest",0);
 				player.mo.A_SetInventory("PowerWineBuffStrong",0);
 				player.mo.A_SetInventory("PowerWineBuffWeak",0);
+				if (MiscItem.WineDefTier == -5) player.mo.A_SetInventory("PowerWineBuffIPMaximum",1);
 				if (MiscItem.WineDefTier == -4) player.mo.A_SetInventory("PowerWineBuffIPStrongestEven",1);
 				if (MiscItem.WineDefTier == -3) player.mo.A_SetInventory("PowerWineBuffIPStrongest",1);
 				if (MiscItem.WineDefTier == -2) player.mo.A_SetInventory("PowerWineBuffIPStrong",1);
@@ -618,7 +661,7 @@ class PowerWineBuffIPWeak : PowerWineBuffWeak
 
 		Inventory.Icon "GBL1A0";
 		Powerup.Duration -15;
-		Powerup.Color "70 2c 52", 0.250;
+		Powerup.Color "70 2c 52", 0.125;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
@@ -696,7 +739,7 @@ class PowerWineBuffIPStrong : PowerWineBuffStrong
 
 		Inventory.Icon "GBL2A0";
 		Powerup.Duration -21;
-		Powerup.Color "70 2c 52", 0.325;
+		Powerup.Color "70 2c 52", 0.1625;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
@@ -774,7 +817,7 @@ class PowerWineBuffIPStrongest : PowerWineBuffStrongest
 
 		Inventory.Icon "GBL3A0";
 		Powerup.Duration -27;
-		Powerup.Color "70 2c 52", 0.400;
+		Powerup.Color "70 2c 52", 0.200;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
@@ -852,7 +895,7 @@ class PowerWineBuffIPStrongestEven : PowerWineBuffStrongestEven
 
 		Inventory.Icon "GBL4A0";
 		Powerup.Duration -36;
-		Powerup.Color "70 2c 52", 0.450;
+		Powerup.Color "70 2c 52", 0.225;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
@@ -863,6 +906,50 @@ class PowerWineBuffIPStrongestEven : PowerWineBuffStrongestEven
 		timer++;
 		if (timer % 12 >= 0 && timer % 12 <= 5) texname = "GBL4B0";
 		if (timer % 12 >= 6 && timer % 12 <= 11) texname = "GBL4C0";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		
+		super.Tick();
+	}
+}
+
+class PowerWineBuffIPMaximum : PowerWine
+{
+	default
+	{
+		DamageFactor "Normal", 0.005;
+		DamageFactor "Melee", 0.005;
+		DamageFactor "Bonk", 0.005;
+		DamageFactor "Cricket", 0.005;
+		DamageFactor "Chop", 0.005;
+		DamageFactor "Lead", 0.005;
+		DamageFactor "Breakfast", 0.005;
+		DamageFactor "Zap", 0.005;
+		DamageFactor "Suck", 0.005;
+		DamageFactor "Dust", 0.005;
+		DamageFactor "Beats", 0.005;
+		DamageFactor "Cherrybomb", 0.005;
+		DamageFactor "BRocket", 0.005;
+		DamageFactor "Spinner", 0.005;
+		DamageFactor "Popper", 0.005;
+		DamageFactor "Dashing", 0.005;
+		DamageFactor "DashingBG", 0.005;
+		DamageFactor "Bap", 0.005;
+		DamageFactor "Fire", 0.005;
+		DamageFactor "Boiling", 0.005;
+
+		Inventory.Icon "GBL5A0";
+		Powerup.Duration -60;
+		Powerup.Color "70 2c 52", 0.25;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+	
+	override void Tick()
+	{
+		timer++;
+		if (timer % 12 >= 0 && timer % 12 <= 5) texname = "GBL5B0";
+		if (timer % 12 >= 6 && timer % 12 <= 11) texname = "GBL5C0";
 		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
 		
 		super.Tick();
