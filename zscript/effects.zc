@@ -66,23 +66,51 @@ class CustomInventoryExt : CustomInventory
 		if (player.mo.CountInv("TurkeyDinner"))
 		{
 			let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+			let globalvars = DDGlobalVariables.Get();
+			
+			bool wutthis = false;
+			if (exex_ikaripointsenabled && MiscItem && globalvars && (player.mo && player.mo.CountInv("IPUseMode")))
+			{
+				double cost = invoker.A_GetIPCost(10);
+				if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
+				If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+				{
+					MiscItem.ItemPoints -= cost;
+					globalvars.ItemPoints -= cost;
+					wutthis = true;
+					//if (wutthis) invoker.A_IPDinahVoiceSelect(0,4,11);
+				}
+			}
+
 			int temp1 = player.mo.health;
 			int temp4 = player.mo.CountInv("PlayerMaxHP");
 			int temp2 = (temp4 * 3.0);
 
 			int temp3 = temp4;
 			temp3 *= (random(45,55) * 0.01);
+			if (wutthis) temp3 *= 1.5;
 				
 			temp1 += temp3;
 			if (temp1 > temp2) temp1 = temp2;
 			player.mo.health = player.health = temp1;
-			if (MiscItem) MiscItem.HPRegenBoostTimer += (random(75,108) * 2.5);
+			if (MiscItem) 
+			{
+				if (wutthis) MiscItem.HPRegenBoostTimer += (random(75,108) * 25);
+								else MiscItem.HPRegenBoostTimer += (random(75,108) * 2.5);
+			}
 			
 			A_StartSound("Dinah/eat",CHAN_VOICE);
 			player.mo.A_TakeInventory("TurkeyDinner",1);
 			A_SetBlend("f1 ff f1",0.1,random(6,9));
 			player.mo.A_GiveInventory("PowerMeal2Buff");
 			player.mo.A_GiveInventory("PowerMeal2Buff2");
+			if (wutthis)
+			{
+				let Buff1Item = PowerMeal2Buff(player.mo.FindInventory("PowerMeal2Buff"));
+				if (Buff1Item) Buff1Item.EffectTics *= 3;
+				let Buff2Item = PowerMeal2Buff2(player.mo.FindInventory("PowerMeal2Buff2"));
+				if (Buff2Item) Buff2Item.EffectTics *= 3;
+			}
 			Console.Printf("\c[red]Ate a delicious Turkey Dinner! \c[green]+%d (Over)HP", temp3);
 		}
 	}
@@ -282,7 +310,11 @@ class CustomInventoryExt : CustomInventory
 						}
 					}
 					let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-					if (MiscItem) MiscItem.HPRegenBoostTimer += (randompick(50,55,60,65) * 2.5);
+					if (MiscItem) 
+					{
+						if (wutthis) MiscItem.HPRegenBoostTimer += (randompick(50,55,60,65) * 25);
+										else MiscItem.HPRegenBoostTimer += (randompick(50,55,60,65) * 2.5);
+					}
 				}
 				
 				// Restore Some Armor
@@ -497,6 +529,8 @@ class KnightGownItem4 : PlaceholderItem { default { Inventory.MaxAmount 1; } }
 
 class PowerWine : PowerProtection
 {
+	string texname;
+	int timer;
 	double ticpiece;
 	
 	override void Tick ()
@@ -589,6 +623,16 @@ class PowerWineBuffIPWeak : PowerWineBuffWeak
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
 	}
+	
+	override void Tick()
+	{
+		timer++;
+		if (timer % 12 >= 0 && timer % 12 <= 5) texname = "GBL1B0";
+		if (timer % 12 >= 6 && timer % 12 <= 11) texname = "GBL1C0";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		
+		super.Tick();
+	}
 }
 
 class PowerWineBuffStrong : PowerWine
@@ -656,6 +700,16 @@ class PowerWineBuffIPStrong : PowerWineBuffStrong
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
+	}
+	
+	override void Tick()
+	{
+		timer++;
+		if (timer % 12 >= 0 && timer % 12 <= 5) texname = "GBL2B0";
+		if (timer % 12 >= 6 && timer % 12 <= 11) texname = "GBL2C0";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		
+		super.Tick();
 	}
 }
 
@@ -725,6 +779,16 @@ class PowerWineBuffIPStrongest : PowerWineBuffStrongest
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
 	}
+	
+	override void Tick()
+	{
+		timer++;
+		if (timer % 12 >= 0 && timer % 12 <= 5) texname = "GBL3B0";
+		if (timer % 12 >= 6 && timer % 12 <= 11) texname = "GBL3C0";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		
+		super.Tick();
+	}
 }
 
 class PowerWineBuffStrongestEven : PowerWine
@@ -792,6 +856,16 @@ class PowerWineBuffIPStrongestEven : PowerWineBuffStrongestEven
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
+	}
+	
+	override void Tick()
+	{
+		timer++;
+		if (timer % 12 >= 0 && timer % 12 <= 5) texname = "GBL4B0";
+		if (timer % 12 >= 6 && timer % 12 <= 11) texname = "GBL4C0";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		
+		super.Tick();
 	}
 }
 
