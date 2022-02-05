@@ -320,7 +320,9 @@ class DDPlayerPawn : PlayerPawn
 			{
 				if (buttons & BT_ZOOM && CountInv("FistPlayerBlock"))
 				{
+					bool wasnodmgthrust;
 					bool wasforceradius;
+					if (bNODAMAGETHRUST) wasnodmgthrust = true;
 					if (bFORCERADIUSDMG) wasforceradius = true;
 					double cost = A_GetIPCost(-1);
 					if (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && MiscItem.PlayerLevel > 0)
@@ -329,49 +331,58 @@ class DDPlayerPawn : PlayerPawn
 						globalvars.ItemPoints -= cost;
 						MiscItem.IPNoGainTimer = 60 * TICRATE;
 						A_SetBlend("FF FF FF",1.00,random(40,70));
-						if (random(1,4) <= 3)
+						double xp = pos.x;
+						double yp = pos.y;
+						double zp = pos.z;
+						ThinkerIterator MonsterFinder = ThinkerIterator.Create("Actor");
+						Actor mo;
+						int numfound = 0;
+						while (mo = Actor(MonsterFinder.Next()))
 						{
-							double xp = pos.x;
-							double yp = pos.y;
-							double zp = pos.z;
-							ThinkerIterator MonsterFinder = ThinkerIterator.Create("Actor");
-							Actor mo;
-							int numfound = 0;
-							while (mo = Actor(MonsterFinder.Next()))
+							if (mo.bISMONSTER && 
+									mo.bSHOOTABLE && 
+									mo.bCOUNTKILL && 
+									mo.health > 0 &&
+									!mo.bFRIENDLY)
 							{
-								if (mo.bISMONSTER && 
-										mo.bSHOOTABLE && 
-										mo.bCOUNTKILL && 
-										mo.health > 0 &&
-										!mo.bFRIENDLY)
+								if (abs(xp - mo.pos.x) <= 16384 || 
+										abs(yp - mo.pos.y) <= 16384 ||
+										abs(zp - mo.pos.z) <= 16384)
 								{
-									if (abs(xp - mo.pos.x) <= 1024 || 
-											abs(yp - mo.pos.y) <= 1024 ||
-											abs(zp - mo.pos.z) <= 1024)
+									if (!wasnodmgthrust) bNODAMAGETHRUST = true;
+									if (!wasforceradius) bFORCERADIUSDMG = true;
+									int counthit = A_Explode(64,16384,0,0,16384);
+									if (!wasforceradius) bFORCERADIUSDMG = false;
+									if (!wasnodmgthrust) bNODAMAGETHRUST = false;
+									if (counthit)
 									{
 										numfound++;
 										Console.Printf("%d", numfound);
 									}
 								}
 							}
-							if (numfound)
-							{
-								if (!wasforceradius) bFORCERADIUSDMG = true;
-								A_Explode(1024,16384,0,0,8192);
-								A_StopSound(CHAN_VOICE);
-								A_StopSound(303);
-								A_StopSound(304);
-								A_StopSound(401);
-								A_StopSound(402);
-								A_StopSound(403);
-								A_StartSound("dinah/YoullPayForThat",CHAN_VOICE,CHANF_OVERLAP,0.8,ATTN_NONE,1.0);
-								A_StartSound("dinah/YoullPayForThat",303,CHANF_OVERLAP,0.7,ATTN_NONE,0.97);
-								A_StartSound("dinah/YoullPayForThat",304,CHANF_OVERLAP,0.7,ATTN_NONE,1.03);
-								A_StartSound("DinahIP/IPBoom1",401,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
-								A_StartSound("DinahIP/IPBoom2",402,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
-								A_StartSound("DinahIP/IPBoom3",403,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
-								if (!wasforceradius) bFORCERADIUSDMG = false;
-							}
+						}
+						if (numfound)
+						{
+							string sndname = "dinah/superdie";
+							if (random(1,2) <= 1) sndname =  "dinah/YoullPayForThat";
+							if (!wasnodmgthrust) bNODAMAGETHRUST = true;
+							if (!wasforceradius) bFORCERADIUSDMG = true;
+							A_Explode(960,16384,0,0,8192);
+							A_StopSound(CHAN_VOICE);
+							A_StopSound(303);
+							A_StopSound(304);
+							A_StopSound(401);
+							A_StopSound(402);
+							A_StopSound(403);
+							A_StartSound(sndname,CHAN_VOICE,CHANF_OVERLAP,0.8,ATTN_NONE,1.0);
+							A_StartSound(sndname,303,CHANF_OVERLAP,0.7,ATTN_NONE,0.97);
+							A_StartSound(sndname,304,CHANF_OVERLAP,0.7,ATTN_NONE,1.03);
+							A_StartSound("DinahIP/IPBoom1",401,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
+							A_StartSound("DinahIP/IPBoom2",402,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
+							A_StartSound("DinahIP/IPBoom3",403,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
+							if (!wasforceradius) bFORCERADIUSDMG = false;
+							if (!wasnodmgthrust) bNODAMAGETHRUST = false;
 						}
 						
 						A_StopSound(501);
@@ -394,15 +405,25 @@ class DDPlayerPawn : PlayerPawn
 			if (CountInv("DinahTrueIPState"))
 			{
 				let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
-				double raddmg = random(4,12) * 4;
+				double raddmg = random(6,12) * 4;
 				if (TrueIPItem)
 				{
-					raddmg = (random(4,12) * 4) * (TrueIPItem.EffectTics * 1.0 / (60 * TICRATE));
+					raddmg = (random(6,12) * 4) * (0.5 + (TrueIPItem.EffectTics * 1.0 / (60 * TICRATE)));
 				}
+				bool wasnodmgthrust;
 				bool wasforceradius;
+				if (bNODAMAGETHRUST) wasnodmgthrust = true;
 				if (bFORCERADIUSDMG) wasforceradius = true;
+				if (!wasnodmgthrust) bNODAMAGETHRUST = true;
+				if (!wasforceradius) bFORCERADIUSDMG = true;
 				A_Explode(raddmg,(radius*3.75),0,0,(radius*2.875));
 				if (!wasforceradius) bFORCERADIUSDMG = false;
+				if (!wasnodmgthrust) bNODAMAGETHRUST = false;
+				A_StartSound("DinahIP/IPLoop3",701,CHANF_NOSTOP|CHANF_LOOPING,frandom(0.9,1.1),ATTN_NONE,frandom(0.9,1.1));
+			}
+			else
+			{
+				A_StopSound(701);
 			}
 			
 			//
