@@ -7,6 +7,7 @@ class DDPlayerPawn : PlayerPawn
 	int ipchargesoundtimer;
 	double truespeed;
 	int armortier;
+	int IPLoopTimer;
 	
 	int lasthealth;
 	
@@ -144,7 +145,6 @@ class DDPlayerPawn : PlayerPawn
 		else
 		{
 			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
-			String nm;
 			int PlayerLevel;
 			if (MiscItem) PlayerLevel = MiscItem.PlayerLevel;
 			double AirControlBase = frandom(0.2432,0.2436);
@@ -330,18 +330,19 @@ class DDPlayerPawn : PlayerPawn
 						MiscItem.ItemPoints -= cost;
 						globalvars.ItemPoints -= cost;
 						MiscItem.IPNoGainTimer = 60 * TICRATE;
-						A_SetBlend("FF FF FF",1.00,random(40,70));
+						A_SetBlend("FF FF FF",1.00,(random(40,70)*2));
 						double xp = pos.x;
 						double yp = pos.y;
 						double zp = pos.z;
 						ThinkerIterator MonsterFinder = ThinkerIterator.Create("Actor");
 						Actor mo;
 						int numfound = 0;
+						nm = "CCardGhostMarker";
 						while (mo = Actor(MonsterFinder.Next()))
 						{
 							if (mo.bISMONSTER && 
 									mo.bSHOOTABLE && 
-									mo.bCOUNTKILL && 
+									(mo.bCOUNTKILL || mo.CountInv(nm)) && 
 									mo.health > 0 &&
 									!mo.bFRIENDLY)
 							{
@@ -349,16 +350,18 @@ class DDPlayerPawn : PlayerPawn
 										abs(yp - mo.pos.y) <= 16384 ||
 										abs(zp - mo.pos.z) <= 16384)
 								{
+									/*
 									if (!wasnodmgthrust) bNODAMAGETHRUST = true;
 									if (!wasforceradius) bFORCERADIUSDMG = true;
 									int counthit = A_Explode(64,16384,0,0,16384);
 									if (!wasforceradius) bFORCERADIUSDMG = false;
 									if (!wasnodmgthrust) bNODAMAGETHRUST = false;
-									if (counthit)
-									{
-										numfound++;
-										Console.Printf("%d", numfound);
-									}
+									*/
+									numfound++;
+									int dmginf = ((mo.SpawnHealth() + mo.Stamina) * 0.25);
+									if (mo.CountInv(nm)) dmginf = ((mo.SpawnHealth() + mo.Stamina) * 2.0);
+									mo.DamageMobj(self, self, dmginf, "TrueIP", DMG_NO_ARMOR|DMG_FORCED|DMG_NO_FACTOR|DMG_NO_PROTECT|DMG_NO_ENHANCE|DMG_EXPLOSION|DMG_THRUSTLESS, angle);
+									//Console.Printf("%d", numfound);
 								}
 							}
 						}
@@ -366,9 +369,6 @@ class DDPlayerPawn : PlayerPawn
 						{
 							string sndname = "dinah/superdie";
 							if (random(1,2) <= 1) sndname =  "dinah/YoullPayForThat";
-							if (!wasnodmgthrust) bNODAMAGETHRUST = true;
-							if (!wasforceradius) bFORCERADIUSDMG = true;
-							A_Explode(960,16384,0,0,8192);
 							A_StopSound(CHAN_VOICE);
 							A_StopSound(303);
 							A_StopSound(304);
@@ -381,8 +381,6 @@ class DDPlayerPawn : PlayerPawn
 							A_StartSound("DinahIP/IPBoom1",401,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
 							A_StartSound("DinahIP/IPBoom2",402,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
 							A_StartSound("DinahIP/IPBoom3",403,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
-							if (!wasforceradius) bFORCERADIUSDMG = false;
-							if (!wasnodmgthrust) bNODAMAGETHRUST = false;
 						}
 						
 						A_StopSound(501);
@@ -402,13 +400,14 @@ class DDPlayerPawn : PlayerPawn
 					}
 				}
 			}
+			int IPLoopInt;
 			if (CountInv("DinahTrueIPState"))
 			{
 				let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
 				double raddmg = random(6,12) * 4;
 				if (TrueIPItem)
 				{
-					raddmg = (random(6,12) * 4) * (0.5 + (TrueIPItem.EffectTics * 1.0 / (60 * TICRATE)));
+					raddmg = (random(6,12) * 4) * (frandom(0.475,0.525) + (TrueIPItem.EffectTics * 1.0 / (60 * TICRATE)));
 				}
 				bool wasnodmgthrust;
 				bool wasforceradius;
@@ -416,13 +415,23 @@ class DDPlayerPawn : PlayerPawn
 				if (bFORCERADIUSDMG) wasforceradius = true;
 				if (!wasnodmgthrust) bNODAMAGETHRUST = true;
 				if (!wasforceradius) bFORCERADIUSDMG = true;
-				A_Explode(raddmg,(radius*3.75),0,0,(radius*2.875));
+				A_Explode(raddmg,(radius*3.75),0,0,(radius*2.875),0,0,"","TrueIP");
 				if (!wasforceradius) bFORCERADIUSDMG = false;
 				if (!wasnodmgthrust) bNODAMAGETHRUST = false;
-				A_StartSound("DinahIP/IPLoop3",701,CHANF_NOSTOP|CHANF_LOOPING,frandom(0.9,1.1),ATTN_NONE,frandom(0.9,1.1));
+				double loopvol = frandom(0.45,0.55);
+				if (TrueIPItem) loopvol = frandom(0.475,0.525) * (TrueIPItem.EffectTics * 1.0 / (60 * TICRATE));
+				//Console.Printf("loopvol: %.2f", loopvol);
+				IPLoopTimer++;
+				IPLoopInt = IPLoopTimer % 91;
+				if (IPLoopInt == 0)
+				{
+					A_StopSound(701);
+					A_StartSound("DinahIP/IPLoop3",701,CHANF_NOSTOP|CHANF_LOOPING,loopvol,ATTN_NORM,frandom(0.9,1.1));
+				}
 			}
 			else
 			{
+				IPLoopTimer = 0;
 				A_StopSound(701);
 			}
 			
