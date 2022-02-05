@@ -192,10 +192,15 @@ class DDWeapon : Weapon
 			if (skill == 3) checkvalfactor = frandom(0.0675,0.1125);
 			if (skill >= 4) checkvalfactor = frandom(0.06,0.10);
 			checkvalfactor *= frandompick(1.75,2,2.25);
+			if (CountInv("DinahTrueIPState")) checkvalfactor *= 10;
 		}
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) checkvalfactor *= frandompick(1.75,1.875,1.875,2.0,2.0,2.0,2.125,2.125,2.125,2.125,2.125,2.25,2.25,2.25,2.375,2.375,2.5);
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		if (MiscItem) MaxCheck = ceil(16 - (MiscItem.PlayerLevel * checkvalfactor));
+		if (MiscItem) 
+		{
+			if (CountInv("DinahTrueIPState")) MaxCheck = ceil(16 - (MiscItem.PlayerLevel * checkvalfactor));
+																	 else MaxCheck = ceil(randompick(1,1,1,2,2) - (MiscItem.PlayerLevel * checkvalfactor));
+		}
 
 		MaxCheck = clamp(MaxCheck, 1, MaxCheck);
 		int randomroll = random(1,MaxCheck);
@@ -846,6 +851,7 @@ class DinahWeapon : DDWeapon
 				double recl = frandom(-0.125,-0.075);
 				int dmg = random(28,52) + (KPower * 3.275);
 				if (KPower) dmg *= frandom(1.00,(1.00 + (KPower * frandompick(0.667,0.75,0.834))));
+				if (CountInv("DinahTrueIPState")) dmg *= 5;
 
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -3583,14 +3589,20 @@ class MalletShot : DDProjectile
 				if (bNOGRAVITY && nogravtimer) 
 				{
 					nogravtimer--;
-					if (!nogravtimer) bNOGRAVITY = false;
+					if (nogravtimer <= 0) bNOGRAVITY = false;
 				}
+				else
+				{
+					nogravtimer = 0;
+				}
+				if (dydudebug_projectilecollisions) Console.Printf("State: Spawn [%d], NoGrav: %d, NGTimer: %d", frame, bNOGRAVITY, nogravtimer);
 			}
 			loop;
 		Death:
 			CBAL C 0 
 			{
 				bNOGRAVITY = true;
+				if (dydudebug_projectilecollisions) Console.Printf("State: Death [%d], NoGrav: %d", frame, bNOGRAVITY);
 			}
 			CBAL CDEF 4 Bright;
 			stop;
@@ -3598,6 +3610,7 @@ class MalletShot : DDProjectile
 			CBAL C 0 
 			{
 				bNOGRAVITY = true;
+				if (dydudebug_projectilecollisions) Console.Printf("State: Crash [%d], NoGrav: %d", frame, bNOGRAVITY);
 			}
 			CBAL CDEF 4 Bright;
 			stop;
@@ -3605,12 +3618,18 @@ class MalletShot : DDProjectile
 			TNT1 A 1
 			{
 				bNOGRAVITY = true;
+				if (dydudebug_projectilecollisions) Console.Printf("State: XDeath [%d], NoGrav: %d", frame, bNOGRAVITY);
 			}
 			stop;
 		Bounce:
 			TNT1 A 0
 			{
+				double scalevel = frandom(0.375,0.625);
+				if (random(1,4) <= 3) scalevel = 0.5;
+				A_ScaleVelocity(scalevel);
 				bNOGRAVITY = false;
+				nogravtimer = random(3,5);
+				if (dydudebug_projectilecollisions) Console.Printf("State: Bounce [%d], NoGrav: %d, VelMul: %.3f", frame, bNOGRAVITY, scalevel);
 			}
 			goto Spawn;
 	}

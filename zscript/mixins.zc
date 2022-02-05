@@ -62,6 +62,7 @@ mixin class DmgCalc
 		previousdamage = damage;
 		If (weapon is "HandToHand")
 		{
+			if (CountInv("DinahTrueIPState")) damage *= 5;
 			if (altfire == 0) damage = damage;
 		}
 		if (dydudebug_meleedmg && altfire == 0) Console.Printf("MeleeDmgAltCheck: (%s) %d - (Previous Dmg: %d) [Punch]", weaponname, damage, previousdamage);
@@ -617,6 +618,11 @@ mixin class IPCostCheck
 		actor player = players[0].mo;
 		double cost;
 		
+		if (ipid == -1)
+		{
+			cost = 999.9;
+		}
+		
 		if (ipid == 1) // Cherry Bomb [Inventory]
 		{
 			if (skill <= 0) cost = 25.0;
@@ -911,24 +917,27 @@ mixin class IPCostCheck
 		}
 		
 		// "Mystery Item" reduces IP Cost by 33.3%
-		if (player && player.CountInv("MysteryItem")) cost = floor(cost * 0.667);
+		if (player && player.CountInv("MysteryItem") && ipid != -1) cost = floor(cost * 0.667);
 		
 		// Armor IPs Reduce Costs for Non-Armor IP Abilities
-		if (!(ipid >= 1000 && ipid <= 1004))
+		if (ipid != -1)
 		{
-			if (player && player.CountInv("KnightGownIP1Buff")) cost = floor(cost * 0.8);
-			if (player && player.CountInv("KnightGownIP2Buff")) cost = floor(cost * 0.6);
-			if (player && player.CountInv("KnightGownIP3Buff")) cost = floor(cost * 0.4);
-			if (player && player.CountInv("KnightGownIP4Buff")) cost = floor(cost * 0.2);
-		}
-		else
-		{
-			if (player && !player.CountInv("MysteryItem"))
+			if (!(ipid >= 1000 && ipid <= 1004))
 			{
-				if (player && player.CountInv("KnightGownIP1Buff")) cost = ceil(cost * 1.075);
-				if (player && player.CountInv("KnightGownIP2Buff")) cost = ceil(cost * 1.15);
-				if (player && player.CountInv("KnightGownIP3Buff")) cost = ceil(cost * 1.225);
-				if (player && player.CountInv("KnightGownIP4Buff")) cost = ceil(cost * 1.30);
+				if (player && player.CountInv("KnightGownIP1Buff")) cost = floor(cost * 0.8);
+				if (player && player.CountInv("KnightGownIP2Buff")) cost = floor(cost * 0.6);
+				if (player && player.CountInv("KnightGownIP3Buff")) cost = floor(cost * 0.4);
+				if (player && player.CountInv("KnightGownIP4Buff")) cost = floor(cost * 0.2);
+			}
+			else
+			{
+				if (player && !player.CountInv("MysteryItem"))
+				{
+					if (player && player.CountInv("KnightGownIP1Buff")) cost = ceil(cost * 1.075);
+					if (player && player.CountInv("KnightGownIP2Buff")) cost = ceil(cost * 1.15);
+					if (player && player.CountInv("KnightGownIP3Buff")) cost = ceil(cost * 1.225);
+					if (player && player.CountInv("KnightGownIP4Buff")) cost = ceil(cost * 1.30);
+				}
 			}
 		}
 		

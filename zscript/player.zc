@@ -6,6 +6,7 @@ class DDPlayerPawn : PlayerPawn
 	bool recalledall;
 	int ipchargesoundtimer;
 	double truespeed;
+	int armortier;
 	
 	int lasthealth;
 	
@@ -264,6 +265,7 @@ class DDPlayerPawn : PlayerPawn
 				if (MiscItem && globalvars && MiscItem.MaxItemPoints)
 				{
 					ipmodevol = basevollvl + (double(MiscItem.ItemPoints / MiscItem.MaxItemPoints) * (1.0 - basevollvl));
+					if (MiscItem.IPNoGainTimer) ipmodevol *= 0.001;
 				}
 				if (dydudebug_ipdisplays) Console.Printf("ipmodevol: %.4f, ipmodepitch: %.4f", ipmodevol, ipmodepitch);
 				if (CountInv("IPUseMode"))
@@ -273,6 +275,7 @@ class DDPlayerPawn : PlayerPawn
 						if (MiscItem && globalvars)
 						{
 							ipmodevol = basevollvl + (double(MiscItem.ItemPoints / MiscItem.MaxItemPoints) * (1.0 - basevollvl));
+							if (MiscItem.IPNoGainTimer) ipmodevol *= 0.001;
 						}
 						A_StopSound(255);
 						A_StartSound("ipmode/start",255,CHANF_NOSTOP,ipmodevol,ATTN_NORM,ipmodepitch);
@@ -312,6 +315,76 @@ class DDPlayerPawn : PlayerPawn
 			}
 			if (dydudebug_ipdisplays) Console.Printf("ipchargesoundtimer: %d", ipchargesoundtimer);
 			
+			// ??????
+			if (exex_ikaripointsenabled && CountInv("IPUseMode"))
+			{
+				if (buttons & BT_ZOOM && CountInv("FistPlayerBlock"))
+				{
+					bool wasforceradius;
+					if (bFORCERADIUSDMG) wasforceradius = true;
+					double cost = A_GetIPCost(-1);
+					if (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && MiscItem.PlayerLevel > 0)
+					{
+						MiscItem.ItemPoints -= cost;
+						globalvars.ItemPoints -= cost;
+						MiscItem.IPNoGainTimer = 60 * TICRATE;
+						A_SetBlend("FF FF FF",1.00,random(40,70));
+						if (random(1,4) <= 3)
+						{
+							double xp = pos.x;
+							double yp = pos.y;
+							double zp = pos.z;
+							ThinkerIterator MonsterFinder = ThinkerIterator.Create("Actor");
+							Actor mo;
+							int numfound = 0;
+							while (mo = Actor(MonsterFinder.Next()))
+							{
+								if (mo.bISMONSTER && 
+										mo.bSHOOTABLE && 
+										mo.bCOUNTKILL && 
+										mo.health > 0 &&
+										!mo.bFRIENDLY)
+								{
+									if (abs(xp - mo.pos.x) <= 1024 || 
+											abs(yp - mo.pos.y) <= 1024 ||
+											abs(zp - mo.pos.z) <= 1024)
+									{
+										numfound++;
+										Console.Printf("%d", numfound);
+									}
+								}
+							}
+							if (numfound)
+							{
+								if (!wasforceradius) bFORCERADIUSDMG = true;
+								A_Explode(1024,16384,0,0,8192);
+								A_StopSound(CHAN_VOICE);
+								A_StopSound(303);
+								A_StopSound(304);
+								A_StopSound(401);
+								A_StopSound(402);
+								A_StopSound(403);
+								A_StartSound("dinah/YoullPayForThat",CHAN_VOICE,CHANF_OVERLAP,0.8,ATTN_NONE,1.0);
+								A_StartSound("dinah/YoullPayForThat",303,CHANF_OVERLAP,0.7,ATTN_NONE,0.97);
+								A_StartSound("dinah/YoullPayForThat",304,CHANF_OVERLAP,0.7,ATTN_NONE,1.03);
+								A_StartSound("DinahIP/IPBoom1",401,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
+								A_StartSound("DinahIP/IPBoom2",402,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
+								A_StartSound("DinahIP/IPBoom3",403,CHANF_OVERLAP,1.0,ATTN_NONE,frandom(0.9,1.1));
+								if (!wasforceradius) bFORCERADIUSDMG = false;
+							}
+						}
+						
+						if (!CountInv("DinahTrueIPState")) 
+						{
+							A_SetInventory("DinahTrueIPState",1);
+							let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
+							if (TrueIPItem) TrueIPItem.EffectTics = ((60 * TICRATE) * (1.0 + ((MiscItem.PlayerLevel - 1) * 0.005)));
+						}
+					}
+				}
+			}
+			
+			//
 			double fademax = 1.00;
 			if (health <= 0)
 			{
@@ -336,7 +409,7 @@ class DDPlayerPawn : PlayerPawn
 				deadtimer = 0;
 			}
 
-			int armortier = 0;
+			armortier = 0;
 			double SavePercent = 0.000000;
 			int MaxAbsorb = 0;
 			int MaxFullAbsorb = 0;
@@ -592,7 +665,7 @@ class DDPlayerPawn : PlayerPawn
 		if (source == null) sour = "NONE"; else sour = source.GetClassName();
 		
 		int olddmg;
-		int armortier = 0;
+		armortier = 0;
 		double SavePercent = 0.000000;
 		int MaxAbsorb = 0;
 		int MaxFullAbsorb = 0;
@@ -1171,7 +1244,7 @@ class DDPlayerPawn : PlayerPawn
 			int gain = 0;
 			if ((source && source != self) && (inflictor && inflictor != self)) gain += 1;
 			if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush')) gain += 1;
-			if (gain)
+			if (gain && MiscItem.IPNoGainTimer <= 0)
 			{
 				double base;
 				// The mod's first and original formula
