@@ -1599,14 +1599,15 @@ class DDStatusBarMain : BaseStatusBar
 						userKeyString9.Split(userKeys9,", ");
 						if (userKeys9[0] == "Space") userKeys9[0] = "SBar";
 						if (userKeys9[0] == "CapsLock") userKeys9[0] = "CapsL";
-						legendstr.AppendFormat("\c[gold]%s\c-", userKeys9[0]);
+						if (flashtimer >= 0 && flashtimer <= 4) legendstr.AppendFormat("\c[gold]%s\c-", userKeys9[0]);
+																							 else legendstr.AppendFormat("\c[sapphire]%s\c-", userKeys9[0]);
 					}
 					else 
 					{
 						legendstr.AppendFormat("\c[red][unb]\c-");
 					}
-					if (flashtimer >= 0 && flashtimer <= 4) legendstr.AppendFormat(" = \c[GOLD]FLOWER CROWN IP\c-");
-																						 else legendstr.AppendFormat(" = \c[SAPPHIRE]FLOWER CROWN IP\c-");
+					if (flashtimer >= 0 && flashtimer <= 4) legendstr.AppendFormat(" = \c[gold]FLOWER CROWN IP\c-");
+																						 else legendstr.AppendFormat(" = \c[sapphire]FLOWER CROWN IP\c-");
 					if (legendstr != "") DrawString(mConFont, legendstr, (Lx, Ly), legendflags, legendfontclr, legendalpha, -1, 4, legendscale);
 				}
 			}
@@ -1630,9 +1631,21 @@ class DDStatusBarMain : BaseStatusBar
 			wsname = "HandToHand";
 			if (CPlayer.mo.CountInv(wsname))
 			{
-				wsfontclr = font.cr_gray;
+				int flashtimer = level.time % 20;
+				double cost = A_GetIPCost(-1);
+				bool IPModeReady;
+				if (exex_ikaripointsenabled && MiscItem.ItemPoints >= cost && MiscItem.PlayerLevel > 0) IPModeReady = true;
 				wsnum = 1;
-				if (wsweapon is wsname) wsfontclr = font.cr_gold;
+				if (wsweapon is wsname) 
+				{
+					wsfontclr = font.cr_gold;
+					if (IPModeReady && (flashtimer >= 10 && flashtimer <= 19)) wsfontclr = font.cr_sapphire;
+				}
+				else
+				{
+					wsfontclr = font.cr_gray;
+					if (IPModeReady && (flashtimer >= 10 && flashtimer <= 19)) wsfontclr = font.cr_fire;
+				}
 				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
 			}
 			x += wsspace;
