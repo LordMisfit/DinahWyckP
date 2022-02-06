@@ -3204,25 +3204,123 @@ class KnightGownIP4Buff : KnightGownIPBuff
 
 class DinahTrueIPState : TempDefenseBuff 
 {
+	int EffectTics2;
+	int Dire;
+	double ticpiece;
 	int timer;
+	int fadeouttic;
 	string texname;
+	double fadeintensity;
+	
 	default
 	{
 		Powerup.Duration -60;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
-		Powerup.Color "ff ff ff", 0.500;
+		Powerup.Color "ff c0 00", 0.500;
 	}
 	
 	override void Tick()
 	{
+		int iconframe;
+		bool debugtick = false;
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
 		timer++;
-		if (timer % 12 >= 0 && timer % 12 <= 2) texname = "DINTIPA0";
-		if (timer % 12 >= 3 && timer % 12 <= 5) texname = "DINTIPB0";
-		if (timer % 12 >= 6 && timer % 12 <= 8) texname = "DINTIPC0";
-		if (timer % 12 >= 9 && timer % 12 <= 11) texname = "DINTIPD0";
+		if (timer % 40 >=  0 && timer % 40 <=  4) iconframe = 1;
+		if (timer % 40 >=  5 && timer % 40 <=  9) iconframe = 2;
+		if (timer % 40 >= 10 && timer % 40 <= 14) iconframe = 3;
+		if (timer % 40 >= 15 && timer % 40 <= 19) iconframe = 4;
+		if (timer % 40 >= 20 && timer % 40 <= 24) iconframe = 5;
+		if (timer % 40 >= 25 && timer % 40 <= 29) iconframe = 6;
+		if (timer % 40 >= 30 && timer % 40 <= 34) iconframe = 7;
+		if (timer % 40 >= 35 && timer % 40 <= 39) iconframe = 8;
+		if (MiscItem && MiscItem.PlayerLevel >= 1 && MiscItem.PlayerLevel <= 25)
+		{
+			if (timer % 32 >=  0 && timer % 32 <=  3) iconframe = 1;
+			if (timer % 32 >=  4 && timer % 32 <=  7) iconframe = 2;
+			if (timer % 32 >=  8 && timer % 32 <= 11) iconframe = 3;
+			if (timer % 32 >= 12 && timer % 32 <= 15) iconframe = 4;
+			if (timer % 32 >= 16 && timer % 32 <= 19) iconframe = 5;
+			if (timer % 32 >= 20 && timer % 32 <= 23) iconframe = 6;
+			if (timer % 32 >= 24 && timer % 32 <= 27) iconframe = 7;
+			if (timer % 32 >= 28 && timer % 32 <= 31) iconframe = 8;
+		}
+		else
+		if (MiscItem && MiscItem.PlayerLevel >= 26 && MiscItem.PlayerLevel <= 50)
+		{
+			if (timer % 24 >=  0 && timer % 24 <=  2) iconframe = 1;
+			if (timer % 24 >=  3 && timer % 24 <=  5) iconframe = 2;
+			if (timer % 24 >=  6 && timer % 24 <=  8) iconframe = 3;
+			if (timer % 24 >=  9 && timer % 24 <= 11) iconframe = 4;
+			if (timer % 24 >= 12 && timer % 24 <= 14) iconframe = 5;
+			if (timer % 24 >= 15 && timer % 24 <= 17) iconframe = 6;
+			if (timer % 24 >= 18 && timer % 24 <= 20) iconframe = 7;
+			if (timer % 24 >= 21 && timer % 24 <= 23) iconframe = 8;
+		}
+		else
+		if (MiscItem && MiscItem.PlayerLevel >= 51 && MiscItem.PlayerLevel <= 100)
+		{
+			if (timer % 16 >=  0 && timer % 16 <=  1) iconframe = 1;
+			if (timer % 16 >=  2 && timer % 16 <=  3) iconframe = 2;
+			if (timer % 16 >=  4 && timer % 16 <=  5) iconframe = 3;
+			if (timer % 16 >=  6 && timer % 16 <=  7) iconframe = 4;
+			if (timer % 16 >=  8 && timer % 16 <=  9) iconframe = 5;
+			if (timer % 16 >= 10 && timer % 16 <= 11) iconframe = 6;
+			if (timer % 16 >= 12 && timer % 16 <= 13) iconframe = 7;
+			if (timer % 16 >= 14 && timer % 16 <= 15) iconframe = 8;
+		}
+		else
+		{
+			if (timer % 8 == 0) iconframe = 1;
+			if (timer % 8 == 1) iconframe = 2;
+			if (timer % 8 == 2) iconframe = 3;
+			if (timer % 8 == 3) iconframe = 4;
+			if (timer % 8 == 4) iconframe = 5;
+			if (timer % 8 == 5) iconframe = 6;
+			if (timer % 8 == 6) iconframe = 7;
+			if (timer % 8 == 7) iconframe = 8;
+		}
+		if (iconframe == 1) texname = "DINTIP01";
+		if (iconframe == 2) texname = "DINTIP02";
+		if (iconframe == 3) texname = "DINTIP03";
+		if (iconframe == 4) texname = "DINTIP04";
+		if (iconframe == 5) texname = "DINTIP05";
+		if (iconframe == 6) texname = "DINTIP06";
+		if (iconframe == 7) texname = "DINTIP07";
+		if (iconframe == 8) texname = "DINTIP08";
 		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+
+		int Point1 = 300;
+		int Point2 = 525;
+		int increment = random(5,9) * random(2,5);
+		
+		if (debugtick) Console.Printf("EffectTics: %d (%d), Dire: %d, Increment: %d", EffectTics2, EffectTics, Dire, Increment);
+
+		if (Dire == 0)
+		{
+			if (EffectTics2 <= Point1) { EffectTics2 = Point1; Dire = 1; }
+			else if (EffectTics2 >= Point2) { EffectTics2 = Point2; Dire = 2; }
+			else { Dire = random(1,2); }
+		}
+
+		if (Dire == 1)
+		{
+			if (owner && owner.CountInv("TimePotionTimeFreezer") <= 0) EffectTics2 += increment;
+			if (EffectTics2 >= Point2) Dire = 2;
+		}
+		else
+		if (Dire == 2)
+		{
+			if (owner && owner.CountInv("TimePotionTimeFreezer") <= 0) EffectTics2 -= increment;
+			if (EffectTics2 <= Point1) Dire = 1;
+		}
+		
+		int fadeouttic = 36;
+		if (EffectTics > fadeouttic && owner) owner.A_StopSound(206);
+		if (EffectTics == fadeouttic && owner) owner.A_StartSound("DinahIP/IPLoop3Down",206,CHANF_DEFAULT,2.25,ATTN_NORM);
 		
 		int basediv = 20;
 		DDPlayerPawn player1;
@@ -3233,8 +3331,13 @@ class DinahTrueIPState : TempDefenseBuff
 			if (player1.armortier == 2) basediv = 15;
 			if (player1.armortier == 3) basediv = 10;
 			if (player1.armortier == 4) basediv = 5;
+			if (owner && owner.CountInv("TimePotionTimeFreezer"))
+			{
+				if (MiscItem && MiscItem.TimeFreezeIPBuff) basediv *= frandompick(1.125,1.25,1.25,1.25,1.25,1.25,1.375);
+																							else basediv *= frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.75);
+			}
 		}
-		if (timer % basediv == 0)
+		if (basediv > 0 && timer % basediv == 0)
 		{
 			int scrapgive = randompick(1,1,1,1,1,1,1,1,2,2,3);
 			for (int i; i < scrapgive; i++)
@@ -3243,7 +3346,46 @@ class DinahTrueIPState : TempDefenseBuff
 			}
 		}
 		
-		super.Tick();
+		if (owner && owner.CountInv("TimePotionTimeFreezer"))
+		{
+			if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += frandompick(7.2,8.0,8.0,8.0,8.0,8.0,8.8);
+																						else ticpiece += frandompick(8.1,9.0,9.0,9.0,9.0,9.0,9.9);
+			while (ticpiece >= 10)
+			{
+				EffectTics--;
+				ticpiece -= 10;
+			}
+		}
+		else
+		{
+			EffectTics--;
+		}
+		
+		// Begin fading when 15 seconds remain
+		fadeintensity = 1.0 * ((EffectTics * 1.0) / 525.0);
+		if (fadeintensity >= 1.00) fadeintensity = 1.00;
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		if (EffectTics <= 0) Destroy();
+	}
+	
+	override color GetBlend()
+	{
+		bool debugblend = false;
+		// slowly fade the True IP out
+		int cnt = 128 - (EffectTics2>>3);
+		cnt *= fadeintensity;
+		int blendclr = BlendColor.a*cnt/256;
+		if (debugblend) Console.Printf("cnt: %d, blendclr: %d, fade: %.2f", cnt, blendclr, fadeintensity);
+
+		if (cnt > 0)
+		{
+			return Color(blendclr,
+				BlendColor.r, BlendColor.g, BlendColor.b);
+		}
+		if (debugblend) Console.Printf("EffectTics2: %d, cnt: %d / 256, BlendColor.a: %d, fadeintensity: %.2f", EffectTics2, cnt, BlendColor.a*cnt/256, fadeintensity);
+		return 0;
 	}
 }
 
