@@ -401,6 +401,27 @@ class PlaceholderItem : CustomInventoryExt
 	}
 }
 
+class PlaceholderItemUndrop : PlaceholderItem
+{
+	default
+	{
+		inventory.icon "";
+		Inventory.MaxAmount 0x7FFFFFFD;
+		+INVENTORY.KEEPDEPLETED
+		+INVENTORY.UNDROPPABLE
+		+INVENTORY.UNCLEARABLE
+		+INVENTORY.PERSISTENTPOWER
+		+INVENTORY.HUBPOWER
+	}
+
+	States
+	{
+		Use:
+			TNT1 A 0;
+			Stop;
+	}
+}
+
 class PlaceholderItemMax : PlaceholderItem
 {
 	default
@@ -1403,10 +1424,13 @@ class PlayerIsDead : PlaceholderItem
 }
 class PlayerDeathFadeOut : PlaceholderItem { }
 
-class PlayingDoom : PlaceholderItem { } // This works as an inventory flag to indicate the game mode
-class PlayingHeretic : PlaceholderItem { } // This works as an inventory flag to indicate the game mode
-class PlayingHexen : PlaceholderItem { } // This works as an inventory flag to indicate the game mode
-class PlayingStrife : PlaceholderItem { } // This works as an inventory flag to indicate the game mode
+class PlayingDoom : PlaceholderItemUndrop { } // This works as an inventory flag to indicate the game mode
+class PlayingHeretic : PlaceholderItemUndrop { } // This works as an inventory flag to indicate the game mode
+class PlayingHexen : PlaceholderItemUndrop { } // This works as an inventory flag to indicate the game mode
+class PlayingStrife : PlaceholderItemUndrop { } // This works as an inventory flag to indicate the game mode
+
+class PlayingGoingDown : PlaceholderItemUndrop { } // This works as an inventory flag to indicate the mapset
+class PlayingCircus2 : PlaceholderItemUndrop { } // This works as an inventory flag to indicate the mapset
 
 class PowerInvulnDD : PowerInvulnerable
 {
@@ -3386,6 +3410,43 @@ class DinahTrueIPState : TempDefenseBuff
 		}
 		if (debugblend) Console.Printf("EffectTics2: %d, cnt: %d / 256, BlendColor.a: %d, fadeintensity: %.2f", EffectTics2, cnt, BlendColor.a*cnt/256, fadeintensity);
 		return 0;
+	}
+}
+
+class DedMonsterFlag : PlaceHolderItem 
+{
+	int fuse;
+	int ownerorigrender;
+	double ownerorigalpha;
+	override void PostBeginPlay()
+	{
+		if (owner) 
+		{
+			ownerorigrender = owner.GetRenderStyle();
+			ownerorigalpha = owner.alpha;
+			if (exex_deadmonsterfade > 0) fuse = (exex_deadmonsterfade);
+			if (exex_deadmonsterfade < 0) fuse = (abs(exex_deadmonsterfade) * TICRATE);
+			if (exex_deadmonsterfade == 0) fuse = (randompick(15,30,45,60,75,90,105,120,135,150,165,180) * TICRATE);
+		}
+		else Destroy();
+		super.PostBeginPlay();
+	}
+
+	override void Tick()
+	{
+		if (exex_deadmonsterfade != 0) fuse--;
+		
+		if (fuse <= 0)
+		{
+			double fadeoutint = 0.019964;
+			If (Owner)
+			{
+				if (fuse == 0) owner.A_SetRenderStyle(1.0,STYLE_Add);
+				if (fuse < 0) owner.A_FadeOut(fadeoutint,FTF_REMOVE);
+			}
+		}
+		
+		if (Owner == NULL) Destroy();
 	}
 }
 

@@ -194,6 +194,14 @@ class DD_EventHandler : EventHandler
 				spawnee.health = basehealth;
 				specialenemy = true;
 			}
+			
+			// Going Down's MAP29 "Boss"
+			if (player.CountInv("PlayingGoingDown") && WolfensteinSS(spawnee))
+			{
+				//Console.Printf("24523");
+				spawnee.health = 12000;
+				specialenemy = true;
+			}
 
 			if (Revenant(spawnee)) spawnee.ProjectilePassHeight = 84;
 			if (Demon1(spawnee) || Demon2(spawnee)) spawnee.ProjectilePassHeight = 104;
@@ -202,7 +210,7 @@ class DD_EventHandler : EventHandler
 			{
 				spawnee.A_SetRenderStyle(frandom(0.625,0.875),STYLE_Add);
 			}
-			
+
 			// Monster "Scaling"
 			if (spawnee.bISMONSTER)
 			{
@@ -211,6 +219,7 @@ class DD_EventHandler : EventHandler
 				double origDmgFct = spawnee.DamageFactor;
 				double origHealth = spawnee.health;
 				double origMass = spawnee.Mass;
+
 				hpmulti = 0.00;
 				atkmulti = 0.00;
 				defmulti = 0.00;
@@ -291,7 +300,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.0019;
 							if (skill >= 4) mult = 0.0018;
 							mult *= multbase;
-							hpmulti += floor(spawnee.health * ((MiscItem.PlayerLevel * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
+							hpmulti += floor(origHealth * ((MiscItem.PlayerLevel * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
 							
 							// Mass
 							if (skill <= 0) mult = 0.0055;
@@ -349,7 +358,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.001375;
 							if (skill >= 4) mult = 0.0015;
 							mult *= multbase;
-							hpmulti += ceil(spawnee.health * (LuckRoll * mult));
+							hpmulti += ceil(origHealth * (LuckRoll * mult));
 							
 							// Mass
 							if (skill <= 0) mult = 0.0025;
@@ -434,7 +443,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.0038;
 							if (skill >= 4) mult = 0.0036;
 							mult *= multbase;
-							hpmulti += floor(spawnee.health * ((globalvars.MapsFinished * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
+							hpmulti += floor(origHealth * ((globalvars.MapsFinished * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
 							
 							// Mass
 							if (skill <= 0) mult = 0.011;
@@ -492,7 +501,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.00275;
 							if (skill >= 4) mult = 0.0030;
 							mult *= multbase;
-							hpmulti += ceil(spawnee.health * (LuckRoll * mult));
+							hpmulti += ceil(origHealth * (LuckRoll * mult));
 							
 							// Mass
 							if (skill <= 0) mult = 0.0050;
@@ -535,6 +544,14 @@ class DD_EventHandler : EventHandler
 		string spawnname = spawnee.GetClassName();
 		if (spawnee)
 		{
+			DedMonsterFlag dedcheckitem;
+			dedcheckitem = DedMonsterFlag(spawnee.FindInventory("DedMonsterFlag"));
+			if (dedcheckitem)
+			{
+				spawnee.A_SetRenderStyle(dedcheckitem.ownerorigalpha,dedcheckitem.ownerorigrender);
+				dedcheckitem.Destroy();
+			}
+
 			if (spawnee.bISMONSTER && spawnee.Stamina > 0)
 			{
 				spawnee.health = spawnee.SpawnHealth() + spawnee.Stamina;
@@ -546,6 +563,7 @@ class DD_EventHandler : EventHandler
 	override void WorldThingDamaged(WorldEvent e)
 	{
 		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		int blundebuff = 0;
 		int scramblerdebuff = 0;
 		actor victim = e.Thing;
@@ -558,7 +576,6 @@ class DD_EventHandler : EventHandler
 		int PLuck;
 		int TrueLuck;
 		let globalvars = DDGlobalVariables.Get();
-		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		if (MiscItem) 
 		{
 			PLuck = MiscItem.PlayerLUCK;
@@ -1085,6 +1102,7 @@ class DD_EventHandler : EventHandler
 	override void WorldThingDied(WorldEvent e)
 	{
 		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		actor victim = e.Thing;
 		actor inflicter = e.inflictor;
 		actor source;
@@ -1102,7 +1120,6 @@ class DD_EventHandler : EventHandler
 		int PLuck;
 		int TrueLuck;
 		let globalvars = DDGlobalVariables.Get();
-		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		if (MiscItem)
 		{
 			PLuck = MiscItem.PlayerLUCK;
@@ -1131,6 +1148,7 @@ class DD_EventHandler : EventHandler
 			actor IPAttack;
 			if (!(vict == "DinahPlayer") || (victim.bCOUNTKILL || specialtype))
 			{
+				if (!victim.CountInv("DedMonsterFlag") && !sv_monsterrespawn) victim.A_SetInventory("DedMonsterFlag",1);
 				actor Player = players[0].mo;
 				bool giveexp;
 				bool playerkill;
@@ -2233,6 +2251,8 @@ class DD_EventHandler : EventHandler
 	
 	override void WorldLoaded(WorldEvent e)
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
 		bool BatGuardCheck = true;
 		if (e.IsSaveGame) BatGuardCheck = false;
@@ -2257,6 +2277,15 @@ class DD_EventHandler : EventHandler
 			globalvars.AllCompletion[globalvars.MapsFinished] = false;
 			if (dydudebug_mapfinishcheck) Console.Printf("Not Reopen [%d]", globalvars.MapsFinished);
 		}
+
+		// Post LevelPostProcess Compatibility Stuff >_>
+		string giveitem = "PlayingGoingDown";
+		if (level.GetChecksum() == '1dfcba1353e9bbf720f17639f294490d' && !player.FindInventory(giveitem)) // gd.wad [Going Down] map01
+		{
+			player.A_SetInventory("PlayingGoingDown",1);
+			Console.Printf("LOLE Welcome to Going Down, Kiddo! :V");
+		}
+
 		if (BatGuardCheck)
 		{
 			actor Player = players[0].mo;
