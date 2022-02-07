@@ -325,11 +325,14 @@ class DDPlayerPawn : PlayerPawn
 					if (bNODAMAGETHRUST) wasnodmgthrust = true;
 					if (bFORCERADIUSDMG) wasforceradius = true;
 					double cost = A_GetIPCost(-1);
-					if (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && MiscItem.PlayerLevel > 0)
+					if (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && MiscItem.PlayerLevel > 0 && MiscItem.TrueIPCooldownTimer <= 0)
 					{
+						globalvars.TrueIPTimesUsed += 1;
 						MiscItem.ItemPoints -= cost;
 						globalvars.ItemPoints -= cost;
 						MiscItem.IPNoGainTimer = 60 * TICRATE;
+						MiscItem.TrueIPCooldownTimer = ((300 * TICRATE) * (1.0 - (MiscItem.PlayerLevel * 0.008)));
+						if (MiscItem.TrueIPCooldownTimer <= (60 * TICRATE)) MiscItem.TrueIPCooldownTimer = 60 * TICRATE;
 						A_SetBlend("ff c0 00",1.00,(random(40,70)*2));
 						double xp = pos.x;
 						double yp = pos.y;
@@ -408,8 +411,6 @@ class DDPlayerPawn : PlayerPawn
 			int IPLoopInt;
 			if (CountInv("DinahTrueIPState"))
 			{
-				MiscItem.ItemPoints = 0;
-				globalvars.ItemPoints = 0;
 				let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
 				double raddmg = random(6,12) * 4;
 				if (TrueIPItem)
