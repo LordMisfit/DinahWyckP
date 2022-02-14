@@ -8,8 +8,13 @@ class DDPlayerPawn : PlayerPawn
 	double truespeed;
 	int armortier;
 	int IPLoopTimer;
+	int beattimer;
+	int beatpulse;
 	
 	int lasthealth;
+	int breathdirection; // 0 = down [size decreases], 1 = up [size increases]
+	int breathframe;
+
 	
 	int DashTimer; int MaxDashTimer; 
 	int cooldash; bool sounddash; 
@@ -45,7 +50,7 @@ class DDPlayerPawn : PlayerPawn
 		RenderStyle "Add";
 		Alpha 1.0;
 	}
-
+	
 	override void BeginPlay()
 	{
 		basexscale = scale.x;
@@ -468,7 +473,80 @@ class DDPlayerPawn : PlayerPawn
 				}
 				deadtimer = 0;
 			}
-
+			
+			// Heartbeat [low health]
+			if (exex_playerbpm)
+			{
+				if (health > 0)
+				{
+					beattimer++;
+					if (health <= (CountInv("PlayerMaxHP") * 0.01))
+					{
+						if (beattimer >= beatpulse)
+						{
+							A_StopSound(134);
+							A_StartSound("heartb2",134,CHANF_DEFAULT,frandom(1.0,1.2),ATTN_NORM,frandom(0.9,1.1));
+							beatpulse = random(10,11);
+							beattimer = 0;
+						}
+					}
+					else
+					if (health <= (CountInv("PlayerMaxHP") * 0.05))
+					{
+						if (beattimer >= beatpulse)
+						{
+							A_StopSound(134);
+							A_StartSound("heartb2",134,CHANF_DEFAULT,frandom(1.0,1.2),ATTN_NORM,frandom(0.9,1.1));
+							beatpulse = random(15,17);
+							beattimer = 0;
+						}
+					}
+					else
+					if (health <= (CountInv("PlayerMaxHP") * 0.10))
+					{
+						if (beattimer >= beatpulse)
+						{
+							A_StopSound(134);
+							A_StartSound("heartb2",134,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,frandom(0.9,1.1));
+							beatpulse = random(28,42);
+							beattimer = 0;
+						}
+					}
+					else
+					if (health <= (CountInv("PlayerMaxHP") * 0.25))
+					{
+						if (beattimer >= beatpulse)
+						{
+							A_StopSound(134);
+							A_StartSound("heartb2",134,CHANF_DEFAULT,frandom(0.675,0.825),ATTN_NORM,frandom(0.9,1.1));
+							beatpulse = random(49,55);
+							beattimer = 0;
+						}
+					}
+					else
+					if (health <= (CountInv("PlayerMaxHP") * 0.5))
+					{
+						if (beattimer >= beatpulse)
+						{
+							A_StopSound(134);
+							A_StartSound("heartb2",134,CHANF_DEFAULT,frandom(0.45,0.55),ATTN_NORM,frandom(0.9,1.1));
+							beatpulse = random(66,74);
+							beattimer = 0;
+						}
+					}
+					else
+					{
+						beatpulse = random(124,128);
+						beattimer = 0;
+					}
+				}
+				else
+				{
+					beatpulse = 5000;
+				}
+			}
+			
+			// Armor
 			armortier = 0;
 			double SavePercent = 0.000000;
 			int MaxAbsorb = 0;
@@ -674,7 +752,89 @@ class DDPlayerPawn : PlayerPawn
 		// New Code goes here
 		return damage;
 	}
+	
+	// Reset Breathing Scale
+	void A_APPBreatheReset()
+	{
+		if (!isvoodoodoll) 
+		{
+			scaleymulti = 1.00;
+			breathdirection = 0;
+			breathframe = 0;
+			A_SetScale(basexscale,baseyscale*scaleymulti);
+		}
+	}
+	
+	// Breathing Function
+	void A_APPBreathe(double startpoint = 1.00625, double endpoint = 0.99375, double breathincrementbase = 0.0025, double basetics = 4)
+	{
+		if (!isvoodoodoll) 
+		{
+			double HealthBreathSpeed = 1.0;
+			double HealthRatio; 
+			if (CountInv("PlayerMaxHP") > 0) 
+			{
+				HealthRatio = (health * 1.00) / (CountInv("PlayerMaxHP") * 1.00);
+				// Console.Printf("%.8f", HealthRatio);
+				if (health > 0)
+				{
+					if (HealthRatio >= 1.75001) HealthBreathSpeed = 0.01;
+					if (HealthRatio >= 1.62501 && HealthRatio <= 1.75000) HealthBreathSpeed = 0.175;
+					if (HealthRatio >= 1.50001 && HealthRatio <= 1.62500) HealthBreathSpeed = 0.34;
+					if (HealthRatio >= 1.37501 && HealthRatio <= 1.50000) HealthBreathSpeed = 0.505;
+					if (HealthRatio >= 1.25001 && HealthRatio <= 1.37500) HealthBreathSpeed = 0.67;
+					if (HealthRatio >= 1.12501 && HealthRatio <= 1.25000) HealthBreathSpeed = 0.835;
+					if (HealthRatio >= 0.87501 && HealthRatio <= 1.12500) HealthBreathSpeed = 1.00;
+					if (HealthRatio >= 0.75001 && HealthRatio <= 0.87500) HealthBreathSpeed = 1.165;
+					if (HealthRatio >= 0.62501 && HealthRatio <= 0.75000) HealthBreathSpeed = 1.33;
+					if (HealthRatio >= 0.50001 && HealthRatio <= 0.62500) HealthBreathSpeed = 1.495;
+					if (HealthRatio >= 0.37501 && HealthRatio <= 0.50000) HealthBreathSpeed = 1.66;
+					if (HealthRatio >= 0.25001 && HealthRatio <= 0.37500) HealthBreathSpeed = 1.825;
+					if (HealthRatio >= 0.12501 && HealthRatio <= 0.25000) HealthBreathSpeed = 1.99;
+					if (HealthRatio >= 0.00001 && HealthRatio <= 0.12500) HealthBreathSpeed = 2.155;
+					if (Health == 1) HealthBreathSpeed = 2.485;
+				}
+				breathincrementbase *= HealthBreathSpeed;
+				
+				double ticmulti = 1.00 * (tics / basetics);
+				breathincrementbase *= ticmulti;
 
+				if (breathdirection == 0)
+				{
+					breathframe++;
+					scaleymulti -= breathincrementbase;
+					if (scaleymulti <= endpoint) { scaleymulti = endpoint; breathdirection = 1; breathframe = 0; }
+				}
+				else
+				{
+					breathframe++;
+					scaleymulti += breathincrementbase;
+					if (scaleymulti >= startpoint) { scaleymulti = startpoint; breathdirection = 0; breathframe = 0; }
+				}
+
+				if (dydudebug_playerbreathedisplays)
+				{
+					Console.Printf("scaleymulti = %.8f, breathincrementbase = %.8f, breathdirection = %d, breathframe = %d, HealthBreathSpeed = %.8f, ticmulti = %.8f, actualtics = %d, basetics = %d", 
+													scaleymulti, 
+													breathincrementbase, 
+													breathdirection, 
+													breathframe, 
+													HealthBreathSpeed, 
+													ticmulti, 
+													tics, 
+													basetics);
+				}
+			}
+			else
+			{
+				scaleymulti = 1.00;
+				breathdirection = 0;
+				breathframe = 0;
+			}
+			A_SetScale(basexscale,baseyscale*scaleymulti);
+		}
+	}
+	
 	void A_CheckNeverBleed(int type, int damage, int flags)
 	{
 		if (type == 0)
@@ -1486,7 +1646,7 @@ class DDPlayerPawn : PlayerPawn
 			{
 				string painsnd = "";
 				if (HealthRatio >= 0.751) painsnd = "Dinah/Pain1A";
-				if (HealthRatio >= 0.501 && HealthRatio < 0.750) painsnd = "Dinah/Pain2A";
+				else if (HealthRatio >= 0.501 && HealthRatio < 0.750) painsnd = "Dinah/Pain2A";
 				else if (HealthRatio >= 0.251 && HealthRatio <= 0.500) painsnd = "Dinah/Pain3A";
 				else if (HealthRatio < 0.251) painsnd = "Dinah/Pain4A";
 				A_StopSound(CHAN_VOICE);
@@ -1531,7 +1691,8 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 		Health 80; // 100
 		Player.MaxHealth 80;
 		Player.MugShotMaxHealth -1; // 100
-		Scale 0.8572;
+		XScale 1.0; //0.8572;
+		YScale 0.95; //0.8572;
 		Mass 60;
 		Height 48; // Slightly Shorter than Flora in Aetherius
 		Radius 12; // Dinah is actually SLIGHTLY thinner than even Flora is in Aetherius
@@ -1550,50 +1711,68 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 	States
 	{
 		Spawn:
-			DINA A -1;
+			DINA A 4
+			{
+				A_APPBreathe();
+			}
 			Loop;
 		See:
-			DINA BCDE 4;
+			DINA BCDE 4
+			{
+				A_APPBreathe();
+			}
 			Loop;
 		Pain:
-			DINA H 6 A_DDPain();
+			DINA H 6 
+			{
+				A_APPBreathe();
+				A_DDPain();
+			}
 			Goto Spawn;
 		Missile:
-			DINA FG 6;
+			DINA FG 6
+			{
+				A_APPBreathe();
+			}
 			Goto Spawn;
 		Melee:
-			DINA FG 6;
+			DINA FG 6
+			{
+				A_APPBreathe();
+			}
 			Goto Spawn;
 		Death:
+			DINA H 0 A_APPBreatheReset();
 			DINA H 9 A_PlayerScream;
 			DINA I 9 A_NoBlocking;
 			DINA JK 9;
 			DINA K -1;
 			Stop;
 		XDeath:
-			DINA H 9 A_PlayerScream;
-			DINA I 9 A_NoBlocking;
-			DINA JK 9;
-			DINA K -1;
-			Stop;
-		Burn:
+			DINA H 0 A_APPBreatheReset();
 			DINA H 9 A_PlayerScream;
 			DINA I 9 A_NoBlocking;
 			DINA JK 9;
 			DINA K -1;
 			Stop;
 		AltSkinDeath:
+			DINA H 0 A_APPBreatheReset();
 			DINA H 9 A_PlayerScream;
 			DINA I 9 A_NoBlocking;
 			DINA JK 9;
 			DINA K -1;
 			Stop;
 		AltSkinXDeath:
+			DINA H 0 A_APPBreatheReset();
 			DINA H 9 A_PlayerScream;
 			DINA I 9 A_NoBlocking;
 			DINA JK 9;
 			DINA K -1;
 			Stop;
+		Burn:
+			goto Death;
+		Ice:
+			goto Death;
   }
 }
 
