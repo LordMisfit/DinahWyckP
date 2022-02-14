@@ -503,7 +503,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.002375;
 							if (skill >= 4) mult = 0.00225;
 							mult *= multbase;
-							defmulti += (globalvars.MapsFinished * mult);
+							defmulti += ((globalvars.MapsFinished * mult) - (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
 							// Health
 							if (skill <= 0) mult = 0.0044;
 							if (skill == 1) mult = 0.0042;
@@ -582,20 +582,34 @@ class DD_EventHandler : EventHandler
 						}
 					}
 					// Final Calcs
-					if (spdmulti) spawnee.Speed *= (1.0 + spdmulti);
+					if (spdmulti) 
+					{
+						if (spdmulti >= 5) spdmulti = 5;
+						spawnee.Speed *= (1.0 + spdmulti);
+					}
 					if (dydudebug_monsterscaling) Console.Printf("Speed: %.8f [old: %.8f, multi: %.8f]", spawnee.Speed, origSpd, spdmulti);
-					if (atkmulti) spawnee.DamageMultiply *= (1.0 + atkmulti);
+					if (atkmulti) 
+					{
+						if (atkmulti >= 9.0) atkmulti = 9.0;
+						spawnee.DamageMultiply *= (1.0 + atkmulti);
+					}
 					if (dydudebug_monsterscaling) Console.Printf("DamageMultiply: %.8f [old: %.8f, multi: %.8f]", spawnee.DamageMultiply, origDmgMul, atkmulti);
-					if (defmulti) spawnee.DamageFactor *= (1.0 + defmulti);
+					if (defmulti) 
+					{
+						if (defmulti >= 0.9) defmulti = 0.9;
+						spawnee.DamageFactor *= (1.0 - defmulti);
+					}
 					if (dydudebug_monsterscaling) Console.Printf("DamageFactor: %.8f [old: %.8f, multi: %.8f]", spawnee.DamageFactor, origDmgFct, defmulti);
 					if (hpmulti) 
 					{
+						if (hpmulti > 20.0) hpmulti = 20.0;
 						spawnee.health += hpmulti;
 						spawnee.Stamina = hpmulti;
 					}
 					if (dydudebug_monsterscaling) Console.Printf("Health: %d [old: %d, diff: %d]", spawnee.health, origHealth, hpmulti);
 					if (massmulti) 
 					{
+						if (massmulti > 20.0) massmulti = 20.0;
 						spawnee.mass += massmulti;
 						spawnee.Accuracy = massmulti;
 					}
@@ -1485,6 +1499,8 @@ class DD_EventHandler : EventHandler
 					{
 						// Specific Drops from Specific Monsters
 						let monsterp = Actor(victim);
+						
+						
 						// Doom Monsters
 						basedropdiv = 256;
 						luckbase = 0.25;
@@ -1963,9 +1979,9 @@ class DD_EventHandler : EventHandler
 						if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
 						if (BlunderPuff(inflicter)) maxchance = (basechance * 16);
 						if (RecordShot(inflicter)) maxchance = (basechance * 4);
-						if (VacPuff(inflicter)) maxchance = (basechance * 0.125);
+						if (VacPuff(inflicter)) maxchance = (basechance * 8);
 						if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [armor]: %d (%d)", maxchance, basechance);
-						if (random(1,maxchance) == 1)
+						if (random(1,maxchance) <= 1)
 						{
 							//Full Armor Drops
 							user_type = random(1,100);
@@ -1979,49 +1995,49 @@ class DD_EventHandler : EventHandler
 							scraprolls = 1;
 							if (BlunderPuff(inflicter)) 
 							{
-								scraprolls += randompick(0,0,0,0,1,1,1,1,1,1,2,2,3);
-								if (random(1,8) <= 5)
+								scraprolls += randompick(0,0,0,0,0,1,1,1,1,1,1,1,2,2,3);
+								if (random(1,32) <= (6 + ((MiscItem.PlayerLevel * 0.015))))
 								{
-									if (Zombieman(victim)) scraprolls += randompick(1,1,2,2,2);
-									if (ShotgunGuy(victim)) scraprolls += randompick(1,2,2,2,3);
-									if (ChaingunGuy(victim)) scraprolls += randompick(2,2,3,3,3);
-									if (DoomImp(victim)) scraprolls += randompick(0,0,1,1,2);
-									if (Demon(victim)) scraprolls += randompick(1,2,2,3,3);
-									if (Cacodemon(victim)) scraprolls += randompick(2,2,2,3,3);
-									if (BaronOfHell(victim)) scraprolls += randompick(1,2,2,3,3);
-									if (PainElemental(victim)) scraprolls += randompick(2,2,2,3,3);
-									if (LostSoul(victim)) scraprolls += randompick(0,0,0,1,1);
-									if (Revenant(victim)) scraprolls += randompick(1,1,1,2,2);
-									if (Arachnotron(victim)) scraprolls += randompick(2,2,2,3,3);
-									if (Fatso(victim)) scraprolls += randompick(1,1,1,2,2);
-									if (Cyberdemon(victim)) scraprolls += randompick(3,3,4,4,4);
-									if (SpiderMastermind(victim)) scraprolls += randompick(5,5,5,6,6);
+									if (Zombieman(victim)) scraprolls += randompick(1,1,2,2);
+									if (ShotgunGuy(victim)) scraprolls += randompick(1,2,2,2);
+									if (ChaingunGuy(victim)) scraprolls += randompick(2,2,3,3);
+									if (DoomImp(victim)) scraprolls += randompick(0,0,1,1);
+									if (Demon(victim)) scraprolls += randompick(1,2,2,3);
+									if (Cacodemon(victim)) scraprolls += randompick(2,2,2,3);
+									if (BaronOfHell(victim)) scraprolls += randompick(1,2,2,3);
+									if (PainElemental(victim)) scraprolls += randompick(2,2,2,3);
+									if (LostSoul(victim)) scraprolls += randompick(0,0,0,1);
+									if (Revenant(victim)) scraprolls += randompick(1,1,1,2);
+									if (Arachnotron(victim)) scraprolls += randompick(2,2,2,3);
+									if (Fatso(victim)) scraprolls += randompick(1,1,1,2);
+									if (Cyberdemon(victim)) scraprolls += randompick(3,3,4,4);
+									if (SpiderMastermind(victim)) scraprolls += randompick(5,5,5,6);
 									
-									if (Knight(victim)) scraprolls += randompick(1,2,2,3,3);
-									if (IronLich(victim)) scraprolls += randompick(9,9,10,10,11);
-									if (Minotaur(victim)) scraprolls += randompick(3,3,4,4,4);
-									if (Beast(victim)) scraprolls += randompick(2,2,2,3,3);
-									if (Clink(victim)) scraprolls += randompick(2,2,3,3,4);
-									if (Snake(victim)) scraprolls += randompick(1,2,2,3,3);
+									if (Knight(victim)) scraprolls += randompick(1,2,2,3);
+									if (IronLich(victim)) scraprolls += randompick(9,9,10,10);
+									if (Minotaur(victim)) scraprolls += randompick(3,3,4,4);
+									if (Beast(victim)) scraprolls += randompick(2,2,2,3);
+									if (Clink(victim)) scraprolls += randompick(2,2,3,3);
+									if (Snake(victim)) scraprolls += randompick(1,2,2,3);
 									
-									if (Ettin(victim)) scraprolls += randompick(1,2,2,3,3);
-									if (Centaur(victim)) scraprolls += randompick(2,2,2,3,3);
-									if (CentaurLeader(victim)) scraprolls += randompick(0,0,1,1,2);
-									if (Demon1(victim)) scraprolls += randompick(1,1,1,2,2);
-									if (Demon2(victim)) scraprolls += randompick(1,1,1,2,2);
-									if (Serpent(victim)) scraprolls += randompick(1,1,1,2,2);
-									if (SerpentLeader(victim)) scraprolls += randompick(0,0,1,1,2);
-									if (FighterBoss(victim)) scraprolls += randompick(5,5,5,6,6);
-									if (ClericBoss(victim)) scraprolls += randompick(3,3,3,4,4);
-									if (MageBoss(victim)) scraprolls += randompick(1,1,1,2,2);
+									if (Ettin(victim)) scraprolls += randompick(1,2,2,3);
+									if (Centaur(victim)) scraprolls += randompick(2,2,2,3);
+									if (CentaurLeader(victim)) scraprolls += randompick(0,0,1,1);
+									if (Demon1(victim)) scraprolls += randompick(1,1,1,2);
+									if (Demon2(victim)) scraprolls += randompick(1,1,1,2);
+									if (Serpent(victim)) scraprolls += randompick(1,1,1,2);
+									if (SerpentLeader(victim)) scraprolls += randompick(0,0,1,1);
+									if (FighterBoss(victim)) scraprolls += randompick(5,5,5,6);
+									if (ClericBoss(victim)) scraprolls += randompick(3,3,3,4);
+									if (MageBoss(victim)) scraprolls += randompick(1,1,1,2);
 								}
 							}
-							if (RecordShot(inflicter)) scraprolls += randompick(0,0,0,0,0,0,1,1,1,1,1,2,2);
-							if (VacPuff(inflicter)) scraprolls += (randompick(0,0,0,0,0,0,1,1,1,1,1,2,2) - 1);
+							if (RecordShot(inflicter)) scraprolls += randompick(0,0,0,1,1,1,1,1,2,2,2);
+							if (VacPuff(inflicter)) scraprolls += (randompick(0,0,0,0,1,1,1,1,2,2,2) - 2);
 							//Scrap Drops
-							if (scraprolls)
+							if (scraprolls > 0)
 							{
-								int baseval = randompick(2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3);
+								int baseval = randompick(2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3);
 								for (int i = 0; i < scraprolls; i++)
 								{
 									if (BlunderPuff(inflicter) && i == 0) victim.A_SpawnItemEx("ArmorScrap",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
