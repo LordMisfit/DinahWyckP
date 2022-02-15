@@ -1140,51 +1140,64 @@ class PlayerStatItem : Inventory
 				if (dydudebug_masscalcs) Console.Printf("Mass [Buffs]: %d", TotalMass);
 
 				// Armor
+				int ArmorAmt;
+				int MassInc;
+				int MassMulti;
 				if (Owner.CountInv("KnightGownItem"))	
 				{
 					if (owner.CountInv("KnightGownIP1Buff"))
 					{
-						TotalMass += 40; TotalMass *= 1.1;
+						MassInc = floor(ArmorAmt * 0.16); // 40
+						MassMulti = (1.0 + (ArmorAmt * 0.0004)); // 1.1
 					}
 					else
 					{
-						TotalMass += 4; TotalMass *= 1.01;
+						MassInc = floor(ArmorAmt * 0.016); // 4
+						MassMulti = (1.0 + (ArmorAmt * 0.00004)); // 1.01
 					}
 				}
 				if (Owner.CountInv("KnightGownItem2"))
 				{
 					if (owner.CountInv("KnightGownIP2Buff"))
 					{
-						TotalMass += 80; TotalMass *= 1.20;
+						MassInc = floor(ArmorAmt * 0.16); // 80
+						MassMulti = (1.0 + (ArmorAmt * 0.0004)); // 1.2
 					}
 					else
 					{
-						TotalMass += 8; TotalMass *= 1.02;
+						MassInc = floor(ArmorAmt * 0.016); // 8
+						MassMulti = (1.0 + (ArmorAmt * 0.00004)); // 1.02
 					}
 				}
 				if (Owner.CountInv("KnightGownItem3"))
 				{
 					if (owner.CountInv("KnightGownIP3Buff"))
 					{
-						TotalMass += 120; TotalMass *= 1.40;
+						MassInc = floor(ArmorAmt * 0.16); // 160
+						MassMulti = (1.0 + (ArmorAmt * 0.0004)); // 1.4
 					}
 					else
 					{
-						TotalMass += 12; TotalMass *= 1.04;
+						MassInc = floor(ArmorAmt * 0.016); // 16
+						MassMulti = (1.0 + (ArmorAmt * 0.00004)); // 1.04
 					}
 				}
 				if (Owner.CountInv("KnightGownItem4"))
 				{
 					if (owner.CountInv("KnightGownIP4Buff"))
 					{
-						TotalMass += 160; TotalMass *= 1.80;
+						MassInc = floor(ArmorAmt * 0.16); // 320
+						MassMulti = (1.0 + (ArmorAmt * 0.0004)); // 1.8
 					}
 					else
 					{
-						TotalMass += 16; TotalMass *= 1.08;
+						MassInc = floor(ArmorAmt * 0.016); // 32
+						MassMulti = (1.0 + (ArmorAmt * 0.00004)); // 1.08
 					}
 					 
 				}
+				TotalMass += MassInc;
+				TotalMass *= MassMulti;
 				if (dydudebug_masscalcs) Console.Printf("Mass [Armor]: %d", TotalMass);
 
 				owner.Mass = TotalMass;
@@ -1231,10 +1244,22 @@ class PlayerStatItem : Inventory
 
 				// Armor
 				double ArmorJumpZ = 1.00;
-				if (Owner.CountInv("KnightGownItem") && !owner.CountInv("KnightGownIP1Buff")) ArmorJumpZ -= 0.0125;
-				if (Owner.CountInv("KnightGownItem2") && !owner.CountInv("KnightGownIP2Buff")) ArmorJumpZ -= 0.025;
-				if (Owner.CountInv("KnightGownItem3") && !owner.CountInv("KnightGownIP3Buff")) ArmorJumpZ -= 0.0475;
-				if (Owner.CountInv("KnightGownItem4") && !owner.CountInv("KnightGownIP4Buff")) ArmorJumpZ -= 0.0875;
+				if (Owner.CountInv("KnightGownItem") && !owner.CountInv("KnightGownIP1Buff")) 
+				{
+					ArmorJumpZ -= (ArmorAmt * 0.0001); // 0.025;
+				}
+				if (Owner.CountInv("KnightGownItem2") && !owner.CountInv("KnightGownIP2Buff")) 
+				{
+					ArmorJumpZ -= (ArmorAmt * 0.0000975); // 0.04875;
+				}
+				if (Owner.CountInv("KnightGownItem3") && !owner.CountInv("KnightGownIP3Buff")) 
+				{
+					ArmorJumpZ -= (ArmorAmt * 0.000095); // 0.095;
+				}
+				if (Owner.CountInv("KnightGownItem4") && !owner.CountInv("KnightGownIP4Buff")) 
+				{
+					ArmorJumpZ -= (ArmorAmt * 0.00009); // 0.180;
+				}
 				if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Armor]: %.8f", ArmorJumpZ);
 
 				// Weapon Checks
@@ -2647,39 +2672,47 @@ class PlayerStatItem : Inventory
 		HUDSpeed *= BuffFactor;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Buffs]: %.8f", BuffFactor);
 
+		int ArmorAmt = owner.CountInv("BasicArmor");
+		double ArmorM;
 		double ArmorFactor = 1.0;
 		if (owner.CountInv("KnightGownItem")) 
 		{
 			if (!owner.CountInv("KnightGownIP1Buff"))
 			{
-				if (berserked) ArmorFactor *= (0.995 + (PlayerLevel * 0.0001));
-									else ArmorFactor *= (0.99 + (PlayerLevel * 0.0001));
+				if (berserked) ArmorM = (ArmorAmt * 0.00004); // -0.01
+									else ArmorM = (ArmorAmt * 0.00008); // -0.02
 			}
 		}
 		if (owner.CountInv("KnightGownItem2")) 
 		{
 			if (!owner.CountInv("KnightGownIP2Buff"))
 			{
-				if (berserked) ArmorFactor *= (0.985 + (PlayerLevel * 0.0003));
-									else ArmorFactor *= (0.97 + (PlayerLevel * 0.0003));
+				if (berserked) ArmorM = (ArmorAmt * 0.00006); // -0.03
+									else ArmorM = (ArmorAmt * 0.00012); // -0.06
 			}
 		}
 		if (owner.CountInv("KnightGownItem3")) 
 		{
 			if (!owner.CountInv("KnightGownIP3Buff"))
 			{
-				if (berserked) ArmorFactor *= (0.97 + (PlayerLevel * 0.0006));
-									else ArmorFactor *= (0.94 + (PlayerLevel * 0.0006));
+				if (berserked) ArmorM = (ArmorAmt * 0.00015); // -0.075
+									else ArmorM = (ArmorAmt * 0.00030); // -0.15
 			}
 		}
 		if (owner.CountInv("KnightGownItem4")) 
 		{
 			if (!owner.CountInv("KnightGownIP4Buff"))
 			{
-				if (berserked) ArmorFactor *= (0.95 + (PlayerLevel * 0.001));
-									else ArmorFactor *= (0.90 + (PlayerLevel * 0.001));
+				if (berserked) ArmorM = (ArmorAmt * 0.0000625); // -0.125
+									else ArmorM = (ArmorAmt * 0.000125); // -0.25
 			}
 		}
+		int ArmorML = ArmorM;
+		let MiscItem = PlayerStatItem(Owner.FindInventory("PlayerStatItem"));
+		if (MiscItem && ArmorM > 0.0) ArmorM *= (1.0 - (MiscItem.PlayerLevel * 0.02));
+		//Console.Printf("%.8f (%.8f)", ArmorM, ArmorML);
+		if (ArmorM < 0.0) ArmorM = 0.0;
+		ArmorFactor = (1.0 - ArmorM);
 		if (ArmorFactor > 1.00) ArmorFactor = 1.00;
 		Speed *= ArmorFactor;
 		HUDSpeed *= ArmorFactor;
