@@ -3951,6 +3951,21 @@ class HandMotherVac : DDOrigBoss
 	}
 }
 
+class HandMotherVacClone : HandMotherVac
+{
+	default
+	{
+		//$Category RPBosses
+		Health 1500;
+		Speed 12;
+		Obituary "%o was put to bed by a clone of the HandMother.";
+		Tag "HandMother (Vacuum) (clone)";
+		painsound "mother/pain";
+		DamageFactor "Breakfast", 0.5;
+		DamageFactor "Suck", 0;
+	}
+}
+
 class HandmotherPhaseA : HandMotherVac
 {
 	default
@@ -3975,6 +3990,35 @@ class HandmotherPhaseA : HandMotherVac
 			BMOX DEFDEFDEFDEF 7;
 			BMOX F 0 A_StartSound("misc/teleport");
 			BMTX F 0 A_SpawnItemEX("HandMotherPhaseB",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+			Stop;
+	}
+}
+
+class HandmotherPhaseAClone : HandmotherPhaseA
+{
+	default
+	{
+		Health 2000;
+		Obituary "%o was put to bed by a clone of the HandMother.";
+		Tag "HandMother (Phase A) (Clone)";
+		Dropitem "AppleWine";
+	}
+	States
+	{
+		Death:
+			BMOT U 0; //ACS_Execute(102,0,0,0,0);
+			BMOT U 0 A_Scream();
+			BMOT UVUUVUVVUVUU 7 Bright 
+			{
+				A_StartSound("weapons/cherryboom");
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			BMOX A 7 A_NoBlocking();
+			BMOX BCABCABC 7;
+			BMOX C 0; //ACS_Execute(102,0,0,0,0);
+			BMOX DEFDEFDEFDEF 7;
+			BMOX F 0 A_StartSound("misc/teleport");
+			BMTX F 0 A_SpawnItemEX("HandMotherPhaseBClone",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
 			Stop;
 	}
 }
@@ -4096,6 +4140,40 @@ class HandMotherPhaseB : DDOrigBoss
 	}
 }
 
+class HandMotherPhaseBClone : HandMotherPhaseB
+{
+	default
+	{
+		//$Category RPBosses
+		Health 2500;
+		Speed 12;
+		Mass 5000;
+		Obituary "%o was put to bed by a clone of the HandMother.";
+		Tag "HandMother (Phase B) (Clone)";
+		painsound "mother/pain";
+		Dropitem "AppleWine";
+	}
+	
+	States
+	{
+		Death:
+			BMO2 U 0; //ACS_Execute(102,0,0,0,0);
+			BMO2 U 0 A_Scream();
+			BMO2 UVUUVUVVUVUU 7 Bright 
+			{
+				A_StartSound("weapons/cherryboom");
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			BM2X A 7 A_NoBlocking();
+			BM2X BCABCABC 7;
+			BM2X C 0; //ACS_Execute(102,0,0,0,0);
+			BM2X DEFDEFDEFDEF 7;
+			BM2X F 0 A_StartSound("misc/teleport");
+			BM2X F 0 A_SpawnItemEX("HandMotherPhaseCClone",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+			Stop;
+	}
+}
+
 class HandMotherPhaseC : DDOrigBoss
 {
 	default
@@ -4126,6 +4204,120 @@ class HandMotherPhaseC : DDOrigBoss
 		+MISSILEMORE
 		Obituary "%o was put to bed by Handmother.";
 		Tag "HandMother (Phase C)";
+		painsound "mother/pain";
+	}
+	
+	States
+	{
+		Spawn:
+			BMO3 A 5 A_Look();
+			Loop;
+		See:
+			BMO3 A 0; //ACS_Execute(102,0,0,0,0)
+			BMO3 EFE 10;
+			Goto Idle;
+		Idle:
+			BMO3 A 0; //ACS_Execute(102,0,0,0,0);
+			BMO3 AABBCCDD 2 A_Chase();
+			Loop;
+		Missile:
+			BMO3 E 0; //ACS_Execute(102,0,0,0,0);
+			BMO3 E 0 A_Jump(96,"MissileSpinner");
+			BMO3 E 9;
+			BMO3 F 9 A_FaceTarget();
+			BMO3 G 0 A_CheckSight("idle");
+			BMO3 G 0 A_StartSound("Weapons/brocketfire");
+			BMO3 G 5 bright A_SpawnProjectile("badbrocketshot",80,0,0);
+			BMO3 HI 3 bright;
+			Goto Idle;
+		MissileSpinner:
+			BMO3 R 0; //ACS_Execute(102,0,0,0,0);
+			BMO3 R 7 A_FaceTarget();
+			BMO3 S 5 A_CheckSight("idle");
+			BMO3 T 0 A_SpawnProjectile("SpinnerShot",80,0,random(-12,12),0,random(-5,-15));
+			BMO3 V 0 A_Jump(192,"Idle");
+			BMO3 V 0 A_SpawnItemEX("cherrybombpickup",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+			Goto Idle;
+		Melee:
+			BMO3 T 0; //ACS_Execute(102,0,0,0,0);
+			BMO3 T 7 A_FaceTarget();
+			BMO3 V 3 A_CustomMeleeAttack (random(25,35), "mallethit", "malletswing", "", 1);
+			BMO3 V 3;
+			Goto Idle;
+		Pain:
+			BMO3 U 0; //ACS_Execute(102,0,0,0,0);
+			BMO3 U 4 A_Pain;
+			BMO3 V 6;
+			Goto Idle;
+		Death:
+			BMO3 U 0; //ACS_Execute(102,0,0,0,0);
+			BMO3 U 0 A_Scream;
+			BMO3 UV 7 Bright
+			{
+				A_StartSound("weapons/cherryboom");
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			BM3X ABCDEFABCDEF 7;
+			BMO3 UV 7 Bright
+			{
+				A_StartSound("weapons/cherryboom");
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			BM3X ABCDEF 7;
+			BM3X C 0; //ACS_Execute(102,0,0,0,0);
+			BM3X ABCDEFABCDEF 7;
+			BMO3 UVUVUV 7 Bright
+			{
+				A_StartSound("weapons/cherryboom");
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			BMO3 U 0 A_NoBlocking();
+			BMO3 U 0; // ACS_Execute(113,0,0,0,0);
+			BMO3 UUUUUU 7 Bright
+			{
+				A_StartSound("weapons/cherryboom");
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			BM3X ZZZZZZZZ 7 Bright
+			{
+				A_StartSound("weapons/cherryboom");
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			BM3X Z 0;
+			Stop;
+	}
+}
+
+class HandMotherPhaseCClone : HandMotherPhaseC
+{
+	default
+	{
+		//$Category RPBosses
+		Health 2500;
+		Radius 24;
+		Height 128;
+		Speed 12;
+		PainChance 200;
+		Painchance "Breakfast", 64;
+		Painchance "Beats", 64;
+		Mass 5000;
+		DamageFactor "Chop", 3;
+		DamageFactor "Bonk", 3;
+		DamageFactor "Breakfast", 0.5;
+		DamageFactor "Suck", 0;
+		DamageFactor "Bap", 1;
+		PainChance "Bap", 64;
+		Damagefactor "Zap", 0.5;
+		MeleeRange 96;
+		MONSTER;
+		+FLOORCLIP
+		+NOINFIGHTING
+		+NOBLOOD
+		+LOOKALLAROUND
+		+DONTHARMCLASS
+		+MISSILEMORE
+		Obituary "%o was put to bed by a clone of the HandMother.";
+		Tag "HandMother (Phase C) (Clone)";
 		painsound "mother/pain";
 	}
 	
