@@ -1,5 +1,15 @@
 class DDPlayerPawn : PlayerPawn
 {
+	const SKILL_VERY_EASY = 0;
+	const SKILL_EASY = 1;
+	const SKILL_NORMAL = 2;
+	const SKILL_HARD = 3;
+	const SKILL_VERY_HARD = 4;
+	const SKILL_EXTREME = 5;
+	const SKILL_HORRIBLE = 6;
+	const SKILL_IMPOSSIBLE = 7;
+	const SKILL_OMEGA = 8;
+
 	int ipmodecooldowntimer;
 	bool isvoodoodoll;
 	int neverbleeds;
@@ -51,6 +61,31 @@ class DDPlayerPawn : PlayerPawn
 		Alpha 1.0;
 	}
 	
+	override void PlayerLandedMakeGruntSound(actor onmobj)
+	{
+		bool grunted;
+
+		// [RH] only make noise if alive
+		if (self.health > 0 && !self.player.morphTics)
+		{
+			grunted = false;
+			// Why should this number vary by gravity?
+			double truegruntspeed = self.player.mo.GruntSpeed;
+			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) truegruntspeed *= 1.34;
+			//Console.Printf("%.8f (%.8f) [%.8f]", self.Vel.Z, truegruntspeed, self.player.mo.GruntSpeed);
+			if (self.Vel.Z < -truegruntspeed)
+			{
+				A_StartSound("*grunt", CHAN_VOICE);
+				grunted = true;
+			}
+			bool isliquid = (pos.Z <= floorz) && HitFloor();
+			if (onmobj != NULL || !isliquid)
+			{
+				A_StartSound("*land", CHAN_BODY);
+			}
+		}
+	}
+
 	override void BeginPlay()
 	{
 		basexscale = scale.x;
@@ -322,6 +357,7 @@ class DDPlayerPawn : PlayerPawn
 			if (dydudebug_ipdisplays) Console.Printf("ipchargesoundtimer: %d", ipchargesoundtimer);
 			
 			// ??????
+			double IPLevelGateInc = 1.0;
 			if (exex_ikaripointsenabled && CountInv("IPUseMode"))
 			{
 				if (buttons & BT_ZOOM && CountInv("FistPlayerBlock"))
@@ -331,9 +367,16 @@ class DDPlayerPawn : PlayerPawn
 					if (bNODAMAGETHRUST) wasnodmgthrust = true;
 					if (bFORCERADIUSDMG) wasforceradius = true;
 					double cost = A_GetIPCost(-1);
-					if (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && MiscItem.PlayerLevel > 0 && MiscItem.TrueIPCooldownTimer <= 0)
+					if (MiscItem.TrueIPLevelGate <= 0 && MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && MiscItem.PlayerLevel > 0 && MiscItem.TrueIPCooldownTimer <= 0)
 					{
 						globalvars.TrueIPTimesUsed += 1;
+						if (skill == SKILL_VERY_EASY) IPLevelGateInc = int(globalvars.TrueIPTimesUsed * 0.625);
+						if (skill == SKILL_EASY) IPLevelGateInc = int(globalvars.TrueIPTimesUsed * 0.75);
+						if (skill == SKILL_NORMAL) IPLevelGateInc = int(globalvars.TrueIPTimesUsed * 0.875);
+						if (skill == SKILL_HARD) IPLevelGateInc = int(globalvars.TrueIPTimesUsed * 1.0);
+						if (skill == SKILL_VERY_HARD) IPLevelGateInc = int(globalvars.TrueIPTimesUsed * 1.125);
+						if (IPLevelGateInc < 1) IPLevelGateInc = 1;
+						MiscItem.TrueIPLevelGate += IPLevelGateInc;
 						MiscItem.ItemPoints -= cost;
 						globalvars.ItemPoints -= cost;
 						MiscItem.IPNoGainTimer = 60 * TICRATE;
