@@ -1,10 +1,15 @@
 class PlayerStatItem : Inventory
 {
+	mixin HUDRecovery;
+	
 	const SKILL_VERY_EASY = 0;
 	const SKILL_EASY = 1;
 	const SKILL_NORMAL = 2;
 	const SKILL_HARD = 3;
 	const SKILL_VERY_HARD = 4;
+	
+	int HPDmgHUDTimer, APDmgHUDTimer, HPRecHUDTimer, APRecHUDTimer;
+	int HPDmgHUDAmt, APDmgHUDAmt, HPRecHUDAmt, APRecHUDAmt;
 	
 	int TrueIPLevelGate;
 	int IPMortalBlowReduceTimer;
@@ -657,6 +662,12 @@ class PlayerStatItem : Inventory
 						
 					}
 					
+					// Misc HUD Timers
+					if (HPDmgHUDTimer) HPDmgHUDTimer--; else HPDmgHUDAmt = 0;
+					if (APDmgHUDTimer) APDmgHUDTimer--; else APDmgHUDAmt = 0;
+					if (HPRecHUDTimer) HPRecHUDTimer--; else HPRecHUDAmt = 0;
+					if (APRecHUDTimer) APRecHUDTimer--; else APRecHUDAmt = 0;
+					
 					// Check Item Points
 					int IPTimerIncMod = 0;
 					int IPTimerInc;
@@ -892,8 +903,10 @@ class PlayerStatItem : Inventory
 								
 								if (CurrentHealth < MaxHealthTrue)
 								{
-									if (berserked) CurrentHealth += randompick(1,1,1,1,1,1,1,1,1,2);
-									else CurrentHealth += randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
+									int rec = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
+									if (berserked) rec = randompick(1,1,1,1,1,1,1,1,2,2);
+									
+									CurrentHealth += rec;
 									if (CurrentHealth >= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
 									owner.player.health = owner.player.mo.health = CurrentHealth;
 								}
@@ -979,8 +992,10 @@ class PlayerStatItem : Inventory
 								
 								if (CurrentHealth > MaxHealthTrue)
 								{
-									if (berserked) CurrentHealth -= randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
-									else CurrentHealth -= randompick(1,1,1,1,1,1,1,1,1,2);
+									int loss = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
+									if (berserked) loss = randompick(1,1,1,1,1,1,1,1,1,2);
+									
+									CurrentHealth -= loss;
 									if (CurrentHealth <= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
 									owner.player.health = owner.player.mo.health = CurrentHealth;
 								}
@@ -2675,8 +2690,8 @@ class PlayerStatItem : Inventory
 		double BuffFactor = 1.0;
 		if (Owner.CountInv("DinahTrueIPState")) 
 		{
-			double temp = (0.125 + ((PlayerLevel - 1) * 0.0125));
-			if (temp >= 0.50) temp = 0.50;
+			double temp = (0.1875 + ((PlayerLevel - 1) * 0.01875));
+			if (temp >= 0.625) temp = 0.625;
 			BuffFactor *= temp;
 		}
 		if (Owner.CountInv("CricketBatGuard")) BuffFactor *= frandom(0.95,0.975);
