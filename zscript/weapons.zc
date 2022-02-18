@@ -4,6 +4,7 @@ class DDWeapon : Weapon
 	mixin DmgCalc;
 	mixin IPCostCheck;
 	mixin InvWeaponShare;
+	mixin HUDRecovery;
 	double IPCostTemp;
 
 	// Misc
@@ -117,6 +118,7 @@ class DDWeapon : Weapon
 						{
 							armorbonus.SaveAmount *= int(actualdamage * lifesteal);
 							if (lifestealmax > 0) armorbonus.MaxSaveAmount = lifestealmax;
+							
 							armorbonus.bDropped = true;
 							armorbonus.ClearCounters();
 
@@ -129,7 +131,29 @@ class DDWeapon : Weapon
 				}
 				else
 				{
-					GiveBody (int(actualdamage * lifesteal), lifestealmax);
+					int stealamt = (actualdamage * lifesteal);
+					if (stealamt > lifestealmax) stealamt = lifestealmax;
+					GiveBody(stealamt);
+					if (stealamt) 
+					{
+						invoker.A_RecoverHUD(stealamt,0);
+						
+						if (exex_combatlog)
+						{
+							string comblog = "";
+							comblog.AppendFormat("\c[red]*\c- ");
+							comblog.AppendFormat("\c[brick]%d\c- HP drained", stealamt);
+							if (t.linetarget)
+							{
+								comblog.AppendFormat(" from \c[red]%s\c-", t.linetarget.GetTag());
+							}
+							if (pufftype == 'VacPuff' || pufftype == 'VacPuffIP') comblog.AppendFormat(" by the SuperVac");
+							comblog.AppendFormat("!");
+							if (dydudebug_showgametic) comblog.AppendFormat(" [%d]", gametic);
+							
+							Console.Printf(comblog);
+						}
+					}
 				}
 			}
 			
