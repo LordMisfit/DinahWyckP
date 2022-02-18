@@ -2495,11 +2495,33 @@ class CheeseFX : MorphProjectile
 		Seesound "aqua/kill2";
 		Deathsound "aqua/kill1";
 		MorphProjectile.PlayerClass "RatPlayer";
-		MorphProjectile.Duration 200;
-		MorphProjectile.MorphStyle MRF_UNDOBYTOMEOFPOWER;
+		MorphProjectile.Duration 175;
+		MorphProjectile.MorphStyle MRF_UNDOBYTOMEOFPOWER|MRF_NEWTIDBEHAVIOUR|MRF_WHENINVULNERABLE;
 		+SEEKERMISSILE
 	}
 	
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	{
+		if (target.player)
+		{
+			double chance = 1.0;
+			if (target.player.mo.CountInv("KnightGownItem")) chance *= 0.8;
+			if (target.player.mo.CountInv("KnightGownItem2")) chance *= 0.6;
+			if (target.player.mo.CountInv("KnightGownItem3")) chance *= 0.4;
+			if (target.player.mo.CountInv("KnightGownItem4")) chance *= 0.2;
+			if (target.player.mo.CountInv("DinahTrueIPState")) chance = 0;
+
+			// Voodoo dolls forward this to the real player
+			if (frandom(0.01,1.00) <= chance) target.player.mo.MorphPlayer(NULL, PlayerClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
+																	 else target.player.mo.DamageMobj(self, self, (damage+(15*random(1,4))), damagetype, 0, Target.Angle);
+		}
+		else
+		{
+			target.MorphMonster (MonsterClass, Duration, MorphStyle, MorphFlash, UnMorphFlash);
+		}
+		return -1;
+	}
+
 	States
 	{
 		Spawn:
@@ -3505,6 +3527,17 @@ class PowerScannerDD : PowerScanner
 	default
 	{
 		Powerup.Duration 0x7FFFFFFD;
+	}
+}
+
+class EvadeAnAttack : PowerProtection 
+{
+	default
+	{
+		damagefactor "normal", 0;
+		radiusdamagefactor 0;
+		inventory.icon "";
+		Powerup.Duration 2147483646;
 	}
 }
 

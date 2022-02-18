@@ -8,6 +8,10 @@ class PlayerStatItem : Inventory
 	const SKILL_HARD = 3;
 	const SKILL_VERY_HARD = 4;
 	
+	int IsMorphed;
+	int EvasionRate;
+	double SPDEvadeCheck;
+	
 	int HPDmgHUDTimer, APDmgHUDTimer, HPRecHUDTimer, APRecHUDTimer;
 	int HPDmgHUDAmt, APDmgHUDAmt, HPRecHUDAmt, APRecHUDAmt;
 	
@@ -76,6 +80,7 @@ class PlayerStatItem : Inventory
 	int BaseStartMaxHealth;
 	double ItemPoints;
 	int MaxHealthTrue;
+	int MaxHealthTrueRF;
 	int HealthLevelAdd;
 	int HealthBonusAdd;
 	int MaxHealthLimit;
@@ -142,6 +147,15 @@ class PlayerStatItem : Inventory
 		else
 		if (playeractor) // Otherwise, Keep
 		{
+			IsMorphed = 0;
+			if (playeractor.GetClassName() == "DinahPlayer") 
+			{
+				IsMorphed = 0;
+			}
+			if (playeractor.GetClassName() == "RatPlayer") 
+			{
+				IsMorphed = 1;
+			}
 			// Load in Globalvars [Start]
 			let globalvars = DDGlobalVariables.Get();
 			if (globalvars)
@@ -198,7 +212,7 @@ class PlayerStatItem : Inventory
 				if (itemtimer <= 2) owner.A_SetInventory("ExpPts",globalvars.Experience);
 				
 				let weapon = owner.player.ReadyWeapon;
-				if (playeractor.GetClassName() == "DinahPlayer") CharacterClass == 10;
+				if (playeractor.GetClassName() == "DinahPlayer" || playeractor.GetClassName() == "RatPlayer") CharacterClass = 10;
 				if (!owner.CountInv("HandToHand")) owner.A_SetInventory("HandToHand",1); // Prevents your "fists/hand-to-hand" from being removed by inventory removing events.
 				if (owner.CountInv("PowerStrength") || owner.CountInv("PowerStrengthDD")) berserked = true;
 				else berserked = false;
@@ -703,7 +717,7 @@ class PlayerStatItem : Inventory
 							BerIPMulti = (1.00 + ((PlayerLevel - 25) * 0.01334));
 							if (BerIPMulti >= 2.00 || PlayerLevel >= 100) BerIPMulti = 2.00;
 						}
-
+						
 						berserkIPGain *= BerIPMulti;
 						if (IPTimer1 < 0) 
 						{
@@ -782,6 +796,52 @@ class PlayerStatItem : Inventory
 						ArmorIPGain *= (1.0 + (PlayerLevel * 0.0025));
 						//Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPTimer1, IPTimerIncMod, ArmorIPMulti);
 						ItemPoints += ArmorIPGain;
+						globalvars.ItemPoints = ItemPoints;
+					}
+					// Morph IP Benefits
+					if (IsMorphed == 1)
+					{
+						double MorphIPGain;
+						MorphIPGain = (0.0025 * 8);
+						if (ItemPoints <= 100.0000)
+						{
+							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+							{
+								MorphIPGain += (0.00125 * 8);
+							}
+							else
+							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+							{
+								MorphIPGain += (0.003125 * 8);
+							}
+							else
+							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+							{
+								MorphIPGain += (0.0078125 * 8);
+							}
+							else
+							if (ItemPoints <= 25.0000)
+							{
+								MorphIPGain += (0.01953125 * 8);
+							}
+						}
+						if (IPTimer1 < 0) 
+						{
+							if (random(1,16) <= 1) MorphIPGain *= 2.5;
+							else 
+							{
+								if (random(1,4) <= 1) MorphIPGain *= 2;
+								else MorphIPGain *= 1.5;
+							}
+							IPTimerIncMod += 5;
+						}
+						else 
+						{
+							IPTimerIncMod += 25;
+						}
+						MorphIPGain *= (1.0 + (PlayerLevel * 0.0075));
+						//Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", MorphIPGain, IPTimer1, IPTimerIncMod, ArmorIPMulti);
+						ItemPoints += MorphIPGain;
 						globalvars.ItemPoints = ItemPoints;
 					}
 					if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
@@ -1021,6 +1081,45 @@ class PlayerStatItem : Inventory
 					if (dydudebug_hpregen && HPRegenBoostTimer) Console.Printf("HPRegenBoostTimer: %d", HPRegenBoostTimer);
 				}
 				
+				//***********
+				//* Evasion *
+				//***********
+				int SkillFactor, PerkFactor;
+				EvasionRate = 0;
+				if (CharacterClass == 10) { SPDEvadeCheck = 7.6; }
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0 - SPD Evade Check]: %.4f\c-", SPDEvadeCheck);
+
+				EvasionRate = ((PlayerLevel * SPDEvadeCheck) + (PlayerSPD * SPDEvadeCheck)) * 0.5;
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 1 - Base (Agl/Evade, Dft/Evade)]: %d\c-", EvasionRate);
+
+				if (IsMorphed == 1) // Rat Form gives up to +75% evasion chance 	
+				{
+					PerkFactor = 7500;
+					SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
+					EvasionRate += SkillFactor;
+					if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 2 - Rat Morph Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
+				}
+				
+				if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility"))
+				{
+					PerkFactor = 3334;
+					SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
+					EvasionRate += SkillFactor;
+					if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 3 - Invisibility Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
+				}
+				
+				int EvasionRNGVal = random[statitem](1,10000); // Based on 0.01% to 100.00%
+				if (EvasionRNGVal <= EvasionRate) 
+				{
+					if (owner.CountInv("EvadeAnAttack") <= 0) owner.A_SetInventory("EvadeAnAttack",1); 
+					if (dydudebug_showevadestuff) Console.Printf("    \cdEvasion % Roll / Rate: %d / %d", EvasionRNGVal, EvasionRate);
+				}
+				else 
+				{ 
+					if (owner.CountInv("EvadeAnAttack") >= 1) owner.A_SetInventory("EvadeAnAttack",0); 
+					if (dydudebug_showevadestuff) Console.Printf("    \cgEvasion % Roll / Rate: %d / %d", EvasionRNGVal, EvasionRate);
+				}
+				
 				//**************************
 				//* Survival Rate [Buddha] *
 				//**************************
@@ -1244,21 +1343,36 @@ class PlayerStatItem : Inventory
 				//* JumpZ *
 				//*********
 				double CharacterJumpZ = 8.25;
+				if (IsMorphed == 1) CharacterJumpZ *= 0.334;
 				if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Character Base]: %.8f", CharacterJumpZ);
 
 				// Level
 				double LevelJumpZ = 1.00;
-				LevelJumpZ += (PlayerLevel * (0.0025 * 1.75));
+				if (IsMorphed == 1)
+				{
+					LevelJumpZ += (PlayerLevel * ((0.0025 * 1.75) * 0.334));
+				}
+				else
+				{
+					LevelJumpZ += (PlayerLevel * (0.0025 * 1.75));
+				}
 				if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Level]: %.8f", LevelJumpZ);
 				
 				// Speed
 				double SpeedJumpZ = 1.00;
-				SpeedJumpZ += (PlayerSPD * (0.0025 * 1.75));
+				if (IsMorphed == 1)
+				{
+					SpeedJumpZ += (PlayerSPD * ((0.0025 * 1.75) * 0.334));
+				}
+				else
+				{
+					SpeedJumpZ += (PlayerSPD * (0.0025 * 1.75));
+				}
 				if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Speed]: %.8f", SpeedJumpZ);
 				
 				// Buffs
 				double BuffJumpZ = 1.00;
-				if (Owner.CountInv("DinahTrueIPState")) 
+				if (Owner.CountInv("DinahTrueIPState"))
 				{
 					double temp = (0.25 + ((PlayerLevel - 1) * 0.025));
 					if (temp >= 0.875) temp = 0.875;
@@ -2267,18 +2381,33 @@ class PlayerStatItem : Inventory
 		if (skill == 2) baseatkfct = 0.00625;
 		if (skill == 3) baseatkfct = 0.005625;
 		if (skill >= 4) baseatkfct = 0.005;
+		if (IsMorphed == 1) baseatkfct *= 0.334;
 		if (!passive && damage > 0) // If the owner [usually the player] of the item is the ATTACKER
 		{
 			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive): %d", damage);
 			// Level
 			double LVLFactor = (1.00 + (PlayerLevel * baseatkfct));
-			if (LVLFactor >= 5.00) LVLFactor = 5.00;
+			if (IsMorphed == 1)
+			{
+				if (LVLFactor <= 2.334) LVLFactor = 2.334;
+			}
+			else
+			{
+				if (LVLFactor >= 5.00) LVLFactor = 5.00;
+			}
 			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - Level): %.8f", LVLFactor);
 
 			// Attack
 			double ATKFactor = 1.00;
 			if (exex_extraatkdefspd) ATKFactor = (1.00 + (PlayerATK * baseatkfct) + (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*1),(baseatkfct*1),(baseatkfct*2))));
-			if (ATKFactor >= 5.00) ATKFactor = 5.00;
+			if (IsMorphed == 1)
+			{
+				if (ATKFactor <= 2.334) ATKFactor = 2.334;
+			}
+			else
+			{
+				if (ATKFactor >= 5.00) ATKFactor = 5.00;
+			}
 			if (dydudebug_attackcalcs) Console.Printf("Damage (!passive - EAttack): %.8f", ATKFactor);
 
 			double SkillFactor = 1.00;
@@ -2411,23 +2540,38 @@ class PlayerStatItem : Inventory
 		// ******************
 		// ******************
 		double basedeffct = 0.0025;
-		if (skill <= 0) baseatkfct = 0.0030;
-		if (skill == 1) baseatkfct = 0.00275;
-		if (skill == 2) baseatkfct = 0.0025;
-		if (skill == 3) baseatkfct = 0.00225;
-		if (skill >= 4) baseatkfct = 0.0020;
+		if (skill <= 0) basedeffct = 0.0030;
+		if (skill == 1) basedeffct = 0.00275;
+		if (skill == 2) basedeffct = 0.0025;
+		if (skill == 3) basedeffct = 0.00225;
+		if (skill >= 4) basedeffct = 0.0020;
+		if (IsMorphed == 1) basedeffct *= 0.334;
 		if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 		{
 			if (dydudebug_defensecalcs) Console.Printf("FDamage (passive[pre]): %d", damage);
 			// Level
 			double LVLFactor = (1.00 - (PlayerLevel * basedeffct));
-			if (LVLFactor <= 0.20) LVLFactor = 0.20;
+			if (IsMorphed == 1)
+			{
+				if (LVLFactor <= 0.60) LVLFactor = 0.60;
+			}
+			else
+			{
+				if (LVLFactor <= 0.20) LVLFactor = 0.20;
+			}
 			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - Level): %.8f", LVLFactor);
 
 			// Defense
 			double DEFFactor = 1.00;
 			if (exex_extraatkdefspd) DEFFactor = (1.00 - (PlayerDEF * basedeffct) - (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.5),(basedeffct*0.5),(basedeffct*0.5),(basedeffct),(basedeffct),(basedeffct*2))));
-			if (DEFFactor <= 0.20) DEFFactor = 0.20;
+			if (IsMorphed == 1)
+			{
+				if (DEFFactor <= 0.60) DEFFactor = 0.60;
+			}
+			else
+			{
+				if (DEFFactor <= 0.20) DEFFactor = 0.20;
+			}
 			if (dydudebug_defensecalcs) Console.Printf("Damage (passive - EDefense): %.8f", DEFFactor);
 
 			// Difficulty Level
@@ -2557,9 +2701,17 @@ class PlayerStatItem : Inventory
 
 		double BaseFactor = 1.0;
 		double BaseMul = 0.009375;
+		if (IsMorphed == 1) BaseMul *= 3;
 		if (exex_extraatkdefspd) BaseFactor *= (1.00 + (PlayerLevel * BaseMul) + (PlayerSPD * BaseMul));
 												else BaseFactor *= (1.00 + (PlayerLevel * BaseMul));
-		if (BaseFactor >= 2.5) BaseFactor = 2.5;
+		if (IsMorphed == 1)
+		{
+			if (BaseFactor >= 7.5) BaseFactor = 7.5;
+		}
+		else
+		{
+			if (BaseFactor >= 2.5) BaseFactor = 2.5;
+		}
 		Speed *= BaseFactor;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [base (level+extra)]: %.8f", BaseFactor);
 

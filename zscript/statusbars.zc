@@ -75,6 +75,7 @@ class DDStatusBarMain : BaseStatusBar
 		double tickinc = 0.1;
 		if (MiscItem && MiscItem.itemtimer <= 2) tickinc = 1.0;
 		healthtick = CPlayer.mo.CountInv("PlayerMaxHP") * tickinc;
+		if (CPlayer.mo.GetClassName() == "RatPlayer") healthtick = (CPlayer.mo.CountInv("PlayerMaxHP") * 0.30) * tickinc;
 		if (healthtick < 1) healthtick = 1;
 		if (healthtick != prevhealthtick) mHealthInterpolator = DynamicValueInterpolator.Create(CPlayer.health, 0.25, 1, healthtick);
 		let armor = CPlayer.mo.FindInventory("BasicArmor");
@@ -533,6 +534,7 @@ class DDStatusBarMain : BaseStatusBar
 			int y = 174;
 			//statbar
 			int PlayerMaxHP = CPlayer.mo.CountInv("PlayerMaxHP");
+			if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHP *= 0.30;
 
 			DrawImage("LIFEBAR", (34, 160), DI_ITEM_OFFSETS);
 			DrawImage("ARMCLEAR", (57, 171), DI_ITEM_OFFSETS);
@@ -749,6 +751,7 @@ class DDStatusBarMain : BaseStatusBar
 			int valueamt = CPlayer.mo.health;
 			string valueamtS = FormatNumber(valueamt);
 			int PlayerMaxHP = CPlayer.mo.CountInv("PlayerMaxHP");
+			if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHP *= 0.30;
 			string PlayerMaxHPS = FormatNumber(PlayerMaxHP);
 
 			int healthdigits = 2;
@@ -889,7 +892,10 @@ class DDStatusBarMain : BaseStatusBar
 			int basey = -27; // -21
 			if (MiscItem && CPlayer.mo.health > 0) 
 			{
-				if (CPlayer.mo.health != MiscItem.MaxHealthTrue) exty = -3;
+				int PlayerMaxHealth = MiscItem.MaxHealthTrue;
+				if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHealth *= 0.30;
+
+				if (CPlayer.mo.health != PlayerMaxHealth) exty = -3;
 				FontScale = (1.0, 1.0);
 				basespeed = MiscItem.HUDSpeed * 100;
 				int speedclr = font.cr_white;
@@ -911,18 +917,18 @@ class DDStatusBarMain : BaseStatusBar
 				massval.AppendFormat("%d Balance", basemass);
 				DrawString(mArmSaveFont, massval, (79, (basey+exty)), DI_TEXT_ALIGN_LEFT, massclr, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 
-				if (CPlayer.mo.health != MiscItem.MaxHealthTrue)
+				if (CPlayer.mo.health != PlayerMaxHealth)
 				{
 					basey += 6;
 					basehpregen = MiscItem.baseregenmulti * 100;
 					int regenclr = font.cr_white;
-					if (CPlayer.mo.health < MiscItem.MaxHealthTrue) 
+					if (CPlayer.mo.health < PlayerMaxHealth) 
 					{
 						if (basehpregen > 100.0000) regenclr = font.cr_blue;
 						if (basehpregen < 100.0000) regenclr = font.cr_red;
 						regenval.AppendFormat("%.2f%% Regen Speed", basehpregen);
 					}
-					if (CPlayer.mo.health > MiscItem.MaxHealthTrue) 
+					if (CPlayer.mo.health > PlayerMaxHealth) 
 					{
 						if (basehpregen > 100.0000) regenclr = font.cr_red;
 						if (basehpregen < 100.0000) regenclr = font.cr_blue;
@@ -1945,7 +1951,9 @@ class DDStatusBarMain : BaseStatusBar
 			//ammotype = CPlayer.mo.FindInventory(wsammoname);
 			if (CPlayer.mo.CountInv(wsname))
 			{
-				ammoratio = CPlayer.mo.health * 100 / MiscItem.MaxHealthTrue;
+				int PlayerMaxHealth = MiscItem.MaxHealthTrue;
+				if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHealth *= 0.30;
+				ammoratio = CPlayer.mo.health * 100 / PlayerMaxHealth;
 				if (CPlayer.mo.health <= 0) wsfontclr = font.cr_red;
 				else if (ammoratio >= 0 && ammoratio <= 33) wsfontclr = font.cr_fire;
 				else if (ammoratio >= 34 && ammoratio <= 66) wsfontclr = font.cr_yellow;
@@ -2164,9 +2172,11 @@ class DDStatusBarMain : BaseStatusBar
 			{
 				if (cplayer.ReadyWeapon is "SigilDD")
 				{
+					int PlayerMaxHealth = MiscItem.MaxHealthTrue;
+					if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHealth *= 0.30;
 					int ammofontclr = font.cr_gray;
 					int SigilHP = CPlayer.mo.health;
-					int SigilMaxHP = MiscItem.MaxHealthTrue;
+					int SigilMaxHP = PlayerMaxHealth;
 					
 					ammoratio = SigilHP * 100 / SigilMaxHP;
 					if (CPlayer.mo.health <= 0) ammofontclr = font.cr_red;

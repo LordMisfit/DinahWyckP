@@ -708,11 +708,11 @@ class DD_EventHandler : EventHandler
 			/*
 			// Ally Check
 			actor IsRebel;
-			if (vict != "DinahWyck" && sour == "DinahWyck")
+			if (!DDPlayerPawn(victim) && DDPlayerPawn(source))
 			{
 				if (victim.bFRIENDLY)
 				{
-					if (victim.master && victim.master.GetClassName() == "DinahWyck")
+					if (victim.master && DDPlayerPawn(victim.master))
 					{
 						if (e.damage)
 						{
@@ -743,7 +743,7 @@ class DD_EventHandler : EventHandler
 				showdmglog = true;
 			}
 			if (vict == "BossBrainNew") showdmglog = true;
-			if (vict == "DinahPlayer" || victname == "Dinah Wyck") showdmglog = false;
+			if (DDPlayerPawn(victim)) showdmglog = false;
 			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) showdmglog = false;
 			if (showdmglog)
 			{
@@ -753,7 +753,7 @@ class DD_EventHandler : EventHandler
 				
 				if (victim.health > 0 && victim.bISMONSTER)
 				{
-					if (source && sour == "DinahPlayer") //
+					if (source && DDPlayerPawn(source)) //
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem) landdamagebonus = MiscItem.landdmgbonus;
@@ -921,7 +921,7 @@ class DD_EventHandler : EventHandler
 			if (victim.bCOUNTKILL || specialtype) showdmglog = true;
 			if (vict == "PracticeTarget" || vict == "PracticeTarget2") showdmglog = true;
 			if (vict == "BossBrainNew") showdmglog = true;
-			if (vict == "DinahPlayer" || victname == "Dinah Wyck") showdmglog = false;
+			if (DDPlayerPawn(victim)) showdmglog = false;
 			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) showdmglog = false;
 			if (exex_combatlog && showdmglog)
 			{
@@ -956,7 +956,11 @@ class DD_EventHandler : EventHandler
 					if (blundebuff == 3) Console.Printf("\c[red]*\c- \c[purple]%s's\c- defense dropped by yet another 30%!", victname);
 					if (blundebuff == 2) Console.Printf("\c[red]*\c- \c[purple]%s's\c- defense dropped by another 30%!", victname);
 					if (blundebuff == 1) Console.Printf("\c[red]*\c- \c[purple]%s's\c- defense dropped by 30%!", victname);
-					if (blundebuff <= 3 && sour == "DinahPlayer") source.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+					if (blundebuff <= 3 && sour == "DinahPlayer") 
+					{
+						source.A_StopSound(CHAN_VOICE);
+						source.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+					}
 				}
 			}
 			
@@ -1247,7 +1251,7 @@ class DD_EventHandler : EventHandler
 			if (dydudebug_worlddied) Console.Printf("[%s] SpecialType [WorldDied]: %d", vict, specialtype);
 
 			actor IPAttack;
-			if (!(vict == "DinahPlayer") || (victim.bCOUNTKILL || specialtype))
+			if (!(DDPlayerPawn(victim)) || (victim.bCOUNTKILL || specialtype))
 			{
 				if (!victim.CountInv("DedMonsterFlag") && !sv_monsterrespawn) victim.A_SetInventory("DedMonsterFlag",1);
 				actor Player = players[0].mo;
@@ -1263,7 +1267,7 @@ class DD_EventHandler : EventHandler
 					{
 						if (PlayerPawn(inflicter)) playerkill = true;
 						if (inflicter.bFRIENDLY) allykill = true;
-						if (inflicter.bFRIENDLY || infl == "DinahWyck")
+						if (inflicter.bFRIENDLY || DDPlayerPawn(inflicter))
 						{
 							if (IPAttack == null) IPAttack = DDProjectile(inflicter);
 							giveexp = true;
@@ -1274,7 +1278,7 @@ class DD_EventHandler : EventHandler
 					{
 						if (PlayerPawn(source)) playerkill = true;
 						if (source.bFRIENDLY) allykill = true;
-						if (source.bFRIENDLY || sour == "DinahWyck") 
+						if (source.bFRIENDLY || DDPlayerPawn(source)) 
 						{
 							if (IPAttack == null) IPAttack = DDProjectile(source);
 							giveexp = true;
@@ -1286,7 +1290,7 @@ class DD_EventHandler : EventHandler
 						if (PlayerPawn(mastor)) playerkill = true;
 						if (mastor.bFRIENDLY) allykill = true;
 						if (IPAttack == null) IPAttack = DDProjectile(mastor);
-						if (mastor.bFRIENDLY || mast == "DinahWyck") giveexp = true;
+						if (mastor.bFRIENDLY || DDPlayerPawn(mastor)) giveexp = true;
 						//Console.Printf("inflictor.master: %s [%d]", mast, mastor.bFRIENDLY);
 					}
 					nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) giveexp = false;
@@ -1301,7 +1305,7 @@ class DD_EventHandler : EventHandler
 									 else ExpGain *= frandom(0.05,0.125);
 
 					if ((source && source.bFRIENDLY) || (inflicter && inflicter.bFRIENDLY) || (mastor && mastor.bFRIENDLY)) ExpGain *= frandom(0.65,0.90);
-					if (sour == "DinahPlayer" && infl == "PlayerWhistle") ExpGain *= frandom(1.1875,1.3125);
+					if (DDPlayerPawn(source) && infl == "PlayerWhistle") ExpGain *= frandom(1.1875,1.3125);
 					if (vict == "KilletanteSoloist") ExpGain *= frandom(1.75,2.0);
 					If (PLuck)
 					{
@@ -1329,7 +1333,7 @@ class DD_EventHandler : EventHandler
 						if (MiscItem && MiscItem.NumOfAfasDrops) 
 						{
 							ExpGain *= (1.0 + (MiscItem.NumOfAfasDrops * 0.0625));
-							if (sour == "DinahPlayer" && infl == "PlayerWhistle")
+							if (DDPlayerPawn(source) && infl == "PlayerWhistle")
 							{
 								ExpGain += (MiscItem.NumOfAfasDrops * randompick(1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,3) * frandom(2.0,2.5));
 							}
@@ -1359,7 +1363,7 @@ class DD_EventHandler : EventHandler
 					if (vict == "PracticeTarget" || vict == "PracticeTarget2") playoneliner = false;
 					nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playoneliner = false;
 					
-					if (playoneliner)
+					if (playoneliner && player.GetClassName() == "DinahPlayer")
 					{
 						if (dydudebug_worlddied) Console.Printf("Voice Check");
 						if (exex_dinahextravoices && exex_dinahoneliners)
@@ -1495,13 +1499,13 @@ class DD_EventHandler : EventHandler
 						lvldivider *= baseIPLvlDivider;
 					}
 					if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
-					if (inflicter && ((source && sour == "DinahPlayer")))
+					if (inflicter && ((source && DDPlayerPawn(source))))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
 					}
 					else
-					if (inflicter && infl == "DinahPlayer")
+					if (inflicter && DDPlayerPawn(inflicter))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
@@ -1781,13 +1785,13 @@ class DD_EventHandler : EventHandler
 						lvldivider *= baseIPLvlDivider;
 					}
 					if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
-					if (inflicter && ((source && sour == "DinahPlayer")))
+					if (inflicter && ((source && DDPlayerPawn(source))))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
 					}
 					else
-					if (inflicter && infl == "DinahPlayer")
+					if (inflicter && DDPlayerPawn(inflicter))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
@@ -1917,13 +1921,13 @@ class DD_EventHandler : EventHandler
 						lvldivider *= baseIPLvlDivider;
 					}
 					if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
-					if (inflicter && ((source && sour == "DinahPlayer")))
+					if (inflicter && ((source && DDPlayerPawn(source))))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
 					}
 					else
-					if (inflicter && infl == "DinahPlayer")
+					if (inflicter && DDPlayerPawn(inflicter))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
@@ -1963,13 +1967,13 @@ class DD_EventHandler : EventHandler
 						lvldivider *= baseIPLvlDivider;
 					}
 					if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
-					if (inflicter && ((source && sour == "DinahPlayer")))
+					if (inflicter && ((source && DDPlayerPawn(source))))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
 					}
 					else
-					if (inflicter && infl == "DinahPlayer")
+					if (inflicter && DDPlayerPawn(inflicter))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
@@ -2076,13 +2080,13 @@ class DD_EventHandler : EventHandler
 						lvldivider *= baseIPLvlDivider;
 					}
 					if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
-					if (inflicter && ((source && sour == "DinahPlayer")))
+					if (inflicter && ((source && DDPlayerPawn(source))))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
 					}
 					else
-					if (inflicter && infl == "DinahPlayer")
+					if (inflicter && DDPlayerPawn(inflicter))
 					{
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && MiscItem.PlayerLevel >= lvldivider) droptimes += (MiscItem.PlayerLevel / lvldivider);
@@ -2365,7 +2369,7 @@ class DD_EventHandler : EventHandler
 				}
 				
 				// Killed With Certain Weapons
-				if (inflicter && sour == "DinahPlayer" && (victim.bCOUNTKILL || specialtype))
+				if (inflicter && DDPlayerPawn(source) && (victim.bCOUNTKILL || specialtype))
 				{
 					if (VacPuff(inflicter))
 					{

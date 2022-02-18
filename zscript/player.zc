@@ -914,6 +914,41 @@ class DDPlayerPawn : PlayerPawn
 
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		if (CountInv("EvadeAnAttack"))
+		{
+			if (!((source == null && inflictor == null) &&
+					(mod == 'Slime' || mod == 'Magma' || mod == 'Crush' || 	mod == 'Drowning' || mod == 'SigilDrain' || mod == 'Falling')))
+			{
+				A_StartSound("player/dodge",305,CHANF_OVERLAP|CHANF_LOCAL,frandom(0.75,1.25),ATTN_NORM,frandom(0.75,1.25));
+				if (exex_playerdmglog)
+				{
+					string combatlogmsg = "\c[sapphire]*\c- Dodged";
+					if (source) // Has a source
+					{
+						combatlogmsg.AppendFormat(" \c[purple]%s\c-", source.GetTag());
+						if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[purple]'s\c- \c[brick]%s\c-", inflictor.GetTag());
+					}
+					else
+					if (inflictor) // No source, but has an inflictor
+					{
+						combatlogmsg.AppendFormat(" \c[brick]%s!", inflictor.GetTag());
+					}
+					else // If no source OR inflictor
+					{
+						if (mod == 'Slime') combatlogmsg.AppendFormat(" a damaging surface");
+						else if (mod == 'Lava' || mod == 'Magma') combatlogmsg.AppendFormat(" a damaging surface");
+						else if (mod == 'Crush') combatlogmsg.AppendFormat(" a crushing ceiling");
+						combatlogmsg.AppendFormat("!");
+					}
+					combatlogmsg.AppendFormat(" [%s]", mod);
+					if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-");
+					if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
+					Console.Printf(combatlogmsg);
+				}
+				if (dydudebug_playerdamagemobj) Console.Printf("Evasion - no damage");
+				return 0;
+			}
+		}
 		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
 		string nm, nn, no, np;
 		
@@ -1855,6 +1890,7 @@ class RavenPlayer : DDPlayerPawn
 {
 	default
 	{
+		Player.DisplayName "Dinah Wyck [Raven Form]";
 		Health 30;
 		ReactionTime 0;
 		PainChance 255;
@@ -1890,6 +1926,7 @@ class RatPlayer : DDPlayerPawn
 {
 	default
 	{
+		Player.DisplayName "Dinah Wyck [Rat Form]";
 		Health 30;
 		ReactionTime 0;
 		PainChance 255;
