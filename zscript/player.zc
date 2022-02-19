@@ -1757,17 +1757,27 @@ class DDPlayerPawn : PlayerPawn
 	override void CheckPoison()
 	{
 		let player = self.player;
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		if (player.poisoncount && !(Level.maptime & 15))
 		{
 			player.poisoncount -= randompick(3,4,4,5,5,5,5,5,6,6,7);
 			if (player.poisoncount < 0) player.poisoncount = 0;
-			int poisdmg = 1;
-			if (health > poisdmg) 
+			int poisdmg = randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3);
+			if (MiscItem) poisdmg = ((randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3) * 0.01) * MiscItem.MaxHealthTrue);
+			if (health > poisdmg)
 			{
 				player.PoisonDamage(player.poisoner, poisdmg, true);
 				A_LossHUD(poisdmg,0);
+				if (exex_playerdmglog)
+				{
+					string combatlogmsg = "\c[sapphire]*\c- Took";
+					combatlogmsg.AppendFormat(" \c[darkred]%d damage\c-", poisdmg);
+					combatlogmsg.AppendFormat(" from poisoning!");
+					if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
+					Console.Printf(combatlogmsg);
+				}
 			}
-			Console.Printf("poisoncount: %d (maptime: %d)", player.poisoncount, Level.maptime);
+			if (dydudebug_playerdamagemobj) Console.Printf("poisoncount: %d (maptime: %d)", player.poisoncount, Level.maptime);
 		}
 	}
 }
