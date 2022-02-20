@@ -259,10 +259,16 @@ class GoldApple : CustomInventoryExt
 					globalvars.HealthBonusAdd += inc;
 					globalvars.PlayerLuck += inc3;
 				}
+				invoker.A_StatIncHud(inc,0);
 				player.mo.health = player.health = temp1;
 				player.mo.A_SetInventory("PlayerMaxHP",temp2);
 				let MiscItem = PlayerDashJump(player.mo.FindInventory("PlayerDashJump"));
-				if (MiscItem) MiscItem.ExtraDashCharge += randompick(0,1,1);
+				int dashinc = randompick(0,1,1);
+				if (MiscItem)
+				{
+					MiscItem.ExtraDashCharge += dashinc;
+					invoker.A_StatIncHud(dashinc,1);
+				}
 				if (MiscItem2) MiscItem2.HPRegenBoostTimer += (randompick(9,10,10,11,11,12,13) * 2.5);
 
 				A_StartSound("player/statsup6",CHAN_BODY,CHANF_DEFAULT,frandom(0.335,0.5),ATTN_NORM,frandom(0.8,1.25));
@@ -321,10 +327,16 @@ class PlatinumApple : CustomInventoryExt
 					globalvars.HealthBonusAdd += inc;
 					globalvars.PlayerLuck += inc3;
 				}
+				invoker.A_StatIncHud(inc,0);
 				player.mo.health = player.health = temp1;
 				player.mo.A_SetInventory("PlayerMaxHP",temp2);
 				let MiscItem = PlayerDashJump(player.mo.FindInventory("PlayerDashJump"));
-				if (MiscItem) MiscItem.ExtraDashCharge += randompick(2,2,2,3,3);
+				int dashinc = randompick(2,2,2,3,3);
+				if (MiscItem)
+				{
+					invoker.A_StatIncHud(dashinc,1);
+					MiscItem.ExtraDashCharge += dashinc;
+				}
 				if (MiscItem2) MiscItem2.HPRegenBoostTimer += (randompick(9,10,10,11,11,12,13) * 2.5);
 
 				A_StartSound("player/statsup7",CHAN_BODY,CHANF_DEFAULT,frandom(0.335,0.5),ATTN_NORM,frandom(0.8,1.25));
@@ -4072,7 +4084,7 @@ class LegendaryMedicine : ExExInvBarItem
 		Inventory.PickupFlash "PickupFlash";
 		Inventory.Icon "LGMDZ0";
 		Inventory.PickupMessage "\c[gold]W-woah! What in the devil are these?";
-		Tag "Legendary Medicine: Gives an artificial level up. Halves current health when used.";
+		Tag "Legendary Medicine: Gives an artificial 'level up'. At least halves current health when used, if not more, depending on its potency, and also induces a non-lethal poison for a few seconds depending on potency.";
 	}
 	
 	override void Tick()
@@ -4095,7 +4107,23 @@ class LegendaryMedicine : ExExInvBarItem
 					A_SetBlend("88 88 7a",(random(34,67) * 0.01),(random(4,5) * 12));
 					A_StartSound("player/statsup5",CHAN_BODY,CHANF_DEFAULT,frandom(0.446,0.525),ATTN_NORM,frandom(0.8,1.25));
 					A_TakeInventory("LegendaryMedicine",1);
-					MiscItem.NumOfLegendMeds++;
+					MiscItem.NumOfLegendMeds += 2;
+					MiscItem.MedStrength += 1;
+					if (random(1,4) <= 1) 
+					{
+						MiscItem.NumOfLegendMeds += 2;
+						MiscItem.MedStrength += 1;
+						if (random(1,16) <= 1)
+						{
+							MiscItem.NumOfLegendMeds += 2;
+							MiscItem.MedStrength += 1;
+							if (random(1,64) <= 1)
+							{
+								MiscItem.NumOfLegendMeds += 2;
+								MiscItem.MedStrength += 1;
+							}
+						}
+					}
 				}
 				else
 				{

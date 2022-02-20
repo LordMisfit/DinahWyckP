@@ -1752,21 +1752,146 @@ class DDPlayerPawn : PlayerPawn
 			}
 		}
 	}
+	
+	void PlayerPoisonDamage(actor source, int damage, bool playPainSound, bool allowpowerups = true, bool allowdmgfactors = true, bool allowskilldmgfactor = true, bool dontkill = false, bool allowautohealth = true, bool allowstrifeautohealth = true)
+	{
+		actor target;
+		
+		if (player == null)
+		{
+			return;
+		}
+		target = player.mo;
+		if (target.health <= 0)
+		{
+			return;
+		}
+		
+		// This must be checked before any modifications. Otherwise, power amplifiers
+		// may result in doing too much damage that cannot be negated by regular buddha,
+		// which is inconsistent. The raw damage must be the only determining factor for
+		// determining if telefrag is actually desired.
+		bool telefragDamage = (damage >= TELEFRAG_DAMAGE && !(target.bLAXTELEFRAGDMG));
+		
+		if ((player.cheats & CF_GODMODE2) || (target.bNODAMAGE) || //These two are never subjected to telefrag thresholds.
+			(!telefragDamage && ((target.bINVULNERABLE) || (player.cheats & CF_GODMODE))))
+		{ // target is invulnerable
+			return;
+		}
+		
+		if (allowskilldmgfactor)
+		{
+			// Take half damage in trainer mode
+			damage = int(damage * SKILLP_DamageFactor * sv_damagefactorplayer);
+		}
+		if (allowpowerups)
+		{
+			// Handle passive damage modifiers (e.g. PowerProtection)
+			damage = target.GetModifiedDamage(player.poisontype, damage, true, null, source);
+		}
+		if (allowdmgfactors)
+		{
+			// Modify with damage factors
+			damage = target.ApplyDamageFactor(player.poisontype, damage);
+		}
+		
+		if (damage <= 0)
+		{ // Damage was reduced to 0, so don't bother further.
+			return;
+		}
+		if (allowautohealth)
+		{
+			if (damage >= player.health
+				&& (SKILLP_AutoUseHealth || deathmatch)
+				&& !player.morphTics)
+			{ // Try to use some inventory health
+				AutoUseHealth(damage - player.health+1);
+			}
+		}
+		player.health -= damage; // mirror mobj health here for Dave
+		if (allowstrifeautohealth)
+		{
+			if (player.health < 50 && !deathmatch)
+			{
+				AutoUseStrifeHealth();
+			}
+		}
+		
+		int healthfloor;
+		if (dontkill) healthfloor = 1; else healthfloor = 0;
+		
+		if (player.health < healthfloor) player.health = healthfloor;
+		
+		player.attacker = source;
+		
+		//*****************
+		//* do the damage *
+		//*****************
+		target.health -= damage;
+		if (target.health < healthfloor) target.health = healthfloor;
+		if (target.health <= 0)
+		{ // Death
+			int buddha;
+			if (player.cheats & CF_BUDDHA2) buddha = 2;
+			if ((player.cheats & CF_BUDDHA) ||
+					(player.mo.bBUDDHA) ||
+					 player.mo.FindInventory("PowerBuddha") != null) buddha = 1;
 
+			if (telefragDamage && buddha == 1) buddha = 0;
+			if (buddha)
+			{ // [SP] Save the player... 
+				player.health = target.health = 1;
+			}
+			else
+			{
+				target.special1 = damage;
+				if (player && !player.morphTics)
+				{ // Check for flame death
+					if ((player.poisontype == 'Fire') && (target.health > -50) && (damage > 25))
+					{
+						target.DamageType = 'Fire';
+					}
+					else
+					{
+						target.DamageType = player.poisontype;
+					}
+				}
+				target.Die(source, source);
+				return;
+			}			
+		}
+		if (!(level.time % 63) && playPainSound)
+		{
+			state painstate = target.FindState("Pain", player.poisonpaintype);
+			if (painstate != null)
+			{
+				target.SetState(painstate);
+			}
+		}
+	}
 	
 	override void CheckPoison()
 	{
+		int oldhealthratio;
+		int oldhealth = health;
+		if (CountInv("NormalHealth")) oldhealthratio = 0;
+		if (CountInv("DecentHealth")) oldhealthratio = 1;
+		if (CountInv("LowHealth")) oldhealthratio = 2;
+		if (CountInv("CriticalHealth")) oldhealthratio = 3;
+
 		let player = self.player;
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		if (player.poisoncount && !(Level.maptime & 15))
 		{
-			player.poisoncount -= randompick(3,4,4,5,5,5,5,5,6,6,7);
+			player.poisoncount -= randompick(3,4,4,4,5,5,5,5,5,5,5,6,6,6,7);
 			if (player.poisoncount < 0) player.poisoncount = 0;
 			int poisdmg = randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3);
 			if (MiscItem) poisdmg = ((randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3) * 0.01) * MiscItem.MaxHealthTrue);
 			if (health > poisdmg)
 			{
-				player.PoisonDamage(player.poisoner, poisdmg, true);
+				PlayerPoisonDamage(player.poisoner, poisdmg, true, false, false, false, true);
+				//player.PoisonDamage(player.poisoner, poisdmg, true);
+
 				A_LossHUD(poisdmg,0);
 				if (exex_playerdmglog)
 				{
@@ -1775,6 +1900,64 @@ class DDPlayerPawn : PlayerPawn
 					combatlogmsg.AppendFormat(" from poisoning!");
 					if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
 					Console.Printf(combatlogmsg);
+				}
+				
+				let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+				let globalvars = DDGlobalVariables.Get();
+				// Item/Ikari Point Gains
+				if (exex_ikaripointsenabled && poisdmg && MiscItem && globalvars && health > 0)
+				{
+					if (MiscItem.IPNoGainTimer <= 0)
+					{
+						double base;
+						// The mod's first and original formula
+						if (exex_ikaripointscalctype <= 0)
+						{
+							base = poisdmg * 100.0 / MiscItem.MaxHealthTrue;
+							if (oldhealthratio == 0) base *= 1.0;
+							if (oldhealthratio == 1) base *= 1.125;
+							if (oldhealthratio == 2) base *= 1.25;
+							if (oldhealthratio == 3) base *= 1.5;
+							if (oldhealthratio == 4) base *= 2.25;
+							if (oldhealth > 1 && health == 1) base *= 3.25;
+							if (MiscItem.PlayerLUCK) base *= (0.125 + (MiscItem.PlayerLevel * 0.00125) + (random(1,MiscItem.PlayerLUCK) * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
+																	else base *= (0.125 + (MiscItem.PlayerLevel * 0.00125));
+							
+						}
+						// The more Lufia II equse formula
+						if (exex_ikaripointscalctype >= 0)
+						{
+							base = poisdmg * 100.0 / oldhealth; // % of remaining HP removed
+							if (base >= 0.001)
+							{
+								if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
+								if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
+								if (base >= 65.001 && base <= 75.000) base *= 0.646154;
+								if (base >= 75.001 && base <= 85.000) base *= 0.76; 
+								if (base >= 85.001 && base <= 90.000) base *= 0.90; 
+								if (base >= 90.001 && base <= 100.000) base *= 1.00; 
+								if (base >= 100.001) base *= 1.25;
+								if (oldhealth > 1 && health == 1) base += MiscItem.MaxItemPoints;
+							}
+						}
+						base *= (frandompick(3.0,4.0,4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0,6.0,7.0) * 0.5);
+						double basef = base;
+						int IPTimerBaseInc = -35;
+						if (MiscItem)
+						{
+							base *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+						}
+						if (base <= 0.01) base = 0.01;
+						if (basef <= 0.01) basef = 0.01;
+						if (base)
+						{
+							if (MiscItem.IPTimer1 > 0) MiscItem.IPTimer1 = (IPTimerBaseInc * basef);
+																		else MiscItem.IPTimer1 += (IPTimerBaseInc * basef);
+							MiscItem.ItemPoints += base;
+							globalvars.ItemPoints += base;
+							if (exex_playerdmglog) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
+						}
+					}
 				}
 			}
 			if (dydudebug_playerdamagemobj) Console.Printf("poisoncount: %d (maptime: %d)", player.poisoncount, Level.maptime);

@@ -8,10 +8,13 @@ class PlayerStatItem : Inventory
 	const SKILL_HARD = 3;
 	const SKILL_VERY_HARD = 4;
 	
+	int MedStrength;
 	int IsMorphed;
 	int EvasionRate;
 	double SPDEvadeCheck;
 	
+	int MaxDashIncTimer, MaxDashIncAmt;
+	int MaxHPIncTimer, MaxHPIncAmt;
 	int HPDmgHUDTimer, APDmgHUDTimer, HPRecHUDTimer, APRecHUDTimer;
 	int HPDmgHUDAmt, APDmgHUDAmt, HPRecHUDAmt, APRecHUDAmt;
 	
@@ -501,11 +504,19 @@ class PlayerStatItem : Inventory
 					}
 				}
 
+				int oldhealthratio;
+				int oldhealth = owner.health;
+				if (owner.CountInv("NormalHealth")) oldhealthratio = 0;
+				if (owner.CountInv("DecentHealth")) oldhealthratio = 1;
+				if (owner.CountInv("LowHealth")) oldhealthratio = 2;
+				if (owner.CountInv("CriticalHealth")) oldhealthratio = 3;
 				PrevATK = PlayerATK;
 				PrevDEF = PlayerDEF;
 				PrevSPD = PlayerSPD;
 				leveluptimes = 0;
 				leveluptimesmax = NumOfLegendMeds - MedCurrLvl;
+				int LMUsed;
+				
 				StatIncrease = 0;
 				PrevTrueIPLevelGate = TrueIPLevelGate;
 				for (leveluptimes = 0; leveluptimes < leveluptimesmax; leveluptimes++)
@@ -514,6 +525,7 @@ class PlayerStatItem : Inventory
 					{
 						PrevTrueIPLevelGate = TrueIPLevelGate;
 						MedCurrLvl += 1;
+						LMUsed++;
 						if (random(1,4) <= 3) 
 						{
 							if (TrueIPLevelGate > 0) TrueIPLevelGate = 0;
@@ -530,13 +542,6 @@ class PlayerStatItem : Inventory
 								TrueIPLevelGate = 0;
 							}
 						}
-						
-						int oldhealthratio;
-						int oldhealth = owner.health;
-						if (owner.CountInv("NormalHealth")) oldhealthratio = 0;
-						if (owner.CountInv("DecentHealth")) oldhealthratio = 1;
-						if (owner.CountInv("LowHealth")) oldhealthratio = 2;
-						if (owner.CountInv("CriticalHealth")) oldhealthratio = 3;
 						
 						LevelUpProcess();
 						
@@ -556,51 +561,75 @@ class PlayerStatItem : Inventory
 							else if (TrueIPLevelGate <= 0) LevelUpMsg.AppendFormat("\n\c[gold]You can now use the Flower Crown's IP again!\n\c[gold](arm Hand To Hand and go into blocking stance\n\c[gold]and press <ZOOM> while IP mode is on!)");
 						}
 						owner.A_Print(LevelUpMsg);
-
-						owner.A_StartSound("Dinah/PainLMS",CHAN_VOICE);
-						owner.A_SetBlend("8a e1 01",0.334,random(32,33));
-						owner.health /= 2;
-						if (owner.health < 0) owner.health = 1;
-
-						double base;
-						if (exex_ikaripointscalctype == 1)
-						{
-							base = (oldhealth - owner.health) * 100.0 / oldhealth; // % of remaining HP removed
-							if (base >= 0.001)
-							{
-								if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
-								if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
-								if (base >= 65.001 && base <= 75.000) base *= 0.646154;
-								if (base >= 75.001 && base <= 85.000) base *= 0.76; 
-								if (base >= 85.001 && base <= 90.000) base *= 0.90; 
-								if (base >= 90.001 && base <= 100.000) base *= 1.00; 
-								if (base >= 100.001) base *= 1.25;
-							}
-						}
-						else
-						{
-							base = (oldhealth - owner.health) * 100.0 / MaxHealthTrue;
-							if (oldhealthratio == 0) base *= 1.0;
-							if (oldhealthratio == 1) base *= 1.125;
-							if (oldhealthratio == 2) base *= 1.25;
-							if (oldhealthratio == 3) base *= 1.5;
-							if (oldhealthratio == 4) base *= 2.25;
-							if (oldhealth > 1 && owner.health == 1) base *= 3.25;
-						}
-						double basef = base;
-						if (base <= 0.01) base = 0.01;
-						if (basef <= 0.01) basef = 0.01;
-						base *= (1.0 + (PlayerLevel * 0.0025));
-						if (base)
-						{
-							if (IPTimer1 > 0) IPTimer1 = (-350 * basef);
-													 else IPTimer1 += (-350 * basef);
-							ItemPoints += base;
-							globalvars.ItemPoints += base;
-							if (exex_playerdmglog) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
-						}
-						
 					}
+				}
+				if (LMUsed)
+				{
+					owner.A_StartSound("Dinah/PainLMS",CHAN_VOICE);
+					//Console.Printf("MedStrength: %d", MedStrength);
+					owner.A_SetBlend("8a e1 01",(0.334 + (MedStrength * 0.0667)),(random(32,33) + (MedStrength * 8)));
+					if (MedStrength >= 1) owner.health *= 0.5;
+					if (MedStrength >= 2) owner.health *= 0.5;
+					if (MedStrength >= 3) owner.health *= 0.5;
+					if (MedStrength >= 4) owner.health *= 0.5;
+					owner.player.poisoncount += (random(16,24) * 5 * (randompick(0,0,0,0,0,0,0,0,0,0,1,1,2) + MedStrength));
+					//Console.Printf("poisoncount: %d", owner.player.poisoncount);
+					if (owner.health < 0) owner.health = 1;
+
+					double base;
+					if (exex_ikaripointscalctype == 1)
+					{
+						base = (oldhealth - owner.health) * 100.0 / oldhealth; // % of remaining HP removed
+						if (base >= 0.001)
+						{
+							if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
+							if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
+							if (base >= 65.001 && base <= 75.000) base *= 0.646154;
+							if (base >= 75.001 && base <= 85.000) base *= 0.76; 
+							if (base >= 85.001 && base <= 90.000) base *= 0.90; 
+							if (base >= 90.001 && base <= 100.000) base *= 1.00; 
+							if (base >= 100.001) base *= 1.25;
+						}
+					}
+					else
+					{
+						base = (oldhealth - owner.health) * 100.0 / MaxHealthTrue;
+						if (oldhealthratio == 0) base *= 1.0;
+						if (oldhealthratio == 1) base *= 1.125;
+						if (oldhealthratio == 2) base *= 1.25;
+						if (oldhealthratio == 3) base *= 1.5;
+						if (oldhealthratio == 4) base *= 2.25;
+						if (oldhealth > 1 && owner.health == 1) base *= 3.25;
+					}
+					double basef = base;
+					if (base <= 0.01) base = 0.01;
+					if (basef <= 0.01) basef = 0.01;
+					base *= (1.0 + (PlayerLevel * 0.0025));
+					if (base)
+					{
+						if (IPTimer1 > 0) IPTimer1 = (-350 * basef);
+												 else IPTimer1 += (-350 * basef);
+						ItemPoints += base;
+						globalvars.ItemPoints += base;
+						if (exex_playerdmglog) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
+					}
+					
+					string blehmsg = "";
+					blehmsg.AppendFormat("\c[gold]BLEGH");
+					if (MedStrength >= 1) blehmsg.AppendFormat("\c[gold]!");
+					if (MedStrength >= 2) blehmsg.AppendFormat("\c[gold]!");
+					if (MedStrength >= 3) blehmsg.AppendFormat("\c[gold]!");
+					if (MedStrength >= 4) blehmsg.AppendFormat("\c[gold]!");
+					blehmsg.AppendFormat(" These things taste absolutely toxic");
+					if (MedStrength >= 1) blehmsg.AppendFormat("\c[gold]!");
+					if (MedStrength >= 3) blehmsg.AppendFormat("\c[gold]!");
+					blehmsg.AppendFormat(" Yet I feel some power is trying to surface inside me... despite that...");
+					if (MedStrength >= 1) blehmsg.AppendFormat("\c[gold]!");
+					if (MedStrength >= 3) blehmsg.AppendFormat("\c[gold]!");
+					Console.Printf(blehmsg);
+
+					MedStrength = 0;
+					LMUsed = 0;
 				}
 				
 				// Wine Tier Defs
@@ -633,474 +662,19 @@ class PlayerStatItem : Inventory
 				CurrentHealth = owner.player.mo.health;
 				MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd + HealthBonusAdd);
 				
+				// Misc HUD Timers
+				if (HPDmgHUDTimer) HPDmgHUDTimer--; else HPDmgHUDAmt = 0;
+				if (APDmgHUDTimer) APDmgHUDTimer--; else APDmgHUDAmt = 0;
+				if (HPRecHUDTimer) HPRecHUDTimer--; else HPRecHUDAmt = 0;
+				if (APRecHUDTimer) APRecHUDTimer--; else APRecHUDAmt = 0;
+				if (MaxHPIncTimer) MaxHPIncTimer--; else MaxHPIncAmt = 0;
+				if (MaxDashIncTimer) MaxDashIncTimer--; else MaxDashIncAmt = 0;
+				
+				
 				//******************
 				//* HP Regen/Degen *
 				//******************
-				if (CurrentHealth <= 0)
-				{
-					Owner.A_SetInventory("PlayerIsDead", 1); 
-				}
-				else
-				if (CurrentHealth > 0)
-				{
-					if (dydudebug_hpregen) Console.Printf("Health: %d / %d", CurrentHealth, MaxHealthTrue);
-					
-					Owner.A_SetInventory("PlayerIsDead", 0);
-					//****************************************
-					//*Get Health Ratio & Health Level Checks*
-					//****************************************
-					if (playeractor && MaxHealthTrue > 0)
-					{
-						HealthRatio = (CurrentHealth * 1000) / MaxHealthTrue;
-						HealthRatio = clamp(HealthRatio, 0, 2000);
-						
-						if (HealthRatio != PrevHealthRatio)
-						{
-							if (HealthRatio < 625)
-							{
-								if (HealthRatio < 167)
-								{
-									if (HealthRatio < 21)
-									{
-										Owner.A_SetInventory("CriticalHealth", 1);
-										Owner.A_SetInventory("LowHealth", 0);
-										Owner.A_SetInventory("DecentHealth", 0);
-										Owner.A_SetInventory("NormalHealth", 0);
-									}
-									else 
-									{
-										Owner.A_SetInventory("CriticalHealth", 0);
-										Owner.A_SetInventory("LowHealth", 1);
-										Owner.A_SetInventory("DecentHealth", 0);
-										Owner.A_SetInventory("NormalHealth", 0);
-									}
-								}
-								else 
-								{
-									Owner.A_SetInventory("CriticalHealth", 0);
-									Owner.A_SetInventory("LowHealth", 0);
-									Owner.A_SetInventory("DecentHealth", 1);
-									Owner.A_SetInventory("NormalHealth", 0);
-								}
-							}
-							else
-							{
-								Owner.A_SetInventory("CriticalHealth", 0);
-								Owner.A_SetInventory("LowHealth", 0);
-								Owner.A_SetInventory("DecentHealth", 0);
-								Owner.A_SetInventory("NormalHealth", 1);
-							}
-							if (CurrentHealth >= MaxHealthTrue) Owner.A_SetInventory("FullHealth", 1); else Owner.A_SetInventory("FullHealth", 0);
-							
-							PrevHealthRatio = HealthRatio;
-						}
-						
-					}
-					
-					// Misc HUD Timers
-					if (HPDmgHUDTimer) HPDmgHUDTimer--; else HPDmgHUDAmt = 0;
-					if (APDmgHUDTimer) APDmgHUDTimer--; else APDmgHUDAmt = 0;
-					if (HPRecHUDTimer) HPRecHUDTimer--; else HPRecHUDAmt = 0;
-					if (APRecHUDTimer) APRecHUDTimer--; else APRecHUDAmt = 0;
-					
-					// Check Item Points
-					int IPTimerIncMod = 0;
-					int IPTimerInc;
-					if (berserked && IPNoGainTimer <= 0)
-					{
-						double berserkIPGain;
-						berserkIPGain = 0.0025;
-						if (ItemPoints <= 100.0000)
-						{
-							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
-							{
-								berserkIPGain += 0.0005;
-							}
-							else
-							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
-							{
-								berserkIPGain += 0.00125;
-							}
-							else
-							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
-							{
-								berserkIPGain += 0.003125;
-							}
-							else
-							if (ItemPoints <= 25.0000)
-							{
-								berserkIPGain += 0.0078125;
-							}
-						}
-						double BerIPMulti = (0.25 + (PlayerLevel * 0.03));
-						if (BerIPMulti >= 1.00 || PlayerLevel >= 25)
-						{
-							BerIPMulti = (1.00 + ((PlayerLevel - 25) * 0.01334));
-							if (BerIPMulti >= 2.00 || PlayerLevel >= 100) BerIPMulti = 2.00;
-						}
-						
-						berserkIPGain *= BerIPMulti;
-						if (IPTimer1 < 0) 
-						{
-							if (random(1,16) <= 1) berserkIPGain *= 3;
-							else 
-							{
-								if (random(1,4) <= 1) berserkIPGain *= 2.5;
-								else berserkIPGain *= 2;
-							}
-							IPTimerIncMod += 1;
-						}
-						else 
-						{
-							IPTimerIncMod += 10;
-						}
-						berserkIPGain *= (1.0 + (PlayerLevel * 0.0025));
-						//Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPTimer1, IPTimerInc, BerIPMulti);
-						ItemPoints += berserkIPGain;
-						globalvars.ItemPoints = ItemPoints;
-					}
-					// Armor IP Effect Benefits
-					double ArmorIPActive = 0;
-					if (owner.CountInv("KnightGownItem") && owner.CountInv("KnightGownIP1Buff")) ArmorIPActive = (1.0 * 1.5);
-					if (owner.CountInv("KnightGownItem2") && owner.CountInv("KnightGownIP2Buff")) ArmorIPActive = (2.15 * 1.5);
-					if (owner.CountInv("KnightGownItem3") && owner.CountInv("KnightGownIP3Buff")) ArmorIPActive = (3.60 * 1.5);
-					if (owner.CountInv("KnightGownItem4") && owner.CountInv("KnightGownIP4Buff")) ArmorIPActive = (5.35 * 1.5);
-					if (ArmorIPActive > 0 && IPNoGainTimer <= 0)
-					{
-						double ArmorIPGain;
-						ArmorIPGain = 0.0025;
-						if (ItemPoints <= 100.0000)
-						{
-							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
-							{
-								ArmorIPGain += 0.00125;
-							}
-							else
-							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
-							{
-								ArmorIPGain += 0.003125;
-							}
-							else
-							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
-							{
-								ArmorIPGain += 0.0078125;
-							}
-							else
-							if (ItemPoints <= 25.0000)
-							{
-								ArmorIPGain += 0.01953125;
-							}
-						}
-						double ArmorIPMulti = (0.25 + (PlayerLevel * 0.03));
-						if (ArmorIPMulti >= 1.00 || PlayerLevel >= 25)
-						{
-							ArmorIPMulti = (1.00 + ((PlayerLevel - 25) * 0.01334));
-							if (ArmorIPMulti >= 2.00 || PlayerLevel >= 100) ArmorIPMulti = 2.00;
-						}
-
-						ArmorIPGain *= ArmorIPMulti;
-						ArmorIPGain *= ArmorIPActive;
-						if (IPTimer1 < 0) 
-						{
-							if (random(1,16) <= 1) ArmorIPGain *= 3;
-							else 
-							{
-								if (random(1,4) <= 1) ArmorIPGain *= 2.5;
-								else ArmorIPGain *= 2;
-							}
-							IPTimerIncMod += 5;
-						}
-						else 
-						{
-							IPTimerIncMod += 25;
-						}
-						ArmorIPGain *= (1.0 + (PlayerLevel * 0.0025));
-						//Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPTimer1, IPTimerIncMod, ArmorIPMulti);
-						ItemPoints += ArmorIPGain;
-						globalvars.ItemPoints = ItemPoints;
-					}
-					// Morph IP Benefits
-					if (IsMorphed == 1)
-					{
-						double MorphIPGain;
-						MorphIPGain = (0.0025 * 8);
-						if (ItemPoints <= 100.0000)
-						{
-							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
-							{
-								MorphIPGain += (0.00125 * 8);
-							}
-							else
-							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
-							{
-								MorphIPGain += (0.003125 * 8);
-							}
-							else
-							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
-							{
-								MorphIPGain += (0.0078125 * 8);
-							}
-							else
-							if (ItemPoints <= 25.0000)
-							{
-								MorphIPGain += (0.01953125 * 8);
-							}
-						}
-						if (IPTimer1 < 0) 
-						{
-							if (random(1,16) <= 1) MorphIPGain *= 2.5;
-							else 
-							{
-								if (random(1,4) <= 1) MorphIPGain *= 2;
-								else MorphIPGain *= 1.5;
-							}
-							IPTimerIncMod += 5;
-						}
-						else 
-						{
-							IPTimerIncMod += 25;
-						}
-						MorphIPGain *= (1.0 + (PlayerLevel * 0.0075));
-						//Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", MorphIPGain, IPTimer1, IPTimerIncMod, ArmorIPMulti);
-						ItemPoints += MorphIPGain;
-						globalvars.ItemPoints = ItemPoints;
-					}
-					if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
-														 else IPTimerInc = level.time % 1;
-					
-					if (ItemPoints > 0.00)
-					{
-						if (IPTimer1 < -2100) IPTimer1 = -2100;
-						if (IPTimer1 < 2100)
-						{
-							if (IPTimerInc == 0) IPTimer1++;
-						}
-						else
-						{
-							IPTimer1 = 0;
-							ItemPoints -= (ItemPoints * frandompick(0.01,0.01,0.01,0.01,0.01,0.01,0.02,0.02,0.02,0.02,0.02,0.05,0.05,0.05,0.10,0.10,0.25));
-							if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
-						}
-						if (dydudebug_ipdisplays) Console.Printf("ItemPoints: %.1f [%.1f], IPTimer1: %d / 2100", ItemPoints, globalvars.ItemPoints, IPTimer1);
-					}
-					else
-					{
-						if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
-						IPTimer1 = 0;
-					}
-					if (owner.health <= 0) 
-					{
-						globalvars.ItemPoints = ItemPoints = 0;
-					}
-					if (owner.CountInv("ItemPointsAdd")) 
-					{
-						if (exex_ikaripointsenabled) ItemPoints += owner.CountInv("ItemPointsAdd");
-						owner.A_SetInventory("ItemPointsAdd",0);
-					}
-					
-					// IP Cost Reduction after Mortal Blow Survival Timer
-					if (IPMortalBlowReduceTimer)
-					{
-						IPMortalBlowReduceTimer--;
-					}
-					// IP "No Gain" Timer [for future unique situations]
-					if (IPNoGainTimer) 
-					{
-						ItemPoints = 0;
-						globalvars.ItemPoints = 0;
-						IPNoGainTimer--;
-					}
-					if (TrueIPCooldownTimer) TrueIPCooldownTimer--;
-					//Console.Printf("TrueIPLevelGate: %d, IPNoGainTimer: %d, TrueIPCooldownTimer: %d, IPMortalBlowReduceTimer: %d", TrueIPLevelGate, IPNoGainTimer, TrueIPCooldownTimer, IPMortalBlowReduceTimer);
-
-					// HP Regeneration
-					baseregenmulti = 1.0;
-					if (CurrentHealth < MaxHealthTrue)
-					{
-						if (exex_hpwillregen)
-						{
-							int inc = 20;
-							inc += (PlayerLevel * 0.025);
-							baseregenmulti = inc;
-							if (HPRegenBoostTimer) inc *= 2.5;
-							
-							if (Owner.CountInv("DinahTrueIPState")) inc = floor(inc * 5);
-							if (Owner.CountInv("CricketBatGuard")) inc = floor(inc * frandom(1.334,1.667)); 
-							if (Owner.CountInv("CricketBatGuard2")) inc = floor(inc * frandom(1.334,1.667)); 
-							if (Owner.CountInv("DoingSpinAttack")) inc = floor(inc * frandom(0.599880023995201,0.7496251874062969)); 
-							if (Owner.CountInv("FistPlayerBlockItem")) inc = ceil(inc * frandompick(1.2,1.3,1.3,1.4,1.4,1.4,1.5,1.5,1.5,1.5,1.6,1.6,1.6,1.7,1.7,1.8)); 
-							if (owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")) inc = 100; 
-							
-							if (owner.CountInv("KnightGownItem")) 
-							{
-								if (owner.CountInv("KnightGownIP1Buff")) inc = ceil(inc * 1.25);
-																										else inc = floor(inc * 1.05);
-							}
-							if (owner.CountInv("KnightGownItem2"))
-							{
-								if (owner.CountInv("KnightGownIP2Buff")) inc = ceil(inc * 1.50);
-																										else inc = floor(inc * 1.10);
-							}
-							if (owner.CountInv("KnightGownItem3")) 
-							{
-								if (owner.CountInv("KnightGownIP3Buff")) inc = ceil(inc * 1.75);
-																										else inc = floor(inc * 1.15);
-							}
-							if (owner.CountInv("KnightGownItem4")) 
-							{
-								if (owner.CountInv("KnightGownIP4Buff")) inc = ceil(inc * 2.00);
-																										else inc = floor(inc * 1.20);
-							}
-
-							if (berserked) inc = floor(inc * frandom(1.5,2.0));
-
-							if (buttons & BT_FORWARD || buttons & BT_BACK || buttons & BT_MOVELEFT || buttons & BT_MOVERIGHT) inc = floor(inc * 0.4);
-							if (buttons & BT_ATTACK || buttons & BT_ALTATTACK) inc = floor(inc * 0.5);
-							if (buttons & BT_MOVEUP || buttons & BT_MOVEDOWN) inc = floor(inc * 0.6);
-							if (buttons & BT_JUMP && sv_allowjump) inc = floor(inc * 0.4);
-							if (buttons & BT_CROUCH && sv_allowcrouch) inc = floor(inc * 1.8);
-
-							if (WineDefTier == 1 || WineDefTier == -1) inc = floor(inc * 1.5);
-							if (WineDefTier == 2 || WineDefTier == -2) inc = floor(inc * 2.25);
-							if (WineDefTier == 3 || WineDefTier == -3) inc = floor(inc * 3.25);
-							if (WineDefTier == 4 || WineDefTier == -4) inc = floor(inc * 4.5);
-							if (WineDefTier == 5 || WineDefTier == -5) inc = floor(inc * 6.0);
-
-							if (CurrentHealth <= (MaxHealthTrue * 0.02)) inc = floor(inc * 20);
-							else if (CurrentHealth <= (MaxHealthTrue * 0.10)) inc = floor(inc * 5);
-							else if (CurrentHealth <= (MaxHealthTrue * 0.25)) inc = floor(inc * 1.25);
-							else if (CurrentHealth <= (MaxHealthTrue * 0.50)) inc = floor(inc * 1.0625);
-							
-							if (afasdroptimer) inc = floor(inc * 0.5);
-							
-							if (baseregenmulti) baseregenmulti = (inc / baseregenmulti);
-							//Console.Printf("BaseRegenMulti: %.8f", baseregenmulti);
-							HPRegenTimer += inc;
-							
-							if (HPRegenTimer > HPRegenTimerMax)
-							{
-								HPRegenTimer -= HPRegenTimerMax;
-								if (HPRegenTimer < 0) HPRegenTimer = 0;
-								
-								if (CurrentHealth < MaxHealthTrue)
-								{
-									int rec = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
-									if (berserked) rec = randompick(1,1,1,1,1,1,1,1,2,2);
-									
-									if (rec && dyduhud_showhpapdmgrecregen) A_RecoverHUD(rec,0);
-									CurrentHealth += rec;
-									if (CurrentHealth >= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
-									owner.player.health = owner.player.mo.health = CurrentHealth;
-								}
-							}
-							if (dydudebug_hpregen) Console.Printf("RegenTimer: %d / %d  (inc: %d)", HPRegenTimer, HPRegenTimerMax, inc);
-						}
-						else
-						{
-							HPRegenTimer = 0;
-						}
-					}
-					else
-					if (CurrentHealth > MaxHealthTrue)
-					{
-						if (exex_hpwilldegen)
-						{
-							int inc = 20;
-							inc -= (PlayerLevel * 0.0125);
-							baseregenmulti = inc;
-							if (HPRegenBoostTimer) inc *= 0.4;
-							
-							if (Owner.CountInv("DinahTrueIPState")) inc = ceil(inc * 0.2); 
-							if (Owner.CountInv("CricketBatGuard")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
-							if (Owner.CountInv("CricketBatGuard2")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
-							if (Owner.CountInv("DoingSpinAttack")) inc = ceil(inc * frandom(1.334,1.667)); 
-							if (Owner.CountInv("FistPlayerBlockItem")) inc = ceil(inc * frandompick(0.8334,0.7693,0.7693,0.7143,0.7143,0.7143,0.6667,0.6667,0.6667,0.6667,0.625,0.625,0.625,0.5882,0.5882,0.5556));
-							if (owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")) inc *= 0.01; 
-
-							if (owner.CountInv("KnightGownItem")) 
-							{
-								if (owner.CountInv("KnightGownIP1Buff")) inc = floor(inc * 0.75);
-																										else inc = ceil(inc * 0.95);
-							}
-							if (owner.CountInv("KnightGownItem2"))
-							{
-								if (owner.CountInv("KnightGownIP2Buff")) inc = floor(inc * 0.50);
-																										else inc = ceil(inc * 0.90);
-							}
-							if (owner.CountInv("KnightGownItem3")) 
-							{
-								if (owner.CountInv("KnightGownIP3Buff")) inc = floor(inc * 0.25);
-																										else inc = ceil(inc * 0.85);
-							}
-							if (owner.CountInv("KnightGownItem4")) 
-							{
-								if (owner.CountInv("KnightGownIP4Buff")) inc = floor(inc * 0.0);
-																										else inc = ceil(inc * 0.80);
-							}
-							
-							if (berserked) inc = ceil(inc * frandom(0.5,0.667));
-							
-							if (buttons & BT_FORWARD || buttons & BT_BACK || buttons & BT_MOVELEFT || buttons & BT_MOVERIGHT) inc = ceil(inc * 2.5);
-							if (buttons & BT_ATTACK || buttons & BT_ALTATTACK) inc = ceil(inc * 2.0);
-							if (buttons & BT_MOVEUP || buttons & BT_MOVEDOWN) inc = ceil(inc * 1.666666666666667);
-							if (buttons & BT_JUMP && sv_allowjump) inc = ceil(inc * 2.5);
-							if (buttons & BT_CROUCH && sv_allowcrouch) inc = ceil(inc * 0.5555555555555556);
-
-							if (WineDefTier == 1 || WineDefTier == -1) inc = ceil(inc * 0.6666666666666667);
-							if (WineDefTier == 2 || WineDefTier == -2) inc = ceil(inc * 0.4444444444444444);
-							if (WineDefTier == 3 || WineDefTier == -3) inc = ceil(inc * 0.3076923076923077);
-							if (WineDefTier == 4 || WineDefTier == -4) inc = ceil(inc * 0.2222222222222222);
-							if (WineDefTier == 5 || WineDefTier == -5) inc = ceil(inc * 0.1666666666666667);
-							
-							if (CurrentHealth >= (MaxHealthTrue * 3.0)) inc = ceil(inc * 3.0);
-							else if (CurrentHealth >= (MaxHealthTrue * 2.75)) inc = ceil(inc * 2.75);
-							else if (CurrentHealth >= (MaxHealthTrue * 2.50)) inc = ceil(inc * 2.5);
-							else if (CurrentHealth >= (MaxHealthTrue * 2.25)) inc = ceil(inc * 2.25);
-							else if (CurrentHealth >= (MaxHealthTrue * 2.00)) inc = ceil(inc * 2.0);
-							else if (CurrentHealth >= (MaxHealthTrue * 1.75)) inc = ceil(inc * 1.75);
-							else if (CurrentHealth >= (MaxHealthTrue * 1.50)) inc = ceil(inc * 1.5);
-							else if (CurrentHealth >= (MaxHealthTrue * 1.25)) inc = ceil(inc * 1.25);
-							else if (CurrentHealth >= (MaxHealthTrue * 1.00)) inc = ceil(inc * 1.0);
-							
-							if (afasdroptimer) inc = ceil(inc * 2.0);
-							
-							if (baseregenmulti) baseregenmulti = (inc / baseregenmulti);
-							//Console.Printf("BaseDegenMulti: %.8f", baseregenmulti);
-							HPDegenTimer += inc;
-							if (HPDegenTimer > HPDegenTimerMax)
-							{
-								HPDegenTimer -= HPDegenTimerMax;
-								if (HPDegenTimer < 0) HPDegenTimer = 0;
-								
-								if (CurrentHealth > MaxHealthTrue)
-								{
-									int loss = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
-									if (berserked) loss = randompick(1,1,1,1,1,1,1,1,1,2);
-									
-									if (loss && dyduhud_showhpapdmgrecregen > 1) A_LossHUD(loss,0);
-									CurrentHealth -= loss;
-									if (CurrentHealth <= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
-									owner.player.health = owner.player.mo.health = CurrentHealth;
-								}
-							}
-							if (dydudebug_hpregen) Console.Printf("DegenTimer: %d / %d  (inc: %d)", HPDegenTimer, HPDegenTimerMax, inc);
-						}
-						else
-						{
-							HPDegenTimer = 0;
-						}
-					}
-					else
-					{
-						HPRegenTimer = 0;
-						HPDegenTimer = 0;
-						if (dydudebug_hpregen) Console.Printf("Regen/Degen Neutral");
-					}
-					
-					if (HPRegenBoostTimer) HPRegenBoostTimer--;
-					if (HPRegenBoostTimer < 0) HPRegenBoostTimer = 0;
-					if (dydudebug_hpregen && HPRegenBoostTimer) Console.Printf("HPRegenBoostTimer: %d", HPRegenBoostTimer);
-				}
+				HPRegenStuff();
 				
 				//***********
 				//* Evasion *
@@ -2133,9 +1707,476 @@ class PlayerStatItem : Inventory
 		}
 	}
 	
+	void HPRegenStuff()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+
+		if (CurrentHealth <= 0)
+		{
+			Owner.A_SetInventory("PlayerIsDead", 1); 
+		}
+		else
+		if (CurrentHealth > 0)
+		{
+			if (dydudebug_hpregen) Console.Printf("Health: %d / %d", CurrentHealth, MaxHealthTrue);
+			
+			Owner.A_SetInventory("PlayerIsDead", 0);
+			//****************************************
+			//*Get Health Ratio & Health Level Checks*
+			//****************************************
+			if (playeractor && MaxHealthTrue > 0)
+			{
+				HealthRatio = (CurrentHealth * 1000) / MaxHealthTrue;
+				HealthRatio = clamp(HealthRatio, 0, 2000);
+				
+				if (HealthRatio != PrevHealthRatio)
+				{
+					if (HealthRatio < 625)
+					{
+						if (HealthRatio < 167)
+						{
+							if (HealthRatio < 21)
+							{
+								Owner.A_SetInventory("CriticalHealth", 1);
+								Owner.A_SetInventory("LowHealth", 0);
+								Owner.A_SetInventory("DecentHealth", 0);
+								Owner.A_SetInventory("NormalHealth", 0);
+							}
+							else 
+							{
+								Owner.A_SetInventory("CriticalHealth", 0);
+								Owner.A_SetInventory("LowHealth", 1);
+								Owner.A_SetInventory("DecentHealth", 0);
+								Owner.A_SetInventory("NormalHealth", 0);
+							}
+						}
+						else 
+						{
+							Owner.A_SetInventory("CriticalHealth", 0);
+							Owner.A_SetInventory("LowHealth", 0);
+							Owner.A_SetInventory("DecentHealth", 1);
+							Owner.A_SetInventory("NormalHealth", 0);
+						}
+					}
+					else
+					{
+						Owner.A_SetInventory("CriticalHealth", 0);
+						Owner.A_SetInventory("LowHealth", 0);
+						Owner.A_SetInventory("DecentHealth", 0);
+						Owner.A_SetInventory("NormalHealth", 1);
+					}
+					if (CurrentHealth >= MaxHealthTrue) Owner.A_SetInventory("FullHealth", 1); else Owner.A_SetInventory("FullHealth", 0);
+					
+					PrevHealthRatio = HealthRatio;
+				}
+				
+			}
+			
+			// Check Item Points
+			int IPTimerIncMod = 0;
+			int IPTimerInc;
+			if (berserked && IPNoGainTimer <= 0)
+			{
+				double berserkIPGain;
+				berserkIPGain = 0.0025;
+				if (ItemPoints <= 100.0000)
+				{
+					if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+					{
+						berserkIPGain += 0.0005;
+					}
+					else
+					if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+					{
+						berserkIPGain += 0.00125;
+					}
+					else
+					if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+					{
+						berserkIPGain += 0.003125;
+					}
+					else
+					if (ItemPoints <= 25.0000)
+					{
+						berserkIPGain += 0.0078125;
+					}
+				}
+				double BerIPMulti = (0.25 + (PlayerLevel * 0.03));
+				if (BerIPMulti >= 1.00 || PlayerLevel >= 25)
+				{
+					BerIPMulti = (1.00 + ((PlayerLevel - 25) * 0.01334));
+					if (BerIPMulti >= 2.00 || PlayerLevel >= 100) BerIPMulti = 2.00;
+				}
+				
+				berserkIPGain *= BerIPMulti;
+				if (IPTimer1 < 0) 
+				{
+					if (random(1,16) <= 1) berserkIPGain *= 3;
+					else 
+					{
+						if (random(1,4) <= 1) berserkIPGain *= 2.5;
+						else berserkIPGain *= 2;
+					}
+					IPTimerIncMod += 1;
+				}
+				else 
+				{
+					IPTimerIncMod += 10;
+				}
+				berserkIPGain *= (1.0 + (PlayerLevel * 0.0025));
+				//Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPTimer1, IPTimerInc, BerIPMulti);
+				ItemPoints += berserkIPGain;
+				globalvars.ItemPoints = ItemPoints;
+			}
+			// Armor IP Effect Benefits
+			double ArmorIPActive = 0;
+			if (owner.CountInv("KnightGownItem") && owner.CountInv("KnightGownIP1Buff")) ArmorIPActive = (1.0 * 1.5);
+			if (owner.CountInv("KnightGownItem2") && owner.CountInv("KnightGownIP2Buff")) ArmorIPActive = (2.15 * 1.5);
+			if (owner.CountInv("KnightGownItem3") && owner.CountInv("KnightGownIP3Buff")) ArmorIPActive = (3.60 * 1.5);
+			if (owner.CountInv("KnightGownItem4") && owner.CountInv("KnightGownIP4Buff")) ArmorIPActive = (5.35 * 1.5);
+			if (ArmorIPActive > 0 && IPNoGainTimer <= 0)
+			{
+				double ArmorIPGain;
+				ArmorIPGain = 0.0025;
+				if (ItemPoints <= 100.0000)
+				{
+					if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+					{
+						ArmorIPGain += 0.00125;
+					}
+					else
+					if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+					{
+						ArmorIPGain += 0.003125;
+					}
+					else
+					if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+					{
+						ArmorIPGain += 0.0078125;
+					}
+					else
+					if (ItemPoints <= 25.0000)
+					{
+						ArmorIPGain += 0.01953125;
+					}
+				}
+				double ArmorIPMulti = (0.25 + (PlayerLevel * 0.03));
+				if (ArmorIPMulti >= 1.00 || PlayerLevel >= 25)
+				{
+					ArmorIPMulti = (1.00 + ((PlayerLevel - 25) * 0.01334));
+					if (ArmorIPMulti >= 2.00 || PlayerLevel >= 100) ArmorIPMulti = 2.00;
+				}
+
+				ArmorIPGain *= ArmorIPMulti;
+				ArmorIPGain *= ArmorIPActive;
+				if (IPTimer1 < 0) 
+				{
+					if (random(1,16) <= 1) ArmorIPGain *= 3;
+					else 
+					{
+						if (random(1,4) <= 1) ArmorIPGain *= 2.5;
+						else ArmorIPGain *= 2;
+					}
+					IPTimerIncMod += 5;
+				}
+				else 
+				{
+					IPTimerIncMod += 25;
+				}
+				ArmorIPGain *= (1.0 + (PlayerLevel * 0.0025));
+				//Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPTimer1, IPTimerIncMod, ArmorIPMulti);
+				ItemPoints += ArmorIPGain;
+				globalvars.ItemPoints = ItemPoints;
+			}
+			// Morph IP Benefits
+			if (IsMorphed == 1)
+			{
+				double MorphIPGain;
+				MorphIPGain = (0.0025 * 8);
+				if (ItemPoints <= 100.0000)
+				{
+					if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+					{
+						MorphIPGain += (0.00125 * 8);
+					}
+					else
+					if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+					{
+						MorphIPGain += (0.003125 * 8);
+					}
+					else
+					if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+					{
+						MorphIPGain += (0.0078125 * 8);
+					}
+					else
+					if (ItemPoints <= 25.0000)
+					{
+						MorphIPGain += (0.01953125 * 8);
+					}
+				}
+				if (IPTimer1 < 0) 
+				{
+					if (random(1,16) <= 1) MorphIPGain *= 2.5;
+					else 
+					{
+						if (random(1,4) <= 1) MorphIPGain *= 2;
+						else MorphIPGain *= 1.5;
+					}
+					IPTimerIncMod += 5;
+				}
+				else 
+				{
+					IPTimerIncMod += 25;
+				}
+				MorphIPGain *= (1.0 + (PlayerLevel * 0.0075));
+				//Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPTimer1: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", MorphIPGain, IPTimer1, IPTimerIncMod, ArmorIPMulti);
+				ItemPoints += MorphIPGain;
+				globalvars.ItemPoints = ItemPoints;
+			}
+			if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
+												 else IPTimerInc = level.time % 1;
+			
+			if (ItemPoints > 0.00)
+			{
+				if (IPTimer1 < -2100) IPTimer1 = -2100;
+				if (IPTimer1 < 2100)
+				{
+					if (IPTimerInc == 0) IPTimer1++;
+				}
+				else
+				{
+					IPTimer1 = 0;
+					ItemPoints -= (ItemPoints * frandompick(0.01,0.01,0.01,0.01,0.01,0.01,0.02,0.02,0.02,0.02,0.02,0.05,0.05,0.05,0.10,0.10,0.25));
+					if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
+				}
+				if (dydudebug_ipdisplays) Console.Printf("ItemPoints: %.1f [%.1f], IPTimer1: %d / 2100", ItemPoints, globalvars.ItemPoints, IPTimer1);
+			}
+			else
+			{
+				if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
+				IPTimer1 = 0;
+			}
+			if (owner.health <= 0) 
+			{
+				globalvars.ItemPoints = ItemPoints = 0;
+			}
+			if (owner.CountInv("ItemPointsAdd")) 
+			{
+				if (exex_ikaripointsenabled) ItemPoints += owner.CountInv("ItemPointsAdd");
+				owner.A_SetInventory("ItemPointsAdd",0);
+			}
+			
+			// IP Cost Reduction after Mortal Blow Survival Timer
+			if (IPMortalBlowReduceTimer)
+			{
+				IPMortalBlowReduceTimer--;
+			}
+			// IP "No Gain" Timer [for future unique situations]
+			if (IPNoGainTimer) 
+			{
+				ItemPoints = 0;
+				globalvars.ItemPoints = 0;
+				IPNoGainTimer--;
+			}
+			if (TrueIPCooldownTimer) TrueIPCooldownTimer--;
+			//Console.Printf("TrueIPLevelGate: %d, IPNoGainTimer: %d, TrueIPCooldownTimer: %d, IPMortalBlowReduceTimer: %d", TrueIPLevelGate, IPNoGainTimer, TrueIPCooldownTimer, IPMortalBlowReduceTimer);
+
+			// HP Regeneration
+			baseregenmulti = 1.0;
+			if (CurrentHealth < MaxHealthTrue)
+			{
+				if (exex_hpwillregen)
+				{
+					int inc = 20;
+					inc += (PlayerLevel * 0.025);
+					baseregenmulti = inc;
+					if (HPRegenBoostTimer) inc *= 2.5;
+					
+					if (Owner.CountInv("DinahTrueIPState")) inc = floor(inc * 5);
+					if (Owner.CountInv("CricketBatGuard")) inc = floor(inc * frandom(1.334,1.667)); 
+					if (Owner.CountInv("CricketBatGuard2")) inc = floor(inc * frandom(1.334,1.667)); 
+					if (Owner.CountInv("DoingSpinAttack")) inc = floor(inc * frandom(0.599880023995201,0.7496251874062969)); 
+					if (Owner.CountInv("FistPlayerBlockItem")) inc = ceil(inc * frandompick(1.2,1.3,1.3,1.4,1.4,1.4,1.5,1.5,1.5,1.5,1.6,1.6,1.6,1.7,1.7,1.8)); 
+					if (owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")) inc = 100; 
+					
+					if (owner.CountInv("KnightGownItem")) 
+					{
+						if (owner.CountInv("KnightGownIP1Buff")) inc = ceil(inc * 1.25);
+																								else inc = floor(inc * 1.05);
+					}
+					if (owner.CountInv("KnightGownItem2"))
+					{
+						if (owner.CountInv("KnightGownIP2Buff")) inc = ceil(inc * 1.50);
+																								else inc = floor(inc * 1.10);
+					}
+					if (owner.CountInv("KnightGownItem3")) 
+					{
+						if (owner.CountInv("KnightGownIP3Buff")) inc = ceil(inc * 1.75);
+																								else inc = floor(inc * 1.15);
+					}
+					if (owner.CountInv("KnightGownItem4")) 
+					{
+						if (owner.CountInv("KnightGownIP4Buff")) inc = ceil(inc * 2.00);
+																								else inc = floor(inc * 1.20);
+					}
+
+					if (berserked) inc = floor(inc * frandom(1.5,2.0));
+
+					if (buttons & BT_FORWARD || buttons & BT_BACK || buttons & BT_MOVELEFT || buttons & BT_MOVERIGHT) inc = floor(inc * 0.4);
+					if (buttons & BT_ATTACK || buttons & BT_ALTATTACK) inc = floor(inc * 0.5);
+					if (buttons & BT_MOVEUP || buttons & BT_MOVEDOWN) inc = floor(inc * 0.6);
+					if (buttons & BT_JUMP && sv_allowjump) inc = floor(inc * 0.4);
+					if (buttons & BT_CROUCH && sv_allowcrouch) inc = floor(inc * 1.8);
+
+					if (WineDefTier == 1 || WineDefTier == -1) inc = floor(inc * 1.5);
+					if (WineDefTier == 2 || WineDefTier == -2) inc = floor(inc * 2.25);
+					if (WineDefTier == 3 || WineDefTier == -3) inc = floor(inc * 3.25);
+					if (WineDefTier == 4 || WineDefTier == -4) inc = floor(inc * 4.5);
+					if (WineDefTier == 5 || WineDefTier == -5) inc = floor(inc * 6.0);
+
+					if (CurrentHealth <= (MaxHealthTrue * 0.02)) inc = floor(inc * 20);
+					else if (CurrentHealth <= (MaxHealthTrue * 0.10)) inc = floor(inc * 5);
+					else if (CurrentHealth <= (MaxHealthTrue * 0.25)) inc = floor(inc * 1.25);
+					else if (CurrentHealth <= (MaxHealthTrue * 0.50)) inc = floor(inc * 1.0625);
+					
+					if (afasdroptimer) inc = floor(inc * 0.5);
+					
+					if (baseregenmulti) baseregenmulti = (inc / baseregenmulti);
+					//Console.Printf("BaseRegenMulti: %.8f", baseregenmulti);
+					HPRegenTimer += inc;
+					
+					if (HPRegenTimer > HPRegenTimerMax)
+					{
+						HPRegenTimer -= HPRegenTimerMax;
+						if (HPRegenTimer < 0) HPRegenTimer = 0;
+						
+						if (CurrentHealth < MaxHealthTrue)
+						{
+							int rec = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
+							if (berserked) rec = randompick(1,1,1,1,1,1,1,1,2,2);
+							
+							if (rec && dyduhud_showhpapdmgrecregen) A_RecoverHUD(rec,0);
+							CurrentHealth += rec;
+							if (CurrentHealth >= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
+							owner.player.health = owner.player.mo.health = CurrentHealth;
+						}
+					}
+					if (dydudebug_hpregen) Console.Printf("RegenTimer: %d / %d  (inc: %d)", HPRegenTimer, HPRegenTimerMax, inc);
+				}
+				else
+				{
+					HPRegenTimer = 0;
+				}
+			}
+			else
+			if (CurrentHealth > MaxHealthTrue)
+			{
+				if (exex_hpwilldegen)
+				{
+					int inc = 20;
+					inc -= (PlayerLevel * 0.0125);
+					baseregenmulti = inc;
+					if (HPRegenBoostTimer) inc *= 0.4;
+					
+					if (Owner.CountInv("DinahTrueIPState")) inc = ceil(inc * 0.2); 
+					if (Owner.CountInv("CricketBatGuard")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
+					if (Owner.CountInv("CricketBatGuard2")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
+					if (Owner.CountInv("DoingSpinAttack")) inc = ceil(inc * frandom(1.334,1.667)); 
+					if (Owner.CountInv("FistPlayerBlockItem")) inc = ceil(inc * frandompick(0.8334,0.7693,0.7693,0.7143,0.7143,0.7143,0.6667,0.6667,0.6667,0.6667,0.625,0.625,0.625,0.5882,0.5882,0.5556));
+					if (owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")) inc *= 0.01; 
+
+					if (owner.CountInv("KnightGownItem")) 
+					{
+						if (owner.CountInv("KnightGownIP1Buff")) inc = floor(inc * 0.75);
+																								else inc = ceil(inc * 0.95);
+					}
+					if (owner.CountInv("KnightGownItem2"))
+					{
+						if (owner.CountInv("KnightGownIP2Buff")) inc = floor(inc * 0.50);
+																								else inc = ceil(inc * 0.90);
+					}
+					if (owner.CountInv("KnightGownItem3")) 
+					{
+						if (owner.CountInv("KnightGownIP3Buff")) inc = floor(inc * 0.25);
+																								else inc = ceil(inc * 0.85);
+					}
+					if (owner.CountInv("KnightGownItem4")) 
+					{
+						if (owner.CountInv("KnightGownIP4Buff")) inc = floor(inc * 0.0);
+																								else inc = ceil(inc * 0.80);
+					}
+					
+					if (berserked) inc = ceil(inc * frandom(0.5,0.667));
+					
+					if (buttons & BT_FORWARD || buttons & BT_BACK || buttons & BT_MOVELEFT || buttons & BT_MOVERIGHT) inc = ceil(inc * 2.5);
+					if (buttons & BT_ATTACK || buttons & BT_ALTATTACK) inc = ceil(inc * 2.0);
+					if (buttons & BT_MOVEUP || buttons & BT_MOVEDOWN) inc = ceil(inc * 1.666666666666667);
+					if (buttons & BT_JUMP && sv_allowjump) inc = ceil(inc * 2.5);
+					if (buttons & BT_CROUCH && sv_allowcrouch) inc = ceil(inc * 0.5555555555555556);
+
+					if (WineDefTier == 1 || WineDefTier == -1) inc = ceil(inc * 0.6666666666666667);
+					if (WineDefTier == 2 || WineDefTier == -2) inc = ceil(inc * 0.4444444444444444);
+					if (WineDefTier == 3 || WineDefTier == -3) inc = ceil(inc * 0.3076923076923077);
+					if (WineDefTier == 4 || WineDefTier == -4) inc = ceil(inc * 0.2222222222222222);
+					if (WineDefTier == 5 || WineDefTier == -5) inc = ceil(inc * 0.1666666666666667);
+					
+					if (CurrentHealth >= (MaxHealthTrue * 3.0)) inc = ceil(inc * 3.0);
+					else if (CurrentHealth >= (MaxHealthTrue * 2.75)) inc = ceil(inc * 2.75);
+					else if (CurrentHealth >= (MaxHealthTrue * 2.50)) inc = ceil(inc * 2.5);
+					else if (CurrentHealth >= (MaxHealthTrue * 2.25)) inc = ceil(inc * 2.25);
+					else if (CurrentHealth >= (MaxHealthTrue * 2.00)) inc = ceil(inc * 2.0);
+					else if (CurrentHealth >= (MaxHealthTrue * 1.75)) inc = ceil(inc * 1.75);
+					else if (CurrentHealth >= (MaxHealthTrue * 1.50)) inc = ceil(inc * 1.5);
+					else if (CurrentHealth >= (MaxHealthTrue * 1.25)) inc = ceil(inc * 1.25);
+					else if (CurrentHealth >= (MaxHealthTrue * 1.00)) inc = ceil(inc * 1.0);
+					
+					if (afasdroptimer) inc = ceil(inc * 2.0);
+					
+					if (baseregenmulti) baseregenmulti = (inc / baseregenmulti);
+					//Console.Printf("BaseDegenMulti: %.8f", baseregenmulti);
+					HPDegenTimer += inc;
+					if (HPDegenTimer > HPDegenTimerMax)
+					{
+						HPDegenTimer -= HPDegenTimerMax;
+						if (HPDegenTimer < 0) HPDegenTimer = 0;
+						
+						if (CurrentHealth > MaxHealthTrue)
+						{
+							int loss = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
+							if (berserked) loss = randompick(1,1,1,1,1,1,1,1,1,2);
+							
+							if (loss && dyduhud_showhpapdmgrecregen > 1) A_LossHUD(loss,0);
+							CurrentHealth -= loss;
+							if (CurrentHealth <= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
+							owner.player.health = owner.player.mo.health = CurrentHealth;
+						}
+					}
+					if (dydudebug_hpregen) Console.Printf("DegenTimer: %d / %d  (inc: %d)", HPDegenTimer, HPDegenTimerMax, inc);
+				}
+				else
+				{
+					HPDegenTimer = 0;
+				}
+			}
+			else
+			{
+				HPRegenTimer = 0;
+				HPDegenTimer = 0;
+				if (dydudebug_hpregen) Console.Printf("Regen/Degen Neutral");
+			}
+			
+			if (HPRegenBoostTimer) HPRegenBoostTimer--;
+			if (HPRegenBoostTimer < 0) HPRegenBoostTimer = 0;
+			if (dydudebug_hpregen && HPRegenBoostTimer) Console.Printf("HPRegenBoostTimer: %d", HPRegenBoostTimer);
+		}
+	}
+	
 	void GameStatTracker()
 	{
 		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
 		//
 		totalkillsgame = 0;
 		totalmaxkills = 0;
@@ -2237,7 +2278,9 @@ class PlayerStatItem : Inventory
 	
 	void LevelUpProcess()
 	{
-		int MaxHPGain;
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+
 		int levelmodulo, levelbonustype;
 		levelmodulo = PlayerLevel % 20;
 		if (levelmodulo == 0) levelbonustype = 0;
@@ -2416,6 +2459,7 @@ class PlayerStatItem : Inventory
 		if (HPMaxGain < 1) HPMaxGain = 1;
 		owner.player.mo.health += HPMaxGain;
 		HealthLevelAdd += HPMaxGain;
+		A_StatIncHud(HPMaxGain,0);
 		MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd + HealthBonusAdd);
 		if (dydudebug_levelupdisplays) Console.Printf("HPMaxGain: %d", HPMaxGain);
 		
