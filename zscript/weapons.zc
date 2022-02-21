@@ -474,15 +474,54 @@ class DDWeapon : Weapon
 	// Fist Block Function
 	action void A_PFistBlockOn()
 	{
+		let player = self.player;
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		A_SetInventory("FistPlayerBlock",0);
 		A_SetInventory("FistPlayerBlock2",0);
 		A_SetInventory("FistPlayerBlock3",0);
+		A_SetInventory("FistPlayerBlock4",0);
 		A_SetInventory("FistPlayerSpeedFactor",0);
 		A_SetInventory("FistPlayerSpeedFactor2",0);
 		A_SetInventory("FistPlayerSpeedFactor3",0);
+		A_SetInventory("FistPlayerSpeedFactor4",0);
 		A_SetInventory("FistPlayerBlockExtra",0);
-		A_SetInventory("FistPlayerBlock",1);
-		if (random(1,16) <= 1) { A_SetInventory("FistPlayerBlockExtra",1); }
+		A_SetInventory("FistPlayerBlockExtra2",0);
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= 0 && MiscItem.PlayerLevel <= 19)
+			{
+				A_SetInventory("FistPlayerBlock",1);
+				A_SetInventory("FistPlayerSpeedFactor",1);
+			}
+			if (MiscItem.PlayerLevel >= 20 && MiscItem.PlayerLevel <= 49)
+			{
+				A_SetInventory("FistPlayerBlock2",1);
+				A_SetInventory("FistPlayerSpeedFactor2",1);
+			}
+			if (MiscItem.PlayerLevel >= 50 && MiscItem.PlayerLevel <= 89)
+			{
+				A_SetInventory("FistPlayerBlock3",1);
+				A_SetInventory("FistPlayerSpeedFactor3",1);
+			}
+			if (MiscItem.PlayerLevel >= 90)
+			{
+				A_SetInventory("FistPlayerBlock4",1);
+				A_SetInventory("FistPlayerSpeedFactor4",1);
+			}
+		}
+		else
+		{
+			A_SetInventory("FistPlayerBlock",0);
+			A_SetInventory("FistPlayerSpeedFactor",1);
+		}
+		if (random(1,16) <= 1) 
+		{
+			A_SetInventory("FistPlayerBlockExtra",1); 
+			if (random(1,16) <= 1 && MiscItem && MiscItem.PlayerLevel >= 50)
+			{
+				A_SetInventory("FistPlayerBlockExtra2",1); 
+			}
+		}
 	}
 
 	action void A_PFistBlockOff()
@@ -490,10 +529,13 @@ class DDWeapon : Weapon
 		A_SetInventory("FistPlayerBlock",0);
 		A_SetInventory("FistPlayerBlock2",0);
 		A_SetInventory("FistPlayerBlock3",0);
+		A_SetInventory("FistPlayerBlock4",0);
 		A_SetInventory("FistPlayerSpeedFactor",0);
 		A_SetInventory("FistPlayerSpeedFactor2",0);
 		A_SetInventory("FistPlayerSpeedFactor3",0);
+		A_SetInventory("FistPlayerSpeedFactor4",0);
 		A_SetInventory("FistPlayerBlockExtra",0);
+		A_SetInventory("FistPlayerBlockExtra2",0);
 		A_SetInventory("FistPlayerBlockItem",0);
 		//bREFLECTIVE = 0;
 		//bSHIELDREFLECT = 0;
@@ -8489,7 +8531,43 @@ class BadZapShot : DDProjectile
 			ZBUL ABCD 3 Bright;
 			loop;
 		Death:
-			ZBUX A 4 Bright;
+			ZBUX A 4 Bright
+			{
+				A_Explode(25,25,0,true,6);
+			}
+			ZBUX BCD 4 Bright;
+			stop;
+	}
+}
+
+class BadZapShot2 : BadZapShot
+{
+	default
+	{
+		Tag "Pike Blast";
+		Radius 3;
+		Height 3;
+		Speed 60;
+		Damage 9;
+		Scale 1;
+		DamageType "Zap";
+		Projectile;
+		RENDERSTYLE "Normal";
+		deathsound "croquet/ballhit";
+		+FORCERADIUSDMG
+		//+NOEXTREMEDEATH
+	}
+	
+	States
+	{
+		Spawn:
+			ZBUL ABCD 3 Bright;
+			loop;
+		Death:
+			ZBUX A 4 Bright
+			{
+				A_Explode(128,128,0,true,32);
+			}
 			ZBUX BCD 4 Bright;
 			stop;
 	}

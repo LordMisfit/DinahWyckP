@@ -240,12 +240,12 @@ class Teacher_Quis : DDOrigBoss
 		MissileZap:
 			MQIS H 0 A_StartSound("Handmother/Zap");
 			MQIS EE 3 bright;
-			MQIS H 3 bright A_SpawnProjectile("badZapshot",40);
+			MQIS H 3 bright A_SpawnProjectile("BadZapshot",40);
 			MQIS H 3 bright;
-			MQIS H 0 bright A_SpawnProjectile("badZapshot",40,-48);
-			MQIS H 3 bright A_SpawnProjectile("badZapshot",40,48);
+			MQIS H 0 bright A_SpawnProjectile("BadZapshot",40,-48);
+			MQIS H 3 bright A_SpawnProjectile("BadZapshot",40,48);
 			MQIS H 3 bright;
-			MQIS H 3 bright A_SpawnProjectile("badZapshot",40);
+			MQIS H 3 bright A_SpawnProjectile("BadZapshot",40);
 			MQIS HH 3 bright;
 			Goto See3;
 		Pain:
@@ -332,12 +332,12 @@ class Teacher_QuisClone : Teacher_Quis
 		MissileZap:
 			MQIS H 0 A_StartSound("Handmother/Zap");
 			MQIS EE 3 bright;
-			MQIS H 3 bright A_SpawnProjectile("badZapshot",40);
+			MQIS H 3 bright A_SpawnProjectile("BadZapshot",40);
 			MQIS H 3 bright;
-			MQIS H 0 bright A_SpawnProjectile("badZapshot",40,-48);
-			MQIS H 3 bright A_SpawnProjectile("badZapshot",40,48);
+			MQIS H 0 bright A_SpawnProjectile("BadZapshot",40,-48);
+			MQIS H 3 bright A_SpawnProjectile("BadZapshot",40,48);
 			MQIS H 3 bright;
-			MQIS H 3 bright A_SpawnProjectile("badZapshot",40);
+			MQIS H 3 bright A_SpawnProjectile("BadZapshot",40);
 			MQIS HH 3 bright;
 			Goto See3;
 		Pain:
@@ -416,7 +416,7 @@ class QuisFake : DDOrigBoss
 			MQIS E 0 A_StartSound("quisling/sight",CHAN_VOICE);
 			MQIS E 8 A_FaceTarget();
 			MQIS H 0 bright A_StartSound("zappo",CHAN_BODY);
-			MQIS H 8 bright A_SpawnProjectile("BadZapshot",48,0);
+			MQIS H 8 bright A_SpawnProjectile("BadZapShot",48,0);
 			MQIS H 6;
 			Goto See2;
 		Pain:
@@ -936,13 +936,321 @@ class Teacher_Vokter : DDOrigBoss
 
 class Teacher_VokterClone : Teacher_Vokter
 {
+	bool truezap;
 	default
 	{
 		//$Category RPTeachers
 		Health 1500;
+		Radius 20;
+		Height 80;
 		Speed 18;
+		PainChance 50;
+		DamageFactor "Fire", 0.5;
+		Painchance "Suck", 64;
+		DamageFactor "Bonk", 2;
+		DamageFactor "Chop", 2;
+		DamageFactor "Zap", 0.25;
+		DamageFactor "suck", 0;
+		Mass 5000;
+		Scale 1;
+		MONSTER;
+		+FLOORCLIP
+		+NOBLOOD
+		+NOINFIGHTING
+		+DONTHARMCLASS
+		SeeSound "vokter/sight";
+		ActiveSound "vokter/active";
+		PainSound "vokter/pain";
+		DeathSound "vokter/death";
 		Obituary "%o was zapped into oblivion by... Baron Vokter?!";
 		Tag "Baron Vokter?!";
+		//RenderStyle "AddStencil";
+		StencilColor "Blue";
+	}
+	
+	action void A_VokShieldDown()
+	{
+		A_SetInventory("VokterCloneShield2",0);
+		A_SetInventory("VokterCloneShield",0);
+	}
+
+	action void A_VokShieldCheck()
+	{
+		if (random(1,4) <= 1)
+		{
+			A_SetInventory("VokterCloneShield2",1);
+			A_SetInventory("VokterCloneShield",0);
+		}
+		else
+		{
+			A_SetInventory("VokterCloneShield",1);
+			A_SetInventory("VokterCloneShield2",0);
+		}
+	}
+	
+	States
+	{
+		Spawn:
+			VOKT Z 10 NoDelay
+			{
+				A_Look();
+				A_VokShieldCheck();
+			}
+			Loop;
+		See:
+			VOKT AABBCCDD 3 
+			{
+				A_VokShieldCheck();
+				A_Chase();
+			}
+			VOKT A 0
+			{
+				if (A_JumpIfTargetInLOS("Teleport", frandom(77.5,82.5)))
+				{
+					if (!CountInv("VokterTeleportCooldown"))
+					{
+						if (random(1,8) <= 1) return resolvestate("Teleport");
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+			Loop;
+		Teleport:
+			VOKT A 0 
+			{
+				A_SetRenderStyle(12,1.00);
+				SetShade("Blue");
+				A_UnSetshootable();
+				A_UnsetSolid();
+			}
+			VOKT A 1 A_StartSound("vokter/tele");
+			VOKT A 1 A_SetTranslucent(0.90);
+			VOKT A 1 A_SetTranslucent(0.80);
+			VOKT A 1 A_SetTranslucent(0.70);
+			VOKT A 1 A_SetTranslucent(0.60);
+			VOKT A 1 A_SetTranslucent(0.50);
+			VOKT A 1 A_SetTranslucent(0.40);
+			VOKT A 1 A_SetTranslucent(0.30);
+			VOKT A 1 A_SetTranslucent(0.20);
+			VOKT A 1 A_SetTranslucent(0.10);
+			VOKT A 0 A_Jump(128,25);
+			VOKT AAAAAAAAAAAAAAAAAAAAAAAA 0 A_Wander();
+			VOKT A 0 A_Jump(128,25);
+			VOKT AAAAAAAAAAAAAAAAAAAAAAAA 0 A_Chase(null,null,CHF_FASTCHASE);
+			VOKT A 1 A_StartSound("vokter/tele2");
+			VOKT A 1 A_SetTranslucent(0.10);
+			VOKT A 1 A_SetTranslucent(0.20);
+			VOKT A 1 A_SetTranslucent(0.30);
+			VOKT A 1 A_SetTranslucent(0.40);
+			VOKT A 1 A_SetTranslucent(0.50);
+			VOKT A 1 A_SetTranslucent(0.60);
+			VOKT A 1 A_SetTranslucent(0.70);
+			VOKT A 1 A_SetTranslucent(0.80);
+			VOKT A 1 A_SetTranslucent(0.90);
+			VOKT A 1 A_SetTranslucent(1.0);
+			VOKT A 0
+			{
+				A_SetSolid();
+				A_SetShootable();
+				A_SetRenderStyle(1,1.00);
+				SetShade("Blue");
+				A_GiveInventory("VokterTeleportCooldown", 1);
+			}
+			goto See;
+		TeleportMissile:
+			VOKT F 0 
+			{
+				A_SetRenderStyle(12,1.00);
+				SetShade("0F 52 BA");
+				A_UnSetshootable();
+				A_UnsetSolid();
+			}
+			VOKT F 1 A_StartSound("vokter/tele");
+			VOKT F 1 A_SetTranslucent(0.90);
+			VOKT F 1 A_SetTranslucent(0.80);
+			VOKT F 1 A_SetTranslucent(0.70);
+			VOKT F 1 A_SetTranslucent(0.60);
+			VOKT F 1 A_SetTranslucent(0.50);
+			VOKT F 1 A_SetTranslucent(0.40);
+			VOKT F 1 A_SetTranslucent(0.30);
+			VOKT F 1 A_SetTranslucent(0.20);
+			VOKT F 1 A_SetTranslucent(0.10);
+			VOKT F 0 A_Jump(128,25);
+			VOKT FFFFFFFFFFFFFFFFFFFFFFFF 0 A_Wander();
+			VOKT F 0 A_Jump(128,25);
+			VOKT FFFFFFFFFFFFFFFFFFFFFFFF 0 A_Chase(null,null,CHF_FASTCHASE);
+			VOKT F 1 A_StartSound("vokter/tele2");
+			VOKT F 1 A_SetTranslucent(0.10);
+			VOKT F 1 A_SetTranslucent(0.20);
+			VOKT F 1 A_SetTranslucent(0.30);
+			VOKT F 1 A_SetTranslucent(0.40);
+			VOKT F 1 A_SetTranslucent(0.50);
+			VOKT F 1 A_SetTranslucent(0.60);
+			VOKT F 1 A_SetTranslucent(0.70);
+			VOKT F 1 A_SetTranslucent(0.80);
+			VOKT F 1 A_SetTranslucent(0.90);
+			VOKT F 1 A_SetTranslucent(1.0);
+			VOKT F 0
+			{
+				A_SetSolid();
+				A_SetShootable();
+				A_SetRenderStyle(1,1.00);
+				SetShade("0F 52 BA");
+				A_GiveInventory("VokterTeleportCooldown", 1);
+			}
+			goto MissileNext;
+		Missile:
+			VOKT F 0 //ACS_Execute(102,0,0,0,0);
+			{
+				A_VokShieldCheck();
+				A_StartSound("teacher/chargeup",CHAN_BODY,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.95,1.05));
+				A_StartSound("teacher/chargeup",CHAN_ITEM,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.8,1.2));
+				A_StartSound("teacher/chargeup",CHAN_5,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.667,1.334));
+				if (random(1,4) <= 1) truezap = true;
+			}
+			VOKT F 4 
+			{
+				A_VokShieldCheck();
+				A_FaceTarget();
+
+				if (A_JumpIfTargetInLOS("TeleportMissile", frandom(77.5,82.5)))
+				{
+					if (!CountInv("VokterTeleportCooldown"))
+					{
+						if (random(1,8) <= 1) return resolvestate("TeleportMissile");
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+		MissileNext:
+			VOKT H 0 bright
+			{
+				if (random(1,8) <= 5)
+				{
+					A_StopSound(CHAN_VOICE);
+					A_StartSound("vokter/attack",CHAN_VOICE);
+				}
+			}
+			VOKT HIJKHI 2 bright
+			{
+				A_VokShieldDown();
+				A_FaceTarget();
+				if (truezap) A_SetTics(randompick(4,6));
+			}
+			VOKT JKHIJK 0 bright
+			{
+				if (truezap) 
+				{
+					A_VokShieldDown();
+					A_FaceTarget();
+					A_SetTics(randompick(4,6));
+				}
+			}
+			VOKT J 0 A_StartSound("Handmother/Zap");
+			VOKT J 3 bright 
+			{
+				A_VokShieldDown();
+				A_FaceTarget();
+				if (truezap) A_SpawnProjectile("BadZapShot2",40);
+								else A_SpawnProjectile("BadZapShot",40);
+			}
+			VOKT K 3 bright
+			{
+				A_VokShieldDown();
+				A_FaceTarget();
+			}
+			VOKT J 0 bright
+			{
+				A_VokShieldDown();
+				A_FaceTarget();
+				if (truezap) A_SpawnProjectile("BadZapShot2",40,-48);
+								else A_SpawnProjectile("BadZapShot",40,-48);
+			}
+			VOKT J 0 A_StartSound("Handmother/Zap");
+			VOKT J 3 bright 
+			{
+				A_VokShieldDown();
+				A_FaceTarget();
+				if (truezap) 
+				{
+					A_SpawnProjectile("BadZapShot2",40,-48);
+					A_SpawnProjectile("BadZapShot2",40,48);
+				}
+				else
+				{
+					A_SpawnProjectile("BadZapShot",40,-48);
+					A_SpawnProjectile("BadZapShot",40,48);
+				}
+			}
+			VOKT K 3 bright
+			{
+				A_VokShieldDown();
+				A_FaceTarget();
+			}
+			VOKT J 0 A_StartSound("Handmother/Zap");
+			VOKT J 3 bright
+			{
+				A_VokShieldDown();
+				A_FaceTarget();
+				if (truezap) A_SpawnProjectile("BadZapShot2",40);
+								else A_SpawnProjectile("BadZapShot",40);
+			}
+			VOKT KH 3 bright
+			{
+				A_VokShieldCheck();
+				A_FaceTarget();
+			}
+			Goto See;
+		Pain:
+			VOKT E 6 
+			{
+				if (CountInv("VokterCloneShield") || CountInv("VokterCloneShield2"))
+				{
+					A_SetTics(0);
+				}
+				else
+				{
+					A_Pain();
+				}
+			}
+			VOKT L 6
+			{
+				if (CountInv("VokterCloneShield") || CountInv("VokterCloneShield2"))
+				{
+					A_SetTics(0);
+				}
+			}
+			VOKT L 0 
+			{
+				if (random(1,8) <= 1) 
+				{
+					if (CountInv("VokterCloneShield") || CountInv("VokterCloneShield2"))
+					{
+						A_StopSound(CHAN_VOICE);
+						A_StartSound("vokter/shieldtaunt",CHAN_VOICE);
+						Console.Printf("\c[sapphire]vokter/shieldtaunt");
+					}
+					else
+					{
+						A_StopSound(CHAN_VOICE);
+						A_StartSound("vokter/anger",CHAN_VOICE);
+						Console.Printf("\c[sapphire]vokter/anger");
+					}
+				}
+				A_VokShieldCheck();
+			}
+			Goto See;
+		Death:
+			VOKT E 0 A_VokShieldDown();
+			VOKT E 10 A_Scream();
+			VOKT L 10;
+			VOKT M 8 bright;
+			TBUM A 0 A_StartSound("teacher/death");
+			TBUM ABCDEFGH 5 bright;
+			TBUM I 5 bright A_NoBlocking();
+			Stop;
 	}
 }
 
