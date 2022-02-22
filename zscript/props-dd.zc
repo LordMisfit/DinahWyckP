@@ -7,6 +7,30 @@ class Geyser : Volcano
 	}
 }
 
+class GeyserTBlast : Actor
+{
+	Default
+	{
+		Radius 8;
+		Height 6;
+		Speed 2;
+		Damage 1;
+		DamageType "Boiling";
+		Gravity 0.125;
+		+NOBLOCKMAP +MISSILE +DROPOFF
+		+NOTELEPORT
+	}
+	States
+	{
+	Spawn:
+		VTFB AB 4 BRIGHT;
+		Loop;
+	Death:
+		SFFI CBABCDE 4 BRIGHT;
+		Stop;
+	}
+}
+
 class Geyserball : Volcanoblast
 {
 	default
@@ -15,14 +39,36 @@ class Geyserball : Volcanoblast
 		+NOEXTREMEDEATH
 	}
 	
+	void A_GeysBallImpact(string spawntype = "GeyserTBlast", int expflags = XF_NOSPLASH, name expdmgtype = 'Boiling')
+	{
+		if (pos.Z <= floorz)
+		{
+			bNoGravity = true;
+			Gravity = 1;
+			AddZ(28);
+		}
+		A_Explode(25, 25, expflags, false, 0, 0, 0, "BulletPuff", expdmgtype);
+		for (int i = 0; i < 4; i++)
+		{
+			Actor tiny = Spawn(spawntype, Pos, ALLOW_REPLACE);
+			if (tiny)
+			{
+				if (target) tiny.target = target; else tiny.target = self;
+				tiny.Angle = 90.*i;
+				tiny.VelFromAngle(0.7);
+				tiny.Vel.Z = 1. + random[GeysBallImpact]() / 128.;
+				tiny.CheckMissileSpawn(radius);
+			}
+		}
+	}
+
 	States
 	{
 		Spawn:
-			WBUL ABCB 4 BRIGHT A_SpawnItemEx("Puffy", random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, 
-																		random2[BeastPuff]()*0.015625, 0, 0, 0, 0, SXF_ABSOLUTEPOSITION, 64);
+			WBUL ABCB 4 BRIGHT; // A_SpawnItemEx("Puffy", random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, 0, 0, 0, 0, SXF_ABSOLUTEPOSITION, 64);
 			Loop;
 		Death:
-			WBUX A 4 BRIGHT A_VolcBallImpact();
+			WBUX A 4 BRIGHT A_GeysBallImpact("GeyserTBlast",XF_NOSPLASH,'Boiling');
 			WBUX BC 4 BRIGHT;
 			Stop;
 	}
