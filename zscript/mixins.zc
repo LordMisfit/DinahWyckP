@@ -347,16 +347,6 @@ mixin class CollisionChecker
 	}
 }
 
-mixin class MonsterTickCheck
-{
-	int hitsoundtimer;
-	int hitweaksoundtimer;
-	override void Tick()
-	{
-		super.Tick();
-	}
-}
-
 mixin class MonsterCollider
 {
 	int targetdummyhitcooldown;
@@ -378,34 +368,89 @@ mixin class MonsterCollider
 				let Vile = Archvile(self);
 				if (Vile) 
 				{
-					if (Vile.health > (Vile.SpawnHealth() >> 2)) //
+					if (Vile.health > ((Vile.SpawnHealth() + Vile.Stamina) * 0.667))
 					{
 						ResSucceed = true;
 						if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Vile's Health is High Enough to resurrect anything");
 					}
 					else
 					{
-						if (other.SpawnHealth() <= 150)
+						if (Vile.health > ((Vile.SpawnHealth() + Vile.Stamina) * 0.334))
 						{
-							ResSucceed = true;
-							if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Resurrectee's max health is low enough");
+							if ((other.SpawnHealth() + other.Stamina) <= 500)
+							{
+								ResSucceed = true;
+								if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Resurrectee's max health is low enough");
+							}
+							else
+							{
+								ResSucceed = false;
+								if (dydudebug_ressurrectdisplays) Console.Printf("Failed: Vile's Health Too Low");
+								if (exex_combatlog) Console.Printf("\c[red]*\c- \c[brick]%s\c- failed to resurrect \c[purple]%s\c- because their health is too low! [%d]", GetTag(), other.GetTag(), gametic);
+							}
 						}
 						else
 						{
-							ResSucceed = false;
-							if (dydudebug_ressurrectdisplays) Console.Printf("Failed: Vile's Health Too Low");
+							if ((other.SpawnHealth() + other.Stamina) <= 150)
+							{
+								ResSucceed = true;
+								if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Resurrectee's max health is low enough");
+							}
+							else
+							{
+								ResSucceed = false;
+								if (dydudebug_ressurrectdisplays) Console.Printf("Failed: Vile's Health Too Low");
+								if (exex_combatlog) Console.Printf("\c[red]*\c- \c[brick]%s\c- failed to resurrect \c[purple]%s\c- because their health is too low! [%d]", GetTag(), other.GetTag(), gametic);
+							}
 						}
 					}
 				}
-				if (exex_combatlog) Console.Printf("\c[red]*\c- \c[brick]%s\c- is resurrecting \c[purple]%s\c-! [%d]", GetTag(), other.GetTag(), gametic);
+				if (exex_combatlog) 
+				{
+					if (ResSucceed)
+					{
+						string sndname = "Resurrection/Evil";
+						if (other.bBOSS) sndname = "Resurrection/EvilBig";
+						other.A_StopSound(15);
+						other.A_StartSound(sndname,15,CHANF_DEFAULT,frandom(0.8,1.2),ATTN_NONE,frandom(0.8,1.2));
+						Console.Printf("\c[red]*\c- \c[brick]%s\c- is resurrecting \c[purple]%s\c-! [%d]", GetTag(), other.GetTag(), gametic);
+					}
+				}
 			}
 			else
 			{
-				if (exex_combatlog) Console.Printf("\c[red]*\c- \c[brick]%s\c- is self resurrecting! [%d]", GetTag(), gametic);
+				if (exex_combatlog) 
+				{
+					if (ResSucceed)
+					{
+						string sndname = "Resurrection/Evil";
+						if (bBOSS) sndname = "Resurrection/EvilBig";
+						A_StopSound(15);
+						A_StartSound(sndname,15,CHANF_DEFAULT,frandom(0.8,1.2),ATTN_NONE,frandom(0.8,1.2));
+						Console.Printf("\c[red]*\c- \c[brick]%s\c- is self resurrecting! [%d]", GetTag(), gametic);
+					}
+				}
 			}
 		}
 		else // Monster is the one BEING REVIVED...
 		{
+			if (RoseMotherClone(other))
+			{
+				let Vile = Archvile(self);
+				if (Vile) 
+				{
+					if (Vile.health >= (Vile.SpawnHealth() + Vile.Stamina))
+					{
+						ResSucceed = true;
+						if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Vile's Health is High Enough to resurrect %s! [%d]", other.GetTag(), gametic);
+					}
+					else
+					{
+						ResSucceed = false;
+						if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Vile's Health is NOT High Enough (i.e. Max or Higher) to resurrect %s! [%d]", other.GetTag(), gametic);
+					}
+				}
+			}
 			//if (exex_combatlog) Console.Printf("\c[red]*\c- \c[purple]%s\c- is being resurrected by \c[brick]%s\c-! [%d]", GetTag(), other.GetTag(), gametic);
 		}
 		return ResSucceed;
