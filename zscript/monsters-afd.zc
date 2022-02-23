@@ -1474,6 +1474,7 @@ class Teacher_VokterClone : Teacher_Vokter
 {
 	bool truezap;
 	int phase;
+	bool paintele;
 	default
 	{
 		//$Category RPTeachers
@@ -1484,7 +1485,8 @@ class Teacher_VokterClone : Teacher_Vokter
 		Speed 18;
 		PainChance 50; // 200
 		DamageFactor "Fire", 0.5;
-		Painchance "Suck", 64;
+		Painchance "Suck", 13;
+		Painchance "DashingBG", 150;
 		DamageFactor "Bonk", 2;
 		DamageFactor "Chop", 2;
 		DamageFactor "Zap", 0.25;
@@ -1515,6 +1517,12 @@ class Teacher_VokterClone : Teacher_Vokter
 		if (globalvars && globalvars.KilledVokterClone) SetTag("Baron Vokter (Clone)");
 	}
 	
+	void A_VokInstaClearTeleBlock()
+	{
+		A_SetInventory("VokterTeleportCooldown",0);
+		A_SetInventory("VokterTeleportCooldown2",0);
+	}
+	
 	void A_VokReactSet()
 	{
 		ReactionTime = (random(25,32) * frandom(1.0,1.5));
@@ -1534,6 +1542,35 @@ class Teacher_VokterClone : Teacher_Vokter
 			phase = 3;
 			ReactionTime = (random(25,32) * frandom(0.334,0.5));
 		}
+	}
+	
+	void A_VokSuperPain()
+	{
+		A_StopSound(CHAN_VOICE);
+		A_StopSound(112);
+		A_StopSound(113);
+		A_StopSound(114);
+		A_StartSound("vokter/pain",CHAN_VOICE,CHANF_DEFAULT,frandom(1.2,1.5),ATTN_NONE,frandom(0.9,1.0));
+		A_StartSound("vokter/pain",112,CHANF_DEFAULT,frandom(1.2,1.5),ATTN_NONE,frandom(0.9,1.0));
+		A_StartSound("vokter/pain",113,CHANF_DEFAULT,frandom(1.2,1.5),ATTN_NONE,frandom(0.8,0.9));
+		A_StartSound("vokter/pain",114,CHANF_DEFAULT,frandom(1.2,1.5),ATTN_NONE,frandom(0.7,0.8));
+	}
+	
+	void A_VokSuperRage()
+	{
+		string ragesnd = "vokter/anger1";
+		int ragepick = random(1,6);
+		if (ragepick >= 1 && ragepick <= 2) ragesnd = "vokter/anger1";
+		if (ragepick >= 3 && ragepick <= 4) ragesnd = "vokter/anger2";
+		if (ragepick >= 5 && ragepick <= 6) ragesnd = "vokter/anger3";
+		A_StopSound(CHAN_VOICE);
+		A_StopSound(112);
+		A_StopSound(113);
+		A_StopSound(114);
+		A_StartSound(ragesnd,CHAN_VOICE,CHANF_DEFAULT,frandom(1.2,1.5),ATTN_NONE,frandom(0.9,1.0));
+		A_StartSound(ragesnd,112,CHANF_DEFAULT,frandom(1.2,1.5),ATTN_NONE,frandom(0.9,1.0));
+		A_StartSound(ragesnd,113,CHANF_DEFAULT,frandom(1.2,1.5),ATTN_NONE,frandom(0.8,0.9));
+		A_StartSound(ragesnd,114,CHANF_DEFAULT,frandom(1.2,1.5),ATTN_NONE,frandom(0.7,0.8));
 	}
 	
 	void A_VokShieldCheck()
@@ -1912,6 +1949,15 @@ class Teacher_VokterClone : Teacher_Vokter
 				if (CountInv("VokterCloneShield") || CountInv("VokterCloneShield2"))
 				{
 					A_SetTics(0);
+					if (random(1,64) <= 1) 
+					{
+						A_VokInstaClearTeleBlock();
+						if (random(1,16) <= 11) paintele = true;
+					}
+					else
+					{
+						if (random(1,16) <= 5) paintele = true;
+					}
 				}
 				else
 				{
@@ -1919,6 +1965,15 @@ class Teacher_VokterClone : Teacher_Vokter
 					if (phase == 2) A_SetTics(5);
 					if (phase == 3) A_SetTics(3);
 					A_Pain();
+					if (random(1,8) <= 1) 
+					{
+						A_VokInstaClearTeleBlock();
+						if (random(1,16) <= 15) paintele = true;
+					}
+					else
+					{
+						if (random(1,16) <= 7) paintele = true;
+					}
 				}
 			}
 			VOKT L 6
@@ -1941,13 +1996,13 @@ class Teacher_VokterClone : Teacher_Vokter
 				if (phase == 2) tauntchance = 3;
 				if (phase == 3) tauntchance = 6;
 				
-				if (random(1,8) <= 1) 
+				if (random(1,8) <= tauntchance) 
 				{
 					if (CountInv("VokterCloneShield") || CountInv("VokterCloneShield2"))
 					{
 						A_StopSound(CHAN_VOICE);
 						A_StartSound("vokter/shieldtaunt",CHAN_VOICE);
-						//Console.Printf("\c[sapphire]vokter/shieldtaunt");
+						Console.Printf("\c[sapphire]vokter/shieldtaunt");
 					}
 					else
 					{
@@ -1958,6 +2013,137 @@ class Teacher_VokterClone : Teacher_Vokter
 				}
 				A_VokShieldCheck();
 				A_VokReactSet();
+				
+				if (paintele)
+				{
+					paintele = false;
+					if (!(CountInv("VokterTeleportCooldown") || CountInv("VokterTeleportCooldown2")))
+					{
+						if (random(1,4) <= 1) 
+						{
+							if (random(1,2) <= 1) return resolvestate("TeleportMissile");
+															 else return resolvestate("TeleportMissileFast");
+						}
+						else
+						{
+							if (random(1,2) <= 1) return resolvestate("Teleport");
+															 else return resolvestate("TeleportFast");
+						}
+						return resolvestate(null);
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+			Goto See;
+		Pain.DashingBG:
+			VOKT E 6 
+			{
+				if (CountInv("VokterCloneShield") || CountInv("VokterCloneShield2"))
+				{
+					A_SetTics(0);
+					if (random(1,8) <= 5)
+					{
+						A_SetInventory("VokterCloneShield",0);
+						A_SetInventory("VokterCloneShield2",0);
+						A_SetInventory("VokterCloneStun",1);
+						if (phase <= 1) A_SetTics(30);
+						if (phase == 2) A_SetTics(25);
+						if (phase == 3) A_SetTics(15);
+						
+						A_VokSuperPain();
+						bNOPAIN = true;
+						if (random(1,8) <= 1) 
+						{
+							A_VokInstaClearTeleBlock();
+							if (random(1,16) <= 5) paintele = true;
+						}
+						else
+						{
+							if (random(1,16) <= 2) paintele = true;
+						}
+					}
+					else
+					{
+						if (random(1,64) <= 1) 
+						{
+							A_VokInstaClearTeleBlock();
+							if (random(1,16) <= 3) paintele = true;
+						}
+						else
+						{
+							if (random(1,16) <= 1) paintele = true;
+						}
+					}
+				}
+				else
+				{
+					A_SetInventory("VokterCloneStun",1);
+					if (phase <= 1) A_SetTics(30);
+					if (phase == 2) A_SetTics(25);
+					if (phase == 3) A_SetTics(15);
+
+					A_VokSuperPain();
+					bNOPAIN = true;
+					if (random(1,8) <= 1) 
+					{
+						A_VokInstaClearTeleBlock();
+						if (random(1,16) <= 5) paintele = true;
+					}
+					else
+					{
+						if (random(1,16) <= 2) paintele = true;
+					}
+				}
+			}
+			VOKT L 6
+			{
+				if (CountInv("VokterCloneShield") || CountInv("VokterCloneShield2"))
+				{
+					A_SetTics(0);
+				}
+				else
+				{
+					if (phase <= 1) A_SetTics(30);
+					if (phase == 2) A_SetTics(25);
+					if (phase == 3) A_SetTics(15);
+				}
+			}
+			VOKT L 0 
+			{
+				if (CountInv("VokterCloneShield") || CountInv("VokterCloneShield2"))
+				{
+				}
+				else
+				{
+					A_VokSuperRage();
+					//Console.Printf("\c[sapphire]vokter/anger");
+				}
+				A_VokShieldCheck();
+				A_VokReactSet();
+				A_SetInventory("VokterCloneStun",0);
+				bNOPAIN = false;
+				
+				if (paintele)
+				{
+					paintele = false;
+					if (!(CountInv("VokterTeleportCooldown") || CountInv("VokterTeleportCooldown2")))
+					{
+						if (random(1,16) <= 1) 
+						{
+							if (random(1,2) <= 1) return resolvestate("TeleportMissile");
+															 else return resolvestate("TeleportMissileFast");
+						}
+						else
+						{
+							if (random(1,2) <= 1) return resolvestate("Teleport");
+															 else return resolvestate("TeleportFast");
+						}
+						return resolvestate(null);
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
 			}
 			Goto See;
 		Death:
