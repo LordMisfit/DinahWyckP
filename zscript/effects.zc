@@ -3815,3 +3815,420 @@ class JustRevived : PlaceHolderItem
 class CCardGhostMarker : PlaceHolderItem { }
 class CCardRespawnedMarker : PlaceHolderItem { }
 class CCardAssassinMarker : PlaceHolderItem { }
+
+//
+class ShieldPartBig : DDBaseZSC
+{
+	default
+	{
+		Radius 8;
+		Height 8;
+		Scale 0.5;
+		RenderStyle "None";
+		Alpha 0.25;
+		Bloodtype "ShieldHit";
+		+SHOOTABLE
+		+NOGRAVITY
+		+NOTELEPORT
+		+NODAMAGE
+		+DONTRIP
+		+NOBLOODDECALS
+		+FLOORCLIP
+		//+REFLECTIVE
+		+GHOST	//Give projectiles that you wish to pass through the shield THRUGHOST flag
+	}
+	
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		if (target)
+		{
+			Console.Printf("target: %s (%p)", target.GetClassName(), target);
+		}
+		if (other)
+		{
+			if (other.target)
+			{
+				Console.Printf("other-target: %s (%p)", other.target.GetClassName(), other.target);
+				if (target)
+				{
+					if (other.target == target)
+					{
+						return false;
+					}
+				}
+			}
+		}
+		else
+		{
+			if (target)
+			{
+				if (other)
+				{
+					if (other.target)
+					{
+						if (target == other.target)
+						{
+							return false;
+						}
+					}
+				}
+			}
+		}
+		
+		// We don't really care about others making the check.
+		return true;
+	}
+	
+	States
+	{
+		Spawn:
+			HEXH A 2 bright;
+			Stop;
+		Death:
+			TNT1 A 2;
+			Stop;
+	}
+}
+
+class ShieldPartBigVisual : DDBaseZSC
+{
+	default
+	{
+		Radius 8;
+		Height 8;
+		Scale 0.5;
+		RenderStyle "Add";	//Fuzzy looks great in software mode
+		Alpha 0.25;
+		+NOINTERACTION
+		+CLIENTSIDEONLY
+		+FLOORCLIP
+	}
+	States
+	{
+		Spawn:
+			HEXH C 2 bright;
+			Stop;
+		Death:
+			TNT1 A 2;
+			Stop;
+	}
+}
+
+class ShieldBigChecker : DDBaseZSC
+{
+	void A_ShieldSpawnTargetSet(actor spawned)
+	{
+		if (spawned) 
+		{
+			spawned.target = target;
+			//if (spawned.target) Console.Printf("Spawned (%s): %s (target: %s) [tic: %d]", GetClassName(), spawned.GetClassName(), spawned.target.GetClassName(), gametic);
+		}
+	}
+}
+
+class ShieldBigSpawner : ShieldBigChecker
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		+NOGRAVITY
+		+NOINTERACTION
+	}
+	States
+	{
+		Spawn:
+			TNT1 A 0;
+			TNT1 A 1;
+			TNT1 A 0 
+			{
+				int flags = SXF_NOCHECKPOSITION|SXF_SETTARGET;
+				bool success;
+				actor spawned;
+				[success, spawned] = A_SpawnItemEx ("ShieldSpawner4up", 0, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldSpawner5up", 24, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldSpawner5up", -24, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldSpawner4up", 48, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldSpawner4up", -48, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				/*
+				[success, spawned] = A_SpawnItemEx ("ShieldSpawner3up", 72, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldSpawner3up", -72, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldSpawner2up", 96, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldSpawner2up", -96, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				*/
+			}
+			Stop;
+	}
+}
+
+class ShieldSpawner5up : ShieldBigChecker
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		+NOGRAVITY
+		+NOINTERACTION
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 0;
+			TNT1 A 1;
+			TNT1 A 0
+			{
+				int flags = SXF_NOCHECKPOSITION|SXF_SETTARGET;
+				bool success;
+				actor spawned;
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 16, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 32, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 48, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 64, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				/*
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 0, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				*/
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 16, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 32, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 48, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 64, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+			}
+			Stop;
+	}
+}
+
+class ShieldSpawner4up : ShieldBigChecker
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		+NOGRAVITY
+		+NOINTERACTION
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 0;
+			TNT1 A 1;
+			TNT1 A 0 
+			{
+				int flags = SXF_NOCHECKPOSITION|SXF_SETTARGET;
+				bool success;
+				actor spawned;
+
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 8, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 24, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 40, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 56, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				/*
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 8, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				*/
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 24, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 40, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 56, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+			}
+			Stop;
+	}
+}
+
+class ShieldSpawner3up : ShieldBigChecker
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		+NOGRAVITY
+		+NOINTERACTION
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 0;
+			TNT1 A 1;
+			TNT1 A 0
+			{
+				int flags = SXF_NOCHECKPOSITION|SXF_SETTARGET;
+				bool success;
+				actor spawned;
+				
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 16, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 32, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 48, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				/*
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 16, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				*/
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 32, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 48, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+			}
+			Stop;
+	}
+}
+
+
+class ShieldSpawner2up : ShieldBigChecker
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		+NOGRAVITY
+		+NOINTERACTION
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 0;
+			TNT1 A 1;
+			TNT1 A 0
+			{
+				int flags = SXF_NOCHECKPOSITION|SXF_SETTARGET;
+				bool success;
+				actor spawned;
+				
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 24, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBig", 0, 0, 40, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				/*
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 24, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+				*/
+				[success, spawned] = A_SpawnItemEx ("ShieldPartBigVisual", 0, 0, 40, 0, 0, 0, 0, flags);
+				A_ShieldSpawnTargetSet(spawned);
+			}
+			Stop;
+	}
+}
+
+class ShieldHit : DDBaseZSC
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		Scale 0.05;
+		Renderstyle "Add";
+		+NOGRAVITY
+		+NOINTERACTION
+	}
+	
+	States
+	{
+		Spawn:
+			RHIT B 0 bright;
+			RHIT B 1 bright A_Stop();
+			RHIT B 0 bright A_StartSound("ForceBarrier/Hit");
+		Grow:
+			RHIT B 1 bright A_SetScale(0.1, 0.1);
+			RHIT B 0 bright A_FadeOut(0.2);
+			RHIT B 1 bright A_SetScale(0.15, 0.15);
+			RHIT B 0 bright A_FadeOut(0.2);
+			RHIT B 1 bright A_SetScale(0.2, 0.2);
+			RHIT B 0 bright A_FadeOut(0.2);
+			RHIT B 1 bright A_SetScale(0.25, 0.25);
+			RHIT B 0 bright A_FadeOut(0.2);
+			RHIT B 1 bright A_SetScale(0.3, 0.3);
+			Stop;
+	}
+}
+
+class ShieldEmitter : PlaceHolderItem 
+{
+	default
+	{
+		-INVENTORY.KEEPDEPLETED
+	}
+	
+	int timer;
+	override void Tick()
+	{
+		if (owner)
+		{
+			if (timer == 0) 
+			{
+				owner.A_StartSound("ForceBarrier/On",121,CHANF_DEFAULT);
+				owner.A_StartSound("ForceBarrier/Pew",122,CHANF_DEFAULT);
+			}
+			if (timer == 1) 
+			{
+				owner.A_StartSound("ForceBarrier/Loop",123,CHANF_DEFAULT);
+			}
+			if (timer >= 1) 
+			{
+				double dist = 48.0;
+				double height = 48.0;
+				int numrotations = 1;
+				bool success;
+				actor spawned;
+				for (int i = 0; i < numrotations; i++)
+				{
+					owner.angle += (360.0 / numrotations);
+					[success, spawned] = owner.A_SpawnItemEx("ShieldBigSpawner", 0, dist, (height * 0.0), 0, 0, 0, -270, SXF_NOCHECKPOSITION|SXF_SETTARGET);
+					if (spawned) 
+					{
+						spawned.target = owner;
+						//if (spawned.target) Console.Printf("Spawned (%s): %s (target: %s) [tic: %d]", GetClassName(), spawned.GetClassName(), spawned.target.GetClassName(), gametic);
+					}
+					[success, spawned] = owner.A_SpawnItemEx("ShieldBigSpawner", 0, dist, (height * 1.0), 0, 0, 0, -270, SXF_NOCHECKPOSITION|SXF_SETTARGET);
+					if (spawned) 
+					{
+						spawned.target = owner;
+						//if (spawned.target) Console.Printf("Spawned (%s): %s (target: %s) [tic: %d]", GetClassName(), spawned.GetClassName(), spawned.target.GetClassName(), gametic);
+					}
+					[success, spawned] = owner.A_SpawnItemEx("ShieldBigSpawner", 0, dist, (height * 2.0), 0, 0, 0, -270, SXF_NOCHECKPOSITION|SXF_SETTARGET);
+					if (spawned) 
+					{
+						spawned.target = owner;
+						//if (spawned.target) Console.Printf("Spawned (%s): %s (target: %s) [tic: %d]", GetClassName(), spawned.GetClassName(), spawned.target.GetClassName(), gametic);
+					}
+				}
+			}
+			if (timer >= 350)
+			{
+				owner.A_StopSound(123);
+				timer = 0;
+			}
+			timer++;
+			//Console.Printf("timer: %d", timer);
+		}
+		if (Owner == NULL) Destroy();
+	}
+}

@@ -591,6 +591,21 @@ mixin class MonsterCollider
 		//*******
 		//*******
 		//*******
+		double hndmthslddmg;
+		if (HandMotherPhaseAClone(self) ||
+				HandMotherPhaseBClone(self) ||
+				HandMotherPhaseCClone(self))
+		{
+			int prevdmg = damage;
+			if (CountInv("ShieldEmitter")) 
+			{
+				hndmthslddmg = frandompick(0.2,0.25,0.25,0.25,0.334);
+				damage *= hndmthslddmg;
+				shieldtype = 3;
+			}
+			Console.Printf("%d (%d)", damage, prevdmg);
+		}
+		
 		double JorgKilSoloFactor = frandompick(1.5,1.75,1.75,1.75,2.0,2.0,2.0,2.0,2.0,2.0,2.25,2.25,2.25,2.5);
 		if (Teacher_JorgClone(self))
 		{
@@ -712,14 +727,18 @@ mixin class MonsterCollider
 			{
 				if (shieldtype == 1) moddedDMG *= 0.0625;
 				if (shieldtype == 2) moddedDMG *= 0.03125;
-				int basetauntchance = 1;
-				int basetauntchancemax = 8;
-				if (mod == 'Zap') basetauntchance *= random(2,3);
-				if (mod == 'Cricket') basetauntchancemax *= random(2,3);
-				if (random(1,basetauntchancemax) <= basetauntchance) 
+				if (shieldtype == 3) moddedDMG *= hndmthslddmg;
+				if (shieldtype >= 1 && shieldtype <= 2)
 				{
-					A_StopSound(CHAN_VOICE);
-					A_StartSound("vokter/shieldtaunt",CHAN_VOICE);
+					int basetauntchance = 1;
+					int basetauntchancemax = 8;
+					if (mod == 'Zap') basetauntchance *= random(2,3);
+					if (mod == 'Cricket') basetauntchancemax *= random(2,3);
+					if (random(1,basetauntchancemax) <= basetauntchance) 
+					{
+						A_StopSound(CHAN_VOICE);
+						A_StartSound("vokter/shieldtaunt",CHAN_VOICE);
+					}
 				}
 			}
 			damagefactor = tempdmgfactor;
