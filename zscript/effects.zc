@@ -3610,27 +3610,167 @@ class EvadeAnAttack : PowerProtection
 	}
 }
 
-class VokterCloneShield : PowerProtection
+class VokterShieldGlitterBase : TeleGlitter1
 {
 	default
 	{
+		Alpha 1.0;
+		scale 0.875;
+		RenderStyle "Add";
+	}
+	
+	void A_AccTeleGlitter()
+	{
+		if (++health > 20)
+		{
+			Vel.z *= frandompick(1.025,1.05,1.075,1.1);
+			if (health >= 40)
+			{
+				A_FadeOut(frandompick(0.04167,0.0625),FTF_REMOVE);
+			}
+		}
+	}
+}
+
+class VokterShieldGlitter1 : VokterShieldGlitterBase
+{
+	States
+	{
+		Spawn:
+			TGLT P 2 BRIGHT;
+			TGLT Q 2 BRIGHT A_AccTeleGlitter;
+			TGLT R 2 BRIGHT;
+			TGLT S 2 BRIGHT A_AccTeleGlitter;
+			TGLT T 2 BRIGHT;
+			Loop;
+	}
+}
+
+class VokterShieldGlitter2 : VokterShieldGlitterBase
+{
+	States
+	{
+		Spawn:
+			TGLT F 2 BRIGHT;
+			TGLT G 2 BRIGHT A_AccTeleGlitter;
+			TGLT H 2 BRIGHT;
+			TGLT I 2 BRIGHT A_AccTeleGlitter;
+			TGLT J 2 BRIGHT;
+			Loop;
+	}
+}
+
+class VokterCloneShield : PowerProtection
+{
+	int timer;
+	int timerint;
+	default
+	{
 		DamageFactor "Normal", 0.0625;
-		DamageFactor "Cricket", 16;
+		DamageFactor "Cricket", 4;
 		RadiusDamageFactor 0.0625;
 		inventory.icon "";
 		Powerup.Duration 2147483646;
+	}
+	
+	override void PostBeginPlay()
+	{
+		timerint = (random(2,4) * 3);
+	}
+
+	override void Tick()
+	{
+		if (owner)
+		{
+			timer++;
+			if (timer % timerint >= (timerint-1))
+			{
+				double maxrad = (owner.radius * 1.5);
+				owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+				owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+				if (random(1,3) <= 1)
+				{
+					owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+					owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+					if (random(1,9) <= 1)
+					{
+						owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+						owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+						if (random(1,27) <= 1)
+						{
+							owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+							owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+						}
+					}
+				}
+				timer = 0;
+				timerint = (random(2,4) * 3);
+				Console.Printf("Shield1: (%d, %d)", timer, timerint);
+			}
+		}
+		if (owner == null) Destroy();
+		super.Tick();
 	}
 }
 
 class VokterCloneShield2 : PowerProtection
 {
+	int timer;
+	int timerint;
 	default
 	{
 		DamageFactor "Normal", 0.03125;
-		DamageFactor "Cricket", 32;
+		DamageFactor "Cricket", 8;
 		RadiusDamageFactor 0.3125;
 		inventory.icon "";
 		Powerup.Duration 2147483646;
+	}
+	
+	override void PostBeginPlay()
+	{
+		timerint = (random(1,3) * 2);
+	}
+	
+	override void Tick()
+	{
+		if (owner)
+		{
+			timer++;
+			if (timer % timerint >= (timerint-1))
+			{
+				double maxrad = (owner.radius * 1.5);
+				owner.A_SpawnItemEx("VokterShieldGlitter1", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+				owner.A_SpawnItemEx("VokterShieldGlitter1", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+				owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+				owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+				if (random(1,3) <= 1)
+				{
+					owner.A_SpawnItemEx("VokterShieldGlitter1", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+					owner.A_SpawnItemEx("VokterShieldGlitter1", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+					owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+					owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+					if (random(1,9) <= 1)
+					{
+						owner.A_SpawnItemEx("VokterShieldGlitter1", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+						owner.A_SpawnItemEx("VokterShieldGlitter1", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+						owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+						owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+						if (random(1,27) <= 1)
+						{
+							owner.A_SpawnItemEx("VokterShieldGlitter1", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+							owner.A_SpawnItemEx("VokterShieldGlitter1", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+							owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+							owner.A_SpawnItemEx("VokterShieldGlitter2", random[TeleGlitter](0,maxrad)-(maxrad*0.5),random[TeleGlitter](0,owner.radius)-(owner.radius*0.5),random[TeleGlitter](owner.height*0.625,owner.height*1.25)-(owner.height*0.3125), 0,0,0.25, SXF_NOCHECKPOSITION,0);
+						}
+					}
+				}
+				timer = 0;
+				timerint = (random(1,3) * 2);
+				Console.Printf("Shield2: (%d, %d)", timer, timerint);
+			}
+		}
+		if (owner == null) Destroy();
+		super.Tick();
 	}
 }
 
