@@ -2257,6 +2257,7 @@ class KilletanteSoloist : Killetante
 	int IncantSummonTimer;
 
 	int timeresist, trestimer, timereschance;
+	actor prevtarget;
 
 	default
 	{
@@ -2384,48 +2385,87 @@ class KilletanteSoloist : Killetante
 		regentimermax = (65 - (Skill * 0.667));
 		if (IPAttackSummon) regentimermax *= 0.8;
 		if (health <= 0) reactive1 = 0;
+		if (!bFRIENDLY)
+		{
+			if (target && Teacher_JorgClone(target))
+			{
+				bNOINFIGHTING = false;
+				bQUICKTORETALIATE = true;
+				prevtarget = target;
+			}
+			else
+			{
+				if (prevtarget && prevtarget.health > 0) 
+				{
+					target = prevtarget;
+				}
+				else
+				{
+					if (prevtarget) prevtarget = null;
+					
+					bNOINFIGHTING = false;
+					bQUICKTORETALIATE = true;
+					if (random(1,32) <= 1) 
+					{
+						bNOINFIGHTING = true;
+						bQUICKTORETALIATE = false;
+					}
+				}
+			}
+		}
+		else
+		{
+			bNOINFIGHTING = true;
+			bQUICKTORETALIATE = false;
+			if (random(1,32) <= 1) 
+			{
+				bNOINFIGHTING = false;
+				bQUICKTORETALIATE = true;
+			}
+		}
+		
 		if (!isFrozen())
 		{
+			double dmgmult = frandom(1.125,1.25);
+			double incmult = frandom(1.2825,1.565);
 			bBUDDHA = false;
 			if (health < maxhealth)
 			{
 				int gutsbasechance = 128;
-				lowHPbuffchance = 1;
+				lowHPbuffchance = 0;
 				if (health <= (maxhealth*(frandom(0.675,0.825))))
 				{
-					mldmg *= frandom(1.05,1.1);
-					inc *= frandom(1.565,2.1);
-					
-					lowHPbuffchance = 5;
-					gutsbasechance = 88;
+					mldmg *= dmgmult;
+					inc *= incmult;
+					lowHPbuffchance = 10;
+					gutsbasechance = random(40,44) * 2;
 				}
 				if (health <= (maxhealth*(frandom(0.45,0.55))))
 				{
-					mldmg *= frandom(1.05,1.1);
-					inc *= frandom(1.565,2.1);
+					mldmg *= dmgmult;
+					inc *= incmult;
 					lowHPbuffchance = 40;
-					gutsbasechance = 56;
+					gutsbasechance = random(25,28) * 2;
 				}
 				if (health <= (maxhealth*(frandom(0.225,0.275)))) 
 				{
-					mldmg *= frandom(1.05,1.1);
-					inc *= frandom(1.565,2.1);
+					mldmg *= dmgmult;
+					inc *= incmult;
 					lowHPbuffchance = 80;
-					gutsbasechance = 32;
-					if (random(1,32) == 1) bBUDDHA = true;
+					gutsbasechance = random(14,16) * 2;
 				}
 				if (health <= (maxhealth*(frandom(0.1125,0.1375)))) 
 				{
-					mldmg *= frandom(1.05,1.1);
-					inc *= frandom(1.565,2.1);
+					mldmg *= dmgmult;
+					inc *= incmult;
 					lowHPbuffchance = 100;
-					gutsbasechance = 16;
+					gutsbasechance = random(7,8) * 2;
 				}
 				if (reactive1) 
 				{
 					mass1 *= frandom(3.3,3.6);
 					mldmg *= frandom(1.1,1.2);
-					gutsbasechance /= 4;
+					gutsbasechance *= frandompick(0.25,0.334,0.334,0.334,0.4);
 				}
 				if (random(1,gutsbasechance) == 1) bBUDDHA = true;
 
