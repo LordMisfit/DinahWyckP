@@ -1473,6 +1473,7 @@ class Teacher_Vokter : DDOrigBoss
 class Teacher_VokterClone : Teacher_Vokter
 {
 	bool truezap;
+	int phase;
 	default
 	{
 		//$Category RPTeachers
@@ -1489,6 +1490,7 @@ class Teacher_VokterClone : Teacher_Vokter
 		DamageFactor "Zap", 0.25;
 		DamageFactor "Suck", 0;
 		Mass 5000;
+		ReactionTime 28;
 		Scale 1;
 		MONSTER;
 		+FLOORCLIP
@@ -1505,25 +1507,75 @@ class Teacher_VokterClone : Teacher_Vokter
 		StencilColor "Blue";
 	}
 	
-	action void A_VokShieldDown()
+	void A_VokShieldDown()
 	{
 		A_SetInventory("VokterCloneShield2",0);
 		A_SetInventory("VokterCloneShield",0);
 		let globalvars = DDGlobalVariables.Get();
 		if (globalvars && globalvars.KilledVokterClone) SetTag("Baron Vokter (Clone)");
 	}
-
-	action void A_VokShieldCheck()
+	
+	void A_VokReactSet()
 	{
-		if (random(1,8) <= 1)
+		ReactionTime = (random(25,32) * frandom(1.0,1.5));
+		phase = 1;
+		if (health > ((SpawnHealth() + Stamina) * 0.5)) 
 		{
-			A_SetInventory("VokterCloneShield2",1);
-			A_SetInventory("VokterCloneShield",0);
+			phase = 1;
+			ReactionTime = (random(25,32) * frandom(1.0,1.5));
 		}
-		else
+		else if (health >= ((SpawnHealth() + Stamina) * 0.25) || health < ((SpawnHealth() + Stamina) * 0.50))
 		{
-			A_SetInventory("VokterCloneShield",1);
-			A_SetInventory("VokterCloneShield2",0);
+			phase = 2;
+			ReactionTime = (random(25,32) * frandom(0.667,0.75));
+		}
+		else 
+		{
+			phase = 3;
+			ReactionTime = (random(25,32) * frandom(0.334,0.5));
+		}
+	}
+	
+	void A_VokShieldCheck()
+	{
+		if (phase <= 1)
+		{
+			if (random(1,8) <= 1)
+			{
+				A_SetInventory("VokterCloneShield2",1);
+				A_SetInventory("VokterCloneShield",0);
+			}
+			else
+			{
+				A_SetInventory("VokterCloneShield",1);
+				A_SetInventory("VokterCloneShield2",0);
+			}
+		}
+		if (phase == 2)
+		{
+			if (random(1,4) <= 1)
+			{
+				A_SetInventory("VokterCloneShield2",1);
+				A_SetInventory("VokterCloneShield",0);
+			}
+			else
+			{
+				A_SetInventory("VokterCloneShield",1);
+				A_SetInventory("VokterCloneShield2",0);
+			}
+		}
+		if (phase == 3)
+		{
+			if (random(1,8) <= 5)
+			{
+				A_SetInventory("VokterCloneShield2",1);
+				A_SetInventory("VokterCloneShield",0);
+			}
+			else
+			{
+				A_SetInventory("VokterCloneShield",1);
+				A_SetInventory("VokterCloneShield2",0);
+			}
 		}
 		let globalvars = DDGlobalVariables.Get();
 		if (globalvars && globalvars.KilledVokterClone) SetTag("Baron Vokter (Clone)");
@@ -1536,6 +1588,7 @@ class Teacher_VokterClone : Teacher_Vokter
 			{
 				A_Look();
 				A_VokShieldCheck();
+				A_VokReactSet();
 			}
 			Loop;
 		See:
@@ -1614,6 +1667,7 @@ class Teacher_VokterClone : Teacher_Vokter
 				A_SetRenderStyle(1,1.00);
 				SetShade("Blue");
 				A_GiveInventory("VokterTeleportCooldown", 1);
+				A_VokReactSet();
 			}
 			goto See;
 		TeleportFast:
@@ -1771,7 +1825,19 @@ class Teacher_VokterClone : Teacher_Vokter
 			{
 				A_VokShieldDown();
 				A_FaceTarget();
-				if (truezap) A_SetTics(randompick(4,6));
+				if (truezap) 
+				{
+					
+					if (phase <= 1) A_SetTics(randompick(4,4,5,5,6));
+					if (phase == 2) A_SetTics(randompick(3,3,4,4,5));
+					if (phase == 3) A_SetTics(randompick(1,2,2,2,3));
+				}
+				else
+				{
+					if (phase <= 1) A_SetTics(2);
+					if (phase == 2) A_SetTics(randompick(1,2,2));
+					if (phase == 3) A_SetTics(randompick(1,1,1,2));
+				}
 			}
 			VOKT JKHIJK 0 bright
 			{
@@ -1779,7 +1845,9 @@ class Teacher_VokterClone : Teacher_Vokter
 				{
 					A_VokShieldDown();
 					A_FaceTarget();
-					A_SetTics(randompick(4,6));
+					if (phase <= 1) A_SetTics(randompick(4,4,5,5,6));
+					if (phase == 2) A_SetTics(randompick(3,3,4,4,5));
+					if (phase == 3) A_SetTics(randompick(1,2,2,2,3));
 				}
 			}
 			VOKT J 0 A_StartSound("Handmother/Zap");
@@ -1835,6 +1903,7 @@ class Teacher_VokterClone : Teacher_Vokter
 			{
 				A_VokShieldCheck();
 				A_FaceTarget();
+				A_VokReactSet();
 			}
 			Goto See;
 		Pain:
@@ -1846,6 +1915,9 @@ class Teacher_VokterClone : Teacher_Vokter
 				}
 				else
 				{
+					if (phase <= 1) A_SetTics(6);
+					if (phase == 2) A_SetTics(5);
+					if (phase == 3) A_SetTics(3);
 					A_Pain();
 				}
 			}
@@ -1855,9 +1927,20 @@ class Teacher_VokterClone : Teacher_Vokter
 				{
 					A_SetTics(0);
 				}
+				else
+				{
+					if (phase <= 1) A_SetTics(6);
+					if (phase == 2) A_SetTics(5);
+					if (phase == 3) A_SetTics(3);
+				}
 			}
 			VOKT L 0 
 			{
+				int tauntchance = 1;
+				if (phase <= 1) tauntchance = 1;
+				if (phase == 2) tauntchance = 3;
+				if (phase == 3) tauntchance = 6;
+				
 				if (random(1,8) <= 1) 
 				{
 					if (CountInv("VokterCloneShield") || CountInv("VokterCloneShield2"))
@@ -1874,6 +1957,7 @@ class Teacher_VokterClone : Teacher_Vokter
 					}
 				}
 				A_VokShieldCheck();
+				A_VokReactSet();
 			}
 			Goto See;
 		Death:
