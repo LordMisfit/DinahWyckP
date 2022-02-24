@@ -817,8 +817,11 @@ mixin class MonsterCollider
 			if (exex_improvediconofsin) { actcheck.user_bosseyetype = 1; }
 			else { actcheck.user_bosseyetype = 0; }
 		}
+		Actor bsbrn;
 		if (BossBrainNew(self))
 		{
+			bsbrn = self;
+			if (bsbrn) Console.Printf("bsbrn: %p", bsbrn);
 			if (exex_improvediconofsin) 
 			{
 				int foundspawners;
@@ -828,13 +831,23 @@ mixin class MonsterCollider
 				while (mo = BossEye(SpawnFinder.Next()))
 				{
 					foundspawners++;
-					if (dydudebug_bossbraininfo) Console.Printf("%s #%d Found!", mo.GetClassName(), foundspawners);
+					mo.master = bsbrn;
+					if (dydudebug_bossbraininfo) 
+					{
+						Console.Printf("%s #%d Found!", mo.GetClassName(), foundspawners);
+						if (mo.master) Console.Printf("BossEye Master: %p", mo.master);
+					}
 				}
 				SpawnFinder = ThinkerIterator.Create("BossTarget");
 				while (mo = BossTarget(SpawnFinder.Next()))
 				{
 					foundspawnspots++;
-					if (dydudebug_bossbraininfo) Console.Printf("%s #%d Found!", mo.GetClassName(), foundspawnspots);
+					if (bsbrn) mo.master = bsbrn;
+					if (dydudebug_bossbraininfo) 
+					{
+						Console.Printf("%s #%d Found!", mo.GetClassName(), foundspawnspots);
+						if (mo.master) Console.Printf("BossTarget Master: %p", mo.master);
+					}
 				}
 				if (foundspawners && foundspawnspots)
 				{
@@ -876,6 +889,7 @@ mixin class MonsterCollider
 						leveldmgmultfactor = 0.0011667;
 						dmgfactbase = 0.5;
 					}
+					A_SetInventory("BossBrainHolder",1);
 					actor player = players[0].mo;
 					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem)
