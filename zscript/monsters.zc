@@ -50,11 +50,7 @@ class BossBrainNew : BossBrain replaces BossBrain
 				A_KillChildren("Massacre");
 				A_BrainScream();
 			}
-			BBRN B 10 
-			{
-				A_RemoveChildren();
-			}
-			BBRN BBBBBBBB 10;
+			BBRN BBBBBBBBB 10;
 			BBRN BB 10;
 			BBRN B -1 A_BrainDie();
 			Stop;
@@ -71,31 +67,6 @@ class BossEyeNew : BossEye replaces BossEye
 		+NOBLOCKMAP;
 		+NOSECTOR;
 		+BOSS;
-		DropItem "DoomImpNew",							255,	50;
-		DropItem "DemonNew",								255,	40;
-		DropItem "SpectreNew",							255,	30;
-		DropItem "PainElementalNew",				255,	10;
-		DropItem "CacodemonNew",						255,	30;
-		DropItem "ArchvileNew",						255,	4;
-		DropItem "RevenantNew",						255,	10;
-		DropItem "ArachnotronNew",					255,	20;
-		DropItem "MancubusNew",								255,	30;
-		DropItem "HellKnightNew",					255,	20;
-		DropItem "BaronOfHellNew",					255,	10;
-		DropItem "CyberdemonNew",					255,	2;
-
-		DropItem "HammerDuck",					255,	25;
-		DropItem "Planter",							255,	15;
-		DropItem "PlanterBird",					255,	10;
-		DropItem "Centaurion",					255,	40;
-		DropItem "CentaurionSgt",				255,	30;
-		DropItem "KnuckleHead",					255,	10;
-		DropItem "Galgoyle",						255,	30;
-		DropItem "Jugger",							255,	30;
-		DropItem "Juggette",						255,	30;
-		DropItem "Vitriola",						255,	24;
-		DropItem "Killetante",					255,	10;
-		DropItem "KilletanteSoloist",		255,	2;
 	}
 	
 	States
@@ -148,7 +119,7 @@ class BossEyeNew : BossEye replaces BossEye
 		{
 			if (spawntype == null) 
 			{
-				spawntype = "SpawnShot";
+				spawntype = "SpawnShotNew";
 				isdefault = true;
 			}
 
@@ -159,7 +130,7 @@ class BossEyeNew : BossEye replaces BossEye
 			{
 				// Assign [try to] the BossBrain as the shot's master
 				if (master) spit.tracer = master;
-				if (dydudebug_bossbraininfo && spit.tracer) Console.Printf("SpawnShot Tracer: %p", spit.tracer);
+				if (dydudebug_bossbraininfo2 && spit.tracer) Console.Printf("SpawnShot (\c[green]%p\c-) Tracer: \c[gold]%p\c-", spit, spit.tracer);
 
 				// Boss cubes should move freely to their destination so it's
 				// probably best to disable all collision detection for them.
@@ -213,6 +184,32 @@ class SpawnShotNew : SpawnShot
 		+RANDOMIZE
 		SeeSound "brain/spit";
 		DeathSound "brain/cubeboom";
+		
+		DropItem "DoomImpNew",							255,	50;
+		DropItem "DemonNew",								255,	40;
+		DropItem "SpectreNew",							255,	30;
+		DropItem "PainElementalNew",				255,	10;
+		DropItem "CacodemonNew",						255,	30;
+		DropItem "ArchvileNew",							255,	4;
+		DropItem "RevenantNew",							255,	10;
+		DropItem "ArachnotronNew",					255,	20;
+		DropItem "MancubusNew",							255,	30;
+		DropItem "HellKnightNew",						255,	20;
+		DropItem "BaronOfHellNew",					255,	10;
+		DropItem "CyberdemonNew",						255,	2;
+		
+		DropItem "HammerDuck",							255,	25;
+		DropItem "Planter",									255,	15;
+		DropItem "PlanterBird",							255,	10;
+		DropItem "Centaurion",							255,	40;
+		DropItem "CentaurionSgt",						255,	30;
+		DropItem "KnuckleHead",							255,	10;
+		DropItem "Galgoyle",								255,	30;
+		DropItem "Jugger",									255,	30;
+		DropItem "Juggette",								255,	30;
+		DropItem "Vitriola",								255,	24;
+		DropItem "Killetante",							255,	10;
+		DropItem "KilletanteSoloist",				255,	2;
 	}
 	
 	States
@@ -225,8 +222,6 @@ class SpawnShotNew : SpawnShot
 	
 	void A_SpawnFly(class<Actor> spawntype = null)
 	{
-		if (GetAge() == 0 && dydudebug_bossbraininfo) Console.Printf("A_SpawnFly :V");
-		
 		sound snd; 
 		if (spawntype != null) 
 		{
@@ -237,10 +232,17 @@ class SpawnShotNew : SpawnShot
 			spawntype = "SpawnFire";
 			snd = "brain/spawn";
 		}
-		SpawnFlyC(spawntype, snd);
+		SpawnFly(spawntype, snd);
 	}
 	
-	void SpawnFlyC(class<Actor> spawntype, sound snd)
+	void A_SpawnSound()
+	{
+		// travelling cube sound
+		A_StartSound("brain/cube", CHAN_BODY);
+		SpawnFly("SpawnFire", "brain/spawn");
+	}
+
+	void SpawnFly(class<Actor> spawntype, sound snd)
 	{
 		Actor newmobj;
 		Actor fog;
@@ -250,12 +252,14 @@ class SpawnShotNew : SpawnShot
 		
 		if (tracer == null || (tracer && tracer.health <= 0))
 		{
+			if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: \c[red]Destroyed (Tracer)\c-", self);
 			Destroy();
 			return;
 		}
 		
 		if (targ == null)
 		{
+			if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: \c[red]Destroyed (Targ)\c-", self);
 			Destroy();
 			return;
 		}
@@ -288,8 +292,22 @@ class SpawnShotNew : SpawnShot
 		drop = GetDropItems();
 
 		// If not, then default back to its master's list
-		if (drop == null && eye != null)
-			drop = eye.GetDropItems();
+		if (drop == null)
+		{
+			if (eye != null)
+			{
+				drop = eye.GetDropItems();
+				if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: \c[green]Getting Eye DropTable\c-", self);
+			}
+			else
+			{
+				if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: \c[RED]NO DROP TABLE INFO\c-", self);
+			}
+		}
+		else
+		{
+			if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: \c[green]Getting SpawnShot DropTable\c-", self);
+		}
 
 		if (drop != null)
 		{
@@ -328,9 +346,12 @@ class SpawnShotNew : SpawnShot
 				}
 			}
 			SpawnName = di.Name;
+			if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: spawnname: \c[blue]%s\c-", self, di.Name);
 		}
+		if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: spawnname (post droptable)", self);
 		if (SpawnName == null)
 		{
+			if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: spawnname was: \c[yellow]null\c-", self);
 			// Randomly select monster to spawn.
 			r = random[pr_spawnfly](0, 255);
 
@@ -348,13 +369,23 @@ class SpawnShotNew : SpawnShot
 			else if (r < 246) SpawnName = "HellKnight";
 			else			  SpawnName = "BaronOfHell";
 		}
+
+		if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: spawnname (post list)", self);
 		if (spawnname != null)
 		{
-			newmobj = Spawn (spawnname, targ.pos, ALLOW_REPLACE);
+			if (dydudebug_bossbraininfo2) Console.Printf("\c[green]%p\c-: spawnname: \c[sapphire]%s\c-", self, spawnname.GetClassName());
+			newmobj = Spawn(spawnname, targ.pos, ALLOW_REPLACE);
 			if (newmobj != null)
 			{
-				if (tracer) newmobj.master = tracer;
-				if (dydudebug_bossbraininfo && newmobj.master) Console.Printf("Spawned Monster Master: %p", newmobj.master);
+				if (tracer) 
+				{
+					newmobj.master = tracer;
+					newmobj.A_SetInventory("IoSMinion",1);
+				}
+				if (dydudebug_bossbraininfo2 && newmobj.master) 
+				{
+					Console.Printf("\c[green]%p\c-: Spawned Monster (\c[blue]%s\c-) Master: \c[gold]%p\c-", self, newmobj.GetClassName(), newmobj.master);
+				}
 				// Make the new monster hate what the boss eye hates
 				if (eye != null)
 				{
@@ -625,6 +656,172 @@ class PainElementalNew : PainElemental // replaces PainElemental
 		DamageFactor "Dust", 5;
 		Painchance "Dust", 80;
 		//-RETARGEAFTERNSLAM
+	}
+	
+	void A_PainShootSkull(Class<Actor> spawntype, double angle, int flags = 0, int limit = -1)
+	{
+		// Don't spawn if we get massacred.
+		if (DamageType == 'Massacre') return;
+
+		if (spawntype == null) spawntype = "LostSoul";
+
+		// [RH] check to make sure it's not too close to the ceiling
+		if (pos.z + height + 8 > ceilingz)
+		{
+			if (bFloat)
+			{
+				Vel.Z -= 2;
+				bInFloat = true;
+				bVFriction = true;
+			}
+			return;
+		}
+
+		// [RH] make this optional
+		if (limit < 0 && (Level.compatflags & COMPATF_LIMITPAIN))
+			limit = 21;
+
+		if (limit > 0)
+		{
+			// count total number of skulls currently on the level
+			// if there are already 21 skulls on the level, don't spit another one
+			int count = limit;
+			ThinkerIterator it = ThinkerIterator.Create(spawntype);
+			Thinker othink;
+
+			while ( (othink = it.Next ()) )
+			{
+				if (--count == 0)
+					return;
+			}
+		}
+
+		// okay, there's room for another one
+		double otherradius = GetDefaultByType(spawntype).radius;
+		double prestep = 4 + (radius + otherradius) * 1.5;
+
+		Vector2 move = AngleToVector(angle, prestep);
+		Vector3 spawnpos = pos + (0,0,8);
+		Vector3 destpos = spawnpos + move;
+
+		Actor other = Spawn(spawntype, spawnpos, ALLOW_REPLACE);
+
+		// Now check if the spawn is legal. Unlike Boom's hopeless attempt at fixing it, let's do it the same way
+		// P_XYMovement solves the line skipping: Spawn the Lost Soul near the PE's center and then use multiple
+		// smaller steps to get it to its intended position. This will also result in proper clipping, but
+		// it will avoid all the problems of the Boom method, which checked too many lines that weren't even touched
+		// and despite some adjustments never worked with portals.
+
+		if (other != null)
+		{
+			double maxmove = other.radius - 1;
+
+			if (maxmove <= 0) maxmove = 16;
+
+			double xspeed = abs(move.X);
+			double yspeed = abs(move.Y);
+
+			int steps = 1;
+
+			if (xspeed > yspeed)
+			{
+				if (xspeed > maxmove)
+				{
+					steps = int(1 + xspeed / maxmove);
+				}
+			}
+			else
+			{
+				if (yspeed > maxmove)
+				{
+					steps = int(1 + yspeed / maxmove);
+				}
+			}
+
+			Vector2 stepmove = move / steps;
+			bool savedsolid = bSolid;
+			bool savednoteleport = other.bNoTeleport;
+			
+			// make the PE nonsolid for the check and the LS non-teleporting so that P_TryMove doesn't do unwanted things.
+			bSolid = false;
+			other.bNoTeleport = true;
+			for (int i = 0; i < steps; i++)
+			{
+				Vector2 ptry = other.pos.xy + stepmove;
+				double oldangle = other.angle;
+				if (!other.TryMove(ptry, 0))
+				{
+					// kill it immediately
+					other.ClearCounters();
+					other.DamageMobj(self, self, TELEFRAG_DAMAGE, 'None');
+					bSolid = savedsolid;
+					other.bNoTeleport = savednoteleport;
+					return;
+				}
+
+				if (other.pos.xy != ptry)
+				{
+					// If the new position does not match the desired position, the player
+					// must have gone through a portal.
+					// For that we need to adjust the movement vector for the following steps.
+					double anglediff = deltaangle(oldangle, other.angle);
+
+					if (anglediff != 0)
+					{
+						stepmove = RotateVector(stepmove, anglediff);
+					}
+				}
+
+			}
+			bSolid = savedsolid;
+			other.bNoTeleport = savednoteleport;
+
+			// [RH] Lost souls hate the same things as their pain elementals
+			other.CopyFriendliness (self, !(flags & PAF_NOTARGET));
+			
+			// Inherit the PE's Master if they have a IoS master
+			if (master && BossBrainNew(master)) other.master = master;
+			if (dydudebug_bossbraininfo2 && other.master)
+			{
+				Console.Printf("%s Master: \c[gold]%p\c-", other.GetClassName(), other.master);
+			}
+
+			if (!(flags & PAF_NOSKULLATTACK))
+			{
+				other.A_SkullAttack();
+			}
+		}
+	}
+
+	void A_PainAttack(class<Actor> spawntype = "LostSoul", double addangle = 0, int flags = 0, int limit = -1)
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			A_PainShootSkull(spawntype, angle + addangle, flags, limit);
+		}
+	}
+	
+	void A_DualPainAttack(class<Actor> spawntype = "LostSoul")
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			A_PainShootSkull(spawntype, angle + 45);
+			A_PainShootSkull(spawntype, angle - 45);
+		}
+	}
+	
+	void A_PainDie(class<Actor> spawntype = "LostSoul")
+	{
+		if (target && IsFriend(target))
+		{ // And I thought you were my friend!
+			bFriendly = false;
+		}
+		A_NoBlocking();
+		A_PainShootSkull(spawntype, angle + 90);
+		A_PainShootSkull(spawntype, angle + 180);
+		A_PainShootSkull(spawntype, angle + 270);
 	}
 	
 	States
