@@ -36,7 +36,7 @@ mixin class HUDRecovery
 		}
 	}
 
-	void A_RecoverHUD(int recovery, int type)
+	void A_RecoverHUD(int recovery, int type, bool acculmuatepulse)
 	{
 		if (dydudebug_hudrecdmgdisplays) Console.Printf("A_RecoverHUD called");
 		actor player = players[0].mo;
@@ -56,6 +56,18 @@ mixin class HUDRecovery
 					if (MiscItem.HPRecHUDTimer > 175) MiscItem.HPRecHUDTimer = 175;
 				}
 				MiscItem.HPRecHUDAmt += recovery;
+				if (acculmuatepulse && recovery > 0)
+				{
+					if (MiscItem.HPRecHUDAmt > 0 && recovery > 0)
+					{
+						int healfactor = MiscItem.HPRecHUDAmt * 100 / MiscItem.MaxHealthTrue;
+						if (healfactor < 10) MiscItem.HPHUDPulseType = 1;
+						if (healfactor >= 10) MiscItem.HPHUDPulseType = 2;
+						if (healfactor >= 50) MiscItem.HPHUDPulseType = 3;
+						if (healfactor >= 100) MiscItem.HPHUDPulseType = 4;
+						MiscItem.HPHUDPulseTimeP = (level.time % randompick(15,25,35));
+					}
+				}
 				if (dydudebug_hudrecdmgdisplays) Console.Printf("HP Gain: %d [%d] (timer: %d)", MiscItem.HPRecHUDAmt, recovery, MiscItem.HPRecHUDTimer);
 			}
 
@@ -70,6 +82,26 @@ mixin class HUDRecovery
 					if (MiscItem.APRecHUDTimer > 175) MiscItem.APRecHUDTimer = 175;
 				}
 				MiscItem.APRecHUDAmt += recovery;
+				if (acculmuatepulse && recovery > 0)
+				{
+					int armmax;
+					if (player.CountInv("KnightGownItem")) armmax = 250;
+					if (player.CountInv("KnightGownItem2")) armmax = 500;
+					if (player.CountInv("KnightGownItem3")) armmax = 1000;
+					if (player.CountInv("KnightGownItem4")) armmax = 2000;
+					if (armmax)
+					{
+						if (MiscItem.APRecHUDAmt > 0 && recovery > 0)
+						{
+							int healfactor = MiscItem.APRecHUDAmt * 100 / armmax;
+							if (healfactor < 10) MiscItem.APHUDPulseType = 1;
+							if (healfactor >= 10) MiscItem.APHUDPulseType = 2;
+							if (healfactor >= 50) MiscItem.APHUDPulseType = 3;
+							if (healfactor >= 100) MiscItem.APHUDPulseType = 4;
+							MiscItem.APHUDPulseTimeP = (level.time % randompick(15,25,35));
+						}
+					}
+				}
 				if (dydudebug_hudrecdmgdisplays) Console.Printf("AP Gain: %d [%d] (timer: %d)", MiscItem.APRecHUDAmt, recovery, MiscItem.APRecHUDTimer);
 			}
 		}
