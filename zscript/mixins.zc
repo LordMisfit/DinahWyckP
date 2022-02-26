@@ -35,7 +35,55 @@ mixin class HUDRecovery
 			}
 		}
 	}
-
+	
+	void A_AddIP(double base, double basef, bool acculmuatepulse)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+		
+		int IPTimerBaseInc = -35;
+		if (MiscItem) 
+		{
+			base *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+			if (base <= 0.01) base = 0.01;
+			if (basef <= 0.01) basef = 0.01;
+			
+			if (base)
+			{
+				if (MiscItem.IPTimer1 > 0) MiscItem.IPTimer1 = (IPTimerBaseInc * basef);
+															else MiscItem.IPTimer1 += (IPTimerBaseInc * basef);
+				MiscItem.ItemPoints += base;
+				globalvars.ItemPoints += base;
+				
+				if (MiscItem.IPHUDPulseTimer <= 0) MiscItem.IPHUDPulseTimer = 105;
+				else
+				{
+					MiscItem.IPHUDPulseTimer += 35;
+					if (MiscItem.IPHUDPulseTimer < 105 && base > (MiscItem.MaxItemPoints * 0.10)) MiscItem.IPHUDPulseTimer = 105;
+					if (MiscItem.IPHUDPulseTimer > 175) MiscItem.IPHUDPulseTimer = 175;
+				}
+				
+				if (acculmuatepulse && base > 0 && (MiscItem.ItemPointsSession < MiscItem.MaxItemPoints))
+				{
+					MiscItem.ItemPointsSession += base;
+					if (MiscItem.ItemPointsSession >= MiscItem.MaxItemPoints) MiscItem.ItemPointsSession == MiscItem.MaxItemPoints;
+					if (MiscItem.ItemPointsSession > 0 && base > 0)
+					{
+						int healfactor = MiscItem.ItemPointsSession * 100 / MiscItem.MaxItemPoints;
+						if (healfactor < 10) MiscItem.IPHUDPulseType = 1;
+						if (healfactor >= 10) MiscItem.IPHUDPulseType = 2;
+						if (healfactor >= 50) MiscItem.IPHUDPulseType = 3;
+						if (healfactor >= 100) MiscItem.IPHUDPulseType = 4;
+						MiscItem.IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+					}
+				}
+				
+				if (exex_playerdmglog) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
+			}
+		}
+	}
+	
 	void A_RecoverHUD(int recovery, int type, bool acculmuatepulse)
 	{
 		if (dydudebug_hudrecdmgdisplays) Console.Printf("A_RecoverHUD called");
@@ -132,11 +180,28 @@ mixin class HUDRecovery
 					if (dydudebug_hudrecdmgdisplays) Console.Printf("HP loss: %d", loss);
 					if (MiscItem.HPDmgHUDAmt > 0 && loss > 0)
 					{
+						MiscItem.HPHUDShakeTime += random(52,53);
 						int damagetakefactor = MiscItem.HPDmgHUDAmt * 100 / MiscItem.MaxHealthTrue;
-						if (damagetakefactor < 10) MiscItem.HPHUDShakeType = 1;
-						if (damagetakefactor >= 10) MiscItem.HPHUDShakeType = 2;
-						if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
-						if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
+						if (damagetakefactor < 10)
+						{
+							MiscItem.HPHUDShakeType = 1;
+							if (MiscItem.HPHUDShakeTime > 53) MiscItem.HPHUDShakeTime = 53;
+						}
+						if (damagetakefactor >= 10) 
+						{
+							MiscItem.HPHUDShakeType = 2;
+							if (MiscItem.HPHUDShakeTime > 88) MiscItem.HPHUDShakeTime = 88;
+						}
+						if (damagetakefactor >= 50) 
+						{
+							MiscItem.HPHUDShakeType = 3;
+							if (MiscItem.HPHUDShakeTime > 140) MiscItem.HPHUDShakeTime = 140;
+						}
+						if (damagetakefactor >= 100) 
+						{
+							MiscItem.HPHUDShakeType = 4;
+							if (MiscItem.HPHUDShakeTime > 175) MiscItem.HPHUDShakeTime = 175;
+						}
 					}
 				}
 				
@@ -167,10 +232,27 @@ mixin class HUDRecovery
 						int damagetakefactor = MiscItem.APDmgHUDAmt * 100 / armmax;
 						if (MiscItem.APDmgHUDAmt > 0 && loss > 0)
 						{
-							if (damagetakefactor < 10) MiscItem.APHUDShakeType = 1;
-							if (damagetakefactor >= 10) MiscItem.APHUDShakeType = 2;
-							if (damagetakefactor >= 50) MiscItem.APHUDShakeType = 3;
-							if (damagetakefactor >= 100) MiscItem.APHUDShakeType = 4;
+							MiscItem.APHUDShakeTime += random(52,53);
+							if (damagetakefactor < 10) 
+							{
+								MiscItem.APHUDShakeType = 1;
+								if (MiscItem.APHUDShakeTime > 53) MiscItem.APHUDShakeTime = 53;
+							}
+							if (damagetakefactor >= 10)
+							{
+								MiscItem.APHUDShakeType = 2;
+							if (MiscItem.APHUDShakeTime > 88) MiscItem.APHUDShakeTime = 88;
+							}
+							if (damagetakefactor >= 50)
+							{
+								MiscItem.APHUDShakeType = 3;
+							if (MiscItem.APHUDShakeTime > 140) MiscItem.APHUDShakeTime = 140;
+							}
+							if (damagetakefactor >= 100)
+							{
+								MiscItem.APHUDShakeType = 4;
+							if (MiscItem.APHUDShakeTime > 175) MiscItem.APHUDShakeTime = 175;
+							}
 						}
 					}
 				}
