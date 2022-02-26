@@ -75,7 +75,7 @@ mixin class HUDRecovery
 		}
 	}
 
-	void A_LossHUD(int loss, int type)
+	void A_LossHUD(int loss, int type, bool acculmuateshake)
 	{
 		if (dydudebug_hudrecdmgdisplays) Console.Printf("A_LossHUD called");
 		actor player = players[0].mo;
@@ -95,6 +95,19 @@ mixin class HUDRecovery
 					if (MiscItem.HPDmgHUDTimer > 175) MiscItem.HPDmgHUDTimer = 175;
 				}
 				MiscItem.HPDmgHUDAmt += loss;
+				if (acculmuateshake && loss > 0)
+				{
+					Console.Printf("HP loss: %d", loss);
+					if (MiscItem.HPDmgHUDAmt > 0 && loss > 0)
+					{
+						int damagetakefactor = MiscItem.HPDmgHUDAmt * 100 / MiscItem.MaxHealthTrue;
+						if (damagetakefactor < 10) MiscItem.HPHUDShakeType = 1;
+						if (damagetakefactor >= 10) MiscItem.HPHUDShakeType = 2;
+						if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
+						if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
+					}
+				}
+				
 				if (dydudebug_hudrecdmgdisplays) Console.Printf("HP Loss: %d [%d] (timer: %d)", MiscItem.HPDmgHUDAmt, loss, MiscItem.HPDmgHUDTimer);
 			}
 
@@ -109,6 +122,26 @@ mixin class HUDRecovery
 					if (MiscItem.APDmgHUDTimer > 175) MiscItem.APDmgHUDTimer = 175;
 				}
 				MiscItem.APDmgHUDAmt += loss;
+				if (acculmuateshake && loss > 0)
+				{
+					Console.Printf("AP loss: %d", loss);
+					int armmax;
+					if (player.CountInv("KnightGownItem")) armmax = 250;
+					if (player.CountInv("KnightGownItem2")) armmax = 500;
+					if (player.CountInv("KnightGownItem3")) armmax = 1000;
+					if (player.CountInv("KnightGownItem4")) armmax = 2000;
+					if (armmax)
+					{
+						int damagetakefactor = MiscItem.APDmgHUDAmt * 100 / armmax;
+						if (MiscItem.APDmgHUDAmt > 0 && loss > 0)
+						{
+							if (damagetakefactor < 10) MiscItem.APHUDShakeType = 1;
+							if (damagetakefactor >= 10) MiscItem.APHUDShakeType = 2;
+							if (damagetakefactor >= 50) MiscItem.APHUDShakeType = 3;
+							if (damagetakefactor >= 100) MiscItem.APHUDShakeType = 4;
+						}
+					}
+				}
 				if (dydudebug_hudrecdmgdisplays) Console.Printf("AP Loss: %d [%d] (timer: %d)", MiscItem.APDmgHUDAmt, loss, MiscItem.APDmgHUDTimer);
 			}
 		}
