@@ -1550,3 +1550,184 @@ mixin class InvWeaponShare
 		}
 	}
 }
+
+/*
+	Enum ESpawnItemExtendedFlags
+	{
+		SXF_ABSOLUTEPITCH = 1 << 29,
+		SXF_ABSOLUTEROLL = 1 << 30,
+		SXF_VELOCITYFROMPITCH = 1 << 31,
+		SXF_OFFSETFROMPITCH = 1 << 32,
+	};
+
+	Bool, Actor A_SpawnItemExtended(Class<Actor> Actr, Double OffsetX = 0.0, Double OffsetY = 0.0, Double OffsetZ = 0.0, Double VelX = 0.0, Double VelY = 0.0, Double VelZ = 0.0, Double Angle = 0.0, Double Pitch = 0.0, Double Roll = 0.0, Int Flags = 0, Int Flags2 = 0, Int FailChance = 0, Int TID = 0)
+	{
+		Bool Result;
+		Actor MapObject;
+		Double CallerAngle;
+		Double CallerPitch;
+		Double CallerRoll;
+		Double CallerPosZ;
+		Double CallerVelZ;
+		Vector3 Position;
+		Double TSin;
+		Double TCos;
+		Double NewVelX;
+	
+		If (!Actr)
+		{
+			Return False, Null;
+		}
+	
+		If (FailChance > 0 && Random[SpawnItemEx]() < FailChance)
+		{
+			Return True, Null;
+		}
+	
+		If (DamageType == 'Massacre' && GetDefaultByType(Actr).bISMONSTER)
+		{
+			Return True, Null;
+		}
+	
+		CallerAngle = Self.Angle;
+		CallerPitch = Self.Pitch;
+		CallerRoll = Self.Roll;
+		CallerPosZ = Self.Pos.Z;
+		CallerVelZ = Self.Vel.Z;
+	
+		If (Flags2 & SXF_OFFSETSFROMPITCH)
+		{
+			Vector3 BaseDirection;
+			Double BaseAngle;
+			Double BasePitch;
+			Vector3 Right;
+			Vector3 Up;
+			Vector2 OffsetXZ;
+			Vector3 Offset;
+			
+			BaseDirection = (Cos(CallerPitch) * Cos(CallerAngle),Cos(CallerPitch) * Sin(CallerAngle),-Sin(CallerPitch));
+			Right = (Cos(CallerAngle - 90.0),Sin(CallerAngle - 90.0),0.0);
+			Up = (Cos(CallerPitch - 90.0) * Cos(CallerAngle),Cos(CallerPitch - 90.0) * Sin(CallerAngle),-Sin(CallerPitch - 90.0));
+			
+			BaseDirection += Sin(Angle) * Right;
+			BaseDirection += Sin(-Pitch) * Up;
+			
+			BaseAngle = VectorAngle(BaseDirection.X,BaseDirection.Y);
+			BaseDirection.XY = RotateVector(BaseDirection.XY,-BaseAngle);
+			BasePitch = -VectorAngle(BaseDirection.X,BaseDirection.Z);
+			
+			OffsetY *= -1;
+			OffsetXZ = RotateVector((OffsetX,OffsetZ),-BasePitch);
+			OffsetX = OffsetXZ.X;
+			OffsetZ = OffsetXZ.Y;
+			Offset = (OffsetX,OffsetY,OffsetZ);
+			Offset.XY = RotateVector(Offset.XY,BaseAngle);
+			
+			If (Flags & SXF_ABSOLUTEPOSITION)
+			{
+				Position.XY = Vec2Offset(Offset.X,Offset.Y,False);
+			}
+			Else
+			{
+				Position.XY = (Self.Pos.X + Offset.X,Self.Pos.Y + Offset.Y);
+			}
+			
+			Position.Z = CallerPosZ - FloorClip + GetBobOffset(0.0) + Offset.Z;
+		}
+		Else
+		{
+			If (!(Flags & SXF_ABSOLUTEANGLE))
+			{
+				Angle += CallerAngle;
+			}
+			
+			TSin = Sin(Angle);
+			TCos = Cos(Angle);
+			
+			If (Flags & SXF_ABSOLUTEPOSITION)
+			{
+				Position.XY = Vec2Offset(OffsetX,OffsetY,False);
+			}
+			Else
+			{
+				Position.XY = Vec2Offset(OffsetX * TCos + OffsetY * TSin,OffsetX * TSin - OffsetY * TCos,False);
+			}
+			
+			Position.Z = CallerPosZ - FloorClip + GetBobOffset(0.0) + OffsetZ;
+		}
+	
+		MapObject = Spawn(Actr,Position,ALLOW_REPLACE);
+		Result = InitSpawnedItem(MapObject,Flags);
+	
+		If (Result)
+		{
+			If (Flags2 & SXF_OFFSETSFROMPITCH)
+			{
+				If (!(Flags & SXF_ABSOLUTEANGLE))
+				{
+						Angle += CallerAngle;
+				}
+			
+				TSin = Sin(Angle);
+				TCos = Cos(Angle);
+			}
+			
+			If (!(Flags2 & SXF_ABSOLUTEPITCH))
+			{
+				Pitch = Clamp(Pitch + CallerPitch,-90.0,90.0);
+			}
+			
+			If (!(Flags2 & SXF_ABSOLUTEROLL))
+			{
+				Roll += CallerRoll;
+			}
+			
+			If (!(Flags & SXF_ABSOLUTEVELOCITY))
+			{
+				NewVelX = VelX * TCos + VelY * TSin;
+				VelY = VelX * TSin - VelY * TCos;
+				VelX = NewVelX;
+			
+				If (Flags2 & SXF_ADDZVELOCITY)
+				{
+							VelZ += CallerVelZ;
+				}
+			}
+			
+			MapObject.Angle = Angle;
+			MapObject.Pitch = Pitch;
+			MapObject.Roll = Roll;
+			MapObject.Vel = (VelX,VelY,VelZ);
+			
+			If (Flags2 & SXF_VELOCITYFROMPITCH)
+			{
+				If (Flags2 & SXF_ADDZVELOCITY)
+				{
+						MapObject.Vel3DFromAngle(MapObject.Vel.XY.Length(),VectorAngle(VelX,VelY),MapObject.Pitch);
+						MapObject.Vel.Z += VelZ;
+				}
+				Else
+				{
+							MapObject.Vel3DFromAngle(MapObject.Vel.Length(),VectorAngle(VelX,VelY),VectorAngle(MapObject.Vel.XY.Length(),VelZ) + Pitch);
+				}
+			}
+			
+			If (Flags & SXF_MULTIPLYSPEED)
+			{
+				MapObject.Vel *= MapObject.Speed;
+			}
+			
+			If (Flags2 & SXF_PITCHFROMMOMENTUM)
+			{
+				MapObject.A_FaceMovementDirection(0.0,0.0,270.0,FMDF_NOANGLE,AAPTR_DEFAULT);
+			}
+			
+			If (TID != 0)
+			{
+				MapObject.ChangeTID(TID);
+			}
+		}
+	
+		Return Result, MapObject;
+	}
+*/
