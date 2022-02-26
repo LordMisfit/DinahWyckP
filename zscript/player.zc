@@ -1553,7 +1553,9 @@ class DDPlayerPawn : PlayerPawn
 		
 		string combatlogmsg = "\c[sapphire]*\c- ";
 		if (dydudebug_playerdamagemobj && armoramt) Console.Printf("Armor Amount: %d", armoramt);
+		//******************************
 		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
+		//******************************
 		int armdmg = (armoramt - CountInv("BasicArmor"));
 		if (armdmg <= 0) armdmg = 0;
 		if (dydudebug_playerdamagemobj && armdmg) Console.Printf("Armor Damage: %d", armdmg);
@@ -1697,6 +1699,32 @@ class DDPlayerPawn : PlayerPawn
 					globalvars.ItemPoints += base;
 					if (exex_playerdmglog) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
 				}
+			}
+		}
+		
+		if (ret)
+		{
+			int damagetakefactor = ret * 100 / MiscItem.MaxHealthTrue;
+			MiscItem.HPHUDShakeType = 1;
+			if (damagetakefactor >= 10) MiscItem.HPHUDShakeType = 2;
+			if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
+			if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
+		}
+		
+		if (armdmg && armortier)
+		{
+			int armmax;
+			if (armortier == 1) armmax = 250;
+			if (armortier == 2) armmax = 500;
+			if (armortier == 3) armmax = 1000;
+			if (armortier == 4) armmax = 2000;
+			if (armmax)
+			{
+				int damagetakefactor = armdmg * 100 / armmax;
+				MiscItem.APHUDShakeType = 1;
+				if (damagetakefactor >= 10) MiscItem.APHUDShakeType = 2;
+				if (damagetakefactor >= 50) MiscItem.APHUDShakeType = 3;
+				if (damagetakefactor >= 100) MiscItem.APHUDShakeType = 4;
 			}
 		}
 		
@@ -1947,6 +1975,15 @@ class DDPlayerPawn : PlayerPawn
 					Console.Printf(combatlogmsg);
 				}
 				
+				if (poisdmg && MiscItem)
+				{
+					int damagetakefactor = poisdmg * 100 / MiscItem.MaxHealthTrue;
+					MiscItem.HPHUDShakeType = 1;
+					if (damagetakefactor >= 10) MiscItem.HPHUDShakeType = 2;
+					if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
+					if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
+				}
+
 				let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
 				// Item/Ikari Point Gains

@@ -20,6 +20,9 @@ class DDStatusBarMain : BaseStatusBar
 	InventoryBarState diparms;
 	InventoryBarState diparms_sbar;
 	private int wiggle;
+	int HPDmgShakeX, HPDmgShakeY;
+	int APDmgShakeX, APDmgShakeY;
+	int hpshakeinc, apshakeinc;
 
 	override void Init()
 	{
@@ -746,7 +749,107 @@ class DDStatusBarMain : BaseStatusBar
 			int FontLineSpace = 4;
 			int FontWrapWidth = -1;
 			double FontAlpha = 0.9;
+			int HPShakeFormX = 0;
+			int HPShakeFormY = 0;
+			int APShakeFormX = 0;
+			int APShakeFormY = 0;
+			
+			if (dyduhud_showhpapdmghudshake)
+			{
+				if (MiscItem)
+				{
+					if (MiscItem.HPHUDShakeType <= 1)
+					{
+						HPShakeFormX = randompick(-1,1);
+						HPShakeFormY = randompick(-1,1);
+					}
+					if (MiscItem.HPHUDShakeType == 2)
+					{
+						HPShakeFormX = randompick(-2,-1,1,2);
+						HPShakeFormY = randompick(-2,-1,1,2);
+					}
+					if (MiscItem.HPHUDShakeType >= 3)
+					{
+						HPShakeFormX = randompick(-3,-2,-1,1,2,3);
+						HPShakeFormY = randompick(-3,-2,-1,1,2,3);
+					}
+					if (MiscItem.HPHUDShakeType >= 4)
+					{
+						HPShakeFormX = randompick(-4,-3,-2,-1,1,2,3,4);
+						HPShakeFormY = randompick(-4,-3,-2,-1,1,2,3,4);
+					}
+					if (MiscItem.APHUDShakeType <= 1)
+					{
+						APShakeFormX = randompick(-1,1);
+						APShakeFormY = randompick(-1,1);
+					}
+					if (MiscItem.APHUDShakeType == 2)
+					{
+						APShakeFormX = randompick(-2,-1,1,2);
+						APShakeFormY = randompick(-2,-1,1,2);
+					}
+					if (MiscItem.APHUDShakeType >= 3)
+					{
+						APShakeFormX = randompick(-3,-2,-1,1,2,3);
+						APShakeFormY = randompick(-3,-2,-1,1,2,3);
+					}
+					if (MiscItem.APHUDShakeType >= 4)
+					{
+						APShakeFormX = randompick(-4,-3,-2,-1,1,2,3,4);
+						APShakeFormY = randompick(-4,-3,-2,-1,1,2,3,4);
+					}
 
+					if (MiscItem.HPDmgHUDTimer >= 71)
+					{
+						hpshakeinc++;
+						if (hpshakeinc >= 2)
+						{
+							hpshakeinc = 0;
+							HPDmgShakeX = HPShakeFormX;
+							HPDmgShakeY = HPShakeFormY;
+						}
+						//Console.Printf("HPDmgHUDTimer: %d, Shake: hpshakeinc: %d, HPDmgShakeX: %d, HPDmgShakeY: %d", MiscItem.HPDmgHUDTimer, hpshakeinc, HPDmgShakeX, HPDmgShakeY);
+					}
+					else
+					{
+						HPDmgShakeX = 0;
+						HPDmgShakeY = 0;
+						hpshakeinc = 0;
+					}
+					
+					if (MiscItem.APDmgHUDTimer >= 71)
+					{
+						apshakeinc++;
+						if (apshakeinc >= 2)
+						{
+							apshakeinc = 0;
+							APDmgShakeX = APShakeFormX;
+							APDmgShakeY = APShakeFormY;
+						}
+						//Console.Printf("APDmgHUDTimer: %d, Shake: apshakeinc: %d, APDmgShakeX: %d, APDmgShakeY: %d", MiscItem.HPDmgHUDTimer, apshakeinc, APDmgShakeX, APDmgShakeY);
+					}
+					else
+					{
+						apshakeinc = 0;
+						APDmgShakeX = 0;
+						APDmgShakeY = 0;
+					}
+				}
+				else
+				{
+					apshakeinc = 0;
+					APDmgShakeX = 0;
+					APDmgShakeY = 0;
+				}
+			}
+			else
+			{
+				apshakeinc = 0;
+				APDmgShakeX = 0;
+				APDmgShakeY = 0;
+			}
+			
+			// Health
 			int digx, digy, spacing;
 			int valueamt = CPlayer.mo.health;
 			string valueamtS = FormatNumber(valueamt);
@@ -769,9 +872,9 @@ class DDStatusBarMain : BaseStatusBar
 			string healthicon = "ARTIWINE";
 			if (CPlayer.cheats & CF_BUDDHA2) healthicon = "ARTIWINB";
 			if (CPlayer.cheats & CF_GODMODE2) healthicon = "ARTIWING";
-			DrawImage(healthicon, (64, -4)); // 51, -3
-			DrawString(mDDMFont, FormatNumber(PlayerMaxHP), (49, -12), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			DrawString(mDDMFont, "/", ((24+slashunit), -18), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawImage(healthicon, ((64+HPDmgShakeX), (-4+HPDmgShakeY))); // 51, -3
+			DrawString(mDDMFont, FormatNumber(PlayerMaxHP), ((49+HPDmgShakeX), (-12+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			DrawString(mDDMFont, "/", (((24+slashunit)+HPDmgShakeX), (-18+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 			double healthalpha = 0.90;
 			double xscal = 1.00;
 			double yscal = 1.00;
@@ -851,7 +954,7 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			//Console.Printf("scal: %.8f / %.8f", xscal, yscal);
 			if (isinvuln) healthcolor = font.CR_Gold;
-			DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), (49, -28), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, FontWrapWidth, FontLineSpace, (xscal*1.25, yscal*1.25));
+			DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), ((49+HPDmgShakeX), (-28+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, FontWrapWidth, FontLineSpace, (xscal*1.25, yscal*1.25));
 			
 			// HP Gain [Upper Right] (2, -32)
 			double HUDHitAlpha = 1.00;
@@ -970,7 +1073,7 @@ class DDStatusBarMain : BaseStatusBar
 				valueamt = armor.Amount;
 				valueamtS = FormatNumber(valueamt);
 
-				DrawInventoryIcon(armor, (64, -32)); // 58, -24
+				DrawInventoryIcon(armor, ((64+APDmgShakeX), (-32+APDmgShakeY))); // 58, -24
 				if (CPlayer.mo.CountInv("KnightGownItem"))
 				{
 					armorcolor = font.CR_Purple;
@@ -1103,7 +1206,7 @@ class DDStatusBarMain : BaseStatusBar
 						{
 							ipicon = "IPICONUN";
 						}
-						DrawImage(ipicon, IPIconPos + (68, -58), DI_ITEM_CENTER, 1.0, (-1, -1), ipiconscale);
+						DrawImage(ipicon, IPIconPos + ((68+APDmgShakeX), (-58+APDmgShakeY)), DI_ITEM_CENTER, 1.0, (-1, -1), ipiconscale);
 					}
 					string legendstr = "";
 					string userKeyString;
@@ -1125,7 +1228,7 @@ class DDStatusBarMain : BaseStatusBar
 					{
 						legendstr.AppendFormat("\c[red][unb]\c-");
 					}
-					if (legendstr != "" && canuseipatk && ipiconspeed >= 2) DrawString(mConFont, legendstr, (Lx, Ly), legendflags, legendfontclr, legendalpha, -1, 4, legendscale);
+					if (legendstr != "" && canuseipatk && ipiconspeed >= 2) DrawString(mConFont, legendstr, ((Lx+APDmgShakeX), (Ly+APDmgShakeY)), legendflags, legendfontclr, legendalpha, -1, 4, legendscale);
 				}
 
 				int armordigits = 2;
@@ -1136,9 +1239,9 @@ class DDStatusBarMain : BaseStatusBar
 				slashunit = (-6 * (armordigits-2));
 				
 				// Amounts
-				DrawString(mDDMFont, FormatNumber(armormax), (49, -42), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				DrawString(mDDMFont, "/", ((20+slashunit), -50), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				DrawString(mDDLFont, FormatNumber(mArmorInterpolator.GetValue()), (49, -59), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mDDMFont, FormatNumber(armormax), ((49+APDmgShakeX), (-42+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mDDMFont, "/", (((20+slashunit)+APDmgShakeX), (-50+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mDDLFont, FormatNumber(mArmorInterpolator.GetValue()), ((49+APDmgShakeX), (-59+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				
 				FontScale = (1.0, 1.0);
 				// Protect %
