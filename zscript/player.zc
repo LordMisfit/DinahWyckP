@@ -12,6 +12,8 @@ class DDPlayerPawn : PlayerPawn
 	
 	mixin HUDRecovery;
 	
+	int PoisonDmgPainInt;
+	
 	int ipmodecooldowntimer;
 	bool isvoodoodoll;
 	int neverbleeds;
@@ -1798,7 +1800,8 @@ class DDPlayerPawn : PlayerPawn
 	const PPD_POISONCANKILL = 8;
 	const PPD_ALLOWAUTOHEALTH = 16;
 	const PPD_ALLOWSTRIFEAUTOHEALTH = 32;
-	void PlayerPoisonDamage(actor source, int damage, bool playPainSound, int PoisonFlags = 63)
+	
+	void PlayerPoisonDamage(actor source, int damage, bool playPainSound, int PoisonFlags = 63, int PainInterval = 63)
 	{
 		bool allowpowerups, allowdmgfactors, allowskilldmgfactor, cankill, allowautohealth, allowstrifeautohealth;
 		
@@ -1917,15 +1920,34 @@ class DDPlayerPawn : PlayerPawn
 				}
 				target.Die(source, source);
 				return;
-			}			
-		}
-		if (!(level.time % 63) && playPainSound)
-		{
-			state painstate = target.FindState("Pain", player.poisonpaintype);
-			if (painstate != null)
-			{
-				target.SetState(painstate);
 			}
+		}
+		if (PainInterval <= 0) PainInterval = 63;
+		int PoisonTargInv = randompick(4,5,5,5,5,5,6);
+		int targtime = target.level.time & 63; // target.level.time % PainInterval;
+		if (playPainSound)
+		{
+			bool PainSnd = false;
+			if (!(targtime & 63))
+			{
+				PainSnd = true;
+			}
+			else
+			{
+				PoisonDmgPainInt++;
+			}
+			if (PoisonDmgPainInt >= PoisonTargInv) 
+			{
+				PainSnd = true;
+				PoisonDmgPainInt = 0;
+			}
+			
+			if (PainSnd)
+			{
+				state painstate = target.FindState("Pain", player.poisonpaintype);
+				if (painstate != null) target.SetState(painstate);
+			}
+			if (dydudebug_playerpoisondisplays) Console.Printf("targtime: %d / %d, PoisonDmgPainInt: %d / %d", targtime, PainInterval, PoisonDmgPainInt, PoisonTargInv);
 		}
 	}
 	
@@ -1937,20 +1959,44 @@ class DDPlayerPawn : PlayerPawn
 		if (CountInv("DecentHealth")) oldhealthratio = 1;
 		if (CountInv("LowHealth")) oldhealthratio = 2;
 		if (CountInv("CriticalHealth")) oldhealthratio = 3;
-
+		
+		int countdec = randompick(3,4,4,4,5,5,5,5,5,5,5,6,6,6,7);
+		int countint = randompick(14,15,15,15,15,15,15,15,15,15);
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+		{
+			countdec = (randompick(3,4,4,4,5,5,5,5,5,5,5,6,6,6,7) - randompick(0,1,1,1,1,1,1,1,1,2));
+			countint = randompick(13,13,13,14,14,14,14,14,14,15);
+		}
 		let player = self.player;
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		if (player.poisoncount && !(Level.maptime & 15))
+		if (player.poisoncount && !(Level.maptime & countint))
 		{
-			player.poisoncount -= randompick(3,4,4,4,5,5,5,5,5,5,5,6,6,6,7);
+			player.poisoncount -= countdec;
 			if (player.poisoncount < 0) player.poisoncount = 0;
+			if (dydudebug_playerpoisondisplays) Console.Printf("poisoncount: %d [\c[green]-%d\c-]", player.poisoncount, countdec);
 			int poisdmg = randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3);
-			if (MiscItem) poisdmg = ((randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3) * 0.01) * MiscItem.MaxHealthTrue);
-			if (health > poisdmg)
+			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 			{
-				PlayerPoisonDamage(player.poisoner, poisdmg, true, PPD_ALLOWAUTOHEALTH|PPD_ALLOWSTRIFEAUTOHEALTH);
+				poisdmg = randompick(1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3);
+				poisdmg *= frandompick(1.25,1.375,1.375,1.5,1.5,1.5,1.5,1.5,1.5,1.625,1.625,1.75);
+			}
+			if (MiscItem) 
+			{
+				poisdmg = ((randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3) * 0.01) * MiscItem.MaxHealthTrue);
+				if (poisdmg < 1) poisdmg = 1;
+			}
+			if (poisdmg > 0 && health > poisdmg)
+			{
+				int PainInterval = (63 - (player.poisoncount / randompick(4,5,5,5,5,6)));
+				if (PainInterval < 15) PainInterval = 15;
+				if (random(1,4) <= 1) 
+				{
+					if (random(1,8) <= 1) PainInterval *= 0.25;
+													 else PainInterval *= 0.5;
+				}
+				PlayerPoisonDamage(player.poisoner, poisdmg, true, PPD_ALLOWAUTOHEALTH|PPD_ALLOWSTRIFEAUTOHEALTH, PainInterval);
 				//player.PoisonDamage(player.poisoner, poisdmg, true);
-
+				
 				A_LossHUD(poisdmg, 0, true);
 				if (exex_playerdmglog)
 				{
