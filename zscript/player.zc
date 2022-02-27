@@ -1924,6 +1924,7 @@ class DDPlayerPawn : PlayerPawn
 		}
 		if (PainInterval <= 0) PainInterval = 63;
 		int PoisonTargInv = randompick(4,5,5,5,5,5,6);
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) PoisonTargInv -= randompick(0,1,1,1,1,1,1,1,1,1,1,1,1,2);
 		int targtime = target.level.time & 63; // target.level.time % PainInterval;
 		if (playPainSound)
 		{
@@ -1974,84 +1975,92 @@ class DDPlayerPawn : PlayerPawn
 			player.poisoncount -= countdec;
 			if (player.poisoncount < 0) player.poisoncount = 0;
 			if (dydudebug_playerpoisondisplays) Console.Printf("poisoncount: %d [\c[green]-%d\c-]", player.poisoncount, countdec);
-			int poisdmg = randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3);
-			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-			{
-				poisdmg = randompick(1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3);
-				poisdmg *= frandompick(1.25,1.375,1.375,1.5,1.5,1.5,1.5,1.5,1.5,1.625,1.625,1.75);
-			}
-			if (MiscItem) 
-			{
-				poisdmg = ((randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3) * 0.01) * MiscItem.MaxHealthTrue);
-				if (poisdmg < 1) poisdmg = 1;
-			}
-			if (poisdmg > 0 && health > poisdmg)
-			{
-				int PainInterval = (63 - (player.poisoncount / randompick(4,5,5,5,5,6)));
-				if (PainInterval < 15) PainInterval = 15;
-				if (random(1,4) <= 1) 
-				{
-					if (random(1,8) <= 1) PainInterval *= 0.25;
-													 else PainInterval *= 0.5;
-				}
-				PlayerPoisonDamage(player.poisoner, poisdmg, true, PPD_ALLOWAUTOHEALTH|PPD_ALLOWSTRIFEAUTOHEALTH, PainInterval);
-				//player.PoisonDamage(player.poisoner, poisdmg, true);
-				
-				A_LossHUD(poisdmg, 0, true);
-				if (exex_playerdmglog)
-				{
-					string combatlogmsg = "\c[sapphire]*\c- Took";
-					combatlogmsg.AppendFormat(" \c[darkred]%d damage\c-", poisdmg);
-					combatlogmsg.AppendFormat(" from poisoning!");
-					if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
-					Console.Printf(combatlogmsg);
-				}
 
-				let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
-				let globalvars = DDGlobalVariables.Get();
-				// Item/Ikari Point Gains
-				if (exex_ikaripointsenabled && poisdmg && MiscItem && globalvars && health > 0)
+			if (!(bINVULNERABLE ||
+						CountInv("PowerInvulnerable") ||
+						CountInv("PowerInvulnDD") ||
+						player.cheats & CF_GODMODE2 ||
+						player.cheats & CF_GODMODE))
+			{
+				int poisdmg = randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3);
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
-					if (MiscItem.IPNoGainTimer <= 0)
+					poisdmg = randompick(1,1,1,1,1,1,1,1,1,1,2,2,2,2,3,3);
+					poisdmg *= frandompick(1.25,1.375,1.375,1.5,1.5,1.5,1.5,1.5,1.5,1.625,1.625,1.75);
+				}
+				if (MiscItem) 
+				{
+					poisdmg = ((randompick(1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,3) * 0.01) * MiscItem.MaxHealthTrue);
+					if (poisdmg < 1) poisdmg = 1;
+				}
+				if (poisdmg > 0 && health > poisdmg)
+				{
+					int PainInterval = (63 - (player.poisoncount / randompick(4,5,5,5,5,6)));
+					if (PainInterval < 15) PainInterval = 15;
+					if (random(1,4) <= 1) 
 					{
-						double base;
-						// The mod's first and original formula
-						if (exex_ikaripointscalctype <= 0)
+						if (random(1,8) <= 1) PainInterval *= 0.25;
+														 else PainInterval *= 0.5;
+					}
+					PlayerPoisonDamage(player.poisoner, poisdmg, true, PPD_ALLOWAUTOHEALTH|PPD_ALLOWSTRIFEAUTOHEALTH, PainInterval);
+					//player.PoisonDamage(player.poisoner, poisdmg, true);
+					
+					A_LossHUD(poisdmg, 0, true);
+					if (exex_playerdmglog)
+					{
+						string combatlogmsg = "\c[sapphire]*\c- Took";
+						combatlogmsg.AppendFormat(" \c[darkred]%d damage\c-", poisdmg);
+						combatlogmsg.AppendFormat(" from poisoning!");
+						if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
+						Console.Printf(combatlogmsg);
+					}
+
+					let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+					let globalvars = DDGlobalVariables.Get();
+					// Item/Ikari Point Gains
+					if (exex_ikaripointsenabled && poisdmg && MiscItem && globalvars && health > 0)
+					{
+						if (MiscItem.IPNoGainTimer <= 0)
 						{
-							base = poisdmg * 100.0 / MiscItem.MaxHealthTrue;
-							if (oldhealthratio == 0) base *= 1.0;
-							if (oldhealthratio == 1) base *= 1.125;
-							if (oldhealthratio == 2) base *= 1.25;
-							if (oldhealthratio == 3) base *= 1.5;
-							if (oldhealthratio == 4) base *= 2.25;
-							if (oldhealth > 1 && health == 1) base *= 3.25;
-							if (MiscItem.PlayerLUCK) base *= (0.125 + (MiscItem.PlayerLevel * 0.00125) + (random(1,MiscItem.PlayerLUCK) * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
-																	else base *= (0.125 + (MiscItem.PlayerLevel * 0.00125));
-							
-						}
-						// The more Lufia II equse formula
-						if (exex_ikaripointscalctype >= 0)
-						{
-							base = poisdmg * 100.0 / oldhealth; // % of remaining HP removed
-							if (base >= 0.001)
+							double base;
+							// The mod's first and original formula
+							if (exex_ikaripointscalctype <= 0)
 							{
-								if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
-								if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
-								if (base >= 65.001 && base <= 75.000) base *= 0.646154;
-								if (base >= 75.001 && base <= 85.000) base *= 0.76; 
-								if (base >= 85.001 && base <= 90.000) base *= 0.90; 
-								if (base >= 90.001 && base <= 100.000) base *= 1.00; 
-								if (base >= 100.001) base *= 1.25;
-								if (oldhealth > 1 && health == 1) base += MiscItem.MaxItemPoints;
+								base = poisdmg * 100.0 / MiscItem.MaxHealthTrue;
+								if (oldhealthratio == 0) base *= 1.0;
+								if (oldhealthratio == 1) base *= 1.125;
+								if (oldhealthratio == 2) base *= 1.25;
+								if (oldhealthratio == 3) base *= 1.5;
+								if (oldhealthratio == 4) base *= 2.25;
+								if (oldhealth > 1 && health == 1) base *= 3.25;
+								if (MiscItem.PlayerLUCK) base *= (0.125 + (MiscItem.PlayerLevel * 0.00125) + (random(1,MiscItem.PlayerLUCK) * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
+																		else base *= (0.125 + (MiscItem.PlayerLevel * 0.00125));
+								
 							}
+							// The more Lufia II equse formula
+							if (exex_ikaripointscalctype >= 0)
+							{
+								base = poisdmg * 100.0 / oldhealth; // % of remaining HP removed
+								if (base >= 0.001)
+								{
+									if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
+									if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
+									if (base >= 65.001 && base <= 75.000) base *= 0.646154;
+									if (base >= 75.001 && base <= 85.000) base *= 0.76; 
+									if (base >= 85.001 && base <= 90.000) base *= 0.90; 
+									if (base >= 90.001 && base <= 100.000) base *= 1.00; 
+									if (base >= 100.001) base *= 1.25;
+									if (oldhealth > 1 && health == 1) base += MiscItem.MaxItemPoints;
+								}
+							}
+							base *= (frandompick(3.0,4.0,4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0,6.0,7.0) * 0.5);
+							double basef = base;
+							A_AddIP(base, basef, true);
 						}
-						base *= (frandompick(3.0,4.0,4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0,6.0,7.0) * 0.5);
-						double basef = base;
-						A_AddIP(base, basef, true);
 					}
 				}
+				if (dydudebug_playerdamagemobj) Console.Printf("poisoncount: %d (maptime: %d)", player.poisoncount, Level.maptime);
 			}
-			if (dydudebug_playerdamagemobj) Console.Printf("poisoncount: %d (maptime: %d)", player.poisoncount, Level.maptime);
 		}
 	}
 }
