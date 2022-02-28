@@ -2907,6 +2907,7 @@ class DD_EventHandler : EventHandler
 	
 	override void WorldLoaded(WorldEvent e)
 	{
+		if (dydudebug_checksumprintout) Console.Printf("\cyMapCheckSum:\cx %s", level.GetChecksum());
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
@@ -2922,6 +2923,25 @@ class DD_EventHandler : EventHandler
 				{
 					addmapcounttrue = false;
 					break;
+				}
+			}
+			// Check for certain MAPs that are more of intermission maps [PSX Doom TC's "D[#]END". KDIZD'S "INTERMAP", etc]
+			if (addmapcounttrue)
+			{
+				let IsPSXDoom = PlayingPSXDoom(player.FindInventory("PlayingPSXDoom"));
+				if (IsPSXDoom)
+				{
+					if (dydudebug_mapfinishcheck) Console.Printf("\c[orange]Playing PSX Doom");
+					if (level.GetChecksum() == '95d8e4afa07a7e3330997a6aa5d0318d') addmapcounttrue = false;
+					if (level.GetChecksum() == '17e16b88bf7f163f05a6a5c45f0dfeb6') addmapcounttrue = false;
+					if (level.GetChecksum() == '39f6b93101248e39ae1af7c751647ea1') addmapcounttrue = false;
+					if (level.GetChecksum() == '058234c82963c80b99a58081f829dead') addmapcounttrue = false;
+					if (level.GetChecksum() == '77e33d393cb8386a13fe74391e053cd6') addmapcounttrue = false;
+					if (level.GetChecksum() == '7364394e3b113aea8490d8b0b89c7e05') addmapcounttrue = false;
+				}
+				if (!addmapcounttrue)
+				{
+					if (dydudebug_mapfinishcheck) Console.Printf("\c[brick]IS AN INTERMISSION MAP (do not add to the queue)");
 				}
 			}
 			if (addmapcounttrue)
@@ -2959,8 +2979,14 @@ class DD_EventHandler : EventHandler
 		string giveitem = "PlayingGoingDown";
 		if (level.GetChecksum() == '1dfcba1353e9bbf720f17639f294490d' && !player.FindInventory(giveitem)) // gd.wad [Going Down] map01
 		{
-			player.A_SetInventory("PlayingGoingDown",1);
+			player.A_SetInventory(giveitem,1);
 			Console.Printf("LOLE Welcome to Going Down, Kiddo! :V");
+		}
+		giveitem = "PlayingPSXDoom";
+		if (level.GetChecksum() == '1dfcba1353e9bbf720f17639f294490d' && !player.FindInventory(giveitem)) // gd.wad [Going Down] map01
+		{
+			player.A_SetInventory(giveitem,1);
+			Console.Printf("LOLE Welcome to PSX Doom TC, Kiddo! V:<");
 		}
 
 		if (BatGuardCheck)
