@@ -870,7 +870,7 @@ class DDPlayerPawn : PlayerPawn
 
 				if (dydudebug_playerbreathedisplays)
 				{
-					Console.Printf("scaleymulti = %.8f, breathincrementbase = %.8f, breathdirection = %d, breathframe = %d, HealthBreathSpeed = %.8f, ticmulti = %.8f, actualtics = %d, basetics = %d", 
+					Console.Printf("scaleymulti = %.8f, breathincrementbase = %.8f, breathdirection = %d, breathframe = %d, HealthBreathSpeed = %.8f, ticmulti = %.8f, actualtics = %d, basetics = %d [gametic: %d]", 
 													scaleymulti, 
 													breathincrementbase, 
 													breathdirection, 
@@ -878,7 +878,8 @@ class DDPlayerPawn : PlayerPawn
 													HealthBreathSpeed, 
 													ticmulti, 
 													tics, 
-													basetics);
+													basetics,
+													gametic);
 				}
 			}
 			else
@@ -1578,9 +1579,28 @@ class DDPlayerPawn : PlayerPawn
 				{
 					int dmgdiff = ((ret + armdmg) - firstdmg);
 					//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
-					if (dmgdiff < 0) combatlogmsg.AppendFormat("[\c[lightblue]%d\c-] ", dmgdiff);
-					if (dmgdiff == 0) combatlogmsg.AppendFormat("[+-0] ", dmgdiff);
-					if (dmgdiff > 0) combatlogmsg.AppendFormat("[\c[brick]+%d\c-] ", dmgdiff);
+					if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
+					{
+						combatlogmsg.AppendFormat("[", dmgdiff);
+						if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
+						if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
+						if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
+						combatlogmsg.AppendFormat(" (", dmgdiff);
+					}
+					else
+					{
+						combatlogmsg.AppendFormat("[", dmgdiff);
+					}
+					if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
+					{
+						double dmgdiffper = (((ret + armdmg) - firstdmg) * 100.0 / MiscItem.MaxHealthTrue);
+						if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
+						if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%", dmgdiffper);
+						if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
+						if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
+																				else combatlogmsg.AppendFormat(")", dmgdiff);
+					}
+					if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
 				}
 				if (mod == 'SigilDrain') combatlogmsg.AppendFormat("of damage drained");
 														else combatlogmsg.AppendFormat("of damage taken");
@@ -2067,6 +2087,7 @@ class DDPlayerPawn : PlayerPawn
 
 class DinahPlayer : DDPlayerPawn // HereticPlayer
 {
+	int breathtic;
 	default
 	{
 		Player.DisplayName "Dinah Wyck";
@@ -2109,45 +2130,129 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 		+NOBLOOD
 		+PLAYERPAWN.NOTHRUSTWHENINVUL
 	}
-
-	/*
+	
 	override void Tick()
 	{
 		super.Tick(); // KEEP THIS HERE ELSE OTHER FUNCTIONS RELATED TO THIS BREAK :V
+		
+		if (InStateSequence(curstate,ResolveState("Death")) ||
+				InStateSequence(curstate,ResolveState("XDeath")) ||
+				InStateSequence(curstate,ResolveState("Burn")) ||
+				InStateSequence(curstate,ResolveState("Ice")))
+		{
+			A_APPBreatheReset();
+		}
+		else
+		{
+			breathtic++;
+			if (breathtic >= 4)
+			{
+				A_APPBreathe();
+				breathtic = 0;
+			}
+		}
 	}
-	*/
 
 	States
 	{
 		Spawn:
 			DINA A 4
 			{
-				A_APPBreathe();
 			}
 			Loop;
 		See:
 			DINA BCDE 4
 			{
-				A_APPBreathe();
+				tics = 4;
+				let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+				if (MiscItem)
+				{
+					if (MiscItem.HUDSpeed >= 2.25) tics = ceil(tics *= 0.875);
+					if (MiscItem.HUDSpeed >= 1.5) tics = ceil(tics *= 0.9375);
+					if (MiscItem.HUDSpeed <= 0.667) tics = ceil(tics *= 1.25);
+					if (MiscItem.HUDSpeed <= 0.334) tics = ceil(tics *= 1.5);
+				}
+				if (CountInv("PowerWineBuffIPWeak")) tics = ceil(tics *= 1.032258064516129);
+				if (CountInv("PowerWineBuffIPStrong")) tics = ceil(tics *= 1.066666666666667);
+				if (CountInv("PowerWineBuffIPStrongest")) tics = ceil(tics *= 1.103448275862069);
+				if (CountInv("PowerWineBuffIPStrongestEven")) tics = ceil(tics *= 1.142857142857143);
+				if (CountInv("PowerWineBuffIPMaximum")) tics = ceil(tics *= 1.230769230769231);
+				if (CountInv("PowerWineBuffWeak")) tics = ceil(tics *= 1.142857142857143);
+				if (CountInv("PowerWineBuffStrong")) tics = ceil(tics *= 1.333333333333333);
+				if (CountInv("PowerWineBuffStrongest")) tics = ceil(tics *= 1.6);
+				if (CountInv("PowerWineBuffStrongestEven")) tics = ceil(tics *= 2.0);
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) tics = ceil(tics *= 0.875);
+				if (CountInv("OverFullHealth3")) tics = ceil(tics *= 0.85);
+				if (CountInv("OverFullHealth2")) tics = ceil(tics *= 0.9);
+				if (CountInv("OverFullHealth1")) tics = ceil(tics *= 0.95);
+				if (CountInv("NormalHealth")) tics = ceil(tics *= 1);
+				if (CountInv("DecentHealth")) tics = ceil(tics *= 1.125);
+				if (CountInv("LowHealth")) tics = ceil(tics *= 1.25);
+				if (CountInv("CriticalHealth")) tics = ceil(tics *= 1.375);
+				
+				if (dydudebug_playerwalkdisplays) Console.Printf("Tics (See): %d", tics);
+				if (tics < 1) tics = 1;
+				A_SetTics(tics);
 			}
 			Loop;
 		Pain:
 			DINA H 6 
 			{
-				A_APPBreathe();
 				A_DDPain();
 			}
 			Goto Spawn;
 		Missile:
 			DINA FG 6
 			{
-				A_APPBreathe();
 			}
 			Goto Spawn;
 		Melee:
-			DINA FG 6
+			DINA FGF 4
 			{
-				A_APPBreathe();
+			}
+			Goto Spawn;
+		BatGuard:
+			DINA LL 1
+			{
+			}
+			DINA L 0
+			{
+			}
+			Goto Spawn;
+		SpinAttackBatPre:
+			DINA FF 1
+			{
+			}
+			DINA F 0
+			{
+			}
+			Goto Spawn;
+		SpinAttackBat:
+			DINA GG 1
+			{
+			}
+			DINA G 0
+			{
+			}
+			Goto Spawn;
+		Kick:
+			DINA FF 1
+			{
+				A_SetInventory("PKicking",1);
+			}
+			DINA F 0
+			{
+				A_SetInventory("PKicking",0);
+			}
+			Goto Spawn;
+		Kick2:
+			DINA GG 1
+			{
+				A_SetInventory("PKicking",1);
+			}
+			DINA G 0
+			{
+				A_SetInventory("PKicking",0);
 			}
 			Goto Spawn;
 		Death:
