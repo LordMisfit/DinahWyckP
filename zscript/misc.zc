@@ -8,6 +8,7 @@ class PlayerStatItem : Inventory
 	const SKILL_HARD = 3;
 	const SKILL_VERY_HARD = 4;
 	
+	int numpikeglows;
 	int MedStrength;
 	int IsMorphed;
 	int EvasionRate;
@@ -26,6 +27,7 @@ class PlayerStatItem : Inventory
 	int HPHUDPulseTimeP, APHUDPulseTimeP;
 	
 	int IPHUDPulseType, IPHUDPulseTimer, IPHUDPulseTimeP;
+	int IPHUDShakeType, IPHUDShakeTimer;
 	
 	int TrueIPLevelGate;
 	int IPMortalBlowReduceTimer;
@@ -696,6 +698,40 @@ class PlayerStatItem : Inventory
 				CurrentHealth = owner.player.mo.health;
 				MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd + HealthBonusAdd);
 				
+				
+				//*************************************************
+				//* Allow the Pike to emit dynlights when equipped [if you have any ammo :V ]
+				//*************************************************
+				if (weapon is "WizardPike" && owner.CountInv("PikeAmmo") > 0)
+				{
+					numpikeglows = 0;
+					ThinkerIterator GlowAttach = ThinkerIterator.Create("PikeGlowAttach");
+					Actor mo;
+					while (mo = PikeGlowAttach(GlowAttach.Next()))
+					{
+						numpikeglows++;
+					}
+					if (!numpikeglows)
+					{
+						A_SpawnItemEx("PikeGlowAttach",owner.pos.x,owner.pos.y,owner.pos.z,0,0,0,0,SXF_NOCHECKPOSITION);
+						numpikeglows++;
+					}
+				}
+				else
+				{
+					if (numpikeglows)
+					{
+						ThinkerIterator GlowAttach = ThinkerIterator.Create("PikeGlowAttach");
+						Actor mo;
+						while (mo = PikeGlowAttach(GlowAttach.Next()))
+						{
+							mo.Destroy();
+							numpikeglows--;
+						}
+						if (numpikeglows) numpikeglows = 0;
+					}
+				}
+				
 				//*******************
 				//* Misc HUD Timers *
 				//*******************
@@ -734,6 +770,7 @@ class PlayerStatItem : Inventory
 					if (IPHUDPulseTimer) IPHUDPulseTimer--; else ItemPointsSession = 0;
 					if (HPHUDShakeTime) HPHUDShakeTime--;
 					if (APHUDShakeTime) APHUDShakeTime--;
+					if (IPHUDShakeTimer) IPHUDShakeTimer--;
 				}
 				
 				//******************
@@ -1550,10 +1587,42 @@ class PlayerStatItem : Inventory
 					else
 					{
 						IPTimer1 = 0;
-						ItemPoints -= (ItemPoints * frandompick(0.01,0.01,0.01,0.01,0.01,0.01,0.02,0.02,0.02,0.02,0.02,0.05,0.05,0.05,0.10,0.10,0.25));
+						int IPLossType = random(1,17);
+						double IPLossPer;
+						IPHUDShakeTimer = random(52,53);
+						if (IPLossType >= 1 && IPLossType <= 6)
+						{
+							IPHUDShakeType = 1;
+							IPLossPer = 0.02;
+						}
+						if (IPLossType >= 7 && IPLossType <= 11)
+						{
+							IPHUDShakeType = 2;
+							IPLossPer = 0.05;
+							IPHUDShakeTimer += random(17,18);
+						}
+						if (IPLossType >= 12 && IPLossType <= 14)
+						{
+							IPHUDShakeType = 3;
+							IPLossPer = 0.10;
+							IPHUDShakeTimer += 35;
+						}
+						if (IPLossType >= 15 && IPLossType <= 16)
+						{
+							IPHUDShakeType = 3;
+							IPLossPer = 0.25;
+							IPHUDShakeTimer += random(52,53);
+						}
+						if (IPLossType == 17)
+						{
+							IPHUDShakeType = 4;
+							IPLossPer = 0.5;
+							IPHUDShakeTimer += 70;
+						}
+						ItemPoints -= (ItemPoints * IPLossPer);
 						if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
 					}
-					if (dydudebug_ipdisplays) Console.Printf("ItemPoints: %.1f [%.1f], IPTimer1: %d / 2100", ItemPoints, globalvars.ItemPoints, IPTimer1);
+					if (dydudebug_ipdisplays2) Console.Printf("ItemPoints: %.1f [%.1f], IPTimer1: %d / 2100", ItemPoints, globalvars.ItemPoints, IPTimer1);
 				}
 				else
 				{

@@ -22,10 +22,11 @@ class DDStatusBarMain : BaseStatusBar
 	private int wiggle;
 	int HPDmgShakeX, HPDmgShakeY;
 	int APDmgShakeX, APDmgShakeY;
+	int IPDmgShakeX, IPDmgShakeY;
 	double HPRecPulseSpd;
 	double APRecPulseSpd;
 	double IPRecPulseSpd;
-	int hpshakeinc, apshakeinc;
+	int hpshakeinc, apshakeinc, ipshakeinc;
 	int hppulseinc, appulseinc;
 	int HPPulseTimer, APPulseTimer;
 
@@ -758,6 +759,8 @@ class DDStatusBarMain : BaseStatusBar
 			int HPShakeFormY = 0;
 			int APShakeFormX = 0;
 			int APShakeFormY = 0;
+			int IPShakeFormX = 0;
+			int IPShakeFormY = 0;
 			double HPPulseScale = 1.00;
 			double APPulseScale = 1.00;
 			
@@ -775,7 +778,7 @@ class DDStatusBarMain : BaseStatusBar
 						HPShakeFormX = randompick(-2,-1,0,1,2);
 						HPShakeFormY = randompick(-2,-1,0,1,2);
 					}
-					if (MiscItem.HPHUDShakeType >= 3)
+					if (MiscItem.HPHUDShakeType == 3)
 					{
 						HPShakeFormX = randompick(-3,-2,-1,0,1,2,3);
 						HPShakeFormY = randompick(-3,-2,-1,0,1,2,3);
@@ -795,7 +798,7 @@ class DDStatusBarMain : BaseStatusBar
 						APShakeFormX = randompick(-2,-1,0,1,2);
 						APShakeFormY = randompick(-2,-1,0,1,2);
 					}
-					if (MiscItem.APHUDShakeType >= 3)
+					if (MiscItem.APHUDShakeType == 3)
 					{
 						APShakeFormX = randompick(-3,-2,-1,0,1,2,3);
 						APShakeFormY = randompick(-3,-2,-1,0,1,2,3);
@@ -804,6 +807,26 @@ class DDStatusBarMain : BaseStatusBar
 					{
 						APShakeFormX = randompick(-4,-3,-2,-1,0,1,2,3,4);
 						APShakeFormY = randompick(-4,-3,-2,-1,0,1,2,3,4);
+					}
+					if (MiscItem.IPHUDShakeType <= 1)
+					{
+						IPShakeFormX = randompick(-1,0,1);
+						IPShakeFormY = randompick(-1,0,1);
+					}
+					if (MiscItem.IPHUDShakeType == 2)
+					{
+						IPShakeFormX = randompick(-2,-1,0,1,2);
+						IPShakeFormY = randompick(-2,-1,0,1,2);
+					}
+					if (MiscItem.IPHUDShakeType == 3)
+					{
+						IPShakeFormX = randompick(-3,-2,-1,0,1,2,3);
+						IPShakeFormY = randompick(-3,-2,-1,0,1,2,3);
+					}
+					if (MiscItem.IPHUDShakeType >= 4)
+					{
+						IPShakeFormX = randompick(-4,-3,-2,-1,0,1,2,3,4);
+						IPShakeFormY = randompick(-4,-3,-2,-1,0,1,2,3,4);
 					}
 
 					if (MiscItem.HPHUDShakeTime && MiscItem.HPDmgHUDAmt > 0)
@@ -841,19 +864,49 @@ class DDStatusBarMain : BaseStatusBar
 						APDmgShakeX = 0;
 						APDmgShakeY = 0;
 					}
+					
+					if (MiscItem.IPHUDShakeTimer)
+					{
+						ipshakeinc++;
+						if (ipshakeinc >= 4)
+						{
+							ipshakeinc = 0;
+							IPDmgShakeX = IPShakeFormX;
+							IPDmgShakeY = IPShakeFormY;
+						}
+						if (dydudebug_hudrecdmgdisplays) Console.Printf("IPHUDShakeTimer: %d, Shake: ipshakeinc: %d, IPDmgShakeX: %d, IPDmgShakeY: %d", MiscItem.IPHUDShakeTimer, ipshakeinc, IPDmgShakeX, IPDmgShakeY);
+					}
+					else
+					{
+						ipshakeinc = 0;
+						IPDmgShakeX = 0;
+						IPDmgShakeY = 0;
+					}
 				}
 				else
 				{
+					HPDmgShakeX = 0;
+					HPDmgShakeY = 0;
+					hpshakeinc = 0;
 					apshakeinc = 0;
 					APDmgShakeX = 0;
 					APDmgShakeY = 0;
+					ipshakeinc = 0;
+					IPDmgShakeX = 0;
+					IPDmgShakeY = 0;
 				}
 			}
 			else
 			{
+				HPDmgShakeX = 0;
+				HPDmgShakeY = 0;
+				hpshakeinc = 0;
 				apshakeinc = 0;
 				APDmgShakeX = 0;
 				APDmgShakeY = 0;
+				ipshakeinc = 0;
+				IPDmgShakeX = 0;
+				IPDmgShakeY = 0;
 			}
 			
 			if (dyduhud_showhpaprechudpulse)
@@ -1648,13 +1701,13 @@ class DDStatusBarMain : BaseStatusBar
 
 					digx = 116 + (digits * spacing); // / 48
 					digy = -82; // -82 / -132
-					DrawString(mDDLFont, FormatNumber(ItemPoints, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
+					DrawString(mDDLFont, FormatNumber(ItemPoints, 3), ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
 					digx += 11;
 					digy += 3;
-					DrawString(mConFont, "%", (digx, digy), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
+					DrawString(mConFont, "%", ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
 					digx -= 11;
 					digy -= 11;
-					DrawString(mSmallFont, "IP", (digx, digy), DI_TEXT_ALIGN_RIGHT, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
+					DrawString(mSmallFont, "IP", ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
 				}
 				
 				string IPInputIcon = "IPINPUT0";
@@ -1679,9 +1732,10 @@ class DDStatusBarMain : BaseStatusBar
 				vector2 ipiconscale = (1.5, 1.5);
 				digx = 142 + (digits * spacing);
 				digy = -66;
-				DrawImage(IPInputIcon, (digx, digy), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (ipiconscale*IPIconPulseScale));
+				DrawImage(IPInputIcon, ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (ipiconscale*IPIconPulseScale));
 			}
 			
+			//
 			if (MiscItem && dydudebug_hudstatdebug)
 			{
 				FontScale = (1.0, 1.0);
