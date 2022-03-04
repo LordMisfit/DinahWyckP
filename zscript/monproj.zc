@@ -19,8 +19,11 @@ class MusicBall : DDProjectile
 	States
 	{
 		Spawn:
-			GBAL A 0 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
-			GBAL A 2 Bright A_SeekerMissile (7,7,SMF_LOOK);
+			GBAL A 2 Bright NoDelay
+			{
+				A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
+				A_SeekerMissile(7,7,SMF_LOOK);
+			}
 			GBAL B 2 Bright;
 			Loop;
     Death:
@@ -31,6 +34,8 @@ class MusicBall : DDProjectile
 
 class MusicBall2 : DDProjectile
 {
+	int seekintensity;
+	int seekintensity2;
 	default
 	{
 		Tag "Very Bad Music";
@@ -45,26 +50,97 @@ class MusicBall2 : DDProjectile
 		PoisonDamage 15;
 		DeathSound "virtuoso/musichit";
 	}
-
+	
+	override void Tick()
+	{
+		seekintensity = frandom(3,4);
+		seekintensity2 = frandom(3,4);
+		if (target)
+		{
+			if (target.CountInv("MonsterLevel") > 0)
+			{
+				seekintensity += (target.CountInv("MonsterLevel") * 0.125);
+				seekintensity2 += (target.CountInv("MonsterLevel") * 0.125);
+			}
+		}
+		if (seekintensity > 15) seekintensity = 15;
+		if (seekintensity2 > seekintensity) seekintensity2 = seekintensity;
+		super.Tick();
+	}
+	
 	States
 	{
 		Spawn:
 			PBAL A 0 Bright A_SpawnItemEx("notetrail2", 0, 0, 0, 0, 0, 0, 180, 128);
 			PBAL A 1 Bright 
 			{
-				A_SeekerMissile(random(3,4),random(3,4),SMF_LOOK);
+				A_SeekerMissile(seekintensity,seekintensity2,SMF_LOOK);
+				int basechance = 1;
+				if (target)
+				{
+					if (target.CountInv("MonsterLevel") > 0)
+					{
+						basechance += (target.CountInv("MonsterLevel") * 0.08);
+					}
+				}
+				if (random(1,8) <= basechance) { A_Weave(frandom(-5,5), frandom(-5,5), 1.0, 1.0); }
 			}
 			PBAL B 1 Bright 
 			{
-				if (random(1,4) <= 1) { A_SeekerMissile(random(3,4),random(3,4),SMF_LOOK); }
+				int basechance = 1;
+				if (target)
+				{
+					if (target.CountInv("MonsterLevel") > 0)
+					{
+						basechance += (target.CountInv("MonsterLevel") * 0.04);
+					}
+				}
+				if (random(1,4) <= basechance) { A_SeekerMissile(seekintensity,seekintensity2,SMF_LOOK); }
+
+				basechance = 1;
+				if (target)
+				{
+					if (target.CountInv("MonsterLevel") > 0)
+					{
+						basechance += (target.CountInv("MonsterLevel") * 0.08);
+					}
+				}
+				if (random(1,4) <= basechance) { A_Weave(frandom(-5,5), frandom(-5,5), 1.0, 1.0); }
 			}
 			PBAL C 1 Bright 
 			{
-				A_SeekerMissile(random(3,4),random(3,4),SMF_LOOK);
+				A_SeekerMissile(seekintensity,seekintensity2,SMF_LOOK);
+				int basechance = 1;
+				if (target)
+				{
+					if (target.CountInv("MonsterLevel") > 0)
+					{
+						basechance += (target.CountInv("MonsterLevel") * 0.08);
+					}
+				}
+				if (random(1,8) <= basechance) { A_Weave(frandom(-5,5), frandom(-5,5), 1.0, 1.0); }
 			}
 			PBAL D 1 Bright 
 			{
-				if (random(1,4) <= 1) { A_SeekerMissile(random(3,4),random(3,4),SMF_LOOK); }
+				int basechance = 1;
+				if (target)
+				{
+					if (target.CountInv("MonsterLevel") > 0)
+					{
+						basechance += (target.CountInv("MonsterLevel") * 0.04);
+					}
+				}
+				if (random(1,4) <= basechance) { A_SeekerMissile(seekintensity,seekintensity2,SMF_LOOK); }
+
+				basechance = 1;
+				if (target)
+				{
+					if (target.CountInv("MonsterLevel") > 0)
+					{
+						basechance += (target.CountInv("MonsterLevel") * 0.16);
+					}
+				}
+				if (random(1,4) <= basechance) { A_Weave(frandom(-5,5), frandom(-5,5), 1.0, 1.0); }
 			}
 			Loop;
     Death:
