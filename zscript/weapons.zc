@@ -1122,7 +1122,7 @@ class DinahWeapon : DDWeapon
 				{
 					dmg *= 10;
 				}
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d, recl: %.8f", dmg, recl);
+				if (dydudebug_meleedmg) Console.Printf("(KickPuff) dmg: %d, recl: %.8f", dmg, recl);
 				A_Recoil(recl);
 				A_CustomPunch(dmg,true,CPF_NOTURN,"KickPuff",104,0,0,"","","");
 				
@@ -2932,7 +2932,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			}
 		}
 		dmg = int(dmg);
-		if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+		if (dydudebug_meleedmg) Console.Printf("(BatPuff) dmg: %d", dmg);
 
 		return dmg;
 	}
@@ -4577,7 +4577,7 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 						if (invoker.IPAttackCheck) A_SetTics(1);
 					}
 				}
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+				if (dydudebug_meleedmg) Console.Printf("(pufftype: %s) dmg: %d", pufftype, dmg);
 				A_CustomPunch(dmg, true, 0, pufftype, range, IPCostOnHit: true);
 				
 				invoker.A_CheckIPModeOnUse();
@@ -5934,9 +5934,18 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			}
 			FPAN D 2 
 			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 				// Melee Hit
 				string pufftype = "PanPuff";
 				int dmg = (random(10,12) * random(1,8));
+				if (MiscItem)
+				{
+					if (MiscItem.PlayerLevel >= exex_scramblernoarmorbonuslvlreq)
+					{
+						if (player.CountInv("BasicArmor") <= 0) dmg *= 5;
+					}
+				}
 				int range = 72;
 				if (invoker.IPAttackCheck)
 				{
@@ -5945,7 +5954,7 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 					range = 90;
 				}
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+				if (dydudebug_meleedmg) Console.Printf("(pufftype: %s) dmg: %d", pufftype, dmg);
 				A_CustomPunch(dmg, true, 0, pufftype, range, IPCostOnHit: true);
 
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
@@ -6056,6 +6065,8 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 				}
 				
 				// Melee Hit
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 				int dmg = (random(10,12) * random(1,8));
 				int range = 72;
 				if (invoker.IPAttackCheck)
@@ -6064,8 +6075,15 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 					dmg *= frandompick(1.5,1.5,1.5,1.5,1.5,1.625,1.625,1.75);
 					range = 90;
 				}
+				if (MiscItem)
+				{
+					if (MiscItem.PlayerLevel >= exex_scramblernoarmorbonuslvlreq)
+					{
+						if (player.CountInv("BasicArmor") <= 0) dmg *= 5;
+					}
+				}
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+				if (dydudebug_meleedmg) Console.Printf("(pufftype: %s) dmg: %d", pufftype, dmg);
 				A_CustomPunch(dmg, true, 0, pufftype, range);
 
 				// Projectiles
@@ -6198,7 +6216,7 @@ class EggShot : DDProjectile
 		Radius 3;
 		Height 3;
 		Speed 70;
-		Damage 12;
+		DamageFunction (finaldamagedealt); // Damage 12;
 		DamageType "Breakfast";
 		Scale 2;
 		Projectile;
@@ -6208,6 +6226,23 @@ class EggShot : DDProjectile
 		DeathSound "blunderfire";
 		Explosiondamage 96;
 	}
+	
+	override void PostBeginPlay()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (12 * random(1,8));
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= exex_scramblernoarmorbonuslvlreq)
+			{
+				if (player.CountInv("BasicArmor") <= 0) finaldamagedealt *= 5;
+			}
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		super.PostBeginPlay();
+	}
+	
 	
 	States
 	{
@@ -6300,7 +6335,7 @@ class EggShotBerserk : EggShot
 		Radius 3;
 		Height 3;
 		Speed 140;
-		Damage 60;
+		DamageFunction (finaldamagedealt); // Damage 60;
 		DamageType "Breakfast";
 		Scale 2;
 		Projectile;
@@ -6309,6 +6344,22 @@ class EggShotBerserk : EggShot
 		RENDERSTYLE "Normal";
 		DeathSound "blunderfire";
 		Explosiondamage 480;
+	}
+	
+	override void PostBeginPlay()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (60 * random(1,8));
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= exex_scramblernoarmorbonuslvlreq)
+			{
+				if (player.CountInv("BasicArmor") <= 0) finaldamagedealt *= 5;
+			}
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		super.PostBeginPlay();
 	}
 	
 	States
@@ -6402,7 +6453,7 @@ class EggGrenade : DDProjectile
 		Radius 3;
 		Height 3;
 		Speed 10;
-		Damage 9;
+		DamageFunction (finaldamagedealt); // Damage 9;
 		DamageType "Breakfast";
 		Scale 1.5;
 		Projectile;
@@ -6413,6 +6464,22 @@ class EggGrenade : DDProjectile
 		DeathSound "blunderfire";
 		ExplosionDamage 64;
 		BounceCount 1;
+	}
+	
+	override void PostBeginPlay()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (9 * random(1,8));
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= exex_scramblernoarmorbonuslvlreq)
+			{
+				if (player.CountInv("BasicArmor") <= 0) finaldamagedealt *= 5;
+			}
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		super.PostBeginPlay();
 	}
 	
 	States
@@ -6489,7 +6556,7 @@ class EggGrenadeBerserk : EggGrenade
 		Radius 3;
 		Height 3;
 		Speed 15;
-		Damage 23;
+		DamageFunction (finaldamagedealt); // Damage 23;
 		DamageType "Breakfast";
 		Scale 1.5;
 		Projectile;
@@ -6500,6 +6567,22 @@ class EggGrenadeBerserk : EggGrenade
 		DeathSound "blunderfire";
 		ExplosionDamage 160;
 		BounceCount 1;
+	}
+	
+	override void PostBeginPlay()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (23 * random(1,8));
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= exex_scramblernoarmorbonuslvlreq)
+			{
+				if (player.CountInv("BasicArmor") <= 0) finaldamagedealt *= 5;
+			}
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		super.PostBeginPlay();
 	}
 	
 	States
@@ -6576,7 +6659,7 @@ class EggMini : DDProjectile
 		Radius 3;
 		Height 3;
 		Speed 10;
-		Damage 6;
+		DamageFunction (finaldamagedealt); // Damage 6;
 		DamageType "Breakfast";
 		Projectile;
 		-NOGRAVITY
@@ -6586,6 +6669,22 @@ class EggMini : DDProjectile
 		DeathSound "blunderfire";
 		ExplosionDamage 32;
 		BounceCount 2;
+	}
+	
+	override void PostBeginPlay()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (6 * random(1,8));
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= exex_scramblernoarmorbonuslvlreq)
+			{
+				if (player.CountInv("BasicArmor") <= 0) finaldamagedealt *= 5;
+			}
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		super.PostBeginPlay();
 	}
 	
 	States
@@ -6630,7 +6729,7 @@ class EggMiniBerserk : EggMini
 		Radius 3;
 		Height 3;
 		Speed 13;
-		Damage 9;
+		DamageFunction (finaldamagedealt); // Damage 9;
 		DamageType "Breakfast";
 		Projectile;
 		-NOGRAVITY
@@ -6640,6 +6739,22 @@ class EggMiniBerserk : EggMini
 		DeathSound "blunderfire";
 		ExplosionDamage 48;
 		BounceCount 2;
+	}
+	
+	override void PostBeginPlay()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (9 * random(1,8));
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= exex_scramblernoarmorbonuslvlreq)
+			{
+				if (player.CountInv("BasicArmor") <= 0) finaldamagedealt *= 5;
+			}
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		super.PostBeginPlay();
 	}
 	
 	States
