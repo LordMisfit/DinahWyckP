@@ -6806,8 +6806,27 @@ class AppleJack : DinahWeapon replaces Chaingun
 	
 	action void A_AppleMeleeAtk()
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		double decenthealthfactor = 0.125;
+		double lowhealthfactor = 0.375;
+		double crisishealthfactor = 1.75;
+
 		int dmg = (random(6,8) * random(1,8));
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) dmg *= 10;
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= exex_jackcrisislvlrequirement && exex_jackcrisislvlrequirement > 0)
+			{
+				decenthealthfactor *= (1.0 + ((MiscItem.PlayerLevel / exex_jackcrisislvlrequirement) * 0.5));
+				lowhealthfactor *= (1.0 + ((MiscItem.PlayerLevel / exex_jackcrisislvlrequirement) * 0.667));
+				crisishealthfactor *= (1.0 + ((MiscItem.PlayerLevel / exex_jackcrisislvlrequirement) * 1.0));
+				if (player.CountInv("DecentHealth")) dmg *= (1.0 + decenthealthfactor);
+				if (player.CountInv("LowHealth")) dmg *= (1.0 + lowhealthfactor);
+				if (player.CountInv("CriticalHealth")) dmg *= (1.0 + crisishealthfactor);
+				if (dydudebug_meleedmg) Console.Printf("decenthealthfactor: %.2f, lowhealthfactor: %.2f, crisishealthfactor: %.2f", decenthealthfactor, lowhealthfactor, crisishealthfactor);
+			}
+		}
 		if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
 		int atkrange = 96;
 		if (invoker.IPAttackCheck) dmg *= frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.75);
@@ -7490,7 +7509,7 @@ class JackShot : DDProjectile
 		Radius 6;
 		Height 6;
 		Speed 50;
-		Damage 20;
+		DamageFunction (finaldamagedealt); // Damage 20;
 		DamageType "Bonk";
 		Projectile;
 		+DONTREFLECT
@@ -7499,6 +7518,33 @@ class JackShot : DDProjectile
 		RENDERSTYLE "Normal";
 		SeeSound "axe/throw";
 		DeathSound "axe/hit";
+	}
+	
+	override void PostBeginPlay()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		double decenthealthfactor = 0.03125;
+		double lowhealthfactor = 0.09375;
+		double crisishealthfactor = 0.4375;
+		
+		finaldamagedealt = (20 * random(1,8));
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= exex_jackcrisislvlrequirement && exex_jackcrisislvlrequirement > 0)
+			{
+				decenthealthfactor *= (1.0 + ((MiscItem.PlayerLevel / exex_jackcrisislvlrequirement) * 0.5));
+				lowhealthfactor *= (1.0 + ((MiscItem.PlayerLevel / exex_jackcrisislvlrequirement) * 0.667));
+				crisishealthfactor *= (1.0 + ((MiscItem.PlayerLevel / exex_jackcrisislvlrequirement) * 1.0));
+				if (player.CountInv("DecentHealth")) finaldamagedealt *= (1.0 + decenthealthfactor);
+				if (player.CountInv("LowHealth")) finaldamagedealt *= (1.0 + lowhealthfactor);
+				if (player.CountInv("CriticalHealth")) finaldamagedealt *= (1.0 + crisishealthfactor);
+				if (dydudebug_rangedmg) Console.Printf("decenthealthfactor: %.2f, lowhealthfactor: %.2f, crisishealthfactor: %.2f", decenthealthfactor, lowhealthfactor, crisishealthfactor);
+			}
+		}
+		
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		Super.PostBeginPlay();
 	}
 	
 	void A_JackShotShieldSetup(actor BombShots, double scaling = 0.0125)
@@ -7629,7 +7675,34 @@ class JackShotBerserk : JackShot
 	{
 		Tag "-Aggro-Apple-";
 		Speed 75;
-		Damage 100;
+		DamageFunction (finaldamagedealt); // Damage 100;
+	}
+	
+	override void PostBeginPlay()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		double decenthealthfactor = 0.03125;
+		double lowhealthfactor = 0.09375;
+		double crisishealthfactor = 0.21875;
+		
+		finaldamagedealt = (100 * random(1,8));
+		if (MiscItem)
+		{
+			if (MiscItem.PlayerLevel >= exex_jackcrisislvlrequirement && exex_jackcrisislvlrequirement > 0)
+			{
+				decenthealthfactor *= (1.0 + ((MiscItem.PlayerLevel / exex_jackcrisislvlrequirement) * 0.25));
+				lowhealthfactor *= (1.0 + ((MiscItem.PlayerLevel / exex_jackcrisislvlrequirement) * 0.334));
+				crisishealthfactor *= (1.0 + ((MiscItem.PlayerLevel / exex_jackcrisislvlrequirement) * 0.5));
+				if (player.CountInv("DecentHealth")) finaldamagedealt *= (1.0 + decenthealthfactor);
+				if (player.CountInv("LowHealth")) finaldamagedealt *= (1.0 + lowhealthfactor);
+				if (player.CountInv("CriticalHealth")) finaldamagedealt *= (1.0 + crisishealthfactor);
+				if (dydudebug_rangedmg) Console.Printf("decenthealthfactor: %.2f, lowhealthfactor: %.2f, crisishealthfactor: %.2f", decenthealthfactor, lowhealthfactor, crisishealthfactor);
+			}
+		}
+		
+		if (dydudebug_rangedmg) Console.Printf("damage: %d", finaldamagedealt);
+		Super.PostBeginPlay();
 	}
 	
 	States
