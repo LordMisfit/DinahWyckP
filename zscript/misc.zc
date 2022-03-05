@@ -274,7 +274,7 @@ class PlayerStatItem : Inventory
 						owner.A_SetInventory("AppleWine",1);
 						owner.A_SetInventory("AppleWine",0);
 						
-						if (owner.CountInv("PlayingHexen")) owner.A_GiveInventory("ItemSatchel",1); // Gives the player their TRUE max ammo limits in Hexen mode and a bit of extra ammo via a Backpack. :P
+						if (owner.CountInv("PlayingHexen")) owner.A_GiveInventory("MegaSatchel",1); // Gives the player their TRUE max ammo limits in Hexen mode and a bit of extra ammo via a Backpack. :P
 					}
 
 					owner.A_SetInventory("PlayerLevel",PlayerLevel);
@@ -419,8 +419,11 @@ class PlayerStatItem : Inventory
 				}
 
 				let vacammotype = owner.FindInventory("VacAmmo");
-				SuperVacAmmo = vacammotype.Amount;
-				SuperVacAmmoMax = vacammotype.MaxAmount;
+				if (vacammotype)
+				{
+					SuperVacAmmo = vacammotype.Amount;
+					SuperVacAmmoMax = vacammotype.MaxAmount;
+				}
 				if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
 				
 				// Ikari/Item Points
@@ -807,8 +810,13 @@ class PlayerStatItem : Inventory
 				//* SuperVac Ammo Handling *
 				//**************************
 				vacammotype = owner.FindInventory("VacAmmo");
-				int vacammoprev = vacammotype.Amount;
-				int prevvacbagstocharge = (vacammoprev % 8);
+				int vacammoprev;
+				int prevvacbagstocharge;
+				if (vacammotype)
+				{
+					vacammoprev = vacammotype.Amount;
+				}
+				prevvacbagstocharge = (vacammoprev % 8);
 				int vacgiveammo;
 				int vacammocounter = owner.CountInv("VacAmmoCounter");
 				if (dydudebug_supervacbag) Console.Printf("Vacuum Bag Size: %d / %d", vacammocounter, SuperVacBagSize);
@@ -827,7 +835,11 @@ class PlayerStatItem : Inventory
 					vacgiveammo = 0;
 				}
 				vacammotype = owner.FindInventory("VacAmmo");
-				int vacammonow = vacammotype.Amount;
+				int vacammonow;
+				if (vacammotype)
+				{
+					vacammonow = vacammotype.Amount;
+				}
 				int vacbagstocharge = (vacammonow % 8);
 				if (prevvacbagstocharge && vacbagstocharge != prevvacbagstocharge)
 				{
@@ -1931,8 +1943,11 @@ class PlayerStatItem : Inventory
 				// Weapon
 				let weapon = owner.player.ReadyWeapon;
 				let vacammotype = owner.FindInventory("VacAmmo");
-				SuperVacAmmo = vacammotype.Amount;
-				SuperVacAmmoMax = vacammotype.MaxAmount;
+				if (vacammotype)
+				{
+					SuperVacAmmo = vacammotype.Amount;
+					SuperVacAmmoMax = vacammotype.MaxAmount;
+				}
 				if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
 				SuperVacAmmoFactor = (SuperVacAmmo * (0.0625 / SuperVacAmmoMax));
 				double WeapEvaAlt = 0.0;
@@ -2373,8 +2388,11 @@ class PlayerStatItem : Inventory
 				else WeaponJumpZ *= 1.0625;
 			}
 			let vacammotype = owner.FindInventory("VacAmmo");
-			SuperVacAmmo = vacammotype.Amount;
-			SuperVacAmmoMax = vacammotype.MaxAmount;
+			if (vacammotype)
+			{
+				SuperVacAmmo = vacammotype.Amount;
+				SuperVacAmmoMax = vacammotype.MaxAmount;
+			}
 			if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
 			SuperVacAmmoFactor = (SuperVacAmmo * (0.0625 / SuperVacAmmoMax));
 			if (weapon is "SuperVac")
@@ -2434,253 +2452,25 @@ class PlayerStatItem : Inventory
 			int itemsmax;
 			int itemid;
 			double baselvlfactor = 50.0;
+			if (owner.CountInv("PlayingHexen")) baselvlfactor = 33.4;
 			double baseholdmultibp1 = 1.125;
 			double baseholdmultibp2 = 1.25;
-			if (owner.CountInv("PlayingHexen")) baselvlfactor = 33.4;
 			
 			//*******************
 			//* Inventory Items *
 			//*******************
-			let currentitemtype = owner.FindInventory("AppleWine");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 15016;
-				baseholdamount = 16;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("TurkeyDinner");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12012;
-				baseholdamount = 6;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("CherryBombPickup");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12011;
-				baseholdamount = 24;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("SpinnerPickup");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12018;
-				baseholdamount = 16;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("BRocketPickup");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12017;
-				baseholdamount = 4;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("PopperPickup");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 13019;
-				baseholdamount = 2;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("SnakePickup");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12091;
-				baseholdamount = 2;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("FuryPotion");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 13164;
-				baseholdamount = 3;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("TimePotion");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 13162;
-				baseholdamount = 3;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("DivingHelm");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 15126;
-				baseholdamount = 2;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("KilletanteEffigy");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 9886;
-				baseholdamount = 5;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("DoorBell");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 13126;
-				baseholdamount = 1;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * (PlayerLevel / baselvlfactor));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.8f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
+			CalcInvLimit("AppleWine", 16, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("TurkeyDinner", 6, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("CherryBombPickup", 24, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("SpinnerPickup", 16, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("BRocketPickup", 4, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("PopperPickup", 2, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("SnakePickup", 2, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("FuryPotion", 3, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("TimePotion", 3, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("DivingHelm", 2, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("KilletanteEffigy", 5, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("DoorBell", 1, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
 
 			//**************
 			//* Ammo Types *
@@ -2689,172 +2479,30 @@ class PlayerStatItem : Inventory
 			baseholdmultibp1 = 1.5;
 			baseholdmultibp2 = 2.0;
 			if (owner.CountInv("PlayingHexen")) baselvlfactor = 150.0;
-			currentitemtype = owner.FindInventory("MalletAmmo");
+			CalcInvLimit("MalletAmmo", 64, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("BlunderAmmo", 48, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("EggAmmo", 28, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("JackAmmo", 64, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("PikeAmmo", 12, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("VacAmmo", 16, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("MusicAmmo", 66, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("CandleAmmo", 80, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+			CalcInvLimit("CZBall", 10, baselvlfactor, baseholdmultibp1, baseholdmultibp2);
+		}
+	}
+	
+		void CalcInvLimit(name itemtype, int baseholdamount, double baselvlfactor, double baseholdmultibp1, double baseholdmultibp2)
+		{
+			int dropamt;
+			string itemname;
+			double leveladd;
+			int itemsmax;
+			int itemid;
+			
+			let currentitemtype = owner.FindInventory(itemtype);
 			if (currentitemtype)
 			{
 				itemname = currentitemtype.GetClassName();
-				itemid = 12467;
-				baseholdamount = 64;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("BlunderAmmo");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12457;
-				baseholdamount = 48;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("EggAmmo");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12447;
-				baseholdamount = 28;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("JackAmmo");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12425;
-				baseholdamount = 64;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("PikeAmmo");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12437;
-				baseholdamount = 12;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("VacAmmo");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12445;
-				baseholdamount = 16;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("MusicAmmo");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12478;
-				baseholdamount = 66;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("CandleAmmo");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 12488;
-				baseholdamount = 80;
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
-				{
-					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
-																					else baseholdamount *= baseholdmultibp1;
-				}
-				if (baseholdamount < 1) baseholdamount = 1;
-				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
-				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
-				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
-				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
-			}
-			currentitemtype = owner.FindInventory("CZBall");
-			if (currentitemtype)
-			{
-				itemname = currentitemtype.GetClassName();
-				itemid = 4835;
-				baseholdamount = 10;
 				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
 				{
 					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
@@ -2870,8 +2518,7 @@ class PlayerStatItem : Inventory
 				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
 			}
 		}
-	}
-
+		
 	void GameStatTracker()
 	{
 		let globalvars = DDGlobalVariables.Get();
@@ -3758,8 +3405,11 @@ class PlayerStatItem : Inventory
 								else WeaponFactor *= 1.125;
 		}
 		let vacammotype = owner.FindInventory("VacAmmo");
-		SuperVacAmmo = vacammotype.Amount;
-		SuperVacAmmoMax = vacammotype.MaxAmount;
+		if (vacammotype)
+		{
+			SuperVacAmmo = vacammotype.Amount;
+			SuperVacAmmoMax = vacammotype.MaxAmount;
+		}
 		if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
 		SuperVacAmmoFactor = (SuperVacAmmo * (0.0625 / SuperVacAmmoMax));
 		if (weapon is "SuperVac")
