@@ -9534,10 +9534,16 @@ class Grimophone : DinahWeapon replaces BFG9000
 
 	action void A_GrimophoneAltReset()
 	{
+		actor player = players[0].mo;
 		invoker.recordalttimer = 0;
 		invoker.modtimer = 90;
-		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		if (MiscItem) MiscItem.GrimophoneDebuffTimer = 0;
+		player.A_SetInventory("GrimAltFireInUse",0);
+	}
+	
+	action void A_GrimophoneAltOn()
+	{
+		actor player = players[0].mo;
+		player.A_SetInventory("GrimAltFireInUse",1);
 	}
 	
 	States
@@ -9571,6 +9577,8 @@ class Grimophone : DinahWeapon replaces BFG9000
 		Fire:
 			RPLY A 0 
 			{
+				A_GrimophoneAltReset();
+
 				invoker.musictype = random(1,16);
 				if (invoker.musictype >= 1 && invoker.musictype <= 14) { A_StartSound("grimophone/jam",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
 				else if (invoker.musictype == 15) { A_StartSound("sa/rickroll",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
@@ -9579,6 +9587,7 @@ class Grimophone : DinahWeapon replaces BFG9000
 		Fire2:
 			NULL A 0 
 			{
+				A_GrimophoneAltReset();
 				A_CheckIPState1();
 				A_ConfirmIPAttack(161,0,1,64);
 
@@ -9586,34 +9595,51 @@ class Grimophone : DinahWeapon replaces BFG9000
 			}
 			RPLY B 1 Bright 
 			{
+				A_GrimophoneAltReset();
 				A_GrimophoneShootMain(1);
 			}
-			RPLY B 1;
-			RPLY B 1;
+			RPLY BB 1
+			{
+				A_GrimophoneAltReset();
+			}
 			RPLY C 1
 			{
+				A_GrimophoneAltReset();
 				if (invoker.IPAttackCheck) A_GrimophoneShootMain(0);
 			}
-			RPLY C 1;
-			RPLY C 1;
+			RPLY CC 1
+			{
+				A_GrimophoneAltReset();
+			}
 			RPLY B 1 Bright 
 			{
+				A_GrimophoneAltReset();
 				A_GrimophoneShootMain(0);
 			}
-			RPLY B 1;
-			RPLY B 1;
+			RPLY BB 1
+			{
+				A_GrimophoneAltReset();
+			}
 			RPLY C 1
 			{
+				A_GrimophoneAltReset();
 				if (invoker.IPAttackCheck) A_GrimophoneShootMain(0);
 			}
-			RPLY C 1;
-			RPLY C 1;
+			RPLY CC 1
+			{
+				A_GrimophoneAltReset();
+			}
 			RPLY C 0 
 			{
+				A_GrimophoneAltReset();
 				invoker.A_CheckIPModeOnUse();
 				A_Refire("Fire2");
 			}
-			RPLY A 0 A_StopSound(65);
+			RPLY A 0 
+			{
+				A_GrimophoneAltReset();
+				A_StopSound(65);
+			}
 			Goto Ready;
 		AltFire:
 			RPLY A 0 
@@ -9624,10 +9650,12 @@ class Grimophone : DinahWeapon replaces BFG9000
 				else if (invoker.musictype == 16) { A_StartSound("sa/vuvuzela",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
 				
 				invoker.modtimer = 90;
+				A_GrimophoneAltOn();
 			}
 		AltFire2:
 			NULL A 0 
 			{
+				A_GrimophoneAltOn();
 				A_CheckIPState1();
 				A_ConfirmIPAttack(162,0,1,128);
 				
@@ -9650,6 +9678,7 @@ class Grimophone : DinahWeapon replaces BFG9000
 			}
 			RPLY BBCC 2
 			{
+				A_GrimophoneAltOn();
 				invoker.dmg = random(2,4);
 				if (invoker.musictype == 15) invoker.dmg = random(6,12); // V:
 				if (invoker.musictype == 16) invoker.dmg = random(10,20); // LUL :V
@@ -9816,6 +9845,7 @@ class Grimophone : DinahWeapon replaces BFG9000
 			}
 			RPLY C 0 
 			{
+				A_GrimophoneAltOn();
 				if (random(1,32) <= 31) 
 				{
 					if (invoker.IPAttackCheck)
@@ -9874,7 +9904,11 @@ class Grimophone : DinahWeapon replaces BFG9000
 				}
 				return resolvestate(null);
 			}
-			RPLY A 0 A_StopSound(65);
+			RPLY A 0 
+			{
+				A_GrimophoneAltOn();
+				A_StopSound(65);
+			}
 			Goto Ready;
 	}
 }
