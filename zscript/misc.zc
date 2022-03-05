@@ -2502,6 +2502,8 @@ class PlayerStatItem : Inventory
 			let currentitemtype = owner.FindInventory(itemtype);
 			if (currentitemtype)
 			{
+				let isammo = Ammo(currentitemtype);
+
 				itemname = currentitemtype.GetClassName();
 				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
 				{
@@ -2510,12 +2512,27 @@ class PlayerStatItem : Inventory
 				}
 				if (baseholdamount < 1) baseholdamount = 1;
 				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
-				leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
+				if (isammo) 
+				{
+					if (exex_dynamicammolimits) leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
+				}
+				else
+				{
+					if (exex_dynamicinventorylimits) leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
+				}
 				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
 				itemsmax = (baseholdamount + int(leveladd));
-				currentitemtype.MaxAmount = (itemsmax);
+				currentitemtype.MaxAmount = itemsmax;
 				if (currentitemtype.MaxAmount < 1) currentitemtype.MaxAmount = 1;
-				if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
+				
+				if (!isammo)
+				{
+					if (currentitemtype.Amount > currentitemtype.MaxAmount) { dropamt = currentitemtype.MaxAmount - currentitemtype.Amount; owner.A_DropInventory(itemname,dropamt); }
+				}
+				else
+				{
+					if (currentitemtype.Amount > currentitemtype.MaxAmount) currentitemtype.Amount = currentitemtype.MaxAmount;
+				}
 			}
 		}
 		
