@@ -669,6 +669,8 @@ class DDStatusBarMain : BaseStatusBar
 			let item = Powerup(iitem);
 			if (item != null)
 			{
+				bool debuff = false;
+				Vector2 posdiff = (0.0, 0.0);
 				int itemeffecttics = item.EffectTics;
 				int itemeffectsecs = (item.EffectTics / thinker.TICRATE);
 				int itemfontclr = font.CR_White;
@@ -703,6 +705,7 @@ class DDStatusBarMain : BaseStatusBar
 						itemeffecttics = MiscItem.GrimophoneDebuffTimer;
 						itemeffectsecs = (MiscItem.GrimophoneDebuffTimer / thinker.TICRATE);
 						itemfontclr = font.CR_brick;
+						debuff = true;
 					}
 				}
 				let icon = item.GetPowerupIcon();
@@ -716,7 +719,14 @@ class DDStatusBarMain : BaseStatusBar
 				if (icon.IsValid() && !item.IsBlinking())
 				{
 					// Each icon gets a 32x32 block.
-					DrawTexture(icon, pos, DI_SCREEN_RIGHT_TOP, 1.0, (POWERUPICONSIZE, POWERUPICONSIZE));
+					if (debuff) 
+					{
+						posdiff = (randompick(-1,0,1), randompick(-1,0,1));
+						if (item.GetClassName() == "GrimophoneDEFDown1") posdiff = (randompick(-1,0,1), randompick(-1,0,1));
+						if (item.GetClassName() == "GrimophoneDEFDown2") posdiff = (randompick(-2,-1,0,1,2), randompick(-2,-1,0,1,2));
+						if (item.GetClassName() == "GrimophoneDEFDown3") posdiff = (randompick(-3,-2,-1,0,1,2,3), randompick(-3,-2,-1,0,1,2,3));
+					}
+					DrawTexture(icon, pos+posdiff, DI_SCREEN_RIGHT_TOP, 1.0, (POWERUPICONSIZE, POWERUPICONSIZE));
 					pos.x -= POWERUPICONSIZE;
 					if (pos.x < -maxpos)
 					{
@@ -738,7 +748,7 @@ class DDStatusBarMain : BaseStatusBar
 						if (itemeffecttics >= 1051) { if (itemeffecttics % 50 >= 25) pos.y += 1; }
 						if (dyduhud_showpoweruptimers) 
 						{
-							if (!(gameinfo.gametype == GAME_Hexen && PowerFlight(item))) DrawString(mDDMFont, FormatNumber(itemeffectsecs), (pos.x+POWERUPICONSIZE, pos.y), DI_TEXT_ALIGN_CENTER, itemfontclr, 0.9, -1, 4, (1.0, 1.0)); // 41, -43
+							if (!(gameinfo.gametype == GAME_Hexen && PowerFlight(item))) DrawString(mDDMFont, FormatNumber(itemeffectsecs), (pos.x+POWERUPICONSIZE, pos.y) + posdiff, DI_TEXT_ALIGN_CENTER, itemfontclr, 0.9, -1, 4, (1.0, 1.0)); // 41, -43
 						}
 						if (itemeffecttics <= 175) 
 						{
