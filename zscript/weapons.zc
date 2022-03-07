@@ -4283,7 +4283,6 @@ class MalletAmmoBig : MalletAmmo
 class Blunderaxe : DinahWeapon replaces Shotgun
 {
 	int IPATKAmmoAmt;
-	double rrecoil;
 	int meleetimes;
 	int chopcombo;
 	double horzspread;
@@ -4313,6 +4312,25 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		if (invoker.chopcombo && MiscItem && MiscItem.PlayerLevel >= exex_axequickshotlvlrequirement) return true;
 		return false;
+	}
+	
+	action void A_BlunderRecoil(double baserecoil)
+	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) baserecoil *= 0.2;
+		if (invoker.chopcombo)
+		{
+			if (A_BlunderCheckComboLevel()) baserecoil *= frandom(1.375,1.625);
+																 else baserecoil *= frandom(1.625,1.875);
+		}
+		if (MiscItem)
+		{
+			double RecoilReduceRate = 1.00;
+			RecoilReduceRate = (1.00 - (MiscItem.PlayerLevel * 0.00875));
+			if (RecoilReduceRate <= 0.125) RecoilReduceRate = 0.125;
+			baserecoil *= RecoilReduceRate;
+		}
+		A_Recoil(baserecoil);
 	}
 	
 	action void A_BlunderShotAttack(double xyspread = 0.0, double zspread = 0.0, actor BombShots = null)
@@ -4881,15 +4899,8 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 					}
 					if (invoker.IPAttackCheck) A_SetAngle(origangle);
 				}
-				if (invoker.IPAttackCheck) invoker.rrecoil = (frandom(4.8,7.2) * (1.0 + (CountInv("BlunderShotUpgrade") * 0.125)) * frandompick(1.75,2,2.25)); 
-															else invoker.rrecoil = frandom(4.8,7.2) * (1.0 + (CountInv("BlunderShotUpgrade") * 0.125));
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) invoker.rrecoil *= 0.2;
-				if (invoker.chopcombo)
-				{
-					if (A_BlunderCheckComboLevel()) invoker.rrecoil *= frandom(1.375,1.625);
-																		 else invoker.rrecoil *= frandom(1.625,1.875);
-				}
-				A_Recoil(invoker.rrecoil);
+				A_BlunderRecoil(frandom(4.8,7.2));
+				
 				if (invoker.IPAttackCheck) A_TakeInventory("BlunderAmmo",invoker.IPATKAmmoAmt);
 															else A_TakeInventory("BlunderAmmo",1);
 				invoker.A_CheckIPModeOnUse();
@@ -8073,6 +8084,21 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 		}
 	}
 	
+	action void A_PikeRecoil(double baserecoil)
+	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) baserecoil *= 0.2;
+		if (invoker.IPAttackCheck) baserecoil *= frandom(1.75,2.5);
+		if (MiscItem)
+		{
+			double RecoilReduceRate = 1.00;
+			RecoilReduceRate = (1.00 - (MiscItem.PlayerLevel * 0.00875));
+			if (RecoilReduceRate <= 0.125) RecoilReduceRate = 0.125;
+			baserecoil *= RecoilReduceRate;
+		}
+		A_Recoil(baserecoil);
+	}
+	
 	States
 	{
 		Spawn:
@@ -8362,7 +8388,7 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 			}
 			SCEP C 0
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_Recoil(frandom(0.64,0.96)); } else { A_Recoil(frandom(3.2,4.8)); }
+				A_PikeRecoil(frandom(3.2,4.8));
 				actor BombShots;
 
 				DDProjectile IPCompat;
