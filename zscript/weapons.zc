@@ -9702,8 +9702,8 @@ class Grimophone : DinahWeapon replaces BFG9000
 		BombShots = A_FireProjectile("RecordShot",0,useammo);
 		if (BombShots)
 		{
-			if (invoker.musictype == 15) { BombShots.stamina = 3; }
-			else if (invoker.musictype == 16) { BombShots.stamina = 5; }
+			if (invoker.musictype == 1) { BombShots.stamina = 3; }
+			if (invoker.musictype == 2) { BombShots.stamina = 5; }
 			if (BombShots && invoker.IPAttackCheck)
 			{
 				IPCompat = DDProjectile(BombShots);
@@ -9729,6 +9729,12 @@ class Grimophone : DinahWeapon replaces BFG9000
 	{
 		actor player = players[0].mo;
 		player.A_SetInventory("GrimAltFireInUse",1);
+	}
+	
+	action void A_GrimophoneAltDecModTimer(int recordinterval, double recintervalIPmult)
+	{
+		if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
+		if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
 	}
 	
 	States
@@ -9762,12 +9768,42 @@ class Grimophone : DinahWeapon replaces BFG9000
 		Fire:
 			RPLY A 0 
 			{
+				actor player = players[0].mo;
 				A_GrimophoneAltReset();
-
-				invoker.musictype = random(1,16);
-				if (invoker.musictype >= 1 && invoker.musictype <= 14) { A_StartSound("grimophone/jam",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
-				else if (invoker.musictype == 15) { A_StartSound("sa/rickroll",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
-				else if (invoker.musictype == 16) { A_StartSound("sa/vuvuzela",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
+				int user_type = random(1,16);
+				
+				if (player.CountInv("GrimophoneUpgrade") <= 0)
+				{
+					user_type = random(1,16);
+					if (user_type >= 1 && user_type <= 14) invoker.musictype = 0;
+					else if (user_type == 15) invoker.musictype = 1;
+					else if (user_type == 16) invoker.musictype = 2;
+				}
+				if (player.CountInv("GrimophoneUpgrade") == 1)
+				{
+					user_type = random(1,14);
+					if (user_type >= 1 && user_type <= 12) invoker.musictype = 0;
+					else if (user_type == 13) invoker.musictype = 1;
+					else if (user_type == 14) invoker.musictype = 2;
+				}
+				if (player.CountInv("GrimophoneUpgrade") == 2)
+				{
+					user_type = random(1,13);
+					if (user_type >= 1 && user_type <= 11) invoker.musictype = 0;
+					else if (user_type == 12) invoker.musictype = 1;
+					else if (user_type == 13) invoker.musictype = 2;
+				}
+				if (player.CountInv("GrimophoneUpgrade") >= 3)
+				{
+					user_type = random(1,11);
+					if (user_type >= 1 && user_type <= 9) invoker.musictype = 0;
+					else if (user_type == 10) invoker.musictype = 1;
+					else if (user_type == 11) invoker.musictype = 2;
+				}
+				
+				if (invoker.musictype == 0) { A_StartSound("grimophone/jam",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
+				if (invoker.musictype == 1) { A_StartSound("sa/rickroll",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
+				if (invoker.musictype == 2) { A_StartSound("sa/vuvuzela",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
 			}
 		Fire2:
 			NULL A 0 
@@ -9829,10 +9865,41 @@ class Grimophone : DinahWeapon replaces BFG9000
 		AltFire:
 			RPLY A 0 
 			{
-				invoker.musictype = random(1,16);
-				if (invoker.musictype >= 1 && invoker.musictype <= 14) { A_StartSound("grimophone/jam",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
-				else if (invoker.musictype == 15) { A_StartSound("sa/rickroll",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
-				else if (invoker.musictype == 16) { A_StartSound("sa/vuvuzela",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
+				actor player = players[0].mo;
+				int user_type = random(1,16);
+				
+				if (player.CountInv("GrimophoneUpgrade") <= 0)
+				{
+					user_type = random(1,16);
+					if (user_type >= 1 && user_type <= 14) invoker.musictype = 0;
+					else if (user_type == 15) invoker.musictype = 1;
+					else if (user_type == 16) invoker.musictype = 2;
+				}
+				if (player.CountInv("GrimophoneUpgrade") == 1)
+				{
+					user_type = random(1,14);
+					if (user_type >= 1 && user_type <= 12) invoker.musictype = 0;
+					else if (user_type == 13) invoker.musictype = 1;
+					else if (user_type == 14) invoker.musictype = 2;
+				}
+				if (player.CountInv("GrimophoneUpgrade") == 2)
+				{
+					user_type = random(1,13);
+					if (user_type >= 1 && user_type <= 11) invoker.musictype = 0;
+					else if (user_type == 12) invoker.musictype = 1;
+					else if (user_type == 13) invoker.musictype = 2;
+				}
+				if (player.CountInv("GrimophoneUpgrade") >= 3)
+				{
+					user_type = random(1,11);
+					if (user_type >= 1 && user_type <= 9) invoker.musictype = 0;
+					else if (user_type == 10) invoker.musictype = 1;
+					else if (user_type == 11) invoker.musictype = 2;
+				}
+				
+				if (invoker.musictype == 0) { A_StartSound("grimophone/jam",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
+				if (invoker.musictype == 1) { A_StartSound("sa/rickroll",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
+				if (invoker.musictype == 2) { A_StartSound("sa/vuvuzela",65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08)); }
 				
 				invoker.modtimer = 90;
 				A_GrimophoneAltOn();
@@ -9840,6 +9907,7 @@ class Grimophone : DinahWeapon replaces BFG9000
 		AltFire2:
 			NULL A 0 
 			{
+				actor player = players[0].mo;
 				A_GrimophoneAltOn();
 				A_CheckIPState1();
 				A_ConfirmIPAttack(162,0,1,128);
@@ -9849,9 +9917,15 @@ class Grimophone : DinahWeapon replaces BFG9000
 				{
 					if (CountInv("MusicAmmo") > 0)
 					{
-						A_TakeInventory("MusicAmmo",1);
-						invoker.recordenergy += 42;
-						invoker.recordenergybits = 2;
+						while (invoker.recordenergy <= 0)
+						{
+							A_TakeInventory("MusicAmmo",1);
+							if (player.CountInv("GrimophoneUpgrade") <= 0) invoker.recordenergy += 42;
+							if (player.CountInv("GrimophoneUpgrade") == 1) invoker.recordenergy += 44;
+							if (player.CountInv("GrimophoneUpgrade") == 2) invoker.recordenergy += 46;
+							if (player.CountInv("GrimophoneUpgrade") >= 3) invoker.recordenergy += 48;
+							invoker.recordenergybits = 10;
+						}
 					}
 					else
 					{
@@ -9865,9 +9939,9 @@ class Grimophone : DinahWeapon replaces BFG9000
 			{
 				actor player = players[0].mo;
 				A_GrimophoneAltOn();
-				invoker.dmg = random(2,4);
-				if (invoker.musictype == 15) invoker.dmg = random(6,12); // V:
-				if (invoker.musictype == 16) invoker.dmg = random(10,20); // LUL :V
+				if (invoker.musictype <= 0) invoker.dmg = randompick(2,3,4);
+				if (invoker.musictype == 1) invoker.dmg = randompick(6,9,12); // V:
+				if (invoker.musictype == 2) invoker.dmg = randompick(10,15,20); // LUL :V
 				if (player.CountInv("GrimophoneUpgrade"))
 				{
 					invoker.dmg *= (1.0 + (player.CountInv("GrimophoneUpgrade") * frandompick(0.667,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.334)));
@@ -9879,7 +9953,14 @@ class Grimophone : DinahWeapon replaces BFG9000
 					invoker.dist *= (1.0 + (player.CountInv("GrimophoneUpgrade") * frandompick(0.334,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.667)));
 				}
 				invoker.fulldist = (invoker.dist * frandompick(0.375,0.5,0.625));
+				int prevalttimer = (invoker.recordalttimer % invoker.modtimer);
 				invoker.recordalttimer += 2;
+				if (invoker.musictype == 1) invoker.recordalttimer += 1;
+				if (invoker.musictype == 2) invoker.recordalttimer += randompick(1,2,2,2,3);
+				if (player.CountInv("GrimophoneUpgrade") == 1) invoker.recordalttimer -= randompick(0,0,1);
+				if (player.CountInv("GrimophoneUpgrade") == 2) invoker.recordalttimer -= randompick(0,1,1);
+				if (player.CountInv("GrimophoneUpgrade") == 3) invoker.recordalttimer -= randompick(1,1,1);
+				int modalttimer = (invoker.recordalttimer % invoker.modtimer);
 				invoker.altflags = XF_NOTMISSILE|XF_NOSPLASH;
 				invoker.altflags2 = RTF_NOTMISSILE|RTF_NOIMPACTDAMAGE;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -9895,127 +9976,57 @@ class Grimophone : DinahWeapon replaces BFG9000
 					invoker.dist *= frandompick(3.0,4.5,4.5,4.5,4.5,4.5,6.0);
 					invoker.fulldist *= frandompick(3.0,4.5,4.5,4.5,4.5,4.5,6.0);
 				}
-				if (dydudebug_grimophonealtfire) Console.Printf("recordalttimer %d", invoker.recordalttimer);
 				
-				if (invoker.recordalttimer > 0 && invoker.recordalttimer % invoker.modtimer == 0)
+				bool dealhit = false;
+				if (invoker.recordalttimer > 0)
 				{
-					if (invoker.IPAttackCheck)
+					if (modalttimer == 0) dealhit = true;
+					if (modalttimer < prevalttimer) dealhit = true;
+					if (dealhit)
 					{
-						if (random(1,7) <= 4)
+						if (invoker.IPAttackCheck)
+						{
+							if (random(1,7) <= 4)
+							{
+								invoker.altflags = XF_HURTSOURCE|XF_NOTMISSILE|XF_NOSPLASH;
+								invoker.altflags2 = RTF_AFFECTSOURCE|RTF_NOTMISSILE|RTF_NOIMPACTDAMAGE;
+							}
+						}
+						else
 						{
 							invoker.altflags = XF_HURTSOURCE|XF_NOTMISSILE|XF_NOSPLASH;
 							invoker.altflags2 = RTF_AFFECTSOURCE|RTF_NOTMISSILE|RTF_NOIMPACTDAMAGE;
 						}
-					}
-					else
-					{
-						invoker.altflags = XF_HURTSOURCE|XF_NOTMISSILE|XF_NOSPLASH;
-						invoker.altflags2 = RTF_AFFECTSOURCE|RTF_NOTMISSILE|RTF_NOIMPACTDAMAGE;
+						if (dydudebug_grimophonealtfire) Console.Printf("Alt-Fire Self Damage Attempt (invoker.recordalttimer: %d (%d vs %d) [gametic: %d]", invoker.recordalttimer, modalttimer, prevalttimer, gametic);
 					}
 				}
 				
-				int recordinterval = 30;
+				int recordinterval = 105;
 				double recintervalIPmult = 1.125;
 				if (player.CountInv("GrimophoneUpgrade") == 1) recintervalIPmult = 1.25;
 				if (player.CountInv("GrimophoneUpgrade") == 2) recintervalIPmult = 1.375;
 				if (player.CountInv("GrimophoneUpgrade") >= 3) recintervalIPmult = 1.625;
-				if (invoker.recordalttimer > 2520)
-				{
-					recordinterval = 30;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 2430)
-				{
-					recordinterval = 32;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 2340)
-				{
-					recordinterval = 34;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 2250)
-				{
-					recordinterval = 36;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 2160)
-				{
-					recordinterval = 38;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 2070)
-				{
-					recordinterval = 40;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 1980)
-				{
-					recordinterval = 45;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 1890)
-				{
-					recordinterval = 50;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 1800)
-				{
-					recordinterval = 55;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 1620)
-				{
-					recordinterval = 60;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 1350)
-				{
-					recordinterval = 75;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 990)
-				{
-					recordinterval = 85;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 540)
-				{
-					recordinterval = 95;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
-				else
-				if (invoker.recordalttimer > 90)
-				{
-					recordinterval = 105;
-					if (invoker.IPAttackCheck) recordinterval *= recintervalIPmult;
-					if (invoker.recordalttimer % recordinterval) invoker.modtimer -= 1;
-				}
+				
+				if (invoker.recordalttimer > 2700) recordinterval = 26;
+				else if (invoker.recordalttimer > 2610) recordinterval = 28;
+				else if (invoker.recordalttimer > 2520) recordinterval = 30;
+				else if (invoker.recordalttimer > 2430) recordinterval = 32;
+				else if (invoker.recordalttimer > 2340) recordinterval = 34;
+				else if (invoker.recordalttimer > 2250) recordinterval = 36;
+				else if (invoker.recordalttimer > 2160) recordinterval = 38;
+				else if (invoker.recordalttimer > 2070) recordinterval = 40;
+				else if (invoker.recordalttimer > 1980) recordinterval = 45;
+				else if (invoker.recordalttimer > 1890) recordinterval = 50;
+				else if (invoker.recordalttimer > 1800) recordinterval = 55;
+				else if (invoker.recordalttimer > 1620) recordinterval = 60;
+				else if (invoker.recordalttimer > 1530) recordinterval = 65;
+				else if (invoker.recordalttimer > 1440) recordinterval = 70;
+				else if (invoker.recordalttimer > 1350) recordinterval = 75;
+				else if (invoker.recordalttimer > 1260) recordinterval = 80;
+				else if (invoker.recordalttimer > 990) recordinterval = 85;
+				else if (invoker.recordalttimer > 540) recordinterval = 95;
+				else if (invoker.recordalttimer > 90) recordinterval = 105;
+				A_GrimophoneAltDecModTimer(recordinterval,recintervalIPmult);
 				if (invoker.IPAttackCheck)
 				{
 					if (invoker.modtimer < 15) invoker.modtimer = 15;
@@ -10024,6 +10035,7 @@ class Grimophone : DinahWeapon replaces BFG9000
 				{
 					if (invoker.modtimer < 10) invoker.modtimer = 10;
 				}
+				if (dydudebug_grimophonealtfire) Console.Printf("\c[brick]modtimer: %d\c-, recordalttimer / recordinterval: %d / %d, \c[yellow]Modulus: %d\c-", invoker.modtimer, invoker.recordalttimer, recordinterval, (invoker.recordalttimer % invoker.modtimer));
 
 				A_Explode(invoker.dmg,invoker.dist,invoker.altflags,1,invoker.fulldist,0,0,"","Beats");
 				A_RadiusThrust((invoker.dmg*-1),invoker.dist,invoker.altflags2,(invoker.fulldist*-1));
@@ -10066,44 +10078,41 @@ class Grimophone : DinahWeapon replaces BFG9000
 			}
 			RPLY C 0 
 			{
+				actor player = players[0].mo;
 				A_GrimophoneAltOn();
-				if (random(1,32) <= 31) 
+				
+				int energybitcost;
+				if (invoker.IPAttackCheck) energybitcost = 5;
+															else energybitcost = 10;
+				if (player.CountInv("GrimophoneUpgrade") <= 0) 
 				{
-					if (invoker.IPAttackCheck)
-					{
-						invoker.recordenergybits--;
-						if (invoker.recordenergybits <= 0)
-						{
-							invoker.recordenergy--;
-							invoker.recordenergybits = 2;
-						}
-					}
-					else
-					{
-						invoker.recordenergy--;
-						invoker.recordenergybits = 2;
-					}
+					energybitcost *= 1.0;
+					if (random(1,32) <= 1) energybitcost *= 2;
 				}
-				else
+				if (player.CountInv("GrimophoneUpgrade") == 1)
 				{
-					if (invoker.IPAttackCheck)
-					{
-						invoker.recordenergybits--;
-						if (invoker.recordenergybits <= 0)
-						{
-							if (random(1,2) == 1) invoker.recordenergy -= 2;
-															 else invoker.recordenergy--;
-							invoker.recordenergybits = 2;
-						}
-					}
-					else
-					{
-						if (random(1,2) == 1) invoker.recordenergy -= 2;
-														 else invoker.recordenergy--;
-						invoker.recordenergybits = 2;
-					}
+					energybitcost *= frandom(0.875,0.925);
+					if (random(1,28) <= 1) energybitcost *= 2;
 				}
-				if (dydudebug_grimophonealtfire) Console.Printf("recordenergy %d", invoker.recordenergy);
+				if (player.CountInv("GrimophoneUpgrade") == 2)
+				{
+					energybitcost *= frandom(0.75,0.85);
+					if (random(1,24) <= 1) energybitcost *= 2;
+				}
+				if (player.CountInv("GrimophoneUpgrade") >= 3) 
+				{
+					energybitcost *= frandom(0.5,0.7);
+					if (random(1,16) <= 1) energybitcost *= 2;
+				}
+				invoker.recordenergybits -= energybitcost;
+				
+				while (invoker.recordenergybits <= 0)
+				{
+					invoker.recordenergy--;
+					invoker.recordenergybits += 10;
+				}
+				if (dydudebug_grimophonealtfire) Console.Printf("\c[blue]recordenergy: %d\c-, \c[sapphire]recordenergybits: %d / 20\c-, energybitcost: %d", invoker.recordenergy, invoker.recordenergybits, energybitcost);
+				
 				invoker.A_CheckIPModeOnUse();
 				
 				if (invoker.recordenergy <= 0)
