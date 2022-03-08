@@ -2686,13 +2686,20 @@ class CricketBat : DinahWeapon replaces Pistol
 
 	action void A_CricketBatGuard(int type = 0)
 	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		bool berserked = false;
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) berserked = true;
 		A_SetInventory("IsInBatGuardFrame",1);
 
+		double lvlfactor = 0.125;
+		if (berserked) lvlfactor *= 2.5;
+		
 		string vispart = "CricketShieldPartNoReflect";
 		if (type == 1) vispart = "CricketShieldPart";
 		else
 		{
-			if (random(1,16) <= 5) vispart = "CricketShieldPart";
+			if (MiscItem && random(1,64) <= (20 + ((MiscItem.PlayerLevel * 0.125)))) vispart = "CricketShieldPart";
+			else if (random(1,16) <= 5) vispart = "CricketShieldPart";
 		}
 
 		double yoffset = frandompick(-0.3125,0,0.3125);
@@ -2758,12 +2765,17 @@ class CricketBat : DinahWeapon replaces Pistol
 
 	action void A_CricketBatSwing(int type = 0, double dist = 112.0)
 	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		bool berserked = false;
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) berserked = true;
+
 		A_BatGuardDashOff();
 		string vispart = "CricketSwingPartNoReflect";
-		if (random(1,16) <= 5) vispart = "CricketSwingShieldPart";
-
+		if (MiscItem && random(1,64) <= (20 + ((MiscItem.PlayerLevel * 0.125)))) vispart = "CricketSwingShieldPart";
+		else if (random(1,16) <= 5) vispart = "CricketSwingShieldPart";
+		
 		double yoffset = frandompick(-0.1625,0,0.1625);
-
+		
 		double distx, disty, distz;
 		double heightmulti = 0.5;
 		double heightmultivari = 0.125;
@@ -10073,32 +10085,37 @@ class Grimophone : DinahWeapon replaces BFG9000
 					A_RadiusThrust((invoker.dmg*-5),invoker.dist,RTF_NOTMISSILE|RTF_NOIMPACTDAMAGE,(invoker.fulldist*-1));
 				}
 				
-				if (MiscItem) 
+				if (!(player.bINVULNERABLE ||
+					 player.CountInv("PowerInvulnerable") || player.CountInv("PowerInvulnDD") || 
+					 player.player.cheats & CF_GODMODE2 || player.player.cheats & CF_GODMODE))
 				{
-					if (player.CountInv("GrimophoneUpgrade"))
+					if (MiscItem) 
 					{
-						if (player.CountInv("GrimophoneUpgrade") >= 3)
+						if (player.CountInv("GrimophoneUpgrade"))
 						{
-							if (invoker.IPAttackCheck) MiscItem.GrimophoneDebuffTimer += 5;
-																		else MiscItem.GrimophoneDebuffTimer += 6;
+							if (player.CountInv("GrimophoneUpgrade") >= 3)
+							{
+								if (invoker.IPAttackCheck) MiscItem.GrimophoneDebuffTimer += 5;
+																			else MiscItem.GrimophoneDebuffTimer += 6;
+							}
+							else
+							if (player.CountInv("GrimophoneUpgrade") == 2)
+							{
+								if (invoker.IPAttackCheck) MiscItem.GrimophoneDebuffTimer += 4;
+																			else MiscItem.GrimophoneDebuffTimer += 5;
+							}
+							else
+							if (player.CountInv("GrimophoneUpgrade") == 1)
+							{
+								if (invoker.IPAttackCheck) MiscItem.GrimophoneDebuffTimer += 3;
+																			else MiscItem.GrimophoneDebuffTimer += 4;
+							}
 						}
 						else
-						if (player.CountInv("GrimophoneUpgrade") == 2)
 						{
-							if (invoker.IPAttackCheck) MiscItem.GrimophoneDebuffTimer += 4;
-																		else MiscItem.GrimophoneDebuffTimer += 5;
+							if (invoker.IPAttackCheck) MiscItem.GrimophoneDebuffTimer += 2;
+																		else MiscItem.GrimophoneDebuffTimer += 3;
 						}
-						else
-						if (player.CountInv("GrimophoneUpgrade") == 1)
-						{
-							if (invoker.IPAttackCheck) MiscItem.GrimophoneDebuffTimer += 3;
-																		else MiscItem.GrimophoneDebuffTimer += 4;
-						}
-					}
-					else
-					{
-						if (invoker.IPAttackCheck) MiscItem.GrimophoneDebuffTimer += 2;
-																	else MiscItem.GrimophoneDebuffTimer += 3;
 					}
 				}
 			}
