@@ -1,5 +1,22 @@
 mixin class HUDRecovery
 {
+	void A_IPUseHUD(double cost)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		if (MiscItem)
+		{
+			MiscItem.IPLossHUDAmt += cost;
+			if (MiscItem.IPLossHUDTimer <= 0) MiscItem.IPLossHUDTimer = 105;
+			else
+			{
+				MiscItem.IPLossHUDTimer += 35;
+				if (MiscItem.IPLossHUDTimer < 105 && cost > (MiscItem.MaxItemPoints * 0.01)) MiscItem.IPLossHUDTimer = 105;
+				if (MiscItem.IPLossHUDTimer > 175) MiscItem.IPLossHUDTimer = 175;
+			}
+		}
+	}
+
 	void A_StatIncHud(int recovery, int type)
 	{
 		if (dydudebug_hudrecdmgdisplays) Console.Printf("A_MaxHPHud called");
@@ -36,7 +53,7 @@ mixin class HUDRecovery
 		}
 	}
 	
-	void A_AddIP(double base, double basef, bool acculmuatepulse)
+	void A_AddIP(double base, double basef, bool acculmuatepulse, bool addtohud)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -62,6 +79,18 @@ mixin class HUDRecovery
 					MiscItem.IPHUDPulseTimer += 35;
 					if (MiscItem.IPHUDPulseTimer < 105 && base > (MiscItem.MaxItemPoints * 0.10)) MiscItem.IPHUDPulseTimer = 105;
 					if (MiscItem.IPHUDPulseTimer > 175) MiscItem.IPHUDPulseTimer = 175;
+				}
+				
+				if (addtohud && base > 0)
+				{
+					MiscItem.IPGainHUDAmt += base;
+					if (MiscItem.IPGainHUDTimer <= 0) MiscItem.IPGainHUDTimer = 105;
+					else
+					{
+						MiscItem.IPGainHUDTimer += 35;
+						if (MiscItem.IPGainHUDTimer < 105 && base > (MiscItem.MaxItemPoints * 0.005)) MiscItem.IPGainHUDTimer = 105;
+						if (MiscItem.IPGainHUDTimer > 175) MiscItem.IPGainHUDTimer = 175;
+					}
 				}
 				
 				if (acculmuatepulse && base > 0 && (MiscItem.ItemPointsSession < MiscItem.MaxItemPoints))
@@ -663,7 +692,7 @@ mixin class MonsterCollider
 	{
 		initdmg = damage;
 		int shieldtype;
-		if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): initdmg vs Damage: %d vs %d", GetClassName(), initdmg, damage);
+		if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
 		if (dydudebug_actordmgdisplays && source) Console.Printf("(\c[green]%s\c-): dmgsource: \c[brick]%p\c- (\c[red]%s\c-)", GetClassName(), source, source.GetClassName());
 		if (dydudebug_actordmgdisplays && inflictor) Console.Printf("(\c[green]%s\c-): dmginflictor: \c[brick]%p\c- (\c[red]%s\c-)", GetClassName(), inflictor, inflictor.GetClassName());
 		nm = "CCards_Actor_Ghost"; if (CountInv(nm)) A_SetInventory("CCardGhostMarker",1);
