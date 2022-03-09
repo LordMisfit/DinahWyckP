@@ -17,6 +17,7 @@ class DDStatusBarMain : BaseStatusBar
 	HUDFont mDDSFont;
 	HUDFont mDDMFont;
 	HUDFont mDDLFont;
+	HUDFont mDDLFont2;
 	InventoryBarState diparms;
 	InventoryBarState diparms_sbar;
 	private int wiggle;
@@ -56,6 +57,8 @@ class DDStatusBarMain : BaseStatusBar
 		mDDMFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 1, 1);
 		fnt = "INDEXFONT_DDL";
 		mDDLFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 1, 1);
+		fnt = "INDEXFONT_DDL";
+		mDDLFont2 = HUDFont.Create(fnt, 0, false, 1, 1);
 		diparms = InventoryBarState.Create(mIndexFont);
 		diparms_sbar = InventoryBarState.CreateNoBox(mIndexFont, boxsize:(31, 31), arrowoffs:(0,-10));
 		mHealthInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
@@ -1475,12 +1478,14 @@ class DDStatusBarMain : BaseStatusBar
 			
 			int digits;
 			//level
+			digx = 32; // 48;
+			digy = -80; // -82;
 			if (exex_expenabled)
 			{
 				if (dyduhud_showexplevel)
 				{
-					DrawString(mDDLFont, FormatNumber(PlayerLevel, 3), (48, -82), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-					DrawString(mSmallFont, "LVL", (48, -91), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					DrawString(mDDLFont, FormatNumber(PlayerLevel, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					DrawString(mSmallFont, "LVL", (digx, digy-9), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				}
 				if (dyduhud_showexperience)
 				{
@@ -1497,10 +1502,10 @@ class DDStatusBarMain : BaseStatusBar
 					if (EXPNeeded < 10) digits = 1;
 					spacing = 6; // 6
 					spacing *= 1.25;
-					digx = 64 + (digits * spacing);
-					DrawString(mDDMFont, FormatNumber(mEXPInterpolator.GetValue(), digits), (digx, -88), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-					DrawString(mDDMFont, "/", ((digx+(spacing*1.334)), -84), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-					DrawString(mDDMFont, FormatNumber(EXPNeeded, digits), (digx, -78), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					digx += 16 + (digits * spacing);
+					DrawString(mDDMFont, FormatNumber(mEXPInterpolator.GetValue(), digits), (digx, digy-6), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					DrawString(mDDMFont, "/", ((digx+(spacing*1.334)), digy-2), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					DrawString(mDDMFont, FormatNumber(EXPNeeded, digits), (digx, digy+4), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				}
 			}
 
@@ -1589,8 +1594,8 @@ class DDStatusBarMain : BaseStatusBar
 			double dashmeterlength = (dyduhud_basedashmeterlength + (PlayerLevel * dyduhud_dashmetergrowperlvl));
 			if (dashmeterlength > dyduhud_dashmetermaxlength) dashmeterlength = dyduhud_dashmetermaxlength;
 			int dashbarunits = dash * dashmeterlength;
-			digy = -94;
-			digx = 5;
+			digx = 5; // 5;
+			digy = -122; // -94;
 			string dun = "DASHUNI2";
 			if (candash) dun = "DASHUNIT";
 			int dashcost = CPlayer.mo.CountInv("DashCost");
@@ -1701,7 +1706,7 @@ class DDStatusBarMain : BaseStatusBar
 
 				int IPx;
 				int IPy;
-				int ItemPoints;
+				double ItemPoints;
 				string IPPts = "";
 				int IPDigits;
 				int IPdigitcolor = 0;
@@ -1721,17 +1726,13 @@ class DDStatusBarMain : BaseStatusBar
 				if (MiscItem) 
 				{
 					ItemPoints = MiscItem.ItemPoints;
-					IPPts.AppendFormat("%.1f", ItemPoints);
+					IPPts.AppendFormat("%.2f%%", ItemPoints);
 
-					digx = 116 + (digits * spacing); // / 48
-					digy = -82; // -82 / -132
-					DrawString(mDDLFont, FormatNumber(ItemPoints, 3), ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
-					digx += 11;
-					digy += 3;
-					DrawString(mConFont, "%", ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
-					digx -= 11;
-					digy -= 11;
-					DrawString(mSmallFont, "IP", ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
+					digx = 34; // 68
+					digy = -108; // -108
+					DrawString(mDDLFont2, IPPts, ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
+					digy -= 8;
+					DrawString(mSmallFont, "IP", ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
 				}
 				
 				string IPInputIcon = "IPINPUT0";
@@ -1754,9 +1755,9 @@ class DDStatusBarMain : BaseStatusBar
 				}
 
 				vector2 ipiconscale = (1.5, 1.5);
-				digx = 142 + (digits * spacing);
-				digy = -66;
-				DrawImage(IPInputIcon, ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (ipiconscale*IPIconPulseScale));
+				digx += 50; // +50
+				digy += 22; // +22
+				DrawImage(IPInputIcon, ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, 1.0, (-1, -1), (ipiconscale*IPIconPulseScale));
 				
 				// Disipation Meter
 				int DissipateTimer = MiscItem.IPDissipateTimer;
@@ -1835,31 +1836,49 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			
 			//
-			if (MiscItem && dydudebug_hudstatdebug)
+			if (MiscItem && dyduhud_showextraatkdefspd)
 			{
 				FontScale = (1.0, 1.0);
 				int sepery = 6;
+				digx = 68 + (digits * spacing); // 176
+				digy = -90; // -90
 				string hudstat;
 				hudstat = "ATK+: ";
 				hudstat.AppendFormat("%d", MiscItem.PlayerATK);
-				hudstat.AppendFormat(" [%d]", MiscItem.PlayerLevel);
-				digx = 176 + (digits * spacing); // / 48
-				digy = -90; // -82 / -132
+				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", MiscItem.PlayerLevel);
 				DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_red, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				hudstat = "DEF+: ";
 				hudstat.AppendFormat("%d", MiscItem.PlayerDEF);
-				hudstat.AppendFormat(" [%d]", MiscItem.PlayerLevel);
+				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", MiscItem.PlayerLevel);
 				digy += sepery; // -82 / -132
 				DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_olive, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				hudstat = "SPD+: ";
 				hudstat.AppendFormat("%d", MiscItem.PlayerSPD);
-				hudstat.AppendFormat(" [%d]", MiscItem.PlayerLevel);
+				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", MiscItem.PlayerLevel);
 				digy += sepery; // -82 / -132
 				DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_blue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				hudstat = "LUCK: ";
-				hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
-				digy += sepery; // -82 / -132
-				DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				if (dyduhud_showluck)
+				{
+					hudstat = "LUCK: ";
+					hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
+					digy += sepery; // -82 / -132
+					DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				}
+				FontScale = (1.25, 1.25);
+			}
+			else
+			{
+				FontScale = (1.0, 1.0);
+				if (dyduhud_showluck)
+				{
+					int sepery = 6;
+					digx = 68 + (digits * spacing); // 176
+					digy = -90; // -90
+					string hudstat;
+					hudstat = "LUCK: ";
+					hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
+					DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				}
 				FontScale = (1.25, 1.25);
 			}
 			
