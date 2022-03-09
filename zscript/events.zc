@@ -1947,6 +1947,10 @@ class DD_EventHandler : EventHandler
 						
 						if (player.health > 0 || !player.CountInv("PlayerIsDead"))
 						{
+							int EXPPrevReq = MiscItem.LevelExpRequirement[(MiscItem.PlayerLevel-1)];
+							int EXPCurrReq = MiscItem.LevelExpRequirement[(MiscItem.PlayerLevel)];
+							int EXPFullReq = (EXPCurrReq-EXPPrevReq);
+							Console.Printf("%d / %d (%d)", EXPPrevReq, EXPCurrReq, EXPFullReq);
 							Player.A_GiveInventory("KillsCount",1);
 							Player.A_GiveInventory("ExpPts",ExpGain);
 							int Kills = Player.CountInv("KillsCount");
@@ -1954,6 +1958,19 @@ class DD_EventHandler : EventHandler
 							int ExpNeeded = Player.CountInv("ExpPtsNeeded");
 							int PlayerLevel = Player.CountInv("PlayerLevel");
 							if (exex_showexpgains) Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
+							if (exex_showexpgains)
+							{
+								MiscItem.EXPGainHUDAmt += ExpGain;
+								if (MiscItem.EXPGainHUDTimer <= 0) MiscItem.EXPGainHUDTimer = 70;
+								else
+								{
+									MiscItem.EXPGainHUDTimer += 35;
+									if (MiscItem.EXPGainHUDTimer < 105 && ExpGain > (EXPFullReq * 0.10)) MiscItem.EXPGainHUDTimer = 105;
+									if (MiscItem.EXPGainHUDTimer < 175 && ExpGain > (EXPFullReq * 0.25)) MiscItem.EXPGainHUDTimer = 175;
+									if (MiscItem.EXPGainHUDTimer < 245 && ExpGain > (EXPFullReq * 0.5)) MiscItem.EXPGainHUDTimer = 245;
+									if (MiscItem.EXPGainHUDTimer > 280) MiscItem.EXPGainHUDTimer = 280;
+								}
+							}
 						}
 					}
 					
