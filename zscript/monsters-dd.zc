@@ -236,7 +236,18 @@ class PlanterBird : Planter
 	{
 		Missile:
 			GARD P 0; //ACS_Execute(102,0,0,0,0);
-			GARD PQRS 4 A_FaceTarget;
+			GARD PQ 4 A_FaceTarget;
+			GARD Q 0
+			{
+				if (CountInv("MonsterLevel") >= 30)
+				{
+					if (random(1,2) <=1) return resolvestate("MissileBomb");
+				}
+				return resolvestate(null);
+			}
+			goto MissileNormal;
+		MissileNormal:
+			GARD RS 4 A_FaceTarget;
 			GARD Q 6 
 			{
 				int rndoffz = random(-5,5);
@@ -250,6 +261,24 @@ class PlanterBird : Planter
 					A_SpawnProjectile("BirdBall",48,rndoffz,rndoffxy,rndang);
 				}
 			}
+			goto MissileEnd;
+		MissileBomb:
+			GARD TU 4 A_FaceTarget;
+			GARD Q 6 
+			{
+				int rndoffz = random(-5,5);
+				int rndoffxy;
+				double rndang = frandompick(3.75,7.5,11.25);
+				if (CountInv("MonsterLevel") >= 45) rndoffxy = random(-5,5);
+				A_SpawnProjectile("BirdBombBall",48,rndoffz,rndoffxy,0);
+				if (CountInv("MonsterLevel") >= 60)
+				{
+					A_SpawnProjectile("BirdBombBall",48,rndoffz,rndoffxy,-rndang);
+					A_SpawnProjectile("BirdBombBall",48,rndoffz,rndoffxy,rndang);
+				}
+			}
+			goto MissileEnd;
+		MissileEnd:
 			GARD QP 6 A_Feathers();
 			Goto See;
 	}
@@ -281,6 +310,49 @@ class BirdBall : DDProjectile
 			Loop;
 		Death:
 			JSPL AAAA 1 A_Feathers();
+			Stop;
+	}
+}
+
+class BirdBombBall : DDProjectile
+{
+	default
+	{
+		Radius 10;
+		Height 12;
+		Speed 7;
+		Health 5;
+		Damage 6;
+		+SEEKERMISSILE
+		+SHOOTABLE
+		+NOBLOOD
+		+NOEXTREMEDEATH
+		Projectile;
+		renderstyle "Normal";
+		SeeSound "birdy/sight";
+		DeathSound "birdy/death";
+	}
+	
+	States
+	{
+		Spawn:
+			FFLY CD 2 A_SeekerMissile(8,8);
+			Loop;
+		Death:
+			JSPL A 0
+			{
+				A_StartSound("weapons/cherryboom",8);
+				A_Explode(64,64,0,true);
+			}
+			JSPL A 1 
+			{
+				A_SetScale((scale.x*1.125),(scale.y*1.125));
+				A_Feathers();
+			}
+			JSPL AAA 1 
+			{
+				A_SetScale((scale.x*1.125),(scale.y*1.125));
+			}
 			Stop;
 	}
 }

@@ -10,7 +10,10 @@ class DDPlayerPawn : PlayerPawn
 	const SKILL_IMPOSSIBLE = 7;
 	const SKILL_OMEGA = 8;
 	
+	double PlayerDefenseIgnoreFactor;
+
 	mixin HUDRecovery;
+	bool IPAttack;
 	
 	int PoisonDmgPainInt;
 	
@@ -1556,7 +1559,7 @@ class DDPlayerPawn : PlayerPawn
 			if (frandom(0.1,100.0) > dmg1base && damage < 1) damage = 1;
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [CCards Acid w/ Armor]: %d (%d)", damage, olddmg);
 		}
-
+		
 		bool isinvuln = false;
 		// If Invulnerable
 		{
@@ -1567,15 +1570,51 @@ class DDPlayerPawn : PlayerPawn
 				isinvuln = true;
 			}
 		}
-
+		
+		// (Partial) Defense Ignoring Attacks
+		PlayerDefenseIgnoreFactor = 0.00;
+		if (damage > 0)
+		{
+			if (inflictor == null && source == null)
+			{
+			}
+			else
+			{
+				if (!CountInv("DinahTrueIPState")) // The Flower Crown IP Mode Negates most Defense Ignoring attacks :V
+				{
+					double PikeAOEFactor = 0.334;
+					if (mod == 'Zap') PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					if (mod == 'Zap' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					double BeatsFactor = frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5);
+					if (mod == 'Beats') PlayerDefenseIgnoreFactor += (BeatsFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					double BeatsAOEFactor = frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5);
+					if (mod == 'Beats' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+				}
+			}
+		}
+		
 		int armoramt = CountInv("BasicArmor");
 		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Final] - Final Damage: %d", damage);
 		
-		string combatlogmsg = "\c[sapphire]*\c- ";
 		if (dydudebug_playerdamagemobj && armoramt) Console.Printf("Armor Amount: %d", armoramt);
 		//******************************
 		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
 		//******************************
+		ret = PostDamageMobj(inflictor, source, damage, mod, flags, angle, 
+												 ret, armoramt, firstdmg, isinvuln, oldhealth, oldhealthratio, SigilDrain,
+												 infl, sour, vict);
+		
+		return ret;
+	}
+	
+	int PostDamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, int ret, int armoramt, int firstdmg, bool isinvuln, int oldhealth, int oldhealthratio, bool SigilDrain, string infl, string sour, string vict)
+	{
+		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+		
+		string combatlogmsg = "\c[sapphire]*\c- ";
 		int armdmg = (armoramt - CountInv("BasicArmor"));
 		if (armdmg <= 0) armdmg = 0;
 		if (dydudebug_playerdamagemobj && armdmg) Console.Printf("Armor Damage: %d", armdmg);

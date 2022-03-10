@@ -921,6 +921,65 @@ mixin class MonsterCollider
 			}
 		}
 
+		int predmginr = damage;
+		// (Partial) Defense Ignoring Attacks
+		double prevDamageFactor;
+		double basedmgfactor = DamageFactor;
+		double ActorDefenseIgnoreFactor = 0.00;
+		if (inflictor == null && source == null) 
+		{
+			// BLASTED Impact Damage
+			if (wasblastedimpact) ActorDefenseIgnoreFactor += (frandom(0.45,0.55) * (1.00 - ActorDefenseIgnoreFactor));
+		}
+		else
+		{
+			double IPDmgFactor = 0.50;
+			DDProjectile IPAtk;
+			
+			if (inflictor) IPAtk = DDProjectile(inflictor);
+			else if (source) IPAtk = DDProjectile(source);
+			if (IPAtk && IPAtk.IPAttack) ActorDefenseIgnoreFactor += (IPDmgFactor * (1.00 - ActorDefenseIgnoreFactor));
+			else
+			{
+				DDPlayerPawn IPAtk2;
+				if (inflictor) IPAtk2 = DDPlayerPawn(inflictor);
+				else if (source) IPAtk2 = DDPlayerPawn(source);
+				if (IPAtk2 && IPAtk2.IPAttack) ActorDefenseIgnoreFactor += (IPDmgFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			
+			double TrueIPFactor = 1.00;
+			DDPlayerPawn TrueIPPlayer;
+			if (inflictor) TrueIPPlayer = DDPlayerPawn(inflictor);
+			else if (source) TrueIPPlayer = DDPlayerPawn(source);
+			if (TrueIPPlayer && TrueIPPlayer.CountInv("DinahTrueIPState")) ActorDefenseIgnoreFactor += (TrueIPFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double PikeAOEFactor = 0.334;
+			if (mod == 'Zap') ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			if (mod == 'Zap' && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double BeatsFactor = frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5);
+			if (mod == 'Beats') ActorDefenseIgnoreFactor += (BeatsFactor * (1.00 - ActorDefenseIgnoreFactor));
+			double BeatsAOEFactor = frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5);
+			if (mod == 'Beats' && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+		}
+		
+		//******************************
+		//*This ignores damage factors *
+		//******************************
+		if (ActorDefenseIgnoreFactor > 1.00) ActorDefenseIgnoreFactor = 1.00;
+		prevDamageFactor = DamageFactor;
+		if (DamageFactor < 1.00) 
+		{
+			//if (criticalhit) ActorDefenseIgnoreFactor = 1.00;
+			DamageFactor += ((1.00 - DamageFactor) * ActorDefenseIgnoreFactor); 
+		}
+		if (dydudebug_actordmgdisplays && damage > 0)
+		{
+			if (ActorDefenseIgnoreFactor > 0.00) Console.Printf("    (\czActor Defensive Input [ef Ignoring]\c-: \caDefenseIgnoreFactor = %.8f\c-, \cadmgfactor = %.8f\c-, \caprevdmgfactor = %.8f\c-, \cypredmg = %d\c-, \cydmg = %d\c- (Monster Actor))", ActorDefenseIgnoreFactor, DamageFactor, prevDamageFactor, predmginr, damage);
+																			else Console.Printf("    (\czActor Defensive Input [ef Ignoring]\c-: \caSKIPPED\c-, \cydmg = %d\c-)", predmginr);
+		}
+
 		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Pre-Function Call: damage: %d (initdmg: %d)", GetClassName(), damage, initdmg);
 		//************************************************************************
 		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);

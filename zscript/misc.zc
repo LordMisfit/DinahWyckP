@@ -158,7 +158,7 @@ class PlayerStatItem : Inventory
 
 	override void DoEffect()
 	{
-		let playeractor = PlayerPawn(owner);
+		let playeractor = DDPlayerPawn(owner);
 		if (!playeractor) // Removes itself if given to a non-Player Class
 		{
 			owner.A_SetInventory("PlayerStatItem",0); super.DoEffect(); 
@@ -1117,7 +1117,6 @@ class PlayerStatItem : Inventory
 							owner.A_SetInventory("GrimophoneDEFDown2",0);
 							owner.A_SetInventory("GrimophoneDEFDown1",1);
 						}
-						owner.bFORCERADIUSDMG = true;
 						if (!owner.CountInv("GrimAltFireInUse")) GrimophoneDebuffTimer -= (1 + floor(PlayerLevel * 0.025));
 																								else GrimophoneDebuffTimer -= (0 + floor(PlayerLevel * 0.00625));
 						
@@ -1129,10 +1128,28 @@ class PlayerStatItem : Inventory
 						owner.A_SetInventory("GrimophoneDEFDown3",0);
 						owner.A_SetInventory("GrimophoneDEFDown2",0);
 						owner.A_SetInventory("GrimophoneDEFDown1",0);
-						if (berserked && DashTics) owner.bFORCERADIUSDMG = true;
-						else owner.bFORCERADIUSDMG = false;
 					}
 				}
+				
+				DDPlayerPawn PlayIP;
+				if (owner.CountInv("GrimAltFireInUse"))
+				{
+					owner.bFORCERADIUSDMG = true;
+					PlayIP = DDPlayerPawn(owner);
+					if (PlayIP)
+					{
+						if (PlayIP.CountInv("IPUseMode")) PlayIP.IPAttack = true;
+																				 else PlayIP.IPAttack = false;
+					}
+				}
+				else
+				{
+					if (berserked && DashTics) owner.bFORCERADIUSDMG = true;
+																else owner.bFORCERADIUSDMG = false;
+					PlayIP = DDPlayerPawn(owner);
+					if (PlayIP) PlayIP.IPAttack = false;
+				}
+				if (dydudebug_grimophonealtfire) Console.Printf("PlayIP.IPAttack: \c[blue]%d\c-", PlayIP.IPAttack);
 				
 				//*************************
 				//* Mercy Invulnerability *
@@ -2944,6 +2961,7 @@ class PlayerStatItem : Inventory
 	
 	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive)
 	{
+		let playeractor = DDPlayerPawn(owner);
 		if (owner && (Owner.CountInv("PowerStrength") || owner.CountInv("PowerStrengthDD"))) berserked = true;
 
 		let globalvars = DDGlobalVariables.Get();
@@ -3274,7 +3292,30 @@ class PlayerStatItem : Inventory
 													 * CrisisFactor
 													 * deffct;
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("\c[gold]Damage (passive - Total): %.8f", TOTALFactor);
-
+			
+			// The following allows TOTALFactor to be affected by varying types of (Partial)Defense-Ignoring attacks.
+			double BaseIgnoreFactor = 0.0;
+			double DefenseIgnoreFactor = 0.0;
+			double PreTOTALFactor = TOTALFactor;
+			if (playeractor && playeractor.PlayerDefenseIgnoreFactor > 0.00 && TOTALFactor <= 1.00)
+			{
+				BaseIgnoreFactor = (1.0 - TOTALFactor);
+				DefenseIgnoreFactor = BaseIgnoreFactor * playeractor.PlayerDefenseIgnoreFactor;
+				TOTALFactor += DefenseIgnoreFactor;
+				if (dydudebug_playerdamagemobj)
+				{
+					Console.Printf("    (\czPlayerStatItem input\c-: \caDefenseIgnoreFactor\c- = \ca%.8f\c- / \cy%.8f\c-, \cwPlyrDmgIgnFctr\c- = \cw%.8f\c-, \cxTOTALFactor\c- = %.8f \cw(%.8f)\c-, \cydmg = %d\c- (StatItem Actor))", 
+					DefenseIgnoreFactor, BaseIgnoreFactor, playeractor.PlayerDefenseIgnoreFactor, TOTALFactor, PreTOTALFactor, damage);
+				}
+			}
+			else
+			{
+				if (dydudebug_playerdamagemobj)
+				{
+					Console.Printf("    (\czPlayerStatItem input\c-: \caSKIPPED\c-, \cydmg = %d\c-)", DefenseIgnoreFactor, damage);
+				}
+			}
+			
 			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("FDamage (passive - Final): %d", newdamage);
 		}
