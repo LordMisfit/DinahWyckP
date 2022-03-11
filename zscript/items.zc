@@ -2435,7 +2435,7 @@ class ArmorScrap : ArmorBonus
 		if (spawntype == 1) msg = "Knight-Gown Scrap!";
 		if (spawntype == 2) msg = "Large Knight-Gown Scrap!";
 		if (spawntype == 3) msg = "Huge Knight-Gown Scrap!";
-		if (spawntype == 4) msg = "A Kit of Knight-Gown Scrap!";
+		if (spawntype == 4) msg = "A Kit of Knight-Gown Scraps and some tools for scavenging more from large armor!";
 		msg.AppendFormat(" \c[green]+%d Armor", SaveAmount);
 		return msg;
 	}
@@ -2607,6 +2607,8 @@ class ArmorScrap : ArmorBonus
 		int armordiff = Owner.CountInv("BasicArmor") - PrevArmorAmt;
 		if (dydudebug_armordisplays) Console.Printf("%d", Owner.CountInv("BasicArmor"));
 		if (armordiff) A_RecoverHUD(armordiff, 1, true);
+		
+		if (spawntype >= 4) owner.A_GiveInventory("ArmorScavengerKit",randompick(3,4,4,5,5,5,6,6,7));
 
 		return true;
 	}
@@ -2684,6 +2686,174 @@ class ArmorScrap : ArmorBonus
 	}
 }
 
+class ArmorScrapKit : ArmorScrap
+{
+	default
+	{
+		Inventory.Icon "DACLE0";
+		Inventory.Pickupmessage "A Kit of Knight-Gown Scraps and some tools for scavenging more from large armor!";
+		Inventory.PickupSound "Scrap/Find";
+		Armor.SavePercent 50;
+		Armor.SaveAmount 25;
+		Armor.MaxSaveAmount 2000;
+		DamageFactor "Melee", 0.8;
+		DamageFactor "Zap", 0.9;
+		-FLOATBOB
+		+DONTGIB
+	}
+	
+	override String PickupMessage()
+	{
+		string msg = PickupMsg;
+		msg.AppendFormat(" \c[green]+%d Armor", SaveAmount);
+		return msg;
+	}
+	
+	override void PostBeginPlay()
+	{
+		ArmorBonus.PostBeginPlay();
+	}
+	
+	override bool Use (bool pickup)
+	{
+		int PrevArmorAmt = Owner.CountInv("BasicArmor");
+		int PrevArmorType;
+		if (owner.CountInv("KnightGownItem")) PrevArmorType = 1;
+		if (owner.CountInv("KnightGownItem2")) PrevArmorType = 2;
+		if (owner.CountInv("KnightGownItem3")) PrevArmorType = 3;
+		if (owner.CountInv("KnightGownItem4")) PrevArmorType = 4;
+		if (dydudebug_armordisplays) Console.Printf("PrevArmorType: %d, PrevArmorAmt: %d", PrevArmorType, PrevArmorAmt);
+
+		let armor = BasicArmor(Owner.FindInventory("BasicArmor"));
+		bool result = false;
+
+		// This should really never happen but let's be prepared for a broken inventory.
+		if (armor == null)
+		{
+			armor = BasicArmor(Spawn("BasicArmor"));
+			armor.BecomeItem();
+			armor.Amount = 0;
+			armor.MaxAmount = MaxSaveAmount;
+			Owner.AddInventory (armor);
+		}
+
+		if (BonusCount > 0 && armor.BonusCount < BonusMax)
+		{
+			armor.BonusCount = min(armor.BonusCount + BonusCount, BonusMax);
+			result = true;
+		}
+
+		int saveAmount = min(GetSaveAmount(), MaxSaveAmount);
+
+		if (saveAmount <= 0)
+		{ // If it can't give you anything, it's as good as used.
+			return BonusCount > 0 ? result : true;
+		}
+
+		// If you already have more armor than this item can give you, you can't
+		// use it.
+		if (armor.Amount >= MaxSaveAmount + armor.BonusCount)
+		{
+			return result;
+		}
+
+		if (armor.Amount <= 0)
+		{ // Should never be less than 0, but might as well check anyway
+			armor.Amount = 0;
+			armor.Icon = Icon;
+			armor.SavePercent = clamp(SavePercent, 0, 100) / 100;
+			armor.MaxAbsorb = MaxAbsorb;
+			armor.ArmorType = GetClassName();
+			armor.MaxFullAbsorb = MaxFullAbsorb;
+			armor.ActualSaveAmount = MaxSaveAmount;
+		}
+		else
+		{
+			if (dydudebug_armordisplays) Console.Printf("armor.Amount: %d", armor.Amount);
+			if (PrevArmorType == 0)
+			{
+				armor.SavePercent = clamp(50.0, 0, 100.0) / 100.0;
+				if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+			}
+			if (PrevArmorType == 1)
+			{
+				if (armor.Amount > 249)
+				{
+					armor.SavePercent = clamp(75.0, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("AGWNJ0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+				else 
+				{
+					if (armor.Amount >= 124)
+					{
+						if (armor.Icon != TexMan.checkForTexture("AGWNI0")) armor.Icon = TexMan.checkForTexture("AGWNI0");
+					}
+					//armor.SavePercent = clamp(50, 0, 100) / 100;
+					armor.SavePercent = clamp(50.0, 0, 100.0) / 100.0;
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+			}
+			else
+			if (PrevArmorType == 2)
+			{
+				if (armor.Amount > 499)
+				{
+					armor.SavePercent = clamp(87.5, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("AGWNK0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+				else
+				{
+					armor.SavePercent = clamp(75.0, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("AGWNJ0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+			}
+			else
+			if (PrevArmorType == 3)
+			{
+				if (armor.Amount > 999)
+				{
+					armor.SavePercent = clamp(93.75, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("AGWNL0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+				else
+				{
+					armor.SavePercent = clamp(87.5, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("AGWNK0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+			}
+			if (PrevArmorType == 4)
+			{
+				armor.SavePercent = clamp(93.75, 0, 100.0) / 100.0;
+				armor.Icon = TexMan.checkForTexture("AGWNL0");
+				if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+			}
+		}
+		
+		armor.Amount = min(armor.Amount + saveAmount, MaxSaveAmount + armor.BonusCount);
+		armor.MaxAmount = max(armor.MaxAmount, MaxSaveAmount);
+		
+		int armordiff = Owner.CountInv("BasicArmor") - PrevArmorAmt;
+		if (dydudebug_armordisplays) Console.Printf("%d", Owner.CountInv("BasicArmor"));
+		if (armordiff) A_RecoverHUD(armordiff, 1, true);
+		
+		owner.A_GiveInventory("ArmorScavengerKit",randompick(3,4,4,5,5,5,6,6,7));
+
+		return true;
+	}
+	
+	States
+	{
+		Spawn:
+			DACL E -1 BRIGHT;
+			stop;
+	}
+}
+
 //Armor
 class KnightGown : SilverShield
 {
@@ -2752,6 +2922,8 @@ class KnightGown : SilverShield
 		if (skill == 2) skillapaddfactor = 0.667;
 		if (skill == 3) skillapaddfactor = 0.625;
 		if (skill >= 4) skillapaddfactor = 0.53125;
+		double remainfactor = ((1.0 - skillapaddfactor) * 0.01);
+		skillapaddfactor += (owner.CountInv("ArmorScavengerKit") * remainfactor);
 		if (PrevArmorType <= 1)
 		{
 			armor.SavePercent = clamp(SavePercent, 0, 100) / 100;
@@ -2900,6 +3072,8 @@ class KnightGown2 : EnchantedShield
 		if (skill == 2) skillapaddfactor = 0.667;
 		if (skill == 3) skillapaddfactor = 0.625;
 		if (skill >= 4) skillapaddfactor = 0.53125;
+		double remainfactor = ((1.0 - skillapaddfactor) * 0.01);
+		skillapaddfactor += (owner.CountInv("ArmorScavengerKit") * remainfactor);
 		if (PrevArmorType <= 2)
 		{
 			armor.SavePercent = clamp(SavePercent, 0, 100) / 100;
@@ -3022,6 +3196,8 @@ class KnightGown3 : EnchantedShield
 		if (skill == 2) skillapaddfactor = 0.667;
 		if (skill == 3) skillapaddfactor = 0.625;
 		if (skill >= 4) skillapaddfactor = 0.53125;
+		double remainfactor = ((1.0 - skillapaddfactor) * 0.01);
+		skillapaddfactor += (owner.CountInv("ArmorScavengerKit") * remainfactor);
 		if (PrevArmorType <= 3)
 		{
 			armor.SavePercent = clamp(SavePercent, 0, 100) / 100;
