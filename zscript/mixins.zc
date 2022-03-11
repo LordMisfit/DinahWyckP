@@ -55,6 +55,7 @@ mixin class HUDRecovery
 	
 	void A_AddIP(double base, double basef, bool acculmuatepulse, bool addtohud)
 	{
+		//Console.Printf("A_AddIP [mixin]");
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
@@ -70,26 +71,36 @@ mixin class HUDRecovery
 			{
 				if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer = (IPTimerBaseInc * basef);
 																			else MiscItem.IPDissipateTimer += (IPTimerBaseInc * basef);
+				double oldItemPoints = MiscItem.ItemPoints;
 				MiscItem.ItemPoints += base;
-				globalvars.ItemPoints += base;
-				
-				if (MiscItem.IPHUDPulseTimer <= 0) MiscItem.IPHUDPulseTimer = 105;
-				else
+				if (MiscItem.ItemPoints > MiscItem.MaxItemPoints) MiscItem.ItemPoints = MiscItem.MaxItemPoints;
+				if (MiscItem.ItemPoints >= oldItemPoints) 
 				{
-					MiscItem.IPHUDPulseTimer += 35;
-					if (MiscItem.IPHUDPulseTimer < 105 && base > (MiscItem.MaxItemPoints * 0.10)) MiscItem.IPHUDPulseTimer = 105;
-					if (MiscItem.IPHUDPulseTimer > 175) MiscItem.IPHUDPulseTimer = 175;
+					base = (MiscItem.ItemPoints - oldItemPoints);
+					if (dydudebug_ipdisplays2) Console.Printf("\c[red]A_AddIP (base): %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", base, oldItemPoints, MiscItem.ItemPoints);
 				}
+				globalvars.ItemPoints = MiscItem.ItemPoints;
 				
-				if (addtohud && base > 0)
+				if (base > 0)
 				{
-					MiscItem.IPGainHUDAmt += base;
-					if (MiscItem.IPGainHUDTimer <= 0) MiscItem.IPGainHUDTimer = 105;
+					if (addtohud)
+					{
+						MiscItem.IPGainHUDAmt += base;
+						if (MiscItem.IPGainHUDTimer <= 0) MiscItem.IPGainHUDTimer = 105;
+						else
+						{
+							MiscItem.IPGainHUDTimer += 35;
+							if (MiscItem.IPGainHUDTimer < 105 && base > (MiscItem.MaxItemPoints * 0.005)) MiscItem.IPGainHUDTimer = 105;
+							if (MiscItem.IPGainHUDTimer > 175) MiscItem.IPGainHUDTimer = 175;
+						}
+					}
+					
+					if (MiscItem.IPHUDPulseTimer <= 0) MiscItem.IPHUDPulseTimer = 105;
 					else
 					{
-						MiscItem.IPGainHUDTimer += 35;
-						if (MiscItem.IPGainHUDTimer < 105 && base > (MiscItem.MaxItemPoints * 0.005)) MiscItem.IPGainHUDTimer = 105;
-						if (MiscItem.IPGainHUDTimer > 175) MiscItem.IPGainHUDTimer = 175;
+						MiscItem.IPHUDPulseTimer += 35;
+						if (MiscItem.IPHUDPulseTimer < 105 && base > (MiscItem.MaxItemPoints * 0.10)) MiscItem.IPHUDPulseTimer = 105;
+						if (MiscItem.IPHUDPulseTimer > 175) MiscItem.IPHUDPulseTimer = 175;
 					}
 				}
 				
@@ -1216,7 +1227,17 @@ mixin class IPCostCheck
 		
 		if (ipid == -1)
 		{
-			cost = 999.9;
+			if (player) 
+			{
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				if (MiscItem)
+				{
+					cost = MiscItem.BaseMaxItemPoints;
+				}
+				else cost = 999.9;
+			}
+			else cost = 999.9;
+			
 		}
 		
 		if (ipid == 1) // Cherry Bomb [Inventory]

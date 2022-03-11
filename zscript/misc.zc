@@ -103,7 +103,8 @@ class PlayerStatItem : Inventory
 	int HealthLevelAdd;
 	int HealthBonusAdd;
 	int MaxHealthLimit;
-	int MaxItemPoints;
+	double MaxItemPoints;
+	double BaseMaxItemPoints;
 
 	int TrueGameSkill;
 	int CurrentArmorClass;
@@ -436,6 +437,8 @@ class PlayerStatItem : Inventory
 				if (TrueGameSkill == SKILL_NORMAL) MaxItemPoints += (PlayerLevel * 1.0);
 				if (TrueGameSkill == SKILL_HARD) MaxItemPoints += (PlayerLevel * 0.75);
 				if (TrueGameSkill == SKILL_VERY_HARD) MaxItemPoints += (PlayerLevel * 0.5);
+				BaseMaxItemPoints = MaxItemPoints;
+				if (owner.CountInv("GoldRageCups")) MaxItemPoints += ((MaxItemPoints * 0.1) * owner.CountInv("GoldRageCups"));
 				if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
 				
 				if (owner.CountInv("PoisonCount"))
@@ -639,33 +642,43 @@ class PlayerStatItem : Inventory
 					{
 						if (IPDissipateTimer > 0) IPDissipateTimer = (-350 * basef);
 																 else IPDissipateTimer += (-350 * basef);
+						double oldItemPoints = ItemPoints;
 						ItemPoints += base;
-						globalvars.ItemPoints += base;
-						
-						if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-						else
+						if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+						if (ItemPoints >= oldItemPoints) 
 						{
-							IPHUDPulseTimer += 35;
-							if (IPHUDPulseTimer < 105 && base > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-							if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+							base = (ItemPoints - oldItemPoints);
+							if (dydudebug_ipdisplays2) Console.Printf("\c[red]LevelUp (base): %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", base, oldItemPoints, ItemPoints);
 						}
+						globalvars.ItemPoints == ItemPoints;
 						
-						if (base > 0 && (ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
+						if (base > 0)
 						{
-							ItemPointsSession += base;
-							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-							if (ItemPointsSession > 0 && base > 0)
+							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+							else
 							{
-								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-								if (healfactor < 10) IPHUDPulseType = 1;
-								if (healfactor >= 10) IPHUDPulseType = 2;
-								if (healfactor >= 50) IPHUDPulseType = 3;
-								if (healfactor >= 100) IPHUDPulseType = 4;
-								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+								IPHUDPulseTimer += 35;
+								if (IPHUDPulseTimer < 105 && base > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
 							}
+							
+							if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
+							{
+								ItemPointsSession += base;
+								if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+								if (ItemPointsSession > 0 && base > 0)
+								{
+									int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+									if (healfactor < 10) IPHUDPulseType = 1;
+									if (healfactor >= 10) IPHUDPulseType = 2;
+									if (healfactor >= 50) IPHUDPulseType = 3;
+									if (healfactor >= 100) IPHUDPulseType = 4;
+									IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+								}
+							}
+							
+							if (exex_playerdmglog) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
 						}
-						
-						if (exex_playerdmglog) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
 					}
 					
 					string blehmsg = "";
@@ -1504,41 +1517,52 @@ class PlayerStatItem : Inventory
 					}
 					berserkIPGain *= (1.0 + (PlayerLevel * 0.0025));
 					//Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPDissipateTimer, IPTimerInc, BerIPMulti);
+					double oldItemPoints = ItemPoints;
 					ItemPoints += berserkIPGain;
+					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+					if (ItemPoints >= oldItemPoints) 
+					{
+						berserkIPGain = (ItemPoints - oldItemPoints);
+						if (dydudebug_ipdisplays2) Console.Printf("\c[red]berserkIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", berserkIPGain, oldItemPoints, ItemPoints);
+					}
 					globalvars.ItemPoints = ItemPoints;
 					
-					if (dyduhud_showmiscipgains)
+					if (berserkIPGain > 0)
 					{
-						IPGainHUDAmt += berserkIPGain;
-						if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-						else
+						if (dydudebug_ipdisplays2) Console.Printf("berserkIPGain > 0: %.8f", berserkIPGain);
+						if (dyduhud_showmiscipgains)
 						{
-							IPGainHUDTimer += 5;
-							if (IPGainHUDTimer < 105 && berserkIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-							if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+							IPGainHUDAmt += berserkIPGain;
+							if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+							else
+							{
+								IPGainHUDTimer += 5;
+								if (IPGainHUDTimer < 105 && berserkIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+								if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+							}
+							
+							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+							else
+							{
+								IPHUDPulseTimer += 35;
+								if (IPHUDPulseTimer < 105 && berserkIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+							}
 						}
 						
-						if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-						else
+						if (ItemPointsSession < MaxItemPoints && ItemPoints < MaxItemPoints)
 						{
-							IPHUDPulseTimer += 35;
-							if (IPHUDPulseTimer < 105 && berserkIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-							if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
-						}
-					}
-					
-					if (berserkIPGain > 0 && (ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
-					{
-						ItemPointsSession += berserkIPGain;
-						if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-						if (ItemPointsSession > 0 && berserkIPGain > 0)
-						{
-							int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-							if (healfactor < 10) IPHUDPulseType = 1;
-							if (healfactor >= 10) IPHUDPulseType = 2;
-							if (healfactor >= 50) IPHUDPulseType = 3;
-							if (healfactor >= 100) IPHUDPulseType = 4;
-							IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+							ItemPointsSession += berserkIPGain;
+							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+							if (ItemPointsSession > 0 && berserkIPGain > 0)
+							{
+								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+								if (healfactor < 10) IPHUDPulseType = 1;
+								if (healfactor >= 10) IPHUDPulseType = 2;
+								if (healfactor >= 50) IPHUDPulseType = 3;
+								if (healfactor >= 100) IPHUDPulseType = 4;
+								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+							}
 						}
 					}
 				}
@@ -1599,41 +1623,52 @@ class PlayerStatItem : Inventory
 					}
 					ArmorIPGain *= (1.0 + (PlayerLevel * 0.0025));
 					//Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
+					double oldItemPoints = ItemPoints;
 					ItemPoints += ArmorIPGain;
+					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+					if (ItemPoints >= oldItemPoints) 
+					{
+						ArmorIPGain = (ItemPoints - oldItemPoints);
+						if (dydudebug_ipdisplays2) Console.Printf("\c[red]ArmorIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", ArmorIPGain, oldItemPoints, ItemPoints);
+					}
 					globalvars.ItemPoints = ItemPoints;
 					
-					if (dyduhud_showmiscipgains)
+					if (ArmorIPGain > 0)
 					{
-						IPGainHUDAmt += ArmorIPGain;
-						if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-						else
+						if (dydudebug_ipdisplays2) Console.Printf("ArmorIPGain > 0: %.8f", ArmorIPGain);
+						if (dyduhud_showmiscipgains)
 						{
-							IPGainHUDTimer += 5;
-							if (IPGainHUDTimer < 105 && ArmorIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-							if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+							IPGainHUDAmt += ArmorIPGain;
+							if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+							else
+							{
+								IPGainHUDTimer += 5;
+								if (IPGainHUDTimer < 105 && ArmorIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+								if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+							}
+							
+							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+							else
+							{
+								IPHUDPulseTimer += 35;
+								if (IPHUDPulseTimer < 105 && ArmorIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+							}
 						}
 						
-						if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-						else
+						if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
 						{
-							IPHUDPulseTimer += 35;
-							if (IPHUDPulseTimer < 105 && ArmorIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-							if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
-						}
-					}
-					
-					if (ArmorIPGain > 0 && (ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
-					{
-						ItemPointsSession += ArmorIPGain;
-						if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-						if (ItemPointsSession > 0 && ArmorIPGain > 0)
-						{
-							int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-							if (healfactor < 10) IPHUDPulseType = 1;
-							if (healfactor >= 10) IPHUDPulseType = 2;
-							if (healfactor >= 50) IPHUDPulseType = 3;
-							if (healfactor >= 100) IPHUDPulseType = 4;
-							IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+							ItemPointsSession += ArmorIPGain;
+							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+							if (ItemPointsSession > 0 && ArmorIPGain > 0)
+							{
+								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+								if (healfactor < 10) IPHUDPulseType = 1;
+								if (healfactor >= 10) IPHUDPulseType = 2;
+								if (healfactor >= 50) IPHUDPulseType = 3;
+								if (healfactor >= 100) IPHUDPulseType = 4;
+								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+							}
 						}
 					}
 				}
@@ -1680,41 +1715,52 @@ class PlayerStatItem : Inventory
 					}
 					MorphIPGain *= (1.0 + (PlayerLevel * 0.0075));
 					//Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", MorphIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
+					double oldItemPoints = ItemPoints;
 					ItemPoints += MorphIPGain;
+					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+					if (ItemPoints >= oldItemPoints) 
+					{
+						MorphIPGain = (ItemPoints - oldItemPoints);
+						if (dydudebug_ipdisplays2) Console.Printf("\c[red]MorphIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", MorphIPGain, oldItemPoints, ItemPoints);
+					}
 					globalvars.ItemPoints = ItemPoints;
 					
-					if (dyduhud_showmiscipgains)
+					if (MorphIPGain > 0)
 					{
-						IPGainHUDAmt += MorphIPGain;
-						if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-						else
+						if (dydudebug_ipdisplays2) Console.Printf("MorphIPGain > 0: %.8f", MorphIPGain);
+						if (dyduhud_showmiscipgains)
 						{
-							IPGainHUDTimer += 5;
-							if (IPGainHUDTimer < 105 && MorphIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-							if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+							IPGainHUDAmt += MorphIPGain;
+							if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+							else
+							{
+								IPGainHUDTimer += 5;
+								if (IPGainHUDTimer < 105 && MorphIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+								if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+							}
+							
+							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+							else
+							{
+								IPHUDPulseTimer += 35;
+								if (IPHUDPulseTimer < 105 && MorphIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+							}
 						}
 						
-						if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-						else
+						if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
 						{
-							IPHUDPulseTimer += 35;
-							if (IPHUDPulseTimer < 105 && MorphIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-							if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
-						}
-					}
-					
-					if (MorphIPGain > 0 && (ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
-					{
-						ItemPointsSession += MorphIPGain;
-						if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-						if (ItemPointsSession > 0 && MorphIPGain > 0)
-						{
-							int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-							if (healfactor < 10) IPHUDPulseType = 1;
-							if (healfactor >= 10) IPHUDPulseType = 2;
-							if (healfactor >= 50) IPHUDPulseType = 3;
-							if (healfactor >= 100) IPHUDPulseType = 4;
-							IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+							ItemPointsSession += MorphIPGain;
+							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+							if (ItemPointsSession > 0 && MorphIPGain > 0)
+							{
+								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+								if (healfactor < 10) IPHUDPulseType = 1;
+								if (healfactor >= 10) IPHUDPulseType = 2;
+								if (healfactor >= 50) IPHUDPulseType = 3;
+								if (healfactor >= 100) IPHUDPulseType = 4;
+								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+							}
 						}
 					}
 				}
@@ -1790,7 +1836,19 @@ class PlayerStatItem : Inventory
 				}
 				if (owner.CountInv("ItemPointsAdd")) 
 				{
-					if (exex_ikaripointsenabled) ItemPoints += owner.CountInv("ItemPointsAdd");
+					if (exex_ikaripointsenabled)
+					{
+						double base = owner.CountInv("ItemPointsAdd");
+						double oldItemPoints = ItemPoints;
+						ItemPoints += base;
+						if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+						if (ItemPoints >= oldItemPoints) 
+						{
+							base = (ItemPoints - oldItemPoints);
+							if (dydudebug_ipdisplays2) Console.Printf("\c[red]ItemPointsAdd (base): %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", base, oldItemPoints, ItemPoints);
+						}
+						globalvars.ItemPoints = ItemPoints;
+					}
 					owner.A_SetInventory("ItemPointsAdd",0);
 				}
 				
