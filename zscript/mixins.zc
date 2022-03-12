@@ -701,6 +701,8 @@ mixin class MonsterCollider
 	int initdmg;
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		initdmg = damage;
 		int shieldtype;
 		if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
@@ -973,6 +975,24 @@ mixin class MonsterCollider
 			if (mod == 'Beats') ActorDefenseIgnoreFactor += (BeatsFactor * (1.00 - ActorDefenseIgnoreFactor));
 			double BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
 			if (mod == 'Beats' && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double BarrelFactor = 0.50;
+			if (skill <= 0) BarrelFactor = 1.0;
+			if (skill == 1) BarrelFactor = 0.75;
+			if (skill == 2) BarrelFactor = 0.5;
+			if (skill == 3) BarrelFactor = 0.25;
+			if (skill >= 4) BarrelFactor = 0.0;
+			if ((ExplosiveBarrel(inflictor) || ExplosiveBarrel(source) || Pod(inflictor) || Pod(source)) && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BarrelFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double CandleFactor = 0.00;
+			if (MiscItem)
+			{
+				if (MiscItem.PlayerLevel >= 120) CandleFactor = ((random(5,15) * 0.025) + (MiscItem.PlayerLevel * (random(14,16) * 0.0035)));
+				else if (MiscItem.PlayerLevel >= 45) CandleFactor = ((random(1,10) * 0.02) + (MiscItem.PlayerLevel * (random(9,11) * 0.003)));
+				else CandleFactor = ((random(1,5) * 0.01) + (MiscItem.PlayerLevel * (random(3,5) * 0.0025)));
+				if (CandleFactor > 1.00) CandleFactor = 1.00;
+			}
+			if (CandlePuff(inflictor) || CandlePuff(source) || WhipPuff(inflictor) || WhipPuff(source)) ActorDefenseIgnoreFactor += (CandleFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
 			double SuckFactor = 0.334;
 			if (mod == 'Suck') ActorDefenseIgnoreFactor += (SuckFactor * (1.00 - ActorDefenseIgnoreFactor));

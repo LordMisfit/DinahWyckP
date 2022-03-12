@@ -12691,12 +12691,166 @@ class CandleWhip : DinahWeapon
 		}
 	}
 	
-	action void A_CandleWhipHit(string pufftype = "WhipPuff")
+	action void A_CandleWhipHit(string pufftype, string pufftypeip, double rangemult, double turnang)
 	{
-		if (invoker.IPAttackCheck) pufftype = "WhipPuffIP";
+		A_SetAngle(angle+turnang);
+		invoker.range = (invoker.rangebase * rangemult);
+		if (invoker.IPAttackCheck) pufftype = pufftypeip;
 		A_CustomPunch((invoker.dmg), true, CPF_NOTURN, pufftype, invoker.range, IPCostOnHit: true);
-		//A_RailAttack((invoker.dmg),0,0,"","",RGF_SILENT,0,pufftype,0,0,invoker.range,0,0,0,"",0);
 		invoker.A_CheckIPModeOnUse();
+		A_SetAngle(angle-turnang);
+	}
+	
+	action void A_WhipCrack2Tics(int baseshieldpartchance, int shieldpartchance, int shieldpartchance2)
+	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		if (invoker.IPAttackCheck) shieldpartchance = shieldpartchance2;
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+		{
+			if (invoker.IPAttackCheck)
+			{
+				if (MiscItem.PlayerLevel >= 45)
+				{
+					A_SetTics(randompick(0,0,0,0,1));
+				}
+				else
+				{
+					A_SetTics(random(0,1));
+				}
+			}
+			else
+			{
+				if (MiscItem.PlayerLevel >= 45)
+				{
+					if (MiscItem.PlayerLevel >= 90)
+					{
+						A_SetTics(randompick(0,0,0,0,1));
+					}
+					else
+					{
+						A_SetTics(random(0,1));
+					}
+				}
+				else
+				{
+					A_SetTics(1);
+				}
+			}
+
+			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
+		}
+		else
+		{
+			if (invoker.IPAttackCheck) 
+			{
+				if (MiscItem.PlayerLevel >= 15)
+				{
+					if (MiscItem.PlayerLevel >= 45)
+					{
+						A_SetTics(randompick(0,0,0,0,1));
+					}
+					else
+					{
+						A_SetTics(random(0,1));
+					}
+				}
+				else
+				{
+					A_SetTics(1);
+				}
+			}
+			else
+			{
+				if (MiscItem.PlayerLevel >= 15)
+				{
+					if (MiscItem.PlayerLevel >= 45)
+					{
+						A_SetTics(random(0,1));
+					}
+					else
+					{
+						A_SetTics(1);
+					}
+				}
+				else
+				{
+					A_SetTics(random(2,3));
+				}
+			}
+			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
+		}
+	}
+
+	action void A_WhipCrack3Tics(int baseshieldpartchance, int shieldpartchance, int shieldpartchance2)
+	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		if (invoker.IPAttackCheck) shieldpartchance = shieldpartchance2;
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+		{
+			if (invoker.IPAttackCheck)
+			{
+				if (MiscItem.PlayerLevel >= 45)
+				{
+					A_SetTics(randompick(0,0,0,1));
+				}
+				else
+				{
+					A_SetTics(random(0,1));
+				}
+			}
+			else
+			{
+				if (MiscItem.PlayerLevel >= 45)
+				{
+					A_SetTics(random(0,1));
+				}
+				else
+				{
+					A_SetTics(random(1,2));
+				}
+			}
+			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
+		}
+		else
+		{
+			if (invoker.IPAttackCheck) 
+			{
+				if (MiscItem.PlayerLevel >= 15)
+				{
+					if (MiscItem.PlayerLevel >= 45)
+					{
+					A_SetTics(randompick(0,0,0,1));
+					}
+					else
+					{
+						A_SetTics(random(0,1));
+					}
+				}
+				else
+				{
+					A_SetTics(random(1,2));
+				}
+			}
+			else
+			{
+				if (MiscItem.PlayerLevel >= 15)
+				{
+					if (MiscItem.PlayerLevel >= 45)
+					{
+						A_SetTics(random(0,1));
+					}
+					else
+					{
+						A_SetTics(random(1,2));
+					}
+				}
+				else
+				{
+					A_SetTics(random(2,3));
+				}
+			}
+			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
+		}
 	}
 
 	States
@@ -12787,158 +12941,22 @@ class CandleWhip : DinahWeapon
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
 					invoker.dmg *= 10;
-					invoker.range *= frandompick(1.0,1.0,1.0,1.125,1.125,1.25);
+					invoker.rangebase *= frandompick(1.0,1.0,1.0,1.125,1.125,1.25);
 					if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0 (berserk)]: %d dmg", invoker.dmg);
 				}
 				if (invoker.dmg < 1) invoker.dmg = 1;
-				if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0]: %d dmg, %d range", invoker.dmg, invoker.range);
+				if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0]: %d dmg, %d rangebase", invoker.dmg, invoker.rangebase);
 			}
 			RCAN Z 3 bright
 			{
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int shieldpartchance = 5;
-				if (invoker.IPAttackCheck) shieldpartchance = randompick(7,7,8,8,8);
-				invoker.range = (invoker.rangebase * 0.59);
-				A_SetAngle(angle+75);
-				A_CandleWhipHit();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					if (invoker.IPAttackCheck)
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(randompick(0,0,0,1));
-						}
-						else
-						{
-							A_SetTics(random(0,1));
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(random(0,1));
-						}
-						else
-						{
-							A_SetTics(random(1,2));
-						}
-					}
-					if (random(1,8) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
-				}
-				else
-				{
-					if (invoker.IPAttackCheck) 
-					{
-						A_SetTics(random(1,2));
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(random(0,1));
-							}
-							else
-							{
-								A_SetTics(random(1,2));
-							}
-						}
-						else
-						{
-							A_SetTics(random(2,3));
-						}
-					}
-					if (random(1,8) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
-				}
-				A_SetAngle(angle-75);
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.795,75);
+				A_WhipCrack3Tics(8,5,randompick(7,7,8,8,8));
 			}
 			RCAN F 2 bright 
 			{
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int shieldpartchance = 5;
-				if (invoker.IPAttackCheck) shieldpartchance = randompick(7,7,8,8,8);
-				invoker.range = (invoker.rangebase * 0.73);
-				A_SetAngle(angle+56.25);
-				A_CandleWhipHit();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					if (invoker.IPAttackCheck)
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(randompick(0,0,0,0,1));
-						}
-						else
-						{
-							A_SetTics(random(0,1));
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							if (MiscItem.PlayerLevel >= 90)
-							{
-								A_SetTics(randompick(0,0,0,0,1));
-							}
-							else
-							{
-								A_SetTics(random(0,1));
-							}
-						}
-						else
-						{
-							A_SetTics(1);
-						}
-					}
-
-					if (random(1,8) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
-				}
-				else
-				{
-					if (invoker.IPAttackCheck) 
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(randompick(0,0,0,0,1));
-							}
-							else
-							{
-								A_SetTics(random(0,1));
-							}
-						}
-						else
-						{
-							A_SetTics(1);
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(random(0,1));
-							}
-							else
-							{
-								A_SetTics(1);
-							}
-						}
-						else
-						{
-							A_SetTics(random(2,3));
-						}
-					}
-					if (random(1,8) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
-				}
-				A_SetAngle(angle-56.25);
-
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.865,56.25);
+				A_WhipCrack2Tics(8,5,randompick(7,7,8,8,8));
+				
 				double sndpitch = 1.0;
 				double sndvol = 1.0;
 				if (invoker.IPAttackCheck) 
@@ -12968,516 +12986,85 @@ class CandleWhip : DinahWeapon
 					}
 				}
 
-				if (CountInv("PlayingStrife",AAPTR_PLAYER1))
-				{
-					if (random(1,8) >= 7) { A_AlertMonsters(512); }
-				}
-				else
-				{
-					if (random(1,8) >= 7) { A_AlertMonsters(); }
-				}
+				if (CountInv("PlayingStrife",AAPTR_PLAYER1) && random(1,8) >= random(3,5)) { A_AlertMonsters(512); }
+																							else if (random(1,8) >= random(3,5)) { A_AlertMonsters(); }
 			}
 			RCAN G 2 bright
 			{
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int shieldpartchance = 9;
-				if (invoker.IPAttackCheck) shieldpartchance = (randompick(7,7,8,8,8) * 1.8);
-				invoker.range = (invoker.rangebase * 0.85);
-				A_SetAngle(angle+37.5);
-				A_CandleWhipHit();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					if (invoker.IPAttackCheck)
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(randompick(0,0,0,0,1));
-						}
-						else
-						{
-							A_SetTics(random(0,1));
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							if (MiscItem.PlayerLevel >= 90)
-							{
-								A_SetTics(randompick(0,0,0,0,1));
-							}
-							else
-							{
-								A_SetTics(random(0,1));
-							}
-						}
-						else
-						{
-							A_SetTics(1);
-						}
-					}
-					if (random(1,16) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
-				}
-				else
-				{
-					if (invoker.IPAttackCheck) 
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(randompick(0,0,0,0,1));
-							}
-							else
-							{
-								A_SetTics(random(0,1));
-							}
-						}
-						else
-						{
-							A_SetTics(1);
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(random(0,1));
-							}
-							else
-							{
-								A_SetTics(1);
-							}
-						}
-						else
-						{
-							A_SetTics(random(2,3));
-						}
-					}
-					if (random(1,16) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
-				}
-				A_SetAngle(angle-37.5);
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.925,37.5);
+				A_WhipCrack2Tics(16,9,(randompick(7,7,8,8,8) * 1.8));
 			}
 			RCAN H 2 bright
 			{
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				invoker.range = (invoker.rangebase * 0.94);
-				A_SetAngle(angle+18.75);
-				A_CandleWhipHit();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					if (invoker.IPAttackCheck)
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(randompick(0,0,0,0,1));
-						}
-						else
-						{
-							A_SetTics(random(0,1));
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							if (MiscItem.PlayerLevel >= 90)
-							{
-								A_SetTics(randompick(0,0,0,0,1));
-							}
-							else
-							{
-								A_SetTics(random(0,1));
-							}
-						}
-						else
-						{
-							A_SetTics(1);
-						}
-					}
-					A_CandleWhipCrack(1,invoker.range);
-				}
-				else
-				{
-					if (invoker.IPAttackCheck) 
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(randompick(0,0,0,0,1));
-							}
-							else
-							{
-								A_SetTics(random(0,1));
-							}
-						}
-						else
-						{
-							A_SetTics(1);
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(random(0,1));
-							}
-							else
-							{
-								A_SetTics(1);
-							}
-						}
-						else
-						{
-							A_SetTics(random(2,3));
-						}
-					}
-					A_CandleWhipCrack(0,invoker.range);
-				}
-				A_SetAngle(angle-18.75);
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.97,18.75);
+				A_WhipCrack2Tics(1,1,1);
 			}
 			RCAN H 2 bright
 			{
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				invoker.range = (invoker.rangebase * 1.0);
-				A_CandleWhipHit();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
-				{
-					if (invoker.IPAttackCheck)
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(randompick(0,0,0,0,1));
-						}
-						else
-						{
-							A_SetTics(random(0,1));
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							if (MiscItem.PlayerLevel >= 90)
-							{
-								A_SetTics(randompick(0,0,0,0,1));
-							}
-							else
-							{
-								A_SetTics(random(0,1));
-							}
-						}
-						else
-						{
-							A_SetTics(1);
-						}
-					}
-					A_CandleWhipCrack(1,invoker.range);
-				}
-				else
-				{
-					if (invoker.IPAttackCheck) 
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(randompick(0,0,0,0,1));
-							}
-							else
-							{
-								A_SetTics(random(0,1));
-							}
-						}
-						else
-						{
-							A_SetTics(1);
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(random(0,1));
-							}
-							else
-							{
-								A_SetTics(1);
-							}
-						}
-						else
-						{
-							A_SetTics(random(2,3));
-						}
-					}
-					A_CandleWhipCrack(0,invoker.range);
-				}
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",1.0,0);
+				A_WhipCrack2Tics(1,1,1);
 			}
 			RCAN I 3 bright
 			{
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int shieldpartchance = 25;
-				if (invoker.IPAttackCheck) shieldpartchance = randompick(33,33,34,34,34,35,35);
-				invoker.range = (invoker.rangebase * 0.94);
-				A_SetAngle(angle-18.75);
-				A_CandleWhipHit();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					if (invoker.IPAttackCheck)
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(randompick(0,0,0,1));
-						}
-						else
-						{
-							A_SetTics(random(0,1));
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(random(0,1));
-						}
-						else
-						{
-							A_SetTics(random(1,2));
-						}
-					}
-					if (random(1,32) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
-				}
-				else
-				{
-					if (invoker.IPAttackCheck) 
-					{
-						A_SetTics(random(1,2));
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(random(0,1));
-							}
-							else
-							{
-								A_SetTics(random(1,2));
-							}
-						}
-						else
-						{
-							A_SetTics(random(2,3));
-						}
-					}
-					if (random(1,32) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
-				}
-				A_SetAngle(angle+18.75);
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.97,-18.75);
+				A_WhipCrack3Tics(32,25,randompick(33,33,34,34,34,35,35));
 			}
 			RCAN J 3 bright
 			{
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int shieldpartchance = 9;
-				if (invoker.IPAttackCheck) shieldpartchance = (randompick(7,7,8,8,8) * 1.8);
-				invoker.range = (invoker.rangebase * 0.85);
-				A_SetAngle(angle-37.5);
-				A_CandleWhipHit();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					if (invoker.IPAttackCheck)
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(randompick(0,0,0,1));
-						}
-						else
-						{
-							A_SetTics(random(0,1));
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(random(0,1));
-						}
-						else
-						{
-							A_SetTics(random(1,2));
-						}
-					}
-					if (random(1,16) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
-				}
-				else
-				{
-					if (invoker.IPAttackCheck) 
-					{
-						A_SetTics(random(1,2));
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(random(0,1));
-							}
-							else
-							{
-								A_SetTics(random(1,2));
-							}
-						}
-						else
-						{
-							A_SetTics(random(2,3));
-						}
-					}
-					if (random(1,16) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
-				}
-				A_SetAngle(angle+37.5);
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.925,-37.5);
+				A_WhipCrack3Tics(16,9,(randompick(7,7,8,8,8) * 1.8));
 			}
 			RCAN K 3 bright
 			{
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int shieldpartchance = 5;
-				if (invoker.IPAttackCheck) shieldpartchance = randompick(7,7,8,8,8);
-				invoker.range = (invoker.rangebase * 0.73);
-				A_SetAngle(angle-56.25);
-				A_CandleWhipHit();
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					if (invoker.IPAttackCheck)
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(randompick(0,0,0,1));
-						}
-						else
-						{
-							A_SetTics(random(0,1));
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(random(0,1));
-						}
-						else
-						{
-							A_SetTics(random(1,2));
-						}
-					}
-					if (random(1,8) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
-				}
-				else
-				{
-					if (invoker.IPAttackCheck) 
-					{
-						A_SetTics(random(1,2));
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 15)
-						{
-							if (MiscItem.PlayerLevel >= 45)
-							{
-								A_SetTics(random(0,1));
-							}
-							else
-							{
-								A_SetTics(random(1,2));
-							}
-						}
-						else
-						{
-							A_SetTics(random(2,3));
-						}
-					}
-					if (random(1,8) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
-				}
-				A_SetAngle(angle+56.25);
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.865,-56.25);
+				A_WhipCrack3Tics(8,5,randompick(7,7,8,8,8));
 			}
 			RCAN L 3 bright
 			{
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.795,-75);
+				A_WhipCrack3Tics(4,1,randompick(2,2,3,3,3,4));
+			}
+			RCAN A 1
+			{
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int shieldpartchance = 1;
-				if (invoker.IPAttackCheck) shieldpartchance = randompick(2,2,3,3,3,4);
-				invoker.range = (invoker.rangebase * 0.59);
-				A_SetAngle(angle-75);
-				A_CandleWhipHit();
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					if (invoker.IPAttackCheck)
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(randompick(0,0,0,1));
-						}
-						else
-						{
-							A_SetTics(random(0,1));
-						}
-					}
-					else
-					{
-						if (MiscItem.PlayerLevel >= 45)
-						{
-							A_SetTics(random(0,1));
-						}
-						else
-						{
-							A_SetTics(random(1,2));
-						}
-					}
-					if (random(1,4) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
-				}
-				else
 				{
 					if (invoker.IPAttackCheck) 
 					{
-						A_SetTics(random(1,2));
+						A_SetTics(0);
 					}
-					else
+					else 
 					{
 						if (MiscItem.PlayerLevel >= 15)
 						{
 							if (MiscItem.PlayerLevel >= 45)
 							{
-								A_SetTics(random(0,1));
+								A_SetTics(0);
 							}
 							else
 							{
-								A_SetTics(random(1,2));
+								A_SetTics(randompick(0,0,0,0,0,1));
 							}
 						}
 						else
 						{
-							A_SetTics(random(2,3));
+							A_SetTics(randompick(0,0,0,1));
 						}
 					}
-					if (random(1,4) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
-				}
-				A_SetAngle(angle+75);
-			}
-			RCAN A 1
-			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					if (invoker.IPAttackCheck) A_SetTics(0);
-																else A_SetTics(randompick(0,0,0,1)); 
 				}
 				else
 				{
-					if (invoker.IPAttackCheck) A_SetTics(randompick(0,0,0,1)); 
+					if (invoker.IPAttackCheck) 
+					{
+						if (MiscItem.PlayerLevel >= 45)
+						{
+							A_SetTics(randompick(0,0,0,0,0,1));
+						}
+						else
+						{
+							A_SetTics(randompick(0,0,0,1));
+						}
+					}
 				}
 			}
 			goto Ready;
@@ -13520,15 +13107,29 @@ class CandleWhip : DinahWeapon
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				string shottype = "CandlePuff";
 				int dmg = 5 * random(1,3);
+				if (MiscItem.PlayerLevel >= 30) dmg = 5 * random(2,4);
+				if (MiscItem.PlayerLevel >= 60) dmg = 6 * random(2,4);
+				if (MiscItem.PlayerLevel >= 90) dmg = 6 * random(3,5);
+				if (MiscItem.PlayerLevel >= 120) dmg = 7 * random(3,5);
+				if (MiscItem.PlayerLevel >= 150) dmg = 7 * random(4,6);
+				if (MiscItem.PlayerLevel >= 180) dmg = 8 * random(4,6);
 				double horizspread = frandom(4,9);
 				double vertspread = frandom(3,7);
 				int numshots = 6;
+				if (MiscItem.PlayerLevel >= 60) numshots = randompick(6,6,7,7,7);
+				if (MiscItem.PlayerLevel >= 120) numshots = randompick(7,8,8,8,9);
+				if (MiscItem.PlayerLevel >= 180) numshots = randompick(9,9,9,10,10);
+				int CandleSSGChance = 5;
+				if (MiscItem.PlayerLevel >= 60) CandleSSGChance = random(11,15);
+				if (MiscItem.PlayerLevel >= 120) CandleSSGChance = random(19,23);
+				if (MiscItem.PlayerLevel >= 180) CandleSSGChance = random(29,33);
 				if (invoker.IPAttackCheck) 
 				{
 					shottype = "CandlePuffIP";
-					if (random(1,64) <= 5)
+					if (random(1,64) <= CandleSSGChance)
 					{
-						numshots = 20 + randompick(0,1,1,2,2,3);
+						numshots += randompick(0,1,1,2,2);
+						numshots *= 3.334;
 						horizspread = frandom(8.4,14.0);
 						vertspread = frandom(5.68,8.52);
 						dmg *= frandompick(1.5,1.75,1.75,1.75,1.75,1.75,2.0);
@@ -13536,6 +13137,9 @@ class CandleWhip : DinahWeapon
 					else
 					{
 						numshots = 6 + randompick(0,0,0,0,1);
+						if (MiscItem.PlayerLevel >= 60) numshots = randompick(6,6,7,7,7) + randompick(0,0,0,1,1);
+						if (MiscItem.PlayerLevel >= 120) numshots = randompick(7,8,8,8,9) + randompick(0,0,1,1,2);
+						if (MiscItem.PlayerLevel >= 180) numshots = randompick(9,9,9,10,10) + randompick(0,1,1,2,2);
 						horizspread = frandom(4.2,7.0);
 						vertspread = frandompick(0.0,0.0,0.0,frandom(0.0,0.8));
 						dmg *= frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.75);
@@ -13543,6 +13147,14 @@ class CandleWhip : DinahWeapon
 				}
 				if (MiscItem)
 				{
+					if (MiscItem.PlayerLevel >= 180) horizspread *= 0.4;
+					else if (MiscItem.PlayerLevel >= 120) horizspread *= 0.6;
+					else if (MiscItem.PlayerLevel >= 60) horizspread *= 0.8;
+					
+					if (MiscItem.PlayerLevel >= 180) vertspread *= 0.4;
+					else if (MiscItem.PlayerLevel >= 120) vertspread *= 0.6;
+					else if (MiscItem.PlayerLevel >= 60) vertspread *= 0.8;
+					
 					if (MiscItem.PlayerLevel >= 176 && MiscItem.PlayerLevel <= 200) dmg = randompick(4,4,4,4,4,4,5,5,5,5);
 					if (MiscItem.PlayerLevel >= 151 && MiscItem.PlayerLevel <= 175) dmg = randompick(3,3,4,4,4,4,4,4,5,5);
 					if (MiscItem.PlayerLevel >= 126 && MiscItem.PlayerLevel <= 150) dmg = randompick(3,3,3,3,4,4,4,4,4,4);
@@ -13552,7 +13164,49 @@ class CandleWhip : DinahWeapon
 					if (MiscItem.PlayerLevel >= 26 && MiscItem.PlayerLevel <= 50) dmg = randompick(2,2,2,2,2,2,3,3,3,3);
 					if (MiscItem.PlayerLevel >= 0 && MiscItem.PlayerLevel <= 25) dmg = randompick(1,1,2,2,2,2,2,2,3,3);
 				}
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(2,3,3,3,3)); }
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (MiscItem.PlayerLevel >= 60)
+					{
+						A_SetTics(randompick(1,1,2,2,3)); 
+					}
+					else
+					{
+						A_SetTics(randompick(2,2,3,3,3)); 
+					}
+				}
+				else
+				{
+					if (invoker.IPAttackCheck)
+					{
+						if (MiscItem.PlayerLevel >= 60)
+						{
+							A_SetTics(randompick(1,1,2,2,3)); 
+						}
+						else
+						{
+							A_SetTics(randompick(2,2,3,3,3)); 
+						}
+					}
+					else
+					{
+						if (MiscItem.PlayerLevel >= 45)
+						{
+							if (MiscItem.PlayerLevel >= 90)
+							{
+								A_SetTics(randompick(0,0,0,1,1));
+							}
+							else
+							{
+								A_SetTics(randompick(1,1,1,2,2));
+							}
+						}
+						else
+						{
+							A_SetTics(randompick(2,2,2,3,3));
+						}
+					}
+				}
 				A_FireBullets(0,0,0,(5*random(1,3)),shottype);
 				if (invoker.IPAttackCheck)
 				{
@@ -13563,15 +13217,151 @@ class CandleWhip : DinahWeapon
 			}
 			RCAN C 3 Bright
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(2,3,3,3,3)); }
+				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					if (MiscItem.PlayerLevel >= 60)
+					{
+						A_SetTics(randompick(1,1,2,2,3)); 
+					}
+					else
+					{
+						A_SetTics(randompick(2,2,3,3,3)); 
+					}
+				}
+				else
+				{
+					if (invoker.IPAttackCheck)
+					{
+						if (MiscItem.PlayerLevel >= 60)
+						{
+							A_SetTics(randompick(1,1,2,2,3)); 
+						}
+						else
+						{
+							A_SetTics(randompick(2,2,3,3,3)); 
+						}
+					}
+					else
+					{
+						if (MiscItem.PlayerLevel >= 45)
+						{
+							if (MiscItem.PlayerLevel >= 90)
+							{
+								A_SetTics(randompick(0,0,0,1,1));
+							}
+							else
+							{
+								A_SetTics(randompick(1,1,1,2,2));
+							}
+						}
+						else
+						{
+							A_SetTics(randompick(2,2,2,3,3));
+						}
+					}
+				}
 			}
 			RCAN D 4
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(3,4,4,4)); }
+				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+				{
+					if (MiscItem.PlayerLevel >= 60)
+					{
+						A_SetTics(randompick(1,2,2,3)); 
+					}
+					else
+					{
+						A_SetTics(randompick(3,4,4,4)); 
+					}
+				}
+				else
+				{
+					if (invoker.IPAttackCheck)
+					{
+						if (MiscItem.PlayerLevel >= 60)
+						{
+							A_SetTics(randompick(0,1,1,2)); 
+						}
+						else
+						{
+							A_SetTics(randompick(2,3,3,3)); 
+						}
+					}
+					else
+					{
+						if (MiscItem.PlayerLevel >= 45)
+						{
+							if (MiscItem.PlayerLevel >= 90)
+							{
+								A_SetTics(randompick(0,0,0,1,1));
+							}
+							else
+							{
+								A_SetTics(randompick(1,1,1,2,2));
+							}
+						}
+						else
+						{
+							A_SetTics(randompick(2,2,2,3,3));
+						}
+					}
+				}
 			}
 			RCAN E 4 
 			{
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_SetTics(randompick(3,4,4,4)); }
+				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+				{
+					if (MiscItem.PlayerLevel >= 60)
+					{
+						A_SetTics(randompick(1,2,2,3)); 
+					}
+					else
+					{
+						A_SetTics(randompick(3,4,4,4)); 
+					}
+				}
+				else
+				{
+					if (invoker.IPAttackCheck)
+					{
+						if (MiscItem.PlayerLevel >= 60)
+						{
+							A_SetTics(randompick(0,1,1,2)); 
+						}
+						else
+						{
+							A_SetTics(randompick(2,3,3,3)); 
+						}
+					}
+					else
+					{
+						if (MiscItem.PlayerLevel >= 30)
+						{
+							if (MiscItem.PlayerLevel >= 60)
+							{
+								if (MiscItem.PlayerLevel >= 90)
+								{
+									A_SetTics(randompick(0,0,0,1,1));
+								}
+								else
+								{
+									A_SetTics(randompick(1,1,1,2,2));
+								}
+							}
+							else
+							{
+								A_SetTics(randompick(2,2,2,3,3));
+							}
+						}
+						else
+						{
+							A_SetTics(randompick(3,3,3,4,4));
+						}
+					}
+				}
 				A_Refire();
 			}
 			goto Ready;
