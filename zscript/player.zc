@@ -153,6 +153,22 @@ class DDPlayerPawn : PlayerPawn
 		Super.PostBeginPlay(); // KEEP THIS HERE ELSE OTHER FUNCTIONS RELATED TO PostBeginPlay() BREAK :V
 	}
 
+	override bool ResetAirSupply(bool playgasp)
+	{
+		let player = self.player;
+		bool wasdrowning = (player.air_finished < Level.maptime);
+
+		if (playgasp && wasdrowning)
+		{
+			A_StartSound("*gasp", CHAN_VOICE);
+		}
+		if (Level.airsupply > 0 && AirCapacity > 0) player.air_finished = Level.maptime + int(Level.airsupply * AirCapacity);
+		else player.air_finished = int.max;
+		//Console.Printf("%d (%.8f)", int(Level.airsupply * AirCapacity), (Level.airsupply * AirCapacity));
+		A_SetInventory("MaxAirMeter", int(Level.airsupply * AirCapacity));
+		return wasdrowning;
+	}
+
 	override void CheckAirSupply()
 	{
 		if (!player || !player.mo || player.mo != self)
@@ -172,7 +188,7 @@ class DDPlayerPawn : PlayerPawn
 					(player.cheats & (CF_GODMODE | CF_NOCLIP2)) || (player.cheats & CF_GODMODE2) || 
 					CountInv("PowerInvulnDD") || CountInv("PowerInvulnerable"))
 				{
-					ResetAirSupply();
+					ResetAirSupply(true);
 				}
 				else if (player.air_finished <= level.maptime && !(level.maptime & 31))
 				{
@@ -180,6 +196,7 @@ class DDPlayerPawn : PlayerPawn
 				}
 			}
 			int AirTime = max(player.air_finished - level.maptime, 0);
+			A_SetInventory("AirMeter",AirTime);
 			if (dydudebug_airmeter) Console.Printf("    WaterLevel: %d, Level.Time: %d, Level.MapTime: %d, Player.AirFinished: %d, \cxAirTime: %d / %d\c- (%d), DrownDmg: %d", waterlevel, level.time, level.maptime, player.air_finished, AirTime, level.airsupply, AirCapacity, DrownDmg);
 		}
 	}

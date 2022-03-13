@@ -1715,6 +1715,50 @@ class DDStatusBarMain : BaseStatusBar
 				}
 			}
 			
+			// Air Display
+			double AirMeterCurrent = Cplayer.mo.CountInv("AirMeter");
+			double AirMeterMax = Cplayer.mo.CountInv("MaxAirMeter");
+			double airmeterlength = 1.0;
+			int AirUnits;
+			if (AirMeterMax) AirUnits = AirMeterCurrent * 100 / AirMeterMax;
+			int airlow = 0;
+			if (AirUnits <= randompick(33,33,34)) airlow = 1;
+			if (AirUnits <= 10) airlow = 2;
+			if (AirUnits <= 4) airlow = 3;
+			if (AirUnits <= 1) airlow = random(3,5);
+			AirUnits *= airmeterlength;
+			unitscale = (1, 1);
+			digx = 5;
+			digy = -148;
+			int lowairx, lowairy;
+			if (airlow)
+			{
+				lowairx = random(-airlow,airlow);
+				lowairy = random(-airlow,airlow);
+			}
+			if (AirMeterCurrent < AirMeterMax)
+			{
+				//Console.Printf("%d / %d (AirUnits: %d)", AirMeterCurrent, AirMeterMax, AirUnits);
+				DrawString(mSmallFont, "AIR", (digx+29+lowairx, digy-18+lowairy), DI_TEXT_ALIGN_RIGHT, font.CR_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				for (int i; i < (100 * airmeterlength); i++)
+				{
+					DrawImage("BLAKUNIT", (digx+i+lowairx, digy+lowairy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+				}
+				for (int i; i < AirUnits; i++) 
+				{
+					dun = "VBAGUNIT";
+					unitscale = (1, 1);
+					ix = (i % AirUnits);
+					if (i != 0 && ix == 0) 
+					{
+						unitscale = (1.125, 1.125);
+						dun = "DASHUNI1";
+					}
+					
+					DrawImage(dun, (digx+i+lowairx, digy+lowairy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+				}
+			}
+			
 			// IP % Display
 			double IPIconPulseScale = 1.00;
 			int IPIconScaleTimer = (level.time + MiscItem.IPHUDPulseTimeP) % 40;
