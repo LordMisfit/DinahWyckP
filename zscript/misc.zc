@@ -13,6 +13,7 @@ class PlayerStatItem : Inventory
 	int IsMorphed;
 	int EvasionRate;
 	double SPDEvadeCheck;
+	int drowndebufflevel, drowndebufftimer;
 	
 	int MaxDashIncTimer, MaxDashIncAmt;
 	int MaxHPIncTimer, MaxHPIncAmt;
@@ -819,6 +820,20 @@ class PlayerStatItem : Inventory
 					if (HPHUDShakeTime) HPHUDShakeTime--;
 					if (APHUDShakeTime) APHUDShakeTime--;
 					if (IPHUDShakeTimer) IPHUDShakeTimer--;
+					
+					if (drowndebufflevel)
+					{
+						if (dydudebug_airmeter) Console.Printf("drowndebufflevel: %d, drowndebufftimer: %d", drowndebufflevel ,drowndebufftimer);
+						if (owner.CountInv("AirMeter") > 0)
+						{
+							if (drowndebufftimer) drowndebufftimer--;
+							else drowndebufflevel = 0;
+						}
+					}
+					else
+					{
+						drowndebufftimer = 0;
+					}
 				}
 				
 				//******************
@@ -2607,9 +2622,14 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("FistPlayerSpeedFactor3")) FistBlockJumpZ = 0.90;
 			if (Owner.CountInv("FistPlayerSpeedFactor4")) FistBlockJumpZ = 0.975;
 			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Fist-Blocking]: %.8f", FistBlockJumpZ);
-
+			
+			// Drowning Debuff
+			double DrownDebuffJumpZ = 1.00;
+			if (drowndebufflevel) DrownDebuffJumpZ = 1.00 - (drowndebufflevel * frandompick(0.06,0.075,0.09));
+			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [DrownDebuff]: %.8f", DrownDebuffJumpZ);
+			
 			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [jmpfct]: %.8f", jmpfct);
-
+			
 			double TotalJumpZ = CharacterJumpZ
 												* LevelJumpZ
 												* SpeedJumpZ
@@ -2617,6 +2637,7 @@ class PlayerStatItem : Inventory
 												* ArmorJumpZ
 												* WeaponJumpZ
 												* FistBlockJumpZ
+												* DrownDebuffJumpZ
 												* jmpfct;
 
 			PlayerPawn(Owner).JumpZ = TotalJumpZ;
@@ -3671,7 +3692,14 @@ class PlayerStatItem : Inventory
 		}
 		Speed *= MystItemFactor;
 		HUDSpeed *= MystItemFactor;
-
+		
+		// Drowning Debuff
+		double DrownDebuffFactor = 1.00;
+		if (drowndebufflevel) DrownDebuffFactor = 1.00 - (drowndebufflevel * frandompick(0.06,0.075,0.09));
+		if (dydudebug_speedcalcs) Console.Printf("SpeedX [DrownDebuff]: %.8f", DrownDebuffFactor);
+		Speed *= DrownDebuffFactor;
+		HUDSpeed *= DrownDebuffFactor;
+			
 		Speed *= spdfct;
 
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [Final]: %.8f, HUDSpeed: %.2f", Speed, HUDSpeed);

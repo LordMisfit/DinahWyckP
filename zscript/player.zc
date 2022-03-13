@@ -14,9 +14,12 @@ class DDPlayerPawn : PlayerPawn
 
 	mixin HUDRecovery;
 	bool IPAttack;
+	bool takendrowndmg;
+	bool willgasp;
 	
 	int PoisonDmgPainInt;
 	int AirTime, MaxAirTime;
+	int InWaterTime;
 	
 	int ipmodecooldowntimer;
 	bool isvoodoodoll;
@@ -157,16 +160,96 @@ class DDPlayerPawn : PlayerPawn
 	override bool ResetAirSupply(bool playgasp)
 	{
 		let player = self.player;
-		bool wasdrowning = (player.air_finished < Level.maptime);
-
-		if (playgasp && wasdrowning)
+		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+		bool wasdrowning;
+		if (AirTime <= 0) 
 		{
-			A_StartSound("*gasp", CHAN_VOICE);
+			wasdrowning = true;
+			AirTime = 0;
+			if (dydudebug_airmeter) Console.Printf("wasdrowning");
 		}
-		if (Level.airsupply > 0 && AirCapacity > 0) player.air_finished = Level.maptime + int(Level.airsupply * AirCapacity);
-		else player.air_finished = int.max;
-		//Console.Printf("%d (%.8f)", int(Level.airsupply * AirCapacity), (Level.airsupply * AirCapacity));
-		A_SetInventory("MaxAirMeter", int(Level.airsupply * AirCapacity));
+		
+		if (AirTime < MaxAirTime)
+		{
+			double airreplen;
+			if (MaxAirTime > 0) 
+			airreplen = (MaxAirTime / (TICRATE * 5));
+			if (airreplen < 1) airreplen = 1;
+			if (MiscItem) airreplen *= (1.0 + (MiscItem.PlayerLevel * 0.0125));
+			if (MaxAirTime > 0 && airreplen > (TICRATE / 35)) airreplen = (MaxAirTime / TICRATE);
+			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) airreplen *= 1.25;
+			if (CountInv("PowerIronFeet") || CountInv("PowerIronFeet2") || CountInv("PowerMask")) airreplen *= 1.625;
+			AirTime += airreplen;
+			if (dydudebug_airmeter) Console.Printf("airreplen: %d (%d / %d)", airreplen, AirTime, MaxAirTime);
+		}
+		if (AirTime > MaxAirTime) AirTime = MaxAirTime;
+
+		if (playgasp)
+		{
+			if (wasdrowning)
+			{
+				if (takendrowndmg)
+				{
+					takendrowndmg = false;
+					A_StopSound(CHAN_VOICE);
+					A_StartSound("dinah/drowngasp1",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
+					willgasp = false;
+				}
+				else
+				{
+					A_StopSound(CHAN_VOICE);
+					if (random(1,9) <= 6) 
+					{
+						A_StartSound("dinah/drowngasp1",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
+						willgasp = false;
+					}
+				}
+			}
+			else
+			{
+				if (willgasp)
+				{
+					int AirMeterRatio;
+					if (MaxAirTime > 0) 
+					{
+						AirMeterRatio = (AirTime * 100 / MaxAirTime);
+						if (AirMeterRatio <= randompick(16,17,17))
+						{
+							A_StopSound(CHAN_VOICE);
+							A_StartSound("dinah/watergasp",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
+						}
+						else
+						if (AirMeterRatio <= randompick(33,33,34))
+						{
+							A_StopSound(CHAN_VOICE);
+							if (random(1,9) <= 8) 
+							{
+								A_StartSound("dinah/watergasp",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
+							}
+						}
+						else
+						if (AirMeterRatio <= randompick(66,67,67))
+						{
+							A_StopSound(CHAN_VOICE);
+							if (random(1,9) <= 4) 
+							{
+								A_StartSound("dinah/watergasp",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
+							}
+						}
+						else
+						if (AirMeterRatio <= randompick(83,83,84))
+						{
+							A_StopSound(CHAN_VOICE);
+							if (random(1,9) <= 1) 
+							{
+								A_StartSound("dinah/watergasp",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
+							}
+						}
+					}
+					willgasp = false;
+				}
+			}
+		}
 		return wasdrowning;
 	}
 
@@ -178,27 +261,93 @@ class DDPlayerPawn : PlayerPawn
 		}
 		else
 		{
-			int DrownDmg = 2 + ((level.maptime - player.air_finished) / TICRATE);
+			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+			MaxAirTime = (12 * TICRATE);
+			if (MiscItem)
+			{
+				MaxAirTime += (MiscItem.PlayerLevel * 2.916666666666667);
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) MaxAirTime *= 1.25;
+			}
+			if (GetAge() <= 1 && AirTime != MaxAirTime) AirTime = MaxAirTime;
+
+			int DrownDmg = 2 + (-AirTime / TICRATE);
 			DrownDmg = ceil(DrownDmg * frandompick(0.625,0.75,0.875,1.000));
-			DrownDmg = clamp(DrownDmg, 0, DrownDmg);
+			if (DrownDmg < 0) DrownDmg = 0;
+			if (dydudebug_airmeter) Console.Printf("InWaterTime: %d, WaterLevel: %d, AirTime: %d / %d, DrownDmg: %d, willgasp: %d, takendrowndmg: %d", InWaterTime, waterlevel, AirTime, MaxAirTime, DrownDmg, willgasp, takendrowndmg);
 			// Handle air supply	
 			//if (level.airsupply > 0)
 			{
 				let player = self.player;
+				if (waterlevel >= 3)
+				{
+					if (InWaterTime <= 0)
+					{
+						A_StartSound("misc/enterwater",215,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.8,1.2));
+					}
+					InWaterTime++;
+					
+					if (CountInv("PowerIronFeet") || 
+							CountInv("PowerIronFeet2") || 
+							CountInv("PowerMask"))
+					{
+						willgasp = false;
+					}
+					else
+					{
+						willgasp = true;
+					}
+				}
+				else 
+				{
+					if (InWaterTime > 0)
+					{
+						A_StartSound("misc/exitwater",215,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.8,1.2));
+						if (dydudebug_airmeter) Console.Printf("misc/exitwater");
+					}
+					InWaterTime = 0;
+				}
+				
 				if (waterlevel < 3 || (bInvulnerable) || 
 					(player.cheats & (CF_GODMODE | CF_NOCLIP2)) || (player.cheats & CF_GODMODE2) || 
 					CountInv("PowerInvulnDD") || CountInv("PowerInvulnerable"))
 				{
 					ResetAirSupply(true);
 				}
-				else if (player.air_finished <= level.maptime && !(level.maptime & 31))
+				else
 				{
-					DamageMobj(NULL, NULL, DrownDmg, 'Drowning');
+					AirTime--;
+					if (AirTime > MaxAirTime) AirTime = MaxAirTime;
+					if (AirTime <= 0)
+					{
+						if (!(level.maptime & 31) && DrownDmg)
+						{
+							DamageMobj(NULL, NULL, DrownDmg, 'Drowning');
+							string drownsnd = "misc/drowning";
+							if (health <= 0) drownsnd = "misc/drowninglong";
+							if (health > 0)
+							{
+								if (MiscItem)
+								{
+									if (MiscItem.drowndebufflevel < 10)
+									{
+										MiscItem.drowndebufflevel++;
+										MiscItem.drowndebufftimer += random(25,35);
+									}
+								}
+							}
+							A_StopSound(120);
+							A_StartSound(drownsnd,120,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(1.375,1.5));
+							takendrowndmg = true;
+						}
+					}
 				}
 			}
-			AirTime = max(player.air_finished - level.maptime, 0);
-			A_SetInventory("AirMeter",AirTime);
-			if (dydudebug_airmeter) Console.Printf("    WaterLevel: %d, Level.Time: %d, Level.MapTime: %d, Player.AirFinished: %d, \cxAirTime: %d / %d\c- (%d), DrownDmg: %d", waterlevel, level.time, level.maptime, player.air_finished, AirTime, level.airsupply, AirCapacity, DrownDmg);
+			int tempAirTime = AirTime;
+			if (tempAirTime < 0) tempAirTime = 0;
+			int tempMaxAirTime = MaxAirTime;
+			if (tempMaxAirTime < 0) tempMaxAirTime = 0;
+			A_SetInventory("AirMeter", tempAirTime);
+			A_SetInventory("MaxAirMeter", tempMaxAirTime);
 		}
 	}
 	

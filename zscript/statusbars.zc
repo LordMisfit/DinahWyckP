@@ -1717,50 +1717,78 @@ class DDStatusBarMain : BaseStatusBar
 			
 			// Air Display
 			double AirMeterCurrent = Cplayer.mo.CountInv("AirMeter");
+			if (AirMeterCurrent < 0) AirMeterCurrent = 0;
 			double AirMeterMax = Cplayer.mo.CountInv("MaxAirMeter");
+			if (AirMeterMax < 1) AirMeterMax = 1;
 			double airmeterlength = 1.0;
+			if (Cplayer.mo.CountInv("PowerStrength") || Cplayer.mo.CountInv("PowerStrengthDD")) airmeterlength *= 1.25;
 			int AirUnits;
 			if (AirMeterMax) AirUnits = AirMeterCurrent * 100 / AirMeterMax;
-			int airlow = 0;
-			if (AirUnits <= randompick(33,33,34)) airlow = 1;
-			if (AirUnits <= 10) airlow = 2;
-			if (AirUnits <= 4) airlow = 3;
-			if (AirUnits <= 1) airlow = random(3,5);
-			AirUnits *= airmeterlength;
-			unitscale = (1, 1);
-			digx = 5;
-			digy = -148;
-			int lowairx, lowairy;
-			if (airlow)
+			if (AirUnits > 0)
 			{
-				lowairx = random(-airlow,airlow);
-				lowairy = random(-airlow,airlow);
-			}
-			if (AirMeterCurrent < AirMeterMax && AirMeterMax > 0)
-			{
-				//Console.Printf("%d / %d (AirUnits: %d)", AirMeterCurrent, AirMeterMax, AirUnits);
-				DrawString(mSmallFont, "AIR", (digx+29+lowairx, digy-18+lowairy), DI_TEXT_ALIGN_RIGHT, font.CR_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				for (int i; i < (100 * airmeterlength); i++)
+				int airlow = 0;
+				int airlowmod = 999;
+				if (AirUnits <= randompick(33,33,34)) 
 				{
-					DrawImage("BLAKUNIT", (digx+i+lowairx, digy+lowairy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+					airlow = 1;
+					airlowmod = 64;
 				}
-				for (int i; i < AirUnits; i++) 
+				if (AirUnits <= 10)
 				{
-					dun = "AIRUNIT1";
-					unitscale = (1, 1);
-					ix = (i % AirUnits);
-					if (i != 0 && ix == 0) 
+					airlow = 2;
+					airlowmod = 32;
+				}
+				if (AirUnits <= 4)
+				{
+					airlow = 3;
+					airlowmod = 16;
+				}
+				if (AirUnits <= 1) 
+				{
+					airlow = random(3,5);
+					airlowmod = 8;
+				}
+				int airlowflashtimer;
+				if (airlow > 0)
+				{
+					airlowflashtimer = level.time % airlowmod;
+				}
+				AirUnits *= airmeterlength;
+				unitscale = (1, 1);
+				digx = 5;
+				digy = -148;
+				int lowairx, lowairy;
+				if (airlow)
+				{
+					lowairx = random(-airlow,airlow);
+					lowairy = random(-airlow,airlow);
+				}
+				if (AirMeterMax > 0)
+				{
+					if (AirMeterCurrent < AirMeterMax && AirMeterMax > 0)
 					{
-						unitscale = (1.125, 1.125);
-						dun = "AIRUNIT2";
+						if (dydudebug_airmeter) Console.Printf("[HUD] %d / %d (AirUnits: %d)", AirMeterCurrent, AirMeterMax, AirUnits);
+						DrawString(mSmallFont, "AIR", (digx+29+lowairx, digy-18+lowairy), DI_TEXT_ALIGN_RIGHT, font.CR_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+						for (int i; i < (100 * airmeterlength); i++)
+						{
+							DrawImage("BLAKUNIT", (digx+i+lowairx, digy+lowairy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+						}
+						for (int i; i < AirUnits; i++) 
+						{
+							dun = "AIRUNIT1";
+							unitscale = (1, 1);
+							if (airlow > 0 && airlowmod > 0)
+							{
+								if (airlowflashtimer >= (airlowmod*0.5)) dun = "AIRUNIT2";
+							}
+							DrawImage(dun, (digx+i+lowairx, digy+lowairy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+						}
+						double airseconds = (AirMeterCurrent / TICRATE);
+						string airsecstring = "";
+						airsecstring.AppendFormat("%.1f", airseconds);
+						DrawString(mSmallFont, airsecstring, (digx+(46*airmeterlength)+lowairx, digy-9+lowairy), DI_TEXT_ALIGN_CENTER, font.CR_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale*0.875); // 41, -43
 					}
-					
-					DrawImage(dun, (digx+i+lowairx, digy+lowairy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
 				}
-				double airseconds = (AirMeterCurrent / TICRATE);
-				string airsecstring = "";
-				airsecstring.AppendFormat("%.1f", airseconds);
-				DrawString(mSmallFont, airsecstring, (digx+(46*airmeterlength)+lowairx, digy-9+lowairy), DI_TEXT_ALIGN_CENTER, font.CR_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale*0.875); // 41, -43
 			}
 			
 			// IP % Display
