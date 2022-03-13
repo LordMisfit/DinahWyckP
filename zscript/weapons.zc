@@ -728,8 +728,8 @@ class DDWeapon : Weapon
 				int BerserkAdd;
 
 				// Base "Recoil"
-				double baserecoil = -0.125;
-				baserecoil = frandom(-0.125,-0.075);
+				double baserecoil = frandompick(-0.125,-0.075);
+				if (attacktype == 1) baserecoil *= (frandompick(2.5,2.75,3.0,3.25,3.5) * frandompick(0.75,1.0,1.25));
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) BerserkAdd = randompick(1,1,1,1,1,1,1,2,2); else BerserkAdd = 0;
 
 				recoil = baserecoil * (random(3,9) + BerserkAdd);
@@ -744,8 +744,8 @@ class DDWeapon : Weapon
 
 				// Stat/Level Mitigation
 				recoilmulti = (1.0 - (PlayerLevel * 0.01171875));
-				recoil *= recoilmulti;
 				if (recoilmulti < 0.0) recoilmulti = 0.0;
+				recoil *= recoilmulti;
 				if (debugrecoil) Console.Printf("\cxRecoil [Stats]: %.8f, Multiplier: %.8f", recoil, recoilmulti);
 
 				// Random Chance for 0 recoil
@@ -1130,11 +1130,23 @@ class DinahWeapon : DDWeapon
 			DKIC H 1 // 1 [13]
 			{
 				A_ForcePlayState("Kick2");
-
+				
+				bool debugrecoil;
 				int PlayerLevel = CountInv("PlayerLevel");
 				int KPower = (player.mo.Stamina / 10);
 				if (KPower > 10) KPower = 10;
-				double recl = frandom(-0.125,-0.075);
+
+				// Base "Recoil"
+				int BerserkAdd;
+				double recl = frandompick(-0.125,-0.075,-0.025,0.025,0.075,0.125);
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) BerserkAdd = randompick(1,1,1,1,2,2,2,2,3); else BerserkAdd = 0;
+				recl = recl * (random(7,17) + BerserkAdd);
+				if (debugrecoil) Console.Printf("\cxRecoil [Base]: %.8f", recl);
+
+				double recoilmulti = (1.0 - (PlayerLevel * 0.0234375));
+				if (recoilmulti < 0.0) recoilmulti = 0.0;
+				recl *= recoilmulti;
+				
 				int dmg = random(28,52) + (KPower * 3.275);
 				if (KPower) dmg *= frandom(1.00,(1.00 + (KPower * frandompick(0.667,0.75,0.834))));
 				if (CountInv("DinahTrueIPState")) dmg *= 5;
