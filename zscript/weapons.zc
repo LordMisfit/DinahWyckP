@@ -132,6 +132,19 @@ class DDWeapon : Weapon
 				IPPuff.IPAttack = true;
 				if (dydudebug_ipdisplays) Console.Printf("IPPuff: %d", IPPuff.IPAttack);
 			}
+			let KickingPuff = KickPuff(puff);
+			if (KickingPuff && pufftype == 'KickPuff')
+			{
+				if (MiscItem)
+				{
+					KickingPuff.ProjectileKickBack = (375 * (1.0 + (MiscItem.PlayerLevel * 0.0334)));
+					if (player.mo.CountInv("PowerStrength") || player.mo.CountInv("PowerStrengthDD"))
+					{
+						KickingPuff.ProjectileKickBack *= 2.5;
+					}
+					//Console.Printf("ProjectileKickBack (KickingPuff): %d", KickingPuff.ProjectileKickBack);
+				}
+			}
 			if (player.mo.CountInv("DinahTrueIPState"))
 			{
 				bool puffisspectral = false;
@@ -1140,8 +1153,8 @@ class DinahWeapon : DDWeapon
 					int mkdist1 = 24;
 					int mkdist2 = 56;
 					int mkdist3 = 88;
-					string mk = "ShieldPartMeleeNoReflect";
-					if (random(1,8) <= (1 + (PlayerLevel * 0.06))) mk = "ShieldPartMeleeReflect";
+					string mk = "KickShieldNoReflect";
+					if (random(1,8) <= (1 + (PlayerLevel * 0.06))) mk = "KickShieldReflect";
 					
 					A_MeleeShieldPiece(mk,mkheight,mkdist1);
 					A_MeleeShieldPiece(mk,mkheight,mkdist2);
@@ -1444,6 +1457,104 @@ class ShieldPartMeleeNoReflect : ShieldPartBase
 }
 
 class ShieldPartMeleeReflect : ShieldPartMeleeNoReflect
+{
+	default
+	{
+		+REFLECTIVE 
+		+AIMREFLECT
+	}
+}
+
+class KickShieldNoReflect : ShieldPartMeleeNoReflect
+{
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		PlayerPawn playpawn;
+		PlayerPawn playpawn2;
+		playpawn = PlayerPawn(other);
+
+		if (dydudebug_shieldcollision) Console.Printf("\cyKickShield [%s] (gametic %d):\c- \c[brick]other: %s\c-", GetClassName(), gametic, other.GetClassName());
+		if (passive)
+		{
+			if (A_CheckCollisionProjShieldExemption(other)) return false;
+
+			if (dydudebug_shieldcollision) Console.Printf("\cyKickShield (gametic %d):\c- passive: %s", gametic, GetClassName());
+			// Pass through different species of select types.
+			if (playpawn) return false; // Player Checking
+
+			if (other)
+			{
+				if (other.bISMONSTER)
+				{
+					if (!other.bFRIENDLY)
+					{
+						if (other.CountInv("JustKicked") > 0)
+						{
+							if (dydudebug_shieldcollision) Console.Printf("JustKicked (%s) [passive side]", other.GetClassName());
+							return false;
+						}
+						if (other.CountInv("JustPunched") > 0)
+						{
+							if (dydudebug_shieldcollision) Console.Printf("JustPunched (%s) [passive side]", other.GetClassName());
+							return false;
+						}
+						if (other.CountInv("JustUppercutted") > 0)
+						{
+							if (dydudebug_shieldcollision) Console.Printf("JustUppercutted (%s) [passive side]", other.GetClassName());
+							return false;
+						}
+					}
+					if (other.bFRIENDLY) return false;
+					if (other.health <= 0) return false;
+					let ShieldPiece = KickShieldNoReflect(other); if (ShieldPiece) return false;
+					let ShieldPiece2 = KickShieldReflect(other); if (ShieldPiece2) return false;
+					return true;
+				}
+			}
+
+			playpawn = PlayerPawn(other.target);
+			playpawn2 = PlayerPawn(master);
+			if (playpawn && playpawn2) return false;
+
+			return true;
+		}
+		else // Non-passive means the one moving into the other is performing the checks.
+		{
+			if (dydudebug_shieldcollision) Console.Printf("\cyKickShield (gametic %d):\c- non-passive: %s", gametic, GetClassName());
+			playpawn = PlayerPawn(other.target);
+			playpawn2 = PlayerPawn(master);
+			if (playpawn && playpawn2) return false;
+
+			return true;
+		}
+
+		// We don't really care about others making the check.
+		return true;
+	}
+	
+	States
+	{
+		Spawn:
+			HEXA C 0 bright NoDelay;
+			HEXA C 1 bright;
+			stop;
+		Pain:
+			TNT1 A 0 bright
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+				{
+					A_StartSound("fisthitberserkwall", 57);
+				}
+				else
+				{
+					A_StartSound("FistHitWall", 57); 
+				} 
+			}
+			stop;
+	}
+}
+
+class KickShieldReflect : KickShieldNoReflect
 {
 	default
 	{

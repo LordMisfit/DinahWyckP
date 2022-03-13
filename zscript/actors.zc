@@ -1406,7 +1406,7 @@ class ShieldPartBase : DDBaseZSC
 		PlayerPawn playpawn2;
 		playpawn = PlayerPawn(other);
 
-		if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart [%s] (gametic %d):\c- other: %s", GetClassName(), gametic, other.GetClassName());
+		if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart [%s] (gametic %d):\c- \c[brick]other: %s\c-", GetClassName(), gametic, other.GetClassName());
 		if (passive)
 		{
 			if (A_CheckCollisionProjShieldExemption(other)) return false;
@@ -1419,6 +1419,24 @@ class ShieldPartBase : DDBaseZSC
 			{
 				if (other.bISMONSTER)
 				{
+					if (!other.bFRIENDLY)
+					{
+						if (other.CountInv("JustKicked") > 0)
+						{
+							if (dydudebug_shieldcollision) Console.Printf("JustKicked (%s) [passive side]", other.GetClassName());
+							return false;
+						}
+						if (other.CountInv("JustPunched") > 0)
+						{
+							if (dydudebug_shieldcollision) Console.Printf("JustPunched (%s) [passive side]", other.GetClassName());
+							return false;
+						}
+						if (other.CountInv("JustUppercutted") > 0)
+						{
+							if (dydudebug_shieldcollision) Console.Printf("JustUppercutted (%s) [passive side]", other.GetClassName());
+							return false;
+						}
+					}
 					if (other.bFRIENDLY) return false;
 					if (other.health <= 0) return false;
 					let ShieldPiece = SwingShieldPart(other); if (ShieldPiece) return false;
@@ -1430,6 +1448,8 @@ class ShieldPartBase : DDBaseZSC
 			playpawn = PlayerPawn(other.target);
 			playpawn2 = PlayerPawn(master);
 			if (playpawn && playpawn2) return false;
+
+			return true;
 		}
 		else // Non-passive means the one moving into the other is performing the checks.
 		{
