@@ -188,62 +188,48 @@ class DDPlayerPawn : PlayerPawn
 		{
 			if (wasdrowning)
 			{
+				bool emergegaspsnd = false;
 				if (takendrowndmg)
 				{
+					emergegaspsnd = true;
 					takendrowndmg = false;
+				}
+				else if (random(1,9) <= 6) 
+				{
+					emergegaspsnd = true;
+					willgasp = false;
+				}
+
+				if (emergegaspsnd)
+				{
 					A_StopSound(CHAN_VOICE);
 					A_StartSound("dinah/drowngasp1",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
 					willgasp = false;
 				}
-				else
-				{
-					A_StopSound(CHAN_VOICE);
-					if (random(1,9) <= 6) 
-					{
-						A_StartSound("dinah/drowngasp1",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
-						willgasp = false;
-					}
-				}
 			}
 			else
 			{
+				bool emergegaspsnd = false;
 				if (willgasp)
 				{
 					int AirMeterRatio;
 					if (MaxAirTime > 0) 
 					{
 						AirMeterRatio = (AirTime * 100 / MaxAirTime);
-						if (AirMeterRatio <= randompick(16,17,17))
+						
+						if (AirMeterRatio <= randompick(16,17,17)) emergegaspsnd = true;
+						else if (AirMeterRatio <= 25 && random(1,8) <= 7) emergegaspsnd = true;
+						else if (AirMeterRatio <= randompick(37,38) && random(1,8) <= 6) emergegaspsnd = true;
+						else if (AirMeterRatio <= 50 && random(1,8) <= 5) emergegaspsnd = true;
+						else if (AirMeterRatio <= randompick(62,63) && random(1,8) <= 4) emergegaspsnd = true;
+						else if (AirMeterRatio <= 75 && random(1,8) <= 3) emergegaspsnd = true;
+						else if (AirMeterRatio <= randompick(87,88) && random(1,8) <= 2) emergegaspsnd = true;
+						else if (AirMeterRatio <= 100 && random(1,8) <= 1) emergegaspsnd = true;
+						
+						if (emergegaspsnd)
 						{
 							A_StopSound(CHAN_VOICE);
 							A_StartSound("dinah/watergasp",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
-						}
-						else
-						if (AirMeterRatio <= randompick(33,33,34))
-						{
-							A_StopSound(CHAN_VOICE);
-							if (random(1,9) <= 8) 
-							{
-								A_StartSound("dinah/watergasp",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
-							}
-						}
-						else
-						if (AirMeterRatio <= randompick(66,67,67))
-						{
-							A_StopSound(CHAN_VOICE);
-							if (random(1,9) <= 4) 
-							{
-								A_StartSound("dinah/watergasp",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
-							}
-						}
-						else
-						if (AirMeterRatio <= randompick(83,83,84))
-						{
-							A_StopSound(CHAN_VOICE);
-							if (random(1,9) <= 1) 
-							{
-								A_StartSound("dinah/watergasp",CHAN_VOICE,CHANF_DEFAULT,frandom(0.9,1.1),ATTN_NORM,1.0);
-							}
 						}
 					}
 					willgasp = false;
@@ -1957,10 +1943,13 @@ class DDPlayerPawn : PlayerPawn
 		if (ret)
 		{
 			int damagetakefactor = ret * 100 / MiscItem.MaxHealthTrue;
-			MiscItem.HPHUDShakeType = 1;
-			if (damagetakefactor >= 10) MiscItem.HPHUDShakeType = 2;
-			if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
-			if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
+			if (MiscItem)
+			{
+				MiscItem.HPHUDShakeType = 1;
+				if (damagetakefactor >= 10) MiscItem.HPHUDShakeType = 2;
+				if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
+				if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
+			}
 		}
 		
 		if (armdmg && armortier)
@@ -1970,13 +1959,16 @@ class DDPlayerPawn : PlayerPawn
 			if (armortier == 2) armmax = 500;
 			if (armortier == 3) armmax = 1000;
 			if (armortier == 4) armmax = 2000;
-			if (armmax)
+			if (armmax > 0)
 			{
 				int damagetakefactor = armdmg * 100 / armmax;
-				MiscItem.APHUDShakeType = 1;
-				if (damagetakefactor >= 10) MiscItem.APHUDShakeType = 2;
-				if (damagetakefactor >= 50) MiscItem.APHUDShakeType = 3;
-				if (damagetakefactor >= 100) MiscItem.APHUDShakeType = 4;
+				if (MiscItem)
+				{
+					MiscItem.APHUDShakeType = 1;
+					if (damagetakefactor >= 10) MiscItem.APHUDShakeType = 2;
+					if (damagetakefactor >= 50) MiscItem.APHUDShakeType = 3;
+					if (damagetakefactor >= 100) MiscItem.APHUDShakeType = 4;
+				}
 			}
 		}
 		
