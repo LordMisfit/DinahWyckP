@@ -1096,7 +1096,7 @@ class DDPlayerPawn : PlayerPawn
 			else
 			{
 				if (!((source == null && inflictor == null) &&
-						(mod == 'Slime' || mod == 'Magma' || mod == 'Crush' || 	mod == 'Drowning' || mod == 'SigilDrain' || mod == 'Falling')) || mod == 'SigilDrain')
+						(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'Crush' || 	mod == 'Drowning' || mod == 'SigilDrain' || mod == 'Falling')) || mod == 'SigilDrain')
 				{
 					A_StartSound("player/dodge",305,CHANF_OVERLAP|CHANF_LOCAL,frandom(0.75,1.25),ATTN_NORM,frandom(0.75,1.25));
 					if (exex_playerdmglog)
@@ -1203,6 +1203,7 @@ class DDPlayerPawn : PlayerPawn
 		int MaxFullAbsorb = 0;
 		
 		int flatdefense;
+		int baseflatdefense;
 		bool useflatdefense;
 		let armoritem = BasicArmor(player.mo.FindInventory("BasicArmor"));
 		if (armoritem != null && CountInv("BasicArmor") > 0)
@@ -1281,7 +1282,8 @@ class DDPlayerPawn : PlayerPawn
 		}
 		else
 		if (mod == 'Slime' || 
-				mod == 'Magma' ||
+				mod == 'Lava' || 
+				mod == 'Magma' || 
 				mod == 'Crush' || 
 				mod == 'Falling')
 		{
@@ -1319,6 +1321,7 @@ class DDPlayerPawn : PlayerPawn
 
 					if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Bullet Buff]: %d (%d)", damage, olddmg);
 				}
+				useflatdefense = true;
 			}
 		}
 		
@@ -1340,8 +1343,8 @@ class DDPlayerPawn : PlayerPawn
 					if (armortier == 2) damage = ceil(damage * 0.9625);
 					if (armortier == 3) damage = ceil(damage * 0.95);
 					if (armortier == 4) damage = ceil(damage * 0.925);
-					useflatdefense = false;
 				}
+				useflatdefense = false;
 			}
 			else
 			{
@@ -1468,6 +1471,7 @@ class DDPlayerPawn : PlayerPawn
 				if (dydudebug_playerdamagemobj) Console.Printf("\c[fire]END DAMAGE ATTEMPT (FRACTAL EGG)");
 				return 0;
 			}
+			if (AttackingActor != self) useflatdefense = true;
 		}
 		
 		olddmg = damage;
@@ -1559,105 +1563,115 @@ class DDPlayerPawn : PlayerPawn
 			}
 		}
 		
-		// Armor Checks
-		if (armortier)
+		// Armor/Defense Checks
+		if (dydudebug_playerdamagemobj) Console.Printf("useflatdefense: %d", useflatdefense);
+		if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'Drowning' || mod == 'Falling'))
 		{
-			if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Drowning' || mod == 'Falling'))
+			olddmg = damage;
+			if (mod == 'Crush')
 			{
-				olddmg = damage;
-				if (mod == 'Crush')
+				if (useflatdefense)
 				{
-					if (useflatdefense)
+					if (MiscItem) baseflatdefense += ((MiscItem.PlayerLevel * 0.04) + (MiscItem.PlayerDEF * 0.04));
+					flatdefense = random((baseflatdefense*0.5),baseflatdefense);
+					if (armortier == 1) 
 					{
-						if (armortier == 1) 
-						{
-							if (CountInv("KnightGownIP1Buff")) damage -= randompick(1,1,2,2,3);
-																						else damage -= randompick(0,0,0,0,1);
-						}
-						if (armortier == 2) 
-						{
-							if (CountInv("KnightGownIP2Buff")) damage -= randompick(2,2,3,3,4);
-																						else damage -= randompick(0,0,0,1,1);
-						}
-						if (armortier == 3)
-						{
-							if (CountInv("KnightGownIP3Buff")) damage -= randompick(3,3,4,4,5);
-																						else damage -= randompick(0,0,1,1,2);
-						}
-						if (armortier >= 4) 
-						{
-							if (CountInv("KnightGownIP4Buff")) damage -= randompick(5,5,6,6,7);
-																						else damage -= randompick(1,1,2,2,3);
-						}
+						if (CountInv("KnightGownIP1Buff")) flatdefense += randompick(1,1,2,2,3);
+																					else flatdefense += randompick(0,0,0,0,1);
 					}
-					if (damage <= 0)
+					if (armortier == 2) 
 					{
-						if (armortier == 1) damage = 1;
-						if (armortier == 2 && random(1,32) > 1) damage = 1;
-						if (armortier == 3 && random(1,32) > 2) damage = 1;
-						if (armortier >= 4 && random(1,32) > 4) damage = 1;
+						if (CountInv("KnightGownIP2Buff")) flatdefense += randompick(2,2,3,3,4);
+																					else flatdefense += randompick(0,0,0,1,1);
 					}
+					if (armortier == 3)
+					{
+						if (CountInv("KnightGownIP3Buff")) flatdefense += randompick(3,3,4,4,5);
+																					else flatdefense += randompick(0,0,1,1,2);
+					}
+					if (armortier >= 4) 
+					{
+						if (CountInv("KnightGownIP4Buff")) flatdefense += randompick(5,5,6,6,7);
+																					else flatdefense += randompick(1,1,2,2,3);
+					}
+					damage -= flatdefense;
+					if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [Crush Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);
 				}
-				else
+				if (damage <= 0)
 				{
-					if (useflatdefense)
-					{
-						if (armortier == 1) 
-						{
-							if (CountInv("KnightGownIP1Buff")) damage -= (random(0,4) + (PlayerLevel * 0.125));
-																						else damage -= (random(0,1) + (PlayerLevel * 0.025));
-						}
-						if (armortier == 2) 
-						{
-							if (CountInv("KnightGownIP2Buff")) damage -= (random(4,8) + (PlayerLevel * 0.250));
-																						else damage -= (random(1,2) + (PlayerLevel * 0.050));
-						}
-						if (armortier == 3) 
-						{
-							if (CountInv("KnightGownIP3Buff")) damage -= (random(8,12) + (PlayerLevel * 0.375));
-																						else damage -= (random(2,3) + (PlayerLevel * 0.075));
-						}
-						if (armortier >= 4) 
-						{
-							if (CountInv("KnightGownIP4Buff")) damage -= (random(16,20) + (PlayerLevel * 0.625));
-																						else damage -= (random(4,5) + (PlayerLevel * 0.125));
-						}
-					}
-					if (damage <= 0)
-					{
-						if (armortier == 1) damage = 1;
-						if (armortier == 2 && random(1,8) > 1) damage = 1;
-						if (armortier == 3 && random(1,8) > 2) damage = 1;
-						if (armortier >= 4 && random(1,8) > 4) damage = 1;
-					}
+					if (armortier == 1) damage = 1;
+					if (armortier == 2 && random(1,32) > 1) damage = 1;
+					if (armortier == 3 && random(1,32) > 2) damage = 1;
+					if (armortier >= 4 && random(1,32) > 4) damage = 1;
 				}
-				if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Raw Armor Def]: %d", damage, olddmg);
 			}
 			else
 			{
 				if (useflatdefense)
 				{
+					if (MiscItem) baseflatdefense += ((MiscItem.PlayerLevel * 0.1) + (MiscItem.PlayerDEF * 0.1));
+					flatdefense = random((baseflatdefense*0.5),baseflatdefense);
 					if (armortier == 1) 
 					{
-						if (CountInv("KnightGownIP1Buff")) damage -= randompick(0,0,0,0,0,0,0,1,1,2,2,3,3);
-																					else damage -= randompick(0,0,0,0,0,0,0,0,0,0,0,0,1);
+						if (CountInv("KnightGownIP1Buff")) flatdefense += (random(0,4) + (PlayerLevel * 0.125));
+																					else flatdefense += (random(0,1) + (PlayerLevel * 0.025));
 					}
 					if (armortier == 2) 
 					{
-						if (CountInv("KnightGownIP2Buff")) damage -= randompick(0,0,0,0,0,0,1,1,2,2,3,3,4);
-																					else damage -= randompick(0,0,0,0,0,0,0,0,0,0,0,1,1);
+						if (CountInv("KnightGownIP2Buff")) flatdefense += (random(4,8) + (PlayerLevel * 0.250));
+																					else flatdefense += (random(1,2) + (PlayerLevel * 0.050));
 					}
-					if (armortier == 3)
+					if (armortier == 3) 
 					{
-						if (CountInv("KnightGownIP3Buff")) damage -= randompick(0,0,0,0,0,1,1,2,2,3,3,4,4);
-																					else damage -= randompick(0,0,0,0,0,0,0,0,0,0,1,1,2);
+						if (CountInv("KnightGownIP3Buff")) flatdefense += (random(8,12) + (PlayerLevel * 0.375));
+																					else flatdefense += (random(2,3) + (PlayerLevel * 0.075));
 					}
 					if (armortier >= 4) 
 					{
-						if (CountInv("KnightGownIP4Buff")) damage -= randompick(0,0,0,1,1,2,2,3,3,4,4,5,5);
-																					else damage -= randompick(0,0,0,0,0,0,0,0,1,1,2,2,3);
+						if (CountInv("KnightGownIP4Buff")) flatdefense += (random(16,20) + (PlayerLevel * 0.625));
+																					else flatdefense += (random(4,5) + (PlayerLevel * 0.125));
 					}
+					damage -= flatdefense;
+					if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [Non-Crush Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);
 				}
+				if (damage <= 0)
+				{
+					if (armortier == 1) damage = 1;
+					if (armortier == 2 && random(1,8) > 1) damage = 1;
+					if (armortier == 3 && random(1,8) > 2) damage = 1;
+					if (armortier >= 4 && random(1,8) > 4) damage = 1;
+				}
+			}
+			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Raw Armor Def]: %d", damage, olddmg);
+		}
+		else // Slime Damage
+		{
+			if (useflatdefense)
+			{
+				if (MiscItem) baseflatdefense += ((MiscItem.PlayerLevel * 0.02) + (MiscItem.PlayerDEF * 0.02));
+				flatdefense = random((baseflatdefense*0.5),baseflatdefense);
+				if (armortier == 1) 
+				{
+					if (CountInv("KnightGownIP1Buff")) flatdefense += randompick(0,0,0,0,0,0,0,1,1,2,2,3,3);
+																				else flatdefense += randompick(0,0,0,0,0,0,0,0,0,0,0,0,1);
+				}
+				if (armortier == 2) 
+				{
+					if (CountInv("KnightGownIP2Buff")) flatdefense += randompick(0,0,0,0,0,0,1,1,2,2,3,3,4);
+																				else flatdefense += randompick(0,0,0,0,0,0,0,0,0,0,0,1,1);
+				}
+				if (armortier == 3)
+				{
+					if (CountInv("KnightGownIP3Buff")) flatdefense += randompick(0,0,0,0,0,1,1,2,2,3,3,4,4);
+																				else flatdefense += randompick(0,0,0,0,0,0,0,0,0,0,1,1,2);
+				}
+				if (armortier >= 4) 
+				{
+					if (CountInv("KnightGownIP4Buff")) flatdefense += randompick(0,0,0,1,1,2,2,3,3,4,4,5,5);
+																				else flatdefense += randompick(0,0,0,0,0,0,0,0,1,1,2,2,3);
+				}
+				damage -= flatdefense;
+				if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [DmgFloor Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);
 			}
 		}
 		
@@ -1666,8 +1680,16 @@ class DDPlayerPawn : PlayerPawn
 		{
 			olddmg = damage;
 			if (mod == 'Falling') damage = ceil(damage * frandom(0.625,0.75));
-			if (mod == 'Crush') damage = ceil(damage * frandom(0.75,0.875));
-			if (mod == 'Drowning') damage = ceil(damage * frandom(0.875,1.000));
+			if (mod == 'Crush') 
+			{
+				damage = ceil(damage * frandom(0.75,0.875));
+				if (damage < 1) damage = 1;
+			}
+			if (mod == 'Drowning') 
+			{
+				damage = ceil(damage * frandom(0.625,1.000));
+				if (damage < 1) damage = 1;
+			}
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Berserk Effects]: %d", damage, olddmg);
 		}
 		
@@ -1683,7 +1705,7 @@ class DDPlayerPawn : PlayerPawn
 				CountInv("TimePotionTimeFreezer") || 
 				CountInv("DashTimeFreezer"))
 		{
-			if (mod == 'Slime' || mod == 'Magma')
+			if (mod == 'Slime' || mod == 'Lava' || mod == 'Magma')
 			{
 				if (dydudebug_playerdamagemobj) Console.Printf("PDamage [TimeFreeze on Slime abort]");
 				return 0;
@@ -1873,7 +1895,7 @@ class DDPlayerPawn : PlayerPawn
 		{
 			int gain = 0;
 			if ((source && source != self) && (inflictor && inflictor != self)) gain += 1;
-			if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush')) gain += 1;
+			if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush')) gain += 1;
 			if (gain && MiscItem.IPNoGainTimer <= 0)
 			{
 				double base;

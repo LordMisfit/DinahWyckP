@@ -1422,7 +1422,9 @@ class DDStatusBarMain : BaseStatusBar
 				// Protect %
 				if (armorprotect) DrawString(mArmSaveFont, armorsaveamt, (79, -53-scavmody), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				// + Defense
-				int ArmorFlatDefValue = 0;
+				int BaseFlatDefValue;
+				if (MiscItem) BaseFlatDefValue = ((MiscItem.PlayerLevel * 0.1) + (MiscItem.PlayerDef * 0.1));
+				int ArmorFlatDefValue = 0 + BaseFlatDefValue;
 				string ArmorFlatDef = "";
 				if (CPlayer.mo.CountInv("KnightGownItem")) 
 				{
@@ -1447,7 +1449,7 @@ class DDStatusBarMain : BaseStatusBar
 				ArmorFlatDef.AppendFormat("-");
 				ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
 				ArmorFlatDef.AppendFormat("flat damage");
-				if (armor.Amount > 0) DrawString(mArmSaveFont, ArmorFlatDef, (79, -47-scavmody), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				if (armor.Amount > 0 && ArmorFlatDefValue) DrawString(mArmSaveFont, ArmorFlatDef, (79, -47-scavmody), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				
 				if (ArmorScavengingLevel > 0) 
 				{
@@ -1458,7 +1460,23 @@ class DDStatusBarMain : BaseStatusBar
 					DrawString(mArmSaveFont, ArmorScavengeLevel, (79, -41-scavmody), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				}
 				
-				
+				FontScale = (1.25, 1.25);
+			}
+			else
+			{
+				FontScale = (1.0, 1.0);
+
+				// + Defense
+				int ArmorScavengingLevel = cplayer.mo.CountInv("ArmorScavengerKit");
+				int BaseFlatDefValue;
+				if (MiscItem) BaseFlatDefValue = ((MiscItem.PlayerLevel * 0.1) + (MiscItem.PlayerDef * 0.1));
+				int ArmorFlatDefValue = 0 + BaseFlatDefValue;
+				string ArmorFlatDef = "";
+				ArmorFlatDef.AppendFormat("-");
+				ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
+				ArmorFlatDef.AppendFormat("flat damage");
+				if (ArmorFlatDefValue) DrawString(mArmSaveFont, ArmorFlatDef, (79, -50), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+
 				FontScale = (1.25, 1.25);
 			}
 			
@@ -1723,7 +1741,13 @@ class DDStatusBarMain : BaseStatusBar
 			double airmeterlength = 1.0;
 			if (Cplayer.mo.CountInv("PowerStrength") || Cplayer.mo.CountInv("PowerStrengthDD")) airmeterlength *= 1.25;
 			int AirUnits;
-			if (AirMeterMax) AirUnits = AirMeterCurrent * 100 / AirMeterMax;
+			double AirPercent;
+			if (AirMeterMax) 
+			{
+				AirUnits = AirMeterCurrent * 100 / AirMeterMax;
+				AirPercent = AirMeterCurrent * 100.0 / AirMeterMax;
+				if (Cplayer.mo.CountInv("PowerStrength") || Cplayer.mo.CountInv("PowerStrengthDD")) AirPercent = AirMeterCurrent * 125.0 / AirMeterMax;
+			}
 			if (AirUnits > 0)
 			{
 				int airlow = 0;
@@ -1758,12 +1782,13 @@ class DDStatusBarMain : BaseStatusBar
 				digx = 5;
 				digy = -148;
 				int lowairx, lowairy;
+				double airmeterscale = 0.875;
 				if (airlow)
 				{
 					lowairx = random(-airlow,airlow);
 					lowairy = random(-airlow,airlow);
 				}
-				if (AirMeterMax > 0)
+				if (AirMeterMax > 0 && dyduhud_showairmeter)
 				{
 					if (AirMeterCurrent < AirMeterMax && AirMeterMax > 0)
 					{
@@ -1785,8 +1810,21 @@ class DDStatusBarMain : BaseStatusBar
 						}
 						double airseconds = (AirMeterCurrent / TICRATE);
 						string airsecstring = "";
-						airsecstring.AppendFormat("%.1f", airseconds);
-						DrawString(mSmallFont, airsecstring, (digx+(46*airmeterlength)+lowairx, digy-9+lowairy), DI_TEXT_ALIGN_CENTER, font.CR_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale*0.875); // 41, -43
+						if (dyduhud_airmeterdisplay)
+						{
+							if (dyduhud_airmeterdisplay & 1) airsecstring.AppendFormat("%.1f", airseconds);
+							if (dyduhud_airmeterdisplay & 1 && dyduhud_airmeterdisplay & 2) 
+							{
+								airmeterscale = 0.75;
+								airsecstring.AppendFormat(" (");
+							}
+							if (dyduhud_airmeterdisplay & 2) airsecstring.AppendFormat("%.1f%%", AirPercent);
+							if (dyduhud_airmeterdisplay & 1 && dyduhud_airmeterdisplay & 2)
+							{
+								airsecstring.AppendFormat(")");
+							}
+							DrawString(mSmallFont, airsecstring, (digx+(46*airmeterlength)+lowairx, digy-9+lowairy), DI_TEXT_ALIGN_CENTER, font.CR_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale*airmeterscale); // 41, -43
+						}
 					}
 				}
 			}
