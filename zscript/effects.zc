@@ -2863,12 +2863,81 @@ class FuryBuffIP : PowerDamage
 //Diving Helmet
 class PowerNoDrown : PowerProtection
 {
+	double ticpiece;
 	default
 	{
 		DamageFactor "Drowning", 0;
 		Powerup.Color "Grey", 0.1;
 		Powerup.Duration -180;
 		Inventory.Icon "DIVRA0";
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+	
+	
+	override void Tick()
+	{
+		int ticpiecemax;
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner)
+		{
+			if (!owner.CountInv("INTERMAPChecker"))
+			{
+				if (owner.waterlevel >= 3)
+				{
+					if (owner.CountInv("TimePotionTimeFreezer"))
+					{
+						if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																									else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+						ticpiecemax = 10;
+						if (ticpiece >= ticpiecemax)
+						{
+							EffectTics--;
+							ticpiece -= ticpiecemax;
+						}
+					}
+					else
+					{
+						ticpiece = 0;
+						ticpiecemax = 1;
+						EffectTics--;
+					}
+				}
+				else
+				{
+					if (owner.CountInv("TimePotionTimeFreezer"))
+					{
+						if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																									else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+						ticpiecemax = 250;
+						if (ticpiece >= ticpiecemax)
+						{
+							EffectTics--;
+							ticpiece -= ticpiecemax;
+						}
+					}
+					else
+					{
+						ticpiece += 1;
+						ticpiecemax = 25;
+						if (ticpiece >= ticpiecemax)
+						{
+							EffectTics--;
+							ticpiece -= ticpiecemax;
+						}
+					}
+				}
+				if (dydudebug_playerbreathedisplays) Console.Printf("ticpiece [PowerNoDrown]: %d / %d", ticpiece, ticpiecemax);
+			}
+			if (ticpiece < -ticpiecemax) ticpiece = 0;
+			if (ticpiece >= (ticpiecemax*3)) ticpiece = 0;
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		if (EffectTics <= 0) Destroy();
 	}
 	
 	override void DoEffect()
