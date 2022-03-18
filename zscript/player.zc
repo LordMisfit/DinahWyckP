@@ -1097,7 +1097,7 @@ class DDPlayerPawn : PlayerPawn
 			else
 			{
 				if (!((source == null && inflictor == null) &&
-						(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'Crush' || 	mod == 'Drowning' || mod == 'SigilDrain' || mod == 'Falling')) || mod == 'SigilDrain')
+						(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'Crush' || mod == 'Drowning' || mod == 'SigilDrain' || mod == 'Falling')) || mod == 'SigilDrain')
 				{
 					A_StartSound("player/dodge",305,CHANF_OVERLAP|CHANF_LOCAL,frandom(0.75,1.25),ATTN_NORM,frandom(0.75,1.25));
 					if (exex_playerdmglog)
@@ -1224,6 +1224,14 @@ class DDPlayerPawn : PlayerPawn
 		
 		bool SigilDrain;
 		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Step 1] - Base: %d", damage);
+		if (mod == 'Drowning' && source == null && inflictor == null)
+		{
+			flags |= DMG_NO_FACTOR;
+			flags |= DMG_NO_PROTECT;
+			flags |= DMG_NO_ENHANCE;
+			flags |= DMG_NO_ARMOR;
+			if (dydudebug_playerdamagemobj) Console.Printf("Drowning", damage);
+		}
 		if (mod == 'SigilDrain' && source == null && inflictor == self && flags & DMG_NO_ARMOR)
 		{
 			flags |= DMG_NO_FACTOR;
@@ -1238,6 +1246,7 @@ class DDPlayerPawn : PlayerPawn
 		{
 			if (random(1,8) <= 7) flags |= DMG_NO_ARMOR;
 			if (random(1,8) <= 1) flags |= DMG_NO_FACTOR;
+			if (random(1,32) <= 1) flags |= DMG_NO_PROTECT;
 			if (dydudebug_playerdamagemobj) Console.Printf("Crush"); 
 		}
 		
@@ -1608,6 +1617,7 @@ class DDPlayerPawn : PlayerPawn
 			}
 			else
 			{
+				if (mod == 'Drowning') useflatdefense = false;
 				if (useflatdefense)
 				{
 					if (MiscItem) baseflatdefense += ((MiscItem.PlayerLevel * 0.1) + (MiscItem.PlayerDEF * 0.1));
@@ -1647,6 +1657,7 @@ class DDPlayerPawn : PlayerPawn
 		}
 		else // Slime Damage
 		{
+			if (mod == 'Drowning') useflatdefense = false;
 			if (useflatdefense)
 			{
 				if (MiscItem) baseflatdefense += ((MiscItem.PlayerLevel * 0.02) + (MiscItem.PlayerDEF * 0.02));
@@ -1692,6 +1703,10 @@ class DDPlayerPawn : PlayerPawn
 				if (damage < 1) damage = 1;
 			}
 			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Berserk Effects]: %d", damage, olddmg);
+		}
+		else
+		{
+			if (mod == 'Drowning' && damage < 1) damage = 1;
 		}
 		
 		if (CountInv("PlayerDashing") && !SigilDrain)
