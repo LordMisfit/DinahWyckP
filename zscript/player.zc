@@ -172,13 +172,18 @@ class DDPlayerPawn : PlayerPawn
 		if (AirTime < MaxAirTime)
 		{
 			double airreplen;
-			if (MaxAirTime > 0) 
-			airreplen = (MaxAirTime / (TICRATE * 5));
+			if (MaxAirTime > 0) airreplen = (MaxAirTime / (TICRATE * 5));
 			if (airreplen < 1) airreplen = 1;
 			if (MiscItem) airreplen *= (1.0 + (MiscItem.PlayerLevel * 0.0125));
-			if (MaxAirTime > 0 && airreplen > (TICRATE / 35)) airreplen = (MaxAirTime / TICRATE);
+			if (MaxAirTime > 0 && airreplen > TICRATE) airreplen = TICRATE;
 			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) airreplen *= 1.25;
 			if (CountInv("PowerNoDrown") || CountInv("PowerIronFeet") || CountInv("PowerIronFeet2") || CountInv("PowerMask")) airreplen *= 1.625;
+			if (MiscItem && MiscItem.drowndebufflevel)
+			{
+				airreplen *= (1.00 - (MiscItem.drowndebufflevel * frandompick(0.5,0.0625,0.0625,0.75,0.75,0.75,0.75,0.75,0.875,0.875,0.875,1.0)));
+				if (airreplen < 1 && random(1,16) <= (16 - int(MiscItem.drowndebufflevel * frandom(0.8,1.2)))) airreplen = 1;
+				if (airreplen < 0) airreplen = 0;
+			}
 			AirTime += airreplen;
 			if (dydudebug_airmeter) Console.Printf("airreplen: %d (%d / %d)", airreplen, AirTime, MaxAirTime);
 		}
@@ -233,7 +238,15 @@ class DDPlayerPawn : PlayerPawn
 		}
 		return wasdrowning;
 	}
-
+	
+	void SpawnBubbles(string bubbletype = "AirBubble1", double bubblex = 0, double bubbley = 0, double bubblez = 0)
+	{
+		bubblex += random(3,11);
+		bubblex += random(-2,2);
+		bubblez += random((Player.ViewHeight-2),(Player.ViewHeight+2));
+		A_SpawnItemEx("AirBubble1",bubblex,bubbley,bubblez,0,0,0,0,SXF_NOCHECKPOSITION);
+	}
+	
 	override void CheckAirSupply()
 	{
 		if (!player || !player.mo || player.mo != self)
@@ -297,6 +310,9 @@ class DDPlayerPawn : PlayerPawn
 				}
 				else
 				{
+					buttons = GetPlayerInput(INPUT_BUTTONS);
+
+					double bubblex, bubbley, bubblez;
 					AirTime--;
 					if (AirTime > MaxAirTime) AirTime = MaxAirTime;
 					if (AirTime <= 0)
@@ -310,6 +326,7 @@ class DDPlayerPawn : PlayerPawn
 							{
 								if (MiscItem)
 								{
+									MiscItem.drowndebuginit = true;
 									if (MiscItem.drowndebufflevel < 10)
 									{
 										MiscItem.drowndebufflevel++;
@@ -320,6 +337,63 @@ class DDPlayerPawn : PlayerPawn
 							A_StopSound(120);
 							A_StartSound(drownsnd,120,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(1.375,1.5));
 							takendrowndmg = true;
+							
+							SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+							SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+							SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+							if (random(1,3) <= random(1,2))
+							{
+								SpawnBubbles("AirBubble1",frandom(-8,8),frandom(-8,8),frandom(-5,5));
+								SpawnBubbles("AirBubble1",frandom(-8,8),frandom(-8,8),frandom(-5,5));
+								SpawnBubbles("AirBubble1",frandom(-8,8),frandom(-8,8),frandom(-5,5));
+								if (random(1,3) <= 1) 
+								{
+									SpawnBubbles("AirBubble1",frandom(-11,11),frandom(-11,11),frandom(-7,7));
+									SpawnBubbles("AirBubble1",frandom(-11,11),frandom(-11,11),frandom(-7,7));
+									SpawnBubbles("AirBubble1",frandom(-11,11),frandom(-11,11),frandom(-7,7));
+								}
+							}
+						}
+					}
+					else
+					{
+						int basechance = 64;
+						bool extrabubbles = true;
+						bool moveaffectchance = true;
+						if (CountInv("PowerNoDrown") || 
+								CountInv("PowerIronFeet") || 
+								CountInv("PowerIronFeet2") || 
+								CountInv("PowerMask"))
+						{
+							basechance *= 16;
+							extrabubbles = false;
+							if (random(1,32) <= 31) moveaffectchance = false;
+						}
+						
+						if (moveaffectchance)
+						{
+							if (buttons & BT_FORWARD || buttons & BT_BACK || buttons & BT_MOVELEFT || buttons & BT_MOVERIGHT)
+							{
+								basechance *= frandom(0.6,0.75);
+								if (random(1,16) <= random(1,2)) basechance *= 0.5;
+							}
+							if (buttons & BT_JUMP || buttons & BT_CROUCH)
+							{
+								basechance *= frandom(0.6,0.75);
+								if (random(1,16) <= random(1,2)) basechance *= 0.5;
+							}
+						}
+						
+						if (random(1,basechance) <= 1)
+						{
+							SpawnBubbles("AirBubble1",frandom(-4,4),frandom(-4,4),frandom(-2,2));
+							if (extrabubbles)
+							{
+								if (random(1,(basechance*0.125)) <= 1) SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+								if (random(1,(basechance*0.5)) <= 1) SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+								if (random(1,(basechance*2)) <= 1) SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+								if (random(1,(basechance*8)) <= 1) SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+							}
 						}
 					}
 				}

@@ -15,6 +15,8 @@ class PlayerStatItem : Inventory
 	int EvasionRate;
 	double SPDEvadeCheck;
 	int drowndebufflevel, drowndebufftimer;
+	bool drowndebuginit;
+	int drowndebuffmaxtimer, drownmaxtimermod;
 	
 	int MaxDashIncTimer, MaxDashIncAmt;
 	int MaxHPIncTimer, MaxHPIncAmt;
@@ -844,18 +846,43 @@ class PlayerStatItem : Inventory
 					if (APHUDShakeTime) APHUDShakeTime--;
 					if (IPHUDShakeTimer) IPHUDShakeTimer--;
 					
-					if (drowndebufflevel)
+					if (drowndebufflevel > 0)
 					{
+						owner.A_SetInventory("DrownDebuffBase",1);
 						if (dydudebug_airmeter) Console.Printf("drowndebufflevel: %d, drowndebufftimer: %d", drowndebufflevel ,drowndebufftimer);
 						if (owner.CountInv("AirMeter") > 0)
 						{
-							if (drowndebufftimer) drowndebufftimer--;
-							else drowndebufflevel = 0;
+							if (drowndebuginit)
+							{
+								drowndebuffmaxtimer = drowndebufftimer;
+								drownmaxtimermod = (drowndebuffmaxtimer / drowndebufflevel);
+								drowndebuginit = false;
+							}
+							if (drowndebufftimer) 
+							{
+								drowndebufftimer--;
+								if (drowndebufftimer % drownmaxtimermod == 1)
+								{
+									drowndebufflevel--;
+									if (drowndebufflevel <= 0) 
+									{
+										drowndebufflevel = 0;
+										drowndebufftimer = 0;
+										owner.A_SetInventory("DrownDebuffBase",0);
+									}
+								}
+							}
+							else 
+							{
+								drowndebufflevel = 0;
+								owner.A_SetInventory("DrownDebuffBase",0);
+							}
 						}
 					}
 					else
 					{
 						drowndebufftimer = 0;
+						owner.A_SetInventory("DrownDebuffBase",0);
 					}
 				}
 				

@@ -678,6 +678,7 @@ class DDStatusBarMain : BaseStatusBar
 				int itemeffectsecs = (item.EffectTics / thinker.TICRATE);
 				int itemfontclr = font.CR_White;
 				int itemticmod = 26;
+				int itemeffectlevel = 0;
 
 				if (PowerFoodATK(item) || PowerFoodDEF(item)) itemfontclr = font.CR_Tan;
 				if (PowerWine(item)) itemfontclr = font.CR_Purple;
@@ -727,6 +728,18 @@ class DDStatusBarMain : BaseStatusBar
 						debuff = true;
 					}
 				}
+				if (DrownDebuffBase(item))
+				{
+					let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+					if (MiscItem) 
+					{
+						itemeffecttics = MiscItem.drowndebufftimer;
+						itemeffectsecs = (MiscItem.drowndebufftimer / thinker.TICRATE);
+						itemfontclr = font.CR_Brick;
+						itemeffectlevel = MiscItem.drowndebufflevel;
+						debuff = true;
+					}
+				}
 				let icon = item.GetPowerupIcon();
 				/*
 				if (icon == TexMan.CheckForTexture("SPSHLD0", TexMan.TYPE_MiscPatch)) 
@@ -740,7 +753,17 @@ class DDStatusBarMain : BaseStatusBar
 					// Each icon gets a 32x32 block.
 					if (debuff) 
 					{
+						let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+						
 						posdiff = (randompick(-1,0,1), randompick(-1,0,1));
+						if (MiscItem)
+						{
+							if (MiscItem.drowndebufflevel >= 3) posdiff = (randompick(-1,0,1), randompick(-1,0,1));
+							if (MiscItem.drowndebufflevel >= 5) posdiff = (randompick(-2,-1,0,1,2), randompick(-2,-1,0,1,2));
+							if (MiscItem.drowndebufflevel >= 7) posdiff = (randompick(-3,-2,-1,0,1,2,3), randompick(-3,-2,-1,0,1,2,3));
+							if (MiscItem.drowndebufflevel >= 10) posdiff = (randompick(4,-3,-2,-1,0,1,2,3,4), randompick(-4,-3,-2,-1,0,1,2,3,4));
+						}
+						
 						if (item.GetClassName() == "GrimophoneDEFDown1") posdiff = (randompick(-1,0,1), randompick(-1,0,1));
 						if (item.GetClassName() == "GrimophoneDEFDown2") posdiff = (randompick(-2,-1,0,1,2), randompick(-2,-1,0,1,2));
 						if (item.GetClassName() == "GrimophoneDEFDown3") posdiff = (randompick(-3,-2,-1,0,1,2,3), randompick(-3,-2,-1,0,1,2,3));
@@ -780,6 +803,14 @@ class DDStatusBarMain : BaseStatusBar
 						if (itemeffecttics >= 177 && itemeffecttics <= 1050) { if (itemeffecttics % 30 >= 15) pos.y -= 1; }
 						if (itemeffecttics >= 1051) { if (itemeffecttics % 50 >= 25) pos.y -= 1; }
 						pos.y -= 1;
+					}
+					if (itemeffectlevel > 0)
+					{
+						pos.x += -8;
+						pos.y += -32;
+						DrawString(mDDLFont, FormatNumber(itemeffectlevel), (pos.x+POWERUPICONSIZE, pos.y) + posdiff, DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, 0.9, -1, 4, (1.0, 1.0)); // 41, -43
+						pos.x -= -8;
+						pos.y -= -32;
 					}
 				}
 			}
