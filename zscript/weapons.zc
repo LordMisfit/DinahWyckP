@@ -39,13 +39,97 @@ class DDWeapon : Weapon
 	int IPAttackCheck;
 	
 	bool PickupUseVoice;
+	bool PickupUseVoice2;
+	string PickupSnd2;
 	property PickUpVoice: PickupUseVoice;
+	property PickUpVoice2: PickupUseVoice2;
+	property PickupSound2: PickupSnd2;
 
 	default
 	{
 		+WEAPON.NOAUTOAIM
 	}
 	
+	override void PlayPickupSound (Actor toucher)
+	{
+		double atten;
+		int chan;
+		int flags = 0;
+
+		if (bNoAttenPickupSound)
+		{
+			atten = ATTN_NONE;
+		}
+		/*
+		else if ((ItemFlags & IF_FANCYPICKUPSOUND) &&
+			(toucher == NULL || toucher->CheckLocalView()))
+		{
+			atten = ATTN_NONE;
+		}
+		*/
+		else
+		{
+			atten = ATTN_NORM;
+		}
+
+		if (toucher != NULL && toucher.CheckLocalView())
+		{
+			if (PickupUseVoice) chan = CHAN_VOICE;
+										 else chan = CHAN_ITEM;
+			flags = CHANF_NOPAUSE | CHANF_MAYBE_LOCAL;
+		}
+		else
+		{
+			if (PickupUseVoice) chan = CHAN_VOICE;
+										 else chan = CHAN_ITEM;
+			flags = CHANF_MAYBE_LOCAL;
+		}
+		//Console.Printf("Channel: %d [PUV: %d]", chan, PickupUseVoice);
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		double maskpitch = 1.00;
+		if (PickupUseVoice) 
+		{
+			if (MiscItem && MiscItem.CanTalkUnderwater)
+			{
+				if (toucher.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+			}
+		}
+		toucher.A_StopSound(chan);
+		toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
+		
+		if (PickupSnd2 != "")
+		{
+			if (toucher != NULL && toucher.CheckLocalView())
+			{
+				if (PickupUseVoice2) chan = CHAN_VOICE;
+												else chan = CHAN_ITEM;
+				flags = CHANF_NOPAUSE | CHANF_MAYBE_LOCAL;
+			}
+			else
+			{
+				if (PickupUseVoice2) chan = CHAN_VOICE;
+												else chan = CHAN_ITEM;
+				flags = CHANF_MAYBE_LOCAL;
+			}
+			//Console.Printf("Channel: %d [PUV2: %d]", chan, PickupUseVoice2);
+			
+			actor player = players[0].mo;
+			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+			double maskpitch = 1.00;
+			if (PickupUseVoice2) 
+			{
+				if (MiscItem && MiscItem.CanTalkUnderwater)
+				{
+					if (toucher.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+				}
+			}
+			toucher.A_StopSound(chan);
+			toucher.A_StartSound(PickupSnd2, chan, flags, 1.0, atten, maskpitch);
+		}
+	}
+
 	action void A_Destroy()
 	{
 		self.Destroy();
@@ -809,6 +893,11 @@ class DDWeapon : Weapon
 
 class DinahWeapon : DDWeapon
 {
+	default
+	{
+		DDWeapon.PickUpVoice true;
+	}
+
 	action void A_QMWKickInit()
 	{
 		A_GunFlash("LightDone",GFF_NOEXTCHANGE); // A_ClearFlash;
@@ -2813,8 +2902,11 @@ class CricketBat : DinahWeapon replaces Pistol
 		+WEAPON.MELEEWEAPON
 		+PUFFONACTORS
 		+FLOATBOB
-		Inventory.Icon "SPBTA0";
-		Inventory.Pickupsound "DinahWeap";
+		Inventory.Icon "SPBTA0";	
+		Inventory.Pickupsound "Dinah/GetWeapon";
+		DDWeapon.PickupVoice true;
+		DDWeapon.PickupSound2 "misc/w_pkup";
+		DDWeapon.PickupVoice2 false;
 		Inventory.PickupMessage "\c[gold]A Cricket Bat! Yeeeesireeee I'll be taking this! \cx[Slot 2]\c-";
 		Tag "Cricket Bat: Dinah's old reliable. Normal attack is melee. Alt attack is a cricket ball shot. <USER4> key allows you to guard/defend from attacks, and blocks/reflects projectiles from the front. Swings can also affect enemy projectiles.";
 		Obituary "%k scored a point with %o.";
@@ -4467,7 +4559,10 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 		+FLOATBOB
 		Inventory.Icon "BLAXP0";
 		Inventory.PickupMessage "\c[gold]Oh yes! The slow, yet trusty Blunderaxe.\c- \cx[Slot 3]\c-";
-		inventory.PickupSound "misc/w_pkup";
+		Inventory.Pickupsound "Dinah/GetWeapon";
+		DDWeapon.PickupVoice true;
+		DDWeapon.PickupSound2 "misc/w_pkup";
+		DDWeapon.PickupVoice2 false;
 		Tag "Blunderaxe: Normal fire chops enemies in melee. Alt-fire shoots a spread of Blundershot. Chop attack occasionally inflicts a defensive debuff [up to 3 tiers] on enemies.";
 		Obituary "%k used %o for target practice.";
 	}
@@ -7300,9 +7395,11 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		+PUFFONACTORS
 		+FLOATBOB
 		Inventory.Icon "FPANP0";
-		Inventory.Pickupsound "DinahWeap";
+		Inventory.Pickupsound "Dinah/GetWeapon";
+		DDWeapon.PickupVoice true;
+		DDWeapon.PickupSound2 "misc/w_pkup";
+		DDWeapon.PickupVoice2 false;
 		Inventory.PickupMessage "\c[gold]This golden frypan is called the 'Scrambler'! It does well at scrambling more than just eggs too! \c- \cx[Slot 3]\c-";
-		inventory.PickupSound "misc/w_pkup";
 		Tag "Scrambler: Normal attack is a melee whack. Alt-attack throws a fractal egg that splits into multiple smaller ones. Melee occasionally 'confuses' enemies, lessing their chance to attack. Swings can also affect enemy projectiles.";
 		Obituary "%k scored a point with %o.";
 	}
@@ -8567,9 +8664,11 @@ class AppleJack : DinahWeapon replaces Chaingun
 		+PUFFONACTORS
 		+FLOATBOB
 		Inventory.Icon "AJAKP0";
-		Inventory.Pickupsound "DinahWeap";
+		Inventory.Pickupsound "Dinah/GetWeapon";
+		DDWeapon.PickupVoice true;
+		DDWeapon.PickupSound2 "misc/w_pkup";
+		DDWeapon.PickupVoice2 false;
 		Inventory.PickupMessage "\c[gold]Nice, I found an Apple Jack! Not as defense based as the Cricket Bat, but nice for offense!\c- \cx[Slot 4]\c-";
-		inventory.PickupSound "misc/w_pkup";
 		Tag "Apple Jack: Normal attack is a melee swing that hit twice. Alt attack is a ranged toss of an aggro-apple that can usually block incoming projectiles. Swings can also affect enemy projectiles.";
 		Obituary "%k kept the doctor away from %o.";
 	}
@@ -9822,7 +9921,10 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 		+FLOATBOB
 		Inventory.Icon "SCPPA0";
 		Inventory.PickupMessage "\c[gold]The mighty Wizard's Pike... I never cared for learning magic spells, but this thing is a fine substitute!\c- \cx[Slot 5]\c-";
-		inventory.PickupSound "misc/w_pkup";
+		Inventory.Pickupsound "Dinah/GetWeapon";
+		DDWeapon.PickupVoice true;
+		DDWeapon.PickupSound2 "misc/w_pkup";
+		DDWeapon.PickupVoice2 false;
 		Tag "Pike: Normal attack is a quick melee jab. Alt attack launches a wave of magical shots.";
 		Obituary "%k fed %o to a hungry pike.";
 	}
@@ -10402,8 +10504,8 @@ class Pike_Flipped : CustomInventoryExt
 		Tag "Pike (Flipped)";
 		+FLOATBOB
 		+NOGRAVITY
-		Inventory.PickupMessage "Pike";
-		inventory.PickupSound "misc/w_pkup";
+		Inventory.Pickupsound "Dinah/GetWeapon";
+		CustomInventoryExt.PickupVoice true;
 	}
 	
 	States
@@ -11034,7 +11136,10 @@ class SuperVac : DinahWeapon replaces PlasmaRifle
 		+PUFFONACTORS
 		Inventory.Icon "VACMP0";
 		Inventory.PickupMessage "\c[gold]This SuperVac is strange and magical, as it converts what it devours into dust-based attack energy, deceptively powerful too. It is heavy though... \c- \cx[Slot 6]\c-";
-		inventory.PickupSound "misc/w_pkup";
+		Inventory.Pickupsound "Dinah/GetWeapon";
+		DDWeapon.PickupVoice true;
+		DDWeapon.PickupSound2 "misc/w_pkup";
+		DDWeapon.PickupVoice2 false;
 		Tag "SuperVac: Normal attack is a constant vaccum/sucking attack that usually absorbs/erases that which it kills into ammo for the alt-fire. Alt fire requires 8 units of ammo, launches a trio of bouncing dust tornadoes as a super attack. Weighs you down, slowing speed and lowering jump height, more so with more collected ammo.";
 		Obituary "%o sucks.";
 	}
@@ -11682,7 +11787,10 @@ class Grimophone : DinahWeapon replaces BFG9000
 		Weapon.Ammogive1 20;
 		Weapon.Ammogive2 0;
 		Weapon.SlotNumber 7;
-		inventory.PickupSound "misc/w_pkup";
+		Inventory.Pickupsound "Dinah/GetWeapon";
+		DDWeapon.PickupVoice true;
+		DDWeapon.PickupSound2 "misc/w_pkup";
+		DDWeapon.PickupVoice2 false;
 		Inventory.Pickupmessage "\c[gold]The enigmatic Grimophone... this one's a newer model than the one I had in Fosna appearantly... Uugh! It's also very heavy now...\c- \cx[Slot 7]\c-";
 		Tag "Grimophone: Normal attack is a dual-shot of records per unit of ammo. Alt-attack plays a cacophony of music that deals constant low-level damage within 1024 units, costing a unit of ammo roughly every ten seconds. Weighs you down, causing speed and jump height to lower while equipping it.";
 		//SpawnID 31981
@@ -12622,7 +12730,10 @@ class CandleWhip : DinahWeapon
 		+FLOATBOB
 		Inventory.Icon "RCAIA0";
 		Inventory.PickupMessage "\c[gold]Is... is this a Roman Candle? It seems to have a function as a whip too... Niiiiiice... :D\c- \cx[Slot 8]\c-";
-		Inventory.PickupSound "misc/w_pkup";
+		Inventory.Pickupsound "Dinah/GetWeapon";
+		DDWeapon.PickupVoice true;
+		DDWeapon.PickupSound2 "misc/w_pkup";
+		DDWeapon.PickupVoice2 false;
 		Tag "Roman Candlewhip";
 		HitObituary "%k gave %o some major whiplash with their Roman Candlewhip.";
 	}
