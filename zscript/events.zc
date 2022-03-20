@@ -338,11 +338,16 @@ class DD_EventHandler : EventHandler
 					double mult;
 					double multbase = 1;
 					int basedivfactor = 16;
+					if (skill <= 0) basedivfactor = 22;
+					if (skill == 1) basedivfactor = 19;
+					if (skill == 2) basedivfactor = 16;
+					if (skill == 3) basedivfactor = 11;
+					if (skill >= 4) basedivfactor = 6;
 					
 					// PlayerLevel Scaling
-					if (random(1,basedivfactor) <= 1)
+					if (random(1,basedivfactor) <= 4)
 					{
-						if (random(1,basedivfactor) <= 1)
+						if (random(1,basedivfactor) <= 2)
 						{
 							if (random(1,basedivfactor) <= 1)
 							{
@@ -510,6 +515,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.001875;
 							if (skill == 3) mult = 0.0020625;
 							if (skill >= 4) mult = 0.00225;
+							mult *= 2;
 							mult *= multbase;
 							spdmulti += (LuckRoll * mult);
 							leveltemp += luckmult;
@@ -531,6 +537,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.0025;
 							if (skill == 3) mult = 0.00275;
 							if (skill >= 4) mult = 0.0030;
+							mult *= 2;
 							mult *= multbase;
 							atkmulti += (LuckRoll * mult);
 							leveltemp += luckmult;
@@ -552,6 +559,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.000625;
 							if (skill == 3) mult = 0.0006875;
 							if (skill >= 4) mult = 0.00075;
+							mult *= 2;
 							mult *= multbase;
 							defmulti += (LuckRoll * mult);
 							leveltemp += luckmult;
@@ -573,6 +581,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.00125;
 							if (skill == 3) mult = 0.001375;
 							if (skill >= 4) mult = 0.0015;
+							mult *= 2;
 							mult *= multbase;
 							hpmulti += ceil(origHealth * (LuckRoll * mult));
 							leveltemp += luckmult;
@@ -594,6 +603,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.003125;
 							if (skill == 3) mult = 0.0034375;
 							if (skill >= 4) mult = 0.00375;
+							mult *= 2;
 							mult *= multbase;
 							massmulti += ceil(spawnee.mass * (LuckRoll * mult));
 							leveltemp += luckmult;
@@ -602,14 +612,21 @@ class DD_EventHandler : EventHandler
 						}
 					}
 					
-					// Map Scaling
-					multbase = 1;
-					basedivfactor = 16;
-					if (random(1,basedivfactor) <= 1)
+					
+					if (exex_enemyscalingmaps)
 					{
-						if (random(1,basedivfactor) <= 1)
+						// Map Scaling
+						multbase = 1;
+						basedivfactor = 16;
+						if (skill <= 0) basedivfactor = 22;
+						if (skill == 1) basedivfactor = 19;
+						if (skill == 2) basedivfactor = 16;
+						if (skill == 3) basedivfactor = 11;
+						if (skill >= 4) basedivfactor = 6;
+						
+						if (random(1,basedivfactor) <= 4)
 						{
-							if (random(1,basedivfactor) <= 1)
+							if (random(1,basedivfactor) <= 2)
 							{
 								if (random(1,basedivfactor) <= 1)
 								{
@@ -623,55 +640,62 @@ class DD_EventHandler : EventHandler
 												{
 													if (random(1,basedivfactor) <= 1)
 													{
-														multbase = 8;
+														if (random(1,basedivfactor) <= 1)
+														{
+															multbase = 8;
+														}
+														else
+														{
+															multbase = 7;
+														}
 													}
 													else
 													{
-														multbase = 7;
+														multbase = 6;
 													}
 												}
 												else
 												{
-													multbase = 6;
+													multbase = 5;
 												}
 											}
 											else
 											{
-												multbase = 5;
+												multbase = 4;
 											}
 										}
 										else
 										{
-											multbase = 4;
+											multbase = 3;
 										}
 									}
 									else
 									{
-										multbase = 3;
+										multbase = 2;
 									}
 								}
 								else
 								{
-									multbase = 2;
+									multbase = 1.5;
 								}
 							}
 							else
 							{
-								multbase = 1.5;
+								multbase = 1.25;
 							}
 						}
-						else
+						if (random(1,64) <= 1) multbase *= 4;
+						if (random(1,256) <= 1) multbase *= 4;
+						if (random(1,1024) <= 1) multbase *= 4;
+						multbase *= exex_enemyscalemapmultiplier;
+						
+						int maplevelbase; 
+						if (globalvars) 
 						{
-							multbase = 1.25;
+							maplevelbase = globalvars.MapsFinished;
+							maplevelbase += exex_mapdifficultyinflation;
+							maplevelbase = maplevelbase * (100 + exex_mapdifficultyinflation2) / 100;
 						}
-					}
-					if (random(1,64) <= 1) multbase *= 4;
-					if (random(1,256) <= 1) multbase *= 4;
-					if (random(1,1024) <= 1) multbase *= 4;
-					multbase *= exex_enemyscalemapmultiplier;
-					
-					if (exex_enemyscalingmaps)
-					{
 						if (spawnee.bFRIENDLY)
 						{
 							if (dydudebug_monsterscaling) Console.Printf("\c[sapphire]%s\c- Maps:  [multbase: %.8f]", spawnname, multbase);
@@ -682,7 +706,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.00475;
 							if (skill >= 4) mult = 0.0045;
 							mult *= multbase;
-							if (globalvars) spdmulti += (globalvars.MapsFinished * mult);
+							if (globalvars) spdmulti += (maplevelbase * mult);
 							if (spdmulti < 0) spdmulti = 0;
 							
 							// Attack
@@ -692,7 +716,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.0095;
 							if (skill >= 4) mult = 0.009;
 							mult *= multbase;
-							if (globalvars) atkmulti += (globalvars.MapsFinished * mult);
+							if (globalvars) atkmulti += (maplevelbase * mult);
 							if (atkmulti < 0) atkmulti = 0;
 							
 							// Defense
@@ -702,7 +726,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.002375;
 							if (skill >= 4) mult = 0.00225;
 							mult *= multbase;
-							if (globalvars && MiscItem) defmulti += ((globalvars.MapsFinished * mult) - (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
+							if (globalvars && MiscItem) defmulti += ((maplevelbase * mult) - (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
 							if (defmulti < 0) defmulti = 0;
 							
 							// Health
@@ -712,7 +736,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.0038;
 							if (skill >= 4) mult = 0.0036;
 							mult *= multbase;
-							if (globalvars && MiscItem) hpmulti += floor(origHealth * ((globalvars.MapsFinished * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
+							if (globalvars && MiscItem) hpmulti += floor(origHealth * ((maplevelbase * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
 							if (hpmulti < 0) hpmulti = 0;
 							
 							// Mass
@@ -722,7 +746,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 3) mult = 0.0095;
 							if (skill >= 4) mult = 0.009;
 							mult *= multbase;
-							if (globalvars && MiscItem) massmulti += floor(spawnee.mass * ((globalvars.MapsFinished * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
+							if (globalvars && MiscItem) massmulti += floor(spawnee.mass * ((maplevelbase * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
 							if (massmulti < 0) massmulti = 0;
 						}
 						else
@@ -730,11 +754,11 @@ class DD_EventHandler : EventHandler
 							int LuckRoll;
 							if (globalvars)
 							{
-								if (skill <= 0) LuckRoll = random((globalvars.MapsFinished*0.25),globalvars.MapsFinished);
-								if (skill == 1) LuckRoll = random((globalvars.MapsFinished*0.375),globalvars.MapsFinished);
-								if (skill == 2) LuckRoll = random((globalvars.MapsFinished*0.5),globalvars.MapsFinished);
-								if (skill == 3) LuckRoll = random((globalvars.MapsFinished*0.625),globalvars.MapsFinished);
-								if (skill >= 4) LuckRoll = random((globalvars.MapsFinished*0.75),globalvars.MapsFinished);
+								if (skill <= 0) LuckRoll = random((maplevelbase*0.25),maplevelbase);
+								if (skill == 1) LuckRoll = random((maplevelbase*0.375),maplevelbase);
+								if (skill == 2) LuckRoll = random((maplevelbase*0.5),maplevelbase);
+								if (skill == 3) LuckRoll = random((maplevelbase*0.625),maplevelbase);
+								if (skill >= 4) LuckRoll = random((maplevelbase*0.75),maplevelbase);
 							}
 							if (dydudebug_monsterscaling) Console.Printf("\c[fire]%s\c- Maps: [multbase: %.8f, LuckRoll: %d]", spawnname, multbase, LuckRoll);
 							
@@ -744,6 +768,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.00375;
 							if (skill == 3) mult = 0.004125;
 							if (skill >= 4) mult = 0.0045;
+							mult *= 2;
 							mult *= multbase;
 							spdmulti += (LuckRoll * mult);
 							if (spdmulti < 0) spdmulti = 0;
@@ -754,6 +779,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.005;
 							if (skill == 3) mult = 0.0055;
 							if (skill >= 4) mult = 0.0060;
+							mult *= 2;
 							mult *= multbase;
 							atkmulti += (LuckRoll * mult);
 							if (atkmulti < 0) atkmulti = 0;
@@ -764,6 +790,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.00125;
 							if (skill == 3) mult = 0.001375;
 							if (skill >= 4) mult = 0.0015;
+							mult *= 2;
 							mult *= multbase;
 							defmulti += (LuckRoll * mult);
 							if (defmulti < 0) defmulti = 0;
@@ -774,6 +801,7 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.0025;
 							if (skill == 3) mult = 0.00275;
 							if (skill >= 4) mult = 0.0030;
+							mult *= 2;
 							mult *= multbase;
 							hpmulti += ceil(origHealth * (LuckRoll * mult));
 							if (hpmulti < 0) hpmulti = 0;
@@ -784,11 +812,13 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.00625;
 							if (skill == 3) mult = 0.006875;
 							if (skill >= 4) mult = 0.0075;
+							mult *= 2;
 							mult *= multbase;
 							massmulti += ceil(spawnee.mass * (LuckRoll * mult));
 							if (massmulti < 0) massmulti = 0;
 						}
 					}
+
 					// Final Calcs
 					if (spdmulti) 
 					{

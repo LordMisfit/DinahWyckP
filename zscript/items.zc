@@ -2294,137 +2294,148 @@ class PopperPickup : ExExInvBarItem
 		Use:
 			TNT1 A 0 Bright 
 			{
-				int buttons = GetPlayerInput(INPUT_BUTTONS);
-				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				let globalvars = DDGlobalVariables.Get();
-				bool wutthis = false;
-				if (exex_ikaripointsenabled && MiscItem && globalvars && (player.mo && player.mo.CountInv("IPUseMode")))
+				if (player.mo.waterlevel <= 2)
 				{
-					double cost = invoker.A_GetIPCost(6);
-					if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
-					If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
+					int buttons = GetPlayerInput(INPUT_BUTTONS);
+					let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+					let globalvars = DDGlobalVariables.Get();
+					bool wutthis = false;
+					if (exex_ikaripointsenabled && MiscItem && globalvars && (player.mo && player.mo.CountInv("IPUseMode")))
 					{
-						MiscItem.ItemPoints -= cost;
-						globalvars.ItemPoints -= cost;
-						invoker.A_IPUseHUD(cost);
-						if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer *= 0.5;
-						wutthis = true;
-						if (wutthis) invoker.A_IPDinahVoiceSelect(0,4,11);
-					}
-				}
-				//if (CountInv("MysteryItem")) wutthis = true;
-				double shotangle = 0;
-				double shotangleend = 0;
-				double shotangleinc = 0;
-				double origangle = angle;
-				int maxshots = 1;
-				if (wutthis) // >.> <.<
-				{
-					shotangle = 0;
-					shotangleend = 0;
-					shotangleinc = 30;
-					maxshots = 12;
-				}
-				if (wutthis) A_SetAngle(angle+shotangle);
-				bool success;
-				actor BombShots;
-				DDProjectile IPCompat;
-
-				for (int j = 0; j < maxshots; j++)
-				{
-					if (j && wutthis) A_SetAngle(angle+shotangleinc);
-					
-					invoker.A_FireBullets(15,2,8,10,"PopperPuff1");
-					invoker.A_FireBullets(8,2,4,15,"PopperPuff2");
-					if (wutthis)
-					{
-						invoker.A_FireBullets(15,2,8,10,"PopperPuff1");
-						invoker.A_FireBullets(8,2,4,15,"PopperPuff2");
-						invoker.A_FireBullets(15,2,8,10,"PopperPuff1");
-						invoker.A_FireBullets(8,2,4,15,"PopperPuff2");
-					}
-
-					invoker.basedmg = randompick(32,48,64);
-					invoker.baseradi = randompick(192,256,320);
-					invoker.basevol = 1.0;
-					if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1))
-					{
-						invoker.basedmg *= frandom(9,11);
-						invoker.baseradi = frandom(4.5,5.5);
-						invoker.basevol = 1.2;
-					}
-					if (wutthis)
-					{
-						invoker.basedmg *= frandompick(1.25,1.375,1.375,1.5,1.625,1.75);
-						invoker.baseradi *= frandompick(1.00,1.125,1.125,1.125,1.25,1.25,1.375);
-						invoker.basevol *= frandompick(0.125,0.1667,0.1667,0.1667,0.2,0.2,0.2,0.25);
-					}
-					invoker.basefradi = (invoker.baseradi * frandompick(0.375,0.5,0.625));
-					bFORCERADIUSDMG = true; // Forces the Popper's soundwave(s) to damage AOE immune enemies/bosses
-					A_StartSound("popper/toot",70,CHANF_DEFAULT,(frandom(0.95,1.1)*invoker.basevol),ATTN_NORM,frandom(0.8,1.2));
-					A_Explode(invoker.basedmg,invoker.baseradi,0,0,invoker.basefradi,0,0,"","Beats");
-					int debrisbase1 = 25;
-					int debrisbase2 = 16;
-					if (wutthis)
-					{
-						debrisbase1 = 15;
-						debrisbase2 = randompick(9,9,10,10,10);
-					}
-					invoker.debris1amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
-					invoker.debris2amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-					invoker.debris3amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-					invoker.debris4amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-					if (random(1,4) <= 3) 
-					{
-						A_StartSound("popper/toot",71,CHANF_DEFAULT,(frandom(0.85,1.0)*invoker.basevol),ATTN_NORM,frandom(0.85,1.15));
-						A_Explode(invoker.basedmg,invoker.baseradi,0,0,invoker.basefradi,0,0,"","Beats");
-						invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
-						invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-						invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-						invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-						if (random(1,12) <= 3) 
+						double cost = invoker.A_GetIPCost(6);
+						if (dydudebug_ipdisplays) Console.Printf("\c[blue]Cost: %.4f", cost);
+						If (MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost)
 						{
-							A_StartSound("popper/toot",72,CHANF_DEFAULT,(frandom(0.75,0.9)*invoker.basevol),ATTN_NORM,frandom(0.9,1.1));
+							MiscItem.ItemPoints -= cost;
+							globalvars.ItemPoints -= cost;
+							invoker.A_IPUseHUD(cost);
+							if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer *= 0.5;
+							wutthis = true;
+							if (wutthis) invoker.A_IPDinahVoiceSelect(0,4,11);
+						}
+					}
+					//if (CountInv("MysteryItem")) wutthis = true;
+					double shotangle = 0;
+					double shotangleend = 0;
+					double shotangleinc = 0;
+					double origangle = angle;
+					int maxshots = 1;
+					if (wutthis) // >.> <.<
+					{
+						shotangle = 0;
+						shotangleend = 0;
+						shotangleinc = 30;
+						maxshots = 12;
+					}
+					if (wutthis) A_SetAngle(angle+shotangle);
+					bool success;
+					actor BombShots;
+					DDProjectile IPCompat;
+
+					for (int j = 0; j < maxshots; j++)
+					{
+						if (j && wutthis) A_SetAngle(angle+shotangleinc);
+						
+						invoker.A_FireBullets(15,2,8,10,"PopperPuff1");
+						invoker.A_FireBullets(8,2,4,15,"PopperPuff2");
+						if (wutthis)
+						{
+							invoker.A_FireBullets(15,2,8,10,"PopperPuff1");
+							invoker.A_FireBullets(8,2,4,15,"PopperPuff2");
+							invoker.A_FireBullets(15,2,8,10,"PopperPuff1");
+							invoker.A_FireBullets(8,2,4,15,"PopperPuff2");
+						}
+
+						invoker.basedmg = randompick(32,48,64);
+						invoker.baseradi = randompick(192,256,320);
+						invoker.basevol = 1.0;
+						if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1))
+						{
+							invoker.basedmg *= frandom(9,11);
+							invoker.baseradi = frandom(4.5,5.5);
+							invoker.basevol = 1.2;
+						}
+						if (wutthis)
+						{
+							invoker.basedmg *= frandompick(1.25,1.375,1.375,1.5,1.625,1.75);
+							invoker.baseradi *= frandompick(1.00,1.125,1.125,1.125,1.25,1.25,1.375);
+							invoker.basevol *= frandompick(0.125,0.1667,0.1667,0.1667,0.2,0.2,0.2,0.25);
+						}
+						invoker.basefradi = (invoker.baseradi * frandompick(0.375,0.5,0.625));
+						bFORCERADIUSDMG = true; // Forces the Popper's soundwave(s) to damage AOE immune enemies/bosses
+						A_StartSound("popper/toot",70,CHANF_DEFAULT,(frandom(0.95,1.1)*invoker.basevol),ATTN_NORM,frandom(0.8,1.2));
+						A_Explode(invoker.basedmg,invoker.baseradi,0,0,invoker.basefradi,0,0,"","Beats");
+						int debrisbase1 = 25;
+						int debrisbase2 = 16;
+						if (wutthis)
+						{
+							debrisbase1 = 15;
+							debrisbase2 = randompick(9,9,10,10,10);
+						}
+						invoker.debris1amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
+						invoker.debris2amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+						invoker.debris3amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+						invoker.debris4amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+						if (random(1,4) <= 3) 
+						{
+							A_StartSound("popper/toot",71,CHANF_DEFAULT,(frandom(0.85,1.0)*invoker.basevol),ATTN_NORM,frandom(0.85,1.15));
 							A_Explode(invoker.basedmg,invoker.baseradi,0,0,invoker.basefradi,0,0,"","Beats");
 							invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
 							invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
 							invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
 							invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-							if (random(1,36) <= 3) 
+							if (random(1,12) <= 3) 
 							{
-								A_StartSound("popper/toot",73,CHANF_DEFAULT,(frandom(0.65,0.8)*invoker.basevol),ATTN_NORM,frandom(0.95,1.05));
+								A_StartSound("popper/toot",72,CHANF_DEFAULT,(frandom(0.75,0.9)*invoker.basevol),ATTN_NORM,frandom(0.9,1.1));
 								A_Explode(invoker.basedmg,invoker.baseradi,0,0,invoker.basefradi,0,0,"","Beats");
 								invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
 								invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
 								invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
 								invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+								if (random(1,36) <= 3) 
+								{
+									A_StartSound("popper/toot",73,CHANF_DEFAULT,(frandom(0.65,0.8)*invoker.basevol),ATTN_NORM,frandom(0.95,1.05));
+									A_Explode(invoker.basedmg,invoker.baseradi,0,0,invoker.basefradi,0,0,"","Beats");
+									invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
+									invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+									invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+									invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+								}
 							}
 						}
+						bFORCERADIUSDMG = false; // now turn of forced AOE damage, just in case :V
+						//Console.Printf("D1Amt: %d, D2Amt: %d, D3Amt: %d, D4Amt: %d", invoker.debris1amt, invoker.debris2amt, invoker.debris3amt, invoker.debris4amt);
+						int confbase1 = 5;
+						int confbase2 = 8;
+						if (wutthis)
+						{
+							confbase1 = 3;
+							confbase2 = randompick(5,5,6,6,6);
+						}
+						for (int i; i < (confbase1 + invoker.debris1amt); i++) { A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0); }
+						for (int i; i < (confbase2 + invoker.debris2amt); i++) { A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0); }
+						for (int i; i < (confbase2 + invoker.debris3amt); i++) { A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0); }
+						for (int i; i < (confbase2 + invoker.debris4amt); i++) { A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0); }
+						
+						double brecoil; 
+						brecoil = frandom(4.8,7.2);
+						if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) brecoil *= 0.2;
+						if (wutthis) brecoil *= frandompick(0.1112,0.125,0.125,0.125,0.1667);
+						A_Recoil(brecoil); 
 					}
-					bFORCERADIUSDMG = false; // now turn of forced AOE damage, just in case :V
-					//Console.Printf("D1Amt: %d, D2Amt: %d, D3Amt: %d, D4Amt: %d", invoker.debris1amt, invoker.debris2amt, invoker.debris3amt, invoker.debris4amt);
-					int confbase1 = 5;
-					int confbase2 = 8;
-					if (wutthis)
-					{
-						confbase1 = 3;
-						confbase2 = randompick(5,5,6,6,6);
-					}
-					for (int i; i < (confbase1 + invoker.debris1amt); i++) { A_ThrowGrenade("StreamerShot",4,random(8,16),random(1,5),0); }
-					for (int i; i < (confbase2 + invoker.debris2amt); i++) { A_ThrowGrenade("Confetti_Y",4,random(2,8),random(1,3),0); }
-					for (int i; i < (confbase2 + invoker.debris3amt); i++) { A_ThrowGrenade("Confetti_B",4,random(2,8),random(1,3),0); }
-					for (int i; i < (confbase2 + invoker.debris4amt); i++) { A_ThrowGrenade("Confetti_P",4,random(2,8),random(1,3),0); }
-					
-					double brecoil; 
-					brecoil = frandom(4.8,7.2);
-					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) brecoil *= 0.2;
-					if (wutthis) brecoil *= frandompick(0.1112,0.125,0.125,0.125,0.1667);
-					A_Recoil(brecoil); 
+					if (wutthis) A_SetAngle(origangle);
+					if (wutthis) invoker.A_CheckIPModeOnUse();
+					A_TakeInventory("PopperPickup",1);
 				}
-				if (wutthis) A_SetAngle(origangle);
-				if (wutthis) invoker.A_CheckIPModeOnUse();
+				else
+				{
+					double maskpitch = 1.00;
+					if (waterlevel >= 3) maskpitch *= 1.259921885;
+					A_StartSound("inv_fail",73,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+					Console.Printf("\c[gold]Nope, the popper doesn't work in the water... Shame.");
+				}
 			}
-			Stop;
+			Fail;
 	} 
 }
 
@@ -4416,10 +4427,10 @@ class MysteryItem : ExExInvBarItem
 	default
 	{
 		//$Category RPArtifacts
-		Inventory.PickupSound "Dinah/Gotcha";
+		Inventory.PickupSound "Dinah/OhMy";
+		CustomInventoryExt.PickUpVoice true;
 		Inventory.PickupMessage "\c[gold]'What in the world...' D:";
 		Inventory.Icon "";
-		CustomInventoryExt.PickUpVoice true;
 		Tag "?: ?";
 		+FLOATBOB
 		+DONTGIB
@@ -4920,6 +4931,8 @@ class LegendaryMedicine : ExExInvBarItem
 class KilletanteEffigy : Inventory
 {
 	mixin IPCostCheck;
+	bool PickupUseVoice;
+	property PickUpVoice: PickupUseVoice;
 	Default
 	{
 		+INVENTORY.INVBAR
@@ -4934,9 +4947,65 @@ class KilletanteEffigy : Inventory
 		Inventory.DefMaxAmount;
 		Inventory.PickupFlash "PickupFlash";
 		Inventory.Icon "DAKEZ0";
-		Inventory.PickupSound "misc/p_pkup";
+		Inventory.PickupSound "Dinah/MyWord";
+		KilletanteEffigy.PickUpVoice true;
 		Inventory.PickupMessage "\c[gold]A Killetante... effigy? What.";
 		Tag "Killetante Effigy: Summons a Killetante Soloist to fight for you for up to 45 seconds, with a buffed status.";
+	}
+	
+	override void PlayPickupSound (Actor toucher)
+	{
+		double atten;
+		int chan;
+		int flags = 0;
+
+		if (bNoAttenPickupSound)
+		{
+			atten = ATTN_NONE;
+		}
+		/*
+		else if ((ItemFlags & IF_FANCYPICKUPSOUND) &&
+			(toucher == NULL || toucher->CheckLocalView()))
+		{
+			atten = ATTN_NONE;
+		}
+		*/
+		else
+		{
+			atten = ATTN_NORM;
+		}
+
+		if (toucher != NULL && toucher.CheckLocalView())
+		{
+			if (PickupUseVoice) chan = CHAN_VOICE;
+										 else chan = CHAN_ITEM;
+			flags = CHANF_NOPAUSE | CHANF_MAYBE_LOCAL;
+		}
+		else
+		{
+			if (PickupUseVoice) chan = CHAN_VOICE;
+										 else chan = CHAN_ITEM;
+			flags = CHANF_MAYBE_LOCAL;
+		}
+		//Console.Printf("Channel: %d [PUV: %d]", chan, PickupUseVoice);
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		double maskpitch = 1.00;
+		if (PickupUseVoice) 
+		{
+			if (MiscItem && MiscItem.CanTalkUnderwater)
+			{
+				if (toucher.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+				toucher.A_StopSound(chan);
+				toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
+			}
+		}
+		else
+		{
+			toucher.A_StopSound(chan);
+			toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
+		}
 	}
 	
 	States
