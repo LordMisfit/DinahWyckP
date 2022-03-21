@@ -119,9 +119,13 @@ class PlayerStatItem : Inventory
 	int TotalMass, BaseMass;
 
 	int PlayerLevel;
+	int TruePlayerLevel;
 	int PlayerATK;
+	int TruePlayerATK;
 	int PlayerDEF;
+	int TruePlayerDEF;
 	int PlayerSPD;
+	int TruePlayerSPD;
 	int PlayerLUCK;
 	int PlayerJUMP;
 	int PrevATK, PrevDEF, PrevSPD;
@@ -188,6 +192,7 @@ class PlayerStatItem : Inventory
 				{
 					if (itemtimer == 0) ClassCheck = globalvars.ClassCheck = 0;
 					PlayerLevel = globalvars.PlayerLevel = 0;
+					TruePlayerLevel = globalvars.TruePlayerLevel = 0;
 					Experience = globalvars.Experience = 0;
 					globalvars.atkfct = atkfct = 1.0;
 					globalvars.deffct = deffct = 1.0;
@@ -207,6 +212,7 @@ class PlayerStatItem : Inventory
 				{
 					ClassCheck = globalvars.ClassCheck;
 					PlayerLevel = globalvars.PlayerLevel;
+					TruePlayerLevel = globalvars.TruePlayerLevel;
 					Experience = globalvars.Experience;
 					atkfct = globalvars.atkfct;
 					deffct = globalvars.deffct;
@@ -425,6 +431,20 @@ class PlayerStatItem : Inventory
 						if (dydudebug_startupinfo) Console.Printf("MaxHP: %d", MaxHealthTrue);
 					}
 				}
+				if (exex_expenabled) 
+				{
+					TruePlayerLevel = PlayerLevel;
+					TruePlayerATK = PlayerATK;
+					TruePlayerDEF = PlayerDEF;
+					TruePlayerSPD = PlayerSPD;
+				}
+				else
+				{
+					TruePlayerLevel = 0;
+					TruePlayerATK = 0;
+					TruePlayerDEF = 0;
+					TruePlayerSPD = 0;
+				}
 
 				let vacammotype = owner.FindInventory("VacAmmo");
 				if (vacammotype)
@@ -458,11 +478,11 @@ class PlayerStatItem : Inventory
 				
 				// Ikari/Item Points
 				MaxItemPoints = 100;
-				if (TrueGameSkill == SKILL_VERY_EASY) MaxItemPoints += (PlayerLevel * 1.5);
-				if (TrueGameSkill == SKILL_EASY) MaxItemPoints += (PlayerLevel * 1.25);
-				if (TrueGameSkill == SKILL_NORMAL) MaxItemPoints += (PlayerLevel * 1.0);
-				if (TrueGameSkill == SKILL_HARD) MaxItemPoints += (PlayerLevel * 0.75);
-				if (TrueGameSkill == SKILL_VERY_HARD) MaxItemPoints += (PlayerLevel * 0.5);
+				if (TrueGameSkill == SKILL_VERY_EASY) MaxItemPoints += (TruePlayerLevel * 1.5);
+				if (TrueGameSkill == SKILL_EASY) MaxItemPoints += (TruePlayerLevel * 1.25);
+				if (TrueGameSkill == SKILL_NORMAL) MaxItemPoints += (TruePlayerLevel * 1.0);
+				if (TrueGameSkill == SKILL_HARD) MaxItemPoints += (TruePlayerLevel * 0.75);
+				if (TrueGameSkill == SKILL_VERY_HARD) MaxItemPoints += (TruePlayerLevel * 0.5);
 				BaseMaxItemPoints = MaxItemPoints;
 				if (owner.CountInv("GoldRageCups")) MaxItemPoints += ((MaxItemPoints * 0.01) * owner.CountInv("GoldRageCups"));
 				if (MaxItemPoints > (BaseMaxItemPoints * 2.5)) MaxItemPoints = (BaseMaxItemPoints * 2.5);
@@ -518,7 +538,7 @@ class PlayerStatItem : Inventory
 										  if (TrueIPLevelGate > 0) LevelUpMsg.AppendFormat("\n\c[brick]Level up %d more times to use Flower Crown IP\n\c[brick] once again!", TrueIPLevelGate);
 								else if (TrueIPLevelGate <= 0) LevelUpMsg.AppendFormat("\n\c[gold]You can now use the Flower Crown's IP again!\n\c[gold](arm Hand To Hand and go into blocking stance\n\c[gold]and press <ZOOM> while IP mode is on!)");
 							}
-							if (PlayerLevel == exex_scramblernoarmorbonuslvlreq) 
+							if (PlayerLevel == exex_scramblernoarmorbonuslvlreq)
 							{
 								LevelUpMsg.AppendFormat("\n\n\n\c[gold]The Scrambler can now deal 5x damage when you have no armor!");
 							}
@@ -562,6 +582,20 @@ class PlayerStatItem : Inventory
 							owner.A_SetBlend("00 00 FF",0.3,3,"00 00 FF",0.0);
 						}
 					}
+				}
+				if (exex_expenabled) 
+				{
+					TruePlayerLevel = PlayerLevel;
+					TruePlayerATK = PlayerATK;
+					TruePlayerDEF = PlayerDEF;
+					TruePlayerSPD = PlayerSPD;
+				}
+				else
+				{
+					TruePlayerLevel = 0;
+					TruePlayerATK = 0;
+					TruePlayerDEF = 0;
+					TruePlayerSPD = 0;
 				}
 
 				int oldhealthratio;
@@ -662,7 +696,7 @@ class PlayerStatItem : Inventory
 						if (oldhealth > 1 && owner.health == 1) base *= 3.25;
 					}
 					double basef = base;
-					base *= (1.0 + (PlayerLevel * 0.0025));
+					base *= (1.0 + (TruePlayerLevel * 0.0025));
 					if (base <= 0.01) base = 0.01;
 					if (basef <= 0.01) basef = 0.01;
 					if (base)
@@ -754,8 +788,18 @@ class PlayerStatItem : Inventory
 				HPRegenTimerMax = 7000 - ((StaminaLevel * 5) * 35);
 				HPDegenTimerMax = 1750 + ((StaminaLevel * 5) * 17.5);
 				CurrentHealth = owner.player.mo.health;
-				MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd + HealthBonusAdd);
-				
+				int HealthBonusAdd2 = HealthBonusAdd;
+				int HealthLevelAdd2 = HealthLevelAdd;
+				if (!exex_expenabled)
+				{
+					if (skill <= 0) HealthBonusAdd2 *= 4.0;
+					if (skill == 1) HealthBonusAdd2 *= 3.5;
+					if (skill == 2) HealthBonusAdd2 *= 3.0;
+					if (skill == 3) HealthBonusAdd2 *= 2.5;
+					if (skill >= 4) HealthBonusAdd2 *= 2.0;
+					HealthLevelAdd2 = 0;
+				}
+				MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd2 + HealthBonusAdd2);
 				
 				//*************************************************
 				//* Allow the Pike to emit dynlights when equipped [if you have any ammo :V ]
@@ -1208,8 +1252,8 @@ class PlayerStatItem : Inventory
 							owner.A_SetInventory("GrimophoneDEFDown2",0);
 							owner.A_SetInventory("GrimophoneDEFDown1",1);
 						}
-						if (!owner.CountInv("GrimAltFireInUse")) GrimophoneDebuffTimer -= (1 + floor(PlayerLevel * 0.025));
-																								else GrimophoneDebuffTimer -= (0 + floor(PlayerLevel * 0.00625));
+						if (!owner.CountInv("GrimAltFireInUse")) GrimophoneDebuffTimer -= (1 + floor(TruePlayerLevel * 0.025));
+																								else GrimophoneDebuffTimer -= (0 + floor(TruePlayerLevel * 0.00625));
 						
 						if (dydudebug_grimophonealtfire) Console.Printf("\c[brick]GrimophoneDebuffTimer %d\c-", GrimophoneDebuffTimer);
 					}
@@ -1332,18 +1376,18 @@ class PlayerStatItem : Inventory
 
 						if (DashTics)
 						{
-							if (random(1,128) <= (68 + (PlayerLevel * frandom(2.75,4.25)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
+							if (random(1,128) <= (68 + (TruePlayerLevel * frandom(2.75,4.25)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
 						}
 						else
 						{
-							if (random(1,128) <= (64 + (PlayerLevel * frandom(0.75,1.25)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
+							if (random(1,128) <= (64 + (TruePlayerLevel * frandom(0.75,1.25)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
 						}
 					}
 					else
 					{
 						if (DashTics)
 						{
-							if (random(1,128) <= (4 + (PlayerLevel * frandom(2,3)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
+							if (random(1,128) <= (4 + (TruePlayerLevel * frandom(2,3)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
 						}
 						else
 						{
@@ -1408,7 +1452,6 @@ class PlayerStatItem : Inventory
 				}
 				
 				
-				
 				//*************************************
 				//*************************************
 				//*************************************
@@ -1424,6 +1467,7 @@ class PlayerStatItem : Inventory
 				globalvars.MaxHealthTrue = MaxHealthTrue;
 				globalvars.Experience = Experience;
 				globalvars.PlayerLevel = PlayerLevel;
+				globalvars.TruePlayerLevel = TruePlayerLevel;
 				globalvars.ClassCheck = ClassCheck;
 				globalvars.atkfct = atkfct;
 				globalvars.deffct = deffct;
@@ -1571,11 +1615,11 @@ class PlayerStatItem : Inventory
 							berserkIPGain += 0.0078125;
 						}
 					}
-					double BerIPMulti = (0.25 + (PlayerLevel * 0.03));
-					if (BerIPMulti >= 1.00 || PlayerLevel >= 25)
+					double BerIPMulti = (0.25 + (TruePlayerLevel * 0.03));
+					if (BerIPMulti >= 1.00 || TruePlayerLevel >= 25)
 					{
-						BerIPMulti = (1.00 + ((PlayerLevel - 25) * 0.01334));
-						if (BerIPMulti >= 2.00 || PlayerLevel >= 100) BerIPMulti = 2.00;
+						BerIPMulti = (1.00 + ((TruePlayerLevel - 25) * 0.01334));
+						if (BerIPMulti >= 2.00 || TruePlayerLevel >= 100) BerIPMulti = 2.00;
 					}
 					
 					berserkIPGain *= BerIPMulti;
@@ -1593,7 +1637,7 @@ class PlayerStatItem : Inventory
 					{
 						IPTimerIncMod += 10;
 					}
-					berserkIPGain *= (1.0 + (PlayerLevel * 0.0025));
+					berserkIPGain *= (1.0 + (TruePlayerLevel * 0.0025));
 					//Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPDissipateTimer, IPTimerInc, BerIPMulti);
 					double oldItemPoints = ItemPoints;
 					ItemPoints += berserkIPGain;
@@ -1676,11 +1720,12 @@ class PlayerStatItem : Inventory
 							ArmorIPGain += 0.01953125;
 						}
 					}
-					double ArmorIPMulti = (0.25 + (PlayerLevel * 0.03));
-					if (ArmorIPMulti >= 1.00 || PlayerLevel >= 25)
+					double ArmorIPMulti = (0.25 + (TruePlayerLevel * 0.03));
+					if (ArmorIPMulti >= 1.00 || (exex_expenabled && TruePlayerLevel >= 25))
 					{
-						ArmorIPMulti = (1.00 + ((PlayerLevel - 25) * 0.01334));
-						if (ArmorIPMulti >= 2.00 || PlayerLevel >= 100) ArmorIPMulti = 2.00;
+						ArmorIPMulti = 1.00;
+						if (exex_expenabled) ArmorIPMulti = (1.00 + ((TruePlayerLevel - 25) * 0.01334));
+						if (ArmorIPMulti >= 2.00 || (exex_expenabled && TruePlayerLevel >= 100)) ArmorIPMulti = 2.00;
 					}
 
 					ArmorIPGain *= ArmorIPMulti;
@@ -1699,7 +1744,7 @@ class PlayerStatItem : Inventory
 					{
 						IPTimerIncMod += 25;
 					}
-					ArmorIPGain *= (1.0 + (PlayerLevel * 0.0025));
+					ArmorIPGain *= (1.0 + (TruePlayerLevel * 0.0025));
 					//Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
 					double oldItemPoints = ItemPoints;
 					ItemPoints += ArmorIPGain;
@@ -1791,7 +1836,7 @@ class PlayerStatItem : Inventory
 					{
 						IPTimerIncMod += 25;
 					}
-					MorphIPGain *= (1.0 + (PlayerLevel * 0.0075));
+					MorphIPGain *= (1.0 + (TruePlayerLevel * 0.0075));
 					//Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", MorphIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
 					double oldItemPoints = ItemPoints;
 					ItemPoints += MorphIPGain;
@@ -1952,7 +1997,7 @@ class PlayerStatItem : Inventory
 					if (exex_hpwillregen)
 					{
 						int inc = 20;
-						inc += ((PlayerLevel * 0.1) + (PlayerDEF * 0.1));
+						inc += ((TruePlayerLevel * 0.1) + (TruePlayerDEF * 0.1));
 						baseregenmulti = inc;
 						if (HPRegenBoostTimer) inc *= 2.5;
 						
@@ -2045,7 +2090,7 @@ class PlayerStatItem : Inventory
 					if (exex_hpwilldegen)
 					{
 						int inc = 20;
-						inc -= ((PlayerLevel * 0.05) + (PlayerDEF * 0.05));
+						inc -= ((TruePlayerLevel * 0.05) + (TruePlayerDEF * 0.05));
 						baseregenmulti = inc;
 						if (HPRegenBoostTimer) inc *= 0.4;
 						
@@ -2238,7 +2283,7 @@ class PlayerStatItem : Inventory
 			
 			if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0x - SPD Evade Check]: %.4f\c-", SPDEvadeCheck);
 		
-			EvasionRate = ((PlayerLevel * SPDEvadeCheck) + (PlayerSPD * SPDEvadeCheck)) * 0.5;
+			EvasionRate = ((TruePlayerLevel * SPDEvadeCheck) + (TruePlayerSPD * SPDEvadeCheck)) * 0.5;
 			if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 1 - Base (Agl/Evade, Lvl/Evade)]: %d\c-", EvasionRate);
 			
 			if (Owner.CountInv("PowerHaste")) EvasionRate *= 3;
@@ -2307,7 +2352,7 @@ class PlayerStatItem : Inventory
 		{
 			SurvivalRate = 100 * suvfct; // out of 10000 [100 = 1%]
 			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Base]: %d", SurvivalRate);
-			SurvivalRate += (PlayerLevel * 5); // +0.05% per level
+			SurvivalRate += (TruePlayerLevel * 5); // +0.05% per level
 			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Level]: %d", SurvivalRate);
 			if (PlayerLuck) SurvivalRate += (PlayerLuck * 1.25); // +0.0125% per Luck Point
 			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Luck]: %d", SurvivalRate);
@@ -2392,11 +2437,19 @@ class PlayerStatItem : Inventory
 				}
 			}
 			else
-			if (PlayerLevel >= exex_scramblernoarmorbonuslvlreq && weapon is "Scrambler" && owner.CountInv("BasicArmor") <= 0)
+			if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq && weapon is "Scrambler")
 			{
-				SurvivalRate += ((10000 - SurvivalRate) * frandompick(0.334,0.334,0.334,0.334,0.5));
-				if (SurvivalRate > 10000) SurvivalRate = 10000;
-				if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o Scrambler (w/o Armor)]: %d", SurvivalRate);
+				if (owner.CountInv("BasicArmor") <= 0)
+				{
+					SurvivalRate += ((10000 - SurvivalRate) * frandompick(0.334,0.334,0.334,0.334,0.5));
+					if (SurvivalRate > 10000) SurvivalRate = 10000;
+					if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o Scrambler (w/o Armor)]: %d", SurvivalRate);
+				}
+				else
+				{
+					if (SurvivalRate > 7500) SurvivalRate = 7500;
+					if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Final w/o CricketBat]: %d", SurvivalRate);
+				}
 			}
 			else
 			{
@@ -2430,11 +2483,11 @@ class PlayerStatItem : Inventory
 			BaseMass = TotalMass;
 			if (dydudebug_masscalcs) Console.Printf("Mass [Base]: %d", TotalMass);
 
-			TotalMass += (PlayerLevel * massmulfactor);
+			TotalMass += (TruePlayerLevel * massmulfactor);
 			BaseMass = TotalMass;
 			if (dydudebug_masscalcs) Console.Printf("Mass [Level]: %d", TotalMass);
 			
-			TotalMass += (PlayerDEF * massmulfactor);
+			TotalMass += (TruePlayerDEF * massmulfactor);
 			BaseMass = TotalMass;
 			if (dydudebug_masscalcs) Console.Printf("Mass [DEF]: %d", TotalMass);
 			
@@ -2443,14 +2496,14 @@ class PlayerStatItem : Inventory
 					owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")) TotalMass *= 128; 
 			if (berserked) 
 			{
-				if (PlayerLevel >= 200) TotalMass *= 2.003;
-				else if (PlayerLevel >= 175) TotalMass *= 1.891;
-				else if (PlayerLevel >= 150) TotalMass *= 1.779;
-				else if (PlayerLevel >= 125) TotalMass *= 1.667;
-				else if (PlayerLevel >= 100) TotalMass *= 1.556;
-				else if (PlayerLevel >= 75) TotalMass *= 1.445;
-				else if (PlayerLevel >= 50) TotalMass *= 1.334;
-				else if (PlayerLevel >= 25) TotalMass *= 1.223;
+				if (TruePlayerLevel >= 200) TotalMass *= 2.003;
+				else if (TruePlayerLevel >= 175) TotalMass *= 1.891;
+				else if (TruePlayerLevel >= 150) TotalMass *= 1.779;
+				else if (TruePlayerLevel >= 125) TotalMass *= 1.667;
+				else if (TruePlayerLevel >= 100) TotalMass *= 1.556;
+				else if (TruePlayerLevel >= 75) TotalMass *= 1.445;
+				else if (TruePlayerLevel >= 50) TotalMass *= 1.334;
+				else if (TruePlayerLevel >= 25) TotalMass *= 1.223;
 				else TotalMass *= 1.112;
 			}
 
@@ -2562,11 +2615,11 @@ class PlayerStatItem : Inventory
 			double LevelJumpZ = 1.00;
 			if (IsMorphed == 1)
 			{
-				LevelJumpZ += (PlayerLevel * ((0.0025 * 1.75) * 0.334));
+				LevelJumpZ += (TruePlayerLevel * ((0.0025 * 1.75) * 0.334));
 			}
 			else
 			{
-				LevelJumpZ += (PlayerLevel * (0.0025 * 1.75));
+				LevelJumpZ += (TruePlayerLevel * (0.0025 * 1.75));
 			}
 			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Level]: %.8f", LevelJumpZ);
 			
@@ -2574,11 +2627,11 @@ class PlayerStatItem : Inventory
 			double SpeedJumpZ = 1.00;
 			if (IsMorphed == 1)
 			{
-				SpeedJumpZ += (PlayerSPD * ((0.0025 * 1.75) * 0.334));
+				SpeedJumpZ += (TruePlayerSPD * ((0.0025 * 1.75) * 0.334));
 			}
 			else
 			{
-				SpeedJumpZ += (PlayerSPD * (0.0025 * 1.75));
+				SpeedJumpZ += (TruePlayerSPD * (0.0025 * 1.75));
 			}
 			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Speed]: %.8f", SpeedJumpZ);
 			
@@ -2586,7 +2639,7 @@ class PlayerStatItem : Inventory
 			double BuffJumpZ = 1.00;
 			if (Owner.CountInv("DinahTrueIPState"))
 			{
-				double temp = (0.25 + ((PlayerLevel - 1) * 0.025));
+				double temp = (0.25 + ((TruePlayerLevel - 1) * 0.025));
 				if (temp >= 0.875) temp = 0.875;
 				BuffJumpZ *= temp;
 			}
@@ -2788,11 +2841,11 @@ class PlayerStatItem : Inventory
 				if (dydudebug_inventorylimits) Console.Printf("baseholdamount  [\c[green]%s\c-]: %.2f", itemname, int(baseholdamount));
 				if (isammo) 
 				{
-					if (exex_dynamicammolimits) leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
+					if (exex_dynamicammolimits) leveladd = (baseholdamount * double((TruePlayerLevel / baselvlfactor)));
 				}
 				else
 				{
-					if (exex_dynamicinventorylimits) leveladd = (baseholdamount * double((PlayerLevel / baselvlfactor)));
+					if (exex_dynamicinventorylimits) leveladd = (baseholdamount * double((TruePlayerLevel / baselvlfactor)));
 				}
 				if (dydudebug_inventorylimits) Console.Printf("leveladd  [\c[green]%s\c-]: %.2f", itemname, int(leveladd));
 				itemsmax = (baseholdamount + int(leveladd));
@@ -3097,6 +3150,7 @@ class PlayerStatItem : Inventory
 		owner.player.mo.health += HPMaxGain;
 		HealthLevelAdd += HPMaxGain;
 		A_StatIncHud(HPMaxGain,0);
+		
 		MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd + HealthBonusAdd);
 		if (dydudebug_levelupdisplays) Console.Printf("HPMaxGain: %d", HPMaxGain);
 		
@@ -3130,7 +3184,7 @@ class PlayerStatItem : Inventory
 		{
 			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive): %d", damage);
 			// Level
-			double LVLFactor = (1.00 + (PlayerLevel * baseatkfct));
+			double LVLFactor = (1.00 + (TruePlayerLevel * baseatkfct));
 			if (IsMorphed == 1)
 			{
 				if (LVLFactor <= 2.334) LVLFactor = 2.334;
@@ -3143,7 +3197,7 @@ class PlayerStatItem : Inventory
 
 			// Attack
 			double ATKFactor = 1.00;
-			if (exex_extraatkdefspd) ATKFactor = (1.00 + (PlayerATK * baseatkfct) + (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*1),(baseatkfct*1),(baseatkfct*2))));
+			if (exex_extraatkdefspd) ATKFactor = (1.00 + (TruePlayerATK * baseatkfct) + (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*1),(baseatkfct*1),(baseatkfct*2))));
 			if (IsMorphed == 1)
 			{
 				if (ATKFactor <= 2.334) ATKFactor = 2.334;
@@ -3295,7 +3349,7 @@ class PlayerStatItem : Inventory
 		{
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("FDamage (passive[pre]): %d", damage);
 			// Level
-			double LVLFactor = (1.00 - (PlayerLevel * basedeffct));
+			double LVLFactor = (1.00 - (TruePlayerLevel * basedeffct));
 			if (IsMorphed == 1)
 			{
 				if (LVLFactor <= 0.60) LVLFactor = 0.60;
@@ -3308,7 +3362,7 @@ class PlayerStatItem : Inventory
 
 			// Defense
 			double DEFFactor = 1.00;
-			if (exex_extraatkdefspd) DEFFactor = (1.00 - (PlayerDEF * basedeffct) - (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.5),(basedeffct*0.5),(basedeffct*0.5),(basedeffct),(basedeffct),(basedeffct*2))));
+			if (exex_extraatkdefspd) DEFFactor = (1.00 - (TruePlayerDEF * basedeffct) - (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.5),(basedeffct*0.5),(basedeffct*0.5),(basedeffct),(basedeffct),(basedeffct*2))));
 			if (IsMorphed == 1)
 			{
 				if (DEFFactor <= 0.60) DEFFactor = 0.60;
@@ -3485,8 +3539,8 @@ class PlayerStatItem : Inventory
 		double BaseFactor = 1.0;
 		double BaseMul = 0.009375;
 		if (IsMorphed == 1) BaseMul *= 3;
-		if (exex_extraatkdefspd) BaseFactor *= (1.00 + (PlayerLevel * BaseMul) + (PlayerSPD * BaseMul));
-												else BaseFactor *= (1.00 + (PlayerLevel * BaseMul));
+		if (exex_extraatkdefspd) BaseFactor *= (1.00 + (TruePlayerLevel * BaseMul) + (TruePlayerSPD * BaseMul));
+												else BaseFactor *= (1.00 + (TruePlayerLevel * BaseMul));
 		if (IsMorphed == 1)
 		{
 			if (BaseFactor >= 7.5) BaseFactor = 7.5;
@@ -3628,7 +3682,7 @@ class PlayerStatItem : Inventory
 		double BuffFactor = 1.0;
 		if (Owner.CountInv("DinahTrueIPState")) 
 		{
-			double temp = (0.1875 + ((PlayerLevel - 1) * 0.01875));
+			double temp = (0.1875 + ((TruePlayerLevel - 1) * 0.01875));
 			if (temp >= 0.625) temp = 0.625;
 			BuffFactor *= temp;
 		}
@@ -3682,7 +3736,7 @@ class PlayerStatItem : Inventory
 		}
 		double ArmorML = ArmorM;
 		let MiscItem = PlayerStatItem(Owner.FindInventory("PlayerStatItem"));
-		if (MiscItem && ArmorM > 0.0) ArmorM *= (1.0 - (MiscItem.PlayerLevel * 0.02));
+		if (MiscItem && ArmorM > 0.0) ArmorM *= (1.0 - (MiscItem.TruePlayerLevel * 0.02));
 		if (dydudebug_armordisplays) Console.Printf("%.8f (%.8f)", ArmorM, ArmorML);
 		if (ArmorM < 0.0) ArmorM = 0.0;
 		ArmorFactor = (1.0 - ArmorM);
@@ -3818,6 +3872,7 @@ class PlayerDashJump : Inventory
 	bool slownthres1, slownthres2, slownthres3;
 	bool berserked;
 	int PlayerLevel;
+	int TruePlayerLevel;
 	int BaseDashChargeMax;
 	int ExtraDashCharge;
 	int SuperVacAmmo, SuperVacAmmoMax;
@@ -3855,8 +3910,9 @@ class PlayerDashJump : Inventory
 		double dashsndvol = 0.67;
 		double dashgruntsndvol = 1.0;
 		PlayerLevel = owner.CountInv("PlayerLevel");
-		MaxDashTics = randompick(6,6,7,7,7) + (PlayerLevel / 20);
-		if (berserked) MaxDashTics *= (1.34 + (PlayerLevel * 0.004));
+		if (exex_expenabled) TruePlayerLevel = PlayerLevel; else TruePlayerLevel = 0;
+		MaxDashTics = randompick(6,6,7,7,7) + (TruePlayerLevel / 20);
+		if (berserked) MaxDashTics *= (1.34 + (TruePlayerLevel * 0.004));
 		let MiscItem = PlayerStatItem(Owner.FindInventory("PlayerStatItem"));
 
 		int DashLvlTier1Thresh = 25;
@@ -3865,7 +3921,7 @@ class PlayerDashJump : Inventory
 		int DashLvlTier4Thresh = 100;
 
 		double baseAddDashLevel = 1.25;
-		int AddDashLevel = (PlayerLevel * baseAddDashLevel);
+		int AddDashLevel = (TruePlayerLevel * baseAddDashLevel);
 		double ADashFactor = 1.5;
 		if (skill <= SKILL_VERY_EASY) baseAddDashLevel = 1.625;
 		if (skill == SKILL_EASY) baseAddDashLevel = 1.5;
@@ -3873,11 +3929,11 @@ class PlayerDashJump : Inventory
 		if (skill == SKILL_HARD) baseAddDashLevel = 1.25;
 		if (skill >= SKILL_VERY_HARD) baseAddDashLevel = 1.125;
 
-		AddDashLevel = (PlayerLevel * (baseAddDashLevel * ADashFactor));
-		if (PlayerLevel >= DashLvlTier1Thresh) AddDashLevel += ((PlayerLevel - DashLvlTier1Thresh) * ((baseAddDashLevel * 0.5) * ADashFactor));
-		if (PlayerLevel >= DashLvlTier2Thresh) AddDashLevel += ((PlayerLevel - DashLvlTier2Thresh) * ((baseAddDashLevel * 0.25) * ADashFactor));
-		if (PlayerLevel >= DashLvlTier3Thresh) AddDashLevel += ((PlayerLevel - DashLvlTier3Thresh) * ((baseAddDashLevel * 0.125) * ADashFactor));
-		if (PlayerLevel >= DashLvlTier4Thresh) AddDashLevel += ((PlayerLevel - DashLvlTier4Thresh) * ((baseAddDashLevel * 0.0625) * ADashFactor));
+		AddDashLevel = (TruePlayerLevel * (baseAddDashLevel * ADashFactor));
+		if (TruePlayerLevel >= DashLvlTier1Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier1Thresh) * ((baseAddDashLevel * 0.5) * ADashFactor));
+		if (TruePlayerLevel >= DashLvlTier2Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier2Thresh) * ((baseAddDashLevel * 0.25) * ADashFactor));
+		if (TruePlayerLevel >= DashLvlTier3Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier3Thresh) * ((baseAddDashLevel * 0.125) * ADashFactor));
+		if (TruePlayerLevel >= DashLvlTier4Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier4Thresh) * ((baseAddDashLevel * 0.0625) * ADashFactor));
 		
 		if (itemtimer <= 2)
 		{
@@ -3915,15 +3971,28 @@ class PlayerDashJump : Inventory
 			if (BaseDashChargeMax == 0) BaseDashChargeMax = globalvars.BaseDashChargeMax;
 		}
 
-		DashMaxCharge = BaseDashChargeMax + AddDashLevel + ExtraDashCharge;
+		int ExDashCharge2 = ExtraDashCharge;
+		int AddDashLevel2 = AddDashLevel;
+		if (!exex_expenabled) 
+		{
+			if (skill <= 0) ExDashCharge2 *= 4.0;
+			if (skill == 1) ExDashCharge2 *= 3.5;
+			if (skill == 2) ExDashCharge2 *= 3.0;
+			if (skill == 3) ExDashCharge2 *= 2.5;
+			if (skill >= 4) ExDashCharge2 *= 2.0;
+			AddDashLevel2 = 0;
+		}
+		DashMaxCharge = BaseDashChargeMax + AddDashLevel2 + ExDashCharge2;
+		if (dydudebug_dashing) Console.Printf("DashMaxCharge: %d (BaseDashChargeMax: %d, AddDashLevel2: %d (%d), ExtraDashCharge2: %d (%d)", DashMaxCharge, BaseDashChargeMax, AddDashLevel2, AddDashLevel, ExDashCharge2, ExtraDashCharge);
+
 		if (berserked) DashMaxCharge *= 1.125;
 		if (itemtimer == 0) DashCharge = DashMaxCharge;
 
 		double DashSpdMul = 1.00;
-		DashSpeed = (25 + (PlayerLevel * 0.125));
+		DashSpeed = (25 + (TruePlayerLevel * 0.125));
 		if (Owner.CountInv("DinahTrueIPState")) 
 		{
-			double temp = (0.125 + ((PlayerLevel - 1) * 0.0125));
+			double temp = (0.125 + ((TruePlayerLevel - 1) * 0.0125));
 			if (temp >= 0.50) temp = 0.50;
 			DashSpdMul *= temp;
 		}
@@ -3980,25 +4049,25 @@ class PlayerDashJump : Inventory
 		}
 		if (weapon is "CricketBat" && owner.CountInv("IsInBatGuardFrame"))
 		{
-			if (PlayerLevel >= DashLvlTier4Thresh)
+			if (TruePlayerLevel >= DashLvlTier4Thresh)
 			{
 				if (!berserked) DashCost *= 1.125;
 									 else DashCost *= 1.03125;
 			}
 			else
-			if (PlayerLevel >= DashLvlTier3Thresh)
+			if (TruePlayerLevel >= DashLvlTier3Thresh)
 			{
 				if (!berserked) DashCost *= 1.1875;
 									 else DashCost *= 1.046875;
 			}
 			else
-			if (PlayerLevel >= DashLvlTier2Thresh)
+			if (TruePlayerLevel >= DashLvlTier2Thresh)
 			{
 				if (!berserked) DashCost *= 1.1875;
 									 else DashCost *= 1.0625;
 			}
 			else
-			if (PlayerLevel >= DashLvlTier1Thresh)
+			if (TruePlayerLevel >= DashLvlTier1Thresh)
 			{
 				if (!berserked) DashCost *= 1.25;
 									 else DashCost *= 1.0625;
@@ -4007,6 +4076,18 @@ class PlayerDashJump : Inventory
 			{
 				if (!berserked) DashCost *= 1.25;
 									 else DashCost *= 1.125;
+			}
+		}
+		if (!exex_expenabled)
+		{
+			int ChargeDiff = DashCost - DashMaxCharge;
+			if (ChargeDiff > 0)
+			{
+				if (skill <= 0) DashMaxCharge += (ChargeDiff * 1.5);
+				if (skill == 1) DashMaxCharge += (ChargeDiff * 1.125);
+				if (skill == 2) DashMaxCharge += ChargeDiff;
+				if (skill == 3) DashMaxCharge += (ChargeDiff * 0.875);
+				if (skill >= 4) DashMaxCharge += (ChargeDiff * 0.5);
 			}
 		}
 		vacammotype = owner.FindInventory("VacAmmo");
@@ -4076,7 +4157,7 @@ class PlayerDashJump : Inventory
 			else
 			{
 				if (airdashtype != 1) DashSpeed *= 0.8;
-				DashVSpeed = (5 * (PlayerLevel * 0.025));
+				DashVSpeed = (5 * (TruePlayerLevel * 0.025));
 				if (berserked) DashVSpeed *= 1.04;
 				DashTics = MaxDashTics;
 				dashtype = 1; // Airdash
@@ -4169,7 +4250,7 @@ class PlayerDashJump : Inventory
 					{
 						dashdmg = ((random(8,12) + random(6,8)) * random(1,3));
 						dashtype = "DashingBG";
-						if (MiscItem.PlayerLevel >= exex_cricketspinlvlrequirement) dashdmg *= 1.25;
+						if (MiscItem.TruePlayerLevel >= exex_cricketspinlvlrequirement) dashdmg *= 1.25;
 					}
 					else
 					{
@@ -4186,7 +4267,7 @@ class PlayerDashJump : Inventory
 						else { owner.bFORCERADIUSDMG = true; }
 	
 						dashdmg = ((random(8,12) + random(6,8)) * random(1,3));
-						if (MiscItem.PlayerLevel >= exex_cricketspinlvlrequirement) dashdmg *= 1.25;
+						if (MiscItem.TruePlayerLevel >= exex_cricketspinlvlrequirement) dashdmg *= 1.25;
 						dashtype = "DashingBG";
 						Owner.A_Explode(dashdmg,(radius*3),XF_NOTMISSILE,false,(radius*1.5),0,0,"",dashtype);
 					}
@@ -4223,7 +4304,7 @@ class PlayerDashJump : Inventory
 						{
 							dashdmg = (random(6,8) * random(1,3));
 							dashtype = "DashingBG";
-							if (MiscItem.PlayerLevel >= exex_cricketspinlvlrequirement) dashdmg *= 1.25;
+							if (MiscItem.TruePlayerLevel >= exex_cricketspinlvlrequirement) dashdmg *= 1.25;
 							Owner.A_Explode(dashdmg,(radius*3),XF_NOTMISSILE,false,(radius*1.5),0,0,"",dashtype);
 						}
 					}
@@ -4239,7 +4320,7 @@ class PlayerDashJump : Inventory
 						{
 							dashdmg = (random(6,8) * random(1,3));
 							dashtype = "DashingBG";
-							if (MiscItem.PlayerLevel >= exex_cricketspinlvlrequirement) dashdmg *= 1.25;
+							if (MiscItem.TruePlayerLevel >= exex_cricketspinlvlrequirement) dashdmg *= 1.25;
 							Owner.A_Explode(dashdmg,(radius*3),XF_NOTMISSILE,false,(radius*1.5),0,0,"",dashtype);
 						}
 					}

@@ -11,6 +11,10 @@ class DDPlayerPawn : PlayerPawn
 	const SKILL_OMEGA = 8;
 	
 	double PlayerDefenseIgnoreFactor;
+	int TruePlayerLevel;
+	int TruePlayerATK;
+	int TruePlayerDEF;
+	int TruePlayerSPD;
 
 	mixin HUDRecovery;
 	bool IPAttack;
@@ -174,7 +178,7 @@ class DDPlayerPawn : PlayerPawn
 			double airreplen;
 			if (MaxAirTime > 0) airreplen = (MaxAirTime / (TICRATE * 5));
 			if (airreplen < 1) airreplen = 1;
-			if (MiscItem) airreplen *= (1.0 + (MiscItem.PlayerLevel * 0.0125));
+			if (MiscItem) airreplen *= (1.0 + (TruePlayerLevel * 0.0125));
 			if (MaxAirTime > 0 && airreplen > TICRATE) airreplen = TICRATE;
 			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) airreplen *= 1.25;
 			if (CountInv("PowerNoDrown") || CountInv("PowerIronFeet") || CountInv("PowerIronFeet2") || CountInv("PowerMask")) airreplen *= 1.625;
@@ -259,7 +263,7 @@ class DDPlayerPawn : PlayerPawn
 			MaxAirTime = (12 * TICRATE);
 			if (MiscItem)
 			{
-				MaxAirTime += (MiscItem.PlayerLevel * 2.916666666666667);
+				MaxAirTime += (TruePlayerLevel * 2.916666666666667);
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) MaxAirTime *= 1.25;
 			}
 			if (GetAge() <= 1 && AirTime != MaxAirTime) AirTime = MaxAirTime;
@@ -415,12 +419,10 @@ class DDPlayerPawn : PlayerPawn
 		else
 		{
 			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
-			int PlayerLevel;
-			if (MiscItem) PlayerLevel = MiscItem.PlayerLevel;
 			double AirControlBase = frandom(0.2432,0.2436);
 
 			// Level Based AirControl
-			double LVLAirControl = 1.00 + (PlayerLevel * 0.00125);
+			double LVLAirControl = 1.00 + (TruePlayerLevel * 0.00125);
 
 			// Armor items
 			double ArmorAirControl = 1.00;
@@ -477,6 +479,20 @@ class DDPlayerPawn : PlayerPawn
 			buttons = GetPlayerInput(INPUT_BUTTONS);
 			if (dydudebug_showvoodoodoll) Console.Printf("Player [Tick] - \c[gold]H: %d, R: %d, M: %d, \c[sapphire]Sx: %4f, Sy: %4f, \c[fire]PosX: %d, PosY: %d, PosZ: %d", height, radius, mass, scale.x, scale.y, pos.x, pos.y, pos.z);
 			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+			if (MiscItem && exex_expenabled) 
+			{
+				TruePlayerLevel = MiscItem.TruePlayerLevel;
+				TruePlayerATK = MiscItem.TruePlayerATK;
+				TruePlayerDEF = MiscItem.TruePlayerDEF;
+				TruePlayerSPD = MiscItem.TruePlayerSPD;
+			}
+			else
+			{
+				TruePlayerLevel = 0;
+				TruePlayerATK = 0;
+				TruePlayerDEF = 0;
+				TruePlayerSPD = 0;
+			}
 			let globalvars = DDGlobalVariables.Get();
 			if (dydudebug_mapinfo)
 			{
@@ -603,8 +619,8 @@ class DDPlayerPawn : PlayerPawn
 						if (bNODAMAGETHRUST) wasnodmgthrust = true;
 						if (bFORCERADIUSDMG) wasforceradius = true;
 						double cost = A_GetIPCost(-1);
-						//Console.Printf("TrueIPLevelGate: %d, IP: %d (%d), Level: %d, TrueIPCooldownTimer: %d", MiscItem.TrueIPLevelGate, MiscItem.ItemPoints, globalvars.ItemPoints, MiscItem.PlayerLevel, MiscItem.TrueIPCooldownTimer);
-						if (MiscItem.TrueIPLevelGate <= 0 && MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && MiscItem.PlayerLevel > 0 && MiscItem.TrueIPCooldownTimer <= 0)
+						//Console.Printf("TrueIPLevelGate: %d, IP: %d (%d), Level: %d, TrueIPCooldownTimer: %d", MiscItem.TrueIPLevelGate, MiscItem.ItemPoints, globalvars.ItemPoints, TruePlayerLevel, MiscItem.TrueIPCooldownTimer);
+						if (MiscItem.TrueIPLevelGate <= 0 && MiscItem.ItemPoints >= cost && globalvars.ItemPoints >= cost && TruePlayerLevel > 0 && MiscItem.TrueIPCooldownTimer <= 0)
 						{
 							globalvars.TrueIPTimesUsed += 1;
 							if (skill == SKILL_VERY_EASY) IPLevelGateInc = int(globalvars.TrueIPTimesUsed * 0.625);
@@ -621,7 +637,7 @@ class DDPlayerPawn : PlayerPawn
 							
 							if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer = 0;
 							MiscItem.IPNoGainTimer = 60 * TICRATE;
-							MiscItem.TrueIPCooldownTimer = ((300 * TICRATE) * (1.0 - (MiscItem.PlayerLevel * 0.008)));
+							MiscItem.TrueIPCooldownTimer = ((300 * TICRATE) * (1.0 - (TruePlayerLevel * 0.008)));
 							if (MiscItem.TrueIPCooldownTimer <= (60 * TICRATE)) MiscItem.TrueIPCooldownTimer = 60 * TICRATE;
 							A_SetBlend("ff c0 00",1.00,(random(40,70)*2));
 							double xp = pos.x;
@@ -688,12 +704,12 @@ class DDPlayerPawn : PlayerPawn
 							{
 								A_SetInventory("DinahTrueIPState",1);
 								let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
-								if (TrueIPItem) TrueIPItem.EffectTics = ((60 * TICRATE) * (1.0 + ((MiscItem.PlayerLevel - 1) * 0.005)));
+								if (TrueIPItem) TrueIPItem.EffectTics = ((60 * TICRATE) * (1.0 + ((TruePlayerLevel - 1) * 0.005)));
 							}
 							else
 							{
 								let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
-								if (TrueIPItem) TrueIPItem.EffectTics += ((60 * TICRATE) * (1.0 + ((MiscItem.PlayerLevel - 1) * 0.005)));
+								if (TrueIPItem) TrueIPItem.EffectTics += ((60 * TICRATE) * (1.0 + ((TruePlayerLevel - 1) * 0.005)));
 							}
 						}
 					}
@@ -936,32 +952,32 @@ class DDPlayerPawn : PlayerPawn
 			{
 				MiscItem.MercyInvulnOn = true;
 				MiscItem.MercyInvulnTimer = 1210; // 1.5 Seconds
-				MiscItem.MercyInvulnTimer += int(MiscItem.PlayerLevel * 3.65);
+				MiscItem.MercyInvulnTimer += int(TruePlayerLevel * 3.65);
 				
 				// IP Cost Reduction Bonuses do NOT occur for having Ultimate Buddha Mode [i.e. CF_BUDDHA2 flag] on by itself
 				if (player.cheats & CF_BUDDHA)
 				{
-					if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 5))
+					if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 5))
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer = 0;
 						MiscItem.IPMortalBlowReduceTimer += 525;
 					}
-					else if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4))
+					else if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4))
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.2;
 						MiscItem.IPMortalBlowReduceTimer += random(437,438);
 					}
-					else if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3))
+					else if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3))
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.4;
 						MiscItem.IPMortalBlowReduceTimer += 350;
 					}
-					else if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2))
+					else if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2))
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.6;
 						MiscItem.IPMortalBlowReduceTimer += random(262,263);
 					}
-					else if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement))
+					else if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement))
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.8;
 						MiscItem.IPMortalBlowReduceTimer += 175;
@@ -1219,9 +1235,6 @@ class DDPlayerPawn : PlayerPawn
 		int firstdmg = damage;
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
-
-		int PlayerLevel;
-		if (MiscItem) PlayerLevel = MiscItem.PlayerLevel;
 		
 		Actor AttackingActor;
 		Actor UniqueProjectile;
@@ -1422,8 +1435,8 @@ class DDPlayerPawn : PlayerPawn
 				}
 				else
 				{
-					damage = ceil(damage * (0.25 - (MiscItem.PlayerLevel * 0.005)));
-					if (MiscItem.PlayerLevel <= 100 && damage < 1) damage = 1;
+					damage = ceil(damage * (0.25 - (TruePlayerLevel * 0.005)));
+					if (TruePlayerLevel <= 100 && damage < 1) damage = 1;
 					if (armortier == 1) damage = ceil(damage * 0.975);
 					if (armortier == 2) damage = ceil(damage * 0.9625);
 					if (armortier == 3) damage = ceil(damage * 0.95);
@@ -1435,27 +1448,27 @@ class DDPlayerPawn : PlayerPawn
 			{
 				double set1, set2, set3;
 				if (dydudebug_playerdamagemobj) Console.Printf("Damage Is Not Own AOE");
-				set1 = (0.750 - (MiscItem.PlayerLevel * 0.0150));
-				set2 = (0.875 - (MiscItem.PlayerLevel * 0.0175));
-				set3 = (1.000 - (MiscItem.PlayerLevel * 0.0200));
+				set1 = (0.750 - (TruePlayerLevel * 0.0150));
+				set2 = (0.875 - (TruePlayerLevel * 0.0175));
+				set3 = (1.000 - (TruePlayerLevel * 0.0200));
 				if (AttackingActor != null)
 				{
 					if (sour == "Cyberdemon") 
 					{
-						set1 = (0.875 - (MiscItem.PlayerLevel * 0.0175));
-						set2 = (0.9375 - (MiscItem.PlayerLevel * 0.01875));
-						set3 = (1.0 - (MiscItem.PlayerLevel * 0.02));
+						set1 = (0.875 - (TruePlayerLevel * 0.0175));
+						set2 = (0.9375 - (TruePlayerLevel * 0.01875));
+						set3 = (1.0 - (TruePlayerLevel * 0.02));
 					}
 					else 
 					if (sour == "Archvile" || sour == "ArchvileNew") 
 					{
-						set1 = (0.50 - (MiscItem.PlayerLevel * 0.01));
-						set2 = (0.625 - (MiscItem.PlayerLevel * 0.0125));
-						set3 = (0.75 - (MiscItem.PlayerLevel * 0.015));
+						set1 = (0.50 - (TruePlayerLevel * 0.01));
+						set2 = (0.625 - (TruePlayerLevel * 0.0125));
+						set3 = (0.75 - (TruePlayerLevel * 0.015));
 					}
 				}
 				damage = ceil(damage * frandompick(set1,set1,set2,set2,set2,set2,set2,set2,set3,set3));
-				if (MiscItem.PlayerLevel <= 100 && damage < 1) damage = 1;
+				if (TruePlayerLevel <= 100 && damage < 1) damage = 1;
 				if (armortier == 1) damage = ceil(damage * 0.9875);
 				if (armortier == 2) damage = ceil(damage * 0.975);
 				if (armortier == 3) damage = ceil(damage * 0.9625);
@@ -1657,7 +1670,7 @@ class DDPlayerPawn : PlayerPawn
 			{
 				if (useflatdefense)
 				{
-					if (MiscItem) baseflatdefense += ((MiscItem.PlayerLevel * 0.04) + (MiscItem.PlayerDEF * 0.04));
+					if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.04) + (TruePlayerDEF * 0.04));
 					flatdefense = random((baseflatdefense*0.5),baseflatdefense);
 					if (armortier == 1) 
 					{
@@ -1696,27 +1709,27 @@ class DDPlayerPawn : PlayerPawn
 				if (mod == 'SigilDrain') useflatdefense = false;
 				if (useflatdefense)
 				{
-					if (MiscItem) baseflatdefense += ((MiscItem.PlayerLevel * 0.1) + (MiscItem.PlayerDEF * 0.1));
+					if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.1) + (TruePlayerDEF * 0.1));
 					flatdefense = random((baseflatdefense*0.5),baseflatdefense);
 					if (armortier == 1) 
 					{
-						if (CountInv("KnightGownIP1Buff")) flatdefense += (random(0,4) + (PlayerLevel * 0.125));
-																					else flatdefense += (random(0,1) + (PlayerLevel * 0.025));
+						if (CountInv("KnightGownIP1Buff")) flatdefense += (random(0,4) + (TruePlayerLevel * 0.125));
+																					else flatdefense += (random(0,1) + (TruePlayerLevel * 0.025));
 					}
 					if (armortier == 2) 
 					{
-						if (CountInv("KnightGownIP2Buff")) flatdefense += (random(4,8) + (PlayerLevel * 0.250));
-																					else flatdefense += (random(1,2) + (PlayerLevel * 0.050));
+						if (CountInv("KnightGownIP2Buff")) flatdefense += (random(4,8) + (TruePlayerLevel * 0.250));
+																					else flatdefense += (random(1,2) + (TruePlayerLevel * 0.050));
 					}
 					if (armortier == 3) 
 					{
-						if (CountInv("KnightGownIP3Buff")) flatdefense += (random(8,12) + (PlayerLevel * 0.375));
-																					else flatdefense += (random(2,3) + (PlayerLevel * 0.075));
+						if (CountInv("KnightGownIP3Buff")) flatdefense += (random(8,12) + (TruePlayerLevel * 0.375));
+																					else flatdefense += (random(2,3) + (TruePlayerLevel * 0.075));
 					}
 					if (armortier >= 4) 
 					{
-						if (CountInv("KnightGownIP4Buff")) flatdefense += (random(16,20) + (PlayerLevel * 0.625));
-																					else flatdefense += (random(4,5) + (PlayerLevel * 0.125));
+						if (CountInv("KnightGownIP4Buff")) flatdefense += (random(16,20) + (TruePlayerLevel * 0.625));
+																					else flatdefense += (random(4,5) + (TruePlayerLevel * 0.125));
 					}
 					damage -= flatdefense;
 					if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [Non-Crush Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);
@@ -1736,7 +1749,7 @@ class DDPlayerPawn : PlayerPawn
 			if (mod == 'Drowning') useflatdefense = false;
 			if (useflatdefense)
 			{
-				if (MiscItem) baseflatdefense += ((MiscItem.PlayerLevel * 0.02) + (MiscItem.PlayerDEF * 0.02));
+				if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.02) + (TruePlayerDEF * 0.02));
 				flatdefense = random((baseflatdefense*0.5),baseflatdefense);
 				if (armortier == 1) 
 				{
@@ -2001,8 +2014,8 @@ class DDPlayerPawn : PlayerPawn
 					if (oldhealthratio == 3) base *= 1.5;
 					if (oldhealthratio == 4) base *= 2.25;
 					if (oldhealth > 1 && health == 1) base *= 3.25;
-					if (MiscItem.PlayerLUCK) base *= (0.125 + (MiscItem.PlayerLevel * 0.00125) + (random(1,MiscItem.PlayerLUCK) * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
-															else base *= (0.125 + (MiscItem.PlayerLevel * 0.00125));
+					if (MiscItem.PlayerLUCK) base *= (0.125 + (TruePlayerLevel * 0.00125) + (random(1,MiscItem.PlayerLUCK) * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
+															else base *= (0.125 + (TruePlayerLevel * 0.00125));
 					
 				}
 				// The more Lufia II equse formula
@@ -2398,8 +2411,8 @@ class DDPlayerPawn : PlayerPawn
 								if (oldhealthratio == 3) base *= 1.5;
 								if (oldhealthratio == 4) base *= 2.25;
 								if (oldhealth > 1 && health == 1) base *= 3.25;
-								if (MiscItem.PlayerLUCK) base *= (0.125 + (MiscItem.PlayerLevel * 0.00125) + (random(1,MiscItem.PlayerLUCK) * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
-																		else base *= (0.125 + (MiscItem.PlayerLevel * 0.00125));
+								if (MiscItem.PlayerLUCK) base *= (0.125 + (TruePlayerLevel * 0.00125) + (random(1,MiscItem.PlayerLUCK) * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
+																		else base *= (0.125 + (TruePlayerLevel * 0.00125));
 								
 							}
 							// The more Lufia II equse formula

@@ -38,13 +38,13 @@ mixin class HUDRecovery
 				MiscItem.MaxHPIncAmt += recovery;
 				if (dydudebug_hudrecdmgdisplays) Console.Printf("Max HP Gain: %d [%d] (timer: %d)", MiscItem.MaxHPIncAmt, recovery, MiscItem.MaxHPIncTimer);
 			}
+			
 			if (type == 1) // Dash Length
 			{
 				if (MiscItem.MaxDashIncTimer <= 0) MiscItem.MaxDashIncTimer = 105;
 				else
 				{
 					MiscItem.MaxDashIncTimer += 35;
-					if (MiscItem.MaxDashIncTimer < 105 && recovery > (MiscItem.MaxHealthTrue * 0.01)) MiscItem.MaxDashIncTimer = 105;
 					if (MiscItem.MaxDashIncTimer > 175) MiscItem.MaxDashIncTimer = 175;
 				}
 				MiscItem.MaxDashIncAmt += recovery;
@@ -59,11 +59,13 @@ mixin class HUDRecovery
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		
 		int IPTimerBaseInc = -35;
 		if (MiscItem) 
 		{
-			base *= (1.0 + (MiscItem.PlayerLevel * 0.0025));
+			base *= (1.0 + (TruePlayerLevel * 0.0025));
 			if (base <= 0.01) base = 0.01;
 			if (basef <= 0.01) basef = 0.01;
 			
@@ -717,6 +719,8 @@ mixin class MonsterCollider
 
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		initdmg = damage;
 		int shieldtype;
 		if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
@@ -1001,9 +1005,9 @@ mixin class MonsterCollider
 			double CandleFactor = 0.00;
 			if (MiscItem)
 			{
-				if (MiscItem.PlayerLevel >= 120) CandleFactor = ((random(5,15) * 0.025) + (MiscItem.PlayerLevel * (random(14,16) * 0.0035)));
-				else if (MiscItem.PlayerLevel >= 45) CandleFactor = ((random(1,10) * 0.02) + (MiscItem.PlayerLevel * (random(9,11) * 0.003)));
-				else CandleFactor = ((random(1,5) * 0.01) + (MiscItem.PlayerLevel * (random(3,5) * 0.0025)));
+				if (TruePlayerLevel >= 120) CandleFactor = ((random(5,15) * 0.025) + (TruePlayerLevel * (random(14,16) * 0.0035)));
+				else if (TruePlayerLevel >= 45) CandleFactor = ((random(1,10) * 0.02) + (TruePlayerLevel * (random(9,11) * 0.003)));
+				else CandleFactor = ((random(1,5) * 0.01) + (TruePlayerLevel * (random(3,5) * 0.0025)));
 				if (CandleFactor > 1.00) CandleFactor = 1.00;
 			}
 			if (CandlePuff(inflictor) || CandlePuff(source) || WhipPuff(inflictor) || WhipPuff(source)) ActorDefenseIgnoreFactor += (CandleFactor * (1.00 - ActorDefenseIgnoreFactor));
@@ -1129,6 +1133,11 @@ mixin class MonsterCollider
 	
 	override void PostBeginPlay()
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+
 		BossEyeNew actcheck;
 		actcheck = BossEyeNew(self);
 		if (actcheck)
@@ -1219,8 +1228,8 @@ mixin class MonsterCollider
 					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem)
 					{
-						health *= (1.0 + (MiscItem.PlayerLevel * levelhpmultfactor));
-						damagefactor *= (dmgfactbase - (MiscItem.PlayerLevel * leveldmgmultfactor));
+						health *= (1.0 + (TruePlayerLevel * levelhpmultfactor));
+						damagefactor *= (dmgfactbase - (TruePlayerLevel * leveldmgmultfactor));
 						if (dydudebug_bossbraininfo) Console.Printf("Icon of Sin is now stronger!");
 					}
 				}
@@ -1260,13 +1269,15 @@ mixin class IPCostCheck
 	double A_GetIPCost(int ipid = 0, bool sigiluse = false, double sigilcostbase = 3.00)
 	{
 		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		double cost;
 		
 		if (ipid == -1)
 		{
 			if (player) 
 			{
-				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 				if (MiscItem)
 				{
 					cost = MiscItem.BaseMaxItemPoints;
@@ -1609,22 +1620,22 @@ mixin class IPCostCheck
 					{
 						if (MiscItem.IPMortalBlowReduceTimer)
 						{
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement) && MiscItem.PlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 2) - 1)) cost = ceil(cost * 0.8334);
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2) && MiscItem.PlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 3) - 1)) cost = ceil(cost * 0.75);
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3) && MiscItem.PlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 4) - 1)) cost = ceil(cost * 0.666);
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4) && MiscItem.PlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 5) - 1)) cost = ceil(cost * 0.583);
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 5)) cost = 0.5;
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 2) - 1)) cost = ceil(cost * 0.8334);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 3) - 1)) cost = ceil(cost * 0.75);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 4) - 1)) cost = ceil(cost * 0.666);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 5) - 1)) cost = ceil(cost * 0.583);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 5)) cost = 0.5;
 						}
 					}
 					else
 					{
 						if (MiscItem.IPMortalBlowReduceTimer)
 						{
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement) && MiscItem.PlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 2) - 1)) cost = ceil(cost * 0.666);
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2) && MiscItem.PlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 3) - 1)) cost = ceil(cost * 0.5);
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3) && MiscItem.PlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 4) - 1)) cost = ceil(cost * 0.333);
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4) && MiscItem.PlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 5) - 1)) cost = ceil(cost * 0.166);
-							if (MiscItem.PlayerLevel >= (exex_mortalblowipcostlvlrequirement * 5)) cost = 0;
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 2) - 1)) cost = ceil(cost * 0.666);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 3) - 1)) cost = ceil(cost * 0.5);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 4) - 1)) cost = ceil(cost * 0.333);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 5) - 1)) cost = ceil(cost * 0.166);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 5)) cost = 0;
 						}
 					}
 				}
@@ -1636,7 +1647,7 @@ mixin class IPCostCheck
 			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 			if (MiscItem) 
 			{
-				cost *= (1.0 - ((MiscItem.PlayerLevel - 1) * 0.001));
+				cost *= (1.0 - ((TruePlayerLevel - 1) * 0.001));
 			}
 		}
 		

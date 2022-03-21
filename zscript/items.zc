@@ -566,6 +566,14 @@ class GoldApple : CustomInventoryExt
 					globalvars.HealthBonusAdd += inc;
 					globalvars.PlayerLuck += inc3;
 				}
+				if (!exex_expenabled)
+				{
+					if (skill <= 0) inc *= 4.0;
+					if (skill == 1) inc *= 3.5;
+					if (skill == 2) inc *= 3.0;
+					if (skill == 3) inc *= 2.5;
+					if (skill >= 4) inc *= 2.0;
+				}
 				invoker.A_StatIncHud(inc,0);
 				player.mo.health = player.health = temp1;
 				int healdiff = player.mo.health - oldhealth;
@@ -576,6 +584,14 @@ class GoldApple : CustomInventoryExt
 				if (MiscItem)
 				{
 					MiscItem.ExtraDashCharge += dashinc;
+					if (!exex_expenabled)
+					{
+						if (skill <= 0) dashinc *= 4.0;
+						if (skill == 1) dashinc *= 3.5;
+						if (skill == 2) dashinc *= 3.0;
+						if (skill == 3) dashinc *= 2.5;
+						if (skill >= 4) dashinc *= 2.0;
+					}
 					invoker.A_StatIncHud(dashinc,1);
 				}
 				if (MiscItem2) MiscItem2.HPRegenBoostTimer += (randompick(9,10,10,11,11,12,13) * 2.5);
@@ -644,6 +660,14 @@ class PlatinumApple : CustomInventoryExt
 					globalvars.HealthBonusAdd += inc;
 					globalvars.PlayerLuck += inc3;
 				}
+				if (!exex_expenabled)
+				{
+					if (skill <= 0) inc *= 4.0;
+					if (skill == 1) inc *= 3.5;
+					if (skill == 2) inc *= 3.0;
+					if (skill == 3) inc *= 2.5;
+					if (skill >= 4) inc *= 2.0;
+				}
 				invoker.A_StatIncHud(inc,0);
 				player.mo.health = player.health = temp1;
 				int healdiff = player.mo.health - oldhealth;
@@ -653,6 +677,14 @@ class PlatinumApple : CustomInventoryExt
 				int dashinc = randompick(2,2,2,3,3);
 				if (MiscItem)
 				{
+					if (!exex_expenabled)
+					{
+						if (skill <= 0) dashinc *= 4.0;
+						if (skill == 1) dashinc *= 3.5;
+						if (skill == 2) dashinc *= 3.0;
+						if (skill == 3) dashinc *= 2.5;
+						if (skill >= 4) dashinc *= 2.0;
+					}
 					invoker.A_StatIncHud(dashinc,1);
 					MiscItem.ExtraDashCharge += dashinc;
 				}
@@ -1253,6 +1285,13 @@ class CherryBombPickup : ExExInvBarItem
 			{
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+				int TruePlayerLevel = 0;
+				int TruePlayerATK = 0;
+				if (exex_expenabled && MiscItem) 
+				{
+					TruePlayerLevel = MiscItem.PlayerLevel;
+					TruePlayerATK = MiscItem.PlayerATK;
+				}
 				let globalvars = DDGlobalVariables.Get();
 				double throwpowerxy = frandom(14.0,18.0);
 				double throwpowerz = frandom(2.75,3.25);
@@ -1264,12 +1303,10 @@ class CherryBombPickup : ExExInvBarItem
 				double throwmaxangle = 3.5;
 				if (MiscItem)
 				{
-					int PlayerLevel = MiscItem.PlayerLevel;
-					int PlayerATK = MiscItem.PlayerATK;
-					throwpowerxy += (((PlayerLevel * throwmulvelxy) + (PlayerATK * throwmulvelxy)) * throwmulvelext);
-					throwpowerz += (((PlayerLevel * throwmulvelz) + (PlayerATK * throwmulvelz)) * throwmulvelext);
-					throwminangle *= (1.0 - (PlayerLevel * 0.01875));
-					throwmaxangle *= (1.0 - (PlayerLevel * 0.01875));
+					throwpowerxy += (((TruePlayerLevel * throwmulvelxy) + (TruePlayerATK * throwmulvelxy)) * throwmulvelext);
+					throwpowerz += (((TruePlayerLevel * throwmulvelz) + (TruePlayerATK * throwmulvelz)) * throwmulvelext);
+					throwminangle *= (1.0 - (TruePlayerLevel * 0.01875));
+					throwmaxangle *= (1.0 - (TruePlayerLevel * 0.01875));
 				}
 				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1))
 				{
@@ -1339,6 +1376,7 @@ class CherryBombPickup : ExExInvBarItem
 
 class CherryBombShot : DDProjectile
 {
+	int TruePlayerLevel;
 	default
 	{
 		ProjectileKickback 5;
@@ -1355,6 +1393,14 @@ class CherryBombShot : DDProjectile
 		SeeSound "weapons/cherrywick";
 	}
 	
+	void A_GetPlayerLevel()
+	{
+		TruePlayerLevel = 0;
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+	}
+	
 	States
 	{
 		Spawn:
@@ -1366,6 +1412,8 @@ class CherryBombShot : DDProjectile
 		Crash:
 			BMX2 A 2 Bright 
 			{
+				A_GetPlayerLevel();
+				
 				int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 				if (IPAttack) 
 				{
@@ -1374,11 +1422,13 @@ class CherryBombShot : DDProjectile
 				}
 				A_StartSound("weapons/cherryboom");
 				bFORCERADIUSDMG = false;
-				if (PlayerLevel > 12 & random(1,12) <= (1 + ((PlayerLevel - 12) * 0.1667))) { bFORCERADIUSDMG = true; }
+				if (TruePlayerLevel > 12 & random(1,12) <= (1 + ((TruePlayerLevel - 12) * 0.1667))) { bFORCERADIUSDMG = true; }
 				A_Explode(16,32,expflags,0,4);
 			}
 			BMX2 B 2 Bright 
 			{
+				A_GetPlayerLevel();
+				
 				int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 				if (IPAttack) 
 				{
@@ -1387,19 +1437,23 @@ class CherryBombShot : DDProjectile
 				}
 				A_AlertMonsters();
 				bFORCERADIUSDMG = false;
-				if (PlayerLevel > 11 & random(1,11) <= (1 + ((PlayerLevel - 11) * 0.1819))) { bFORCERADIUSDMG = true; }
+				if (TruePlayerLevel > 11 & random(1,11) <= (1 + ((TruePlayerLevel - 11) * 0.1819))) { bFORCERADIUSDMG = true; }
 				A_Explode(24,48,expflags,0,6);
 			}
 			BMX2 C 1 Bright 
 			{
+				A_GetPlayerLevel();
+				
 				int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 				if (IPAttack) expflags = 0;
 				bFORCERADIUSDMG = false;
-				if (PlayerLevel > 10 & random(1,10) <= (1 + ((PlayerLevel - 10) * 0.20))) { bFORCERADIUSDMG = true; }
+				if (TruePlayerLevel > 10 & random(1,10) <= (1 + ((TruePlayerLevel - 10) * 0.20))) { bFORCERADIUSDMG = true; }
 				A_Explode(32,64,expflags,0,8);
 			}
 			BMX2 D 2 Bright 
 			{
+				A_GetPlayerLevel();
+				
 				int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 				if (IPAttack) 
 				{
@@ -1407,19 +1461,23 @@ class CherryBombShot : DDProjectile
 					A_SetTics(1);
 				}
 				bFORCERADIUSDMG = false;
-				if (PlayerLevel > 9 & random(1,9) <= (1 + ((PlayerLevel - 9) * 0.2223))) { bFORCERADIUSDMG = true; }
+				if (TruePlayerLevel > 9 & random(1,9) <= (1 + ((TruePlayerLevel - 9) * 0.2223))) { bFORCERADIUSDMG = true; }
 				A_Explode(40,80,expflags,0,10);
 			}
 			BMX2 E 1 Bright 
 			{
+				A_GetPlayerLevel();
+				
 				int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 				if (IPAttack) expflags = 0;
 				bFORCERADIUSDMG = false;
-				if (PlayerLevel > 8 & random(1,8) <= (1 + ((PlayerLevel - 8) * 0.25))) { bFORCERADIUSDMG = true; }
+				if (TruePlayerLevel > 8 & random(1,8) <= (1 + ((TruePlayerLevel - 8) * 0.25))) { bFORCERADIUSDMG = true; }
 				A_Explode(48,96,expflags,0,12);
 			}
 			BMX2 F 2 Bright 
 			{
+				A_GetPlayerLevel();
+				
 				int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 				if (IPAttack) 
 				{
@@ -1427,15 +1485,17 @@ class CherryBombShot : DDProjectile
 					A_SetTics(1);
 				}
 				bFORCERADIUSDMG = false;
-				if (PlayerLevel > 7 & random(1,7) <= (1 + ((PlayerLevel - 7) * 0.28572))) { bFORCERADIUSDMG = true; }
+				if (TruePlayerLevel > 7 & random(1,7) <= (1 + ((TruePlayerLevel - 7) * 0.28572))) { bFORCERADIUSDMG = true; }
 				A_Explode(56,112,expflags,0,14);
 			}
 			BMX2 G 1 Bright 
 			{
+				A_GetPlayerLevel();
+				
 				int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 				if (IPAttack) expflags = 0;
 				bFORCERADIUSDMG = false;
-				if (PlayerLevel > 6 & random(1,6) <= (1 + ((PlayerLevel - 6) * 0.334))) { bFORCERADIUSDMG = true; }
+				if (TruePlayerLevel > 6 & random(1,6) <= (1 + ((TruePlayerLevel - 6) * 0.334))) { bFORCERADIUSDMG = true; }
 				A_Explode(64,128,expflags,0,16);
 			}
 			stop;
@@ -2294,11 +2354,14 @@ class PopperPickup : ExExInvBarItem
 		Use:
 			TNT1 A 0 Bright 
 			{
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+				let globalvars = DDGlobalVariables.Get();
+				int TruePlayerLevel = 0;
+				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				
 				if (player.mo.waterlevel <= 2)
 				{
-					int buttons = GetPlayerInput(INPUT_BUTTONS);
-					let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-					let globalvars = DDGlobalVariables.Get();
 					bool wutthis = false;
 					if (exex_ikaripointsenabled && MiscItem && globalvars && (player.mo && player.mo.CountInv("IPUseMode")))
 					{
@@ -2372,34 +2435,34 @@ class PopperPickup : ExExInvBarItem
 							debrisbase1 = 15;
 							debrisbase2 = randompick(9,9,10,10,10);
 						}
-						invoker.debris1amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
-						invoker.debris2amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-						invoker.debris3amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-						invoker.debris4amt = random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+						invoker.debris1amt = random(0,(TruePlayerLevel / debrisbase1));
+						invoker.debris2amt = random(0,(TruePlayerLevel / debrisbase2));
+						invoker.debris3amt = random(0,(TruePlayerLevel / debrisbase2));
+						invoker.debris4amt = random(0,(TruePlayerLevel / debrisbase2));
 						if (random(1,4) <= 3) 
 						{
 							A_StartSound("popper/toot",71,CHANF_DEFAULT,(frandom(0.85,1.0)*invoker.basevol),ATTN_NORM,frandom(0.85,1.15));
 							A_Explode(invoker.basedmg,invoker.baseradi,0,0,invoker.basefradi,0,0,"","Beats");
-							invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
-							invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-							invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-							invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+							invoker.debris1amt += random(0,(TruePlayerLevel / debrisbase1));
+							invoker.debris2amt += random(0,(TruePlayerLevel / debrisbase2));
+							invoker.debris3amt += random(0,(TruePlayerLevel / debrisbase2));
+							invoker.debris4amt += random(0,(TruePlayerLevel / debrisbase2));
 							if (random(1,12) <= 3) 
 							{
 								A_StartSound("popper/toot",72,CHANF_DEFAULT,(frandom(0.75,0.9)*invoker.basevol),ATTN_NORM,frandom(0.9,1.1));
 								A_Explode(invoker.basedmg,invoker.baseradi,0,0,invoker.basefradi,0,0,"","Beats");
-								invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
-								invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-								invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-								invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+								invoker.debris1amt += random(0,(TruePlayerLevel / debrisbase1));
+								invoker.debris2amt += random(0,(TruePlayerLevel / debrisbase2));
+								invoker.debris3amt += random(0,(TruePlayerLevel / debrisbase2));
+								invoker.debris4amt += random(0,(TruePlayerLevel / debrisbase2));
 								if (random(1,36) <= 3) 
 								{
 									A_StartSound("popper/toot",73,CHANF_DEFAULT,(frandom(0.65,0.8)*invoker.basevol),ATTN_NORM,frandom(0.95,1.05));
 									A_Explode(invoker.basedmg,invoker.baseradi,0,0,invoker.basefradi,0,0,"","Beats");
-									invoker.debris1amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase1));
-									invoker.debris2amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-									invoker.debris3amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
-									invoker.debris4amt += random(0,(CountInv("PlayerLevel",AAPTR_PLAYER1) / debrisbase2));
+									invoker.debris1amt += random(0,(TruePlayerLevel / debrisbase1));
+									invoker.debris2amt += random(0,(TruePlayerLevel / debrisbase2));
+									invoker.debris3amt += random(0,(TruePlayerLevel / debrisbase2));
+									invoker.debris4amt += random(0,(TruePlayerLevel / debrisbase2));
 								}
 							}
 						}

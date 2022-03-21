@@ -819,9 +819,18 @@ class DDStatusBarMain : BaseStatusBar
 
 	protected void DrawFullScreenStuff()
 	{
-		int PlayerLevel;
+		int VisiblePlayerLevel = 0;
+		int VisiblePlayerATK = 0;
+		int VisiblePlayerDEF = 0;
+		int VisiblePlayerSPD = 0;
 		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
-		if (MiscItem) PlayerLevel = MiscItem.PlayerLevel;
+		if (MiscItem && exex_expenabled) 
+		{
+			VisiblePlayerLevel = MiscItem.PlayerLevel;
+			VisiblePlayerATK = MiscItem.PlayerATK;
+			VisiblePlayerDEF = MiscItem.PlayerDEF;
+			VisiblePlayerSPD = MiscItem.PlayerSPD;
+		}
 
 		if (screenblocks < 12)
 		{
@@ -1470,28 +1479,28 @@ class DDStatusBarMain : BaseStatusBar
 				if (armorprotect) DrawString(mArmSaveFont, armorsaveamt, (79, -53-scavmody), DI_TEXT_ALIGN_LEFT, armorcolor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				// + Defense
 				int BaseFlatDefValue;
-				if (MiscItem) BaseFlatDefValue = ((MiscItem.PlayerLevel * 0.1) + (MiscItem.PlayerDef * 0.1));
+				if (MiscItem) BaseFlatDefValue = ((VisiblePlayerLevel * 0.1) + (VisiblePlayerDEF * 0.1));
 				int ArmorFlatDefValue = 0 + BaseFlatDefValue;
 				string ArmorFlatDef = "";
 				if (CPlayer.mo.CountInv("KnightGownItem")) 
 				{
-					if (CPlayer.mo.CountInv("KnightGownIP1Buff")) ArmorFlatDefValue = (4 + (PlayerLevel * 0.125));
-																									 else ArmorFlatDefValue = (1 + (PlayerLevel * 0.025));
+					if (CPlayer.mo.CountInv("KnightGownIP1Buff")) ArmorFlatDefValue = (4 + (VisiblePlayerLevel * 0.125));
+																									 else ArmorFlatDefValue = (1 + (VisiblePlayerLevel * 0.025));
 				}
 				if (CPlayer.mo.CountInv("KnightGownItem2")) 
 				{
-					if (CPlayer.mo.CountInv("KnightGownIP2Buff")) ArmorFlatDefValue = (8 + (PlayerLevel * 0.250));
-																									 else ArmorFlatDefValue = (2 + (PlayerLevel * 0.050));
+					if (CPlayer.mo.CountInv("KnightGownIP2Buff")) ArmorFlatDefValue = (8 + (VisiblePlayerLevel * 0.250));
+																									 else ArmorFlatDefValue = (2 + (VisiblePlayerLevel * 0.050));
 				}
 				if (CPlayer.mo.CountInv("KnightGownItem3"))
 				{
-					if (CPlayer.mo.CountInv("KnightGownIP3Buff")) ArmorFlatDefValue = (12 + (PlayerLevel * 0.375));
-																									 else ArmorFlatDefValue = (3 + (PlayerLevel * 0.075));
+					if (CPlayer.mo.CountInv("KnightGownIP3Buff")) ArmorFlatDefValue = (12 + (VisiblePlayerLevel * 0.375));
+																									 else ArmorFlatDefValue = (3 + (VisiblePlayerLevel * 0.075));
 				}
 				if (CPlayer.mo.CountInv("KnightGownItem4")) 
 				{
-					if (CPlayer.mo.CountInv("KnightGownIP4Buff")) ArmorFlatDefValue = (20 + (PlayerLevel * 0.625));
-																									 else ArmorFlatDefValue = (5 + (PlayerLevel * 0.125));
+					if (CPlayer.mo.CountInv("KnightGownIP4Buff")) ArmorFlatDefValue = (20 + (VisiblePlayerLevel * 0.625));
+																									 else ArmorFlatDefValue = (5 + (VisiblePlayerLevel * 0.125));
 				}
 				ArmorFlatDef.AppendFormat("-");
 				ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
@@ -1516,7 +1525,7 @@ class DDStatusBarMain : BaseStatusBar
 				// + Defense
 				int ArmorScavengingLevel = cplayer.mo.CountInv("ArmorScavengerKit");
 				int BaseFlatDefValue;
-				if (MiscItem) BaseFlatDefValue = ((MiscItem.PlayerLevel * 0.1) + (MiscItem.PlayerDef * 0.1));
+				if (MiscItem) BaseFlatDefValue = ((VisiblePlayerLevel * 0.1) + (VisiblePlayerDEF * 0.1));
 				int ArmorFlatDefValue = 0 + BaseFlatDefValue;
 				string ArmorFlatDef = "";
 				ArmorFlatDef.AppendFormat("-");
@@ -1563,7 +1572,7 @@ class DDStatusBarMain : BaseStatusBar
 			{
 				if (dyduhud_showexplevel)
 				{
-					DrawString(mDDLFont, FormatNumber(PlayerLevel, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					DrawString(mDDLFont, FormatNumber(VisiblePlayerLevel, 3), (digx, digy), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 					DrawString(mSmallFont, "LVL", (digx, digy-9), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				}
 				if (dyduhud_showexperience)
@@ -1590,7 +1599,8 @@ class DDStatusBarMain : BaseStatusBar
 				// EXP Gain
 				vector2 EXPScale = (0.875, 0.875);
 				double EXPScaleMul = 0.0028571428571429;
-				int EXPScaleTimer = MiscItem.EXPGainHUDTimer % 35;
+				int EXPScaleTimer; 
+				if (MiscItem) EXPScaleTimer = MiscItem.EXPGainHUDTimer % 35;
 				if (EXPScaleTimer == 0) EXPScale *= 1.00;
 				if (EXPScaleTimer == 1 || EXPScaleTimer == 34) EXPScale *= (1 + EXPScaleMul*1);
 				if (EXPScaleTimer == 2 || EXPScaleTimer == 33) EXPScale *= (1 + EXPScaleMul*2);
@@ -1709,7 +1719,7 @@ class DDStatusBarMain : BaseStatusBar
 			int dashcharge = CPlayer.mo.CountInv("DashCharge");
 			int dashtics = CPlayer.mo.CountInv("DashTics");
 			int dashmaxcharge = CPlayer.mo.CountInv("DashMaxCharge");
-			double dashmeterlength = (dyduhud_basedashmeterlength + (PlayerLevel * dyduhud_dashmetergrowperlvl));
+			double dashmeterlength = (dyduhud_basedashmeterlength + (VisiblePlayerLevel * dyduhud_dashmetergrowperlvl));
 			if (dashmeterlength > dyduhud_dashmetermaxlength) dashmeterlength = dyduhud_dashmetermaxlength;
 			int dashbarunits = dash * dashmeterlength;
 			digx = 5; // 5;
@@ -1879,9 +1889,10 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			
 			// IP % Display
-			double IPIconPulseScale = 1.00;
-			int IPIconScaleTimer = (level.time + MiscItem.IPHUDPulseTimeP) % 40;
 			let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+			double IPIconPulseScale = 1.00;
+			int IPIconScaleTimer;
+			if (MiscItem) IPIconScaleTimer = (level.time + MiscItem.IPHUDPulseTimeP) % 40;
 			if (exex_ikaripointsenabled)
 			{
 				if (MiscItem)
@@ -1927,7 +1938,7 @@ class DDStatusBarMain : BaseStatusBar
 				int IPDigits;
 				int IPdigitcolor = 0;
 				int IPdigittimer = level.time % 30;
-				if (MiscItem.ItemPoints >= MiscItem.MaxItemPoints)
+				if (MiscItem && MiscItem.ItemPoints >= MiscItem.MaxItemPoints)
 				{
 					//Console.Printf("IPdigittimer: %d", IPdigittimer);
 					if (IPdigittimer >= 0 && IPdigittimer <= 4) IPdigitcolor = font.cr_red;
@@ -1964,16 +1975,24 @@ class DDStatusBarMain : BaseStatusBar
 				
 				string IPInputIcon = "IPINPUT0";
 				if (CPlayer.mo.CountInv("IPUseMode")) IPInputIcon = "IPINPUT1";
-				if (MiscItem.IPNoGainTimer)
+				if (MiscItem)
 				{
-					IPInputIcon = "IPINPUT2";
-					if (CPlayer.mo.CountInv("IPUseMode")) IPInputIcon = "IPINPUT3";
-				}
-				else
-				if (MiscItem.IPMortalBlowReduceTimer)
-				{
-					IPInputIcon = "IPINPUT4";
-					if (CPlayer.mo.CountInv("IPUseMode")) IPInputIcon = "IPINPUT5";
+					if (MiscItem.IPNoGainTimer)
+					{
+						IPInputIcon = "IPINPUT2";
+						if (CPlayer.mo.CountInv("IPUseMode")) IPInputIcon = "IPINPUT3";
+					}
+					else
+					if (MiscItem.IPMortalBlowReduceTimer)
+					{
+						IPInputIcon = "IPINPUT4";
+						if (CPlayer.mo.CountInv("IPUseMode")) IPInputIcon = "IPINPUT5";
+					}
+					else
+					{
+						IPInputIcon = "IPINPUT0";
+						if (CPlayer.mo.CountInv("IPUseMode")) IPInputIcon = "IPINPUT1";
+					}
 				}
 				else
 				{
@@ -1987,7 +2006,8 @@ class DDStatusBarMain : BaseStatusBar
 				DrawImage(IPInputIcon, ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, 1.0, (-1, -1), (ipiconscale*IPIconPulseScale));
 				
 				// Disipation Meter
-				int DissipateTimer = MiscItem.IPDissipateTimer;
+				int DissipateTimer;
+				if (MiscItem) DissipateTimer = MiscItem.IPDissipateTimer;
 				string IPDisipateIcon = "";
 				double IPDisipatePulse = 0.25;
 				double IPDisipatePulseInc = frandompick(0.25,0.325,0.325,0.325,0.325,0.325,0.375);
@@ -2144,7 +2164,7 @@ class DDStatusBarMain : BaseStatusBar
 				if (DissipateTimer >= -1819 && DissipateTimer <= -1680) IPDisipateIcon = "IPDRTM13";
 				if (DissipateTimer >= -1959 && DissipateTimer <= -1820) IPDisipateIcon = "IPDRTM14";
 				if (DissipateTimer >= -2100 && DissipateTimer <= -1960) IPDisipateIcon = "IPDRTM15";
-				if (MiscItem.IPDissipateTimer != 0) DrawImage(IPDisipateIcon, ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, IPDisipatePulse, (-1, -1), (ipiconscale*IPIconPulseScale));
+				if (MiscItem && MiscItem.IPDissipateTimer != 0) DrawImage(IPDisipateIcon, ((digx+IPDmgShakeX), (digy+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, IPDisipatePulse, (-1, -1), (ipiconscale*IPIconPulseScale));
 				if (dydudebug_ipdisplays2) Console.Printf(IPDisipateIcon);
 			}
 			
@@ -2197,17 +2217,17 @@ class DDStatusBarMain : BaseStatusBar
 				digy = -90; // -90
 				string hudstat;
 				hudstat = "ATK+: ";
-				hudstat.AppendFormat("%d", MiscItem.PlayerATK);
-				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", MiscItem.PlayerLevel);
+				hudstat.AppendFormat("%d", VisiblePlayerATK);
+				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
 				DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_red, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				hudstat = "DEF+: ";
-				hudstat.AppendFormat("%d", MiscItem.PlayerDEF);
-				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", MiscItem.PlayerLevel);
+				hudstat.AppendFormat("%d", VisiblePlayerDEF);
+				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
 				digy += sepery; // -82 / -132
 				DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_olive, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				hudstat = "SPD+: ";
-				hudstat.AppendFormat("%d", MiscItem.PlayerSPD);
-				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", MiscItem.PlayerLevel);
+				hudstat.AppendFormat("%d", VisiblePlayerSPD);
+				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
 				digy += sepery; // -82 / -132
 				DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_blue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				if (dyduhud_showluck)
@@ -2228,9 +2248,12 @@ class DDStatusBarMain : BaseStatusBar
 					digx = 68 + (digits * spacing); // 176
 					digy = -90; // -90
 					string hudstat;
-					hudstat = "LUCK: ";
-					hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
-					DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					if (MiscItem)
+					{
+						hudstat = "LUCK: ";
+						hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
+						DrawString(mConFont, hudstat, (digx, digy), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					}
 				}
 				FontScale = (1.25, 1.25);
 			}
@@ -2385,7 +2408,7 @@ class DDStatusBarMain : BaseStatusBar
 			Array<String> userKeys7;
 			string userKeyString8;
 			Array<String> userKeys8;
-			if (cplayer.ReadyWeapon is "CricketBat" && (MiscItem && MiscItem.PlayerLevel >= exex_cricketspinlvlrequirement))
+			if (cplayer.ReadyWeapon is "CricketBat" && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement))
 			{
 				Ly += LyInc;
 				userKeyString6 = UIKeybinds.getKeyboard("+moveleft");
@@ -2437,7 +2460,7 @@ class DDStatusBarMain : BaseStatusBar
 			{
 				int flashtimer = level.time % 10;
 				double cost = A_GetIPCost(-1);
-				if (cplayer.mo.CountInv("IPUseMode") && MiscItem.ItemPoints >= cost && MiscItem.PlayerLevel > 0)
+				if (cplayer.mo.CountInv("IPUseMode") && MiscItem.ItemPoints >= cost && VisiblePlayerLevel > 0)
 				{
 					Ly += LyInc;
 					if (MiscItem.TrueIPCooldownTimer > 0)
@@ -2505,7 +2528,7 @@ class DDStatusBarMain : BaseStatusBar
 				int flashtimer = level.time % 20;
 				double cost = A_GetIPCost(-1);
 				bool IPModeReady;
-				if (exex_ikaripointsenabled && MiscItem.ItemPoints >= cost && MiscItem.PlayerLevel > 0 && MiscItem.TrueIPCooldownTimer <= 0 && MiscItem.TrueIPLevelGate <= 0) IPModeReady = true;
+				if (exex_ikaripointsenabled && MiscItem.ItemPoints >= cost && VisiblePlayerLevel > 0 && MiscItem.TrueIPCooldownTimer <= 0 && MiscItem.TrueIPLevelGate <= 0) IPModeReady = true;
 
 				wsnum = 1;
 				wsfontclr = font.cr_gray;
@@ -2896,17 +2919,17 @@ class DDStatusBarMain : BaseStatusBar
 					int jx, jy;
 					jx = -30;
 					jy = -76;
-					if (MiscItem && MiscItem.PlayerLevel >= exex_axecombolvlrequirement)
+					if (MiscItem && VisiblePlayerLevel >= exex_axecombolvlrequirement)
 					{
 						string blimg = "BLUNQKST";
-						if (MiscItem && MiscItem.PlayerLevel >= (exex_axequickshotlvlrequirement * 1.0)) blimg = "BLUNQKS1";
-						if (MiscItem && MiscItem.PlayerLevel >= (exex_axequickshotlvlrequirement * 1.4)) blimg = "BLUNQKS2";
-						if (MiscItem && MiscItem.PlayerLevel >= (exex_axequickshotlvlrequirement * 2.0)) blimg = "BLUNQKS3";
-						if (MiscItem && MiscItem.PlayerLevel >= (exex_axequickshotlvlrequirement * 3.0)) blimg = "BLUNQKS4";
-						if (MiscItem && MiscItem.PlayerLevel >= (exex_axequickshotlvlrequirement * 4.5)) blimg = "BLUNQKS5";
-						if (MiscItem && MiscItem.PlayerLevel >= (exex_axequickshotlvlrequirement * 6.5)) blimg = "BLUNQKS6";
-						if (MiscItem && MiscItem.PlayerLevel >= (exex_axequickshotlvlrequirement * 9.0)) blimg = "BLUNQKS7";
-						if (MiscItem && MiscItem.PlayerLevel >= (exex_axequickshotlvlrequirement * 12.0)) blimg = "BLUNQKS8";
+						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 1.0)) blimg = "BLUNQKS1";
+						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 1.4)) blimg = "BLUNQKS2";
+						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 2.0)) blimg = "BLUNQKS3";
+						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 3.0)) blimg = "BLUNQKS4";
+						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 4.5)) blimg = "BLUNQKS5";
+						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 6.5)) blimg = "BLUNQKS6";
+						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 9.0)) blimg = "BLUNQKS7";
+						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 12.0)) blimg = "BLUNQKS8";
 						DrawImage(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
 					}
 					int upgrades = cplayer.mo.CountInv("BlunderShotUpgrade");
@@ -2914,7 +2937,7 @@ class DDStatusBarMain : BaseStatusBar
 					{
 						jx = -22;
 						jy = -40;
-						if (MiscItem && MiscItem.PlayerLevel >= exex_axecombolvlrequirement) 
+						if (MiscItem && VisiblePlayerLevel >= exex_axecombolvlrequirement) 
 						{
 							jy -= 31;
 						}
@@ -2929,7 +2952,7 @@ class DDStatusBarMain : BaseStatusBar
 					int jx, jy;
 					jx = -30;
 					jy = -76;
-					if (MiscItem && MiscItem.PlayerLevel >= exex_jackcrisislvlrequirement)
+					if (MiscItem && VisiblePlayerLevel >= exex_jackcrisislvlrequirement)
 					{
 						if (cplayer.mo.CountInv("DecentHealth") || 
 								cplayer.mo.CountInv("LowHealth") || 
@@ -2949,7 +2972,7 @@ class DDStatusBarMain : BaseStatusBar
 					int jx, jy;
 					jx = -30;
 					jy = -76;
-					if (MiscItem && MiscItem.PlayerLevel >= exex_scramblernoarmorbonuslvlreq && cplayer.mo.CountInv("BasicArmor") <= 0)
+					if (MiscItem && VisiblePlayerLevel >= exex_scramblernoarmorbonuslvlreq && cplayer.mo.CountInv("BasicArmor") <= 0)
 					{
 						string blimg = "SCRMBOST";
 						DrawImage(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
@@ -2988,7 +3011,7 @@ class DDStatusBarMain : BaseStatusBar
 					}
 					bool canspinattack;
 					let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
-					if (exex_cricketbatcanspinattack && (MiscItem && MiscItem.PlayerLevel >= exex_cricketspinlvlrequirement)) canspinattack = true;
+					if (exex_cricketbatcanspinattack && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement)) canspinattack = true;
 					vector2 poss = (-16, -64);
 					if (canspinattack) DrawImage("DINSPINA", poss, DI_ITEM_CENTER, spiniconalpha, (-1,-1), spiniconscale); // 51, -3
 				}
@@ -3020,7 +3043,7 @@ class DDStatusBarMain : BaseStatusBar
 					int jx, jy;
 					jx = -56; // -30;
 					jy = -56; // -76;
-					if (MiscItem.PlayerLevel > 0)
+					if (VisiblePlayerLevel > 0)
 					{
 						string blimg = "FLCRNIP0";
 						if (MiscItem.TrueIPLevelGate <= 0 && MiscItem.TrueIPCooldownTimer <= 0)
@@ -3565,7 +3588,7 @@ class DDStatusBarMain : BaseStatusBar
 						// Cricket Bat [Spin Attack]
 						bool canspinattack;
 						let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
-						if (exex_cricketbatcanspinattack && (MiscItem && MiscItem.PlayerLevel >= exex_cricketspinlvlrequirement)) canspinattack = true;
+						if (exex_cricketbatcanspinattack && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement)) canspinattack = true;
 						if (canspinattack)
 						{
 							IPIconPos = (-50, -54);
