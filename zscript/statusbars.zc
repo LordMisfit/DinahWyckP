@@ -267,6 +267,7 @@ class DDStatusBarMain : BaseStatusBar
 			{
 				double ipcost = 0.0;
 				string ipicon = "IPICONUN";
+				textureid ipicont = TexMan.CheckForTexture("IPICONUN", TexMan.TYPE_MiscPatch);
 				Vector2 IPIconPos = position + (boxsize.X * i, 0); // (324, -25) + (0, yadd)
 				bool hasipicon = false;
 				int canuseipatk = 0;
@@ -345,8 +346,16 @@ class DDStatusBarMain : BaseStatusBar
 				{
 					if (canuseipatk) 
 					{
-						if (ipiconspeed <= 1) ipicon = "IPICON1U";
-						if (ipiconspeed >= 2) ipicon = "IPICON2U";
+						if (ipiconspeed <= 1) 
+						{
+							ipicon = "IPICON1U";
+							ipicont = TexMan.CheckForTexture("IPICON1U", TexMan.TYPE_MiscPatch);
+						}
+						if (ipiconspeed >= 2)
+						{
+							ipicon = "IPICON2U";
+							ipicont = TexMan.CheckForTexture("IPICON2U", TexMan.TYPE_MiscPatch);
+						}
 						if (canuseipatk == 1)
 						{
 							if (ipiconspeed == 1)
@@ -408,8 +417,10 @@ class DDStatusBarMain : BaseStatusBar
 					else
 					{
 						ipicon = "IPICONUN";
+						ipicont = TexMan.CheckForTexture("IPICONUN", TexMan.TYPE_MiscPatch);
 					}
-					DrawImage(ipicon, IPIconPos + (24, 6), flags | DI_ITEM_CENTER);
+					DrawTexture(ipicont, IPIconPos + (24, 6), flags | DI_ITEM_CENTER);
+					//DrawImage(ipicon, IPIconPos + (24, 6), flags | DI_ITEM_CENTER);
 				}
 			}
 			
@@ -503,19 +514,6 @@ class DDStatusBarMain : BaseStatusBar
 	override void Draw (int state, double TicFrac)
 	{
 		Super.Draw (state, TicFrac);
-
-		/*
-		if (state == HUD_StatusBar)
-		{
-			BeginStatusBar();
-			DrawMainBar (TicFrac);
-		}
-		else if (state == HUD_Fullscreen)
-		{
-			BeginHUD();
-			DrawFullScreenStuff();
-		}
-		*/
 		BeginHUD();
 		DrawFullScreenStuff();
 	}
@@ -742,13 +740,6 @@ class DDStatusBarMain : BaseStatusBar
 					}
 				}
 				let icon = item.GetPowerupIcon();
-				/*
-				if (icon == TexMan.CheckForTexture("SPSHLD0", TexMan.TYPE_MiscPatch)) 
-				{
-					if (gameinfo.gametype & 1) icon = TexMan.CheckForTexture("PINVA0", TexMan.TYPE_MiscPatch);
-					if (gameinfo.gametype & 8) icon = TexMan.CheckForTexture("PINVA0", TexMan.TYPE_MiscPatch);
-				}
-				*/
 				if (icon.IsValid() && !item.IsBlinking())
 				{
 					// Each icon gets a 32x32 block.
@@ -1077,42 +1068,41 @@ class DDStatusBarMain : BaseStatusBar
 			
 			// Damage Border
 			int digx, digy, spacing;
-			if (MiscItem)
+			int currhealth = cplayerpawn.health;
+			int MaxHealthTrue = MiscItem.MaxHealthTrue;
+			if (MiscItem && cplayerpawn)
 			{
-				int currhealth = cplayerpawn.health;
-				int MaxHealthTrue = MiscItem.MaxHealthTrue;
 				double HealthRatio = (currhealth * 1.00) / (MaxHealthTrue * 1.00);
-				string injborder = "";
+				textureid injbordert;
 				double baseinjalpha;
 				double injalpha = 1.0;
 				double injscale = 1.125;
-				int injpulsetimermod = random(49,55);
-				if (cplayerpawn) injpulsetimermod = cplayerpawn.hudbeatpulse;
+				int injpulsetimermod = cplayerpawn.hudbeatpulse;
 
 				if (HealthRatio <= 0.02)
 				{
-					injborder = "M_INJ2";
+					injbordert = TexMan.CheckForTexture("M_INJ2", TexMan.TYPE_MiscPatch);
 					baseinjalpha = 0.575; // 0.9975;
 				}
 				else
 				{
 					if (HealthRatio <= 0.05)
 					{
-						injborder = "M_INJ2";
+						injbordert = TexMan.CheckForTexture("M_INJ2", TexMan.TYPE_MiscPatch);
 						baseinjalpha = 0.475; // 0.9;
 					}
 					else
 					{
 						if (HealthRatio <= 0.10)
 						{
-							injborder = "M_INJ";
+							injbordert = TexMan.CheckForTexture("M_INJ", TexMan.TYPE_MiscPatch);
 							baseinjalpha = 0.4; // 0.8;
 						}
 						else
 						{
 							if (HealthRatio <= 0.25)
 							{
-								injborder = "M_INJ";
+								injbordert = TexMan.CheckForTexture("M_INJ", TexMan.TYPE_MiscPatch);
 								baseinjalpha = 0.35; // 0.625;
 							}
 						}
@@ -1132,15 +1122,15 @@ class DDStatusBarMain : BaseStatusBar
 				
 				digx = 480;
 				digy = 270;
-				DrawImage(injborder, (digx, digy), DI_ITEM_CENTER, injalpha, (-1,-1), (injscale, injscale));
+				DrawTexture(injbordert, (digx, digy), DI_ITEM_CENTER, injalpha, (-1,-1), (injscale, injscale));
 			}
 			
 			//**********
 			//* Health *
 			//**********
-			int valueamt = CPlayer.mo.health;
+			int valueamt = currhealth;
 			string valueamtS = FormatNumber(valueamt);
-			int PlayerMaxHP = CPlayer.mo.CountInv("PlayerMaxHP");
+			int PlayerMaxHP = MaxHealthTrue;
 			if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHP *= 0.30;
 			string PlayerMaxHPS = FormatNumber(PlayerMaxHP);
 
@@ -1156,10 +1146,10 @@ class DDStatusBarMain : BaseStatusBar
 					 CPlayer.cheats & CF_GODMODE2 || CPlayer.cheats & CF_GODMODE) isinvuln = true;
 			if (isinvuln) healthcolor = font.CR_Gold;
 			//health
-			string healthicon = "ARTIWINE";
-			if (CPlayer.cheats & CF_BUDDHA2) healthicon = "ARTIWINB";
-			if (CPlayer.cheats & CF_GODMODE2) healthicon = "ARTIWING";
-			DrawImage(healthicon, ((64+HPDmgShakeX), (-4+HPDmgShakeY))); // 51, -3
+			textureid healthicon = TexMan.CheckForTexture("ARTIWINE", TexMan.TYPE_MiscPatch);
+			if (CPlayer.cheats & CF_BUDDHA2) healthicon = TexMan.CheckForTexture("ARTIWINB", TexMan.TYPE_MiscPatch);
+			if (CPlayer.cheats & CF_GODMODE2) healthicon = TexMan.CheckForTexture("ARTIWING", TexMan.TYPE_MiscPatch);
+			DrawTexture(healthicon, ((64+HPDmgShakeX), (-4+HPDmgShakeY))); // 51, -3
 			DrawString(mDDMFont, FormatNumber(PlayerMaxHP), ((49+HPDmgShakeX), (-12+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*HPPulseScale)); // 41, -43
 			DrawString(mDDMFont, "/", (((24+slashunit)+HPDmgShakeX), (-18+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, healthcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*HPPulseScale)); // 41, -43
 			double healthalpha = 0.90;
@@ -1306,7 +1296,7 @@ class DDStatusBarMain : BaseStatusBar
 			int basey = -27; // -21
 			if (MiscItem && CPlayer.mo.health > 0) 
 			{
-				int PlayerMaxHealth = MiscItem.MaxHealthTrue;
+				int PlayerMaxHealth = MaxHealthTrue;
 				if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHealth *= 0.30;
 
 				if (CPlayer.mo.health != PlayerMaxHealth) exty = -3;
@@ -2819,7 +2809,7 @@ class DDStatusBarMain : BaseStatusBar
 			//ammotype = CPlayer.mo.FindInventory(wsammoname);
 			if (CPlayer.mo.CountInv(wsname))
 			{
-				int PlayerMaxHealth = MiscItem.MaxHealthTrue;
+				int PlayerMaxHealth = MaxHealthTrue;
 				if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHealth *= 0.30;
 				ammoratio = CPlayer.mo.health * 100 / PlayerMaxHealth;
 				if (CPlayer.mo.health <= 0) wsfontclr = font.cr_red;
@@ -3160,10 +3150,10 @@ class DDStatusBarMain : BaseStatusBar
 				
 				if (cplayer.ReadyWeapon is "SigilDD")
 				{
-					int PlayerMaxHealth = MiscItem.MaxHealthTrue;
+					int PlayerMaxHealth = MaxHealthTrue;
 					if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHealth *= 0.30;
 					int ammofontclr = font.cr_gray;
-					int SigilHP = CPlayer.mo.health;
+					int SigilHP = currhealth;
 					int SigilMaxHP = PlayerMaxHealth;
 					
 					ammoratio = SigilHP * 100 / SigilMaxHP;
