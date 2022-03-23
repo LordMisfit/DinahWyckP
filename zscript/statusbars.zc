@@ -61,6 +61,11 @@ class DDStatusBarMain : BaseStatusBar
 		mDDLFont2 = HUDFont.Create(fnt, 0, false, 1, 1);
 		diparms = InventoryBarState.Create(mIndexFont);
 		diparms_sbar = InventoryBarState.CreateNoBox(mIndexFont, boxsize:(31, 31), arrowoffs:(0,-10));
+		if (dydudebug_hudinitdisplays)
+		{
+			Console.Printf("diparms.boxsize: %d x %d", diparms.boxsize.x, diparms.boxsize.y);
+			Console.Printf("diparms_sbar.boxsize: %d x %d", diparms_sbar.boxsize.x, diparms_sbar.boxsize.y);
+		}
 		mHealthInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
 		mArmorInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
 		mEXPInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
@@ -133,7 +138,10 @@ class DDStatusBarMain : BaseStatusBar
 	// Except for the placement information this gets all info from the struct that gets passed in.
 	void DrawInventoryBar(InventoryBarState parms, Vector2 position, int numfields, int flags = 0, double bgalpha = 1.)
 	{
-		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+		if (dydudebug_invbardisplays) Console.Printf("\c[yellow][DrawInventoryBar Init]\c- boxsize: %d x %d, selectofs: %d x %d", parms.boxsize.x, parms.boxsize.y, parms.selectofs.x, parms.selectofs.y);
+		DDPlayerPawn cplayerpawn;
+		cplayerpawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(cplayerpawn.FindInventory("PlayerStatItem"));
 		
 		Font fnt = "INDEXFONT_DD";
 		parms.amountfont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
@@ -168,10 +176,6 @@ class DDStatusBarMain : BaseStatusBar
 		
 		int ItemHeldRatio;
 		int texttranslation = font.CR_UNTRANSLATED;
-		//Console.Printf("%d", CPlayer.inventorytics);
-		//Console.Printf("texttranslation: %d", texttranslation);
-		DDPlayerPawn cplayerpawn;
-		cplayerpawn = DDPlayerPawn(CPlayer.mo);
 		for (item = CPlayer.mo.InvFirst; item != NULL && i < numfields; item = item.NextInv())
 		{
 			// Main Icons
@@ -259,157 +263,153 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			
 			// IP Icons
-			if (exex_ikaripointsenabled)
+			if (exex_ikaripointsenabled && MiscItem)
 			{
 				double ipcost = 0.0;
 				string ipicon = "IPICONUN";
-				vector2 IPIconPos = position + (boxsize.X * i, 0); // (324, -25) + (0, yadd)
-				//Console.Printf("ipos: %d / %d, x: %d [%d], y: %d [%d]", i, numfields, IPIconPos.x, position.x, IPIconPos.y, position.y);
+				Vector2 IPIconPos = position + (boxsize.X * i, 0); // (324, -25) + (0, yadd)
 				bool hasipicon = false;
 				int canuseipatk = 0;
 				int ipicontimer = level.time % 8;
 				int ipiconspeed = 1;
 				if (cplayerpawn && cplayerpawn.CountInv("IPUseMode")) ipiconspeed = 2;
-
-				if (MiscItem)
+				
+				if (item is "AppleWine" && item.Amount > 0)
 				{
-					if (item is "AppleWine" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(9);
-					}
-					if (item is "TurkeyDinner" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(10);
-					}
-					if (item is "CherryBombPickup" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(1);
-					}
-					if (item is "SpinnerPickup" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(4);
-					}
-					if (item is "BRocketPickup" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(2);
-					}
-					if (item is "SnakePickup" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(3);
-					}
-					if (item is "KilletanteEffigy" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(5);
-					}
-					if (item is "PopperPickup" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(6);
-					}
-					if (item is "FuryPotion" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(7);
-					}
-					if (item is "TimePotion" && item.Amount > 0)
-					{
-						hasipicon = true;
-						canuseipatk = 0;
-						ipcost = A_GetIPCost(8);
-					}
-					if (MiscItem.ItemPoints >= (ipcost*2)) canuseipatk = 2;
-					else if (MiscItem.ItemPoints >= (ipcost*1)) canuseipatk = 1;
-					if (dydudebug_infiniteip) canuseipatk = 3;
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(9);
+				}
+				if (item is "TurkeyDinner" && item.Amount > 0)
+				{
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(10);
+				}
+				if (item is "CherryBombPickup" && item.Amount > 0)
+				{
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(1);
+				}
+				if (item is "SpinnerPickup" && item.Amount > 0)
+				{
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(4);
+				}
+				if (item is "BRocketPickup" && item.Amount > 0)
+				{
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(2);
+				}
+				if (item is "SnakePickup" && item.Amount > 0)
+				{
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(3);
+				}
+				if (item is "KilletanteEffigy" && item.Amount > 0)
+				{
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(5);
+				}
+				if (item is "PopperPickup" && item.Amount > 0)
+				{
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(6);
+				}
+				if (item is "FuryPotion" && item.Amount > 0)
+				{
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(7);
+				}
+				if (item is "TimePotion" && item.Amount > 0)
+				{
+					hasipicon = true;
+					canuseipatk = 0;
+					ipcost = A_GetIPCost(8);
+				}
+				if (MiscItem.ItemPoints >= (ipcost*2)) canuseipatk = 2;
+				else if (MiscItem.ItemPoints >= (ipcost*1)) canuseipatk = 1;
+				if (dydudebug_infiniteip) canuseipatk = 3;
 
-					if (dydudebug_ipdisplays && hasipicon) Console.Printf("\c[blue][SBAR Inventory (%s)] Cost: %.4f", item.GetClassName(), ipcost);
+				if (dydudebug_ipdisplays && hasipicon) Console.Printf("\c[blue][SBAR Inventory (%s)] Cost: %.4f", item.GetClassName(), ipcost);
 
-					// Shows the Proper Icon if the above meets criteria
-					if (hasipicon) 
+				// Shows the Proper Icon if the above meets criteria
+				if (hasipicon) 
+				{
+					if (canuseipatk) 
 					{
-						if (canuseipatk) 
+						if (ipiconspeed <= 1) ipicon = "IPICON1U";
+						if (ipiconspeed >= 2) ipicon = "IPICON2U";
+						if (canuseipatk == 1)
 						{
-							if (ipiconspeed <= 1) ipicon = "IPICON1U";
-							if (ipiconspeed >= 2) ipicon = "IPICON2U";
-							if (canuseipatk == 1)
+							if (ipiconspeed == 1)
 							{
-								if (ipiconspeed == 1)
-								{
-									ipicontimer = level.time % 32;
-									if (ipicontimer >= 0 && ipicontimer <= 7) IPIconPos += (0, 0);
-									if (ipicontimer >= 8 && ipicontimer <= 15) IPIconPos += (1, 0);
-									if (ipicontimer >= 16 && ipicontimer <= 23) IPIconPos += (1, 1);
-									if (ipicontimer >= 24 && ipicontimer <= 31) IPIconPos += (0, 1);
-								}
-								else
-								{
-									ipicontimer = level.time % 24;
-									if (ipicontimer >= 0 && ipicontimer <= 5) IPIconPos += (0, 0);
-									if (ipicontimer >= 6 && ipicontimer <= 11) IPIconPos += (1, 0);
-									if (ipicontimer >= 12 && ipicontimer <= 17) IPIconPos += (1, 1);
-									if (ipicontimer >= 18 && ipicontimer <= 23) IPIconPos += (0, 1);
-								}
+								ipicontimer = level.time % 32;
+								if (ipicontimer >= 0 && ipicontimer <= 7) IPIconPos += (0, 0);
+								if (ipicontimer >= 8 && ipicontimer <= 15) IPIconPos += (1, 0);
+								if (ipicontimer >= 16 && ipicontimer <= 23) IPIconPos += (1, 1);
+								if (ipicontimer >= 24 && ipicontimer <= 31) IPIconPos += (0, 1);
 							}
-							if (canuseipatk == 2)
+							else
 							{
-								if (ipiconspeed == 1)
-								{
-									ipicontimer = level.time % 16;
-									if (ipicontimer >= 0 && ipicontimer <= 3) IPIconPos += (0, 0);
-									if (ipicontimer >= 4 && ipicontimer <= 7) IPIconPos += (1, 0);
-									if (ipicontimer >= 8 && ipicontimer <= 11) IPIconPos += (1, 1);
-									if (ipicontimer >= 12 && ipicontimer <= 15) IPIconPos += (0, 1);
-								}
-								else
-								{
-									ipicontimer = level.time % 12;
-									if (ipicontimer >= 0 && ipicontimer <= 2) IPIconPos += (0, 0);
-									if (ipicontimer >= 3 && ipicontimer <= 5) IPIconPos += (1, 0);
-									if (ipicontimer >= 6 && ipicontimer <= 8) IPIconPos += (1, 1);
-									if (ipicontimer >= 9 && ipicontimer <= 11) IPIconPos += (0, 1);
-								}
-							}
-							if (canuseipatk >= 3)
-							{
-								if (ipiconspeed == 1)
-								{
-									ipicontimer = level.time % 8;
-									if (ipicontimer >= 0 && ipicontimer <= 1) IPIconPos += (0, 0);
-									if (ipicontimer >= 2 && ipicontimer <= 3) IPIconPos += (1, 0);
-									if (ipicontimer >= 4 && ipicontimer <= 5) IPIconPos += (1, 1);
-									if (ipicontimer >= 6 && ipicontimer <= 7) IPIconPos += (0, 1);
-								}
-								else
-								{
-									ipicontimer = level.time % 4;
-									if (ipicontimer == 0) IPIconPos += (0, 0);
-									if (ipicontimer == 1) IPIconPos += (1, 0);
-									if (ipicontimer == 2) IPIconPos += (1, 1);
-									if (ipicontimer == 3) IPIconPos += (0, 1);
-								}
+								ipicontimer = level.time % 24;
+								if (ipicontimer >= 0 && ipicontimer <= 5) IPIconPos += (0, 0);
+								if (ipicontimer >= 6 && ipicontimer <= 11) IPIconPos += (1, 0);
+								if (ipicontimer >= 12 && ipicontimer <= 17) IPIconPos += (1, 1);
+								if (ipicontimer >= 18 && ipicontimer <= 23) IPIconPos += (0, 1);
 							}
 						}
-						else
+						if (canuseipatk == 2)
 						{
-							ipicon = "IPICONUN";
+							if (ipiconspeed == 1)
+							{
+								ipicontimer = level.time % 16;
+								if (ipicontimer >= 0 && ipicontimer <= 3) IPIconPos += (0, 0);
+								if (ipicontimer >= 4 && ipicontimer <= 7) IPIconPos += (1, 0);
+								if (ipicontimer >= 8 && ipicontimer <= 11) IPIconPos += (1, 1);
+								if (ipicontimer >= 12 && ipicontimer <= 15) IPIconPos += (0, 1);
+							}
+							else
+							{
+								ipicontimer = level.time % 12;
+								if (ipicontimer >= 0 && ipicontimer <= 2) IPIconPos += (0, 0);
+								if (ipicontimer >= 3 && ipicontimer <= 5) IPIconPos += (1, 0);
+								if (ipicontimer >= 6 && ipicontimer <= 8) IPIconPos += (1, 1);
+								if (ipicontimer >= 9 && ipicontimer <= 11) IPIconPos += (0, 1);
+							}
 						}
-						DrawImage(ipicon, IPIconPos + (24, 6), flags | DI_ITEM_CENTER);
+						if (canuseipatk >= 3)
+						{
+							if (ipiconspeed == 1)
+							{
+								ipicontimer = level.time % 8;
+								if (ipicontimer >= 0 && ipicontimer <= 1) IPIconPos += (0, 0);
+								if (ipicontimer >= 2 && ipicontimer <= 3) IPIconPos += (1, 0);
+								if (ipicontimer >= 4 && ipicontimer <= 5) IPIconPos += (1, 1);
+								if (ipicontimer >= 6 && ipicontimer <= 7) IPIconPos += (0, 1);
+							}
+							else
+							{
+								ipicontimer = level.time % 4;
+								if (ipicontimer == 0) IPIconPos += (0, 0);
+								if (ipicontimer == 1) IPIconPos += (1, 0);
+								if (ipicontimer == 2) IPIconPos += (1, 1);
+								if (ipicontimer == 3) IPIconPos += (0, 1);
+							}
+						}
 					}
+					else
+					{
+						ipicon = "IPICONUN";
+					}
+					DrawImage(ipicon, IPIconPos + (24, 6), flags | DI_ITEM_CENTER);
 				}
 			}
 			
@@ -487,6 +487,7 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			i++;
 		}
+
 		// Is there something to the left?
 		if (CPlayer.mo.FirstInv() != CPlayer.mo.InvFirst)
 		{
@@ -823,7 +824,9 @@ class DDStatusBarMain : BaseStatusBar
 		int VisiblePlayerATK = 0;
 		int VisiblePlayerDEF = 0;
 		int VisiblePlayerSPD = 0;
-		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+		DDPlayerPawn cplayerpawn;
+		cplayerpawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(cplayerpawn.FindInventory("PlayerStatItem"));
 		if (MiscItem && exex_expenabled) 
 		{
 			VisiblePlayerLevel = MiscItem.PlayerLevel;
@@ -834,7 +837,7 @@ class DDStatusBarMain : BaseStatusBar
 
 		if (screenblocks < 12)
 		{
-			vector2 FontScale = (1.25, 1.25);
+			Vector2 FontScale = (1.25, 1.25);
 			int FontLineSpace = 4;
 			int FontWrapWidth = -1;
 			double FontAlpha = 0.9;
@@ -1072,8 +1075,69 @@ class DDStatusBarMain : BaseStatusBar
 				}
 			}
 			
-			// Health
+			// Damage Border
 			int digx, digy, spacing;
+			if (MiscItem)
+			{
+				int currhealth = cplayerpawn.health;
+				int MaxHealthTrue = MiscItem.MaxHealthTrue;
+				double HealthRatio = (currhealth * 1.00) / (MaxHealthTrue * 1.00);
+				string injborder = "";
+				double baseinjalpha;
+				double injalpha = 1.0;
+				double injscale = 1.125;
+				int injpulsetimermod = random(49,55);
+				if (cplayerpawn) injpulsetimermod = cplayerpawn.hudbeatpulse;
+
+				if (HealthRatio <= 0.02)
+				{
+					injborder = "M_INJ2";
+					baseinjalpha = 0.575; // 0.9975;
+				}
+				else
+				{
+					if (HealthRatio <= 0.05)
+					{
+						injborder = "M_INJ2";
+						baseinjalpha = 0.475; // 0.9;
+					}
+					else
+					{
+						if (HealthRatio <= 0.10)
+						{
+							injborder = "M_INJ";
+							baseinjalpha = 0.4; // 0.8;
+						}
+						else
+						{
+							if (HealthRatio <= 0.25)
+							{
+								injborder = "M_INJ";
+								baseinjalpha = 0.35; // 0.625;
+							}
+						}
+					}
+				}
+				
+				injalpha = 0.0;
+				if (injpulsetimermod && exex_playerbpmhud)
+				{
+					double baseinjalphaframe = baseinjalpha / (injpulsetimermod * 0.5);
+					int injpulsetimer = level.time % injpulsetimermod;
+					int injpulseframe = (injpulsetimermod * 0.5);
+					injpulseframe = abs(injpulseframe - injpulsetimer);
+					injalpha = baseinjalpha + (injpulseframe * baseinjalphaframe);
+					//Console.Printf("\c[brick]HealthRatio: %.3f, injalpha: %.3f (timer: %d / %d)", HealthRatio, injalpha, injpulsetimer, injpulsetimermod);
+				}
+				
+				digx = 480;
+				digy = 270;
+				DrawImage(injborder, (digx, digy), DI_ITEM_CENTER, injalpha, (-1,-1), (injscale, injscale));
+			}
+			
+			//**********
+			//* Health *
+			//**********
 			int valueamt = CPlayer.mo.health;
 			string valueamtS = FormatNumber(valueamt);
 			int PlayerMaxHP = CPlayer.mo.CountInv("PlayerMaxHP");
@@ -1184,7 +1248,9 @@ class DDStatusBarMain : BaseStatusBar
 			if (isinvuln) healthcolor = font.CR_Gold;
 			DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), ((49+HPDmgShakeX), (-28+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, healthcolor, healthalpha, FontWrapWidth, FontLineSpace, ((xscal*1.25, yscal*1.25)*HPPulseScale));
 			
-			// HP Gain [Upper Right] (2, -32)
+			//*************************
+			//* HP Gain [Upper Right] (2, -32)
+			//*************************
 			double HUDHitAlpha = 1.00;
 			If (MiscItem)
 			{
@@ -1197,7 +1263,9 @@ class DDStatusBarMain : BaseStatusBar
 			HUDStringHit.AppendFormat("%d", HUDNumHitValue);
 			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -32), DI_TEXT_ALIGN_LEFT, font.CR_Green, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 
-			// HP Loss [Lower Left] (2, -24)
+			//*************************
+			//* HP Loss [Lower Left] (2, -24)
+			//*************************
 			HUDNumHitValue = 0;
 			If (MiscItem)
 			{
@@ -1209,7 +1277,9 @@ class DDStatusBarMain : BaseStatusBar
 			HUDStringHit.AppendFormat("%d", HUDNumHitValue);
 			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -24), DI_TEXT_ALIGN_LEFT, font.CR_Brick, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 			
-			// Max HP Gain [Lower Right] (5, -9)
+			//*************************
+			//* Max HP Gain [Lower Right] (5, -9)
+			//*************************
 			HUDNumHitValue = 0;
 			If (MiscItem)
 			{
@@ -1221,7 +1291,9 @@ class DDStatusBarMain : BaseStatusBar
 			HUDStringHit.AppendFormat("%d", HUDNumHitValue);
 			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (5, -9), DI_TEXT_ALIGN_LEFT, font.CR_Gold, HUDHitAlpha, FontWrapWidth, FontLineSpace, (FontScale*0.8)); // 41, -43
 			
-			//misc [speed]
+			//****************
+			//* misc [speed] *
+			//****************
 			double basemass = 1.0;
 			double basespeed = 1.0;
 			double basehpregen = 1.0;
@@ -1281,7 +1353,9 @@ class DDStatusBarMain : BaseStatusBar
 				FontScale = (1.25, 1.25);
 			}
 
-			//armor
+			//*********
+			//* Armor *
+			//*********
 			int armorcolor = font.CR_White; 
 			int armormax;
 			double armorprotect;
@@ -1327,8 +1401,6 @@ class DDStatusBarMain : BaseStatusBar
 				
 				if (exex_ikaripointsenabled && MiscItem)
 				{
-					DDPlayerPawn cplayerpawn;
-					cplayerpawn = DDPlayerPawn(CPlayer.mo);
 					bool hasipicon = false;
 					string image = "";
 					double ipcost = 0.0;
@@ -1336,8 +1408,8 @@ class DDStatusBarMain : BaseStatusBar
 					int canuseipatk = 0;
 					int ipicontimer = level.time % 8;
 					int ipiconspeed = 1;
-					vector2 IPIconPos = (0, 0);
-					vector2 ipiconscale = (2.0, 2.0);
+					Vector2 IPIconPos = (0, 0);
+					Vector2 ipiconscale = (2.0, 2.0);
 					if (cplayerpawn && cplayerpawn.CountInv("IPUseMode")) ipiconspeed = 2;
 
 					if (CPlayer.mo.CountInv("KnightGownItem"))
@@ -1442,7 +1514,7 @@ class DDStatusBarMain : BaseStatusBar
 					int legendflags = DI_TEXT_ALIGN_CENTER;
 					int legendfontclr = font.cr_gray;
 					double legendalpha = 0.9;
-					vector2 legendscale = (1.0, 1.0);
+					Vector2 legendscale = (1.0, 1.0);
 					int Lx, Ly;
 					Lx = 64; // 64;
 					Ly = -46; // -46;
@@ -1630,7 +1702,6 @@ class DDStatusBarMain : BaseStatusBar
 				{
 					if (MiscItem.EXPGainHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.EXPGainHUDTimer))));
 					else HUDHitAlpha = 1.00;
-					//if (MiscItem.EXPGainHUDTimer) Console.Printf("EXPGainHUDTimer: %d, EXPGainHUDAmt: %d", MiscItem.EXPGainHUDTimer, MiscItem.EXPGainHUDAmt);
 				}
 				HUDNumHitValue = 0;
 				If (MiscItem) HUDNumHitValue = MiscItem.EXPGainHUDAmt;
@@ -2986,8 +3057,6 @@ class DDStatusBarMain : BaseStatusBar
 				if (cplayer.ReadyWeapon is "CricketBat")
 				{
 					int spiniconscaletimer = level.time % 32;
-					DDPlayerPawn cplayerpawn;
-					cplayerpawn = DDPlayerPawn(CPlayer.mo);
 					double spiniconscale2 = 0.375;
 					vector2 spiniconscale = (spiniconscale2, spiniconscale2);
 					double spiniconalpha = (FontAlpha * 0.75);
@@ -3141,9 +3210,6 @@ class DDStatusBarMain : BaseStatusBar
 			// IP Icons [Weapons]
 			if (exex_ikaripointsenabled)
 			{
-				DDPlayerPawn cplayerpawn;
-				cplayerpawn = DDPlayerPawn(CPlayer.mo);
-
 				string ipicon = "IPICONUN";
 				vector2 IPIconPos = (0, 0); // (324, -25) + (0, yadd)
 				//Console.Printf("ipos: %d / %d, x: %d [%d], y: %d [%d]", i, numfields, IPIconPos.x, position.x, IPIconPos.y, position.y);
@@ -3787,7 +3853,6 @@ class DDStatusBarMain : BaseStatusBar
 					int dayaddx = 0;
 					if (leveltimedays > 0 && leveltimedays <= 9) dayaddx = 12;
 					if (leveltimedays >= 10 && leveltimedays <= 99) dayaddx = 24;
-					//Console.Printf("dayaddx: %d", dayaddx);
 
 					tallytemp = "TIME: ";
 					leveltime = level.time;
@@ -3962,12 +4027,10 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			int numboxes = exex_inventorybarboxes;
 			if (numboxes <= 0) numboxes = 1;
-			DrawInventoryBar(diparms, (0, 0+yadd), numboxes, DI_SCREEN_CENTER_BOTTOM, HX_SHADOW);
-			
-			if (CPlayer.mo.CountInv("BlackScreenHUD"))
-			{
-				DrawImage("BLAKSCRN", (0, 540), DI_SCREEN_CENTER); // -46, -1
-			}
+			DrawInventoryBar(diparms, (0,0+yadd), numboxes, DI_SCREEN_CENTER_BOTTOM, HX_SHADOW);
+			//Console.Printf("End Of ScreenBlocks Check");
 		}
+		
+		if (CPlayer.mo.CountInv("BlackScreenHUD")) DrawImage("BLAKSCRN", (0, 540), DI_SCREEN_CENTER); // -46, -1
 	}
 }
