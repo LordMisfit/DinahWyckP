@@ -1,5 +1,5 @@
 // Base class [for later use]
-class DDBaseZSC : Actor abstract
+class EEBaseZSC : Actor abstract
 {
 	mixin DmgCalc;
 	mixin CollisionChecker;
@@ -41,7 +41,7 @@ class DDBaseZSC : Actor abstract
 	
 	override int DoSpecialDamage(Actor target, int damage, Name damagetype)
 	{
-		//Console.Printf("DoSpecialDamage: DDBaseZSC, target: %s, damage: %d, damagetype: %s", target.GetClassName(), damage, damagetype);
+		//Console.Printf("DoSpecialDamage: EEBaseZSC, target: %s, damage: %d, damagetype: %s", target.GetClassName(), damage, damagetype);
 		damage = super.DoSpecialDamage(target, damage, damagetype);
 
 		string vict = "";
@@ -170,7 +170,7 @@ class DDBaseZSC : Actor abstract
 }
 
 // Base Projectile Class
-class DDProjectile : DDBaseZSC abstract
+class EEProjectile : EEBaseZSC abstract
 {
 	mixin InvWeaponShare;
 	int user_hitsparkrand;
@@ -315,7 +315,7 @@ class DDProjectile : DDBaseZSC abstract
 	
 	override int DoSpecialDamage(Actor target, int damage, Name damagetype)
 	{
-		//Console.Printf("DoSpecialDamage: DDProjectile, target: %s, damage: %d, damagetype: %s", target.GetClassName(), damage, damagetype);
+		//Console.Printf("DoSpecialDamage: EEProjectile, target: %s, damage: %d, damagetype: %s", target.GetClassName(), damage, damagetype);
 		damage = super.DoSpecialDamage(target, damage, damagetype);
 		// New Code goes here
 		return damage;
@@ -742,8 +742,8 @@ class DDProjectile : DDBaseZSC abstract
 			EggShots.target = player; // EggShots.target = self.target;
 			if (IPAttack)
 			{
-				DDProjectile IPCompat; 
-				IPCompat = DDProjectile(EggShots);
+				EEProjectile IPCompat; 
+				IPCompat = EEProjectile(EggShots);
 				if (IPCompat)
 				{
 					IPCompat.target = player;
@@ -757,7 +757,7 @@ class DDProjectile : DDBaseZSC abstract
 	// Sigil
 	void A_SpectralLightning()
 	{
-		DDProjectile flash2;
+		EEProjectile flash2;
 
 		if (threshold != 0)
 			--threshold;
@@ -775,7 +775,7 @@ class DDProjectile : DDBaseZSC abstract
 		Actor flash = Spawn (cls, Vec2OffsetZ(xo, yo, ONCEILINGZ), ALLOW_REPLACE);
 		if (flash != null)
 		{
-			flash2 = DDProjectile(flash);
+			flash2 = EEProjectile(flash);
 			flash.target = target;
 			flash.Vel.Z = -18;
 			flash.FriendPlayer = FriendPlayer;
@@ -785,7 +785,7 @@ class DDProjectile : DDBaseZSC abstract
 		flash = Spawn("SpectralLightningV2New", (pos.xy, ONCEILINGZ), ALLOW_REPLACE);
 		if (flash != null)
 		{
-			flash2 = DDProjectile(flash);
+			flash2 = EEProjectile(flash);
 			flash.target = target;
 			flash.Vel.Z = -18;
 			flash.FriendPlayer = FriendPlayer;
@@ -807,7 +807,7 @@ class DDProjectile : DDBaseZSC abstract
 	void A_SpectralBigBallLightning(string spawntype = "SpectralLightningH3")
 	{
 		Actor foo;
-		DDProjectile foo2;
+		EEProjectile foo2;
 		Class<Actor> cls = spawntype;
 		if (cls)
 		{
@@ -815,7 +815,7 @@ class DDProjectile : DDBaseZSC abstract
 			foo = SpawnSubMissile(cls, target);
 			if (foo != null)
 			{
-				foo2 = DDProjectile(foo);
+				foo2 = EEProjectile(foo);
 				if (target) foo.Target = Target;
 				foo.FriendPlayer = FriendPlayer;
 				if (foo2) foo2.IPAttack = true;
@@ -824,7 +824,7 @@ class DDProjectile : DDBaseZSC abstract
 			foo = SpawnSubMissile(cls, target);
 			if (foo != null)
 			{
-				foo2 = DDProjectile(foo);
+				foo2 = EEProjectile(foo);
 				if (target) foo.Target = Target;
 				foo.FriendPlayer = FriendPlayer;
 				if (foo2) foo2.IPAttack = true;
@@ -833,7 +833,7 @@ class DDProjectile : DDBaseZSC abstract
 			foo = SpawnSubMissile(cls, target);
 			if (foo != null)
 			{
-				foo2 = DDProjectile(foo);
+				foo2 = EEProjectile(foo);
 				if (target) foo.Target = Target;
 				foo.FriendPlayer = FriendPlayer;
 				if (foo2) foo2.IPAttack = true;
@@ -843,7 +843,7 @@ class DDProjectile : DDBaseZSC abstract
 }
 
 // Base FastProjectile Class
-class DDFastProjectile : DDProjectile abstract
+class EEFastProjectile : EEProjectile abstract
 {
 	Default
 	{
@@ -1075,9 +1075,185 @@ class DDFastProjectile : DDProjectile abstract
 	}
 }
 
+class CFlameMissileNew : EEFastProjectile
+{
+	Default
+	{
+		Speed 200;
+		Radius 14;
+		Height 8;
+		Damage 8;
+		DamageType "Fire";
+		+INVISIBLE
+		+ZDOOMTRANS
+		RenderStyle "Add";
+		Obituary "$OB_MPCWEAPFLAME";
+	}
+	
+	States
+	{
+		Spawn:
+			CFFX A 4 Bright;
+			CFFX A 1 A_CFlamePuff;
+			Goto Death + 1;
+		Death:
+			CFFX A 1 Bright A_CFlameMissile;
+			CFFX ABC 3 Bright;
+			CFFX D 4 Bright;
+			CFFX E 3 Bright;
+			CFFX F 4 Bright;
+			CFFX G 3 Bright;
+			CFFX H 4 Bright;
+			CFFX I 3 Bright;
+			CFFX J 4 Bright;
+			CFFX K 3 Bright;
+			CFFX L 4 Bright;
+			CFFX M 3 Bright;
+			Stop;
+	}
+	
+	override void BeginPlay ()
+	{
+		special1 = 2;
+	}
+
+	override void Effect ()
+	{
+		if (!--special1)
+		{
+			special1 = 4;
+			double newz = pos.z - 12;
+			if (newz < floorz)
+			{
+				newz = floorz;
+			}
+			Actor mo = Spawn ("CFlameFloor", (pos.xy, newz), ALLOW_REPLACE);
+			if (mo)
+			{
+				mo.angle = angle;
+			}
+		}
+	}
+	
+	//============================================================================
+	//
+	// A_CFlamePuff
+	//
+	//============================================================================
+
+	void A_CFlamePuff()
+	{
+		bInvisible = false;
+		bMissile = false;
+		Vel = (0,0,0);
+		A_StartSound("ClericFlameExplode", CHAN_BODY);
+	}
+
+	//============================================================================
+	//
+	// A_CFlameMissile
+	//
+	//============================================================================
+
+	void A_CFlameMissile(string actorname = "CircleFlame")
+	{
+		bInvisible = false;
+		A_StartSound("ClericFlameExplode", CHAN_BODY);
+		if (BlockingMobj && BlockingMobj.bShootable)
+		{ // Hit something, so spawn the flame circle around the thing
+			double dist = BlockingMobj.radius + 18;
+			for (int i = 0; i < 4; i++)
+			{
+				double an = i*45.;
+				Actor mo = Spawn (actorname, BlockingMobj.Vec3Angle(dist, an, 5), ALLOW_REPLACE);
+				if (mo)
+				{
+					mo.angle = an;
+					mo.target = target;
+					mo.VelFromAngle(CircleFlame.FLAMESPEED);
+					mo.specialf1 = mo.Vel.X;
+					mo.specialf2 = mo.Vel.Y;
+					mo.tics -= random[FlameMissile]()&3;
+				}
+				an += 180;
+				mo = Spawn(actorname, BlockingMobj.Vec3Angle(dist, an, 5), ALLOW_REPLACE);
+				if (mo)
+				{
+					mo.angle = an;
+					mo.target = target;
+					mo.VelFromAngle(-CircleFlame.FLAMESPEED);
+					mo.specialf1 = mo.Vel.X;
+					mo.specialf2 = mo.Vel.Y;
+					mo.tics -= random[FlameMissile]()&3;
+				}
+			}
+			SetState (SpawnState);
+		}
+	}
+}
+
+class CircleFlameNew : EEProjectile
+{
+	const FLAMESPEED = 0.45;
+	const FLAMEROTSPEED = 2.;
+	
+	Default
+	{
+		Radius 6;
+		Damage 2;
+		DamageType "Fire";
+		Projectile;
+		-ACTIVATEIMPACT
+		-ACTIVATEPCROSS
+		+ZDOOMTRANS
+		RenderStyle "Add";
+		DeathSound "ClericFlameCircle";
+		Obituary "$OB_MPCWEAPFLAME";
+	}
+
+	States
+	{
+		Spawn:
+			CFCF A 4 Bright;
+			CFCF B 2 Bright A_CFlameRotate;
+			CFCF C 2 Bright;
+			CFCF D 1 Bright;
+			CFCF E 2 Bright;
+			CFCF F 2 Bright A_CFlameRotate;
+			CFCF G 1 Bright;
+			CFCF HI 2 Bright;
+			CFCF J 1 Bright A_CFlameRotate;
+			CFCF K 2 Bright;
+			CFCF LM 3 Bright;
+			CFCF N 2 Bright A_CFlameRotate;
+			CFCF O 3 Bright;
+			CFCF P 2 Bright;
+			Stop;
+		Death:
+			CFCF QR 3 Bright;
+			CFCF S 3 Bright A_Explode(20, 128, 0);
+			CFCF TUVWXYZ 3 Bright;
+			Stop;
+	}
+	
+	//============================================================================
+	//
+	// A_CFlameRotate
+	//
+	//============================================================================
+
+	void A_CFlameRotate()
+	{
+		double an = Angle + 90.;
+		VelFromAngle(FLAMEROTSPEED, an);
+		Vel.XY += (specialf1, specialf2);
+		Angle += 6;
+	}
+}
+
 // Projectiles derived from this class should rip through actors,
 // but not actually hit them more than once.
-class SingleDamageRipper : DDProjectile abstract
+class SingleDamageRipper : EEProjectile abstract
 {
 	default
 	{
@@ -1139,7 +1315,7 @@ class SingleDamageRipper : DDProjectile abstract
 	}
 }
 
-class SingleDamageFastRipper : DDFastProjectile abstract
+class SingleDamageFastRipper : EEFastProjectile abstract
 {
 	default
 	{
@@ -1202,7 +1378,7 @@ class SingleDamageFastRipper : DDFastProjectile abstract
 }
 
 // Base Puff Class
-class DDPuff : DDProjectile abstract
+class EEPuff : EEProjectile abstract
 {
 	default
 	{
@@ -1255,14 +1431,14 @@ class DDPuff : DDProjectile abstract
 	
 	override int DoSpecialDamage(Actor target, int damage, Name damagetype)
 	{
-		//Console.Printf("DoSpecialDamage: DDPuff, target: %s, damage: %d, damagetype: %s", target.GetClassName(), damage, damagetype);
+		//Console.Printf("DoSpecialDamage: EEPuff, target: %s, damage: %d, damagetype: %s", target.GetClassName(), damage, damagetype);
 		damage = super.DoSpecialDamage(target, damage, damagetype);
 		// New Code goes here
 		return damage;
 	}
 }
 
-class DDVisualAImage : DDBaseZSC abstract
+class EEVisualAImage : EEBaseZSC abstract
 {
 	default
 	{
@@ -1284,15 +1460,17 @@ class DDVisualAImage : DDBaseZSC abstract
 	}
 }
 
-class DDProp : DDBaseZSC abstract
+class EEProp : EEBaseZSC abstract
 {
 }
 
-class DDCreature : DDBaseZSC abstract
+class EECreature : EEBaseZSC abstract
 {
 	mixin MonsterCollider;
 	int bossdeathactivate;
 	bool IPAttackSummon;
+	double gravitypulsetimer;
+	int user_gravitytype;
 	
 	bool waspartinvis;
 	double initalpha;
@@ -1303,10 +1481,368 @@ class DDCreature : DDBaseZSC abstract
 		super.Tick();
 	}
 	*/
+	
+	void A_DiabHealProj(double anglevec = 0.0, double anglevec2 = 0.0)
+	{
+		if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60)
+		{
+			A_SpawnProjectile("ReviveProj2", 0, 0, 0+anglevec, 0);
+			A_SpawnProjectile("ReviveProj2", 0, 0, 72+anglevec, 0);
+			A_SpawnProjectile("ReviveProj2", 0, 0, 144+anglevec, 0);
+			A_SpawnProjectile("ReviveProj2", 0, 0, 216+anglevec, 0);
+			A_SpawnProjectile("ReviveProj2", 0, 0, 288+anglevec, 0);
+		}
+		else
+		if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 20)
+		{
+			A_SpawnProjectile("ReviveProj2", 0, 0, 0+anglevec2, 0);
+			A_SpawnProjectile("ReviveProj2", 0, 0, 120+anglevec2, 0);
+			A_SpawnProjectile("ReviveProj2", 0, 0, 240+anglevec2, 0);
+		}
+	}
+	
+	// Diabloist Gravity Attack
+	void A_DiabloistGravityCheck()
+	{
+		int user_monsterlevel = CountInv("MonsterLevel");
+		gravitypulsetimer = 0;
+		Actor targ = target;
+		if (targ)
+		{
+			if (random(1,8) <= 3) user_gravitytype = 3;
+											 else user_gravitytype = random(1,2);
+
+			Actor playertarg = DDPlayerPawn(target);
+			/*if (!playertarg && user_gravitytype != 0)*/ user_gravitytype = 1;
+			//Console.Printf("user_gravitytype: %d", user_gravitytype);
+
+			targ.A_StartSound("diabloistgravitystart", CHAN_7);
+			bNOTARGETSWITCH = true;
+			if (random(1,256) <= (85.334 + (user_monsterlevel/1.5))) bNOPAIN = true;
+			bQUICKTORETALIATE = false;
+		}
+	}
+	
+	void A_DiabloistSpawnGravityNodes()
+	{
+		int user_monsterlevel = CountInv("MonsterLevel");
+
+		gravitypulsetimer = 0;
+		if (user_gravitytype == 1 || user_gravitytype == 3) 
+		{
+			//A_Log("HP Targetter");
+			if (exex_monsterlevelenabledflags && user_monsterlevel > 120) { A_VileTarget("DiabloistGravityHPTargeter3"); }
+			else if (exex_monsterlevelenabledflags && user_monsterlevel > 40) { A_VileTarget("DiabloistGravityHPTargeter2"); }
+			else { A_VileTarget("DiabloistGravityHPTargeter"); }
+		}
+		if (user_gravitytype == 2 || user_gravitytype == 3)
+		{
+			//A_Log("MP Targetter");
+			if (exex_monsterlevelenabledflags && user_monsterlevel > 120) { A_VileTarget("DiabloistGravityManaTargeter3"); }
+			else if (exex_monsterlevelenabledflags && user_monsterlevel > 40) { A_VileTarget("DiabloistGravityManaTargeter2"); }
+			else { A_VileTarget("DiabloistGravityManaTargeter"); }
+		}
+		bNOTARGETSWITCH = true;
+		bQUICKTORETALIATE = false;
+	}
+	
+	void A_DiabloistGravityPulse(double speed)
+	{
+		int user_monsterlevel = CountInv("MonsterLevel");
+		gravitypulsetimer += speed;
+		
+		if ((level.time % 3) == 0)
+		{
+			if (bNOPAIN)
+			{
+				if (random (1,256) <= (32+(user_monsterlevel/(33.4*0.334))))
+				{
+					if (random (1,256) <= (256+(user_monsterlevel/(12.5*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (213.334+(user_monsterlevel/(15*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (170.667+(user_monsterlevel/(18.75*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (128+(user_monsterlevel/(25*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (85.334+(user_monsterlevel/(37.5*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (42.667+(user_monsterlevel/(50*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+				}
+			}
+			else
+			{
+				if (random (1,256) <= (128+(user_monsterlevel/(25*0.334))))
+				{
+					if (random (1,256) <= (256+(user_monsterlevel/(12.5*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (213.334+(user_monsterlevel/(15*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (170.667+(user_monsterlevel/(18.75*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (128+(user_monsterlevel/(25*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (85.334+(user_monsterlevel/(37.5*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+					if (random (1,256) <= (42.667+(user_monsterlevel/(50*0.334)))) A_Chase(null,null, CHF_FASTCHASE);
+				}
+			}
+		}
+		
+		if (gravitypulsetimer > 22.5)
+		{
+			gravitypulsetimer -= 22.5;
+			A_StartSound("diabloistgravitypulse", CHAN_7);
+		}
+	}
+	
+	void A_DiabloistGravity(int gravitytype)
+	{
+		actor player = players[0].mo;
+		gravitypulsetimer = 0;
+		double GravityEffectFactor, FinalGravityFactor;
+		int PropertyValue, LevelFactor;
+		int basedmgratio;
+		int AffectedStat, MultFactor, THEEffect;
+		int InvulnerabilityTimer;
+		let InvulnItem = PowerInvulnDD(player.FindInventory("PowerInvulnDD"));
+		if (!InvulnItem)
+		{
+			let InvulnItem = PowerInvulnerable(player.FindInventory("PowerInvulnerable"));
+		}
+		if (InvulnItem) InvulnerabilityTimer = InvulnItem.EffectTics;
+		int PrevHealth, PrevMana, PrevInvulnTimer;
+		int healthdiff;
+		int ptemp1, ptemp2;
+
+		Actor targ = target;
+		if (targ)
+		{
+			DDPlayerPawn playertarg;
+			playertarg = DDPlayerPawn(target);
+			EECreature actortarg;
+			actortarg = EECreature(target);
+			DDPlayerPawn playerculprit;
+			playerculprit = DDPlayerPawn(self);
+			EECreature actorculprit;
+			actorculprit = EECreature(self);
+
+			/*gravitytype -= 1;
+			if (!playertarg && gravitytype != 0)*/ gravitytype = 0;
+
+			A_FaceTarget();
+			if (!CheckSight(targ, 0)) return;
+			if (playertarg && playertarg.CountInv("PlayerDashing")) return;
+			targ.A_StartSound("diabloistgravityend", CHAN_7);
+
+			if (playertarg)
+			{
+				if (InvulnItem && InvulnerabilityTimer > 0)
+				{
+					//Console.Printf("gravitytype: %d [Invulnerable]", gravitytype);
+
+					if (skill <= SKILL_VERY_EASY) GravityEffectFactor = 0.0625;  
+					if (skill == SKILL_EASY) GravityEffectFactor = 0.1250;  
+					if (skill == SKILL_NORMAL) GravityEffectFactor = 0.2500;  
+					if (skill == SKILL_HARD) GravityEffectFactor = 0.3750;  
+					if (skill >= SKILL_VERY_HARD) GravityEffectFactor = 0.4375;  
+					if (gravitytype == 2) GravityEffectFactor *= 2;
+					if (random(1,16) == 16) GravityEffectFactor *= 2;
+
+					FinalGravityFactor = 1.000 - GravityEffectFactor;
+					GravityEffectFactor = clamp(GravityEffectFactor, 0.000, GravityEffectFactor);
+					if (GravityEffectFactor > 0.000)
+					{
+						double PrevInvulnTime = InvulnerabilityTimer;
+						PropertyValue = InvulnerabilityTimer;
+						PropertyValue = PropertyValue * FinalGravityFactor;
+						
+						if (PropertyValue < 1) PropertyValue = 1;
+						InvulnItem.EffectTics = PropertyValue;
+						if (playertarg) playertarg.A_SetBlend("C0 C0 C0",1.25,random(39,40));
+						PrevInvulnTime -= PropertyValue;
+						PrevInvulnTime /= 35;
+						if (playertarg) playertarg.A_Print(String.Format("%1f second[s] of your invulnerablity were sapped!", PrevInvulnTime));
+					}
+				}
+				else
+				{
+					//Console.Printf("gravitytype: %d", gravitytype);
+
+					if (gravitytype == 0) // HP only
+					{
+						if (skill <= SKILL_VERY_EASY) GravityEffectFactor = 0.125;  
+						if (skill == SKILL_EASY) GravityEffectFactor = 0.250;  
+						if (skill == SKILL_NORMAL) GravityEffectFactor = 0.500;  
+						if (skill == SKILL_HARD) GravityEffectFactor = 0.750;  
+						if (skill >= SKILL_VERY_HARD) GravityEffectFactor = 0.875;  
+						FinalGravityFactor = 1.000 - GravityEffectFactor;
+						GravityEffectFactor = clamp(GravityEffectFactor, 0.000, GravityEffectFactor);
+						if (GravityEffectFactor > 0.000)
+						{
+							PrevHealth = targ.health;
+							PropertyValue = PrevHealth;
+							PropertyValue = PropertyValue * FinalGravityFactor;
+							
+							/*
+							ptemp1 = (630*FinalGravityFactor);
+							if (dvdsdebug_regenpenaltydisplay) Console.Printf("HPPenaltyTimeAdd: %d", ptemp1);
+							// HPRegenBonPenTimer
+							*/
+
+							if (PropertyValue < 1) PropertyValue = 1;
+							targ.health = PropertyValue;
+							healthdiff = (PrevHealth - PropertyValue);
+							if (playertarg) playertarg.A_SetBlend("C0 00 00",1.25,random(39,40));
+						}
+					}
+					/*
+					else
+					if (gravitytype == 1) // Mana only
+					{
+						if (skill <= SKILL_VERY_EASY) GravityEffectFactor = 0.125;  
+						if (skill == SKILL_EASY) GravityEffectFactor = 0.250;  
+						if (skill == SKILL_NORMAL) GravityEffectFactor = 0.500;  
+						if (skill == SKILL_HARD) GravityEffectFactor = 0.750;  
+						if (skill >= SKILL_VERY_HARD) GravityEffectFactor = 0.875;  
+						FinalGravityFactor = 1.000 - GravityEffectFactor;
+						GravityEffectFactor = clamp(GravityEffectFactor, 0.000, GravityEffectFactor);
+						if (GravityEffectFactor > 0.000)
+						{
+							PropertyValue = CallACS("StatCheck",14);
+							PropertyValue = PropertyValue * FinalGravityFactor;
+							
+							ptemp1 = (630*FinalGravityFactor);
+							if (dvdsdebug_regenpenaltydisplay) Console.Printf("MPPenaltyTimeAdd: %d", ptemp1);
+							CallACS("MiscVarSetDECORATE",93,ptemp1,2); // MPRegenBonPenTimer
+							
+							if (PropertyValue < 1) PropertyValue = 1;
+							CallACS("OtherVarSetDECORATE",2,PropertyValue);
+							if (playertarg) playertarg.A_SetBlend("00 00 C0",1.25,random(39,40));
+						}
+					}
+					else
+					if (gravitytype == 2) // HP & Mana
+					{
+						// HP Damage
+						if (skill <= SKILL_VERY_EASY) GravityEffectFactor = 0.125;  
+						if (skill == SKILL_EASY) GravityEffectFactor = 0.250;  
+						if (skill == SKILL_NORMAL) GravityEffectFactor = 0.500;  
+						if (skill == SKILL_HARD) GravityEffectFactor = 0.750;  
+						if (skill >= SKILL_VERY_HARD) GravityEffectFactor = 0.875;  
+						FinalGravityFactor = 1.000 - GravityEffectFactor;
+						GravityEffectFactor = clamp(GravityEffectFactor, 0.000, GravityEffectFactor);
+						if (GravityEffectFactor > 0.000)
+						{
+							PrevHealth = targ.health;
+							PropertyValue = PrevHealth;
+							PropertyValue = PropertyValue * FinalGravityFactor;
+							
+							ptemp1 = (420*FinalGravityFactor);
+							if (dvdsdebug_regenpenaltydisplay) Console.Printf("HPPenaltyTimeAdd: %d", ptemp1);
+							CallACS("MiscVarSetDECORATE",92,ptemp1,2); // HPRegenBonPenTimer
+							
+							if (PropertyValue < 1) PropertyValue = 1;
+							targ.health = PropertyValue;
+							healthdiff = (PrevHealth - PropertyValue);
+						}
+						
+						// MP Damage
+						if (skill <= SKILL_VERY_EASY) GravityEffectFactor = 0.125;  
+						if (skill == SKILL_EASY) GravityEffectFactor = 0.250;  
+						if (skill == SKILL_NORMAL) GravityEffectFactor = 0.500;  
+						if (skill == SKILL_HARD) GravityEffectFactor = 0.750;  
+						if (skill >= SKILL_VERY_HARD) GravityEffectFactor = 0.875;  
+						if (random(1,16) != 16) GravityEffectFactor /= 2;
+						FinalGravityFactor = 1.000 - GravityEffectFactor;
+						GravityEffectFactor = clamp(GravityEffectFactor, 0.000, GravityEffectFactor);
+						if (GravityEffectFactor > 0.000)
+						{
+							PropertyValue = CallACS("StatCheck",14);
+							PropertyValue = PropertyValue * FinalGravityFactor;
+							
+							ptemp1 = (420*FinalGravityFactor);
+							if (dvdsdebug_regenpenaltydisplay) Console.Printf("MPPenaltyTimeAdd: %d", ptemp1);
+							CallACS("MiscVarSetDECORATE",93,ptemp1,2); // MPRegenBonPenTimer
+							
+							if (PropertyValue < 1) PropertyValue = 1;
+							CallACS("OtherVarSetDECORATE",2,PropertyValue);
+						}
+						if (playertarg) playertarg.A_SetBlend("C0 00 C0",1.25,random(39,40));
+					}
+					// Inflict Possible Blindness
+					if (playertarg && random(1,32) <= 1) ACS_NamedExecuteAlways("BuffTimer",0,8,19,random(17,51));
+					*/
+				}
+			}
+			else
+			{
+				if (skill <= SKILL_VERY_EASY) GravityEffectFactor = 0.125;  
+				if (skill == SKILL_EASY) GravityEffectFactor = 0.250;  
+				if (skill == SKILL_NORMAL) GravityEffectFactor = 0.500;  
+				if (skill == SKILL_HARD) GravityEffectFactor = 0.750;  
+				if (skill >= SKILL_VERY_HARD) GravityEffectFactor = 0.875;  
+
+				LevelFactor = 128 - CountInv("MonsterLevel");
+				GravityEffectFactor = GravityEffectFactor * LevelFactor / 128;
+
+				FinalGravityFactor = 1.000 - GravityEffectFactor;
+				GravityEffectFactor = clamp(GravityEffectFactor, 0.000, GravityEffectFactor);
+				if (GravityEffectFactor > 0.000)
+				{
+					PrevHealth = targ.health;
+					PropertyValue = PrevHealth;
+					PropertyValue *= FinalGravityFactor;
+				
+					if (PropertyValue < 1) PropertyValue = 1;
+					targ.health = PropertyValue;
+					healthdiff = (PrevHealth - PropertyValue);
+				}
+			}
+			
+			// Print Outs
+			if (healthdiff)
+			{
+				string culprit = GetClassName();
+				string victim;
+				
+				string friendmsg = " \cn(F)\c-";
+				string charmmsg = " \cx(C)\c-";
+				
+				if ((playertarg && (exex_playerdmglog & 1)) || (actortarg && (exex_combatlog & 2)))
+				{
+					if (playertarg) victim = playertarg.GetClassName();
+					if (actortarg) victim = actortarg.GetClassName();
+
+						culprit = GetTag("");
+						if (playertarg) victim = playertarg.GetTag("");
+						if (actortarg) victim = actortarg.GetTag("");
+
+					string DamageMessage = " \c[white]* ";
+					DamageMessage.AppendFormat("\cy%d\c- ", healthdiff);
+					DamageMessage.AppendFormat("\c[purple]Gravity\c- ");
+					DamageMessage.AppendFormat("\c[red]Damage\c-");
+					DamageMessage.AppendFormat(" dealt to \cx%s\c-", victim);
+					if (actortarg)
+					{
+						if (actortarg.health > 0) DamageMessage.AppendFormat(" \cx[L%d]\c-", actortarg.CountInv("MonsterLevel"));
+																 else DamageMessage.AppendFormat(" \cx[L%d]\c-", actortarg.CountInv("MonsterLevel"));
+					}
+					if (actortarg && actortarg.bFRIENDLY) 
+					{
+						DamageMessage.AppendFormat(friendmsg);
+					}
+					DamageMessage.AppendFormat(" by \cw%s's\c-", culprit);
+					if (actorculprit && actorculprit.CountInv("MonsterLevel") >= 0) DamageMessage.AppendFormat(" \cw[L%d]\c-", actorculprit.CountInv("MonsterLevel"));
+					if (actorculprit && actorculprit.bFRIENDLY)
+					{
+						DamageMessage.AppendFormat(friendmsg);
+					}
+					DamageMessage.AppendFormat(" \czGraviton Glare\c-!");
+					if (dydudebug_showgametic) DamageMessage.AppendFormat(" (%d)", gametic);
+					
+					Console.Printf("%s", DamageMessage);
+				}
+			}
+		}
+		bQUICKTORETALIATE = true;
+		bNOPAIN = false;
+		bNOTARGETSWITCH = false;
+	}
 }
 
 // A subclass for the DD/AFD unique monsters
-class DDOrigCreature : DDCreature abstract
+class DDOrigCreature : EECreature abstract
 {
 	default
 	{
@@ -1315,7 +1851,7 @@ class DDOrigCreature : DDCreature abstract
 }
 
 // A subclass for the DD/AFD unique boss-class enemies
-class DDOrigBoss : DDCreature abstract
+class DDOrigBoss : EECreature abstract
 {
 	default
 	{
@@ -1327,7 +1863,7 @@ class DDMorphedCreature : MorphedMonster abstract
 {
 }
 
-class ShieldPartBase : DDBaseZSC
+class ShieldPartBase : EEBaseZSC
 {
 	Actor oldtarget;
 
@@ -1466,7 +2002,7 @@ class ShieldPartBase : DDBaseZSC
 	}
 }
 
-class NoItemSpawn : DDBaseZSC // A special 'drop' that is meant to be an empty "drop" for use in droptables
+class NoItemSpawn : EEBaseZSC // A special 'drop' that is meant to be an empty "drop" for use in droptables
 {
 	states
 	{
@@ -1477,7 +2013,7 @@ class NoItemSpawn : DDBaseZSC // A special 'drop' that is meant to be an empty "
 }
 
 // Melee Hitsparks
-class MeleeHitSpark1 : DDPuff
+class MeleeHitSpark1 : EEPuff
 {
 	default
 	{
@@ -1738,7 +2274,7 @@ class SwingShieldPartNoReflect : ShieldPartNoReflect // For swinging based shiel
 	}
 }
 
-class PlayerWhistle : DDBaseZSC
+class PlayerWhistle : EEBaseZSC
 {
 	default
 	{
@@ -1805,7 +2341,7 @@ class PlayerWhistle : DDBaseZSC
 	}
 }
 
-class BatNew : DDBaseZSC replaces Bat
+class BatNew : EEBaseZSC replaces Bat
 {
 	Default
 	{
@@ -1861,7 +2397,7 @@ class BatNew : DDBaseZSC replaces Bat
 	}
 }
 
-class PoisonCloudEE : DDBaseZSC replaces PoisonCloud
+class PoisonCloudEE : EEBaseZSC replaces PoisonCloud
 {
 	Default
 	{
@@ -1991,7 +2527,7 @@ class PoisonCloudEE : DDBaseZSC replaces PoisonCloud
 }
 
 // Practice Target
-class PracticeTarget : DDCreature //21333
+class PracticeTarget : EECreature //21333
 {
 	default
 	{
@@ -2035,7 +2571,7 @@ class PracticeTarget : DDCreature //21333
 	}
 }
 
-class PracticeTarget2 : DDCreature
+class PracticeTarget2 : EECreature
 {
 	default
 	{
