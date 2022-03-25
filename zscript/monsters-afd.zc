@@ -2618,32 +2618,14 @@ class Manchineel_Ceiling : Manchineel
 }
 
 //BELLEFISH
-class Bellefish_Fly : DDCreature
+class Bellefish_Fly : Bellefish
 {
 	default
 	{
-		//$Category RPMonsters
-		Health 150;
-		Radius 20;
-		Height 56;
-		Speed 10;
-		Mass 500;
-		MeleeRange 128;
-		PainChance 256;
-		DamageFactor "Fire", 0.25;
-		DamageFactor "Boiling", 0;
-		DamageFactor "Bap", 1;
-		PainChance "Bap", 200;
-		MONSTER;
-		+NOBLOOD
-		+NOINFIGHTING
-		+NOTARGET
+		-FLOORCLIP
 		+FLOAT
-		+NOGRAVITY
 		+DONTMORPH
 		Obituary "%o was zapped by a flying bellefish.";
-		PainSound "aqua/kill2";
-		Deathsound "aqua/kill2";
 		Tag "Bellefish (Flying)";
 	}
 	
@@ -2659,7 +2641,7 @@ class Bellefish_Fly : DDCreature
 			SHLF D 0 fast bright ; //ACS_Execute(102,0,0,0,0);
 			SHLF E 0 fast bright A_StartSound("bellefish/charge",CHAN_BODY);
 			SHLF EFG 3 fast bright A_FaceTarget();
-			SHLF HIHI 3 fast bright A_CustomMeleeAttack (random(1,5), "bellefish/zap", "bellefish/charge", "", 1);
+			SHLF HIHI 3 bright A_BelleFishZap();
 			SHLF G 8 fast bright;
 			Goto See;
 		Pain:
@@ -2707,6 +2689,8 @@ class NightmareBellefish_Fly : Bellefish_Fly
 		DamageFactor "Bap", 1;
 		PainChance "Bap", 200;
 		MONSTER;
+		+DONTHARMCLASS
+		+DONTHARMSPECIES
 		+NOBLOOD
 		+NOINFIGHTING
 		+NOTARGET
@@ -2719,6 +2703,40 @@ class NightmareBellefish_Fly : Bellefish_Fly
 		Tag "Bellefish (Flying) [Nightmare]";
 		RenderStyle "Subtract";
 		Alpha 0.35;
+		Species "Bellefish";
+	}
+	
+	action void A_NightmareBelleFishZap()
+	{
+		if (random(1,3) <= 2) A_SetTics(2);
+
+		int dmgbase = (random(2,6) * random(1,2));
+		dmgbase += (CountInv("MonsterLevel") * frandompick(0.20,0.20,0.25,0.25,0.25,0.334,0.334,0.334,0.5,0.5));
+		dmgbase *= 1.0 + (CountInv("MonsterLevel") * 0.0334);
+		if (random(1,256) <= (1 + (CountInv("MonsterLevel") * 1.625))) dmgbase *= 2;
+		if (random(1,256) <= (1 + (CountInv("MonsterLevel") * 0.40625))) dmgbase *= 2;
+		A_StartSound("bellefish/charge",CHAN_WEAPON);
+		A_StartSound("bellefish/zap",CHAN_ITEM);
+		A_Explode(dmgbase,128,XF_NOTMISSILE|XF_NOSPLASH,0,random(112,128),0,0,"","Melee");
+		if (random(1,3) <= 1)
+		{
+			int dmgbase2 = random(1,5);
+			dmgbase2 += (CountInv("MonsterLevel") * frandompick(0.1667,0.20,0.25,0.334));
+			dmgbase2 *= 1.0 + (CountInv("MonsterLevel") * 0.0334);
+			if (random(1,256) <= (1 + (CountInv("MonsterLevel") * 1.625))) dmgbase2 *= 2;
+			if (random(1,256) <= (1 + (CountInv("MonsterLevel") * 0.40625))) dmgbase2 *= 2;
+			A_Explode(dmgbase2,128,XF_NOTMISSILE|XF_NOSPLASH,0,random(112,128),0,0,"","Melee");
+
+			if (random(1,3) <= 1)
+			{
+				dmgbase2 = random(1,5);
+				dmgbase2 += (CountInv("MonsterLevel") * frandompick(0.1667,0.20,0.25,0.334));
+				dmgbase2 *= 1.0 + (CountInv("MonsterLevel") * 0.0334);
+				if (random(1,256) <= (1 + (CountInv("MonsterLevel") * 1.625))) dmgbase2 *= 2;
+				if (random(1,256) <= (1 + (CountInv("MonsterLevel") * 0.40625))) dmgbase2 *= 2;
+				A_Explode(dmgbase2,128,XF_NOTMISSILE|XF_NOSPLASH,0,random(112,128),0,0,"","Melee");
+			}
+		}
 	}
 	
 	override void Tick()
@@ -2754,19 +2772,7 @@ class NightmareBellefish_Fly : Bellefish_Fly
 				if (random(1,3) <= 2) A_SetTics(2);
 				A_FaceTarget();
 			}
-			SHLF HIHI 3 fast bright 
-			{
-				if (random(1,3) <= 2) A_SetTics(2);
-				A_CustomMeleeAttack ((random(2,6)*random(1,2)), "bellefish/zap", "bellefish/charge", "", 1);
-				if (random(1,3) <= 1)
-				{
-					A_CustomMeleeAttack (random(1,5), "", "", "", 1);
-					if (random(1,3) <= 1)
-					{
-						A_CustomMeleeAttack (random(1,5), "", "", "", 1);
-					}
-				}
-			}
+			SHLF HIHI 3 fast bright A_NightmareBelleFishZap();
 			SHLF G 7 fast bright
 			{
 				if (random(1,6) <= 5) A_SetTics(6);
