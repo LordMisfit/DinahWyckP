@@ -63,8 +63,8 @@ class DDStatusBarMain : BaseStatusBar
 		diparms_sbar = InventoryBarState.CreateNoBox(mIndexFont, boxsize:(31, 31), arrowoffs:(0,-10));
 		if (dydudebug_hudinitdisplays)
 		{
-			Console.Printf("diparms.boxsize: %d x %d", diparms.boxsize.x, diparms.boxsize.y);
-			Console.Printf("diparms_sbar.boxsize: %d x %d", diparms_sbar.boxsize.x, diparms_sbar.boxsize.y);
+			Console.Printf("diparms: boxsize: %d x %d, boxofs: %d x %d, selectofs: %d x %d, innersize: %d x %d", diparms.boxsize.x, diparms.boxsize.y, diparms.boxofs.x, diparms.boxofs.y, diparms.selectofs.x, diparms.selectofs.y, diparms.innersize.x, diparms.innersize.y);
+			Console.Printf("diparms_sbar: boxsize: %d x %d, boxofs: %d x %d, selectofs: %d x %d, innersize: %d x %d", diparms_sbar.boxsize.x, diparms_sbar.boxsize.y, diparms_sbar.boxofs.x, diparms_sbar.boxofs.y, diparms_sbar.selectofs.x, diparms_sbar.selectofs.y, diparms_sbar.innersize.x, diparms_sbar.innersize.y);
 		}
 		mHealthInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
 		mArmorInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);
@@ -147,6 +147,13 @@ class DDStatusBarMain : BaseStatusBar
 		parms.amountfont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
 		parms.box = TexMan.CheckForTexture("ARTIBOXD", TexMan.TYPE_MiscPatch);
 		parms.selector = TexMan.CheckForTexture("SELECTBO", TexMan.TYPE_MiscPatch);
+		if (dydudebug_invbarfix)
+		{
+			parms.boxsize = (30, 30);
+			parms.boxofs = (2, 2);
+			parms.selectofs = (0, 0);
+			parms.innersize = (26, 26);
+		}
 		
 		double width = parms.boxsize.X * NumFields;
 		[position, flags] = AdjustPosition(position, flags, width, parms.boxsize.Y);
@@ -588,32 +595,8 @@ class DDStatusBarMain : BaseStatusBar
 			{
 				DrawTexture(ammo1.icon, (x-15, y+13), DI_ITEM_CENTER, 0.75, (-1, -1), (1.0,1.0));
 				DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (136, y), DI_TEXT_ALIGN_RIGHT, font.cr_Gold);
-				if (cplayer.mo.CountInv("BackpackTier1"))
-				{
-					DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (137, y+1), DI_TEXT_ALIGN_RIGHT, font.cr_black);
-					if (cplayer.mo.CountInv("BackpackTier2"))
-					{
-						DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (138, y+2), DI_TEXT_ALIGN_RIGHT, font.cr_black);
-					}
-				}
 				DrawString(mDDSFont, "/", (136, y+12), DI_TEXT_ALIGN_RIGHT, font.cr_Gold);
-				if (cplayer.mo.CountInv("BackpackTier1"))
-				{
-					DrawString(mDDSFont, "/", (137, y+13), DI_TEXT_ALIGN_RIGHT, font.cr_black);
-					if (cplayer.mo.CountInv("BackpackTier2"))
-					{
-						DrawString(mDDSFont, "/", (138, y+14), DI_TEXT_ALIGN_RIGHT, font.cr_black);
-					}
-				}
 				DrawString(mDDSFont, FormatNumber(ammo1.MaxAmount, 3), (136, y+19), DI_TEXT_ALIGN_RIGHT, font.cr_Gold);
-				if (cplayer.mo.CountInv("BackpackTier1"))
-				{
-					DrawString(mDDSFont, FormatNumber(ammo1.MaxAmount, 3), (137, y+20), DI_TEXT_ALIGN_RIGHT, font.cr_black);
-					if (cplayer.mo.CountInv("BackpackTier2"))
-					{
-						DrawString(mDDSFont, FormatNumber(ammo1.MaxAmount, 3), (138, y+21), DI_TEXT_ALIGN_RIGHT, font.cr_black);
-					}
-				}
 			}
 			else if (ammo2 != null)
 			{
@@ -1162,6 +1145,7 @@ class DDStatusBarMain : BaseStatusBar
 			if (IsInvuln) HealthColor = font.CR_Gold;
 			//health
 			textureid HealthIcon = TexMan.CheckForTexture("ARTIWINE", TexMan.TYPE_MiscPatch);
+			if (Cplayer.mo.player.poisoncount) HealthIcon = TexMan.CheckForTexture("ARTIWINP", TexMan.TYPE_MiscPatch);
 			if (CPlayer.cheats & CF_BUDDHA2) HealthIcon = TexMan.CheckForTexture("ARTIWINB", TexMan.TYPE_MiscPatch);
 			if (CPlayer.cheats & CF_GODMODE2) HealthIcon = TexMan.CheckForTexture("ARTIWING", TexMan.TYPE_MiscPatch);
 			DrawTexture(HealthIcon, ((64+HPDmgShakeX), (-4+HPDmgShakeY))); // 51, -3
@@ -1250,7 +1234,18 @@ class DDStatusBarMain : BaseStatusBar
 				}
 			}
 			//Console.Printf("scal: %.8f / %.8f", XScal, YScal);
-			if (IsInvuln) HealthColor = font.CR_Gold;
+			if (IsInvuln)
+			{
+				HealthColor = font.CR_Gold;
+			}
+			else
+			{
+				if (Cplayer.mo.player.poisoncount) 
+				{
+					if (level.time % 16 >= 8) HealthColor = font.CR_DarkRed;
+					else HealthColor = font.CR_DarkGreen;
+				}
+			}
 			DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), ((49+HPDmgShakeX), (-28+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, HealthColor, HealthAlpha, FontWrapWidth, FontLineSpace, ((XScal*1.25, YScal*1.25)*HPPulseScale));
 			
 			//*************************
@@ -1686,9 +1681,9 @@ class DDStatusBarMain : BaseStatusBar
 					DrawString(mDDMFont, FormatNumber(EXPNeeded, Digits), (DigX, DigY+4), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 				}
 				
-				//************
-				//* EXP Gain *
-				//************
+				//*************************
+				//* EXP Gain / Kill Combo *
+				//*************************
 				double EXPBaseScale = 1.0;
 				int EXPScaleTimer; 
 				int EXPScaleTimerMod = 35;
@@ -1710,8 +1705,9 @@ class DDStatusBarMain : BaseStatusBar
 				If (MiscItem) HUDNumHitValue = MiscItem.EXPGainHUDAmt;
 				HUDStringHit = "+";
 				HUDStringHit.AppendFormat("%d", HUDNumHitValue);
-				DigX = 3; // 35;
-				DigY = -67; // -95;
+				if (MiscItem && MiscItem.KillComboCount) HUDStringHit.AppendFormat(" [%d]", MiscItem.KillComboCount);
+				DigX = 3;
+				DigY = -67;
 				if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.CR_Gold, HUDHitAlpha, FontWrapWidth, FontLineSpace, EXPScale); // 41, -43
 			}
 
