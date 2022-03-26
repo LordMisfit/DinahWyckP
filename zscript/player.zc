@@ -1189,8 +1189,8 @@ class DDPlayerPawn : PlayerPawn
 			}
 			else
 			{
-				if (!((source == null && inflictor == null) &&
-						(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'Crush' || mod == 'Drowning' || mod == 'SigilDrain' || mod == 'Falling')) || mod == 'SigilDrain')
+				if (!(((source == null && inflictor == null) &&
+						(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'Crush' || mod == 'Drowning' || mod == 'SigilDrain' || mod == 'Falling')) || mod == 'SigilDrain'))
 				{
 					A_StartSound("player/dodge",305,CHANF_OVERLAP|CHANF_LOCAL,frandom(0.75,1.25),ATTN_NORM,frandom(0.75,1.25));
 					if (exex_playerdmglog)
@@ -1411,6 +1411,48 @@ class DDPlayerPawn : PlayerPawn
 			return super.DamageMobj(inflictor, source, damage, mod, flags, angle); 
 			//*********************************************************************
 		}
+		
+		
+		// (Partial) Defense Ignoring Attacks
+		PlayerDefenseIgnoreFactor = 0.00;
+		if (damage > 0)
+		{
+			if (inflictor == null && source == null)
+			{
+			}
+			else
+			{
+				if (!CountInv("DinahTrueIPState")) // The Flower Crown IP Mode Negates most Defense Ignoring attacks :V
+				{
+					double PikeAOEFactor = 0.334;
+					if (mod == 'Zap') PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					if (mod == 'Zap' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					double BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
+					if (mod == 'Beats') PlayerDefenseIgnoreFactor += (BeatsFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					double BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
+					if (mod == 'Beats' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					double BarrelFactor = 0.50;
+					if (skill <= 0) BarrelFactor = 0.0;
+					if (skill == 1) BarrelFactor = 0.25;
+					if (skill == 2) BarrelFactor = 0.5;
+					if (skill == 3) BarrelFactor = 0.75;
+					if (skill >= 4) BarrelFactor = 1.0;
+					if ((ExplosiveBarrel(inflictor) || ExplosiveBarrel(source) || Pod(inflictor) || Pod(source)) && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (BarrelFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					double SuckFactor = 0.334;
+					if (mod == 'Suck') PlayerDefenseIgnoreFactor += (SuckFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					double PuddingFactor = 0.667;
+					if (PuddingDog(inflictor) || PuddingPup(inflictor) || PupGrenade(inflictor) || PuddingDog(source) || PuddingPup(source) || PupGrenade(source)) PlayerDefenseIgnoreFactor += (PuddingFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					if (bellefishzap) PlayerDefenseIgnoreFactor += (0.334 * (1.00 - PlayerDefenseIgnoreFactor));
+				}
+			}
+		}
+		if (PlayerDefenseIgnoreFactor > 1.00) PlayerDefenseIgnoreFactor = 1.00;
 
 		// Direct Damage Changes
 		if (flags & DMG_INFLICTOR_IS_PUFF)
@@ -1717,6 +1759,7 @@ class DDPlayerPawn : PlayerPawn
 						flatdefense += (basearmorflat * armfactor);
 						if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
 					}
+					flatdefense *= (1.00 - PlayerDefenseIgnoreFactor);
 					damage -= flatdefense;
 					if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [Crush Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);
 				}
@@ -1762,6 +1805,7 @@ class DDPlayerPawn : PlayerPawn
 						flatdefense += (basearmorflat * armfactor);
 						if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
 					}
+					flatdefense *= (1.00 - PlayerDefenseIgnoreFactor);
 					damage -= flatdefense;
 					if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [Non-Crush Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);
 				}
@@ -1808,6 +1852,7 @@ class DDPlayerPawn : PlayerPawn
 					flatdefense += (basearmorflat * armfactor);
 					if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
 				}
+				flatdefense *= (1.00 - PlayerDefenseIgnoreFactor);
 				damage -= flatdefense;
 				if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [DmgFloor Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);
 			}
@@ -1890,43 +1935,6 @@ class DDPlayerPawn : PlayerPawn
 				if (SigilDrain) damage = 0;
 				A_StartSound("Player/TookNoDamageInvuln",199,CHANF_DEFAULT,frandom(0.5,0.75),ATTN_NORM);
 				isinvuln = true;
-			}
-		}
-		
-		// (Partial) Defense Ignoring Attacks
-		PlayerDefenseIgnoreFactor = 0.00;
-		if (damage > 0)
-		{
-			if (inflictor == null && source == null)
-			{
-			}
-			else
-			{
-				if (!CountInv("DinahTrueIPState")) // The Flower Crown IP Mode Negates most Defense Ignoring attacks :V
-				{
-					double PikeAOEFactor = 0.334;
-					if (mod == 'Zap') PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					if (mod == 'Zap' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					
-					double BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
-					if (mod == 'Beats') PlayerDefenseIgnoreFactor += (BeatsFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					double BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
-					if (mod == 'Beats' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					
-					double BarrelFactor = 0.50;
-					if (skill <= 0) BarrelFactor = 0.0;
-					if (skill == 1) BarrelFactor = 0.25;
-					if (skill == 2) BarrelFactor = 0.5;
-					if (skill == 3) BarrelFactor = 0.75;
-					if (skill >= 4) BarrelFactor = 1.0;
-					if ((ExplosiveBarrel(inflictor) || ExplosiveBarrel(source) || Pod(inflictor) || Pod(source)) && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (BarrelFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					
-					double SuckFactor = 0.334;
-					if (mod == 'Suck') PlayerDefenseIgnoreFactor += (SuckFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					
-					if (bellefishzap) PlayerDefenseIgnoreFactor += (0.334 * (1.00 - PlayerDefenseIgnoreFactor));
-				}
 			}
 		}
 		
