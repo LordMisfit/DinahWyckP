@@ -817,6 +817,53 @@ mixin class MonsterCollider
 	int initdmg;
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		bool IsPlayerRaven = false;
+		DDPlayerPawn RavenPlayer;
+		RavenPlayer = DDPlayerPawn(source);
+		if (RavenPlayer)
+		{
+			let RavenItem = PowerRavenInvisibility(RavenPlayer.FindInventory("PowerRavenInvisibility"));
+			if (RavenItem) 
+			{
+				IsPlayerRaven = true;
+			}
+			else
+			{
+				let RavenItem = PowerRavenFlight(RavenPlayer.FindInventory("PowerRavenFlight"));
+				if (RavenItem) IsPlayerRaven = true;
+			}
+		}
+		else
+		{
+			RavenPlayer = DDPlayerPawn(inflictor);
+			if (RavenPlayer)
+			{
+				let RavenItem = PowerRavenInvisibility(RavenPlayer.FindInventory("PowerRavenInvisibility"));
+				if (RavenItem) 
+				{
+					IsPlayerRaven = true;
+				}
+				else
+				{
+					let RavenItem = PowerRavenFlight(RavenPlayer.FindInventory("PowerRavenFlight"));
+					if (RavenItem) IsPlayerRaven = true;
+				}
+			}
+		}
+		if (IsPlayerRaven && self.bISMONSTER)
+		{
+			if (self.bFLOAT && self.bNOGRAVITY)
+			{
+				damage *= 0.4;
+				if (exex_hitweaksounds) A_StartSound("Misc/ResistanceHitMid", 31, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+			}
+			else
+			{
+				damage *= 2.5;
+				if (exex_hitweaksounds) A_StartSound("Misc/WeaknessHitMid", 31, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+			}
+		}
+		
 		if ((BlunderSmokeSmall(inflictor) || BlunderSmokeSmall(source)))
 		{
 			if (random(1,4) <= 3)
@@ -1532,6 +1579,15 @@ mixin class IPCostCheck
 		}
 		if (ipid == 11) // Door Bell [Inventory]
 		{
+		}
+		if (ipid == 12) // Raven Potion [Inventory]
+		{
+			if (skill <= 0) cost = 45.0;
+			if (skill == 1) cost = 47.5;
+			if (skill == 2) cost = 50.0;
+			if (skill == 3) cost = 52.5;
+			if (skill >= 4) cost = 55.0;
+			cost *= 0.667;
 		}
 		
 		if (ipid == 101) // Cricket Bat Melee/Main Attack [Weapon]
