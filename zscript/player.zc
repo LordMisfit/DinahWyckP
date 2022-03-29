@@ -1730,6 +1730,20 @@ class DDPlayerPawn : PlayerPawn
 			olddmg = damage;
 			if (mod == 'Crush')
 			{
+				double basecrushdmgfact;
+				if (PowerStrength(FindInventory("PowerStrength")) || PowerStrengthDD(FindInventory("PowerStrengthDD")))
+				{
+					basecrushdmgfact = frandompick(25,33.4,33.4,50,50,50,50,50,50,66.7,66.7,75);
+				}
+				else
+				{
+					basecrushdmgfact = frandompick(75,87.5,87.5,100,100,100,100,100,100,112.5,112.5,125);
+				}
+				damage *= double(basecrushdmgfact / mass);
+				damage *= (basecrushdmgfact * 0.01);
+				if (damage <= (olddmg * 0.1)) damage = (olddmg * 0.1);
+				if (damage >= (olddmg * 10)) damage = (olddmg * 10);
+
 				if (useflatdefense)
 				{
 					if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.04) + (TruePlayerDEF * 0.04));
@@ -1992,29 +2006,36 @@ class DDPlayerPawn : PlayerPawn
 				if (dydudebug_dmgdiffdebug)
 				{
 					int dmgdiff = ((ret + armdmg) - firstdmg);
-					//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
-					if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
+					if (dmgdiff)
 					{
-						combatlogmsg.AppendFormat("[", dmgdiff);
-						if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
-						if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
-						if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
-						combatlogmsg.AppendFormat(" (", dmgdiff);
+						//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
+						if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
+						{
+							combatlogmsg.AppendFormat("[", dmgdiff);
+							if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
+							if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
+							if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
+							if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
+						}
+						else
+						{
+							combatlogmsg.AppendFormat("[", dmgdiff);
+						}
+						if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
+						{
+							double dmgdiffper;
+							if (firstdmg) 
+							{
+								dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
+								if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
+								if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
+								if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
+								if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
+																						else combatlogmsg.AppendFormat(")", dmgdiff);
+							}
+						}
+						if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
 					}
-					else
-					{
-						combatlogmsg.AppendFormat("[", dmgdiff);
-					}
-					if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
-					{
-						double dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
-						if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
-						if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
-						if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
-						if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
-																				else combatlogmsg.AppendFormat(")", dmgdiff);
-					}
-					if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
 				}
 				if (mod == 'SigilDrain') combatlogmsg.AppendFormat("of damage drained");
 														else combatlogmsg.AppendFormat("of damage taken");
@@ -2032,29 +2053,36 @@ class DDPlayerPawn : PlayerPawn
 					if (dydudebug_dmgdiffdebug)
 					{
 						int dmgdiff = ((ret + armdmg) - firstdmg);
-						//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
-						if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
+						if (dmgdiff)
 						{
-							combatlogmsg.AppendFormat("[", dmgdiff);
-							if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
-							if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
-							if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
-							combatlogmsg.AppendFormat(" (", dmgdiff);
+							//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
+							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
+							{
+								combatlogmsg.AppendFormat("[", dmgdiff);
+								if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
+								if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
+								if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
+								if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
+							}
+							else
+							{
+								combatlogmsg.AppendFormat("[", dmgdiff);
+							}
+							if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
+							{
+								double dmgdiffper;
+								if (firstdmg) 
+								{
+									dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
+									if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
+									if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
+									if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
+									if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
+																							else combatlogmsg.AppendFormat(")", dmgdiff);
+								}
+							}
+							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
 						}
-						else
-						{
-							combatlogmsg.AppendFormat("[", dmgdiff);
-						}
-						if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
-						{
-							double dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
-							if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
-							if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
-							if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
-							if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
-																					else combatlogmsg.AppendFormat(")", dmgdiff);
-						}
-						if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
 					}
 					combatlogmsg.AppendFormat("\c[white]taken\c-");
 				}

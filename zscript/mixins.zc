@@ -777,6 +777,7 @@ mixin class MonsterCollider
 						shieldpiece.GetClassName() == "ShieldPartMeleeNoReflect" || shieldpiece.GetClassName() == "ShieldPartMeleeNoReflect")
 				{
 					if (dydudebug_generalcollisions) Console.Printf("\c[sapphire]Collision:  Passive - \c[green]%s\c- [MeleeShieldPart] vs (\c[orange]%s\c-) {gametic: %d}", GetClassName(), other.GetClassName(), gametic);
+					if (ExplosiveBarrel(self)) return false;
 					return true;
 				}
 				return false;
@@ -1145,6 +1146,25 @@ mixin class MonsterCollider
 			if (PuddingDog(inflictor) || PuddingPup(inflictor) || PupGrenade(inflictor) || PuddingDog(source) || PuddingPup(source) || PupGrenade(source)) ActorDefenseIgnoreFactor += (PuddingFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
 			if (bellefishzap) ActorDefenseIgnoreFactor += (0.334 * (1.00 - ActorDefenseIgnoreFactor));
+		}
+		
+		predmginr = damage;
+		// Defense Checks
+		if (mod == 'Crush' && !inflictor && !source)
+		{
+			double basecrushdmgfact;
+			if (PowerStrength(FindInventory("PowerStrength")) || PowerStrengthDD(FindInventory("PowerStrengthDD")))
+			{
+				basecrushdmgfact = frandompick(25,33.4,33.4,50,50,50,50,50,50,66.7,66.7,75);
+			}
+			else
+			{
+				basecrushdmgfact = frandompick(75,87.5,87.5,100,100,100,100,100,100,112.5,112.5,125);
+			}
+			damage *= double(basecrushdmgfact / mass);
+			damage *= (basecrushdmgfact * 0.01);
+			if (damage <= (predmginr * 0.1)) damage = (predmginr * 0.1);
+			if (damage >= (predmginr * 10)) damage = (predmginr * 10);
 		}
 		
 		//******************************
