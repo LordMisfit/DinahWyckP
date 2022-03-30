@@ -88,6 +88,7 @@ class DD_EventHandler : EventHandler
 		
 		if (spawnee)
 		{
+			int basemonsterrating = spawnee.CountInv("MonsterRating");
 			bool practicetarget;
 			if (spawnname == "PracticeTarget" || spawnname == "PracticeTarget2") practicetarget = true;
 
@@ -317,6 +318,8 @@ class DD_EventHandler : EventHandler
 			// Monster "Scaling"
 			if (spawnee.bISMONSTER && !practicetarget)
 			{
+				double monsterrating = 0;
+				double monsterrating2 = 0;
 				double monsterlevel = 0;
 				double leveltemp = 0;
 				double luckmult = 0;
@@ -341,6 +344,7 @@ class DD_EventHandler : EventHandler
 						playerlevelbase = playerlevelbase * (100 + exex_leveldifficultyinflation2) / 100;
 					}
 					if (playerlevelbase < 0) playerlevelbase = 0;
+
 					double mult;
 					double multbase = 1;
 					int basedivfactor = 16;
@@ -350,7 +354,6 @@ class DD_EventHandler : EventHandler
 					if (skill == 3) basedivfactor = 11;
 					if (skill >= 4) basedivfactor = 6;
 					
-					// PlayerLevel Scaling
 					if (random(1,basedivfactor) <= 8)
 					{
 						if (random(1,basedivfactor) <= 4)
@@ -365,54 +368,46 @@ class DD_EventHandler : EventHandler
 										{
 											if (random(1,basedivfactor) <= 1)
 											{
-												if (random(1,basedivfactor) <= 1)
-												{
-													multbase = 8;
-												}
-												else
-												{
-													multbase = 7;
-												}
+												if (random(1,basedivfactor) <= 1) monsterrating = 8;
+												else monsterrating = 7;
 											}
-											else
-											{
-												multbase = 6;
-											}
+											else monsterrating = 6;
 										}
-										else
-										{
-											multbase = 5;
-										}
+										else monsterrating = 5;
 									}
-									else
-									{
-										multbase = 4;
-									}
+									else monsterrating = 4;
 								}
-								else
-								{
-									multbase = 3;
-								}
+								else monsterrating = 3;
 							}
-							else
-							{
-								multbase = 2;
-							}
+							else monsterrating = 2;
 						}
-						else
-						{
-							multbase = 1.5;
-						}
+						else monsterrating = 1;
 					}
-					if (DDOrigCreature(spawnee)) multbase *= frandompick(1.25,1.5,1.5,2.25,2.25,2.25,3,3,3.25);
-					if (DDOrigBoss(spawnee)) multbase *= frandompick(2.5,3,3,4.5,4.5,4.5,6,6,6.5);
-					if (random(1,64) <= 1) multbase *= 4;
-					if (random(1,256) <= 1) multbase *= 4;
-					if (random(1,1024) <= 1) multbase *= 4;
-					multbase *= exex_enemyscalelevelmultiplier;
 					
+					if (monsterrating < basemonsterrating) monsterrating = basemonsterrating;
+					if (monsterrating <= 0) multbase = 1.0;
+					if (monsterrating == 1) multbase = 1.5;
+					if (monsterrating == 2) multbase = 2.125;
+					if (monsterrating == 3) multbase = 3.2;
+					if (monsterrating == 4) multbase = 4.25;
+					if (monsterrating == 5) multbase = 5.334;
+					if (monsterrating == 6) multbase = 6.4;
+					if (monsterrating == 7) multbase = 7.5;
+					if (monsterrating >= 8) multbase = 8.75;
+
+					if (DDOrigCreature(spawnee)) 
+					{
+						multbase *= frandompick(1.25,1.5,2.25,2.25,3,3.25);
+						if (DDOrigBoss(spawnee)) multbase *= 2;
+					}
+					if (random(1,64) <= (monsterrating*0.5)) multbase *= 4;
+					if (random(1,256) <= (monsterrating*0.125)) multbase *= 4;
+					if (random(1,1024) <= (monsterrating*0.03125)) multbase *= 4;
+					
+					// PlayerLevel Scaling
 					if (exex_enemyscalingplevel && globalvars && MiscItem)
 					{
+						double truemultbase = multbase *= exex_enemyscalelevelmultiplier;
 						if (spawnee.bFRIENDLY)
 						{
 							// Speed
@@ -421,7 +416,11 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.0025;
 							if (skill == 3) mult = 0.002375;
 							if (skill >= 4) mult = 0.00225;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 1.5;
+							else if (monsterrating >= 6) mult *= 1.375;
+							else if (monsterrating >= 4) mult *= 1.25;
+							else if (monsterrating >= 2) mult *= 1.125;
+							mult *= truemultbase;
 							luckmult = frandompick(0,0,0,0,0,0,0,0,0,0,0,0.25,0.25,0.25,0.25,0.25,0.25,0.25,0.5,0.5,0.5,0.5,0.5,1,1,1,2);
 							if (MiscItem) 
 							{
@@ -437,7 +436,11 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.005;
 							if (skill == 3) mult = 0.00475;
 							if (skill >= 4) mult = 0.0045;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 2.0;
+							else if (monsterrating >= 6) mult *= 1.75;
+							else if (monsterrating >= 4) mult *= 1.5;
+							else if (monsterrating >= 2) mult *= 1.25;
+							mult *= truemultbase;
 							luckmult = frandompick(0,0,0,0,0,0,0,0,0,0,0,0.25,0.25,0.25,0.25,0.25,0.25,0.25,0.5,0.5,0.5,0.5,0.5,1,1,1,2);
 							if (MiscItem)
 							{
@@ -453,7 +456,11 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.00125;
 							if (skill == 3) mult = 0.0011875;
 							if (skill >= 4) mult = 0.001125;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 2.0;
+							else if (monsterrating >= 6) mult *= 1.75;
+							else if (monsterrating >= 4) mult *= 1.5;
+							else if (monsterrating >= 2) mult *= 1.25;
+							mult *= truemultbase;
 							luckmult = frandompick(0,0,0,0,0,0,0,0,0,0,0,0.25,0.25,0.25,0.25,0.25,0.25,0.25,0.5,0.5,0.5,0.5,0.5,1,1,1,2);
 							if (MiscItem)
 							{
@@ -469,8 +476,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.0020;
 							if (skill == 3) mult = 0.0019;
 							if (skill >= 4) mult = 0.0018;
-							mult *= 1.5;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 1.5;
+							else if (monsterrating >= 3) mult *= 1.25;
+							mult *= truemultbase;
 							luckmult = frandompick(0,0,0,0,0,0,0,0,0,0,0,0.25,0.25,0.25,0.25,0.25,0.25,0.25,0.5,0.5,0.5,0.5,0.5,1,1,1,2);
 							if (MiscItem) 
 							{
@@ -486,8 +494,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.005;
 							if (skill == 3) mult = 0.00475;
 							if (skill >= 4) mult = 0.0045;
-							mult *= 1.5;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 1.5;
+							else if (monsterrating >= 3) mult *= 1.25;
+							mult *= truemultbase;
 							luckmult = frandompick(0,0,0,0,0,0,0,0,0,0,0,0.25,0.25,0.25,0.25,0.25,0.25,0.25,0.5,0.5,0.5,0.5,0.5,1,1,1,2);
 							if (MiscItem)
 							{
@@ -516,8 +525,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.001875;
 							if (skill == 3) mult = 0.0020625;
 							if (skill >= 4) mult = 0.00225;
-							mult *= 2;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 2.0;
+							else if (monsterrating >= 3) mult *= 1.5;
+							mult *= truemultbase;
 							spdmulti += (LuckRoll * mult);
 							leveltemp += luckmult;
 							if (spdmulti < 0) spdmulti = 0;
@@ -538,8 +548,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.0025;
 							if (skill == 3) mult = 0.00275;
 							if (skill >= 4) mult = 0.0030;
-							mult *= 2;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 2.0;
+							else if (monsterrating >= 3) mult *= 1.5;
+							mult *= truemultbase;
 							atkmulti += (LuckRoll * mult);
 							leveltemp += luckmult;
 							if (atkmulti < 0) atkmulti = 0;
@@ -560,8 +571,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.000625;
 							if (skill == 3) mult = 0.0006875;
 							if (skill >= 4) mult = 0.00075;
-							mult *= 2;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 2.0;
+							else if (monsterrating >= 3) mult *= 1.5;
+							mult *= truemultbase;
 							defmulti += (LuckRoll * mult);
 							leveltemp += luckmult;
 							if (defmulti < 0) defmulti = 0;
@@ -582,8 +594,11 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.00125;
 							if (skill == 3) mult = 0.001375;
 							if (skill >= 4) mult = 0.0015;
-							mult *= 3;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 3.75;
+							else if (monsterrating >= 6) mult *= 3;
+							else if (monsterrating >= 4) mult *= 2.25;
+							else if (monsterrating >= 2) mult *= 1.5;
+							mult *= truemultbase;
 							hpmulti += ceil(origHealth * (LuckRoll * mult));
 							leveltemp += luckmult;
 							if (hpmulti < 0) hpmulti = 0;
@@ -604,8 +619,11 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.003125;
 							if (skill == 3) mult = 0.0034375;
 							if (skill >= 4) mult = 0.00375;
-							mult *= 3;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 3.75;
+							else if (monsterrating >= 6) mult *= 3;
+							else if (monsterrating >= 4) mult *= 2.25;
+							else if (monsterrating >= 2) mult *= 1.5;
+							mult *= truemultbase;
 							massmulti += ceil(spawnee.mass * (LuckRoll * mult));
 							leveltemp += luckmult;
 							if (massmulti < 0) massmulti = 0;
@@ -616,74 +634,8 @@ class DD_EventHandler : EventHandler
 					
 					if (exex_enemyscalingmaps)
 					{
+						double truemultbase = multbase *= exex_enemyscalemapmultiplier;
 						// Map Scaling
-						multbase = 1;
-						basedivfactor = 16;
-						if (skill <= 0) basedivfactor = 22;
-						if (skill == 1) basedivfactor = 19;
-						if (skill == 2) basedivfactor = 16;
-						if (skill == 3) basedivfactor = 11;
-						if (skill >= 4) basedivfactor = 6;
-						
-						if (random(1,basedivfactor) <= 8)
-						{
-							if (random(1,basedivfactor) <= 4)
-							{
-								if (random(1,basedivfactor) <= 2)
-								{
-									if (random(1,basedivfactor) <= 1)
-									{
-										if (random(1,basedivfactor) <= 1)
-										{
-											if (random(1,basedivfactor) <= 1)
-											{
-												if (random(1,basedivfactor) <= 1)
-												{
-													if (random(1,basedivfactor) <= 1)
-													{
-														multbase = 8;
-													}
-													else
-													{
-														multbase = 7;
-													}
-												}
-												else
-												{
-													multbase = 6;
-												}
-											}
-											else
-											{
-												multbase = 5;
-											}
-										}
-										else
-										{
-											multbase = 4;
-										}
-									}
-									else
-									{
-										multbase = 3;
-									}
-								}
-								else
-								{
-									multbase = 2;
-								}
-							}
-							else
-							{
-								multbase = 1.5;
-							}
-						}
-						if (DDOrigCreature(spawnee)) multbase *= frandompick(1.125,1.25,1.25,1.625,1.625,1.65,2,2,2.125);
-						if (DDOrigBoss(spawnee)) multbase *= frandompick(1.25,1.5,1.5,2.25,2.25,2.25,3,3,4.25);
-						if (random(1,64) <= 1) multbase *= 4;
-						if (random(1,256) <= 1) multbase *= 4;
-						if (random(1,1024) <= 1) multbase *= 4;
-						multbase *= exex_enemyscalemapmultiplier;
 						
 						int maplevelbase; 
 						if (globalvars) 
@@ -704,14 +656,18 @@ class DD_EventHandler : EventHandler
 						}
 						if (spawnee.bFRIENDLY)
 						{
-							if (dydudebug_monsterscaling) Console.Printf("\c[sapphire]%s\c- Maps:  [multbase: %.8f]", spawnname, multbase);
+							if (dydudebug_monsterscaling) Console.Printf("\c[sapphire]%s\c- Maps:  [truemultbase: %.8f]", spawnname, truemultbase);
 							// Speed
 							if (skill <= 0) mult = 0.0055;
 							if (skill == 1) mult = 0.00525;
 							if (skill == 2) mult = 0.005;
 							if (skill == 3) mult = 0.00475;
 							if (skill >= 4) mult = 0.0045;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 1.5;
+							else if (monsterrating >= 6) mult *= 1.375;
+							else if (monsterrating >= 4) mult *= 1.25;
+							else if (monsterrating >= 2) mult *= 1.125;
+							mult *= truemultbase;
 							if (globalvars) spdmulti += (maplevelbase * mult);
 							if (spdmulti < 0) spdmulti = 0;
 							
@@ -721,7 +677,11 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.010;
 							if (skill == 3) mult = 0.0095;
 							if (skill >= 4) mult = 0.009;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 2.0;
+							else if (monsterrating >= 6) mult *= 1.75;
+							else if (monsterrating >= 4) mult *= 1.5;
+							else if (monsterrating >= 2) mult *= 1.25;
+							mult *= truemultbase;
 							if (globalvars) atkmulti += (maplevelbase * mult);
 							if (atkmulti < 0) atkmulti = 0;
 							
@@ -731,7 +691,10 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.0025;
 							if (skill == 3) mult = 0.002375;
 							if (skill >= 4) mult = 0.00225;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 2.0;
+							else if (monsterrating >= 6) mult *= 1.75;
+							else if (monsterrating >= 4) mult *= 1.5;
+							else if (monsterrating >= 2) mult *= 1.25;
 							if (globalvars && MiscItem) defmulti += ((maplevelbase * mult) - (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2))));
 							if (defmulti < 0) defmulti = 0;
 							
@@ -741,8 +704,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.0040;
 							if (skill == 3) mult = 0.0038;
 							if (skill >= 4) mult = 0.0036;
-							mult *= 1.5;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 1.5;
+							else if (monsterrating >= 3) mult *= 1.25;
+							mult *= truemultbase;
 							if (globalvars && MiscItem) hpmulti += floor(origHealth * ((maplevelbase * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
 							if (hpmulti < 0) hpmulti = 0;
 							
@@ -752,8 +716,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.010;
 							if (skill == 3) mult = 0.0095;
 							if (skill >= 4) mult = 0.009;
-							mult *= 1.5;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 1.5;
+							else if (monsterrating >= 3) mult *= 1.25;
+							mult *= truemultbase;
 							if (globalvars && MiscItem) massmulti += floor(spawnee.mass * ((maplevelbase * mult) + (MiscItem.PlayerLUCK * frandompick(0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)))));
 							if (massmulti < 0) massmulti = 0;
 						}
@@ -768,7 +733,7 @@ class DD_EventHandler : EventHandler
 								if (skill == 3) LuckRoll = random((maplevelbase*0.625),maplevelbase);
 								if (skill >= 4) LuckRoll = random((maplevelbase*0.75),maplevelbase);
 							}
-							if (dydudebug_monsterscaling) Console.Printf("\c[fire]%s\c- Maps: [multbase: %.8f, LuckRoll: %d]", spawnname, multbase, LuckRoll);
+							if (dydudebug_monsterscaling) Console.Printf("\c[fire]%s\c- Maps: [truemultbase: %.8f, LuckRoll: %d]", spawnname, truemultbase, LuckRoll);
 							
 							// Speed
 							if (skill <= 0) mult = 0.0030;
@@ -776,8 +741,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.00375;
 							if (skill == 3) mult = 0.004125;
 							if (skill >= 4) mult = 0.0045;
-							mult *= 2;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 2.0;
+							else if (monsterrating >= 3) mult *= 1.5;
+							mult *= truemultbase;
 							spdmulti += (LuckRoll * mult);
 							if (spdmulti < 0) spdmulti = 0;
 							
@@ -787,8 +753,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.005;
 							if (skill == 3) mult = 0.0055;
 							if (skill >= 4) mult = 0.0060;
-							mult *= 2;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 2.0;
+							else if (monsterrating >= 3) mult *= 1.5;
+							mult *= truemultbase;
 							atkmulti += (LuckRoll * mult);
 							if (atkmulti < 0) atkmulti = 0;
 							
@@ -798,8 +765,9 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.00125;
 							if (skill == 3) mult = 0.001375;
 							if (skill >= 4) mult = 0.0015;
-							mult *= 2;
-							mult *= multbase;
+							if (monsterrating >= 7) mult *= 2.0;
+							else if (monsterrating >= 3) mult *= 1.5;
+							mult *= truemultbase;
 							defmulti += (LuckRoll * mult);
 							if (defmulti < 0) defmulti = 0;
 							
@@ -809,8 +777,11 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.0025;
 							if (skill == 3) mult = 0.00275;
 							if (skill >= 4) mult = 0.0030;
-							mult *= 3;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 3.75;
+							else if (monsterrating >= 6) mult *= 3;
+							else if (monsterrating >= 4) mult *= 2.25;
+							else if (monsterrating >= 2) mult *= 1.5;
+							mult *= truemultbase;
 							hpmulti += ceil(origHealth * (LuckRoll * mult));
 							if (hpmulti < 0) hpmulti = 0;
 							
@@ -820,8 +791,11 @@ class DD_EventHandler : EventHandler
 							if (skill == 2) mult = 0.00625;
 							if (skill == 3) mult = 0.006875;
 							if (skill >= 4) mult = 0.0075;
-							mult *= 3;
-							mult *= multbase;
+							if (monsterrating >= 8) mult *= 3.75;
+							else if (monsterrating >= 6) mult *= 3;
+							else if (monsterrating >= 4) mult *= 2.25;
+							else if (monsterrating >= 2) mult *= 1.5;
+							mult *= truemultbase;
 							massmulti += ceil(spawnee.mass * (LuckRoll * mult));
 							if (massmulti < 0) massmulti = 0;
 						}
@@ -880,7 +854,21 @@ class DD_EventHandler : EventHandler
 						montag.AppendFormat(" \c[gold](L%d)\c-", monsterlevel);
 						spawnee.SetTag(montag);
 					}
-					if (dydudebug_monsterscaling) Console.Printf("Actor's Level: %d [%d]", monsterlevel, spawnee.CountInv("MonsterLevel"));
+					if (dydudebug_monsterscaling) Console.Printf("Actor's Level: %d [%d], Actor's Rating: %d [%d]", monsterlevel, spawnee.CountInv("MonsterLevel"), monsterrating, spawnee.CountInv("MonsterRating"));
+				}
+				if (monsterrating)
+				{
+					spawnee.A_SetInventory("MonsterRating",monsterrating);
+					string montag = spawnee.GetTag();
+					if (monsterrating == 8) montag.AppendFormat(" \c[purple]<SSS>\c-");
+					else if (monsterrating == 7) montag.AppendFormat(" \c[fire]<SS>\c-");
+					else if (monsterrating == 6) montag.AppendFormat(" \c[red][S]\c-");
+					else if (monsterrating == 5) montag.AppendFormat(" \c[brick][A]\c-");
+					else if (monsterrating == 4) montag.AppendFormat(" \c[orange][B]\c-");
+					else if (monsterrating == 3) montag.AppendFormat(" \c[yellow][C]\c-");
+					else if (monsterrating == 2) montag.AppendFormat(" \c[green][D]\c-");
+					else if (monsterrating == 1) montag.AppendFormat(" \c[sapphire][E]\c-");
+					spawnee.SetTag(montag);
 				}
 				
 				if (exex_monsterlevelenabledflags)
@@ -1941,6 +1929,7 @@ class DD_EventHandler : EventHandler
 			actor IPAttack;
 			if (!(DDPlayerPawn(victim)) || (victim.bCOUNTKILL || specialtype))
 			{
+				int monsterrating = victim.CountInv("MonsterRating");
 				if (!victim.CountInv("DedMonsterFlag") && !sv_monsterrespawn) victim.A_SetInventory("DedMonsterFlag",1);
 				actor Player = players[0].mo;
 				bool giveexp;
@@ -1982,8 +1971,19 @@ class DD_EventHandler : EventHandler
 						//Console.Printf("inflictor.master: %s [%d]", mast, mastor.bFRIENDLY);
 					}
 					nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) giveexp = false;
-
+					
 					int ExpGain = (victim.spawnhealth() + victim.Stamina);
+					if (monsterrating)
+					{
+						if (monsterrating == 1) ExpGain *= 1.0125;
+						if (monsterrating == 2) ExpGain *= 1.025;
+						if (monsterrating == 3) ExpGain *= 1.05;
+						if (monsterrating == 4) ExpGain *= 1.1;
+						if (monsterrating == 5) ExpGain *= 1.2;
+						if (monsterrating == 6) ExpGain *= 1.4;
+						if (monsterrating == 7) ExpGain *= 1.8;
+						if (monsterrating >= 8) ExpGain *= 2.6;
+					}
 					if (specialtype & 1) ExpGain *= 0.5;
 					if (specialtype & 2) ExpGain *= frandompick(1.8,2.2);
 					if (specialtype & 4) ExpGain *= frandompick(0.625,0.875);
@@ -2233,7 +2233,15 @@ class DD_EventHandler : EventHandler
 				if (candropitems)
 				{
 					droptimes = 1;
-					luckbase = 0.0625;
+					if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
+					if (monsterrating == 2) droptimes = randompick(1,1,1,2,2);
+					if (monsterrating == 3) droptimes = randompick(1,1,2,2,2);
+					if (monsterrating == 4) droptimes = randompick(1,2,2,2,2);
+					if (monsterrating == 5) droptimes = randompick(2,2,2,2,3);
+					if (monsterrating == 6) droptimes = randompick(2,2,2,3,3);
+					if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
+					if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
+					luckbase = 0.0625 + (monsterrating * 0.015625);
 					lvldivider = 35;
 					if (IPAttack) 
 					{
@@ -2557,7 +2565,15 @@ class DD_EventHandler : EventHandler
 					// Ammo/Weapons
 					string droptype;
 					droptimes = 1;
-					luckbase = 0.0625;
+					if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
+					if (monsterrating == 2) droptimes = randompick(1,1,1,2,2);
+					if (monsterrating == 3) droptimes = randompick(1,1,2,2,2);
+					if (monsterrating == 4) droptimes = randompick(1,2,2,2,2);
+					if (monsterrating == 5) droptimes = randompick(2,2,2,2,3);
+					if (monsterrating == 6) droptimes = randompick(2,2,2,3,3);
+					if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
+					if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
+					luckbase = 0.0625 + (monsterrating * 0.015625);
 					lvldivider = 50;
 					if (IPAttack) 
 					{
@@ -2816,7 +2832,15 @@ class DD_EventHandler : EventHandler
 					
 					// Heal Items
 					droptimes = 1;
-					luckbase = 0.0625;
+					if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
+					if (monsterrating == 2) droptimes = randompick(1,1,1,2,2);
+					if (monsterrating == 3) droptimes = randompick(1,1,2,2,2);
+					if (monsterrating == 4) droptimes = randompick(1,2,2,2,2);
+					if (monsterrating == 5) droptimes = randompick(2,2,2,2,3);
+					if (monsterrating == 6) droptimes = randompick(2,2,2,3,3);
+					if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
+					if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
+					luckbase = 0.0625 + (monsterrating * 0.015625);
 					lvldivider = 35;
 					if (IPAttack) 
 					{
@@ -2862,7 +2886,15 @@ class DD_EventHandler : EventHandler
 					}
 
 					droptimes = 1;
-					luckbase = 0.0625;
+					if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
+					if (monsterrating == 2) droptimes = randompick(1,1,1,2,2);
+					if (monsterrating == 3) droptimes = randompick(1,1,2,2,2);
+					if (monsterrating == 4) droptimes = randompick(1,2,2,2,2);
+					if (monsterrating == 5) droptimes = randompick(2,2,2,2,3);
+					if (monsterrating == 6) droptimes = randompick(2,2,2,3,3);
+					if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
+					if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
+					luckbase = 0.0625 + (monsterrating * 0.015625);
 					lvldivider = 70;
 					if (IPAttack) 
 					{
@@ -3021,7 +3053,15 @@ class DD_EventHandler : EventHandler
 					// Random Inventory Item Drops
 					// Primary
 					droptimes = 1;
-					luckbase = 0.0625;
+					if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
+					if (monsterrating == 2) droptimes = randompick(1,1,1,2,2);
+					if (monsterrating == 3) droptimes = randompick(1,1,2,2,2);
+					if (monsterrating == 4) droptimes = randompick(1,2,2,2,2);
+					if (monsterrating == 5) droptimes = randompick(2,2,2,2,3);
+					if (monsterrating == 6) droptimes = randompick(2,2,2,3,3);
+					if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
+					if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
+					luckbase = 0.0625 + (monsterrating * 0.015625);
 					lvldivider = 70;
 					if (IPAttack) 
 					{

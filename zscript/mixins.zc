@@ -881,14 +881,19 @@ mixin class MonsterCollider
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		if (FoundPlayer) 
 		{
-			int critbase = 64;
-			if (exex_expenabled && MiscItem) critbase = (64 - (MiscItem.PlayerLevel * 0.125));
-			if (critbase <= 32) critbase = 32;
+			int critbase = 128;
+			if (exex_expenabled && MiscItem) critbase = (128 - (MiscItem.PlayerLevel * 0.0625));
+			if (critbase <= 64) critbase = 64;
+			if (CountInv("BlunderHelmSplitter")) critbase *= 0.9275;
+			if (CountInv("BlunderHelmSplitter2")) critbase *= 0.85;
+			if (CountInv("BlunderHelmSplitter3")) critbase *= 0.7775;
 			if (FoundPlayer.CountInv("PowerDouble")) critbase *= 0.75;
 			if (bBOSS) critbase *= 4;
+			if (mod == 'Beats' && flags & DMG_EXPLOSION) critbase *= 8;
 			if (random(1,critbase) <= 1) criticalhit = true;
 			if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critbase: %d", GetClassName(), critbase);
 		}
+		
 		initdmg = damage;
 		if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
 		if (criticalhit)
@@ -906,7 +911,7 @@ mixin class MonsterCollider
 		
 		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) DamageMobj [Mixin]", GetClassName());
 		int oldhealth = health;
-		int initdmg = damage;
+		initdmg = damage;
 		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) initdmg: %d, oldhealth: %d", GetClassName(), initdmg, oldhealth);
 		string infl, sour, vict;
 		vict = GetClassName();
@@ -1216,7 +1221,16 @@ mixin class MonsterCollider
 					BatSpinPuffIP(inflictor) || BatSpinPuffIP(source) ||
 					BatSpinPuffNoSound(inflictor) || BatSpinPuffNoSound(source) ||
 					BatSpinPuffNoSoundIP(inflictor) || BatSpinPuffNoSoundIP(source)) ActorDefenseIgnoreFactor += (SpinAtkFactor * (1.00 - ActorDefenseIgnoreFactor));
-					
+			
+			if (FoundPlayer)
+			{
+				double FoodFactor = 0.00;
+				IF (FoundPlayer.CountInv("PowerRoastBuff")) FoodFactor += 0.0625; // Pig Roast
+				IF (FoundPlayer.CountInv("PowerMealBuff")) FoodFactor += 0.25; // Gourmet Meal
+				IF (FoundPlayer.CountInv("PowerMeal2Buff")) FoodFactor += 0.0625; // Turkey Dinner
+				if (FoodFactor > 0.00) ActorDefenseIgnoreFactor += (FoodFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			
 			if (mod == 'Massacre') ActorDefenseIgnoreFactor += (1.00 * (1.00 - ActorDefenseIgnoreFactor));
 		}
 		
