@@ -817,35 +817,36 @@ mixin class MonsterCollider
 	int initdmg;
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		bool criticalhit = false;
 		bool IsPlayerRaven = false;
-		DDPlayerPawn RavenPlayer;
-		RavenPlayer = DDPlayerPawn(source);
-		if (RavenPlayer)
+		DDPlayerPawn FoundPlayer;
+		FoundPlayer = DDPlayerPawn(source);
+		if (FoundPlayer)
 		{
-			let RavenItem = PowerRavenInvisibility(RavenPlayer.FindInventory("PowerRavenInvisibility"));
+			let RavenItem = PowerRavenInvisibility(FoundPlayer.FindInventory("PowerRavenInvisibility"));
 			if (RavenItem) 
 			{
 				IsPlayerRaven = true;
 			}
 			else
 			{
-				let RavenItem = PowerRavenFlight(RavenPlayer.FindInventory("PowerRavenFlight"));
+				let RavenItem = PowerRavenFlight(FoundPlayer.FindInventory("PowerRavenFlight"));
 				if (RavenItem) IsPlayerRaven = true;
 			}
 		}
 		else
 		{
-			RavenPlayer = DDPlayerPawn(inflictor);
-			if (RavenPlayer)
+			FoundPlayer = DDPlayerPawn(inflictor);
+			if (FoundPlayer)
 			{
-				let RavenItem = PowerRavenInvisibility(RavenPlayer.FindInventory("PowerRavenInvisibility"));
+				let RavenItem = PowerRavenInvisibility(FoundPlayer.FindInventory("PowerRavenInvisibility"));
 				if (RavenItem) 
 				{
 					IsPlayerRaven = true;
 				}
 				else
 				{
-					let RavenItem = PowerRavenFlight(RavenPlayer.FindInventory("PowerRavenFlight"));
+					let RavenItem = PowerRavenFlight(FoundPlayer.FindInventory("PowerRavenFlight"));
 					if (RavenItem) IsPlayerRaven = true;
 				}
 			}
@@ -878,9 +879,25 @@ mixin class MonsterCollider
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = 0;
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		if (FoundPlayer) 
+		{
+			int critbase = 64;
+			if (exex_expenabled && MiscItem) critbase = (64 - (MiscItem.PlayerLevel * 0.125));
+			if (critbase <= 32) critbase = 32;
+			if (FoundPlayer.CountInv("PowerDouble")) critbase *= 0.75;
+			if (bBOSS) critbase *= 4;
+			if (random(1,critbase) <= 1) criticalhit = true;
+			if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critbase: %d", GetClassName(), critbase);
+		}
 		initdmg = damage;
-		int shieldtype;
 		if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
+		if (criticalhit)
+		{
+			damage *= frandom(1.9,2.1);
+			if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critical Hit Dealth: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
+			A_StartSound("misc/critsnd1", 214, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.75,1.25));
+		}
+		int shieldtype;
 		if (dydudebug_actordmgdisplays && source) Console.Printf("(\c[green]%s\c-): dmgsource: \c[brick]%p\c- (\c[red]%s\c-)", GetClassName(), source, source.GetClassName());
 		if (dydudebug_actordmgdisplays && inflictor) Console.Printf("(\c[green]%s\c-): dmginflictor: \c[brick]%p\c- (\c[red]%s\c-)", GetClassName(), inflictor, inflictor.GetClassName());
 		nm = "CCards_Actor_Ghost"; if (CountInv(nm)) A_SetInventory("CCardGhostMarker",1);
@@ -1193,6 +1210,14 @@ mixin class MonsterCollider
 			if (PuddingDog(inflictor) || PuddingPup(inflictor) || PupGrenade(inflictor) || PuddingDog(source) || PuddingPup(source) || PupGrenade(source)) ActorDefenseIgnoreFactor += (PuddingFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
 			if (bellefishzap) ActorDefenseIgnoreFactor += (0.334 * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double SpinAtkFactor = 0.8;
+			if (BatSpinPuff(inflictor) || BatSpinPuff(source) ||
+					BatSpinPuffIP(inflictor) || BatSpinPuffIP(source) ||
+					BatSpinPuffNoSound(inflictor) || BatSpinPuffNoSound(source) ||
+					BatSpinPuffNoSoundIP(inflictor) || BatSpinPuffNoSoundIP(source)) ActorDefenseIgnoreFactor += (SpinAtkFactor * (1.00 - ActorDefenseIgnoreFactor));
+					
+			if (mod == 'Massacre') ActorDefenseIgnoreFactor += (1.00 * (1.00 - ActorDefenseIgnoreFactor));
 		}
 		
 		predmginr = damage;
@@ -1221,7 +1246,7 @@ mixin class MonsterCollider
 		prevDamageFactor = DamageFactor;
 		if (DamageFactor < 1.00) 
 		{
-			//if (criticalhit) ActorDefenseIgnoreFactor = 1.00;
+			if (criticalhit) ActorDefenseIgnoreFactor = 1.00;
 			DamageFactor += ((1.00 - DamageFactor) * ActorDefenseIgnoreFactor); 
 		}
 		if (dydudebug_actordmgdisplays && damage > 0)
@@ -1235,7 +1260,7 @@ mixin class MonsterCollider
 			int basepoke = 64;
 			if (PikePuffIP(inflictor) || PikePuffIP(source)) basepoke *= 0.125;
 			if (bBOSS) basepoke *= 4;
-			if (random(1,basepoke) <= 1)
+			if (random(1,basepoke) <= 1 || criticalhit)
 			{
 				mod = 'KillPoke';
 				if (bBOSS) damage += (((SpawnHealth() + Stamina) * random(1,2)) / 8); 
