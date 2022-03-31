@@ -3221,9 +3221,20 @@ class PlayerStatItem : Inventory
 		if (IsMorphed == 1) baseatkfct *= 0.334;
 		if (!passive && damage > 0) // If the owner [usually the player] of the item is the ATTACKER
 		{
-			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive): %d", damage);
+			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive): %d (baseatkfct: %.8f)", damage, baseatkfct);
+			
+			// Map Completion [No-RPG Mode]
+			double MapFactor = 1.00;
+			if (!exex_expenabled) 
+			{
+				MapFactor = (1.00 + (totalcompleted * (baseatkfct * 3)) + (totalallkills * (baseatkfct)) + (totalallitems * (baseatkfct)) + (totalallsecrets * (baseatkfct)));
+				if (MapFactor >= 5.00) MapFactor = 5.00;
+				if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
+			}
+			
 			// Level
-			double LVLFactor = (1.00 + (TruePlayerLevel * baseatkfct));
+			double LVLFactor = 1.00;
+			if (exex_expenabled) LVLFactor = (1.00 + (TruePlayerLevel * baseatkfct));
 			if (IsMorphed == 1)
 			{
 				if (LVLFactor <= 2.334) LVLFactor = 2.334;
@@ -3236,7 +3247,7 @@ class PlayerStatItem : Inventory
 
 			// Attack
 			double ATKFactor = 1.00;
-			if (exex_extraatkdefspd) ATKFactor = (1.00 + (TruePlayerATK * baseatkfct) + (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*1),(baseatkfct*1),(baseatkfct*2))));
+			if (exex_extraatkdefspd && exex_expenabled) ATKFactor = (1.00 + (TruePlayerATK * baseatkfct) + (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*1),(baseatkfct*1),(baseatkfct*2))));
 			if (IsMorphed == 1)
 			{
 				if (ATKFactor <= 2.334) ATKFactor = 2.334;
@@ -3356,6 +3367,7 @@ class PlayerStatItem : Inventory
 			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - atkfct): %.8f", atkfct);
 			
 			double TOTALFactor = 1.0
+													 * MapFactor
 													 * LVLFactor
 													 * ATKFactor
 													 * SkillFactor
@@ -3386,9 +3398,21 @@ class PlayerStatItem : Inventory
 		if (IsMorphed == 1) basedeffct *= 0.334;
 		if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 		{
-			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("FDamage (passive[pre]): %d", damage);
+			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("FDamage (passive[pre]): %d (basedeffct: %.8f)", damage, basedeffct);
+			
+			// Map Completion [No-RPG Mode]
+			double MapFactor = 1.00;
+			if (!exex_expenabled) 
+			{
+				MapFactor = (1.00 - (totalcompleted * (basedeffct * 3)) - (totalallkills * (basedeffct)) - (totalallitems * (basedeffct)) - (totalallsecrets * (basedeffct)));
+				if (MapFactor <= 0.20) MapFactor = 0.20;
+				if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
+				//Console.Printf("totalallkills: %d, totalallitems: %d, totalallitems: %d, totalcompleted: %d", totalallkills, totalallsecrets, totalallitems, totalcompleted);
+			}
+
 			// Level
-			double LVLFactor = (1.00 - (TruePlayerLevel * basedeffct));
+			double LVLFactor = 1.00;
+			if (exex_expenabled) LVLFactor = (1.00 - (TruePlayerLevel * basedeffct));
 			if (IsMorphed == 1)
 			{
 				if (LVLFactor <= 0.60) LVLFactor = 0.60;
@@ -3401,7 +3425,7 @@ class PlayerStatItem : Inventory
 
 			// Defense
 			double DEFFactor = 1.00;
-			if (exex_extraatkdefspd) DEFFactor = (1.00 - (TruePlayerDEF * basedeffct) - (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.5),(basedeffct*0.5),(basedeffct*0.5),(basedeffct),(basedeffct),(basedeffct*2))));
+			if (exex_extraatkdefspd && exex_expenabled) DEFFactor = (1.00 - (TruePlayerDEF * basedeffct) - (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.5),(basedeffct*0.5),(basedeffct*0.5),(basedeffct),(basedeffct),(basedeffct*2))));
 			if (IsMorphed == 1)
 			{
 				if (DEFFactor <= 0.60) DEFFactor = 0.60;
@@ -3519,6 +3543,7 @@ class PlayerStatItem : Inventory
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - deffct): %.8f", deffct);
 
 			double TOTALFactor = 1.0
+													 * MapFactor
 													 * LVLFactor
 													 * DEFFactor
 													 * SkillFactor
@@ -3571,15 +3596,26 @@ class PlayerStatItem : Inventory
 		HUDSpeed = Speed;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [base]: %.8f", Speed);
 
-		Speed = 1.00;
-		HUDSpeed = Speed;
-		if (dydudebug_speedcalcs) Console.Printf("SpeedX [base]: %.8f", Speed);
-
 		double BaseFactor = 1.0;
 		double BaseMul = 0.009375;
 		if (IsMorphed == 1) BaseMul *= 3;
-		if (exex_extraatkdefspd) BaseFactor *= (1.00 + (TruePlayerLevel * BaseMul) + (TruePlayerSPD * BaseMul));
-												else BaseFactor *= (1.00 + (TruePlayerLevel * BaseMul));
+
+		// Map Completion [No-RPG Mode]
+		double MapFactor = 1.00;
+		if (!exex_expenabled) 
+		{
+			MapFactor = (1.00 + (totalcompleted * (BaseMul * 3)) + (totalallkills * (BaseMul)) + (totalallitems * (BaseMul)) + (totalallsecrets * (BaseMul)));
+			if (MapFactor >= 2.5) MapFactor = 2.5;
+			Speed *= MapFactor;
+			if (dydudebug_speedcalcs) Console.Printf("SpeedX [map completion (RPG mode off)]: %.8f", MapFactor);
+		}
+
+		if (exex_expenabled)
+		{
+			if (exex_extraatkdefspd) BaseFactor *= (1.00 + (TruePlayerLevel * BaseMul) + (TruePlayerSPD * BaseMul));
+													else BaseFactor *= (1.00 + (TruePlayerLevel * BaseMul));
+		}
+		
 		if (IsMorphed == 1)
 		{
 			if (BaseFactor >= 7.5) BaseFactor = 7.5;
