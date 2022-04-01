@@ -109,6 +109,7 @@ class PlayerStatItem : Inventory
 	int MaxHealthTrue;
 	int MaxHealthTrueRF;
 	int HealthLevelAdd;
+	int HealthNoRPGAdd;
 	int HealthBonusAdd;
 	int MaxHealthLimit;
 	double MaxItemPoints;
@@ -208,6 +209,7 @@ class PlayerStatItem : Inventory
 					globalvars.PlayerSPD = PlayerSPD = 0;
 					globalvars.PlayerLuck = PlayerLuck = 0;
 					globalvars.HealthLevelAdd = HealthLevelAdd = 0;
+					globalvars.HealthNoRPGAdd = HealthNoRPGAdd = 0;
 					globalvars.HealthBonusAdd = HealthBonusAdd = 0;
 					globalvars.ItemPoints = ItemPoints = 0;
 					if (itemtimer == 0 && dydudebug_deathexitdebug) Console.Printf("exex_deathexitaffectsstats: YES", exex_deathexitaffectsstats);
@@ -229,6 +231,7 @@ class PlayerStatItem : Inventory
 					PlayerLuck = globalvars.PlayerLuck;
 					MaxHealthTrue = globalvars.MaxHealthTrue;
 					HealthLevelAdd = globalvars.HealthLevelAdd;
+					HealthNoRPGAdd = globalvars.HealthNoRPGAdd;
 					HealthBonusAdd = globalvars.HealthBonusAdd;
 					ItemPoints = globalvars.ItemPoints;
 					BaseStartMaxHealth = globalvars.BaseStartMaxHealth;
@@ -237,7 +240,7 @@ class PlayerStatItem : Inventory
 						if (MaxHealthTrue) owner.player.mo.health = MaxHealthTrue;
 						if (dydudebug_deathexitdebug)
 						{
-							Console.Printf("MaxHealthTrue: %d, HealthLevelAdd: %d, HealthBonusAdd: %d, BaseStartMaxHealth: %d", MaxHealthTrue, HealthLevelAdd, HealthBonusAdd, BaseStartMaxHealth);
+							Console.Printf("MaxHealthTrue: %d, HealthLevelAdd: %d, HealthNoRPGAdd, %d, HealthBonusAdd: %d, BaseStartMaxHealth: %d", MaxHealthTrue, HealthLevelAdd, HealthBonusAdd, HealthNoRPGAdd, BaseStartMaxHealth);
 							Console.Printf("exex_deathexitaffectsstats: NO", exex_deathexitaffectsstats);
 						}
 					}
@@ -429,6 +432,7 @@ class PlayerStatItem : Inventory
 						
 						if (MaxHealthTrue < 1) MaxHealthTrue = 1;
 						HealthLevelAdd = 0;
+						HealthNoRPGAdd = 0;
 						owner.player.health = owner.player.mo.health = CurrentHealth = MaxHealthTrue;
 						owner.A_SetInventory("PlayerMaxHP",MaxHealthTrue);
 						BaseStartMaxHealth = MaxHealthTrue; // Sets the original Max Health as at the start of a game [for various checks, including Sigil damage]
@@ -524,7 +528,7 @@ class PlayerStatItem : Inventory
 							PlayerLevel += 1;
 							TrueIPLevelGate--;
 							
-							LevelUpProcess();
+							LevelUpProcess(0);
 							
 							owner.A_SetInventory("PlayerLevel",PlayerLevel);
 							string LevelUpMsg = "";
@@ -641,11 +645,11 @@ class PlayerStatItem : Inventory
 							}
 						}
 						
-						LevelUpProcess();
+						LevelUpProcess(1);
 						
 						string LevelUpMsg = "";
 						LevelUpMsg.AppendFormat("\c[Green]Consumed a bottle of Potentylene! \c[brick][+%d HP]", HPMaxGain);
-						if (exex_extraatkdefspd)
+						if (exex_expenabled && exex_extraatkdefspd)
 						{
 							if ((PlayerATK > PrevATK) || (PlayerDEF > PrevDEF) || (PlayerSPD > PrevSPD)) LevelUpMsg.AppendFormat("\n\n");
 							if (PlayerATK > PrevATK) LevelUpMsg.AppendFormat("\n\c[brick]Attack Increased Even More than Normal!");
@@ -802,6 +806,11 @@ class PlayerStatItem : Inventory
 					if (skill == 3) HealthBonusAdd2 *= 2.5;
 					if (skill >= 4) HealthBonusAdd2 *= 2.0;
 					HealthLevelAdd2 = 0;
+					if (skill <= 0) HealthLevelAdd2 = (HealthNoRPGADD * 4.0);
+					if (skill == 1) HealthLevelAdd2 = (HealthNoRPGADD * 3.5);
+					if (skill == 2) HealthLevelAdd2 = (HealthNoRPGADD * 3.0);
+					if (skill == 3) HealthLevelAdd2 = (HealthNoRPGADD * 2.5);
+					if (skill >= 4) HealthLevelAdd2 = (HealthNoRPGADD * 2.0);
 				}
 				MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd2 + HealthBonusAdd2);
 				
@@ -1472,6 +1481,7 @@ class PlayerStatItem : Inventory
 				globalvars.ItemPoints = ItemPoints;
 				globalvars.BaseStartMaxHealth = BaseStartMaxHealth;
 				globalvars.HealthLevelAdd = HealthLevelAdd;
+				globalvars.HealthNoRPGADD = HealthNoRPGADD;
 				globalvars.HealthBonusAdd = HealthBonusAdd;
 				globalvars.MaxHealthTrue = MaxHealthTrue;
 				globalvars.Experience = Experience;
@@ -2522,14 +2532,33 @@ class PlayerStatItem : Inventory
 			if (playerset) TotalMass = playerset.originalmass;
 			BaseMass = TotalMass;
 			if (dydudebug_masscalcs) Console.Printf("Mass [Base]: %d", TotalMass);
-
+			
 			TotalMass += (TruePlayerLevel * massmulfactor);
 			BaseMass = TotalMass;
 			if (dydudebug_masscalcs) Console.Printf("Mass [Level]: %d", TotalMass);
 			
-			TotalMass += (TruePlayerDEF * massmulfactor);
-			BaseMass = TotalMass;
-			if (dydudebug_masscalcs) Console.Printf("Mass [DEF]: %d", TotalMass);
+			if (!exex_expenabled)
+			{
+				double tempmass;
+				tempmass += (totalcompleted * massmulfactor);
+				tempmass += (totalallkills * (massmulfactor / 3));
+				tempmass += (totalallitems * (massmulfactor / 3));
+				tempmass += (totalallsecrets * (massmulfactor / 3));
+				tempmass *= (1.00 + (NumOfAfasDrops * 0.05));
+				TotalMass += tempmass;
+				if (dydudebug_masscalcs) Console.Printf("Mass [No-RPGMode]: %d", TotalMass);
+			}
+			
+			if (exex_expenabled && exex_extraatkdefspd)
+			{
+				TotalMass += (TruePlayerLevel * massmulfactor);
+				BaseMass = TotalMass;
+				if (dydudebug_masscalcs) Console.Printf("Mass [Level]: %d", TotalMass);
+				
+				TotalMass += (TruePlayerDEF * massmulfactor);
+				BaseMass = TotalMass;
+				if (dydudebug_masscalcs) Console.Printf("Mass [DEF]: %d", TotalMass);
+			}
 			
 			// Buffs
 			if ((owner.bINVULNERABLE || owner.player.cheats & CF_GODMODE2 || owner.player.cheats & CF_GODMODE) || 
@@ -2651,29 +2680,56 @@ class PlayerStatItem : Inventory
 			if (IsMorphed == 1) CharacterJumpZ *= 0.334;
 			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Character Base]: %.8f", CharacterJumpZ);
 
+			// Map Completion [No-RPG Mode]
+			double MapNoRPGJumpZ = 1.00;
+			if (!exex_expenabled) 
+			{
+				if (IsMorphed == 1)
+				{
+					MapNoRPGJumpZ += (totalcompleted * ((0.0025 * 1.75) * 0.334));
+					MapNoRPGJumpZ += (totalallkills * ((0.0025 * (1.75 / 3)) * 0.334));
+					MapNoRPGJumpZ += (totalallitems * ((0.0025 * (1.75 / 3)) * 0.334));
+					MapNoRPGJumpZ += (totalallsecrets * ((0.0025 * (1.75 / 3)) * 0.334));
+				}
+				else
+				{
+					MapNoRPGJumpZ += (totalcompleted * (0.0025 * 1.75));
+					MapNoRPGJumpZ += (totalallkills * (0.0025 * (1.75 / 3)));
+					MapNoRPGJumpZ += (totalallitems * (0.0025 * (1.75 / 3)));
+					MapNoRPGJumpZ += (totalallsecrets * (0.0025 * (1.75 / 3)));
+				}
+				MapNoRPGJumpZ *= (1.00 + (NumOfAfasDrops * 0.05));
+			}
+
 			// Level
 			double LevelJumpZ = 1.00;
-			if (IsMorphed == 1)
+			if (exex_expenabled) 
 			{
-				LevelJumpZ += (TruePlayerLevel * ((0.0025 * 1.75) * 0.334));
+				if (IsMorphed == 1)
+				{
+					LevelJumpZ += (TruePlayerLevel * ((0.0025 * 1.75) * 0.334));
+				}
+				else
+				{
+					LevelJumpZ += (TruePlayerLevel * (0.0025 * 1.75));
+				}
+				if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Level]: %.8f", LevelJumpZ);
 			}
-			else
-			{
-				LevelJumpZ += (TruePlayerLevel * (0.0025 * 1.75));
-			}
-			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Level]: %.8f", LevelJumpZ);
 			
 			// Speed
 			double SpeedJumpZ = 1.00;
-			if (IsMorphed == 1)
+			if (exex_expenabled && exex_extraatkdefspd) 
 			{
-				SpeedJumpZ += (TruePlayerSPD * ((0.0025 * 1.75) * 0.334));
+				if (IsMorphed == 1)
+				{
+					SpeedJumpZ += (TruePlayerSPD * ((0.0025 * 1.75) * 0.334));
+				}
+				else
+				{
+					SpeedJumpZ += (TruePlayerSPD * (0.0025 * 1.75));
+				}
+				if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Speed]: %.8f", SpeedJumpZ);
 			}
-			else
-			{
-				SpeedJumpZ += (TruePlayerSPD * (0.0025 * 1.75));
-			}
-			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Speed]: %.8f", SpeedJumpZ);
 			
 			// Buffs
 			double BuffJumpZ = 1.00;
@@ -2788,6 +2844,7 @@ class PlayerStatItem : Inventory
 			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [jmpfct]: %.8f", jmpfct);
 			
 			double TotalJumpZ = CharacterJumpZ
+												* MapNoRPGJumpZ
 												* LevelJumpZ
 												* SpeedJumpZ
 												* BuffJumpZ
@@ -3006,7 +3063,7 @@ class PlayerStatItem : Inventory
 		}
 	}
 	
-	void LevelUpProcess()
+	void LevelUpProcess(int type)
 	{
 		let globalvars = DDGlobalVariables.Get();
 		let playeractor = DDPlayerPawn(owner);
@@ -3189,6 +3246,18 @@ class PlayerStatItem : Inventory
 		if (HPMaxGain < 1) HPMaxGain = 1;
 		owner.player.mo.health += HPMaxGain;
 		HealthLevelAdd += HPMaxGain;
+		if (type == 1) 
+		{
+			HealthNoRPGAdd += HPMaxGain;
+			if (!exex_expenabled)
+			{
+				if (skill <= 0) HPMaxGain *= 4.0;
+				if (skill == 1) HPMaxGain *= 3.5;
+				if (skill == 2) HPMaxGain *= 3.0;
+				if (skill == 3) HPMaxGain *= 2.5;
+				if (skill >= 4) HPMaxGain *= 2.0;
+			}
+		}
 		A_StatIncHud(HPMaxGain,0);
 		
 		MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd + HealthBonusAdd);
@@ -3229,6 +3298,7 @@ class PlayerStatItem : Inventory
 			if (!exex_expenabled) 
 			{
 				MapFactor = (1.00 + (totalcompleted * (baseatkfct * 3)) + (totalallkills * (baseatkfct)) + (totalallitems * (baseatkfct)) + (totalallsecrets * (baseatkfct)));
+				MapFactor *= (1.00 + (NumOfAfasDrops * 0.05));
 				if (MapFactor >= 5.00) MapFactor = 5.00;
 				if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
 			}
@@ -3406,6 +3476,7 @@ class PlayerStatItem : Inventory
 			if (!exex_expenabled) 
 			{
 				MapFactor = (1.00 - (totalcompleted * (basedeffct * 3)) - (totalallkills * (basedeffct)) - (totalallitems * (basedeffct)) - (totalallsecrets * (basedeffct)));
+				MapFactor *= (1.00 - (NumOfAfasDrops * 0.05));
 				if (MapFactor <= 0.20) MapFactor = 0.20;
 				if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
 				//Console.Printf("totalallkills: %d, totalallitems: %d, totalallitems: %d, totalcompleted: %d", totalallkills, totalallsecrets, totalallitems, totalcompleted);
@@ -3606,6 +3677,7 @@ class PlayerStatItem : Inventory
 		if (!exex_expenabled) 
 		{
 			MapFactor = (1.00 + (totalcompleted * (BaseMul * 1)) + (totalallkills * (BaseMul * 0.3334)) + (totalallitems * (BaseMul * 0.3334)) + (totalallsecrets * (BaseMul * 0.3334)));
+			MapFactor *= (1.00 + (NumOfAfasDrops * 0.05));
 			if (MapFactor >= 2.5) MapFactor = 2.5;
 			Speed *= MapFactor;
 			if (dydudebug_speedcalcs) Console.Printf("SpeedX [map completion (RPG mode off)]: %.8f", MapFactor);
