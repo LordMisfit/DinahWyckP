@@ -23,6 +23,13 @@ class CupOfRage : CustomInventoryExt
 		CustomInventoryExt.PickUpVoice false;
 	}
 	
+	override String PickupMessage()
+	{
+		string msg = PickupMsg;
+		if (!exex_ikaripointsenabled) msg = "\c[brick]A drink of this cup brings you anger... healed a small chunk of health!\c-";
+		return msg;
+	}
+	
 	states
 	{
 		Spawn:
@@ -31,22 +38,34 @@ class CupOfRage : CustomInventoryExt
 		Pickup:
 			TNT1 A 0
 			{
+				let globalvars = DDGlobalVariables.Get();
+				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				player.mo.A_StartSound("misc/ding1",301,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
 				player.mo.A_StartSound("misc/ding1",302,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
 				player.mo.A_StartSound("misc/ding1",303,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.8,1.2));
 				player.mo.A_StartSound("misc/ragecup",308,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
 				player.mo.A_StartSound("misc/ragecup",309,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.8,1.2));
-				let globalvars = DDGlobalVariables.Get();
-				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				if (MiscItem)
 				{
-					double ipgain = (MiscItem.MaxItemPoints - MiscItem.ItemPoints);
-					ipgain *= frandompick(0.0875,0.1,0.1,0.1,0.1125);
-					int basechance = 4;
-					if (random(1,basechance) <= 1) 
+					if (!exex_ikaripointsenabled)
 					{
-						ipgain += frandompick(2.5,2.5,2.5,2.5,2.5,5.0,5.0,5.0,5.0,7.5,7.5,7.5,10.0,10.0,12.5);
-						if (random(1,basechance) <= 1)
+						int heal = ((MiscItem.MaxHealthTrue * frandompick(0.05)) * random(4,8));
+						int basechance = 4;
+						if (random(1,basechance) <= 1) heal *= random(2,4);
+						if (health < MiscItem.MaxHealthTrue)
+						{
+							int temphealth = health;
+							temphealth += heal;
+							if (temphealth > MiscItem.MaxHealthTrue) temphealth = MiscItem.MaxHealthTrue;
+							health = temphealth;
+						}
+					}
+					else
+					{
+						double ipgain = (MiscItem.MaxItemPoints - MiscItem.ItemPoints);
+						ipgain *= frandompick(0.0875,0.1,0.1,0.1,0.1125);
+						int basechance = 4;
+						if (random(1,basechance) <= 1) 
 						{
 							ipgain += frandompick(2.5,2.5,2.5,2.5,2.5,5.0,5.0,5.0,5.0,7.5,7.5,7.5,10.0,10.0,12.5);
 							if (random(1,basechance) <= 1)
@@ -67,6 +86,10 @@ class CupOfRage : CustomInventoryExt
 												if (random(1,basechance) <= 1)
 												{
 													ipgain += frandompick(2.5,2.5,2.5,2.5,2.5,5.0,5.0,5.0,5.0,7.5,7.5,7.5,10.0,10.0,12.5);
+													if (random(1,basechance) <= 1)
+													{
+														ipgain += frandompick(2.5,2.5,2.5,2.5,2.5,5.0,5.0,5.0,5.0,7.5,7.5,7.5,10.0,10.0,12.5);
+													}
 												}
 											}
 										}
@@ -74,12 +97,12 @@ class CupOfRage : CustomInventoryExt
 								}
 							}
 						}
+						invoker.A_AddIP(ipgain, ipgain, true, true);
+						
+						int IPTimerBaseInc = random(3,5) * -35;
+						if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer = IPTimerBaseInc;
+																					else MiscItem.IPDissipateTimer += IPTimerBaseInc;
 					}
-					invoker.A_AddIP(ipgain, ipgain, true, true);
-					
-					int IPTimerBaseInc = random(3,5) * -35;
-					if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer = IPTimerBaseInc;
-																				else MiscItem.IPDissipateTimer += IPTimerBaseInc;
 				}
 			}
 			stop;
@@ -100,6 +123,13 @@ class CupOfRageMax : CustomInventoryExt
 		Inventory.PickupMessage "\c[brick]A drink of this cup brings you anger... IP levels maxed out!";
 		Inventory.PickupSound "misc/ragecup";
 		CustomInventoryExt.PickUpVoice false;
+	}
+	
+	override String PickupMessage()
+	{
+		string msg = PickupMsg;
+		if (!exex_ikaripointsenabled) msg = "\c[brick]A drink of this cup brings you anger... health overmaxed to 3x!\c-";
+		return msg;
 	}
 	
 	states
@@ -123,10 +153,17 @@ class CupOfRageMax : CustomInventoryExt
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				if (MiscItem)
 				{
-					double ipgain = MiscItem.MaxItemPoints;
-					invoker.A_AddIP(ipgain, ipgain, true, true);
-					
-					MiscItem.IPDissipateTimer = -2100;
+					if (!exex_ikaripointsenabled)
+					{
+						if (health < (MiscItem.MaxHealthTrue * 3)) health = (MiscItem.MaxHealthTrue * 3);
+					}
+					else
+					{
+						double ipgain = MiscItem.MaxItemPoints;
+						invoker.A_AddIP(ipgain, ipgain, true, true);
+						
+						MiscItem.IPDissipateTimer = -2100;
+					}
 				}
 			}
 			stop;
@@ -149,6 +186,13 @@ class CupOfGoldenRage : CustomInventoryExt
 		CustomInventoryExt.PickUpVoice false;
 	}
 	
+	override String PickupMessage()
+	{
+		string msg = PickupMsg;
+		if (!exex_ikaripointsenabled) msg = "\c[brick]A drink of this golden cup brings you anger... healed a large chunk of health!\c-";
+		return msg;
+	}
+	
 	states
 	{
 		Spawn:
@@ -169,13 +213,25 @@ class CupOfGoldenRage : CustomInventoryExt
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				if (MiscItem)
 				{
-					double ipgain = (MiscItem.MaxItemPoints - MiscItem.ItemPoints);
-					ipgain *= frandompick(0.0875,0.1,0.1,0.1,0.1125);
-					int basechance = 4;
-					if (random(1,basechance) <= 1) 
+					if (!exex_ikaripointsenabled)
 					{
-						ipgain += frandompick(2.5,2.5,2.5,2.5,2.5,5.0,5.0,5.0,5.0,7.5,7.5,7.5,10.0,10.0,12.5);
-						if (random(1,basechance) <= 1)
+						int heal = ((MiscItem.MaxHealthTrue * frandompick(0.125)) * random(4,8));
+						int basechance = 4;
+						if (random(1,basechance) <= 1) heal *= random(2,4);
+						if (health < MiscItem.MaxHealthTrue)
+						{
+							int temphealth = health;
+							temphealth += heal;
+							if (temphealth > MiscItem.MaxHealthTrue) temphealth = MiscItem.MaxHealthTrue;
+							health = temphealth;
+						}
+					}
+					else
+					{
+						double ipgain = (MiscItem.MaxItemPoints - MiscItem.ItemPoints);
+						ipgain *= frandompick(0.0875,0.1,0.1,0.1,0.1125);
+						int basechance = 4;
+						if (random(1,basechance) <= 1) 
 						{
 							ipgain += frandompick(2.5,2.5,2.5,2.5,2.5,5.0,5.0,5.0,5.0,7.5,7.5,7.5,10.0,10.0,12.5);
 							if (random(1,basechance) <= 1)
@@ -196,6 +252,10 @@ class CupOfGoldenRage : CustomInventoryExt
 												if (random(1,basechance) <= 1)
 												{
 													ipgain += frandompick(2.5,2.5,2.5,2.5,2.5,5.0,5.0,5.0,5.0,7.5,7.5,7.5,10.0,10.0,12.5);
+													if (random(1,basechance) <= 1)
+													{
+														ipgain += frandompick(2.5,2.5,2.5,2.5,2.5,5.0,5.0,5.0,5.0,7.5,7.5,7.5,10.0,10.0,12.5);
+													}
 												}
 											}
 										}
@@ -203,14 +263,14 @@ class CupOfGoldenRage : CustomInventoryExt
 								}
 							}
 						}
+						ipgain *= 2.5;
+						invoker.A_AddIP(ipgain, ipgain, true, true);
+						
+						int IPTimerBaseInc = ((random(3,5) * -35) * 2.5);
+						if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer = IPTimerBaseInc;
+																					else MiscItem.IPDissipateTimer += IPTimerBaseInc;
+						player.mo.A_GiveInventory("GoldRageCups",1);
 					}
-					ipgain *= 2.5;
-					invoker.A_AddIP(ipgain, ipgain, true, true);
-					
-					int IPTimerBaseInc = ((random(3,5) * -35) * 2.5);
-					if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer = IPTimerBaseInc;
-																				else MiscItem.IPDissipateTimer += IPTimerBaseInc;
-					player.mo.A_GiveInventory("GoldRageCups",1);
 				}
 			}
 			stop;
