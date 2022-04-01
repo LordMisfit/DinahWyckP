@@ -2319,8 +2319,9 @@ class PlayerStatItem : Inventory
 			}
 			
 			if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0x - SPD Evade Check]: %.4f\c-", SPDEvadeCheck);
-		
-			EvasionRate = ((TruePlayerLevel * SPDEvadeCheck) + (TruePlayerSPD * SPDEvadeCheck)) * 0.5;
+			
+			if (exex_expenabled) EvasionRate = (((TruePlayerLevel + 1) * SPDEvadeCheck) + ((TruePlayerSPD + 1) * SPDEvadeCheck)) * 0.5;
+			else EvasionRate = SPDEvadeCheck;
 			if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 1 - Base (Agl/Evade, Lvl/Evade)]: %d\c-", EvasionRate);
 			
 			if (Owner.CountInv("PowerHaste")) EvasionRate *= 3;
@@ -3604,7 +3605,7 @@ class PlayerStatItem : Inventory
 		double MapFactor = 1.00;
 		if (!exex_expenabled) 
 		{
-			MapFactor = (1.00 + (totalcompleted * (BaseMul * 3)) + (totalallkills * (BaseMul)) + (totalallitems * (BaseMul)) + (totalallsecrets * (BaseMul)));
+			MapFactor = (1.00 + (totalcompleted * (BaseMul * 1)) + (totalallkills * (BaseMul * 0.3334)) + (totalallitems * (BaseMul * 0.3334)) + (totalallsecrets * (BaseMul * 0.3334)));
 			if (MapFactor >= 2.5) MapFactor = 2.5;
 			Speed *= MapFactor;
 			if (dydudebug_speedcalcs) Console.Printf("SpeedX [map completion (RPG mode off)]: %.8f", MapFactor);
@@ -4124,43 +4125,67 @@ class PlayerDashJump : Inventory
 		}
 		if (weapon is "HandToHand")
 		{
-			if (berserked) DashCost -= 4;
-								else DashCost -= 3;
+			if (exex_expenabled)
+			{
+				if (berserked) DashCost -= 4;
+									else DashCost -= 3;
+			}
+			else
+			{
+				if (berserked) DashCost -= 6;
+									else DashCost -= 4;
+			}
 		}
 		if (weapon is "CandleWhip")
 		{
-			if (berserked) DashCost -= 2;
-								else DashCost -= 1;
+			if (exex_expenabled)
+			{
+				if (berserked) DashCost -= 2;
+									else DashCost -= 1;
+			}
+			else
+			{
+				if (berserked) DashCost -= 3;
+									else DashCost -= 2;
+			}
 		}
 		if (weapon is "CricketBat" && owner.CountInv("IsInBatGuardFrame"))
 		{
-			if (TruePlayerLevel >= DashLvlTier4Thresh)
+			if (exex_expenabled)
+			{
+				if (TruePlayerLevel >= DashLvlTier4Thresh)
+				{
+					if (!berserked) DashCost *= 1.125;
+										else DashCost *= 1.03125;
+				}
+				else
+				if (TruePlayerLevel >= DashLvlTier3Thresh)
+				{
+					if (!berserked) DashCost *= 1.1875;
+										else DashCost *= 1.046875;
+				}
+				else
+				if (TruePlayerLevel >= DashLvlTier2Thresh)
+				{
+					if (!berserked) DashCost *= 1.1875;
+										else DashCost *= 1.0625;
+				}
+				else
+				if (TruePlayerLevel >= DashLvlTier1Thresh)
+				{
+					if (!berserked) DashCost *= 1.25;
+										else DashCost *= 1.0625;
+				}
+				else
+				{
+					if (!berserked) DashCost *= 1.25;
+										else DashCost *= 1.125;
+				}
+			}
+			else
 			{
 				if (!berserked) DashCost *= 1.125;
-									 else DashCost *= 1.03125;
-			}
-			else
-			if (TruePlayerLevel >= DashLvlTier3Thresh)
-			{
-				if (!berserked) DashCost *= 1.1875;
-									 else DashCost *= 1.046875;
-			}
-			else
-			if (TruePlayerLevel >= DashLvlTier2Thresh)
-			{
-				if (!berserked) DashCost *= 1.1875;
-									 else DashCost *= 1.0625;
-			}
-			else
-			if (TruePlayerLevel >= DashLvlTier1Thresh)
-			{
-				if (!berserked) DashCost *= 1.25;
-									 else DashCost *= 1.0625;
-			}
-			else
-			{
-				if (!berserked) DashCost *= 1.25;
-									 else DashCost *= 1.125;
+									else DashCost *= 1.0625;
 			}
 		}
 		if (!exex_expenabled)
