@@ -3818,16 +3818,158 @@ class KnightGown4 : EnchantedShield
 	}
 }
 
-class WineArmor : BasicArmorPickup
+class WineArmor : ArmorBonus // BasicArmorPickup
 {
+	mixin HUDRecovery;
+	int user_type;
+	int basespawnchance;
+	int spawntype;
 	default
 	{
 		+DONTGIB
 		+FLOATBOB
-		Inventory.PickupMessage "One little sip won't hurt...";
+		Inventory.PickupMessage "\c[gold]Eh... One little sip won't hurt... right?";
 		Inventory.Icon "WINEI0";
-		Armor.SavePercent 33; // 33
-		Armor.SaveAmount 50; // 50
+		Armor.SavePercent 50;
+		Armor.SaveAmount 50;
+		Armor.MaxSaveAmount 2000;
+		DamageFactor "Melee", 0.8;
+		DamageFactor "Zap", 0.9;
+	}
+	
+	override void PostBeginPlay()
+	{
+		ArmorBonus.PostBeginPlay();
+	}
+	
+	override bool Use (bool pickup)
+	{
+		int PrevArmorAmt = Owner.CountInv("BasicArmor");
+		int PrevArmorType;
+		if (owner.CountInv("KnightGownItem")) PrevArmorType = 1;
+		if (owner.CountInv("KnightGownItem2")) PrevArmorType = 2;
+		if (owner.CountInv("KnightGownItem3")) PrevArmorType = 3;
+		if (owner.CountInv("KnightGownItem4")) PrevArmorType = 4;
+		if (dydudebug_armordisplays) Console.Printf("PrevArmorType: %d, PrevArmorAmt: %d", PrevArmorType, PrevArmorAmt);
+
+		let armor = BasicArmor(Owner.FindInventory("BasicArmor"));
+		bool result = false;
+
+		// This should really never happen but let's be prepared for a broken inventory.
+		if (armor == null)
+		{
+			armor = BasicArmor(Spawn("BasicArmor"));
+			armor.BecomeItem();
+			armor.Amount = 0;
+			armor.MaxAmount = MaxSaveAmount;
+			Owner.AddInventory (armor);
+		}
+
+		if (BonusCount > 0 && armor.BonusCount < BonusMax)
+		{
+			armor.BonusCount = min(armor.BonusCount + BonusCount, BonusMax);
+			result = true;
+		}
+
+		int saveAmount = min(GetSaveAmount(), MaxSaveAmount);
+
+		if (saveAmount <= 0)
+		{ // If it can't give you anything, it's as good as used.
+			return BonusCount > 0 ? result : true;
+		}
+
+		// If you already have more armor than this item can give you, you can't
+		// use it.
+		if (armor.Amount >= MaxSaveAmount + armor.BonusCount)
+		{
+			return result;
+		}
+
+		if (armor.Amount <= 0)
+		{ // Should never be less than 0, but might as well check anyway
+			armor.Amount = 0;
+			armor.Icon = Icon;
+			armor.SavePercent = clamp(SavePercent, 0, 100) / 100;
+			armor.MaxAbsorb = MaxAbsorb;
+			armor.ArmorType = GetClassName();
+			armor.MaxFullAbsorb = MaxFullAbsorb;
+			armor.ActualSaveAmount = MaxSaveAmount;
+		}
+		else
+		{
+			if (dydudebug_armordisplays) Console.Printf("armor.Amount: %d", armor.Amount);
+			if (PrevArmorType == 0)
+			{
+				armor.SavePercent = clamp(50.0, 0, 100.0) / 100.0;
+				if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+			}
+			if (PrevArmorType == 1)
+			{
+				if (armor.Amount > 249)
+				{
+					armor.SavePercent = clamp(75.0, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNJ0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+				else 
+				{
+					if (armor.Amount >= 124)
+					{
+						if (armor.Icon != TexMan.checkForTexture("KGWNI0")) armor.Icon = TexMan.checkForTexture("KGWNI0");
+					}
+					//armor.SavePercent = clamp(50, 0, 100) / 100;
+					armor.SavePercent = clamp(50.0, 0, 100.0) / 100.0;
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+			}
+			else
+			if (PrevArmorType == 2)
+			{
+				if (armor.Amount > 499)
+				{
+					armor.SavePercent = clamp(87.5, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNK0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+				else
+				{
+					armor.SavePercent = clamp(75.0, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNJ0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+			}
+			else
+			if (PrevArmorType == 3)
+			{
+				if (armor.Amount > 999)
+				{
+					armor.SavePercent = clamp(93.75, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNL0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+				else
+				{
+					armor.SavePercent = clamp(87.5, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNK0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+			}
+			if (PrevArmorType == 4)
+			{
+				armor.SavePercent = clamp(93.75, 0, 100.0) / 100.0;
+				armor.Icon = TexMan.checkForTexture("KGWNL0");
+				if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+			}
+		}
+		
+		armor.Amount = min(armor.Amount + saveAmount, MaxSaveAmount + armor.BonusCount);
+		armor.MaxAmount = max(armor.MaxAmount, MaxSaveAmount);
+		
+		int armordiff = Owner.CountInv("BasicArmor") - PrevArmorAmt;
+		if (dydudebug_armordisplays) Console.Printf("%d", Owner.CountInv("BasicArmor"));
+		if (armordiff) A_RecoverHUD(armordiff, 1, true);
+
+		return true;
 	}
 	
 	States
@@ -4509,8 +4651,8 @@ class DivingHelm : ExExInvBarItem
 	}
 }
 
-//Palace Key
-class PalaceKey : ExExInvBarItem
+//Palace Key [Mod-Specific Version]
+class PalaceKeyNew : ExExInvBarItem
 {
 	default
 	{
@@ -4522,7 +4664,6 @@ class PalaceKey : ExExInvBarItem
 		Inventory.Amount 1;
 		Inventory.MaxAmount 5;
 		Inventory.InterHubAmount 5;
-		//PuzzleItem.Number 1
 		Tag "Palace Key";
 		+INVENTORY.INVBAR
 		+INVENTORY.HUBPOWER
@@ -4614,7 +4755,15 @@ class DoorBell : ExExInvBarItem
 		Use:
 			TNT1 A 0
 			{
-				A_SpawnItemEx("DoorBellDingALing",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+				if (CountInv("IsDynDuchess"))
+				{
+					A_StartSound("misc/bellring",CHAN_BODY);
+					ACS_Execute(1,0,0,0,0);
+				}
+				else
+				{
+					A_SpawnItemEx("DoorBellDingALing",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+				}
 			}
 			Stop;
 	} 

@@ -1,6 +1,101 @@
+// Base Class
+class PuzzleItemEE : PuzzleItem
+{
+	int user_type;
+	mixin IPCostCheck;
+	mixin InvWeaponShare;
+	mixin HUDRecovery;
+	
+	bool PickupUseVoice;
+	property PickUpVoice: PickupUseVoice;
+	
+	override String PickupMessage()
+	{
+		return PickupMsg;
+	}
+	
+	override void PlayPickupSound (Actor toucher)
+	{
+		double atten;
+		int chan;
+		int flags = 0;
+
+		if (bNoAttenPickupSound)
+		{
+			atten = ATTN_NONE;
+		}
+		/*
+		else if ((ItemFlags & IF_FANCYPICKUPSOUND) &&
+			(toucher == NULL || toucher->CheckLocalView()))
+		{
+			atten = ATTN_NONE;
+		}
+		*/
+		else
+		{
+			atten = ATTN_NORM;
+		}
+
+		if (toucher != NULL && toucher.CheckLocalView())
+		{
+			if (PickupUseVoice) chan = CHAN_VOICE;
+										 else chan = CHAN_ITEM;
+			flags = CHANF_NOPAUSE | CHANF_MAYBE_LOCAL;
+		}
+		else
+		{
+			if (PickupUseVoice) chan = CHAN_VOICE;
+										 else chan = CHAN_ITEM;
+			flags = CHANF_MAYBE_LOCAL;
+		}
+		//Console.Printf("Channel: %d [PUV: %d]", chan, PickupUseVoice);
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		double maskpitch = 1.00;
+		if (PickupUseVoice) 
+		{
+			if (MiscItem && MiscItem.CanTalkUnderwater)
+			{
+				if (toucher.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+				toucher.A_StopSound(chan);
+				toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
+			}
+		}
+		else
+		{
+			toucher.A_StopSound(chan);
+			toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
+		}
+	}
+}
+
 //ARTIFACTS
+
+//Palace Key [original version]
+class PalaceKey : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Icon "GKEYI0";
+		Inventory.PickupMessage "A fancy palace key!";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 1;
+		Tag "Palace Key";
+		+FLOATBOB;
+	}
+	States
+	{
+		Spawn:
+			GKEY AB 6 Bright;
+			Loop;
+	}
+}
+
 //Clock Gear
-class ClockGear : PuzzleItem
+class ClockGear : PuzzleItemEE
 {
 	default
 	{
@@ -8,6 +103,7 @@ class ClockGear : PuzzleItem
 		Inventory.Icon "GEARI0";
 		Inventory.PickupMessage "\c[gold]A silver gear...?";
 		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
 		PuzzleItem.Number 2;
 		Tag "Clock Gear";
 		+DONTGIB
@@ -18,6 +114,55 @@ class ClockGear : PuzzleItem
 	{
 		Spawn:
 			GEAR A -1;
+			Stop;
+	}
+}
+
+//Hour Hand
+class HourHand : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "HHNDI0";
+		Inventory.PickupMessage "A golden hour hand...?";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 3;
+		Tag "Hour Hand";
+		+FLOATBOB;
+	}
+	
+	States
+	{
+		Spawn:
+			HHND A -1;
+			Stop;
+	}
+}
+
+//Knight Helm
+class Helm : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "HELMI0";
+		Inventory.PickupMessage "\c[gold]An empty helmet...?";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 4;
+		Tag "Helmet";
+		+FLOATBOB
+	}
+	States
+	{
+		Spawn:
+			HELM A -1;
 			Stop;
 	}
 }
@@ -53,30 +198,327 @@ class ArcadeChip : PuzzleItem
 	}
 }
 
-//Knight Helm
-class Helm : PuzzleItem
+
+//Teacup
+class TeaCup : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 4;
+		Inventory.Icon "TCUPI0";
+		Inventory.PickupMessage "A fancy teacup";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 6;
+		Tag "Teacup (puzzle item)";
+		+FLOATBOB;
+	}
+	
+	States
+	{
+		Spawn:
+			TCUP A -1;
+			Stop;
+	}
+}
+
+//Portrait of Apple
+class PortraitApple : PuzzleItemEE
 {
 	default
 	{
 		//$Category RPArtifacts
 		Inventory.Amount 1;
 		Inventory.MaxAmount 1;
-		Inventory.Icon "HELMI0";
-		Inventory.PickupMessage "\c[gold]An empty helmet...?";
+		Inventory.Icon "PORIA0";
+		Inventory.PickupMessage "A portrait of a ripe red apple.";
 		Inventory.PickupSound "Dinah/allowme";
-		PuzzleItem.Number 4;
-		Tag "Helmet";
-		+FLOATBOB
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 11;
+		Tag "Portrait (Apple)";
+		+FLOATBOB;
 	}
+	
 	States
 	{
 		Spawn:
-			HELM A -1;
+			PORT A -1;
 			Stop;
 	}
 }
 
-class GoldHelm : PuzzleItem 
+//Portrait of Ball
+class PortraitGame : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "PORIB0";
+		Inventory.PickupMessage "A portrait of a cricket ball.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 12;
+		Tag "Portrait (Ball)";
+		+FLOATBOB;
+		-NOGRAVITY
+	}
+	
+	States
+	{
+	Spawn:
+		PORT B -1;
+		Stop;
+	}
+}
+
+//Portrait of Rose
+class PortraitRose : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "PORIF0";
+		Inventory.PickupMessage "A portrait of a pretty rose.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 13;
+		Tag "Portrait (Rose)";
+		+FLOATBOB;
+	}
+	
+	States
+	{
+		Spawn:
+			PORT F -1;
+			Stop;
+	}
+}
+
+//Portrait of Key
+class PortraitKey : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "PORIK0";
+		Inventory.PickupMessage "A portrait of an ornate key.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 14;
+		Tag "Portrait (Key)";
+		+FLOATBOB;
+	}
+	
+	States
+	{
+		Spawn:
+			PORT K -1;
+			Stop;
+	}
+}
+
+//Portrait of Moon
+class PortraitMoon : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "PORIP0";
+		Inventory.PickupMessage "A portrait of a glowing moon.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 15;
+		Tag "Portrait (Moon)";
+		+FLOATBOB;
+	}
+	
+	States
+	{
+		Spawn:
+			PORT P -1;
+			Stop;
+	}
+}
+
+//Portrait of Dog
+class PortraitDog : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "PORID0";
+		Inventory.PickupMessage "A portrait of a cute puppy.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 16;
+		Tag "Portrait (Puppy)";
+		+FLOATBOB;
+	}
+	
+	States
+	{
+		Spawn:
+			PORT D -1;
+			Stop;
+	}
+}
+
+
+//Planetoids
+class Planet_Y : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "MOOIA0";
+		Inventory.PickupMessage "A small planetoid.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 26;
+		Tag "Planetoid (Yellow)";
+		+FLOATBOB;
+	}
+	
+	States
+	{
+		Spawn:
+			MOON A -1;
+			Stop;
+	}
+}
+
+class Planet_R : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "MOOIB0";
+		Inventory.PickupMessage "A small planetoid.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 27;
+		Tag "Planetoid (Red)";
+		+FLOATBOB;
+	}
+	States
+	{
+		Spawn:
+			MOON B -1;
+			Stop;
+	}
+}
+
+class Planet_P : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "MOOIC0";
+		Inventory.PickupMessage "A small planetoid.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 28;
+		Tag "Planetoid (Purple)";
+		+FLOATBOB;
+	}
+	
+	States
+	{
+		Spawn:
+			MOON C -1;
+			Stop;
+	}
+}
+
+class Planet_B : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "MOOID0";
+		Inventory.PickupMessage "A small planetoid.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 29;
+		Tag "Planetoid (Blue)";
+		+FLOATBOB;
+	}
+	
+	States
+	{
+		Spawn:
+			MOON D -1;
+			Stop;
+	}
+}
+
+class Planet_A : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "MOOIE0";
+		Inventory.PickupMessage "A small planetoid.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 30;
+		Tag "Planetoid (Aqua)";
+		+FLOATBOB;
+	}
+	States
+	{
+		Spawn:
+			MOON E -1;
+			Stop;
+	}
+}
+
+class Planet_G : PuzzleItemEE
+{
+	default
+	{
+		//$Category RPArtifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "MOOIF0";
+		Inventory.PickupMessage "A small planetoid.";
+		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
+		PuzzleItem.Number 31;
+		Tag "Planetoid (Green)";
+		+FLOATBOB;
+	}
+	States
+	{
+		Spawn:
+			MOON F -1;
+			Stop;
+	}
+}
+
+class GoldHelm : PuzzleItemEE
 {
 	default
 	{
@@ -84,6 +526,7 @@ class GoldHelm : PuzzleItem
 		Inventory.Icon "HELGI0";
 		Inventory.PickupMessage "\c[gold]A fancy gold helmet...";
 		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
 		Inventory.Amount 1;
 		Inventory.MaxAmount 1;
 		PuzzleItem.Number 56;
@@ -98,7 +541,7 @@ class GoldHelm : PuzzleItem
 	}
 }
 
-class PipePickup : PuzzleItem
+class PipePickup : PuzzleItemEE
 {
 	default
 	{
@@ -106,6 +549,7 @@ class PipePickup : PuzzleItem
 		Inventory.Icon "PIPEI0";
 		Inventory.PickupMessage "\c[gold](I'd be DELIGHTED to carry this heavy, filthy length of pipe around...) >.>;";
 		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
 		Inventory.Amount 1;
 		Inventory.MaxAmount 1;
 		PuzzleItem.Number 55;
@@ -121,7 +565,7 @@ class PipePickup : PuzzleItem
 	}
 }
 
-class FosnaStandard : PuzzleItem
+class FosnaStandard : PuzzleItemEE
 {
 	default
 	{
@@ -129,6 +573,7 @@ class FosnaStandard : PuzzleItem
 		Inventory.Icon "FLAGI0";
 		Inventory.PickupMessage "\c[gold]The standard of Fosna, my homeland.";
 		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
 		Inventory.Amount 1;
 		Inventory.MaxAmount 1;
 		PuzzleItem.Number 57;
@@ -146,7 +591,7 @@ class FosnaStandard : PuzzleItem
 	}
 }
 
-class FancyFork : PuzzleItem
+class FancyFork : PuzzleItemEE
 {
 	default
 	{
@@ -154,6 +599,7 @@ class FancyFork : PuzzleItem
 		Inventory.Icon "FORKI0";
 		Inventory.PickupMessage "\c[gold]A glimmering dinner fork. Must be for that Culinary Judgement thing...";
 		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
 		Inventory.Amount 1;
 		Inventory.MaxAmount 1;
 		PuzzleItem.Number 58;
@@ -171,7 +617,7 @@ class FancyFork : PuzzleItem
 	}
 }
 
-class RevisionaryBrush : PuzzleItem
+class RevisionaryBrush : PuzzleItemEE
 {
 	default
 	{
@@ -179,6 +625,7 @@ class RevisionaryBrush : PuzzleItem
 		Inventory.Icon "MPNTI0";
 		Inventory.PickupMessage "\c[gold]An exquisite, glimmering paint brush...?";
 		Inventory.PickupSound "Dinah/allowme";
+		PuzzleItemEE.PickUpVoice true;
 		Inventory.Amount 1;
 		Inventory.MaxAmount 1;
 		PuzzleItem.Number 51;
@@ -204,6 +651,7 @@ class RevisionaryBrush_Flipped : CustomInventoryExt
 		Tag "Revisionary Brush (Flipped)";
 		Inventory.PickupMessage "\c[gold]An exquisite, glimmering paint brush...?";
 		Inventory.PickupSound "Dinah/allowme";
+		CustomInventoryExt.PickUpVoice true;
 		+FLOATBOB
 		+NOGRAVITY
 	}
