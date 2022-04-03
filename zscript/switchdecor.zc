@@ -20,8 +20,13 @@ class WineSet : SwitchableDecoration
 			Stop;
 		Active:
 			WINE B 0 A_StartSound("dinah/drink");
-			WINE B 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 15);
-			WINE B 1 A_RadiusGive("WineArmor", 96, RGF_PLAYERS, 1);
+			WINE B 1;
+			WINE B 1
+			{
+				A_RadiusGive("Health", 96, RGF_PLAYERS, 15);
+				A_RadiusGive("WineArmor", 96, RGF_PLAYERS, 1);
+				Console.Printf("\c[gold]Eh... One little sip won't hurt... right?");
+			}
 			WINE B -1;
 			Stop;
 	}
@@ -74,10 +79,10 @@ class FoodPlate1 : SwitchableDecoration //pig
 					{
 						double maskpitch = 1.00;
 						if (waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
-						A_StopSound(CHAN_VOICE);
-						A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+						player.A_StopSound(CHAN_VOICE);
+						player.A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
 					}
-					A_SetBlend("f1 ff f1",0.1,random(4,6));
+					player.A_SetBlend("f1 ff f1",0.1,random(4,6));
 					player.A_GiveInventory("PowerRoastBuff");
 					Console.Printf("\c[red]Ate a dish of Roasted Pig! \c[green]+%d (Over)HP", temp3);
 					//invoker.A_FadeOut(1.0,FTF_REMOVE);
@@ -145,10 +150,10 @@ class FoodPlate2 : SwitchableDecoration //fruit
 					{
 						double maskpitch = 1.00;
 						if (waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
-						A_StopSound(CHAN_VOICE);
-						A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+						player.A_StopSound(CHAN_VOICE);
+						player.A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
 					}
-					A_SetBlend("f1 ff f1",0.1,random(4,6));
+					player.A_SetBlend("f1 ff f1",0.1,random(4,6));
 					Console.Printf("\c[red]Food Plate (Fruit)! \c[green]+%d (Over)HP", temp3);
 					//invoker.A_FadeOut(1.0,FTF_REMOVE);
 					return resolvestate("Eaten");
@@ -189,11 +194,48 @@ class FoodPlate3 : SwitchableDecoration //jello
 			FOOD C -1;
 			Stop;
 		Active:
-			FOOD G 0 A_StartSound("dinah/eat");
-			FOOD G 1
+			FOOD G 0
 			{
-				A_RadiusGive("Health", 96, RGF_PLAYERS, 10);
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				int temp1 = player.health;
+				int oldhealth = player.health;
+				int temp4 = player.CountInv("PlayerMaxHP");
+				int temp2 = (temp4 * 3.0);
+				if (temp1 < temp2)
+				{
+					int temp3 = temp4;
+					temp3 *= frandom(0.08,0.12);
+						
+					temp1 += temp3;
+					if (temp1 > temp2) temp1 = temp2;
+					player.health = temp1;
+					int healdiff = player.health - oldhealth;
+					if (healdiff) invoker.A_RecoverHUD(healdiff, 0, true);
+					if (MiscItem) MiscItem.HPRegenBoostTimer += (randompick(9,10,10,11,11,12,13) * 2.5);
+					
+					player.A_GiveInventory("PowerFruitBuff");
+					player.A_GiveInventory("PowerFruitBuff2");
+					if (MiscItem && MiscItem.CanTalkUnderwater)
+					{
+						double maskpitch = 1.00;
+						if (waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+						player.A_StopSound(CHAN_VOICE);
+						player.A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+					}
+					player.A_SetBlend("f1 ff f1",0.1,random(4,6));
+					Console.Printf("\c[red]Food Plate (Jello)! \c[green]+%d (Over)HP", temp3);
+					//invoker.A_FadeOut(1.0,FTF_REMOVE);
+					return resolvestate("Eaten");
+				}
+				else
+				{
+					A_StartSound("inv_fail",84,CHANF_DEFAULT,1.0,ATTN_NORM);
+					return resolvestate("Inactive");
+				}
+				return resolvestate(null);
 			}
+		Eaten:
 			FOOD G -1;
 			Stop;
 	}
@@ -236,6 +278,7 @@ class FoodPlate4 : SwitchableDecoration //turkey
 						player.A_StopSound(CHAN_VOICE);
 						player.A_StartSound("Dinah/giggle",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
 						player.A_GiveInventory("TurkeyDinner",1);
+						Console.Printf("\c[gold]Mmmmm! A delicious Turkey Dinner!\c- \c[green](Eat for Health and a 'well fed' buff)");
 					}
 					else
 					{
@@ -273,8 +316,53 @@ class FoodPlateFinal : SwitchingDecoration
 			FOOD Y -1;
 			Stop;
 		Active:
-			FOOD Z 0 A_StartSound("dinah/eat");
-			FOOD Z 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 50);
+			FOOD Z 0
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				int temp1 = player.health;
+				int oldhealth = player.health;
+				int temp4 = player.CountInv("PlayerMaxHP");
+				int temp2 = (temp4 * 3.0);
+				if (temp1 < temp2)
+				{
+					int temp3 = temp4;
+					temp3 *= 2.00;
+						
+					temp1 += temp3;
+					if (temp1 > temp2) temp1 = temp2;
+					player.health = temp1;
+					int healdiff = player.health - oldhealth;
+					if (healdiff) invoker.A_RecoverHUD(healdiff, 0, true);
+					if (MiscItem) MiscItem.HPRegenBoostTimer += (random(225,325) * 2.5);
+
+					double maskpitch = 1.00;
+					if (MiscItem && MiscItem.CanTalkUnderwater)
+					{
+						if (waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+						player.A_StopSound(CHAN_VOICE);
+						player.A_StartSound("Dinah/eatgourmet",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+					}
+					else
+					{
+						player.A_StopSound(CHAN_VOICE);
+						player.A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+					}
+					player.A_SetBlend("f1 ff f1",0.1,random(10,15));
+					player.A_GiveInventory("PowerMealBuff");
+					player.A_GiveInventory("PowerMealBuff2");
+					Console.Printf("\c[red]Ate a massive Gourmet Meal! \c[green]+%d (Over)HP", temp3);
+					//invoker.A_FadeOut(1.0,FTF_REMOVE);
+					return resolvestate("Eaten");
+				}
+				else
+				{
+					A_StartSound("inv_fail",84,CHANF_DEFAULT,1.0,ATTN_NORM);
+					return resolvestate("Inactive");
+				}
+				return resolvestate(null);
+			}
+		Eaten:
 			FOOD Z -1;
 			Stop;
 	}
