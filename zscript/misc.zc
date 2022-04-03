@@ -8,6 +8,7 @@ class PlayerStatItem : Inventory
 	const SKILL_HARD = 3;
 	const SKILL_VERY_HARD = 4;
 	
+	bool cankick;
 	int IPPikePokeTimer;
 	int IPCallOutCooldown;
 	int OneLinerCooldown;
@@ -250,7 +251,27 @@ class PlayerStatItem : Inventory
 				
 				let weapon = owner.player.ReadyWeapon;
 				if (playeractor.GetClassName() == "DinahPlayer" || playeractor.GetClassName() == "RatPlayer") CharacterClass = 10;
-				//if (!owner.CountInv("HandToHand")) owner.A_SetInventory("HandToHand",1); // Prevents your "fists/hand-to-hand" from being removed by inventory removing events.
+
+				cankick = true;
+				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite")))
+				{
+					if (ddafd_disablehandtohand == 1)
+					{
+						cankick = false;
+						if (owner.CountInv("HandToHand")) owner.A_SetInventory("HandToHand",0); // Prevents your "fists/hand-to-hand" from being removed by inventory removing events.
+					}
+					else
+					if (ddafd_disablehandtohand == -1)
+					{
+						if (!owner.CountInv("HandToHand")) owner.A_SetInventory("HandToHand",1); // Prevents your "fists/hand-to-hand" from being removed by inventory removing events.
+						cankick = true;
+					}
+				}
+				else
+				{
+					if (!owner.CountInv("HandToHand")) owner.A_SetInventory("HandToHand",1); // Prevents your "fists/hand-to-hand" from being removed by inventory removing events.
+					cankick = true;
+				}
 				if (owner.CountInv("PowerStrength") || owner.CountInv("PowerStrengthDD")) berserked = true;
 				else berserked = false;
 				
@@ -3493,6 +3514,8 @@ class PlayerStatItem : Inventory
 			
 			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - atkfct): %.8f", atkfct);
 			
+			double tempfactor = 1.0;
+
 			double TOTALFactor = 1.0
 													 * MapFactor
 													 * LVLFactor
@@ -3504,6 +3527,7 @@ class PlayerStatItem : Inventory
 													 * ArmorIPFactor
 													 * CrisisFactor
 													 * SigilFactor
+													 * tempfactor
 													 * atkfct;
 			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("\c[gold]Damage (!passive - Total): %.8f", TOTALFactor);
 
@@ -3670,6 +3694,16 @@ class PlayerStatItem : Inventory
 			
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - deffct): %.8f", deffct);
 
+			double tempfactor = 1.0;
+			if (ddafd_damageskilllevel && owner.CountInv("IsDynDuchess") && owner.CountInv("IsAppetite"))
+			{
+				if (skill <= 0) tempfactor = 0.5;
+				if (skill == 1) tempfactor = 0.667;
+				if (skill == 3) tempfactor = 1.5;
+				if (skill >= 4) tempfactor = 2.0;
+				if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - DynDuchess/Appetite Skill Check): %.8f", tempfactor);
+			}
+
 			double TOTALFactor = 1.0
 													 * MapFactor
 													 * LVLFactor
@@ -3680,6 +3714,7 @@ class PlayerStatItem : Inventory
 													 * PlayerFistBlockFactor
 													 * WeaponFactor
 													 * CrisisFactor
+													 * tempfactor
 													 * deffct;
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("\c[gold]Damage (passive - Total): %.8f", TOTALFactor);
 			
