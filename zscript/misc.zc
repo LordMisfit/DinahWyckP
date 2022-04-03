@@ -267,11 +267,31 @@ class PlayerStatItem : Inventory
 				
 				if (itemtimer <= 2)
 				{
-					if (itemtimer <= 0) 
+					if (dydudebug_miscitemdebug) Console.Printf("itemtimer: %d, IsDynDuchess?: %d, IsAppetite?: %d", itemtimer, owner.CountInv("IsDynDuchess"), owner.CountInv("IsAppetite"));
+					if (itemtimer >= 1)
 					{
-						owner.A_SetInventory("DoorBell",1);
-						owner.A_SetInventory("DoorBell",0);
-						DoorBellNormalUses = 0;
+						if (!(owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite")))
+						{
+							owner.A_SetInventory("DoorBell",1);
+							owner.A_SetInventory("DoorBell",0);
+							DoorBellNormalUses = 0;
+						}
+						else
+						{
+							if (owner.CountInv("IsDynDuchess"))
+							{
+								owner.A_SetInventory("ArcadeChip",1);
+								owner.A_SetInventory("ArcadeChip",0);
+							}
+							else
+							if (owner.CountInv("IsAppetite"))
+							{
+								owner.A_SetInventory("BirdPotion",1);
+								owner.A_SetInventory("BirdPotion",0);
+							}
+							owner.A_SetInventory("PalaceKey",1);
+							owner.A_SetInventory("PalaceKey",0);
+						}
 						owner.A_SetInventory("KilletanteEffigy",1);
 						owner.A_SetInventory("KilletanteEffigy",0);
 						owner.A_SetInventory("DivingHelm",1);
@@ -294,9 +314,8 @@ class PlayerStatItem : Inventory
 						owner.A_SetInventory("TurkeyDinner",0);
 						owner.A_SetInventory("AppleWine",1);
 						owner.A_SetInventory("AppleWine",0);
-						
-						if (owner.CountInv("PlayingHexen")) owner.A_GiveInventory("MegaSatchel",1); // Gives the player their TRUE max ammo limits in Hexen mode and a bit of extra ammo via a Backpack. :P
 					}
+					if (itemtimer <= 0) if (owner.CountInv("PlayingHexen")) owner.A_GiveInventory("MegaSatchel",1); // Gives the player their TRUE max ammo limits in Hexen mode and a bit of extra ammo via a Backpack. :P
 
 					owner.A_SetInventory("PlayerLevel",PlayerLevel);
 					LegMedCap = 50;
@@ -1423,12 +1442,15 @@ class PlayerStatItem : Inventory
 				}
 				
 				// Track Doorbell Uses [Normal use, not IP]
-				if (owner.CountInv("DoorBell"))
+				if (!(owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite")))
 				{
-				}
-				else
-				{
-					DoorBellNormalUses = 0;
+					if (owner.CountInv("DoorBell"))
+					{
+					}
+					else
+					{
+						DoorBellNormalUses = 0;
+					}
 				}
 				
 				//***************************
@@ -2876,6 +2898,7 @@ class PlayerStatItem : Inventory
 			int itemsmax;
 			int itemid;
 			double baselvlfactor = 50.0;
+			if (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite")) baselvlfactor = 25.0;
 			if (owner.CountInv("PlayingHexen")) baselvlfactor = 33.4;
 			double baseholdmultibp1 = 1.25;
 			double baseholdmultibp2 = 1.5;
