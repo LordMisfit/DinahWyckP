@@ -29,6 +29,7 @@ class WineSet : SwitchableDecoration
 
 class FoodPlate1 : SwitchableDecoration //pig
 {
+	mixin HUDRecovery;
 	default
 	{
 		//$Category RPProps
@@ -49,8 +50,47 @@ class FoodPlate1 : SwitchableDecoration //pig
 			FOOD A -1;
 			Stop;
 		Active:
-			FOOD E 0 A_StartSound("dinah/eat");
-			FOOD E 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 50);
+			FOOD E 0
+			{
+		actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				int temp1 = player.health;
+				int oldhealth = player.health;
+				int temp4 = player.CountInv("PlayerMaxHP");
+				int temp2 = (temp4 * 3.0);
+				if (temp1 < temp2)
+				{
+					int temp3 = temp4;
+					temp3 *= 0.50;
+						
+					temp1 += temp3;
+					if (temp1 > temp2) temp1 = temp2;
+					player.health = temp1;
+					int healdiff = player.health - oldhealth;
+					if (healdiff) invoker.A_RecoverHUD(healdiff, 0, true);
+					if (MiscItem) MiscItem.HPRegenBoostTimer += (random(45,65) * 2.5);
+
+					if (MiscItem && MiscItem.CanTalkUnderwater)
+					{
+						double maskpitch = 1.00;
+						if (waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+						A_StopSound(CHAN_VOICE);
+						A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+					}
+					A_SetBlend("f1 ff f1",0.1,random(4,6));
+					player.A_GiveInventory("PowerRoastBuff");
+					Console.Printf("\c[red]Ate a dish of Roasted Pig! \c[green]+%d (Over)HP", temp3);
+					//invoker.A_FadeOut(1.0,FTF_REMOVE);
+					return resolvestate("Eaten");
+				}
+				else
+				{
+					A_StartSound("inv_fail",84,CHANF_DEFAULT,1.0,ATTN_NORM);
+					return resolvestate("Inactive");
+				}
+				return resolvestate(null);
+			}
+		Eaten:
 			FOOD E -1;
 			Stop;
 	}
@@ -58,6 +98,7 @@ class FoodPlate1 : SwitchableDecoration //pig
 
 class FoodPlate2 : SwitchableDecoration //fruit
 {
+	mixin HUDRecovery;
 	default
 	{
 		//$Category RPProps
@@ -78,8 +119,48 @@ class FoodPlate2 : SwitchableDecoration //fruit
 			FOOD B -1;
 			Stop;
 		Active:
-			FOOD F 0 A_StartSound("dinah/eatapple");
-			FOOD F 1 A_RadiusGive("Health", 96, RGF_PLAYERS, 10);
+			FOOD F 0
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				int temp1 = player.health;
+				int oldhealth = player.health;
+				int temp4 = player.CountInv("PlayerMaxHP");
+				int temp2 = (temp4 * 3.0);
+				if (temp1 < temp2)
+				{
+					int temp3 = temp4;
+					temp3 *= 0.10;
+						
+					temp1 += temp3;
+					if (temp1 > temp2) temp1 = temp2;
+					player.health = temp1;
+					int healdiff = player.health - oldhealth;
+					if (healdiff) invoker.A_RecoverHUD(healdiff, 0, true);
+					if (MiscItem) MiscItem.HPRegenBoostTimer += (randompick(9,10,10,11,11,12,13) * 2.5);
+					
+					player.A_GiveInventory("PowerFruitBuff");
+					player.A_GiveInventory("PowerFruitBuff2");
+					if (MiscItem && MiscItem.CanTalkUnderwater)
+					{
+						double maskpitch = 1.00;
+						if (waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+						A_StopSound(CHAN_VOICE);
+						A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+					}
+					A_SetBlend("f1 ff f1",0.1,random(4,6));
+					Console.Printf("\c[red]Food Plate (Fruit)! \c[green]+%d (Over)HP", temp3);
+					//invoker.A_FadeOut(1.0,FTF_REMOVE);
+					return resolvestate("Eaten");
+				}
+				else
+				{
+					A_StartSound("inv_fail",84,CHANF_DEFAULT,1.0,ATTN_NORM);
+					return resolvestate("Inactive");
+				}
+				return resolvestate(null);
+			}
+		Eaten:
 			FOOD F -1;
 			Stop;
 	}
@@ -87,6 +168,7 @@ class FoodPlate2 : SwitchableDecoration //fruit
 
 class FoodPlate3 : SwitchableDecoration //jello
 {
+	mixin HUDRecovery;
 	default
 	{
 		//$Category RPProps
@@ -119,6 +201,7 @@ class FoodPlate3 : SwitchableDecoration //jello
 
 class FoodPlate4 : SwitchableDecoration //turkey
 {
+	mixin HUDRecovery;
 	default
 	{
 		//$Category RPProps
@@ -174,6 +257,7 @@ class FoodPlate4 : SwitchableDecoration //turkey
 
 class FoodPlateFinal : SwitchingDecoration 
 {
+	mixin HUDRecovery;
 	default
 	{
 		//$Category RPProps
