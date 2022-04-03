@@ -4131,6 +4131,14 @@ class CricketBat : DinahWeapon replaces Pistol
 		User4:
 			DBIG A 0
 			{
+				if (ddafd_disablebatguard)
+				{
+					if (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite"))
+					{
+						return resolvestate("Ready");
+					}
+					return resolvestate(null);
+				}
 				if (exex_cricketbatguardtype == 1)
 				{
 					if (invoker.guardcooldown) { return resolvestate("Ready"); }
@@ -4183,31 +4191,59 @@ class CricketBat : DinahWeapon replaces Pistol
 		GuardHold:
 			DBGR D 1
 			{
-				A_ForcePlayState2("BatGuard");
-				A_CheckGuardState();
-				if (invoker.guardtimer <= (invoker.guardtimerlimit + invoker.sguardtimeextra))
+				bool allowguard = true;
+				if (ddafd_disablebatguard)
 				{
-					A_CricketBatGuard(1); // Gives Guaranteed Reflect on the Bat Shield and Elevated Defense for the duration of the above tics [~7] when first entering proper guard stance
-					invoker.guardtimer++;
+					if (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite")) allowguard = false;
+				}
+				
+				if (allowguard)
+				{
+					A_ForcePlayState2("BatGuard");
+					A_CheckGuardState();
+					if (invoker.guardtimer <= (invoker.guardtimerlimit + invoker.sguardtimeextra))
+					{
+						A_CricketBatGuard(1); // Gives Guaranteed Reflect on the Bat Shield and Elevated Defense for the duration of the above tics [~7] when first entering proper guard stance
+						invoker.guardtimer++;
+					}
+					else
+					{
+						A_CricketBatGuard(0);
+					}
+					A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOPRIMARY|WRF_NOSECONDARY|WRF_NOSWITCH);
 				}
 				else
 				{
-					A_CricketBatGuard(0);
+					return resolvestate("UnGuard");
 				}
-				A_WeaponReady(WRF_NOBOB|WRF_NOFIRE|WRF_NOPRIMARY|WRF_NOSECONDARY|WRF_NOSWITCH);
+				return resolvestate(null);
 			}
 			DBGR D 0
 			{
-				A_ForcePlayState2("BatGuard");
-				if (dydudebug_cricketbatguard) Console.Printf("guardtype: %d", exex_cricketbatguardtype);
-				if (exex_cricketbatguardtype == 1)
+				bool allowguard = true;
+				if (ddafd_disablebatguard)
 				{
-					if (invoker.guardstate == 0) { return resolvestate("UnGuard"); }
-																	else { return resolvestate("GuardHold"); } 
+					if (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite")) allowguard = false;
+				}
+				
+				if (allowguard)
+				{
+					A_ForcePlayState2("BatGuard");
+					if (dydudebug_cricketbatguard) Console.Printf("guardtype: %d", exex_cricketbatguardtype);
+					if (exex_cricketbatguardtype == 1)
+					{
+						if (invoker.guardstate == 0) { return resolvestate("UnGuard"); }
+																		else { return resolvestate("GuardHold"); } 
+					}
+					else
+					{
+						if (invoker.buttons & BT_USER4) return resolvestate("GuardHold");
+					}
+					return resolvestate(null);
 				}
 				else
 				{
-					if (invoker.buttons & BT_USER4) return resolvestate("GuardHold");
+					return resolvestate("UnGuard");
 				}
 				return resolvestate(null);
 			}
