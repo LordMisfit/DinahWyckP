@@ -1,13 +1,65 @@
 // GEYSER
-class Geyser : Volcano
+class Geyser : EEProp // Volcano
 {
 	default
 	{
 		//$Category RPHazards
 	}
+	
+	Default
+	{
+		Radius 12;
+		Height 20;
+		+SOLID
+	}
+	
+	States
+	{
+		Spawn:
+			VLCO A 350;
+			VLCO A 35 A_VolcanoSet;
+			VLCO BCDBCD 3;
+			VLCO E 10 A_VolcanoBlast("Geyserball");
+			Goto Spawn+1;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_VolcanoSet
+	//
+	//----------------------------------------------------------------------------
+
+	void A_VolcanoSet ()
+	{
+		tics = random[VolcanoSet](105, 232);
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC A_VolcanoBlast
+	//
+	//----------------------------------------------------------------------------
+
+	void A_VolcanoBlast(string type = "Geyserball")
+	{
+		int count = random[VolcanoBlast](1,3);
+		for (int i = 0; i < count; i++)
+		{
+			Actor blast = Spawn(type, pos + (0, 0, 44), ALLOW_REPLACE);
+			if (blast != null)
+			{
+				blast.target = self;
+				blast.Angle = random[VolcanoBlast]() * (360 / 256.);
+				blast.VelFromAngle(1.);
+				blast.Vel.Z = 2.5 + random[VolcanoBlast]() / 64.;
+				blast.A_StartSound ("world/volcano/shoot", CHAN_BODY);
+				blast.CheckMissileSpawn (radius);
+			}
+		}
+	}
 }
 
-class GeyserTBlast : Actor
+class GeyserTBlast : EEProjectile
 {
 	Default
 	{
@@ -22,12 +74,12 @@ class GeyserTBlast : Actor
 	}
 	States
 	{
-	Spawn:
-		VTFB AB 4 BRIGHT;
-		Loop;
-	Death:
-		SFFI CBABCDE 4 BRIGHT;
-		Stop;
+		Spawn:
+			VTFB AB 4 BRIGHT;
+			Loop;
+		Death:
+			SFFI CBABCDE 4 BRIGHT;
+			Stop;
 	}
 }
 
@@ -39,7 +91,7 @@ class Geyserball : Volcanoblast
 		+NOEXTREMEDEATH
 	}
 	
-	void A_GeysBallImpact(string spawntype = "GeyserTBlast", int expflags = XF_NOSPLASH, name expdmgtype = 'Boiling')
+	void A_GeysBallImpact(string spawntype = "GeyserMiniBall", int expflags = XF_NOSPLASH, name expdmgtype = 'Boiling')
 	{
 		if (pos.Z <= floorz)
 		{
@@ -68,13 +120,13 @@ class Geyserball : Volcanoblast
 			WBUL ABCB 4 BRIGHT; // A_SpawnItemEx("Puffy", random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, random2[BeastPuff]()*0.015625, 0, 0, 0, 0, SXF_ABSOLUTEPOSITION, 64);
 			Loop;
 		Death:
-			WBUX A 4 BRIGHT A_GeysBallImpact("GeyserTBlast",XF_NOSPLASH,'Boiling');
+			WBUX A 4 BRIGHT A_GeysBallImpact("GeyserMiniBall",XF_NOSPLASH,'Boiling');
 			WBUX BC 4 BRIGHT;
 			Stop;
 	}
 }
 
-class Geyserminiball : VolcanoTBlast
+class GeyserMiniBall : VolcanoTBlast
 {
 	default
 	{
