@@ -10,6 +10,8 @@ class PlayerStatItem : Inventory
 	const SKILL_VERY_HARD = 4;
 	
 	bool cankick;
+	int CritChance;
+	int CritRoll;
 	int IPPikePokeTimer;
 	int IPCallOutCooldown;
 	int OneLinerCooldown;
@@ -1019,6 +1021,13 @@ class PlayerStatItem : Inventory
 				//**************************
 				SurvivalStuff();
 				
+				
+				//**************************
+				//* Crit Rate Calculations *
+				//**************************
+				CritRateCalc();
+				
+				
 				//********
 				//* Mass *
 				//********
@@ -1560,6 +1569,18 @@ class PlayerStatItem : Inventory
 			if (dydudebug_miscitemdebug) Console.Printf("ClassCheck: %d", ClassCheck);
 			super.DoEffect();
 		}
+	}
+	
+	
+	void CritRateCalc()
+	{
+		owner.A_SetInventory("DealCriticalHit",0);
+		CritChance = 128;
+		if (exex_expenabled) CritChance = (128 - (TruePlayerLevel * 0.0625));
+		if (CritChance <= 64) CritChance = 64;
+		if (owner.CountInv("PowerDouble")) CritChance *= 0.75;
+		CritRoll = random(1,CritChance);
+		if (CritRoll <= 1) owner.A_SetInventory("DealCriticalHit",1);
 	}
 	
 	//
@@ -4476,8 +4497,13 @@ class PlayerDashJump : Inventory
 						dashgruntsound = "dinah/jump";
 					}
 				}
-				Owner.A_StopSound(CHAN_VOICE);
-				Owner.A_StartSound(dashgruntsound,CHAN_VOICE,CHANF_DEFAULT,(dashgruntsndvol * frandom(1.25,1.375)));
+				if (MiscItem && MiscItem.CanTalkUnderwater)
+				{
+					double maskpitch = 1.00;
+					if (Owner.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+					Owner.A_StopSound(CHAN_VOICE);
+					Owner.A_StartSound(dashgruntsound,CHAN_VOICE,CHANF_DEFAULT,(dashgruntsndvol * frandom(1.25,1.375)),ATTN_NORM,maskpitch);
+				}
 			}
 
 			bool CollisonSpawn = false;

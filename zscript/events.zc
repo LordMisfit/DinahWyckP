@@ -1603,6 +1603,7 @@ class DD_EventHandler : EventHandler
 				if (dmg)
 				{
 					comblog.AppendFormat("\c[brick]%d\c-", dmg);
+					if (victim.CountInv("TookCriticalHit") > 0) comblog.AppendFormat(" \c[orange]CRITICAL\c-");
 					comblog.AppendFormat(" damage dealt to \c[red]%s\c- by", victname);
 					if (inflicter && source && (inflicter != source)) comblog.AppendFormat(" \c[purple]%s's", attkernam);
 					if (inflicter) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
@@ -3514,11 +3515,66 @@ class DD_EventHandler : EventHandler
 				{
 					if (VacPuff(inflicter))
 					{
+						int vactype = 0;
+						if (DDOrigCreature(victim))
+						{
+							if (ddafd_originalsupervacamts && (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite"))) vactype = 1;
+							if (vactype >= 1)
+							{
+								if (Hammerduck(victim) ||
+										Planter(victim) ||
+										Manchineel(victim) ||
+										Manchineel_Ceiling(victim) ||
+										Centaurion(victim) ||
+										PuddingDog(victim) ||
+										PuddingPup(victim) ||
+										Vitriola(victim) ||
+										Killetante(victim) ||
+										KilletanteSoloist(victim) ||
+										Muddernaut(victim) ||
+										Jugger(victim) ||
+										Juggette(victim) ||
+										ReelHeel(victim) ||
+										SpiderCenser(victim) ||
+										Galgoyle(victim) ||
+										KnuckleHead(victim) ||
+										Shillfish(victim) ||
+										Bellefish(victim) ||
+										Nurse(victim)) vactype = 1; else vactype = 0;
+							}
+						}
 						let IPPuff = EEProjectile(inflicter);
-						int vacgive = victim.spawnhealth() + victim.Stamina;
-						vacgive *= frandompick(0.6667,0.8334,1.000,1.1667,1.3334);
-						if (IPPuff) vacgive *= frandompick(0.75,0.75,0.75,0.75,0.875); 
-									 else vacgive *= 0.5;
+						int vacgive;
+						if (vactype <= 0)
+						{
+							vacgive = victim.spawnhealth() + victim.Stamina;
+							vacgive *= frandompick(0.6667,0.8334,1.000,1.1667,1.3334);
+							if (IPPuff) vacgive *= frandompick(0.75,0.75,0.75,0.75,0.875); 
+										 else vacgive *= 0.5;
+						}
+						else
+						{
+							if (Hammerduck(victim)) vacgive = 3;
+							if (Planter(victim)) vacgive = 4;
+							if (Manchineel(victim)) vacgive = 6;
+							if (Manchineel_Ceiling(victim)) vacgive = 6;
+							if (Centaurion(victim)) vacgive = 6;
+							if (PuddingDog(victim)) vacgive = 6;
+							if (PuddingPup(victim)) vacgive = 1;
+							if (Vitriola(victim)) vacgive = 4;
+							if (Killetante(victim)) vacgive = 4;
+							if (KilletanteSoloist(victim)) vacgive = 5;
+							if (Muddernaut(victim)) vacgive = 12;
+							if (Jugger(victim)) vacgive = 12;
+							if (Juggette(victim)) vacgive = 6;
+							if (ReelHeel(victim)) vacgive = 4;
+							if (SpiderCenser(victim)) vacgive = 4;
+							if (Galgoyle(victim)) vacgive = 4;
+							if (KnuckleHead(victim)) vacgive = 12;
+							if (Shillfish(victim)) vacgive = 6;
+							if (Bellefish(victim)) vacgive = 2;
+							if (Nurse(victim)) vacgive = 4;
+						}
 						source.A_GiveInventory("VacAmmoCounter",vacgive);
 						source.A_StartSound("VacDed",210,CHANF_DEFAULT,frandom(0.75,0.90),ATTN_NORM,frandom(1.8,2.7));
 						if (vict == "CommanderKeen") victim.A_KeenDie(); // I forgot to consider Keens use a different "death action" than the other monsters. >.>
