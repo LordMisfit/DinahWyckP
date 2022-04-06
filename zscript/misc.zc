@@ -10,6 +10,7 @@ class PlayerStatItem : Inventory
 	const SKILL_VERY_HARD = 4;
 	
 	bool cankick;
+	int VacCost;
 	int CritChance;
 	int CritRoll;
 	int IPPikePokeTimer;
@@ -88,6 +89,8 @@ class PlayerStatItem : Inventory
 	int RenderStyleType;
 	int tempalpha;
 	int SuperVacAmmo, SuperVacAmmoMax;
+	int SuperVacBaseMax;
+	double SuperVacBaseMaxFactor;
 	double SuperVacAmmoFactor;
 
 	int InitEXPTables;
@@ -167,6 +170,9 @@ class PlayerStatItem : Inventory
 	double BaseRegenMulti;
 	
 	double atkfct, deffct, spdfct, jmpfct, suvfct;
+	
+	bool DD_HandMother1, DD_HandMother2, DD_MossMother, DD_GameMother, DD_RoseMother, DD_SphinxMother, DD_GlobeMother, DD_TrueHandMother;
+	bool AFD_Krag, AFD_Lauritz, AFD_Quisling, AFD_Jorgensen1, AFD_Jorgensen2, AFD_JorgCannon;
 
 	default 
 	{
@@ -499,13 +505,23 @@ class PlayerStatItem : Inventory
 					TruePlayerSPD = 0;
 				}
 
+				SuperVacBaseMax = 16;
+				SuperVacBaseMaxFactor = 0.625;
+				if (ddafd_originalinvlimits)
+				{
+					if (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite"))
+					{
+						SuperVacBaseMax = 12;
+						SuperVacBaseMaxFactor = 0.0833333333333333;
+					}
+				}
 				let vacammotype = owner.FindInventory("VacAmmo");
 				if (vacammotype)
 				{
 					SuperVacAmmo = vacammotype.Amount;
 					SuperVacAmmoMax = vacammotype.MaxAmount;
 				}
-				if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
+				if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
 				
 				// Check if player can breath/talk underwater
 				CanTalkUnderwater = 0;
@@ -856,6 +872,24 @@ class PlayerStatItem : Inventory
 					if (skill == 2) HealthLevelAdd2 = (HealthNoRPGADD * 3.0);
 					if (skill == 3) HealthLevelAdd2 = (HealthNoRPGADD * 2.5);
 					if (skill >= 4) HealthLevelAdd2 = (HealthNoRPGADD * 2.0);
+					
+					if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite")))
+					{
+						if (DD_RoseMother) HealthNoRPGADD += (BaseStartMaxHealth * 0.125);
+						if (DD_GameMother) HealthNoRPGADD += (BaseStartMaxHealth * 0.125);
+						if (DD_MossMother) HealthNoRPGADD += (BaseStartMaxHealth * 0.125);
+						if (DD_GlobeMother) HealthNoRPGADD += (BaseStartMaxHealth * 0.125);
+						if (DD_SphinxMother) HealthNoRPGADD += (BaseStartMaxHealth * 0.125);
+						if (DD_HandMother1) HealthNoRPGADD += (BaseStartMaxHealth * 0.125);
+						if (DD_HandMother2) HealthNoRPGADD += (BaseStartMaxHealth * 0.125);
+						if (DD_TrueHandMother) HealthNoRPGADD += (BaseStartMaxHealth * 0.125);
+						if (AFD_Krag) HealthNoRPGADD += (BaseStartMaxHealth * 0.2);
+						if (AFD_Quisling) HealthNoRPGADD += (BaseStartMaxHealth * 0.2);
+						if (AFD_Lauritz) HealthNoRPGADD += (BaseStartMaxHealth * 0.2);
+						if (AFD_Jorgensen1) HealthNoRPGADD += (BaseStartMaxHealth * 0.2);
+						if (AFD_Jorgensen2) HealthNoRPGADD += (BaseStartMaxHealth * 0.2);
+						if (AFD_JorgCannon) HealthNoRPGADD += (BaseStartMaxHealth * 0.2);
+					}
 				}
 				MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd2 + HealthBonusAdd2);
 				
@@ -1042,13 +1076,16 @@ class PlayerStatItem : Inventory
 				//* SuperVac Ammo Handling *
 				//**************************
 				vacammotype = owner.FindInventory("VacAmmo");
+				VacCost = 8;
+				if (ddafd_originalsupervaccost && (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite"))) VacCost = 12;
+				if (VacCost <= 0) VacCost = 1;
 				int vacammoprev;
 				int prevvacbagstocharge;
 				if (vacammotype)
 				{
 					vacammoprev = vacammotype.Amount;
 				}
-				prevvacbagstocharge = (vacammoprev % 8);
+				prevvacbagstocharge = (vacammoprev % VacCost);
 				int vacgiveammo;
 				int vacammocounter = owner.CountInv("VacAmmoCounter");
 				if (dydudebug_supervacbag) Console.Printf("Vacuum Bag Size: %d / %d", vacammocounter, SuperVacBagSize);
@@ -1072,7 +1109,7 @@ class PlayerStatItem : Inventory
 				{
 					vacammonow = vacammotype.Amount;
 				}
-				int vacbagstocharge = (vacammonow % 8);
+				int vacbagstocharge = (vacammonow % VacCost);
 				if (prevvacbagstocharge && vacbagstocharge != prevvacbagstocharge)
 				{
 					if (vacbagstocharge < prevvacbagstocharge)
@@ -1080,14 +1117,14 @@ class PlayerStatItem : Inventory
 						owner.A_StopSound(CHAN_VOICE);
 						owner.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT);
 						string vacmsg;
-						if (vacammoprev < 8)
+						if (vacammoprev < VacCost)
 						{
 							vacmsg = "The SuperVac's Alt-Fire is Ready!";
 						}
 						else
 						{
 							vacmsg = "";
-							vacmsg.AppendFormat("The SuperVac's Alt-Fire Has %d Charges now!", (vacammonow / 8));
+							vacmsg.AppendFormat("The SuperVac's Alt-Fire Has %d Charges now!", (vacammonow / VacCost));
 						}
 						owner.A_Log(vacmsg);
 					}
@@ -1097,26 +1134,6 @@ class PlayerStatItem : Inventory
 					vacammocounter = 0;
 					owner.A_SetInventory("VacAmmoCounter",0);
 				}
-				/*
-				if (vacammoprev < 8 && vacammonow >= 8)
-				{
-					owner.A_StopSound(CHAN_VOICE);
-					owner.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT);
-					owner.A_Log("The SuperVac's Alt-Fire is Ready!", vacgiveammo);
-				}
-				if (vacammoprev < 16 && vacammonow >= 16)
-				{
-					owner.A_StopSound(CHAN_VOICE);
-					owner.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT);
-					owner.A_Log("The SuperVac's Alt-Fire Has TWO Charges now!", vacgiveammo);
-				}
-				if (vacammoprev < 24 && vacammonow >= 24)
-				{
-					owner.A_StopSound(CHAN_VOICE);
-					owner.A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT);
-					owner.A_Log("The SuperVac's Alt-Fire Has THREE Charges now!", vacgiveammo);
-				}
-				*/
 				
 				//**********************
 				//* TimeFreeze Handler *
@@ -2399,8 +2416,8 @@ class PlayerStatItem : Inventory
 					SuperVacAmmo = vacammotype.Amount;
 					SuperVacAmmoMax = vacammotype.MaxAmount;
 				}
-				if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
-				SuperVacAmmoFactor = (SuperVacAmmo * (0.0625 / SuperVacAmmoMax));
+				if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
+				SuperVacAmmoFactor = (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax));
 				double WeapEvaAlt = 0.0;
 				if (weapon is "HandToHand") WeapEvaAlt += (BaseEVA * 0.125);
 				if (weapon is "BlunderAxe") WeapEvaAlt -= (BaseEVA * 0.05);
@@ -2909,12 +2926,12 @@ class PlayerStatItem : Inventory
 				SuperVacAmmo = vacammotype.Amount;
 				SuperVacAmmoMax = vacammotype.MaxAmount;
 			}
-			if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
-			SuperVacAmmoFactor = (SuperVacAmmo * (0.0625 / SuperVacAmmoMax));
+			if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
+			SuperVacAmmoFactor = (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax));
 			if (weapon is "SuperVac")
 			{
-				if (berserked) WeaponJumpZ *= (0.984375 - (SuperVacAmmo * (0.015625 / SuperVacAmmoMax)));
-				else WeaponJumpZ *= (0.9375 - (SuperVacAmmo * (0.0625 / SuperVacAmmoMax)));
+				if (berserked) WeaponJumpZ *= (0.984375 - (SuperVacAmmo * ((SuperVacBaseMaxFactor * 2.5) / SuperVacAmmoMax)));
+				else WeaponJumpZ *= (0.9375 - (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax)));
 			}
 			if (weapon is "Grimophone") 
 			{
@@ -4080,12 +4097,12 @@ class PlayerStatItem : Inventory
 			SuperVacAmmo = vacammotype.Amount;
 			SuperVacAmmoMax = vacammotype.MaxAmount;
 		}
-		if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
-		SuperVacAmmoFactor = (SuperVacAmmo * (0.0625 / SuperVacAmmoMax));
+		if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
+		SuperVacAmmoFactor = (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax));
 		if (weapon is "SuperVac")
 		{
-			if (berserked) WeaponFactor *= (0.9375 - (SuperVacAmmo * (0.03125 / SuperVacAmmoMax)));
-								else WeaponFactor *= (0.875 - (SuperVacAmmo * (0.0625 / SuperVacAmmoMax)));
+			if (berserked) WeaponFactor *= (0.9375 - (SuperVacAmmo * ((SuperVacBaseMaxFactor * 0.5) / SuperVacAmmoMax)));
+								else WeaponFactor *= (0.875 - (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax)));
 		}
 		if (weapon is "Grimophone")
 		{
@@ -4177,6 +4194,8 @@ class PlayerDashJump : Inventory
 	int BaseDashChargeMax;
 	int ExtraDashCharge;
 	int SuperVacAmmo, SuperVacAmmoMax;
+	int SuperVacBaseMax;
+	double SuperVacBaseMaxFactor;
 	double SuperVacAmmoFactor;
 	
 	Default
@@ -4202,8 +4221,8 @@ class PlayerDashJump : Inventory
 			SuperVacAmmo = vacammotype.Amount;
 			SuperVacAmmoMax = vacammotype.MaxAmount;
 		}
-		if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
-		SuperVacAmmoFactor = (SuperVacAmmo * (0.0925 / SuperVacAmmoMax));
+		if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
+		SuperVacAmmoFactor = (SuperVacAmmo * ((SuperVacBaseMaxFactor * 1.5) / SuperVacAmmoMax));
 		PlayerInfo PlayDash = Owner.Player;
 		Int BTInput = PlayDash.cmd.buttons;
 		dashgruntchance = randompick(66,66,67);
@@ -4311,9 +4330,9 @@ class PlayerDashJump : Inventory
 		if (owner.CountInv("PowerRoastBuff")) DashSpdMul += 0.04;
 		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashSpdMul += 0.08;
 		if (owner.CountInv("PowerMeal2Buff") || owner.CountInv("PowerMeal2Buff2")) DashSpdMul += 0.08;
-		if (weapon is "HandToHand") DashSpdMul += 0.0925;
-		if (weapon is "SuperVac") DashSpdMul -= (0.0925 + SuperVacAmmoFactor);
-		if (weapon is "Grimophone") DashSpdMul -= 0.185;
+		if (weapon is "HandToHand") DashSpdMul += 0.09375;
+		if (weapon is "SuperVac") DashSpdMul -= (0.09375 + SuperVacAmmoFactor);
+		if (weapon is "Grimophone") DashSpdMul -= 0.1875;
 		DashSpeed *= DashSpdMul;
 		if (berserked) DashSpeed *= 1.125;
 		if (dydudebug_dashing) Console.Printf("DashSpeed: %.8f", DashSpeed);
@@ -4431,7 +4450,7 @@ class PlayerDashJump : Inventory
 			SuperVacAmmo = vacammotype.Amount;
 			SuperVacAmmoMax = vacammotype.MaxAmount;
 		}
-		if (SuperVacAmmoMax < 16) SuperVacAmmoMax = 16;
+		if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
 		if (weapon is "SuperVac")
 		{
 			if (!berserked) DashCost += (1 + (SuperVacAmmo * (1 / SuperVacAmmoMax)));

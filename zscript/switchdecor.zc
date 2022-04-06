@@ -1,6 +1,7 @@
 // Switchable Decor [DD food items/etc]
 class WineSet : SwitchableDecoration 
 {
+	mixin HUDRecovery;
 	default
 	{
 		//$Category RPProps
@@ -23,8 +24,38 @@ class WineSet : SwitchableDecoration
 			WINE B 1;
 			WINE B 1
 			{
-				A_RadiusGive("Health", 96, RGF_PLAYERS, 15);
-				A_RadiusGive("WineArmor", 96, RGF_PLAYERS, 1);
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				int temp1 = player.health;
+				int oldhealth = player.health;
+				int temp2 = player.CountInv("PlayerMaxHP");
+				if (temp1 < temp2)
+				{
+					int temp3 = player.CountInv("PlayerMaxHP");
+					temp3 *= 0.15;
+					temp1 += temp3;
+					
+					if (temp1 > temp2) temp1 = temp2;
+				}
+				else
+				{
+					int temp3 = player.CountInv("PlayerMaxHP");
+					temp3 *= 0.05;
+					temp1 += temp3;
+					if (temp1 > (temp2 * 3)) temp1 = (temp2 * 3);
+				}
+				player.health = temp1;
+				int healdiff = player.health - oldhealth;
+				if (healdiff) invoker.A_RecoverHUD(healdiff, 0, true);
+				if (MiscItem) MiscItem.HPRegenBoostTimer += (randompick(9,10,10,11,11,12,13) * 2.5);
+
+				int armorgive = 50;
+				for (int i; i < armorgive; i++) player.A_GiveInventory("ArmorScrap",1);
+				
+				double maskpitch = 1.00;
+				if (player.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+				player.A_StopSound(CHAN_VOICE);
+				player.A_StartSound("dinah/giggle",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
 				Console.Printf("\c[gold]Eh... One little sip won't hurt... right?");
 			}
 			WINE B -1;
@@ -57,45 +88,34 @@ class FoodPlate1 : SwitchableDecoration //pig
 		Active:
 			FOOD E 0
 			{
-		actor player = players[0].mo;
+				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 				int temp1 = player.health;
 				int oldhealth = player.health;
 				int temp4 = player.CountInv("PlayerMaxHP");
 				int temp2 = (temp4 * 3.0);
-				if (temp1 < temp2)
-				{
-					int temp3 = temp4;
-					temp3 *= 0.50;
-						
-					temp1 += temp3;
-					if (temp1 > temp2) temp1 = temp2;
-					player.health = temp1;
-					int healdiff = player.health - oldhealth;
-					if (healdiff) invoker.A_RecoverHUD(healdiff, 0, true);
-					if (MiscItem) MiscItem.HPRegenBoostTimer += (random(45,65) * 2.5);
+				int temp3 = temp4;
+				temp3 *= 0.50;
+					
+				temp1 += temp3;
+				if (temp1 > temp2) temp1 = temp2;
+				player.health = temp1;
+				int healdiff = player.health - oldhealth;
+				if (healdiff) invoker.A_RecoverHUD(healdiff, 0, true);
+				if (MiscItem) MiscItem.HPRegenBoostTimer += (random(45,65) * 2.5);
 
-					if (MiscItem && MiscItem.CanTalkUnderwater)
-					{
-						double maskpitch = 1.00;
-						if (waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
-						player.A_StopSound(CHAN_VOICE);
-						player.A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
-					}
-					player.A_SetBlend("f1 ff f1",0.1,random(4,6));
-					player.A_GiveInventory("PowerRoastBuff");
-					Console.Printf("\c[red]Ate a dish of Roasted Pig! \c[green]+%d (Over)HP", temp3);
-					//invoker.A_FadeOut(1.0,FTF_REMOVE);
-					return resolvestate("Eaten");
-				}
-				else
+				if (MiscItem && MiscItem.CanTalkUnderwater)
 				{
-					A_StartSound("inv_fail",84,CHANF_DEFAULT,1.0,ATTN_NORM);
-					SetStateLabel("Inactive");
+					double maskpitch = 1.00;
+					if (waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+					player.A_StopSound(CHAN_VOICE);
+					player.A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
 				}
-				return resolvestate(null);
+				player.A_SetBlend("f1 ff f1",0.1,random(4,6));
+				player.A_GiveInventory("PowerRoastBuff");
+				Console.Printf("\c[red]Ate a dish of Roasted Pig! \c[green]+%d (Over)HP", temp3);
+				//invoker.A_FadeOut(1.0,FTF_REMOVE);
 			}
-			goto Inactive;
 		Eaten:
 			FOOD E -1;
 			Stop;
