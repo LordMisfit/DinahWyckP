@@ -10,6 +10,7 @@ class DDPlayerPawn : PlayerPawn
 	const SKILL_IMPOSSIBLE = 7;
 	const SKILL_OMEGA = 8;
 	
+	bool wasongroundprevtic, wasongroundcurrtic;
 	double PlayerDefenseIgnoreFactor;
 	int TruePlayerLevel;
 	int TruePlayerATK;
@@ -412,6 +413,85 @@ class DDPlayerPawn : PlayerPawn
 		}
 	}
 	
+	override void PlayerThink()
+	{
+		wasongroundprevtic = player.onground;
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+		
+		CheckFOV();
+
+		if (player.inventorytics)
+		{
+			player.inventorytics--;
+		}
+		CheckCheats();
+
+		if (bJustAttacked)
+		{ // Chainsaw/Gauntlets attack auto forward motion
+			cmd.yaw = 0;
+			cmd.forwardmove = 0xc800/2;
+			cmd.sidemove = 0;
+			bJustAttacked = false;
+		}
+
+		bool totallyfrozen = CheckFrozen();
+
+		// Handle crouching
+		CheckCrouch(totallyfrozen);
+		CheckMusicChange();
+
+		if (player.playerstate == PST_DEAD)
+		{
+			DeathThink ();
+			return;
+		}
+		if (player.jumpTics != 0)
+		{
+			player.jumpTics--;
+			if (player.onground && player.jumpTics < -18)
+			{
+				player.jumpTics = 0;
+			}
+		}
+		if (player.morphTics && !(player.cheats & CF_PREDICTING))
+		{
+			MorphPlayerThink ();
+		}
+
+		CheckPitch();
+		HandleMovement();
+		CalcHeight ();
+
+		if (!(player.cheats & CF_PREDICTING))
+		{
+			CheckEnvironment();
+			// Note that after this point the PlayerPawn may have changed due to getting unmorphed or getting its skull popped so 'self' is no longer safe to use.
+			// This also must not read mo into a local variable because several functions in this block can change the attached PlayerPawn.
+			player.mo.CheckUse();
+			player.mo.CheckUndoMorph();
+			// Cycle psprites.
+			player.mo.TickPSprites();
+			// Other Counters
+			if (player.damagecount)	player.damagecount--;
+			if (player.bonuscount) player.bonuscount--;
+
+			if (player.hazardcount)
+			{
+				player.hazardcount--;
+				if (player.hazardinterval <= 0)
+					player.hazardinterval = 32; // repair invalid hazardinterval
+				if (!(Level.maptime % player.hazardinterval) && player.hazardcount > 16*TICRATE)
+					player.mo.DamageMobj (NULL, NULL, 5, player.hazardtype);
+			}
+			player.mo.CheckPoison();
+			player.mo.CheckDegeneration();
+			player.mo.CheckAirSupply();
+		}
+		wasongroundcurrtic = player.onground;
+		if (dydudebug_playermove) Console.Printf("wasongroundprevtic: %d, wasongroundcurrtic: %d [gametic: %d]", wasongroundprevtic, wasongroundcurrtic, gametic);
+	}
+
 	override void MovePlayer()
 	{
 		if (!player || !player.mo || player.mo != self)
@@ -462,7 +542,85 @@ class DDPlayerPawn : PlayerPawn
 			}
 		}
 		
-		super.MovePlayer();
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+
+		// [RH] 180-degree turn overrides all other yaws
+		if (player.turnticks)
+		{
+			player.turnticks--;
+			Angle += (180. / TURN180_TICKS);
+		}
+		else
+		{
+			Angle += cmd.yaw * (360./65536.);
+		}
+
+		player.onground = (pos.z <= floorz) || bOnMobj || bMBFBouncer || (player.cheats & CF_NOCLIP2);
+
+		// killough 10/98:
+		//
+		// We must apply thrust to the player and bobbing separately, to avoid
+		// anomalies. The thrust applied to bobbing is always the same strength on
+		// ice, because the player still "works just as hard" to move, while the
+		// thrust applied to the movement varies with 'movefactor'.
+
+		if (cmd.forwardmove | cmd.sidemove)
+		{
+			double forwardmove, sidemove;
+			double bobfactor;
+			double friction, movefactor;
+			double fm, sm;
+
+			[friction, movefactor] = GetFriction();
+			bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
+			if (!player.onground && !bNoGravity && !waterlevel)
+			{
+				// [RH] allow very limited movement if not on ground.
+				movefactor *= level.aircontrol;
+				bobfactor*= level.aircontrol;
+			}
+
+			fm = cmd.forwardmove;
+			sm = cmd.sidemove;
+			[fm, sm] = TweakSpeeds (fm, sm);
+			fm *= Speed / 256;
+			sm *= Speed / 256;
+
+			// When crouching, speed and bobbing have to be reduced
+			if (CanCrouch() && player.crouchfactor != 1)
+			{
+				fm *= player.crouchfactor;
+				sm *= player.crouchfactor;
+				bobfactor *= player.crouchfactor;
+			}
+
+			forwardmove = fm * movefactor * (35 / TICRATE);
+			sidemove = sm * movefactor * (35 / TICRATE);
+
+			if (forwardmove)
+			{
+				Bob(Angle, cmd.forwardmove * bobfactor / 256., true);
+				ForwardThrust(forwardmove, Angle);
+			}
+			if (sidemove)
+			{
+				let a = Angle - 90;
+				Bob(a, cmd.sidemove * bobfactor / 256., false);
+				Thrust(sidemove, a);
+			}
+
+			if (!(player.cheats & CF_PREDICTING) && (forwardmove != 0 || sidemove != 0))
+			{
+				PlayRunning ();
+			}
+
+			if (player.cheats & CF_REVERTPLEASE)
+			{
+				player.cheats &= ~CF_REVERTPLEASE;
+				player.camera = player.mo;
+			}
+		}
 	}
 	
 	Override void Tick()
@@ -1177,9 +1335,40 @@ class DDPlayerPawn : PlayerPawn
 			}
 		}
 	}
-
+	
+	bool CheckFallDamageDMobj()
+	{
+		bool takefalldamage = true;
+		if (bFLY || bNOGRAVITY) 
+		{
+			takefalldamage = false;
+			if (dydudebug_playerdamagemobj) Console.Printf("bFLY: %d, bNOGRAVITY: %d", bFLY, bNOGRAVITY);
+		}
+		else
+		{
+			bool onground2 = (pos.z <= floorz) || bOnMobj || bMBFBouncer || (player.cheats & CF_NOCLIP2);
+			if (wasongroundprevtic == onground2)
+			{
+				takefalldamage = false;
+				if (dydudebug_playerdamagemobj) Console.Printf("wasongroundprevtic: %d, onground2: %d", wasongroundprevtic, onground2);
+			}
+		}
+		if (dydudebug_playerdamagemobj) Console.Printf("takefalldamage: %d", takefalldamage);
+		
+		return takefalldamage;
+	}
+	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		if (mod == 'Falling')
+		{
+			if (CheckFallDamageDMobj() == false) 
+			{
+				if (dydudebug_playerdamagemobj) Console.Printf("Fall Damage Nullified");
+				return -1;
+			}
+		}
+		
 		if (CountInv("EvadeAnAttack"))
 		{
 			if (EggShot(inflictor) ||
