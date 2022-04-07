@@ -1599,7 +1599,7 @@ class DD_EventHandler : EventHandler
 			string comblog = "";
 			comblog.AppendFormat("\c[red]*\c- ");
 			showdmglog = false;
-			if (victim.bCOUNTKILL || specialtype) showdmglog = true;
+			if (victim.bCOUNTKILL || specialtype || DDAFDNPC(victim)) showdmglog = true;
 			if (vict == "PracticeTarget" || vict == "PracticeTarget2") showdmglog = true;
 			if (vict == "BossBrainNew") showdmglog = true;
 			if (DDPlayerPawn(victim)) showdmglog = false;
@@ -1619,10 +1619,11 @@ class DD_EventHandler : EventHandler
 					if (inflicter) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
 					comblog.AppendFormat(" [\c[lightblue]%s\c-]", mod);
 					if (flags & DMG_EXPLOSION) comblog.AppendFormat(" \c[brick][AOE]\c-");
-					if (victim.health <= 0 && !DDAFDNPC(victim)) comblog.AppendFormat(" \c[brick]%s dies!\c-", victname);
-
-					//if (victim.health <= 0) Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-] \c[brick]%s dies!", dmg, victname, atkrname, mod, victname);
-					//else Console.Printf("\c[brick]%d\c- damage dealt to \c[red]%s\c- by \c[gold]%s\c-! [\c[lightblue]%s\c-]", dmg, victname, atkrname, mod);
+					if (victim.health <= 0) 
+					{
+						if (DDAFDNPC(victim) && !VacPuff(inflicter)) comblog.AppendFormat(" \c[orange]%s has been knocked senseless!\c-", victname);
+						else comblog.AppendFormat(" \c[brick]%s dies!\c-", victname);
+					}
 				}
 				else
 				{
@@ -1745,7 +1746,7 @@ class DD_EventHandler : EventHandler
 			if (BowlingPin(victim) || DDHoganTarget(victim)) playdthsounds = false;
 			if (playdthsounds)
 			{
-				if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype))
+				if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype || DDAFDNPC(victim)))
 				{
 					if (source || inflicter)
 					{
@@ -1755,18 +1756,42 @@ class DD_EventHandler : EventHandler
 						if (playpawn == null && inflicter) playpawn = PlayerPawn(inflicter);
 						if (victim.bFRIENDLY)
 						{
-							if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsndAlly";
-							if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDEDAlly";
-							if (exex_q3aqckillsoundtype >= 0) 
+							if (dydudebug_hitsounds) Console.Printf("[deathsound] victim is friendly: %s", victim.GetClassName());
+							if (DDAFDNPC(victim))
 							{
-								victim.A_StopSound(12);
-								victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+								if (dydudebug_hitsounds) Console.Printf("[deathsound] victim is DDAFDNPC Type: %s", victim.GetClassName());
+								playedsound = "misc/whoops";
+								if (exex_q3aqchitsoundtype >= 0) 
+								{
+									victim.A_StopSound(12);
+									victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE, frandom(0.80,0.888889));
+								}
+							}
+							else
+							{
+								if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsndAlly";
+								if (exex_q3aqckillsoundtype == 1) playedsound = "misc/killsndDEDAlly";
+								if (exex_q3aqckillsoundtype >= 0) 
+								{
+									victim.A_StopSound(12);
+									victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE);
+								}
 							}
 						}
 						else
 						if (playpawn) 
 						{
 							if (dydudebug_hitsounds) Console.Printf("[deathsound] playpawn: %s", playpawn.GetClassName());
+							if (DDAFDNPC(victim))
+							{
+								playedsound = "misc/whoops";
+								if (exex_q3aqchitsoundtype >= 0) 
+								{
+									victim.A_StopSound(12);
+									victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE, frandom(1.25,1.5));
+								}
+							}
+							else
 							if (!victim.bFRIENDLY)
 							{
 								if (exex_q3aqckillsoundtype == 0) playedsound = "misc/killsnd";
@@ -1785,6 +1810,16 @@ class DD_EventHandler : EventHandler
 							if (othermon) 
 							{
 								if (dydudebug_hitsounds) Console.Printf("[deathsound] othermon: %s", othermon.GetClassName());
+								if (DDAFDNPC(victim))
+								{
+									playedsound = "misc/whoops";
+									if (exex_q3aqchitsoundtype >= 0) 
+									{
+										victim.A_StopSound(12);
+										victim.A_StartSound(playedsound, 12, CHANF_DEFAULT, (exex_q3aqckillsoundvol * frandom(0.75,1.25)), ATTN_NONE, frandom(0.80,0.888889));
+									}
+								}
+								else
 								if (othermon.bFRIENDLY && !victim.bFRIENDLY)
 								{
 									if (dydudebug_hitsounds) Console.Printf("[deathsound] othermon: %s kills %s (ally kills)", othermon.GetClassName(), victim.GetClassName());
@@ -1819,7 +1854,7 @@ class DD_EventHandler : EventHandler
 			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playdmgsounds = false;
 			if (playdmgsounds)
 			{
-				if (exex_q3aqchitsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype || vict == "BossBrainNew") && victim.CountInv("TempNoHitSound") <= 0)
+				if (exex_q3aqchitsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype || DDAFDNPC(victim) || vict == "BossBrainNew") && victim.CountInv("TempNoHitSound") <= 0)
 				{
 					victim.A_SetInventory("TempNoHitSound",1);
 					
