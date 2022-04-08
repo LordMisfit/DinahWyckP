@@ -1360,6 +1360,8 @@ class DDPlayerPawn : PlayerPawn
 	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		bool isbarrierbeam = false;
+		if (BarrierBeam(inflictor) || BarrierBeam(source)) isbarrierbeam = true;
 		if (mod == 'Falling')
 		{
 			if (CheckFallDamageDMobj() == false) 
@@ -1378,6 +1380,8 @@ class DDPlayerPawn : PlayerPawn
 				if (dydudebug_playerdamagemobj) Console.Printf("Evasion (Eggs) - no damage");
 				return 0;
 			}
+			else 
+			if (isbarrierbeam) A_SetInventory("EvadeAnAttack",0);
 			else
 			{
 				if (!(((source == null && inflictor == null) &&
@@ -1485,6 +1489,14 @@ class DDPlayerPawn : PlayerPawn
 			flags &= ~DMG_EXPLOSION;
 			bellefishzap = true;
 			if (dydudebug_playerdamagemobj) Console.Printf("Bellefish Zap Melee");
+		}
+		
+		if (isbarrierbeam)
+		{
+			flags |= DMG_NO_FACTOR;
+			flags |= DMG_NO_PROTECT;
+			flags |= DMG_NO_ENHANCE;
+			flags |= DMG_THRUSTLESS;
 		}
 
 		int olddmg;
@@ -1641,6 +1653,8 @@ class DDPlayerPawn : PlayerPawn
 					
 					if (bellefishzap) PlayerDefenseIgnoreFactor += (0.334 * (1.00 - PlayerDefenseIgnoreFactor));
 				}
+				
+				if (isbarrierbeam) PlayerDefenseIgnoreFactor += (frandom(0.9,1.0) * (1.00 - PlayerDefenseIgnoreFactor));
 			}
 			
 			double FoodFactor = 0.00;
@@ -2096,10 +2110,17 @@ class DDPlayerPawn : PlayerPawn
 			if (mod == 'Drowning' && damage < 1) damage = 1;
 		}
 		
+
 		if (CountInv("PlayerDashing") && !SigilDrain)
 		{
-			if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Dashing Avoids Damage]");
-			return 0;
+			if (BarrierBeam(inflictor) || BarrierBeam(source))
+			{
+			}
+			else
+			{
+				if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Dashing Avoids Damage]");
+				return 0;
+			}
 		}
 
 		if (CountInv("PowerTimeFreezer") || 

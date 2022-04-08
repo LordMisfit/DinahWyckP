@@ -11570,21 +11570,53 @@ class Lightningbolt : EEProjectile
 
 class BarrierBeam : EEProjectile 
 {
+	int selfaoe;
 	default
 	{
-		Tag "Pike Blast";
+		Tag "Barrier Beam";
 		Height 16;
 		Radius 20;
 		Speed 80;
-		DamageFunction (finaldamagedealt);
+		Damage 100;
 		Scale 1;
-		DamageType "Zap";
+		DamageType "Normal";
 		Projectile;
 		RENDERSTYLE "Normal";
 		Seesound "";
 		Deathsound "";
 		+FORCERADIUSDMG
-		//+NOEXTREMEDEATH
+		+FOILBUDDHA
+		+FOILINVUL
+		+NOEXTREMEDEATH
+	}
+	
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		if (ShieldPart(other)) return false;
+		
+		// We don't really care about others making the check.
+		return true;
+	}
+	
+	States
+	{
+		Spawn:
+			ZBUL A 0 Bright NoDelay
+			{
+				//A_ScaleVelocity(frandompick(1.0,1.125,1.125,1.25,1.25,1.25,1.25,1.25,1.25,1.375,1.375,1.5));
+			}
+		Idle:
+			ZBUL ABCD 3 Bright
+			{
+				int rad = random(4,8) * 10;
+				A_Explode(100*random(1,8),rad,true,true,rad);
+			}
+			loop;
+		Death:
+			ZBUX A 4 Bright A_Explode(128,128,true,true,32);
+			ZBUX BC 4 Bright;
+			ZBUX D 4 Bright;
+			stop;
 	}
 }
 
