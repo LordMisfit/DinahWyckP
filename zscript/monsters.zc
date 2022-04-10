@@ -3668,4 +3668,256 @@ class HellCleric : EECreature
 	}
 }
 
+
+// Aetherius's Version of The Hell Cleric
+class HellClericDVDS : EECreature
+{
+	default
+	{
+		Tag "Hell Cleric";
+		Health 175;
+		Radius 20;
+		Height 56;
+		Mass 150;
+		DamageFunction ((3+(11*(random(6,13))))/2); // 69-146 per whack
+		Speed 8;
+		FastSpeed 16;
+		ReactionTime 8;
+		Painchance 24;
+		Painchance "Melee", 3;
+		Painchance "Fist", 3;
+		Painchance "Kick", 16;
+		DamageFactor "Beats", 1.334;
+		DamageFactor "Cricket", 1.334;
+		DamageFactor "Lead", 1.334;
+		DamageFactor "Zap", 2.5;
+		DamageFactor "Dust", 2.667;
+		DamageFactor "CherryBomb", 0.875;
+		DamageFactor "Spinner", 0.875;
+		DamageFactor "BRocket", 0.875;
+		DamageFactor "Popper", 2.667;
+		DamageFactor "Fire", 0.75;
+		DamageFactor "Ice", 1.334;
+		DamageFactor "Bonk", 0.4;
+		DamageFactor "Chop", 0.4;
+		DamageFactor "Suck", 0.4;
+		DamageFactor "Melee", 0.4;
+		DamageFactor "Fist", 0.4;
+		DamageFactor "Kick", 0.4;
+		Monster;
+		+SOLID;
+		+FLOORCLIP;
+		+DONTHARMCLASS;
+		SeeSound "hellcleric/sight";
+		PainSound "hellcleric/pain";
+		DeathSound "hellcleric/death";
+		ActiveSound "hellcleric/active" ;
+		Obituary "%o was burned and flamed by a Hell Cleric.";
+		HitObituary "%o had %p head bashed in by a Hell Cleric.";
+	}
+	
+	states
+	{
+		Spawn:
+			HELC A 0 NoDelay; 
+			HELC A 4 A_Look;
+			HELC A 4 A_Look;
+			goto Spawn+1;
+		See:
+			HELC AABBCCDD 2
+			{
+				int user_monsterlevel = CountInv("MonsterLevel");
+				if (exex_monsterlevelenabledflags && user_monsterlevel > 60) { bAVOIDMELEE = true; } else { bAVOIDMELEE = false; }
+				if (exex_monsterlevelenabledflags && user_monsterlevel > 120) { A_SetTics(1); }
+				user_fastchasetimer++;
+				if (user_fastchasetimer >= 1 && user_fastchasetimer <= 2) { user_fastchasetimermax = 16; }
+				if (user_fastchasetimer >= 3 && user_fastchasetimer <= 4) { user_fastchasetimermax = 4; }
+				if (user_fastchasetimer >= 5 && user_fastchasetimer <= 6) { user_fastchasetimermax = 8; }
+				if (user_fastchasetimer >= 7 && user_fastchasetimer <= 8) { user_fastchasetimermax = 2; }
+				if (user_fastchasetimer >= 8) { user_fastchasetimer = 0; }
+				if (exex_monsterlevelenabledflags && user_monsterlevel > 240) { user_fastchasetimermax /= 2; }
+				if (random(1,user_fastchasetimermax) == 1) { A_Chase("Melee","Missile", CHF_FASTCHASE | CHF_NIGHTMAREFAST); } else { A_Chase("Melee","Missile"); }
+			}
+			loop;
+
+		Melee:
+		Missile:
+			TNT1 A 0;
+			HELC E 4 
+			{
+				int user_monsterlevel = CountInv("MonsterLevel");
+				if (exex_monsterlevelenabledflags && user_monsterlevel > 180) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && user_monsterlevel > 90) { A_SetTics(3); }
+
+				user_attacktype = random(1,2);
+				user_attacks = 0;
+				user_attackmax = 3;
+				A_FaceTarget();
+			}
+		MissileLoop:
+			HELC G 4 
+			{
+				int user_monsterlevel = CountInv("MonsterLevel");
+				if (exex_monsterlevelenabledflags && user_monsterlevel > 180) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && user_monsterlevel > 90) { A_SetTics(3); }
+				A_FaceTarget();
+
+				user_tempvar1 = 24;
+				user_tempvar2 = 15;
+				string atktype = "HellClericBall";
+				if (user_attacktype == 1) atktype = "HellClericDarkBall";
+				
+				A_CustomComboAttack(atktype, user_tempvar1, (7+(12*(random(6,12)))/2), "imp/melee", "Melee", true);
+				if (exex_monsterlevelenabledflags && user_monsterlevel >= 30)
+				{
+					A_SpawnProjectile(atktype,user_tempvar1,0,(user_tempvar2*1));
+					A_SpawnProjectile(atktype,user_tempvar1,0,(user_tempvar2*-1));
+					if (user_monsterlevel >= 60)
+					{
+						A_SpawnProjectile(atktype,user_tempvar1,0,(user_tempvar2*2));
+						A_SpawnProjectile(atktype,user_tempvar1,0,(user_tempvar2*-2));
+					}
+				}
+				user_attacks += 1;
+			}
+			HELC F 0
+			{
+				if (random(1,8) > 1) { if (user_attacks >= user_attackmax) { return resolvestate("See"); } return resolvestate(null); }    
+				return resolvestate(null);
+			}
+			HELC F 3 
+			{
+				int user_monsterlevel = CountInv("MonsterLevel");
+				if (exex_monsterlevelenabledflags && user_monsterlevel > 120) { A_SetTics(2); }
+				A_FaceTarget();
+			}
+			loop;
+
+		Pain:
+			HELC H 2 A_Pain(); // A_DVDSPain(1,random(18,22),8,0,0,25)
+			goto See;
+		Pain.Fist:
+			HELC H 2 A_Pain(); // A_DVDSPain(1,random(18,22),8,0,0,50)
+			HELC H 1;
+			goto See;
+		Pain.Kick:
+			HELC H 2 A_Pain(); // A_DVDSPain(1,random(18,22),8,0,0,75);
+			HELC H 2;
+			goto See;
+		Death:
+			HELC I 5;
+			HELC J 5 A_Scream();
+			HELC K 5;
+			HELC L 5 A_NoBlocking();
+			HELC M -1;
+
+		XDeath:
+			HELC N 5;
+			HELC O 5 A_XScream();
+			HELC P 5;
+			HELC Q 5 A_NoBlocking();
+			HELC RSTU 5;
+			HELC V -1;
+
+		Ice:
+			HELC H 5 A_GenericFreezeDeath();
+			HELC H 1 A_FreezeDeathChunks();
+			wait;
+
+		Raise:
+			HELC L 5;
+			HELC KJI 5;
+			goto See;
+	}
+}
+
+class HellClericSpectral : HellClericDVDS
+{
+	default
+	{
+		Tag "Spectral Hell Cleric";
+		+SHADOW
+		RenderStyle "OptFuzzy";
+		Obituary "%o was burned and flamed by a Spectral Hell Cleric.";
+		HitObituary "%o had %p head bashed in by a Spectral Hell Cleric.";
+	}
+}
+
+// Hell Cleric Shot 1
+class HellClericBall : EEProjectile
+{
+	default
+	{
+		Tag "Cleric Fireball";
+		Radius 6;
+		Height 8;
+		scale 1.25;
+		Speed 12;
+		Fastspeed 24;
+		DamageFunction ((32+(random(3,6)*random(9,16)))/4); // 15-32 per shot
+		Projectile;
+		+RANDOMIZE;
+		RenderStyle "Add";
+		Alpha 1.0;
+		SeeSound "imp/attack";
+		DeathSound "imp/shotx";
+		DamageType "Fire";
+	}
+	
+	states
+	{
+		Spawn:
+			FRB1 A 4 Bright;
+			FRB1 B 4 Bright;
+			FRB1 C 4 Bright;
+			loop;
+		Death:
+			FRB1 DEFGH 4 Bright;
+			stop;
+	}
+}
+
+// Hell Cleric Shot 2
+class HellClericDarkBall : EEProjectile // DarkSeeker
+{
+	default
+	{
+		Tag "Cleric Seekerball";
+		Radius 8;
+		Height 6;
+		Scale 1.25;
+		Speed 24;
+		Fastspeed 48;
+		DamageFunction ((24+(random(4,7)*random(9,16)))/4); // 15-34 per shot
+		DamageType "Fire";
+		+SEEKERMISSILE;
+		PROJECTILE;
+		SeeSound "imp/attack";
+		DeathSound "imp/shotx";
+		decal "DoomImpScorch";
+	}
+
+	states
+	{
+		Spawn:
+			FX15 A 0;
+			"####" A 2 Bright;
+			"####" A 2 Bright;
+			"####" B 2 Bright;
+			"####" B 2 Bright A_SeekerMissile(10,20);
+			"####" C 2 Bright;
+			"####" C 2 Bright;
+			"####" A 2 Bright;
+			"####" A 2 Bright A_SeekerMissile(10,20);
+			"####" B 2 Bright;
+			"####" B 2 Bright;
+			"####" C 2 Bright;
+			"####" C 2 Bright A_SeekerMissile(10,20);
+			loop;
+		Death:
+			FX15 DEFG 4 Bright;
+			stop;
+	}
+}
+
 // TBC :V
