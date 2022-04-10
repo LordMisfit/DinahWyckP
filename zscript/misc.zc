@@ -513,13 +513,13 @@ class PlayerStatItem : Inventory
 				}
 				
 				SuperVacBaseMax = 16;
-				SuperVacBaseMaxFactor = 0.625;
+				SuperVacBaseMaxFactor = double(1.00 / SuperVacBaseMax);
 				if (ddafd_originalinvlimits)
 				{
 					if (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite"))
 					{
 						SuperVacBaseMax = 12;
-						SuperVacBaseMaxFactor = 0.0833333333333333;
+						SuperVacBaseMaxFactor = double(1.00 / SuperVacBaseMax);
 					}
 				}
 				let vacammotype = owner.FindInventory("VacAmmo");
@@ -529,6 +529,7 @@ class PlayerStatItem : Inventory
 					SuperVacAmmoMax = vacammotype.MaxAmount;
 				}
 				if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
+				if (dydudebug_supervacother) Console.Printf("SuperVacBaseMaxFactor: %.8f, SuperVacBaseMax: %d", SuperVacBaseMaxFactor, SuperVacBaseMax);
 				
 				// Check if player can breath/talk underwater
 				CanTalkUnderwater = 0;
@@ -2425,6 +2426,7 @@ class PlayerStatItem : Inventory
 				}
 				if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
 				SuperVacAmmoFactor = (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax));
+				if (dydudebug_supervacother) Console.Printf("[Weapon Evasion] SuperVacAmmoFactor: %.8f, SuperVacBaseMaxFactor: %.8f, SuperVacBaseMax: %d", SuperVacAmmoFactor, SuperVacBaseMaxFactor, SuperVacBaseMax);
 				double WeapEvaAlt = 0.0;
 				if (weapon is "HandToHand") WeapEvaAlt += (BaseEVA * 0.125);
 				if (weapon is "BlunderAxe") WeapEvaAlt -= (BaseEVA * 0.05);
@@ -2934,11 +2936,16 @@ class PlayerStatItem : Inventory
 				SuperVacAmmoMax = vacammotype.MaxAmount;
 			}
 			if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
-			SuperVacAmmoFactor = (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax));
+			if (SuperVacAmmoMax > 0) 
+			{
+				if (berserked) SuperVacAmmoFactor = (SuperVacAmmo * ((SuperVacBaseMaxFactor * 2.5) / SuperVacAmmoMax));
+									else SuperVacAmmoFactor = (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax));
+			}
+			if (dydudebug_supervacother) Console.Printf("[Weapon JumpZ] SuperVacAmmoFactor: %.8f, SuperVacBaseMaxFactor: %.8f, SuperVacBaseMax: %d", SuperVacAmmoFactor, SuperVacBaseMaxFactor, SuperVacBaseMax);
 			if (weapon is "SuperVac")
 			{
-				if (berserked) WeaponJumpZ *= (0.984375 - (SuperVacAmmo * ((SuperVacBaseMaxFactor * 2.5) / SuperVacAmmoMax)));
-				else WeaponJumpZ *= (0.9375 - (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax)));
+				if (berserked) WeaponJumpZ *= (0.984375 - SuperVacAmmoFactor);
+									else WeaponJumpZ *= (0.9375 - SuperVacAmmoFactor);
 			}
 			if (weapon is "Grimophone") 
 			{
@@ -4106,11 +4113,16 @@ class PlayerStatItem : Inventory
 			SuperVacAmmoMax = vacammotype.MaxAmount;
 		}
 		if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
-		if (SuperVacAmmoMax) SuperVacAmmoFactor = (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax));
+		if (SuperVacAmmoMax > 0) 
+		{
+			if (berserked) SuperVacAmmoFactor = (SuperVacAmmo * ((SuperVacBaseMaxFactor * 0.5) / SuperVacAmmoMax));
+								else SuperVacAmmoFactor = (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax));
+		}
+		if (dydudebug_supervacother) Console.Printf("[Speed] SuperVacAmmoFactor: %.8f, SuperVacBaseMaxFactor: %.8f, SuperVacBaseMax: %d", SuperVacAmmoFactor, SuperVacBaseMaxFactor, SuperVacBaseMax);
 		if (weapon is "SuperVac")
 		{
-			if (berserked) WeaponFactor *= (0.9375 - (SuperVacAmmo * ((SuperVacBaseMaxFactor * 0.5) / SuperVacAmmoMax)));
-								else WeaponFactor *= (0.875 - (SuperVacAmmo * (SuperVacBaseMaxFactor / SuperVacAmmoMax)));
+			if (berserked) WeaponFactor *= (0.9375 - SuperVacAmmoFactor);
+								else WeaponFactor *= (0.875 - SuperVacAmmoFactor);
 		}
 		if (weapon is "Grimophone")
 		{
@@ -4219,10 +4231,16 @@ class PlayerDashJump : Inventory
 		Super.Tick();
 		if (!Owner || Owner && (!Owner.Player || Owner.Health < 1)) Return;
 		let globalvars = DDGlobalVariables.Get();
+		let MiscItem = PlayerStatItem(Owner.FindInventory("PlayerStatItem"));
 		let weapon = owner.player.ReadyWeapon;
 		if (Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD")) berserked = true;
 		else berserked = false;
 		
+		if (MiscItem) 
+		{
+			SuperVacBaseMax = MiscItem.SuperVacBaseMax;
+			SuperVacBaseMaxFactor = MiscItem.SuperVacBaseMaxFactor;
+		}
 		let vacammotype = owner.FindInventory("VacAmmo");
 		if (vacammotype)
 		{
@@ -4230,7 +4248,11 @@ class PlayerDashJump : Inventory
 			SuperVacAmmoMax = vacammotype.MaxAmount;
 		}
 		if (SuperVacAmmoMax < SuperVacBaseMax) SuperVacAmmoMax = SuperVacBaseMax;
-		if (SuperVacAmmoMax) SuperVacAmmoFactor = (SuperVacAmmo * ((SuperVacBaseMaxFactor * 1.5) / SuperVacAmmoMax));
+		if (SuperVacAmmoMax > 0)
+		{
+			SuperVacAmmoFactor = (SuperVacAmmo * ((SuperVacBaseMaxFactor * 1.5) / SuperVacAmmoMax));
+		}
+		if (dydudebug_supervacother) Console.Printf("[Dash] SuperVacAmmoFactor: %.8f, SuperVacBaseMaxFactor: %.8f, SuperVacBaseMax: %d", SuperVacAmmoFactor, SuperVacBaseMaxFactor, SuperVacBaseMax);
 		PlayerInfo PlayDash = Owner.Player;
 		Int BTInput = PlayDash.cmd.buttons;
 		dashgruntchance = randompick(66,66,67);
@@ -4241,7 +4263,6 @@ class PlayerDashJump : Inventory
 		if (exex_expenabled) TruePlayerLevel = PlayerLevel; else TruePlayerLevel = 0;
 		MaxDashTics = randompick(6,6,7,7,7) + (TruePlayerLevel / 20);
 		if (berserked) MaxDashTics *= (1.34 + (TruePlayerLevel * 0.004));
-		let MiscItem = PlayerStatItem(Owner.FindInventory("PlayerStatItem"));
 
 		int DashLvlTier1Thresh = 25;
 		int DashLvlTier2Thresh = 50;
