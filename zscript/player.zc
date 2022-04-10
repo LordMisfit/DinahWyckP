@@ -176,23 +176,30 @@ class DDPlayerPawn : PlayerPawn
 		
 		if (AirTime < MaxAirTime)
 		{
-			double airreplen;
-			if (MaxAirTime > 0) airreplen = (MaxAirTime / (TICRATE * 5));
-			if (airreplen < 1) airreplen = 1;
-			if (MiscItem) airreplen *= (1.0 + (TruePlayerLevel * 0.0125));
-			if (MaxAirTime > 0 && airreplen > TICRATE) airreplen = TICRATE;
-			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) airreplen *= 1.25;
-			if (CountInv("PowerNoDrown") || CountInv("PowerIronFeet") || CountInv("PowerIronFeet2") || CountInv("PowerMask")) airreplen *= 1.625;
-			if (MiscItem && MiscItem.drowndebufflevel)
+			if (ddafd_underwatercompat && (CountInv("IsDynDuchess") || CountInv("IsAppetite")))
 			{
-				airreplen *= (1.00 - (MiscItem.drowndebufflevel * frandompick(0.5,0.0625,0.0625,0.75,0.75,0.75,0.75,0.75,0.875,0.875,0.875,1.0)));
-				if (airreplen < 1 && random(1,16) <= (16 - int(MiscItem.drowndebufflevel * frandom(0.8,1.2)))) airreplen = 1;
-				if (airreplen < 0) airreplen = 0;
+				if (AirTime != MaxAirTime) AirTime = MaxAirTime;
 			}
-			AirTime += airreplen;
-			if (dydudebug_airmeter) Console.Printf("airreplen: %d (%d / %d)", airreplen, AirTime, MaxAirTime);
-		}
-		if (AirTime > MaxAirTime) AirTime = MaxAirTime;
+			else
+			{
+				double airreplen;
+				if (MaxAirTime > 0) airreplen = (MaxAirTime / (TICRATE * 5));
+				if (airreplen < 1) airreplen = 1;
+				if (MiscItem) airreplen *= (1.0 + (TruePlayerLevel * 0.0125));
+				if (MaxAirTime > 0 && airreplen > TICRATE) airreplen = TICRATE;
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) airreplen *= 1.25;
+				if (CountInv("PowerNoDrown") || CountInv("PowerIronFeet") || CountInv("PowerIronFeet2") || CountInv("PowerMask")) airreplen *= 1.625;
+				if (MiscItem && MiscItem.drowndebufflevel)
+				{
+					airreplen *= (1.00 - (MiscItem.drowndebufflevel * frandompick(0.5,0.0625,0.0625,0.75,0.75,0.75,0.75,0.75,0.875,0.875,0.875,1.0)));
+					if (airreplen < 1 && random(1,16) <= (16 - int(MiscItem.drowndebufflevel * frandom(0.8,1.2)))) airreplen = 1;
+					if (airreplen < 0) airreplen = 0;
+				}
+				AirTime += airreplen;
+				if (dydudebug_airmeter) Console.Printf("airreplen: %d (%d / %d)", airreplen, AirTime, MaxAirTime);
+			}
+			if (AirTime > MaxAirTime) AirTime = MaxAirTime;
+			}
 
 		if (playgasp)
 		{
@@ -261,12 +268,16 @@ class DDPlayerPawn : PlayerPawn
 		else
 		{
 			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
-			MaxAirTime = (12 * TICRATE);
-			if (MiscItem)
+			if (ddafd_underwatercompat && (CountInv("IsDynDuchess") || CountInv("IsAppetite")))
 			{
-				MaxAirTime += (TruePlayerLevel * 2.916666666666667);
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) MaxAirTime *= 1.25;
+				MaxAirTime = (20 * TICRATE);
 			}
+			else
+			{
+				MaxAirTime = (12 * TICRATE);
+				if (MiscItem) MaxAirTime += (TruePlayerLevel * 2.916666666666667);
+			}
+			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) MaxAirTime *= 1.25;
 			if (MaxAirTime > 0) MaxAirTime *= AirCapacity;
 			if (GetAge() <= 1 && AirTime != MaxAirTime) AirTime = MaxAirTime;
 
