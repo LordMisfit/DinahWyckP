@@ -425,6 +425,10 @@ mixin class DmgCalc
 		if (istarget && target) weapon = target.player.ReadyWeapon;
 		else weapon = player.ReadyWeapon;
 
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int PlayerSTR;
+		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK;
 		string weaponname;
 		weaponname = weapon.GetClassName();
 		string actorname = GetClassName();
@@ -433,25 +437,18 @@ mixin class DmgCalc
 		int strengthcounter;
 		String nm, nn, no, np;
 
-		int Power;
-		if (istarget && target) Power = target.player.mo.Stamina;
-		else Power = player.mo.Stamina;
-		if (Power) Power /= 10;
-		if (Power > 10) Power = 10;
-
 		// Character Check [base damage]
 		If (weapon is "HandToHand")
 		{
 			if (altfire == 0)
 			{
-				damage = (random(9,15) + (Power * 0.9));
+				damage = random(9,15);
 			}
 			else
 			if (altfire == 1)
 			{
-				damage = (random(59,101) + (Power * 6.663));
+				damage = random(59,101);
 			}
-			if (Power) damage *= frandom(1.00,(1.00 + (Power * frandompick(0.667,0.75,0.834))));
 		}
 		else
 		{
@@ -459,9 +456,28 @@ mixin class DmgCalc
 		}
 		if (dydudebug_meleedmg) Console.Printf("BaseDmg: %d [%s, %s]", damage, weaponname, actorname);
 
+		// [STRIFE] Stamina Upgrades
+		int stamdamagefactor = player.Stamina;
+		previousdamage = damage;
+		damage = floor(damage * (1.00 + (stamdamagefactor * 0.75)));
+		if (dydudebug_meleedmg) Console.Printf("StaminaDmg: %d, StamUpgrades: %d - (Previous Dmg: %d)", damage, stamdamagefactor, previousdamage);
+
+		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
+		{
+			if (altfire == 0)
+			{
+				damage += randompick(1,1,2,2);
+			}
+			if (altfire == 1)
+			{
+				damage += randompick(5,6,7,9);
+			}
+		}
+		if (dydudebug_meleedmg) Console.Printf("StrDmg: %d - (Strength: %d) - (Previous Dmg: %d)", damage, PlayerSTR, previousdamage);
+
 		// Berserk Check
 		previousdamage = damage;
-		if (CountInv("PowerStrength", AAPTR_PLAYER1) || CountInv("PowerStrengthDD", AAPTR_PLAYER1)) damage = floor(damage * 10);
+		if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) damage = floor(damage * 10);
 		if (dydudebug_meleedmg) Console.Printf("BerserkDmg: %d - (Previous Dmg: %d) [%s, %s]", damage, previousdamage, weaponname, actorname);
 
 		double PerkFactor;
@@ -487,6 +503,12 @@ mixin class DmgCalc
 		if (dydudebug_meleedmg && altfire == 0) Console.Printf("MeleeDmgAltCheck: (\c[green]%s\c-) %d - (Previous Dmg: %d) [Punch]", weaponname, damage, previousdamage);
 		if (dydudebug_meleedmg && altfire == 1) Console.Printf("MeleeDmgAltCheck: (\c[green]%s\c-) %d - (Previous Dmg: %d) [Uppercut]", weaponname, damage, previousdamage);
 
+		previousdamage = damage;
+		if (altfire == 0) damage = floor(damage * 1.0);
+		if (altfire == 1) damage = floor(damage * 0.25);
+		if (dydudebug_meleedmg && altfire == 0) Console.Printf("MeleeDmgAltCheck: (%s) %d - (Previous Dmg: %d) [Kick]", weaponname, damage, previousdamage);
+		if (dydudebug_meleedmg && altfire == 1) Console.Printf("MeleeDmgAltCheck: (%s) %d - (Previous Dmg: %d) [Roundhouse Kick]", weaponname, damage, previousdamage);
+
 		if (istarget)
 		{
 			if (dydudebug_meleedmg && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Puff: \c[darkgreen]%s\c-) %d\c- - \cx(Previous Dmg: %d) [Punch]\c-", weaponname, actorname, damage, previousdamage);
@@ -496,6 +518,85 @@ mixin class DmgCalc
 		{
 			if (dydudebug_meleedmg && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Source: \c[darkgreen]%s\c-) %d\c- - \cx(Previous Dmg: %d) [Punch]\c-", weaponname, actorname, damage, previousdamage);
 			if (dydudebug_meleedmg && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Source: \c[darkgreen]%s\c-) %d\c- - \cx(Previous Dmg: %d) [Uppercut]\c-", weaponname, actorname, damage, previousdamage);
+		}
+		
+		return damage;
+	}
+	
+	action int A_GetKickDamage(int altfire = 0, int shockwave = 0, bool istarget = false)
+	{
+		Weapon weapon;
+		if (istarget && target) weapon = target.player.ReadyWeapon;
+		else weapon = player.ReadyWeapon;
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int PlayerSTR;
+		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK;
+
+		string weaponname = weapon.GetClassName();
+		string actorname = GetClassName();
+		int damage;
+		int previousdamage;
+		int strengthcounter;
+		int debugmelee = dydudebug_meleeinformation;
+
+		damage = random(28,52);
+		if (debugmelee) Console.Printf("BaseDmg: %d", damage);
+
+		// [STRIFE] Stamina Upgrades
+		int stamdamagefactor = player.Stamina;
+		previousdamage = damage;
+		damage = floor(damage * (1.00 + (stamdamagefactor * 0.75)));
+		if (debugmelee) Console.Printf("StaminaDmg: %d, StamUpgrades: %d - (Previous Dmg: %d)", damage, stamdamagefactor, previousdamage);
+
+		// Strength Stat Check [7 pts = roughly double the character's base punch damage]
+		previousdamage = damage;
+		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
+		{
+			damage += randompick(3,4,5);
+		}
+		if (debugmelee) Console.Printf("StrDmg: %d - (Strength: %d) - (Previous Dmg: %d)", damage, PlayerSTR, previousdamage);
+
+		// Reduce Check
+		previousdamage = damage;
+		if (altfire == 0) damage = floor(damage * (1.00 + (0.05 * random(-4,4))));
+		if (altfire == 1) damage = floor(damage * (1.00 + (0.075 * random(-4,4))));
+		if (debugmelee) Console.Printf("ReduceDmg: %d - (Previous Dmg: %d)", damage, previousdamage);
+
+		if (player.CountInv("DinahTrueIPState")) damage *= 5;
+
+		// Berserk Check
+		previousdamage = damage;
+		if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) damage = floor(damage * 10);
+		if (debugmelee) Console.Printf("BerserkDmg: %d - (Previous Dmg: %d)", damage, previousdamage);
+
+		double PerkFactor;
+		double temp1, temp2;
+
+		previousdamage = damage;
+		if (shockwave)
+		{
+			if (altfire == 0) damage = floor(damage * (0.04166667 * randompick(1,2,2,2,2,2,3)));
+			if (altfire == 1) damage = floor(damage * (0.05 * randompick(1,2,2,2,2,2,3)));
+			if (debugmelee) Console.Printf("MeleeDmg [Shockwave]: (%s) %d - (Previous Dmg: %d [Martial Arts Mastery Perk (Shockwave)]", weaponname, damage, previousdamage);
+		}
+
+		previousdamage = damage;
+		if (altfire == 0) damage = floor(damage * 1.0);
+		if (altfire == 1) damage = floor(damage * 0.25);
+		if (debugmelee && altfire == 0) Console.Printf("MeleeDmgAltCheck: (%s) %d - (Previous Dmg: %d) [Kick]", weaponname, damage, previousdamage);
+		if (debugmelee && altfire == 1) Console.Printf("MeleeDmgAltCheck: (%s) %d - (Previous Dmg: %d) [Roundhouse Kick]", weaponname, damage, previousdamage);
+
+		if (istarget)
+		{
+			if (debugmelee && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Puff: %s) %d\c- - \cx(Previous Dmg: %d) [Kick]\c-", weaponname, actorname, damage, previousdamage);
+			if (debugmelee && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Puff: %s) %d\c- - \cx(Previous Dmg: %d) [Roundhouse Kick]\c-", weaponname, actorname, damage, previousdamage);
+		}
+		else
+		{
+			if (debugmelee && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Source: %s) %d\c- - \cx(Previous Dmg: %d) [Kick]\c-", weaponname, actorname, damage, previousdamage);
+			if (debugmelee && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Source: %s) %d\c- - \cx(Previous Dmg: %d) [Roundhouse Kick]\c-", weaponname, actorname, damage, previousdamage);
 		}
 		
 		return damage;
@@ -1251,8 +1352,15 @@ mixin class MonsterCollider
 					BatSpinPuffNoSound(inflictor) || BatSpinPuffNoSound(source) ||
 					BatSpinPuffNoSoundIP(inflictor) || BatSpinPuffNoSoundIP(source)) ActorDefenseIgnoreFactor += (SpinAtkFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
+
 			if (FoundPlayer)
 			{
+				double EggFactor = 0.00;
+				if ((EggShot(inflictor) || EggShot(source))) EggFactor = 0.125;
+				if ((EggGrenade(inflictor) || EggGrenade(source))) EggFactor = 0.334;
+				if ((EggMini(inflictor) || EggMini(source))) EggFactor = 0.75;
+				if (EggFactor > 0.00) ActorDefenseIgnoreFactor += (EggFactor * (1.00 - ActorDefenseIgnoreFactor));
+				
 				double FoodFactor = 0.00;
 				IF (FoundPlayer.CountInv("PowerRoastBuff")) FoodFactor += 0.0625; // Pig Roast
 				IF (FoundPlayer.CountInv("PowerMealBuff")) FoodFactor += 0.25; // Gourmet Meal
