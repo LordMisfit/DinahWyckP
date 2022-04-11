@@ -840,6 +840,36 @@ class EEProjectile : EEBaseZSC abstract
 			}
 		}
 	}
+	
+	// Customizable version of A_Tracer, allowing you to change the puff and smoke, as well as the tracing angle.
+	void A_CustomTracer(double traceang = 16.875, string pufftype = "BulletPuff", string smoketype = "RevenantTracerSmoke")
+	{
+		// killough 1/18/98: this is why some missiles do not have smoke
+		// and some do. Also, internal demos start at random gametics, thus
+		// the bug in which revenants cause internal demos to go out of sync.
+		//
+		// killough 3/6/98: fix revenant internal demo bug by subtracting
+		// levelstarttic from gametic:
+		//
+		// [RH] level.time is always 0-based, so nothing special to do here.
+
+		if (level.time & 3)	return;
+	
+		// spawn a puff of smoke behind the rocket
+		SpawnPuff (pufftype, pos, angle, angle, 3);
+		Actor smoke = Spawn ("RevenantTracerSmoke", Vec3Offset(-Vel.X, -Vel.Y, 0.), ALLOW_REPLACE);
+	
+		if (smoke != null)
+		{
+			smoke.Vel.Z = 1.;
+			smoke.tics -= random[Tracer](0, 3);
+			if (smoke.tics < 1)
+				smoke.tics = 1;
+		}
+
+		// The rest of this function was identical with Strife's version, except for the angle being used.
+		A_Tracer2(traceang);
+	}
 }
 
 // Base FastProjectile Class
@@ -1466,21 +1496,25 @@ class EEProp : EEBaseZSC abstract
 
 class EECreature : EEBaseZSC abstract
 {
+	int specialspeed1;
 	mixin MonsterCollider;
 	int bossdeathactivate;
 	bool IPAttackSummon;
 	double gravitypulsetimer;
 	int user_gravitytype;
 	
-	int user_attacks;
-	int user_attackmax;
 	bool waspartinvis;
 	double initalpha;
 	int initrenderstyle;
 	int user_fastchasetimer, user_fastchasetimermax;
+	int user_painreacttimer;
 	int user_attacktype;
-	int user_tempvar1, user_tempvar2;
+	int user_attacks;
+	int user_attackmax;
+	int user_tempvar1, user_tempvar2, user_tempvar3;
 	int user_hyperlvl1, user_hyperlvl2;
+	int user_fastchasechance, user_fastchaseextra, user_painfastchase;
+	
 	/*
 	override void Tick()
 	{
@@ -2115,6 +2149,216 @@ class EECreature : EEBaseZSC abstract
 		if (pos.z <= floorz)
 		{
 			SetStateLabel ("Crash");
+		}
+	}
+	
+	// int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0
+	void A_EEWander(int flags = 0, int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		if (type == 0)
+		{
+			if (value1) value1 = 0;
+			if (value2) value2 = 0;
+			if (value3) value3 = 0;
+			if (value4) value4 = 0;
+			if (value5) value5 = 0;
+			if (value5) value6 = 0;
+		}
+		if (type == 1)
+		{
+			if (value1 <= 0) value1 = 3; // ticdecrement
+			if (value2 <= 0) value2 = 1; // speedtimerdecrement
+			if (value3 <= 0) value3 = 1; // lowcap
+
+			if (specialspeed1)
+			{
+				specialspeed1 -= value2;
+				tics -= value1;
+				if (tics < value3) tics = value3;
+				if (dydudebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_DVDSWander]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
+			}
+		}
+		
+		A_Wander(flags);
+	}
+
+	// int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0
+	void A_EEChase(statelabel melee = '_a_chase_default', statelabel missile = '_a_chase_default', int flags = 0, int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		if (type == 0)
+		{
+			if (value1) value1 = 0;
+			if (value2) value2 = 0;
+			if (value3) value3 = 0;
+			if (value4) value4 = 0;
+			if (value5) value5 = 0;
+			if (value6) value6 = 0;
+		}
+		if (type == 1)
+		{
+			if (value1 <= 0) value1 = 3; // ticdecrement
+			if (value2 <= 0) value2 = 1; // speedtimerdecrement
+			if (value3 <= 0) value3 = 1; // lowcap
+
+			if (specialspeed1)
+			{
+				specialspeed1 -= value2;
+				tics -= value1;
+				if (tics < value3) tics = value3;
+				if (dydudebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_DVDSChase]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
+			}
+		}
+		
+		int NoAtkChance = 0;
+		int PerkFactor;
+		int SkillFactor;
+		string Actorname = GetClassName();
+
+		DDPlayerPawn playpawn;
+		if (target) playpawn = DDPlayerPawn(target);
+		if (playpawn)
+		{
+			if (playpawn.CountInv("PowerInvisibility") ||
+					playpawn.CountInv("PowerInvisibility2") ||
+					playpawn.CountInv("PowerRavenInvisibility") ||
+					playpawn.CountInv("PowerGhost") ||
+					playpawn.CountInv("PowerGhost2"))
+			{
+				PerkFactor = 167;
+				if (PerkFactor > 1000) PerkFactor = 1000;
+				SkillFactor = (1000 - NoAtkChance) * PerkFactor / 1000;
+				NoAtkChance += SkillFactor;
+			}
+			if (playpawn.CountInv("PlayerDashing"))
+			{
+				PerkFactor = 875;
+				SkillFactor = (1000 - NoAtkChance) * PerkFactor / 1000;
+				NoAtkChance += SkillFactor;
+			}
+		}
+		
+		if (dydudebug_showactormoveinformation && NoAtkChance > 0) 
+		{
+			if (target) Console.Printf("\cx(%s) (gametic: %d) [A_EEChase]\c- NoAtkChance: %d / 1000, Target: %s \cytics: %d\c-", GetClassName(), gametic, NoAtkChance, target.GetClassName(), tics);
+						 else Console.Printf("\cx(%s) (gametic: %d) [A_EEChase]\c- NoAtkChance: %d / 1000 \cytics: %d\c-", GetClassName(), gametic, NoAtkChance, tics);
+		}
+		if (random(1,1000) <= NoAtkChance)
+		{
+			if (flags & CHF_FASTCHASE) flags &= ~CHF_FASTCHASE;
+			if (playpawn && 
+				 (playpawn.CountInv("PowerInvisibility") ||
+					playpawn.CountInv("PowerInvisibility2") ||
+					playpawn.CountInv("PowerRavenInvisibility") ||
+					playpawn.CountInv("PowerGhost") ||
+					playpawn.CountInv("PowerGhost2")))
+			{
+				if (random(1,1000) <= 250) 
+				{
+					A_Wander();
+					if (dydudebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_DVDSChase]\c- A_Wander Succeed", GetClassName(), gametic);
+				}
+				else 
+				{
+					A_Chase(null,null,flags);
+				}
+			}
+			else
+			{
+				A_Chase(null,null,flags);
+			}
+			if (dydudebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_DVDSChase]\c- NoAtkChance Succeed \cytics: %d\c-", GetClassName(), gametic, tics);
+		}
+		else
+		{
+			A_Chase(melee,missile,flags);
+		}
+		if (dydudebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_DVDSChase]\c- Default Chase \cytics: %d\c-", GetClassName(), gametic, tics);
+	}
+	
+	void A_EEPain(int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		int user_monsterlevel = CountInv("MonsterLevel");
+		A_Pain();
+		
+		if (type == 0)
+		{
+			if (value1) value1 = 0;
+			if (value2) value2 = 0;
+			if (value3) value3 = 0;
+			if (value4) value4 = 0;
+			if (value5) value5 = 0;
+			if (value6) value6 = 0;
+		}
+		if (type == 1) // SpeedPainChange
+		{
+			if (random(1,100) <= value5)
+			{
+				if (value1 <= 0) value1 = random(18,22);
+				if (value2 <= 0) value2 = 8;
+				
+				int extrasteps;
+				if (exex_monsterlevelenabledflags) extrasteps = user_monsterlevel / value2;
+				specialspeed1 = value1 + extrasteps; // Number of steps to walk fast
+				if (dydudebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_DVDSPain]\c- specialspeed1: %d, basespeedtimer: %d, leveldivisor: %d, ?3: %d, ?4: %d, chanceroll[/100]: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, value4, value5, tics);
+			}
+		}
+
+		if (GetClassName() == "Diabloist")
+		{
+			if (bNOTARGETSWITCH) bNOTARGETSWITCH = false;
+			if (!bQUICKTORETALIATE) bQUICKTORETALIATE = true;
+		}
+	}
+
+	void A_FastChaseCalc(int base = 3, int leveldivisor = 24)
+	{
+		int user_monsterlevel = CountInv("MonsterLevel");
+		if (exex_monsterlevelenabledflags) { user_fastchaseextra = user_monsterlevel / leveldivisor; }
+		user_fastchasechance = base + user_fastchaseextra + user_painfastchase;
+		if (dydudebug_monsterspecialaidisplays) Console.Printf("Class: %s - \czFastChaseChance: %d (base: %d, leveldivisor: %d)\cz", GetClassName(), user_fastchasechance, base, leveldivisor); 
+	}
+
+	// Attempts to mitigate floating-monsters from drifting too out of control when fast-chasing or damaged [like if they get kicked backwards]
+	// by slowing them down gradually and then stopping them at a certain interval that won't reset until they get hurt again or they attempt 
+	// to fast-chase.
+	void A_FloatLook(int time = 16)
+	{
+		A_Look();
+		user_fastchasetimer = time;
+		user_painreacttimer = time;
+	}
+
+	void A_FloatPain(int settime = 0, int settime2 = 8, int settime2chance = 64, int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		A_EEPain(type,value1,value2,value3,value4,value5,value6);
+		if (random(1,256) <= settime2chance) user_painreacttimer = settime2; else user_painreacttimer = settime;
+	}
+
+	void A_FloatSetFChaseT(int time = 0)
+	{
+		user_fastchasetimer = time;
+	}
+
+	void A_FloatChaseCheck(int time1 = 4, int time2 = 8, int time3 = 12, int time4 = 16, double decelrate1 = 0.5, double decelrate2 = 0.5)
+	{
+		user_painreacttimer++;
+		if (user_painreacttimer == time1) { A_ScaleVelocity(decelrate1); }
+		if (user_painreacttimer == time2) { A_ScaleVelocity(decelrate1); }
+		if (user_painreacttimer == time3) { A_ScaleVelocity(decelrate1); }
+		if (user_painreacttimer == time4) { A_ScaleVelocity(0); A_Stop(); }
+		if (dydudebug_monsterspecialaidisplays) 
+		{ 
+			if (user_painreacttimer == time1 || user_painreacttimer == time2 || user_painreacttimer == time3 || user_painreacttimer == time4) Console.Printf("Class: %s - \cxFloatPain-painreacttimer: %d\c-", GetClassName(), user_painreacttimer); 
+		}
+		
+		user_fastchasetimer++;
+		if (user_fastchasetimer == time1) { A_ScaleVelocity(decelrate2); }
+		if (user_fastchasetimer == time2) { A_ScaleVelocity(decelrate2);}
+		if (user_fastchasetimer == time3) { A_ScaleVelocity(decelrate2); }
+		if (user_fastchasetimer == time4) { A_ScaleVelocity(0); A_Stop(); }
+		if (dvdsdebug_monsterspecialaidisplays) 
+		{ 
+			if (user_fastchasetimer == time1 || user_fastchasetimer == time2 || user_fastchasetimer == time3 || user_fastchasetimer == time4) Console.Printf("Class: %s - \cwFloatChase-fastchasetimer: %d\c-", GetClassName(), user_fastchasetimer);
 		}
 	}
 }
