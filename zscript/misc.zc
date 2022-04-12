@@ -132,6 +132,9 @@ class PlayerStatItem : Inventory
 	int ClassicDoomType;
 	int ModType;
 	int TotalMass, BaseMass;
+	int MassLevelAdd;
+	int MassNoRPGAdd;
+	int MassBonusAdd;
 
 	int PlayerLevel;
 	int TruePlayerLevel;
@@ -144,7 +147,7 @@ class PlayerStatItem : Inventory
 	int PlayerLUCK;
 	int PlayerJUMP;
 	int PrevATK, PrevDEF, PrevSPD;
-	int HPMaxGain;
+	int HPMaxGain, MassGain;
 	
 	int SurvivalRate;
 	
@@ -224,6 +227,9 @@ class PlayerStatItem : Inventory
 					globalvars.HealthLevelAdd = HealthLevelAdd = 0;
 					globalvars.HealthNoRPGAdd = HealthNoRPGAdd = 0;
 					globalvars.HealthBonusAdd = HealthBonusAdd = 0;
+					globalvars.MassLevelAdd = MassLevelAdd = 0;
+					globalvars.MassNoRPGAdd = MassNoRPGAdd = 0;
+					globalvars.MassBonusAdd = MassBonusAdd = 0;
 					globalvars.ItemPoints = ItemPoints = 0;
 					if (itemtimer == 0 && dydudebug_deathexitdebug) Console.Printf("exex_deathexitaffectsstats: YES", exex_deathexitaffectsstats);
 				}
@@ -246,6 +252,9 @@ class PlayerStatItem : Inventory
 					HealthLevelAdd = globalvars.HealthLevelAdd;
 					HealthNoRPGAdd = globalvars.HealthNoRPGAdd;
 					HealthBonusAdd = globalvars.HealthBonusAdd;
+					MassLevelAdd = globalvars.MassLevelAdd;
+					MassNoRPGAdd = globalvars.MassNoRPGAdd;
+					MassBonusAdd = globalvars.MassBonusAdd;
 					ItemPoints = globalvars.ItemPoints;
 					BaseStartMaxHealth = globalvars.BaseStartMaxHealth;
 					if (itemtimer == 0) 
@@ -1576,6 +1585,9 @@ class PlayerStatItem : Inventory
 				globalvars.HealthLevelAdd = HealthLevelAdd;
 				globalvars.HealthNoRPGADD = HealthNoRPGADD;
 				globalvars.HealthBonusAdd = HealthBonusAdd;
+				globalvars.MassLevelAdd = MassLevelAdd;
+				globalvars.MassNoRPGAdd = MassNoRPGAdd;
+				globalvars.MassBonusAdd = MassBonusAdd;
 				globalvars.MaxHealthTrue = MaxHealthTrue;
 				globalvars.Experience = Experience;
 				globalvars.PlayerLevel = PlayerLevel;
@@ -2658,9 +2670,56 @@ class PlayerStatItem : Inventory
 			BaseMass = TotalMass;
 			if (dydudebug_masscalcs) Console.Printf("Mass [Base]: %d", TotalMass);
 			
+			int MassBonusAdd2 = MassBonusAdd;
+			int MassLevelAdd2 = MassLevelAdd;
+			if (!exex_expenabled)
+			{
+				if (skill <= 0) MassBonusAdd2 *= 2.0;
+				if (skill == 1) MassBonusAdd2 *= 1.75;
+				if (skill == 2) MassBonusAdd2 *= 1.5;
+				if (skill == 3) MassBonusAdd2 *= 1.25;
+				if (skill >= 4) MassBonusAdd2 *= 1.0;
+				MassLevelAdd2 = 0;
+				if (skill <= 0) MassLevelAdd2 = (MassNoRPGADD * 2.0);
+				if (skill == 1) MassLevelAdd2 = (MassNoRPGADD * 1.75);
+				if (skill == 2) MassLevelAdd2 = (MassNoRPGADD * 1.5);
+				if (skill == 3) MassLevelAdd2 = (MassNoRPGADD * 1.25);
+				if (skill >= 4) MassLevelAdd2 = (MassNoRPGADD * 1.0);
+				
+				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite")))
+				{
+					if (DD_RoseMother) MassNoRPGADD += (BaseMass * 0.0625);
+					if (DD_GameMother) MassNoRPGADD += (BaseMass * 0.0625);
+					if (DD_MossMother) MassNoRPGADD += (BaseMass * 0.0625);
+					if (DD_GlobeMother) MassNoRPGADD += (BaseMass * 0.0625);
+					if (DD_SphinxMother) MassNoRPGADD += (BaseMass * 0.0625);
+					if (DD_HandMother1) MassNoRPGADD += (BaseMass * 0.0625);
+					if (DD_HandMother2) MassNoRPGADD += (BaseMass * 0.0625);
+					if (DD_TrueHandMother) MassNoRPGADD += (BaseMass * 0.0625);
+					if (AFD_Krag) MassNoRPGADD += (BaseMass * 0.1);
+					if (AFD_Quisling) MassNoRPGADD += (BaseMass * 0.1);
+					if (AFD_Lauritz) MassNoRPGADD += (BaseMass * 0.1);
+					if (AFD_Jorgensen1) MassNoRPGADD += (BaseMass * 0.1);
+					if (AFD_Jorgensen2) MassNoRPGADD += (BaseMass * 0.1);
+					if (AFD_JorgCannon) MassNoRPGADD += (BaseMass * 0.1);
+				}
+			}
+			
+			TotalMass += MassLevelAdd;
+			BaseMass = TotalMass;
+			if (dydudebug_masscalcs) Console.Printf("Mass [Level Add]: %d", TotalMass);
+			
+			TotalMass += MassNoRPGAdd;
+			BaseMass = TotalMass;
+			if (dydudebug_masscalcs) Console.Printf("Mass [No-RPG Add]: %d", TotalMass);
+			
+			TotalMass += MassBonusAdd;
+			BaseMass = TotalMass;
+			if (dydudebug_masscalcs) Console.Printf("Mass [Bonus Add]: %d", TotalMass);
+			
 			TotalMass += (TruePlayerLevel * massmulfactor);
 			BaseMass = TotalMass;
-			if (dydudebug_masscalcs) Console.Printf("Mass [Level]: %d", TotalMass);
+			if (dydudebug_masscalcs) Console.Printf("Mass [Level Mult]: %d", TotalMass);
 			
 			if (!exex_expenabled)
 			{
@@ -3395,9 +3454,7 @@ class PlayerStatItem : Inventory
 
 		// Health/HP Boost
 		CurrentHealth = owner.player.mo.health;
-		int LevelAddMaxHP = 0;
 		HPMaxGain = 0;
-		int HPRandomizer1;
 		
 		if (PlayerLevel >= 151 && PlayerLevel <= 200)				HPMaxGain += floor(PlayerLevel * frandompick(0.0525,0.06));
 		else if (PlayerLevel >= 101 && PlayerLevel <= 150)	HPMaxGain += floor(PlayerLevel * frandompick(0.045,0.0525));
@@ -3452,6 +3509,60 @@ class PlayerStatItem : Inventory
 		
 		MaxHealthTrue = (BaseStartMaxHealth + HealthLevelAdd + HealthBonusAdd);
 		if (dydudebug_levelupdisplays) Console.Printf("HPMaxGain: %d", HPMaxGain);
+		
+		// Mass/Balance
+		double BaseMass = 1.0;
+		let playerset = DDPlayerPawn(owner);
+		if (playerset) BaseMass = playerset.originalmass;
+		MassGain = 0;
+
+		if (PlayerLevel >= 151 && PlayerLevel <= 200)				MassGain += floor(PlayerLevel * frandompick(0.0525,0.06));
+		else if (PlayerLevel >= 101 && PlayerLevel <= 150)	MassGain += floor(PlayerLevel * frandompick(0.045,0.0525));
+		else if (PlayerLevel >= 51 && PlayerLevel <= 100)		MassGain += floor(PlayerLevel * frandompick(0.0375,0.045));
+		else if (PlayerLevel <= 50)													MassGain += floor(PlayerLevel * frandompick(0.03,0.0375));
+
+		MassGain += 													randompick(0,0,0,1,1,1,1,1,1,1,1,1,1,1,2,2);
+		if (levelbonustype == 0) MassGain += randompick(1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3);
+		if (levelbonustype == 1) MassGain += randompick(0,0,0,0,1,1,1,1,1,1,1,1,2,2,2,2);
+		if (levelbonustype == 2) MassGain += randompick(0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1);
+		if (TrueGameSkill <= SKILL_VERY_EASY) 
+		{
+			MassGain += randompick(0,0,0,0,0,1,1,2,2,3);
+			MassGain += (BaseMass / (324 - (NumOfAfasDrops * 8)));
+		}
+		if (TrueGameSkill == SKILL_EASY) 
+		{
+			MassGain += randompick(0,0,0,0,0,0,1,1,2,2);
+			MassGain += (BaseMass / (405 - (NumOfAfasDrops * 6.4)));
+		}
+		if (TrueGameSkill == SKILL_NORMAL) 
+		{
+			MassGain += randompick(0,0,0,0,0,0,0,1,1,2);
+			MassGain += (BaseMass / (486 - (NumOfAfasDrops * 4.8)));
+		}
+		if (TrueGameSkill == SKILL_HARD) 
+		{
+			MassGain += randompick(0,0,0,0,0,0,0,0,1,1);
+			MassGain += (BaseMass / (557 - (NumOfAfasDrops * 3.2)));
+		}
+		if (TrueGameSkill == SKILL_VERY_HARD)
+		{
+			MassGain += randompick(0,0,0,0,0,0,0,0,0,1);
+			MassGain += (BaseMass / (648 - (NumOfAfasDrops * 1.6)));
+		}
+		MassLevelAdd += MassGain;
+		if (type == 1) 
+		{
+			MassNoRPGAdd += MassGain;
+			if (!exex_expenabled)
+			{
+				if (skill <= 0) MassGain *= (2.0 + (NumOfAfasDrops * 0.04));
+				if (skill == 1) MassGain *= (1.75 + (NumOfAfasDrops * 0.035));
+				if (skill == 2) MassGain *= (1.5 + (NumOfAfasDrops * 0.03));
+				if (skill == 3) MassGain *= (1.25 + (NumOfAfasDrops * 0.025));
+				if (skill >= 4) MassGain *= (1.0 + (NumOfAfasDrops * 0.02));
+			}
+		}
 		
 		owner.A_StartSound("misc/bellring",101,CHANF_DEFAULT,frandom(0.6,0.75),ATTN_NORM,frandom(1.25,1.5));
 	}
