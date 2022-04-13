@@ -1359,12 +1359,16 @@ class RevenantNew : EECreature
 	}
 }
 
-class ArachnotronNew : Arachnotron replaces Arachnotron
+class ArachnotronNew : EECreature
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "Arachnotron";
+		Health 500;
+		Radius 64;
+		Height 64;
+		Mass 600;
+		Speed 12;
 		PainChance 128;
 		DamageFactor "Fire", 0.75;
 		Painchance "Fire", 96;
@@ -1382,15 +1386,63 @@ class ArachnotronNew : Arachnotron replaces Arachnotron
 		Painchance "Suck", 32;
 		DamageFactor "Zap", 1.5;
 		Painchance "Zap", 192;
+		Monster;
+		+FLOORCLIP
+		+BOSSDEATH
+		+MAP07BOSS2
+		SeeSound "baby/sight";
+		PainSound "baby/pain";
+		DeathSound "baby/death";
+		ActiveSound "baby/active";
+		Obituary "$OB_BABY";
+	}
+	
+	States
+	{
+		Spawn:
+			BSPI AB 10 A_Look;
+			Loop;
+		See:
+			BSPI A 20;
+			BSPI A 3 A_BabyMetal;
+			BSPI ABBCC 3 A_Chase;
+			BSPI D 3 A_BabyMetal;
+			BSPI DEEFF 3 A_Chase;
+			Goto See+1;
+		Missile:
+			BSPI A 20 BRIGHT A_FaceTarget;
+			BSPI G 4 BRIGHT A_BspiAttack;
+			BSPI H 4 BRIGHT;
+			BSPI H 1 BRIGHT A_SpidRefire;
+			Goto Missile+1;
+		Pain:
+			BSPI I 3;
+			BSPI I 3 A_Pain;
+			Goto See+1;
+		Death:
+			BSPI J 20 A_Scream;
+			BSPI K 7 A_NoBlocking;
+			BSPI LMNO 7;
+			BSPI P -1 A_BossDeath;
+			Stop;
+			Raise:
+			BSPI P 5;
+			BSPI ONMLKJ 5;
+			Goto See+1;
 	}
 }
 
-class MancubusNew : Fatso // replaces Fatso
+class MancubusNew : EECreature
 {
-	mixin MonsterCollider;
+	int spreadtype;
 	default
 	{
 		Tag "Mancubus";
+		Health 600;
+		Radius 48;
+		Height 64;
+		Mass 1000;
+		Speed 8;
 		PainChance 80;
 		DamageFactor "Fire", 0.667;
 		Painchance "Fire", 53;
@@ -1416,8 +1468,81 @@ class MancubusNew : Fatso // replaces Fatso
 		Painchance "Spinner", 140;
 		DamageFactor "Popper", 1.25;
 		Painchance "Popper", 100;
+		Monster;
+		+FLOORCLIP
+		+BOSSDEATH
+		+MAP07BOSS1
+		SeeSound "fatso/sight";
+		PainSound "fatso/pain";
+		DeathSound "fatso/death";
+		ActiveSound "fatso/active";
+		Obituary "$OB_FATSO";
+	}
+	
+	States
+	{
+		Spawn:
+			FATT AB 15 A_Look();
+			Loop;
+		See:
+			FATT AABBCCDDEEFF 4 A_Chase();
+			Loop;
+		Missile:
+			FATT G 0
+			{
+				spreadtype = 0;
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") >= 100) spreadtype = random(0,1);
+					else if (CountInv("MonsterLevel") >= 80 && random(1,2) <= 1) spreadtype = random(0,1);
+					else if (CountInv("MonsterLevel") >= 60 && random(1,4) <= 1) spreadtype = random(0,1);
+					else if (CountInv("MonsterLevel") >= 40 && random(1,8) <= 1) spreadtype = random(0,1);
+					else if (CountInv("MonsterLevel") >= 20 && random(1,12) <= 1) spreadtype = random(0,1);
+					else if (random(1,16) <= 1) spreadtype = random(0,1);
+				}
+				else
+				{
+					if (random(1,16) <= 1) spreadtype = random(0,1);
+				}
+			}
+			FATT G 20 A_FatRaise();
+			FATT H 10 BRIGHT 
+			{
+				if (spreadtype == 1) A_FatAttack2();
+				else A_FatAttack1();
+			}
+			FATT IG 5 A_FaceTarget();
+			FATT H 10 BRIGHT 
+			{
+				if (spreadtype == 1) A_FatAttack2();
+				else A_FatAttack1();
+			}
+			FATT IG 5 A_FaceTarget();
+			FATT H 10 BRIGHT
+			{
+				if (spreadtype == 1) A_FatAttack3();
+				else A_FatAttack3();
+			}
+			FATT IG 5 A_FaceTarget();
+			Goto See;
+		Pain:
+			FATT J 3;
+			FATT J 3 A_Pain();
+			Goto See;
+		Death:
+			FATT K 6;
+			FATT L 6 A_Scream();
+			FATT M 6 A_NoBlocking();
+			FATT NOPQRS 6;
+			FATT T -1 A_BossDeath();
+			Stop;
+		Raise:
+			FATT R 5;
+			FATT QPONMLK 5;
+			Goto See;
 	}
 }
+
 class HellKnightNew : HellKnight // replaces HellKnight
 {
 	mixin MonsterCollider;
