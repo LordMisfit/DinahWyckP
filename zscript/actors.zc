@@ -2656,6 +2656,32 @@ class EECreature : EEBaseZSC abstract
 			if (user_fastchasetimer == time1 || user_fastchasetimer == time2 || user_fastchasetimer == time3 || user_fastchasetimer == time4) Console.Printf("Class: %s - \cwFloatChase-fastchasetimer: %d\c-", GetClassName(), user_fastchasetimer);
 		}
 	}
+
+	const DEFSKULLSPEED = 20;
+	
+	void A_SkullAttack(double skullspeed = DEFSKULLSPEED)
+	{
+		if (target == null) return;
+
+		if (skullspeed <= 0) skullspeed = DEFSKULLSPEED;
+
+		bSkullfly = true;
+		A_StartSound(AttackSound, CHAN_VOICE);
+		A_FaceTarget();
+		VelFromAngle(skullspeed);
+		Vel.Z = (target.pos.Z + target.Height/2 - pos.Z) / DistanceBySpeed(target, skullspeed);
+	}
+
+	void A_BetaSkullAttack(int basedmg = 1, int randmin = 1, int randmax = 8)
+	{
+		if (target == null || target.GetSpecies() == self.GetSpecies()) return;
+
+		A_StartSound(AttackSound, CHAN_WEAPON);
+		A_FaceTarget();
+		
+		int damage = random(randmin,randmax) * basedmg;
+		target.DamageMobj(self, self, damage, 'PSI');
+	}
 }
 
 // A subclass for the DD/AFD unique monsters
