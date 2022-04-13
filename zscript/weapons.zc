@@ -4266,10 +4266,10 @@ class BatPuff : EEPuff
 	
 	override void Tick()
 	{
-		if (GetAge() == 1) A_AOEQuakeEffect();
+		if (GetAge() == 0) A_AOEQuakeEffect();
 		super.Tick();
 	}
-
+	
 	void A_SetPainForcedPain()
 	{
 		int basechance = 4;
@@ -7703,6 +7703,7 @@ class BlunderShot : EEProjectile
 
 class BlunderSmokeSmall : SingleDamageRipper
 {
+	double basealpha;
 	default
 	{
 		Height 8;
@@ -7719,13 +7720,22 @@ class BlunderSmokeSmall : SingleDamageRipper
 		Scale 0.5;
 	}
 	
+	override void PostBeginPlay()
+	{
+		basealpha = alpha;
+		super.PostBeginPlay();
+	}
+	
 	States
 	{
 		Spawn:
-			LSMK A 1 Bright;
+			LSMK A 1 Bright NoDelay
+			{
+				A_SetRenderStyle((alpha*exex_bsmokealphamul),STYLE_Translucent);
+			}
 			Goto Death;
 		Death:
-			LSMK ABCDEFGH 4 Bright A_FadeOut(0.02);
+			LSMK ABCDEFGH 4 Bright A_FadeOut(basealpha*frandom(0.1,0.125));
 			Stop;
 	}
 }
@@ -9894,12 +9904,28 @@ class ApplePuff : EEPuff
 		Species "Players";
 		RenderStyle "Translucent";
 		Alpha 0.6;
-		SeeSound "MalletHit";
-		AttackSound "MalletWall";
+		SeeSound "";
+		AttackSound "";
 		VSpeed 1;
 		DamageType "Bonk";
 	}
 	
+	override void Tick()
+	{
+		if (GetAge() == 0) A_AOEQuakeEffect();
+		super.Tick();
+	}
+	
+	void A_AOEQuakeEffect()
+	{
+		// AOE/Quake Effect
+		if (saveddmg)
+		{
+			A_Explode((saveddmg*frandom(0.1,0.125)), A_MeleeImpactRadius(1), 0, 0, (A_MeleeImpactRadius(1)*0.25));
+			A_Quake((A_QuakeMeleeIntensity(1)),(A_QuakeMeleeDuration(1)),0,(A_QuakeMeleeTremrad(1)),"nosound/silent");
+		}
+	}
+
 	void A_SetPainForcedPain()
 	{
 		int basechance = 7;
@@ -9911,12 +9937,27 @@ class ApplePuff : EEPuff
 	States
 	{
 		Spawn:
-		Melee:
-		Crash:
 			TNT1 A 0 NoDelay
 			{
 				A_SetPainForcedPain();
+				A_StartSound("MalletWall", 56);
 			}
+			goto Idle;
+		Melee:
+			TNT1 A 0
+			{
+				A_SetPainForcedPain();
+				A_StartSound("MalletHit", 56);
+			}
+			goto Idle;
+		Crash:
+			TNT1 A 0
+			{
+				A_SetPainForcedPain();
+				A_StartSound("MalletWall", 56);
+			}
+			goto Idle;
+		Idle:
 			BASH ABC 4 Bright;
 			BASH DE 3 bright;
 			Stop;
@@ -9940,12 +9981,27 @@ class ApplePuffIP : ApplePuff
 	States
 	{
 		Spawn:
-		Melee:
-		Crash:
 			TNT1 A 0 NoDelay
 			{
 				A_SetPainForcedPain();
+				A_StartSound("MalletWall", 56);
 			}
+			goto Idle;
+		Melee:
+			TNT1 A 0
+			{
+				A_SetPainForcedPain();
+				A_StartSound("MalletHit", 56);
+			}
+			goto Idle;
+		Crash:
+			TNT1 A 0
+			{
+				A_SetPainForcedPain();
+				A_StartSound("MalletWall", 56);
+			}
+			goto Idle;
+		Idle:
 			BASH ABC 4 Bright
 			{
 				A_SetTics(randompick(2,2,3));
