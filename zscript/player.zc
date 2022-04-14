@@ -1369,6 +1369,64 @@ class DDPlayerPawn : PlayerPawn
 		return takefalldamage;
 	}
 	
+	double A_DefenseIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool bellefishzap, bool isbarrierbeam)
+	{
+		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+
+		// (Partial) Defense Ignoring Attacks
+		PlayerDefenseIgnoreFactor = 0.00;
+		if (damage > 0)
+		{
+			if (inflictor == null && source == null)
+			{
+			}
+			else
+			{
+				if (!CountInv("DinahTrueIPState")) // The Flower Crown IP Mode Negates most Defense Ignoring attacks :V
+				{
+					double PikeAOEFactor = 0.334;
+					if (mod == 'Zap') PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					if (mod == 'Zap' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					double BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
+					if (mod == 'Beats') PlayerDefenseIgnoreFactor += (BeatsFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					double BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
+					if (mod == 'Beats' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					double BarrelFactor = 0.50;
+					if (skill <= 0) BarrelFactor = 0.0;
+					if (skill == 1) BarrelFactor = 0.25;
+					if (skill == 2) BarrelFactor = 0.5;
+					if (skill == 3) BarrelFactor = 0.75;
+					if (skill >= 4) BarrelFactor = 1.0;
+					if ((ExplosiveBarrel(inflictor) || ExplosiveBarrel(source) || Pod(inflictor) || Pod(source)) && (flags & DMG_EXPLOSION || mod == 'Explosive')) PlayerDefenseIgnoreFactor += (BarrelFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					double SuckFactor = 0.334;
+					if (mod == 'Suck') PlayerDefenseIgnoreFactor += (SuckFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					double PuddingFactor = 0.667;
+					if (PuddingDog(inflictor) || PuddingPup(inflictor) || PupGrenade(inflictor) || PuddingDog(source) || PuddingPup(source) || PupGrenade(source)) PlayerDefenseIgnoreFactor += (PuddingFactor * (1.00 - PlayerDefenseIgnoreFactor));
+					
+					if (bellefishzap) PlayerDefenseIgnoreFactor += (0.334 * (1.00 - PlayerDefenseIgnoreFactor));
+				}
+				
+				if (isbarrierbeam) PlayerDefenseIgnoreFactor += (frandom(0.9,1.0) * (1.00 - PlayerDefenseIgnoreFactor));
+			}
+			
+			double FoodFactor = 0.00;
+			if (CountInv("PowerRoastBuff")) FoodFactor += 0.0625; // Pig Roast
+			if (CountInv("PowerMealBuff")) FoodFactor += 0.25; // Gourmet Meal
+			if (CountInv("PowerMeal2Buff")) FoodFactor += 0.0625; // Turkey Dinner
+			if (FoodFactor > 0.00) PlayerDefenseIgnoreFactor = (PlayerDefenseIgnoreFactor * (1.00 - FoodFactor));
+		}
+		if (PlayerDefenseIgnoreFactor > 1.00) PlayerDefenseIgnoreFactor = 1.00;
+		if (dydudebug_playerdamagemobj) Console.Printf("PlayerDefenseIgnoreFactor: %.8f", PlayerDefenseIgnoreFactor);
+
+		return PlayerDefenseIgnoreFactor;
+	}
+	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
 		bool isbarrierbeam = false;
@@ -1626,55 +1684,8 @@ class DDPlayerPawn : PlayerPawn
 			//*********************************************************************
 		}
 		
-		
 		// (Partial) Defense Ignoring Attacks
-		PlayerDefenseIgnoreFactor = 0.00;
-		if (damage > 0)
-		{
-			if (inflictor == null && source == null)
-			{
-			}
-			else
-			{
-				if (!CountInv("DinahTrueIPState")) // The Flower Crown IP Mode Negates most Defense Ignoring attacks :V
-				{
-					double PikeAOEFactor = 0.334;
-					if (mod == 'Zap') PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					if (mod == 'Zap' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) PlayerDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					
-					double BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
-					if (mod == 'Beats') PlayerDefenseIgnoreFactor += (BeatsFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					double BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
-					if (mod == 'Beats' && flags & DMG_EXPLOSION) PlayerDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					
-					double BarrelFactor = 0.50;
-					if (skill <= 0) BarrelFactor = 0.0;
-					if (skill == 1) BarrelFactor = 0.25;
-					if (skill == 2) BarrelFactor = 0.5;
-					if (skill == 3) BarrelFactor = 0.75;
-					if (skill >= 4) BarrelFactor = 1.0;
-					if ((ExplosiveBarrel(inflictor) || ExplosiveBarrel(source) || Pod(inflictor) || Pod(source)) && (flags & DMG_EXPLOSION || mod == 'Explosive')) PlayerDefenseIgnoreFactor += (BarrelFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					
-					double SuckFactor = 0.334;
-					if (mod == 'Suck') PlayerDefenseIgnoreFactor += (SuckFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					
-					double PuddingFactor = 0.667;
-					if (PuddingDog(inflictor) || PuddingPup(inflictor) || PupGrenade(inflictor) || PuddingDog(source) || PuddingPup(source) || PupGrenade(source)) PlayerDefenseIgnoreFactor += (PuddingFactor * (1.00 - PlayerDefenseIgnoreFactor));
-					
-					if (bellefishzap) PlayerDefenseIgnoreFactor += (0.334 * (1.00 - PlayerDefenseIgnoreFactor));
-				}
-				
-				if (isbarrierbeam) PlayerDefenseIgnoreFactor += (frandom(0.9,1.0) * (1.00 - PlayerDefenseIgnoreFactor));
-			}
-			
-			double FoodFactor = 0.00;
-			if (CountInv("PowerRoastBuff")) FoodFactor += 0.0625; // Pig Roast
-			if (CountInv("PowerMealBuff")) FoodFactor += 0.25; // Gourmet Meal
-			if (CountInv("PowerMeal2Buff")) FoodFactor += 0.0625; // Turkey Dinner
-			if (FoodFactor > 0.00) PlayerDefenseIgnoreFactor = (PlayerDefenseIgnoreFactor * (1.00 - FoodFactor));
-		}
-		if (PlayerDefenseIgnoreFactor > 1.00) PlayerDefenseIgnoreFactor = 1.00;
+		PlayerDefenseIgnoreFactor = A_DefenseIgnoreFactor(inflictor, source, damage, mod, flags, angle, bellefishzap, isbarrierbeam);
 
 		// Direct Damage Changes
 		if (flags & DMG_INFLICTOR_IS_PUFF)
