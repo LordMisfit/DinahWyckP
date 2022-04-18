@@ -173,7 +173,8 @@ class EEBaseZSC : Actor abstract
 class EEProjectile : EEBaseZSC abstract
 {
 	int saveddmg; // Save damage from things like A_CustomPunch for puffs
-
+	int user_canafflict;
+	int user_ailmentmaxchance;
 	mixin InvWeaponShare;
 	int user_hitsparkrand;
 	int user_sparksizelevel;
@@ -1199,6 +1200,32 @@ class EEProjectile : EEBaseZSC abstract
 		}
 		return tremrad;
 	}
+	
+	void A_StatusEffectChecker(int basechance)
+	{
+		user_ailmentmaxchance = basechance;
+		//if (CountInv("EWShieldIdleMode",AAPTR_PLAYER1) > 0) user_ailmentmaxchance * 4;
+
+		user_canafflict = 1;
+		if (master != null && master.health <= 0) user_canafflict = 0;
+		/*
+		if (CountInv("InvulnerabilitySpell",AAPTR_MASTER) > 0 || 
+				CountInv("IsInvulnerable",AAPTR_MASTER) > 0 || 
+				CountInv("MenuInvulnerability",AAPTR_MASTER) > 0 ||
+				CountInv("EvadeAnAttack",AAPTR_MASTER) > 0 || 
+				CountInv("PlayerDashing",AAPTR_MASTER) > 0) 
+				{
+					user_canafflict = 0;
+				}
+		*/
+
+		PlayerPawn playpawn;
+		if (master) playpawn = PlayerPawn(master);
+		if (playpawn)
+		{
+			if (playpawn.player.cheats & CF_GODMODE2 || playpawn.player.cheats & CF_GODMODE) user_canafflict = 0;
+		}
+	}
 }
 
 // Base FastProjectile Class
@@ -1875,6 +1902,10 @@ class EEProp : EEBaseZSC abstract
 
 class EECreature : EEBaseZSC abstract
 {
+	int user_charmed;
+	int user_pelletsfired;
+	int user_HPXDeathRange2;
+	int user_ressurrectstr, user_resurrectedtimes, user_autorestimer;
 	int user_barragecounter, user_shotsfired, user_shotsfiredmax;
 	float user_shotaccuracy, user_shotaccuracy1, user_shotaccuracy2; 
 	float user_shotzaccuracy, user_shotzaccuracy1, user_shotzaccuracy2; 
@@ -2956,6 +2987,21 @@ class EECreature : EEBaseZSC abstract
 			}
 		}
 	}
+	
+	// Nightmare Stuff
+	void A_NightmarePhaseOut()
+	{
+		bSHOOTABLE = 0; bNORADIUSDMG = 1; bNOPAIN = 1; bNOBLOOD = 1; 
+		A_UnSetShootable();
+		A_SetInventory("NightmarePhaseOutDefense",1); // A_SetInvulnerable
+	}
+	
+	void A_NightmarePhaseIn()
+	{
+		bSHOOTABLE = 1; bNORADIUSDMG = 0; bNOPAIN = 0; bNOBLOOD = 0; 
+		A_SetShootable();
+		A_SetInventory("NightmarePhaseOutDefense",0); // A_SetInvulnerable
+	}
 }
 
 // A subclass for the DD/AFD unique monsters
@@ -3722,7 +3768,8 @@ class PracticeTarget : EECreature //21333
 		Tag "Practicing Target";
 		//$Angled
 		//$Color 6
-		//$Category EE Monsters
+		//$Category "EE Monsters"
+		//$Sprite "PRDUA0"
 		Radius 16;
 		Height 48;
 		Health 10000000;
@@ -3781,7 +3828,8 @@ class PracticeTarget2 : EECreature
 		Tag "Practicing Target";
 		//$Angled
 		//$Color 6
-		//$Category EE Monsters
+		//$Category "EE Monsters"
+		//$Sprite "PRDUA0"
 		Radius 16;
 		Height 48;
 		Health 10000000;
