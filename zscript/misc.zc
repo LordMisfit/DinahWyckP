@@ -1733,6 +1733,7 @@ class PlayerStatItem : Inventory
 				// Check Item Points
 				int IPTimerIncMod = 0;
 				int IPTimerInc;
+				// Berserk = Gradually gain IP
 				if (berserked && IPNoGainTimer <= 0)
 				{
 					double berserkIPGain;
@@ -1782,7 +1783,9 @@ class PlayerStatItem : Inventory
 						IPTimerIncMod += 10;
 					}
 					berserkIPGain *= (1.0 + (TruePlayerLevel * 0.0025));
+					if (owner.CountInv("AngerLevelEvent")) berserkIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.001));
 					//Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPDissipateTimer, IPTimerInc, BerIPMulti);
+
 					double oldItemPoints = ItemPoints;
 					ItemPoints += berserkIPGain;
 					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
@@ -1832,6 +1835,7 @@ class PlayerStatItem : Inventory
 						}
 					}
 				}
+				
 				// Armor IP Effect Benefits
 				double ArmorIPActive = 0;
 				if (owner.CountInv("KnightGownItem")) KnightGownTier = 1;
@@ -1893,6 +1897,8 @@ class PlayerStatItem : Inventory
 						IPTimerIncMod += 25;
 					}
 					ArmorIPGain *= (1.0 + (TruePlayerLevel * 0.0025));
+					if (owner.CountInv("AngerLevelEvent")) ArmorIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.001));
+
 					//Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
 					double oldItemPoints = ItemPoints;
 					ItemPoints += ArmorIPGain;
@@ -1943,6 +1949,7 @@ class PlayerStatItem : Inventory
 						}
 					}
 				}
+				
 				// Morph IP Benefits
 				if (IsMorphed == 1)
 				{
@@ -1985,6 +1992,8 @@ class PlayerStatItem : Inventory
 						IPTimerIncMod += 25;
 					}
 					MorphIPGain *= (1.0 + (TruePlayerLevel * 0.0075));
+					if (owner.CountInv("AngerLevelEvent")) MorphIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.001));
+					
 					//Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", MorphIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
 					double oldItemPoints = ItemPoints;
 					ItemPoints += MorphIPGain;
@@ -2035,9 +2044,91 @@ class PlayerStatItem : Inventory
 						}
 					}
 				}
+				
+				// Unique "Event" IP Related Gains
+				if (owner.CountInv("AngerLevelEvent") > 0)
+				{
+					double AngerEventIPGain;
+					AngerEventIPGain = 0.00125;
+					if (ItemPoints <= 100.0000)
+					{
+						if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+						{
+							AngerEventIPGain += 0.00025;
+						}
+						else
+						if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+						{
+							AngerEventIPGain += 0.000625;
+						}
+						else
+						if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+						{
+							AngerEventIPGain += 0.0015625;
+						}
+						else
+						if (ItemPoints <= 25.0000)
+						{
+							AngerEventIPGain += 0.00390625;
+						}
+					}
+					AngerEventIPGain *= (owner.CountInv("AngerLevelEvent") * 0.25);
+					IPTimerIncMod += (owner.CountInv("AngerLevelEvent") * 5);
+
+					double oldItemPoints = ItemPoints;
+					ItemPoints += AngerEventIPGain;
+					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+					if (ItemPoints >= oldItemPoints) 
+					{
+						AngerEventIPGain = (ItemPoints - oldItemPoints);
+						if (dydudebug_ipdisplays2) Console.Printf("\c[red]AngerEventIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", AngerEventIPGain, oldItemPoints, ItemPoints);
+					}
+					globalvars.ItemPoints = ItemPoints;
+
+					bool AngerHUDEnabled = false;
+					if (AngerEventIPGain > 0 && AngerHUDEnabled)
+					{
+						if (dydudebug_ipdisplays2) Console.Printf("AngerEventIPGain > 0: %.8f", AngerEventIPGain);
+						if (dyduhud_showmiscipgains)
+						{
+							IPGainHUDAmt += AngerEventIPGain;
+							if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+							else
+							{
+								IPGainHUDTimer += 5;
+								if (IPGainHUDTimer < 105 && AngerEventIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+								if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+							}
+							
+							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+							else
+							{
+								IPHUDPulseTimer += 35;
+								if (IPHUDPulseTimer < 105 && AngerEventIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+							}
+						}
+						
+						if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
+						{
+							ItemPointsSession += AngerEventIPGain;
+							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+							if (ItemPointsSession > 0 && AngerEventIPGain > 0)
+							{
+								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+								if (healfactor < 10) IPHUDPulseType = 1;
+								if (healfactor >= 10) IPHUDPulseType = 2;
+								if (healfactor >= 50) IPHUDPulseType = 3;
+								if (healfactor >= 100) IPHUDPulseType = 4;
+								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+							}
+						}
+					}
+				}
+				
 				if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
 													 else IPTimerInc = level.time % 1;
-				
+
 				if (ItemPoints > 0.00)
 				{
 					if (IPDissipateTimer < -2100) IPDissipateTimer = -2100;
