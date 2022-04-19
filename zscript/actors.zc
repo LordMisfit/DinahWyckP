@@ -16,6 +16,7 @@ class EEBaseZSC : Actor abstract
 	const SKILL_IMPOSSIBLE = 7;
 	const SKILL_OMEGA = 8;
 	
+	int hsexphealth;
 	double oldVelZ;
 	int user_randompain;
 	int finaldamagedealt;
@@ -166,6 +167,35 @@ class EEBaseZSC : Actor abstract
 	void A_Destroy()
 	{
 		self.Destroy();
+	}
+}
+
+// Custom Powerups/Items that obey the effect of "AetheriusTimeFreezer" that might be used for monsters [buffs/debuffs/cooldowns]
+class EEPowerup : Powerup
+{
+	override void Tick()
+	{
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL)
+		{
+			Destroy();
+		}
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("PowerTimeFreezer") ||
+				player.CountInv("DDMiscTimeFreezer") ||
+				player.CountInv("DebugTimeFreezer") ||
+				player.CountInv("TimePotionTimeFreezer") ||
+				!player.player.timefreezer)
+		{
+			//Console.Printf("EffectTics: %d", EffectTics);
+			EffectTics--;
+		}
+		if (EffectTics <= 0)
+		{
+			Destroy();
+		}
 	}
 }
 
@@ -1226,6 +1256,45 @@ class EEProjectile : EEBaseZSC abstract
 			if (playpawn.player.cheats & CF_GODMODE2 || playpawn.player.cheats & CF_GODMODE) user_canafflict = 0;
 		}
 	}
+	
+	
+	void A_HadesSphereExplode(int basedmg = 112, int baserad = 112)
+	{
+		int newdmg = basedmg;
+		int newrad = baserad;
+		if (target)
+		{
+			int maxhp;
+			if ((target.SpawnHealth() + target.Stamina) > 0) maxhp = (target.SpawnHealth() + target.Stamina);
+			else maxhp = target.SpawnHealth();
+			maxhp *= (1.0 + (target.CountInv("MonsterLevel") * 0.0111111112)); // +100% damage every ~90 levels
+			maxhp *= 0.25; // +100% damage every ~180 levels
+			newdmg += maxhp;
+			EECreature HSFound;
+			HSFound = EECreature(target);
+			int healthleft;
+			if (HSFound) healthleft = HSFound.hsexphealth;
+			healthleft *= (1.0 + (target.CountInv("MonsterLevel") * 0.0222222223)); // +100% damage every ~45 levels
+			healthleft *= 0.5;
+			newdmg += healthleft;
+
+			int maxhp2;
+			if ((target.SpawnHealth() + target.Stamina) > 0) maxhp2 = (target.SpawnHealth() + target.Stamina);
+			else maxhp2 = target.SpawnHealth();
+			maxhp2 *= (1.0 + (target.CountInv("MonsterLevel") * 0.005555556)); // +100% radius every ~180 levels
+			maxhp2 *= 0.125;
+			newrad += maxhp2;
+			HSFound = EECreature(target);
+			int healthleft2;
+			if (HSFound) healthleft2 = HSFound.hsexphealth;
+			healthleft2 *= (1.0 + (target.CountInv("MonsterLevel") * 0.011111112)); // +100% radius every ~90 levels
+			healthleft2 *= 0.25;
+			newrad += healthleft2;
+			
+			//if (dvdsdebug_showmiscdmginformation) Console.Printf("NewDmg: %d (%d), NewRad: %d (%d), MaxHP: %d, HealthLeft: %d, MaxHP2: %d, HealthLeft2: %d", newdmg, basedmg, newrad, baserad, maxhp, healthleft, maxhp2, healthleft2);
+		}
+		A_Explode(newdmg,newrad,0,(newrad*0.334));
+	}
 }
 
 // Base FastProjectile Class
@@ -1902,6 +1971,7 @@ class EEProp : EEBaseZSC abstract
 
 class EECreature : EEBaseZSC abstract
 {
+	int user_deathcounter, user_truekill;
 	int user_charmed;
 	int user_pelletsfired;
 	int user_HPXDeathRange2;
@@ -3001,6 +3071,20 @@ class EECreature : EEBaseZSC abstract
 		bSHOOTABLE = 1; bNORADIUSDMG = 0; bNOPAIN = 0; bNOBLOOD = 0; 
 		A_SetShootable();
 		A_SetInventory("NightmarePhaseOutDefense",0); // A_SetInvulnerable
+	}
+	
+	void A_GetHSHealthPreExp()
+	{
+		hsexphealth = health;
+	}
+
+	void A_HadesSphereTeleport(statelabel tele = "Teleport", int chance = 128, int chancemax = 1024)
+	{
+		if (!CountInv("HSphereTeleportCooldown") && target && CheckIfTargetInLOS(0, JLOSF_DEADNOJUMP))
+		{
+			if (random(1,chancemax) <= chance) { SetStateLabel(tele); }
+			//if (dvdsdebug_monsterspecialaidisplays) Console.Printf("HSTele: Target - %s (%d / %d)", target.GetClassName(), chance, chancemax);
+		}
 	}
 }
 
