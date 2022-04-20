@@ -2847,6 +2847,87 @@ class EECreature : EEBaseZSC abstract
 		}
 	}
 
+	// Cacodemons' Shadow Split
+	void A_ActorStartShadowSplit()
+	{
+		A_Stop();
+		A_StartSound("caco/shadowsplit", CHAN_7, CHANF_DEFAULT, 1, ATTN_NONE, frandom(1.2,1.4));
+		A_FaceTarget();
+		bSHOOTABLE = 0;
+		int user_monsterlevel = CountInv("MonsterLevel");
+		
+		int nonsolidchance = 1;
+		if (GetClassName() == "CacodemonNew") nonsolidchance += (user_monsterlevel / 90);
+		//if (GetClassName() == "Cacolantern") nonsolidchance += (user_monsterlevel / random(67,68));
+		//if (GetClassName() == "Abaddon") nonsolidchance += (user_monsterlevel / 45);
+		//if (GetClassName() == "DSPainElemental") nonsolidchance += (user_monsterlevel / 45);
+		if (random(1,4) <= nonsolidchance) bSOLID = 0;
+	}
+	void A_ActorEndShadowSplit()
+	{
+		A_GiveInventory("ShadowSplitCooldown", 1);
+		A_Stop();
+		bSHOOTABLE = 1;
+		if (!bSOLID) bSOLID = 1;
+	}
+
+	void A_ActorShadowSplit(int minlevel = 30, int minchance = 256)
+	{
+		int user_monsterlevel = CountInv("MonsterLevel");
+		int splittype = 0; // 0;
+		int splittype2 = 0; // 0;
+		int RandRoll = random(1,1024);
+		if (exex_monsterlevelenabledflags)
+		{
+			A_StopSound(CHAN_WEAPON);
+			if (!CountInv("ShadowSplitCooldown")) 
+			{
+				if (user_monsterlevel >= (minlevel*9))
+				{
+					if (RandRoll <= (minchance*4)) splittype2 = 2;
+				}
+				else
+				if (user_monsterlevel >= (minlevel*4))
+				{
+					if (RandRoll <= (minchance*2)) splittype2 = random(1,2);
+				}
+				else
+				if (user_monsterlevel >= minlevel)
+				{
+					if (RandRoll <= minchance) splittype2 = randompick(1,1,1,1,1,1,1,2);
+				}
+				else
+				if (user_monsterlevel >= (minlevel/2))
+				{
+					if (RandRoll <= (minchance/4)) splittype2 = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2);
+				}
+			}
+		}
+
+		if (splittype2 == 0)
+		{
+		}
+		else
+		if (splittype2 == 1)
+		{
+			splittype = random(1,4);
+			if (splittype == 1) { SetStateLabel("Shadowsplit1"); }
+			if (splittype == 2) { SetStateLabel("Shadowsplit2"); }
+			if (splittype == 3) { SetStateLabel("Shadowsplit3"); }
+			if (splittype == 4) { SetStateLabel("Shadowsplit4"); }
+		}
+		else
+		if (splittype2 == 2)
+		{
+			splittype = random(1,4);
+			if (splittype == 1) { SetStateLabel("Shadowsplit1a"); }
+			if (splittype == 2) { SetStateLabel("Shadowsplit2a"); }
+			if (splittype == 3) { SetStateLabel("Shadowsplit3a"); }
+			if (splittype == 4) { SetStateLabel("Shadowsplit4a"); }
+		}
+		if (dydudebug_monsterspecialai) Console.Printf("Class: %s - \cuCacos' ShadowSplit --- (Level / RequiredLvl: %d / %d) splittype2: %d, splittype: %d\c-", GetClassName(), user_monsterlevel, minlevel, splittype2, splittype);
+	}
+
 	const DEFSKULLSPEED = 20;
 	
 	void A_SkullAttack(double skullspeed = DEFSKULLSPEED)
@@ -3123,7 +3204,7 @@ class EECreature : EEBaseZSC abstract
 		if (!CountInv("HSphereTeleportCooldown") && target && CheckIfTargetInLOS(0, JLOSF_DEADNOJUMP))
 		{
 			if (random(1,chancemax) <= chance) { SetStateLabel(tele); }
-			//if (dvdsdebug_monsterspecialaidisplays) Console.Printf("HSTele: Target - %s (%d / %d)", target.GetClassName(), chance, chancemax);
+			//if (dydudebug_monsterspecialai) Console.Printf("HSTele: Target - %s (%d / %d)", target.GetClassName(), chance, chancemax);
 		}
 	}
 }
