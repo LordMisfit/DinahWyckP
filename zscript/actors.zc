@@ -2865,12 +2865,52 @@ class EECreature : EEBaseZSC abstract
 	void A_BetaSkullAttack(int basedmg = 1, int randmin = 1, int randmax = 8)
 	{
 		if (target == null || target.GetSpecies() == self.GetSpecies()) return;
-
 		A_StartSound(AttackSound, CHAN_WEAPON);
 		A_FaceTarget();
 		
-		int damage = random(randmin,randmax) * basedmg;
-		target.DamageMobj(self, self, damage, 'PSI');
+		int damage = 0;
+		if (CheckIfTargetInLOS(90.0, JLOSF_DEADNOJUMP, 1024))
+		{
+			Console.Printf("BetaSoul [1024 Unit Attack]");
+			if (random(1,16) <= 15) damage = random(randmin,randmax) * basedmg;
+												 else damage = ((random(randmin,randmax) * basedmg) * frandom(0.25,0.5));
+		}
+		else
+		{
+			if (CheckIfTargetInLOS(90.0, JLOSF_DEADNOJUMP, 4096))
+			{
+				Console.Printf("BetaSoul [4096 Unit Attack]");
+				if (random(1,4) <= 1) damage = ((random(randmin,randmax) * basedmg) * frandom(0.25,0.5));
+			}
+		}
+		
+		if (damage > 0) 
+		{
+			target.DamageMobj(self, self, damage, 'PSI');
+		}
+		else
+		{
+			string comblog;
+			comblog.AppendFormat("\c[red]*\c- ");
+			if (exex_combatlog && target)
+			{
+				if (PlayerPawn(target))
+				{
+					target.A_StartSound("Player/TookNoDamage",199,CHANF_DEFAULT,frandom(0.5,0.75),ATTN_NORM);
+				}
+				else
+				{
+					target.A_StopSound(14);
+					target.A_StartSound("misc/hitnodmg", 14, CHANF_DEFAULT, (exex_monsternodmgvol * frandom(0.875,1.375)), ATTN_NONE, frandompick(1.1,1.375,1.71875));
+				}
+				comblog.AppendFormat("\c[red]%s\c- took \c[purple]no damage\c- from", target.GetTag());
+				comblog.AppendFormat(" \c[purple]%s's", GetTag());
+				comblog.AppendFormat(" \c[red]psychic attack!\c-!");
+				comblog.AppendFormat(" [\c[lightblue]PSI\c-]");
+				if (dydudebug_showgametic) comblog.AppendFormat(" [%d]", gametic);
+				Console.Printf(comblog);
+			}
+		}
 	}
 	
 	void A_PainShootSkull(Class<Actor> spawntype, double angle, int flags = 0, int limit = -1)
