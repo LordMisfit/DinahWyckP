@@ -1265,7 +1265,7 @@ class RevenantNew : EECreature
 			SKEL AB 10 A_Look();
 			Loop;
 		See:
-			SKEL AABBCCDDEEFF 2 A_Chase();
+			SKEL AABBCCDDEEFF 2 A_EEChase("Melee","Missile",0,1,3,1,1);
 			Loop;
 		Melee:
 			SKEL G 0 A_FaceTarget();
@@ -1341,32 +1341,37 @@ class ArachnotronNew : EECreature
 			BSPI AB 10 A_Look;
 			Loop;
 		See:
-			BSPI A 20;
-			BSPI A 3 A_BabyMetal;
-			BSPI ABBCC 3 A_Chase;
-			BSPI D 3 A_BabyMetal;
-			BSPI DEEFF 3 A_Chase;
-			Goto See+1;
+			BSPI A 0 { user_walksound = 0; }
+			BSPI A 20 { user_walksound = 0; }
+			BSPI AABBCCDDEEFF 3
+			{
+				user_walksound++;
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { bAVOIDMELEE = true; }
+				if (user_walksound == 1) { A_StartSound("baby/walk",CHAN_BODY); }
+				if (user_walksound >= 6) { user_walksound = 0; }
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+			}
+			goto See+2;
 		Missile:
-			BSPI A 20 BRIGHT A_FaceTarget;
-			BSPI G 4 BRIGHT A_BspiAttack;
+			BSPI A 20 BRIGHT A_FaceTarget();
+			BSPI G 4 BRIGHT A_BspiAttack();
 			BSPI H 4 BRIGHT;
-			BSPI H 1 BRIGHT A_SpidRefire;
+			BSPI H 1 BRIGHT A_SpidRefire();
 			Goto Missile+1;
 		Pain:
 			BSPI I 3;
-			BSPI I 3 A_Pain;
-			Goto See+1;
+			BSPI I 3 A_EEPain;
+			Goto See+2;
 		Death:
 			BSPI J 20 A_Scream;
 			BSPI K 7 A_NoBlocking;
 			BSPI LMNO 7;
 			BSPI P -1 A_BossDeath;
 			Stop;
-			Raise:
+		Raise:
 			BSPI P 5;
 			BSPI ONMLKJ 5;
-			Goto See+1;
+			Goto See+2;
 	}
 }
 
@@ -1591,7 +1596,7 @@ class BaronOfHellNew : EECreature
 			BOSS AB 10 A_Look();
 			Loop;
 		See:
-			BOSS AABBCCDD 3 A_Chase();
+			BOSS AABBCCDD 3 A_EEChase("Melee","Missile",0,1,3,1,1);
 			Loop;
 		Melee:
 		Missile:
