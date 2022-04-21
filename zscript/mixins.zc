@@ -932,7 +932,7 @@ mixin class MonsterCollider
 	// Damage Tracking
 	int initdmg;
 	
-	double, double, double A_DefenseIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool wasblastedimpact, bool bellefishzap)
+	double, double, double A_DefenseIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool wasblastedimpact, bool bellefishzap, bool surprisehit)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -1012,6 +1012,9 @@ mixin class MonsterCollider
 			double PuddingFactor = 0.667;
 			if (PuddingDog(inflictor) || PuddingPup(inflictor) || PupGrenade(inflictor) || PuddingDog(source) || PuddingPup(source) || PupGrenade(source)) ActorDefenseIgnoreFactor += (PuddingFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
+			double RailFactor = 0.00;
+			if (mod == 'Railgun') ActorDefenseIgnoreFactor += (frandom(0.3,0.334) * (1.00 - ActorDefenseIgnoreFactor));
+			
 			if (bellefishzap) ActorDefenseIgnoreFactor += (0.334 * (1.00 - ActorDefenseIgnoreFactor));
 				
 			if (BarrierBeam(inflictor) || BarrierBeam(source)) ActorDefenseIgnoreFactor += (frandom(0.9,1.0) * (1.00 - ActorDefenseIgnoreFactor));
@@ -1042,6 +1045,8 @@ mixin class MonsterCollider
 			}
 			
 			if (mod == 'Massacre') ActorDefenseIgnoreFactor += (1.00 * (1.00 - ActorDefenseIgnoreFactor));
+
+			if (surprisehit) ActorDefenseIgnoreFactor += (0.50 * (1.00 - ActorDefenseIgnoreFactor));
 		}
 
 		return prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor;
@@ -1049,8 +1054,28 @@ mixin class MonsterCollider
 	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		bool surprisehit = false;
 		if (mod == 'TrueIP' && flags & DMG_EXPLOSION) flags &= ~DMG_EXPLOSION;
 		if (DDAFDNPC(self) && mod == 'TrueIP') return -1;
+		if (source && target != source && (PlayerPawn(source) || source.bFRIENDLY) && !bFRIENDLY)
+		{
+			int initdmg = damage;
+			surprisehit = true;
+			A_StopSound(32);
+			if (InStateSequence(curstate,ResolveState("Spawn")) ||
+				  (InStateSequence(curstate,ResolveState("Idle")) && HeresiarchNew(self)))
+			{
+				A_SetInventory("JustSurprised",1);
+				if (exex_hitweaksounds) A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+				damage *= frandompick(1.3334,1.50);
+			}
+			else
+			{
+				if (exex_hitweaksounds) A_StartSound("Misc/WeaknessHit", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+				damage *= frandompick(1.0667,1.10);
+			}
+			if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) surprisehit: damage: %d (initdmg: %d)", GetClassName(), damage, initdmg);
+		}
 
 		bool criticalhit = false;
 		bool IsPlayerRaven = false;
@@ -1404,7 +1429,7 @@ mixin class MonsterCollider
 		int predmginr = damage;
 		// (Partial) Defense Ignoring Attacks
 		double prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor;
-		[prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor] = A_DefenseIgnoreFactor(inflictor, source, damage, mod, flags, angle, wasblastedimpact, bellefishzap);
+		[prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor] = A_DefenseIgnoreFactor(inflictor, source, damage, mod, flags, angle, wasblastedimpact, bellefishzap, surprisehit);
 		
 		predmginr = damage;
 		// Defense Checks
