@@ -7,7 +7,11 @@ class PuzzleItemEE : PuzzleItem
 	mixin HUDRecovery;
 	
 	bool PickupUseVoice;
+	bool PickupUseVoice2;
+	string PickupSnd2;
 	property PickUpVoice: PickupUseVoice;
+	property PickUpVoice2: PickupUseVoice2;
+	property PickupSound2: PickupSnd2;
 	
 	override String PickupMessage()
 	{
@@ -58,14 +62,39 @@ class PuzzleItemEE : PuzzleItem
 			if (MiscItem && MiscItem.CanTalkUnderwater)
 			{
 				if (toucher.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
-				toucher.A_StopSound(chan);
-				toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
 			}
 		}
-		else
+		toucher.A_StopSound(chan);
+		toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
+		
+		if (PickupSnd2 != "")
 		{
+			if (toucher != NULL && toucher.CheckLocalView())
+			{
+				if (PickupUseVoice2) chan = CHAN_VOICE;
+												else chan = CHAN_ITEM;
+				flags = CHANF_NOPAUSE | CHANF_MAYBE_LOCAL;
+			}
+			else
+			{
+				if (PickupUseVoice2) chan = CHAN_VOICE;
+												else chan = CHAN_ITEM;
+				flags = CHANF_MAYBE_LOCAL;
+			}
+			//Console.Printf("Channel: %d [PUV2: %d]", chan, PickupUseVoice2);
+			
+			actor player = players[0].mo;
+			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+			double maskpitch = 1.00;
+			if (PickupUseVoice2) 
+			{
+				if (MiscItem && MiscItem.CanTalkUnderwater)
+				{
+					if (toucher.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+				}
+			}
 			toucher.A_StopSound(chan);
-			toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
+			toucher.A_StartSound(PickupSnd2, chan, flags, 1.0, atten, maskpitch);
 		}
 	}
 }

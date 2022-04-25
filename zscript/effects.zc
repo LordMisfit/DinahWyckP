@@ -16,7 +16,11 @@ class CustomInventoryExt : CustomInventory
 	mixin HUDRecovery;
 	
 	bool PickupUseVoice;
+	bool PickupUseVoice2;
+	string PickupSnd2;
 	property PickUpVoice: PickupUseVoice;
+	property PickUpVoice2: PickupUseVoice2;
+	property PickupSound2: PickupSnd2;
 	
 	override String PickupMessage()
 	{
@@ -67,14 +71,39 @@ class CustomInventoryExt : CustomInventory
 			if (MiscItem && MiscItem.CanTalkUnderwater)
 			{
 				if (toucher.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
-				toucher.A_StopSound(chan);
-				toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
 			}
 		}
-		else
+		toucher.A_StopSound(chan);
+		toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
+		
+		if (PickupSnd2 != "")
 		{
+			if (toucher != NULL && toucher.CheckLocalView())
+			{
+				if (PickupUseVoice2) chan = CHAN_VOICE;
+												else chan = CHAN_ITEM;
+				flags = CHANF_NOPAUSE | CHANF_MAYBE_LOCAL;
+			}
+			else
+			{
+				if (PickupUseVoice2) chan = CHAN_VOICE;
+												else chan = CHAN_ITEM;
+				flags = CHANF_MAYBE_LOCAL;
+			}
+			//Console.Printf("Channel: %d [PUV2: %d]", chan, PickupUseVoice2);
+			
+			actor player = players[0].mo;
+			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+			double maskpitch = 1.00;
+			if (PickupUseVoice2) 
+			{
+				if (MiscItem && MiscItem.CanTalkUnderwater)
+				{
+					if (toucher.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+				}
+			}
 			toucher.A_StopSound(chan);
-			toucher.A_StartSound(PickupSound, chan, flags, 1.0, atten, maskpitch);
+			toucher.A_StartSound(PickupSnd2, chan, flags, 1.0, atten, maskpitch);
 		}
 	}
 
@@ -733,7 +762,7 @@ class PowerWine : PowerProtection
 	int timer;
 	double ticpiece;
 	
-	override void Tick ()
+	override void Tick()
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
@@ -745,6 +774,7 @@ class PowerWine : PowerProtection
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -1135,6 +1165,7 @@ class PowerFoodATK : PowerDamage
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -1170,6 +1201,7 @@ class PowerFoodDEF : PowerProtection
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -1615,6 +1647,7 @@ class PowerDouble : PowerDamage
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -1678,6 +1711,7 @@ class PowerGuard : PowerProtection
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -1739,6 +1773,7 @@ class PowerHaste : PowerSpeed
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -1801,6 +1836,7 @@ class PowerTerror : PowerFrightener
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -1864,6 +1900,7 @@ class PowerInvulnDD : PowerInvulnerable
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -1979,6 +2016,7 @@ class PowerStrengthDD : PowerStrength
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -2690,6 +2728,7 @@ class PowerIronFeet2 : PowerIronFeet
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -2754,6 +2793,7 @@ class PowerInvisibility2 : PowerInvisibility
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -2815,6 +2855,7 @@ class PowerGhost2 : PowerGhost
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -2954,6 +2995,7 @@ class PowerNoDrown : PowerProtection
 						{
 							if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																										else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+							if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 							while (ticpiece >= ticpiecemax && ticwhiletimes)
 							{
 								EffectTics--;
@@ -2984,6 +3026,7 @@ class PowerNoDrown : PowerProtection
 							{
 								if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																											else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+								if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 								while (ticpiece >= ticpiecemax && ticwhiletimes)
 								{
 									EffectTics--;
@@ -3012,6 +3055,7 @@ class PowerNoDrown : PowerProtection
 						if (skill >= 4) ticpiecemax = 10;
 						if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite")) ticpiecemax *= 7.5;
 						if (owner.CountInv("TimePotionTimeFreezer")) ticpiecemax *= 10;
+						if (owner.CountInv("MysteryItem")) ticpiecemax *= 4;
 						if (ticpiecemax > 0) 
 						{
 							ticpiece += 1;
@@ -3098,6 +3142,7 @@ class PowerRatMorph : PowerMorph
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -3237,6 +3282,7 @@ class PowerRavenInvisibility : PowerInvisibility2
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -3300,6 +3346,7 @@ class PowerRavenFlight : PowerFlight
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -3356,6 +3403,7 @@ class PowerLightAmp2 : PowerLightAmp
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -3904,6 +3952,7 @@ class KnightGownIPBuff : PowerProtection
 				{
 					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
 																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 					while (ticpiece >= 10)
 					{
 						EffectTics--;
@@ -4268,6 +4317,7 @@ class DinahTrueIPState : TempDefenseBuff
 			{
 				if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += frandompick(7.2,8.0,8.0,8.0,8.0,8.0,8.8);
 																							else ticpiece += frandompick(8.1,9.0,9.0,9.0,9.0,9.0,9.9);
+				if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
 				while (ticpiece >= 10)
 				{
 					EffectTics--;
