@@ -9,6 +9,7 @@ class PlayerStatItem : Inventory
 	const SKILL_HARD = 3;
 	const SKILL_VERY_HARD = 4;
 	
+	int HellWarriorShieldLevel;
 	int oldhealthratio;
 	bool IPUseMode;
 	int KnightGownTier;
@@ -270,6 +271,7 @@ class PlayerStatItem : Inventory
 				if (itemtimer <= 2) owner.A_SetInventory("ExpPts",globalvars.Experience);
 				
 				let weapon = owner.player.ReadyWeapon;
+				HellWarriorShieldLevel = owner.CountInv("HellWarriorShieldLevel");
 				if (playeractor.GetClassName() == "DinahPlayer" || playeractor.GetClassName() == "RatPlayer") CharacterClass = 10;
 
 				cankick = true;
@@ -1644,6 +1646,7 @@ class PlayerStatItem : Inventory
 	//
 	void HPRegenStuff()
 	{
+		let weapon = owner.player.ReadyWeapon;
 		let globalvars = DDGlobalVariables.Get();
 		let playeractor = DDPlayerPawn(owner);
 		
@@ -2328,6 +2331,11 @@ class PlayerStatItem : Inventory
 							if (WineDefTier == 4 || WineDefTier == -4) inc = floor(inc * 4.5);
 							if (WineDefTier == 5 || WineDefTier == -5) inc = floor(inc * 6.0);
 							
+							If (weapon is "EvilWarriorShield")
+							{
+								inc = floor(inc * (0.875 + (HellWarriorShieldLevel * 0.0125)));
+							}
+							
 							if (exex_healthregendegentype >= 1)
 							{
 								if (CurrentHealth <= (MaxHealthTrue * 0.02)) inc = floor(inc * 4);
@@ -2432,6 +2440,10 @@ class PlayerStatItem : Inventory
 							if (WineDefTier == 4 || WineDefTier == -4) inc = ceil(inc * 0.2222222222222222);
 							if (WineDefTier == 5 || WineDefTier == -5) inc = ceil(inc * 0.1666666666666667);
 							
+							If (weapon is "EvilWarriorShield")
+							{
+								inc = ceil(inc * (1.142857142857143 + (HellWarriorShieldLevel * 0.01143)));
+							}
 							if (exex_healthregendegentype >= 1)
 							{
 								if (CurrentHealth >= (MaxHealthTrue * 3.0)) inc = ceil(inc * 2.0);
@@ -2570,6 +2582,7 @@ class PlayerStatItem : Inventory
 				if (weapon is "SuperVac") WeapEvaAlt -= (BaseEVA * (0.125 + SuperVacAmmoFactor));
 				if (weapon is "Grimophone") WeapEvaAlt -= (BaseEVA * 0.1875);
 				if (weapon is "CandleWhip") WeapEvaAlt += (BaseEVA * 0.0625);
+				If (weapon is "EvilWarriorShield") WeapEvaAlt -= (BaseEVA * (HellWarriorShieldLevel * 0.0125));
 				SPDEvadeCheck += WeapEvaAlt;
 				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0e - SPD Evade Check (weapon check)]: %.4f\c-", SPDEvadeCheck);
 				
@@ -2916,6 +2929,14 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerMeal2Buff") || Owner.CountInv("PowerMeal2Buff2")) MealBuffs++;
 			if (MealBuffs) TotalMass *= (1 + (MealBuffs * 0.125));
 			if (dydudebug_masscalcs) Console.Printf("Mass [Buffs]: %d", TotalMass);
+
+			If (owner.player.ReadyWeapon is "EvilWarriorShield")
+			{
+				TotalMass *= (1.5 + (HellWarriorShieldLevel * 0.075));
+				if (Owner.CountInv("EWShieldDefendMode")) TotalMass *= (3.5 + (HellWarriorShieldLevel * 0.175));
+				if (Owner.CountInv("EWShieldDefendModeExtra")) TotalMass *= (1.75 + (HellWarriorShieldLevel * 0.0875));
+				if (owner.CountInv("PowerStrength") || owner.CountInv("PowerStrengthDD")) TotalMass *= 2.5;
+			}
 
 			// Armor
 			int ArmorAmt = owner.CountInv("BasicArmor");
@@ -3976,6 +3997,18 @@ class PlayerStatItem : Inventory
 			}
 			if (dydudebug_attackcalcs) Console.Printf("Damage (passive - TimeFreezeIPBuff): %.8f", TimeFactor);
 			
+			// Hell Warrior Shield [DEFENSIVE]
+			double EWShieldFactor = 1.00;
+			int BerserkFactorblock = frandompick[statitem2](0.334,0.5,0.667);
+			int HellWarriorShieldLevel = owner.CountInv("HellWarriorShieldLevel");
+			If (weapon is "EvilWarriorShield") 
+			{
+				EWShieldFactor *= (0.67 - (HellWarriorShieldLevel * 0.0125));
+				if (Owner.CountInv("EWShieldDefendMode")) EWShieldFactor *= (0.134 - (HellWarriorShieldLevel * 0.01));
+				if (Owner.CountInv("EWShieldDefendModeExtra")) EWShieldFactor *= (0.0268 - (HellWarriorShieldLevel * 0.002));
+				if (EWShieldFactor < 1.00 && ( Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD"))) EWShieldFactor *= BerserkFactorblock;
+			}
+
 			double PlayerFistBlockFactor = 1.00;
 			int UsingFistBlock = 0;
 			BerserkFactorblock = frandompick[statitem2](0.25,0.334,0.5,0.667,0.75);
@@ -4073,6 +4106,7 @@ class PlayerStatItem : Inventory
 													 * SkillFactor
 													 * BuffFactor
 													 * TimeFactor
+													 * EWShieldFactor
 													 * PlayerFistBlockFactor
 													 * WeaponFactor
 													 * CrisisFactor
@@ -4142,7 +4176,7 @@ class PlayerStatItem : Inventory
 			if (exex_extraatkdefspd) BaseFactor *= (1.00 + (TruePlayerLevel * BaseMul) + (TruePlayerSPD * BaseMul));
 													else BaseFactor *= (1.00 + (TruePlayerLevel * BaseMul));
 		}
-		
+
 		if (IsMorphed == 1)
 		{
 			if (BaseFactor >= 7.5) BaseFactor = 7.5;
@@ -4153,6 +4187,14 @@ class PlayerStatItem : Inventory
 		}
 		Speed *= BaseFactor;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [base (level+extra)]: %.8f", BaseFactor);
+		
+		double HWShieldSpeed = 1.00;
+		If (weapon is "EvilWarriorShield")
+		{
+			if (Owner.CountInv("HWShieldBlockHold")) HWShieldSpeed = (0.81 * (1.0 - (HellWarriorShieldLevel * 0.0125))); else HWShieldSpeed = (0.9 * (1.0 - (HellWarriorShieldLevel * 0.00625)));
+		}
+		Speed *= HWShieldSpeed;
+		HUDSpeed *= HWShieldSpeed;
 
 		double HealthFactor = 1.0;
 		if (CurrentHealth >= (MaxHealthTrue * 3)) 

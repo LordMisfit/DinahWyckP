@@ -918,6 +918,7 @@ class DDStatusBarMain : BaseStatusBar
 			int IPShakeFormY = 0;
 			double HPPulseScale = 1.00;
 			double APPulseScale = 1.00;
+			let PlayerWeapon = CPlayer.ReadyWeapon;
 			
 			if (dyduhud_showhpapdmghudshake)
 			{
@@ -2359,7 +2360,7 @@ class DDStatusBarMain : BaseStatusBar
 			LY = -35;
 			bool cankick = true;
 			if (MiscItem) cankick = MiscItem.cankick;
-			if (cplayer.ReadyWeapon is 'DinahWeapon' && cankick)
+			if (PlayerWeapon is 'DinahWeapon' && cankick)
 			{
 				LY += LYInc;
 				string UserKeyString;
@@ -2449,11 +2450,11 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			
 			// Weapon Specific Binds
-			let Sigl = SigilDD(cplayer.ReadyWeapon);
+			let Sigl = SigilDD(PlayerWeapon);
 			LegendStr = "";
 			string UserKeyString5;
 			Array<String> UserKeys5;
-			if (cplayer.ReadyWeapon is "HandToHand" || cplayer.ReadyWeapon is "CricketBat" || (cplayer.ReadyWeapon is "SigilDD" && Sigl && Sigl.health > 1))
+			if (PlayerWeapon is "HandToHand" || PlayerWeapon is "CricketBat" || (PlayerWeapon is "SigilDD" && Sigl && Sigl.health > 1))
 			{
 				LY += LYInc;
 				UserKeyString5 = UIKeybinds.getKeyboard("+user4");
@@ -2468,9 +2469,9 @@ class DDStatusBarMain : BaseStatusBar
 				{
 					LegendStr.AppendFormat("\c[red][unb]\c-");
 				}
-				if (cplayer.ReadyWeapon is "SigilDD") LegendStr.AppendFormat(" = \c[blue]CHANGE MODE\c-");
-				if (cplayer.ReadyWeapon is "HandToHand") LegendStr.AppendFormat(" = \c[blue]GUARD MODE\c-");
-				if (cplayer.ReadyWeapon is "CricketBat") 
+				if (PlayerWeapon is "SigilDD") LegendStr.AppendFormat(" = \c[blue]CHANGE MODE\c-");
+				if (PlayerWeapon is "HandToHand") LegendStr.AppendFormat(" = \c[blue]GUARD MODE\c-");
+				if (PlayerWeapon is "CricketBat") 
 				{
 					if (exex_cricketbatguardtype) 
 					{
@@ -2494,7 +2495,7 @@ class DDStatusBarMain : BaseStatusBar
 			Array<String> UserKeys7;
 			string UserKeyString8;
 			Array<String> UserKeys8;
-			if (cplayer.ReadyWeapon is "CricketBat" && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement))
+			if (PlayerWeapon is "CricketBat" && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement))
 			{
 				LY += LYInc;
 				UserKeyString6 = UIKeybinds.getKeyboard("+moveleft");
@@ -2597,7 +2598,7 @@ class DDStatusBarMain : BaseStatusBar
 			int startposx = -150; // -150
 			int startposy = ((wsspace * -2) - (wsspace * 0.1));
 			int wsflags = DI_TEXT_ALIGN_LEFT;
-			let wsweapon = CPlayer.ReadyWeapon;
+			let wsweapon = PlayerWeapon;
 			string wsname;
 			string wsammoname;
 			int wsnum;
@@ -2876,6 +2877,9 @@ class DDStatusBarMain : BaseStatusBar
 			x -= baseinc;
 			y -= baseinc;
 
+			baseinc = 2;
+			x -= baseinc;
+			y -= baseinc;
 			x += wsspace;
 			wsname = "CrazyBallDD";
 			wsammoname = "CzBall";
@@ -2900,6 +2904,34 @@ class DDStatusBarMain : BaseStatusBar
 				wsalpha = wsalphadefault;
 				wsscale = wsscaledefault;
 			}
+
+			x += (baseinc * 2);
+			y += (baseinc * 2);
+			wsname = "EvilWarriorShield";
+			wsammoname = "PikeAmmo";
+			ammotype = CPlayer.mo.FindInventory(wsammoname);
+			if (CPlayer.mo.CountInv(wsname))
+			{
+				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 9;
+				if (wsweapon is wsname)
+				{
+					wsalpha = wsalphadefault2;
+					wsscale = wsscaledefault2;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+				wsalpha = wsalphadefault;
+				wsscale = wsscaledefault;
+			}
+			x -= baseinc;
+			y -= baseinc;
 			x += wsspace;
 			wsname = "";
 			//ammotype = CPlayer.mo.FindInventory(wsammoname);
@@ -2927,7 +2959,7 @@ class DDStatusBarMain : BaseStatusBar
 			int bary = -48;
 			if (ammo1 != null)
 			{
-				if (cplayer.ReadyWeapon is "Grimophone")
+				if (PlayerWeapon is "Grimophone")
 				{
 					int recordenergy;
 					int recordenergymax = 42;
@@ -2964,7 +2996,7 @@ class DDStatusBarMain : BaseStatusBar
 						DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 					}
 				}
-				if (cplayer.ReadyWeapon is "SuperVac")
+				if (PlayerWeapon is "SuperVac")
 				{
 					int VacBagUnits = CPlayer.mo.CountInv("VacAmmoCounter");
 					int VacBagPercent;
@@ -2993,7 +3025,7 @@ class DDStatusBarMain : BaseStatusBar
 						}
 					}
 				}
-				if (cplayer.ReadyWeapon is "BlunderAxe")
+				if (PlayerWeapon is "BlunderAxe")
 				{
 					int jx, jy;
 					jx = -30;
@@ -3026,7 +3058,7 @@ class DDStatusBarMain : BaseStatusBar
 						DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 					}
 				}
-				if (cplayer.ReadyWeapon is "AppleJack")
+				if (PlayerWeapon is "AppleJack")
 				{
 					int jx, jy;
 					jx = -30;
@@ -3043,7 +3075,7 @@ class DDStatusBarMain : BaseStatusBar
 						}
 					}
 				}
-				if (cplayer.ReadyWeapon is "Scrambler")
+				if (PlayerWeapon is "Scrambler")
 				{
 					int jx, jy;
 					jx = -30;
@@ -3054,7 +3086,7 @@ class DDStatusBarMain : BaseStatusBar
 						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
 					}
 				}
-				if (cplayer.ReadyWeapon is "CricketBat")
+				if (PlayerWeapon is "CricketBat")
 				{
 					int spinIconScaletimer = level.time % 32;
 					double spinIconScale2 = 0.375;
@@ -3118,7 +3150,7 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			else
 			{
-				if (cplayer.ReadyWeapon is "HandToHand")
+				if (PlayerWeapon is "HandToHand")
 				{
 					double FLCRAlpha = FontAlpha * 0.5;
 					vector2 FLCRScale = (0.75, 0.75);
@@ -3166,7 +3198,7 @@ class DDStatusBarMain : BaseStatusBar
 					}
 				}
 				
-				if (cplayer.ReadyWeapon is "SigilDD")
+				if (PlayerWeapon is "SigilDD")
 				{
 					int AmmoFontCLR = font.cr_gray;
 					
@@ -3185,7 +3217,7 @@ class DDStatusBarMain : BaseStatusBar
 					DrawString(mDDLFont, FormatNumber(CurrHealth, 3), (x+2, y-3), DI_TEXT_ALIGN_RIGHT, AmmoFontCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 					
 					vector2 IconScale = (0.334, 0.334);
-					let Sigl = SigilDD(cplayer.ReadyWeapon);
+					let Sigl = SigilDD(PlayerWeapon);
 					if (Sigl)
 					{
 						textureid Sigl1Icon;
@@ -3232,7 +3264,7 @@ class DDStatusBarMain : BaseStatusBar
 					//***********************
 					//* Main Attack Icon[s] *
 					//***********************
-					if (cplayer.ReadyWeapon is "CricketBat")
+					if (PlayerWeapon is "CricketBat")
 					{
 						// Cricket Bat [Normal Melee]
 						IPIconPos = (-50, -10);
@@ -3247,7 +3279,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "BlunderAxe")
+					if (PlayerWeapon is "BlunderAxe")
 					{
 						// Blunderaxe [Normal Melee]
 						IPIconPos = (-50, -10);
@@ -3262,7 +3294,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "Scrambler")
+					if (PlayerWeapon is "Scrambler")
 					{
 						// Blunderaxe [Normal Melee]
 						IPIconPos = (-50, -10);
@@ -3277,7 +3309,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "AppleJack")
+					if (PlayerWeapon is "AppleJack")
 					{
 						// Blunderaxe [Normal Melee]
 						IPIconPos = (-50, -10);
@@ -3292,7 +3324,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "WizardPike")
+					if (PlayerWeapon is "WizardPike")
 					{
 						// Blunderaxe [Normal Melee]
 						IPIconPos = (-50, -10);
@@ -3307,7 +3339,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "SuperVac")
+					if (PlayerWeapon is "SuperVac")
 					{
 						// Blunderaxe [Normal Melee]
 						IPIconPos = (-50, -10);
@@ -3322,7 +3354,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "Grimophone")
+					if (PlayerWeapon is "Grimophone")
 					{
 						// Grimophone [Normal Ranged Attack]
 						IPIconPos = (-50, -10);
@@ -3337,7 +3369,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "CandleWhip")
+					if (PlayerWeapon is "CandleWhip")
 					{
 						// CandleWhip [Normal Melee]
 						IPIconPos = (-50, -10);
@@ -3352,7 +3384,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "SigilDD")
+					if (PlayerWeapon is "SigilDD")
 					{
 						// Sigil
 						IPIconPos = (-50, -10);
@@ -3368,7 +3400,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Main] (%s)] Cost: %.4f", cplayer.ReadyWeapon.GetClassName(), IPCost);
+					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Main] (%s)] Cost: %.4f", PlayerWeapon.GetClassName(), IPCost);
 					
 					// Shows the Proper Icon if the above meets criteria
 					if (HasIPIcon) 
@@ -3446,7 +3478,7 @@ class DDStatusBarMain : BaseStatusBar
 					//* Alt Attack Icon[s] *
 					//**********************
 					HasIPIcon = false;
-					if (cplayer.ReadyWeapon is "CricketBat")
+					if (PlayerWeapon is "CricketBat")
 					{ 
 						// Cricket Bat [Alt Attack]
 						IPIconPos = (-62, -10);
@@ -3461,7 +3493,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "BlunderAxe")
+					if (PlayerWeapon is "BlunderAxe")
 					{
 						// Blunderaxe [Alt Attack]
 						IPIconPos = (-62, -10);
@@ -3481,7 +3513,7 @@ class DDStatusBarMain : BaseStatusBar
 							if (dydudebug_infiniteip) CanUseIPATK = 3;
 						}
 					}
-					if (cplayer.ReadyWeapon is "Scrambler")
+					if (PlayerWeapon is "Scrambler")
 					{
 						// Scrambler [Alt Attack]
 						IPIconPos = (-62, -10);
@@ -3496,7 +3528,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "AppleJack")
+					if (PlayerWeapon is "AppleJack")
 					{
 						// AppleJack [Alt Attack]
 						IPIconPos = (-62, -10);
@@ -3511,7 +3543,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "WizardPike")
+					if (PlayerWeapon is "WizardPike")
 					{
 						// Pike [Alt Attack]
 						IPIconPos = (-62, -10);
@@ -3531,7 +3563,7 @@ class DDStatusBarMain : BaseStatusBar
 							if (dydudebug_infiniteip) CanUseIPATK = 3;
 						}
 					}
-					if (cplayer.ReadyWeapon is "SuperVac")
+					if (PlayerWeapon is "SuperVac")
 					{
 						// Pike [Alt Attack]
 						IPIconPos = (-62, -10);
@@ -3549,7 +3581,7 @@ class DDStatusBarMain : BaseStatusBar
 							if (dydudebug_infiniteip) CanUseIPATK = 3;
 						}
 					}
-					if (cplayer.ReadyWeapon is "Grimophone")
+					if (PlayerWeapon is "Grimophone")
 					{
 						// Grimophone [Alt Attack]
 						IPIconPos = (-62, -10);
@@ -3564,7 +3596,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (cplayer.ReadyWeapon is "CandleWhip")
+					if (PlayerWeapon is "CandleWhip")
 					{
 						// CandleWhip [Alt Attack]
 						IPIconPos = (-62, -10);
@@ -3579,7 +3611,7 @@ class DDStatusBarMain : BaseStatusBar
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
 					}
-					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Alt] (%s)] Cost: %.4f", cplayer.ReadyWeapon.GetClassName(), IPCost);
+					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Alt] (%s)] Cost: %.4f", PlayerWeapon.GetClassName(), IPCost);
 					
 					// Shows the Proper Icon if the above meets criteria
 					if (HasIPIcon) 
@@ -3658,7 +3690,7 @@ class DDStatusBarMain : BaseStatusBar
 					//* Special[1] Icon[s] *
 					//**********************
 					HasIPIcon = false;
-					if (cplayer.ReadyWeapon is "CricketBat")
+					if (PlayerWeapon is "CricketBat")
 					{
 						// Cricket Bat [Spin Attack]
 						bool canspinattack;
@@ -3678,7 +3710,7 @@ class DDStatusBarMain : BaseStatusBar
 							if (dydudebug_infiniteip) CanUseIPATK = 3;
 						}
 					}
-					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Special1] (%s)] Cost: %.4f", cplayer.ReadyWeapon.GetClassName(), IPCost);
+					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Special1] (%s)] Cost: %.4f", PlayerWeapon.GetClassName(), IPCost);
 					
 					// Shows the Proper Icon if the above meets criteria
 					if (HasIPIcon) 
