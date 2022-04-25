@@ -170,6 +170,43 @@ class EEBaseZSC : Actor abstract
 	}
 }
 
+class EECustomGib : EEBaseZSC abstract
+{
+	int deathcounter;
+	int fadecounter;
+	int ownedgib;
+
+	override void Tick()
+	{
+		if (GetAge() >= 0 && GetAge() <= 4) { if (target != null) ownedgib = 1; }
+		if (ownedgib)
+		{
+			if (target && target.health > 0) A_FadeOut(0.0625);
+
+			if (exex_gibswillfade)
+			{
+				int maxage;
+				if (exex_gibswillfade > 0) maxage = exex_gibswillfade;
+				if (exex_gibswillfade < 0) maxage = exex_gibswillfade * 35;
+				if (GetAge() >= maxage)
+				{
+					fadecounter++;
+					A_FadeOut((1.0/random(32,38)),FTF_REMOVE);
+					if (fadecounter > 39) Destroy();
+					if (dydudebug_deathgibfadedisplays) Console.Printf("\cy%s\c- alpha: \cx%.8f\c- - fadecounter: %d / 40", GetClassName(), alpha, fadecounter);
+				}
+				else
+				{
+					if (dydudebug_deathgibfadedisplays) Console.Printf("\cy%s\c- deathcounter: \cx%d\c-", GetClassName(), GetAge());
+				}
+			}
+		}
+
+		//This space for rent.
+		super.Tick(); // KEEP THIS HERE ELSE OTHER FUNCTIONS RELATED TO THIS BREAK :V
+	}
+}
+
 // Custom Powerups/Items that obey the effect of "AetheriusTimeFreezer" that might be used for monsters [buffs/debuffs/cooldowns]
 class EEPowerup : Powerup
 {
