@@ -2454,10 +2454,11 @@ class DDStatusBarMain : BaseStatusBar
 			LegendStr = "";
 			string UserKeyString5;
 			Array<String> UserKeys5;
-			if (PlayerWeapon is "HandToHand" || PlayerWeapon is "CricketBat" || (PlayerWeapon is "SigilDD" && Sigl && Sigl.health > 1))
+			if (PlayerWeapon is "HandToHand" || PlayerWeapon is "EvilWarriorShield" || PlayerWeapon is "CricketBat" || (PlayerWeapon is "SigilDD" && Sigl && Sigl.health > 1))
 			{
 				LY += LYInc;
-				UserKeyString5 = UIKeybinds.getKeyboard("+user4");
+				if (PlayerWeapon is "EvilWarriorShield") UserKeyString5 = UIKeybinds.getKeyboard("+altattack");
+				else UserKeyString5 = UIKeybinds.getKeyboard("+user4");
 				if (UserKeyString5 != "")
 				{
 					UserKeyString5.Split(UserKeys5,", ");
@@ -2468,6 +2469,20 @@ class DDStatusBarMain : BaseStatusBar
 				else 
 				{
 					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				if (PlayerWeapon is "EvilWarriorShield") 
+				{
+					if (exex_hwshieldaltfirekeytype)
+					{
+						if (cplayer.mo.CountInv("EWShieldDefendMode")) LegendStr.AppendFormat(" = \c[blue]UN-SHIELD\c-");
+																											else LegendStr.AppendFormat(" = \c[blue]SHIELD\c-");
+						LegendStr.AppendFormat(" \c[blue][TAP]\c-");
+					}
+					else
+					{
+						LegendStr.AppendFormat(" = \c[blue]SHIELD\c-");
+						LegendStr.AppendFormat(" \c[blue][HOLD]\c-");
+					}
 				}
 				if (PlayerWeapon is "SigilDD") LegendStr.AppendFormat(" = \c[blue]CHANGE MODE\c-");
 				if (PlayerWeapon is "HandToHand") LegendStr.AppendFormat(" = \c[blue]GUARD MODE\c-");
@@ -2962,13 +2977,17 @@ class DDStatusBarMain : BaseStatusBar
 				if (PlayerWeapon is "EvilWarriorShield")
 				{
 					int shieldenergy;
-					int shieldenergymax = 500;
+					int shieldenergymax = 1000;
 					int shieldenergypercent;
 					double shieldmeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
 					if (shieldmeterlength > 1.5) shieldmeterlength = 1.5;
 					dun = TexMan.CheckForTexture("SHLDUNIT", TexMan.TYPE_MiscPatch);
 					let EWS = EvilWarriorShield(cplayer.mo.FindInventory("EvilWarriorShield"));
-					if (EWS) shieldenergy = EWS.shieldenergy;
+					if (EWS && MiscItem)
+					{
+						shieldenergy = EWS.shieldenergy;
+						shieldenergymax = MiscItem.HellWarriorMaxCharge;
+					}
 					if (shieldenergymax)
 					{
 						shieldenergypercent = shieldenergy * 100 / shieldenergymax;

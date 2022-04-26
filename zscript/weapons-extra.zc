@@ -2177,13 +2177,16 @@ class EvilWarriorShield : DinahWeapon
 			EWS4 A 0
 			{
 				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				//HellWarriorMaxCharge
 				invoker.shieldenergycost = (10 + (player.CountInv("HellWarriorShieldLevel") * 0.6));
 				if (invoker.shieldenergy <= invoker.shieldenergycost)
 				{
 					if (CountInv("PikeAmmo") > 0)
 					{
 						A_TakeInventory("PikeAmmo",1);
-						invoker.shieldenergy += 500;
+						if (MiscItem) invoker.shieldenergy += MiscItem.HellWarriorMaxCharge;
+						else invoker.shieldenergy += 1000;
 					}
 					else
 					{
@@ -2213,6 +2216,7 @@ class EvilWarriorShield : DinahWeapon
 			EWS4 A 2 Bright
 			{
 				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 				A_PHellWarShieldOn();
 				invoker.shieldenergy -= invoker.shieldenergycost;
 
@@ -2221,7 +2225,8 @@ class EvilWarriorShield : DinahWeapon
 					if (CountInv("PikeAmmo") > 0)
 					{
 						A_TakeInventory("PikeAmmo",1);
-						invoker.shieldenergy += 500;
+						if (MiscItem) invoker.shieldenergy += MiscItem.HellWarriorMaxCharge;
+						else invoker.shieldenergy += 1000;
 					}
 				}
 
@@ -2409,10 +2414,26 @@ class EvilWarriorShieldBall : EEProjectile
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 
-		finaldamagedealt = (2 * random(1,8));
+		finaldamagedealt = 1;
 		if (target && PlayerPawn(target) && MiscItem)
 		{
-			finaldamagedealt += (MiscItem.TruePlayerLevel * (0.03125 * random(1,8)));
+			finaldamagedealt += floor(MiscItem.TruePlayerLevel * 0.015625);
+			finaldamagedealt *= (random(1,4) + floor(MiscItem.TruePlayerLevel * 0.05));
+			finaldamagedealt *= (1.0 + (player.CountInv("HellWarriorShieldLevel") * 0.2));
+		}
+		else
+		{
+			finaldamagedealt *= random(1,4);
+		}
+		double rollval;
+		int rngroll = random(1,16);
+		if (MiscItem) 
+		{
+			if (rngroll <= 12) rollval = (MiscItem.EWShieldKills * frandompick(0.0005,0.00075,0.00075,0.00075,0.00075,0.00075,0.001));
+			else if (rngroll >= 13 && rngroll <= 15) rollval = (MiscItem.EWShieldKills * frandompick(0.01,0.015,0.015,0.015,0.015,0.015,0.02));
+			else if (rngroll >= 16) rollval = (MiscItem.EWShieldKills * frandompick(0.002,0.003,0.003,0.003,0.003,0.003,0.004));
+			finaldamagedealt *= (1.0 + rollval);
+			if (dydudebug_attackstuff) Console.Printf("finaldamagedealt [HWShieldBall] (kills: %d): %d, rollval: %.8f, rngroll: %d", MiscItem.EWShieldKills, finaldamagedealt, rollval, rngroll);
 		}
 	}
 	
