@@ -3258,6 +3258,54 @@ class EECreature : EEBaseZSC abstract
 			//if (dydudebug_monsterspecialai) Console.Printf("HSTele: Target - %s (%d / %d)", target.GetClassName(), chance, chancemax);
 		}
 	}
+	
+	// Shielding Hell Warrior
+	void A_HellWarShieldOff()
+	{
+		bNOBLOOD = false;
+		bNOPAIN = false;
+		bREFLECTIVE = false;
+		bINVULNERABLE = false;
+		//A_SetInventory("HWShieldDefense",0); // A_UnSetInvulnerable
+		//A_SetInventory("HWShieldDefenseExtra",0);
+	}
+
+	void A_HellWarShieldOn()
+	{
+		bNOBLOOD = true;
+		bNOPAIN = true;
+		bREFLECTIVE = true;
+		bINVULNERABLE = true;
+		//A_SetInventory("HWShieldDefense",1); // A_SetInvulnerable
+		//A_SetInventory("HWShieldDefenseExtra",0);
+		A_ShieldBlastVelFactor(0.5,0.5,16,1);
+
+		if (random(1,4) == 1) 
+		{
+			A_SetInventory("HWShieldDefenseExtra",1); 
+			A_ShieldBlastVelFactor(0.5,0.5,4,1);
+		}
+	}
+	
+	// Shielding Blasted/Vel Factor (makes shielding enemies who've been blasted slow down and occasionally can clear the BLASTED flag)
+	void A_ShieldBlastVelFactor(double xmul = 0.5, double ymul = 0.5, int maxunblastchance = 16, int unblastchance = 1)
+	{
+		xmul = clamp(xmul, 0.0, 1.0);
+		ymul = clamp(ymul, 0.0, 1.0);
+		if (bBLASTED && (vel.x != 0.0 || vel.y != 0.0))
+		{
+			vel.x *= xmul;
+			vel.y *= ymul;
+			if (random(1,maxunblastchance) <= unblastchance) 
+			{
+				bBLASTED = false;
+			}
+			else
+			{
+				if ((vel.x >= -0.125 && vel.x <= 0.125) && (vel.y >= -0.125 && vel.y <= 0.125)) bBLASTED = false;
+			}
+		}
+	}
 }
 
 // A subclass for the DD/AFD unique monsters
