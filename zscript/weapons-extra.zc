@@ -2083,6 +2083,9 @@ class Popcorn_Shrap7 : EEProjectile
 // EVIL WARRIOR'S SHIELD
 class EvilWarriorShield : DinahWeapon
 {
+	int shieldenergy;
+	int shieldenergybits;
+	int shieldenergycost;
 	default
 	{
 		//$Category EE KDIZD Weapons
@@ -2173,7 +2176,21 @@ class EvilWarriorShield : DinahWeapon
 		Fire:
 			EWS4 A 0
 			{
-				//if (A_UseManaAttack(CountInv("NormFireManaCost"),2,1,1) == 0) { return resolvestate("Ready"); }
+				actor player = players[0].mo;
+				invoker.shieldenergycost = (10 + (player.CountInv("HellWarriorShieldLevel") * 0.6));
+				if (invoker.shieldenergy <= invoker.shieldenergycost)
+				{
+					if (CountInv("PikeAmmo") > 0)
+					{
+						A_TakeInventory("PikeAmmo",1);
+						invoker.shieldenergy += 500;
+					}
+					else
+					{
+						return resolvestate("Ready");
+					}
+					return resolvestate(null);
+				}
 				return resolvestate(null);
 			}
 			EWS4 D 2 Bright
@@ -2195,7 +2212,18 @@ class EvilWarriorShield : DinahWeapon
 			}
 			EWS4 A 2 Bright
 			{
+				actor player = players[0].mo;
 				A_PHellWarShieldOn();
+				invoker.shieldenergy -= invoker.shieldenergycost;
+
+				if (invoker.shieldenergy <= invoker.shieldenergycost)
+				{
+					if (CountInv("PikeAmmo") > 0)
+					{
+						A_TakeInventory("PikeAmmo",1);
+						invoker.shieldenergy += 500;
+					}
+				}
 
 				A_FireProjectile("EvilWarriorShieldBall", 0, 0, 0, 3); 
 				if (random(1,8) <= 1) { A_AlertMonsters(); }
