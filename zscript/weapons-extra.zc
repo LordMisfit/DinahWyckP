@@ -2106,8 +2106,8 @@ class EvilWarriorShield : DinahWeapon
 		Weapon.BobStyle "Smooth";
 		Weapon.KickBack 0;
 		Tag "Hell Warrior's Shield";
-		Inventory.PickupMessage "You got the \czHell Warrior's Shield\c-! \cx[Slot 9]\c-";
-		Obituary "%o was ripped apart by %k's Shield.";
+		Inventory.PickupMessage "\c[gold]Huh!? What in the world is this broken shield...? It feels like Devils Food can be fed to it...\c- \cx[Slot 9]\c-";
+		Obituary "%o was ripped apart by %k's Hell Warrior's Shield.";
 		BounceType "Doom";
 		+WEAPON.NOALERT;
 		+DROPOFF;
@@ -2176,8 +2176,15 @@ class EvilWarriorShield : DinahWeapon
 		Fire:
 			EWS4 A 0
 			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(191,0,2,15,true);
+
+				int PlayerLevel;
 				actor player = players[0].mo;
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				let globalvars = DDGlobalVariables.Get();
+
 				//HellWarriorMaxCharge
 				invoker.shieldenergycost = (10 + (player.CountInv("HellWarriorShieldLevel") * 0.6));
 				if (invoker.shieldenergy <= invoker.shieldenergycost)
@@ -2230,7 +2237,41 @@ class EvilWarriorShield : DinahWeapon
 					}
 				}
 
-				A_FireProjectile("EvilWarriorShieldBall", 0, 0, 0, 3); 
+				double shotangle = 0;
+				double shotangleend = 0;
+				double shotangleinc = 0;
+				double origangle = angle;
+				int maxshots = 1;
+				int bounces = (randompick(2,2,2,2,2,2,2,3) + randompick(0,1,1,2) + randompick(0,0,0,0,1));
+				string shottype = "EvilWarriorShieldBall";
+				if (invoker.IPAttackCheck) 
+				{
+					shotangle = -45.0;
+					shotangleend = 45.0;
+					shotangleinc = 3.0;
+					maxshots = 29;
+					shottype = "EvilWarriorShieldBallIP";
+				}
+				if (invoker.IPAttackCheck) A_SetAngle(angle+shotangle);
+				actor BombShots;
+				EEProjectile IPCompat;
+				for (int i = 0; i < maxshots; i++)
+				{
+					if (i && invoker.IPAttackCheck) A_SetAngle(angle+shotangleinc);
+					BombShots = A_FireProjectile(shottype, 0, 0, 0, 3); 
+					if (BombShots && invoker.IPAttackCheck)
+					{
+						IPCompat = EEProjectile(BombShots);
+						if (IPCompat)
+						{
+							IPCompat.IPattack = true;
+							IPCompat.Speed *= frandompick(0.75,0.875);
+							IPCompat.BounceCount = bounces;
+						}
+					}
+				}
+				if (invoker.IPAttackCheck) A_SetAngle(origangle);
+				invoker.A_CheckIPModeOnUse();
 				if (random(1,8) <= 1) { A_AlertMonsters(); }
 				A_Recoil(0.875);
 			}
@@ -2333,7 +2374,7 @@ class EvilWarriorShieldExtraPickup : CustomInventoryExt
 		CustomInventoryExt.PickupVoice true;
 		CustomInventoryExt.PickupSound2 "misc/w_pkup";
 		CustomInventoryExt.PickupVoice2 false;
-		Inventory.PickupMessage "You got a \czHell Warrior's Shield\c- power-up! (\cy+20% damage\c-) \cx[Slot 9]\c-";
+		Inventory.PickupMessage "\c[gold]Another broken shield... wait did it just assimilate with mine?! Is mine stronger now or something?\c- (\cy+20% damage\c-) \cx[Slot 9]\c-";
 	}
 	
 	States
@@ -2435,6 +2476,7 @@ class EvilWarriorShieldBall : EEProjectile
 			finaldamagedealt *= (1.0 + rollval);
 			if (dydudebug_attackstuff) Console.Printf("finaldamagedealt [HWShieldBall] (kills: %d): %d, rollval: %.8f, rngroll: %d", MiscItem.EWShieldKills, finaldamagedealt, rollval, rngroll);
 		}
+		if (IPattack) finaldamagedealt *= frandompick(2.5,3.75,3.75,3.75,3.75,5.0);
 	}
 	
 	override void PostBeginPlay()
@@ -2457,5 +2499,15 @@ class EvilWarriorShieldBall : EEProjectile
 		Death:
 			GRBA AIJKLMN 3 Bright;
 			Stop;
+	}
+}
+
+class EvilWarriorShieldBallIP : EvilWarriorShieldBall
+{
+	default
+	{
+		BounceType "Hexen";
+		BounceCount 0;
+		+DONTREFLECT;
 	}
 }

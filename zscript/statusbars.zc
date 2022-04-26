@@ -88,14 +88,16 @@ class DDStatusBarMain : BaseStatusBar
 	override void Tick()
 	{
 		Super.Tick();
-		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
 		double tickinc = 0.1;
 		if (MiscItem && MiscItem.itemtimer <= 2) tickinc = 1.0;
-		healthtick = CPlayer.mo.CountInv("PlayerMaxHP") * tickinc;
-		if (CPlayer.mo.GetClassName() == "RatPlayer") healthtick = (CPlayer.mo.CountInv("PlayerMaxHP") * 0.30) * tickinc;
+		healthtick = CPlayerPawn.CountInv("PlayerMaxHP") * tickinc;
+		if (CPlayerPawn.GetClassName() == "RatPlayer") healthtick = (CPlayerPawn.CountInv("PlayerMaxHP") * 0.30) * tickinc;
 		if (healthtick < 1) healthtick = 1;
-		if (healthtick != prevhealthtick) mHealthInterpolator = DynamicValueInterpolator.Create(CPlayer.health, 0.25, 1, healthtick);
-		let armor = CPlayer.mo.FindInventory("BasicArmor");
+		if (healthtick != prevhealthtick) mHealthInterpolator = DynamicValueInterpolator.Create(CPlayerPawn.health, 0.25, 1, healthtick);
+		let armor = CPlayerPawn.FindInventory("BasicArmor");
 		if (armor != null && armor.Amount > 0) 
 		{
 			if (MiscItem)
@@ -108,14 +110,14 @@ class DDStatusBarMain : BaseStatusBar
 			if (armortick < 1) armortick = 1;
 			if (armortick != prevarmortick) mArmorInterpolator = DynamicValueInterpolator.Create(armor.Amount, 0.25, 1, armortick);
 		}
-		EXPtick = CPlayer.mo.CountInv("ExpPtsNeeded") * tickinc;
+		EXPtick = CPlayerPawn.CountInv("ExpPtsNeeded") * tickinc;
 		if (EXPtick < 1) EXPtick = 1;
-		if (EXPtick != prevEXPtick) mEXPInterpolator = DynamicValueInterpolator.Create(CPlayer.mo.CountInv("ExpPts"), 0.25, 1, EXPTick);
+		if (EXPtick != prevEXPtick) mEXPInterpolator = DynamicValueInterpolator.Create(CPlayerPawn.CountInv("ExpPts"), 0.25, 1, EXPTick);
 		//Console.Printf("HealthTick: %d [%d], ArmorTick %d [%d], EXPTick %d [%d]", healthtick, prevhealthtick, armortick, prevarmortick, EXPtick, prevEXPtick);
 
-		mHealthInterpolator.Update(CPlayer.health);
+		mHealthInterpolator.Update(CPlayerPawn.health);
 		if (armor != null && armor.Amount > 0) mArmorInterpolator.Update(armor.Amount);
-		mEXPInterpolator.Update(CPlayer.mo.CountInv("ExpPts"));
+		mEXPInterpolator.Update(CPlayerPawn.CountInv("ExpPts"));
 		
 		prevhealthtick = healthtick;
 		prevarmortick = armortick;
@@ -124,7 +126,7 @@ class DDStatusBarMain : BaseStatusBar
 		// wiggle the chain if it moves
 		if (Level.time & 1)
 		{
-			wiggle = (mHealthInterpolator.GetValue() != CPlayer.health) && Random[ChainWiggle](0, 1);
+			wiggle = (mHealthInterpolator.GetValue() != CPlayerPawn.health) && Random[ChainWiggle](0, 1);
 		}
 	}
 	
@@ -161,8 +163,8 @@ class DDStatusBarMain : BaseStatusBar
 		double width = parms.boxsize.X * NumFields;
 		[position, flags] = AdjustPosition(position, flags, width, parms.boxsize.Y);
 		
-		CPlayer.mo.InvFirst = ValidateInvFirst(NumFields);
-		if (CPlayer.mo.InvFirst == null) return;	// Player has no listed inventory items.
+		CPlayerPawn.InvFirst = ValidateInvFirst(NumFields);
+		if (CPlayerPawn.InvFirst == null) return;	// Player has no listed inventory items.
 		
 		Vector2 boxsize = parms.boxsize;
 		// First draw all the boxes
@@ -186,14 +188,14 @@ class DDStatusBarMain : BaseStatusBar
 		
 		int ItemHeldRatio;
 		int TextTranslation = font.CR_UNTRANSLATED;
-		for (item = CPlayer.mo.InvFirst; item != NULL && i < NumFields; item = item.NextInv())
+		for (item = CPlayerPawn.InvFirst; item != NULL && i < NumFields; item = item.NextInv())
 		{
 			// Main Icons
 			for (int j = 0; j < 2; j++)
 			{
 				if (j ^ !!(flags & DI_DRAWCURSORFIRST))
 				{
-					if (item == CPlayer.mo.InvSel)
+					if (item == CPlayerPawn.InvSel)
 					{
 						double FlashAlpha = BGAlpha;
 						if (flags & DI_ARTIFLASH) FlashAlpha *= itemflashFade;
@@ -505,7 +507,7 @@ class DDStatusBarMain : BaseStatusBar
 		}
 
 		// Is there something to the left?
-		if (CPlayer.mo.FirstInv() != CPlayer.mo.InvFirst)
+		if (CPlayerPawn.FirstInv() != CPlayerPawn.InvFirst)
 		{
 			DrawTexture(parms.left, position + (-parms.arrowoffset.X, parms.arrowoffset.Y), flags | DI_ITEM_RIGHT|DI_ITEM_VCENTER);
 		}
@@ -588,12 +590,17 @@ class DDStatusBarMain : BaseStatusBar
 	{
 		Super.Draw (state, TicFrac);
 		BeginHUD();
-		if (!CPlayer.mo.CountInv("NoHUD")) DrawFullScreenStuff();
+		
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		if (!CPlayerPawn.CountInv("NoHUD")) DrawFullScreenStuff();
 	}
 
 	protected void DrawMainBar (double TicFrac)
 	{
-		let MiscItem = PlayerStatItem(CPlayer.mo.FindInventory("PlayerStatItem"));
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
 		DrawTexture(TexMan.CheckForTexture("BARBACK", TexMan.TYPE_MiscPatch), (0, 158), DI_ITEM_OFFSETS);
 		DrawTexture(TexMan.CheckForTexture("LTFCTOP", TexMan.TYPE_MiscPatch), (0, 148), DI_ITEM_OFFSETS);
 		DrawTexture(TexMan.CheckForTexture("RTFCTOP", TexMan.TYPE_MiscPatch), (290, 148), DI_ITEM_OFFSETS);
@@ -607,7 +614,7 @@ class DDStatusBarMain : BaseStatusBar
 		DrawTexture(TexMan.CheckForTexture("CHAINBAC", TexMan.TYPE_MiscPatch), (0, 190), DI_ITEM_OFFSETS);
 		// wiggle the chain if it moves
 		int inthealth =  mHealthInterpolator.GetValue();
-		DrawGem("CHAIN", "LIFEGEM4", inthealth, CPlayer.mo.GetMaxHealth(true), (2, 191 + wiggle), 15, 25, 16, (multiplayer? DI_TRANSLATABLE : 0) | DI_ITEM_LEFT_TOP); 
+		DrawGem("CHAIN", "LIFEGEM4", inthealth, CPlayerPawn.GetMaxHealth(true), (2, 191 + wiggle), 15, 25, 16, (multiplayer? DI_TRANSLATABLE : 0) | DI_ITEM_LEFT_TOP); 
 		DrawTexture(TexMan.CheckForTexture("LTFACE", TexMan.TYPE_MiscPatch), (0, 190), DI_ITEM_OFFSETS);
 		DrawTexture(TexMan.CheckForTexture("RTFACE", TexMan.TYPE_MiscPatch), (276, 190), DI_ITEM_OFFSETS);
 		DrawShader(SHADER_HORZ, (19, 190), (16, 10));
@@ -618,8 +625,8 @@ class DDStatusBarMain : BaseStatusBar
 			int x = 86;
 			int y = 174;
 			//statbar
-			int PlayerMaxHP = CPlayer.mo.CountInv("PlayerMaxHP");
-			if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHP *= 0.30;
+			int PlayerMaxHP = CPlayerPawn.CountInv("PlayerMaxHP");
+			if (CPlayerPawn.GetClassName() == "RatPlayer") PlayerMaxHP *= 0.30;
 
 			DrawTexture(TexMan.CheckForTexture("LIFEBAR", TexMan.TYPE_MiscPatch), (34, 160), DI_ITEM_OFFSETS);
 			DrawTexture(TexMan.CheckForTexture("ARMCLEAR", TexMan.TYPE_MiscPatch), (57, 171), DI_ITEM_OFFSETS);
@@ -633,7 +640,7 @@ class DDStatusBarMain : BaseStatusBar
 			{
 				int ArmorColor = font.CR_White; 
 				int ArmorMax;
-				let armor = CPlayer.mo.FindInventory("BasicArmor");
+				let armor = CPlayerPawn.FindInventory("BasicArmor");
 				if (MiscItem.KnightGownTier == 1)
 				{
 					ArmorColor = font.CR_Purple;
@@ -693,7 +700,7 @@ class DDStatusBarMain : BaseStatusBar
 			{
 				bool locks[6];
 				String image = "";
-				for (int i = 0; i < 6; i++) locks[i] = CPlayer.mo.CheckKeys(i + 1, false, true);
+				for (int i = 0; i < 6; i++) locks[i] = CPlayerPawn.CheckKeys(i + 1, false, true);
 				// key 1
 				if (locks[1] && locks[4]) image = "BKEYICO2";
 				else if (locks[1]) image = "BKEYICO0";
@@ -715,18 +722,18 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			if (gameinfo.gametype & 2) // Heretic Mode
 			{
-				if (CPlayer.mo.CheckKeys(3, false, true)) DrawTexture(TexMan.CheckForTexture("YKEYICON", TexMan.TYPE_MiscPatch), (153, 164), DI_ITEM_OFFSETS);
-				if (CPlayer.mo.CheckKeys(1, false, true)) DrawTexture(TexMan.CheckForTexture("GKEYICON", TexMan.TYPE_MiscPatch), (153, 172), DI_ITEM_OFFSETS);
-				if (CPlayer.mo.CheckKeys(2, false, true)) DrawTexture(TexMan.CheckForTexture("BKEYICON", TexMan.TYPE_MiscPatch), (153, 180), DI_ITEM_OFFSETS);
+				if (CPlayerPawn.CheckKeys(3, false, true)) DrawTexture(TexMan.CheckForTexture("YKEYICON", TexMan.TYPE_MiscPatch), (153, 164), DI_ITEM_OFFSETS);
+				if (CPlayerPawn.CheckKeys(1, false, true)) DrawTexture(TexMan.CheckForTexture("GKEYICON", TexMan.TYPE_MiscPatch), (153, 172), DI_ITEM_OFFSETS);
+				if (CPlayerPawn.CheckKeys(2, false, true)) DrawTexture(TexMan.CheckForTexture("BKEYICON", TexMan.TYPE_MiscPatch), (153, 180), DI_ITEM_OFFSETS);
 			}
 
 			//inventory box
-			if (CPlayer.mo.InvSel != null)
+			if (CPlayerPawn.InvSel != null)
 			{
-				DrawInventoryIcon(CPlayer.mo.InvSel, (194, 175), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
-				if (CPlayer.mo.InvSel.Amount > 1)
+				DrawInventoryIcon(CPlayerPawn.InvSel, (194, 175), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
+				if (CPlayerPawn.InvSel.Amount > 1)
 				{
-					DrawString(mIndexFont, FormatNumber(CPlayer.mo.InvSel.Amount, 3), (209, 182), DI_TEXT_ALIGN_RIGHT);
+					DrawString(mIndexFont, FormatNumber(CPlayerPawn.InvSel.Amount, 3), (209, 182), DI_TEXT_ALIGN_RIGHT);
 				}
 			}
 		}
@@ -1159,7 +1166,7 @@ class DDStatusBarMain : BaseStatusBar
 			int ValueAmt = CurrHealth;
 			string ValueAmtS = FormatNumber(ValueAmt);
 			int PlayerMaxHP = MaxHealthTrue;
-			if (CPlayer.mo.GetClassName() == "RatPlayer") PlayerMaxHP *= 0.30;
+			if (CPlayerPawn.GetClassName() == "RatPlayer") PlayerMaxHP *= 0.30;
 			string PlayerMaxHPS = FormatNumber(PlayerMaxHP);
 
 			int HealthDigits = 2;
@@ -1169,13 +1176,13 @@ class DDStatusBarMain : BaseStatusBar
 			int SlashUnit = (-6 * (HealthDigits-2));
 			int HealthColor = font.CR_brick;
 			bool IsInvuln = false;
-			if (CPlayer.mo.bINVULNERABLE || 
-					 CPlayer.mo.CountInv("PowerInvulnerable") || CPlayer.mo.CountInv("PowerInvulnDD") || 
+			if (CPlayerPawn.bINVULNERABLE || 
+					 CPlayerPawn.CountInv("PowerInvulnerable") || CPlayerPawn.CountInv("PowerInvulnDD") || 
 					 CPlayer.cheats & CF_GODMODE2 || CPlayer.cheats & CF_GODMODE) IsInvuln = true;
 			if (IsInvuln) HealthColor = font.CR_Gold;
 			//health
 			textureid HealthIcon = TexMan.CheckForTexture("ARTIWINE", TexMan.TYPE_MiscPatch);
-			if (Cplayer.mo.player.poisoncount) HealthIcon = TexMan.CheckForTexture("ARTIWINP", TexMan.TYPE_MiscPatch);
+			if (CPlayerPawn.player.poisoncount) HealthIcon = TexMan.CheckForTexture("ARTIWINP", TexMan.TYPE_MiscPatch);
 			if (CPlayer.cheats & CF_BUDDHA2) HealthIcon = TexMan.CheckForTexture("ARTIWINB", TexMan.TYPE_MiscPatch);
 			if (CPlayer.cheats & CF_GODMODE2) HealthIcon = TexMan.CheckForTexture("ARTIWING", TexMan.TYPE_MiscPatch);
 			DrawTexture(HealthIcon, ((64+HPDmgShakeX), (-4+HPDmgShakeY))); // 51, -3
@@ -1270,7 +1277,7 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			else
 			{
-				if (Cplayer.mo.player.poisoncount) 
+				if (CPlayerPawn.player.poisoncount) 
 				{
 					if (level.time % 16 >= 8) HealthColor = font.CR_DarkRed;
 					else HealthColor = font.CR_DarkGreen;
@@ -1389,10 +1396,11 @@ class DDStatusBarMain : BaseStatusBar
 			double ArmorProtect;
 			string ArmorMaxS;
 			string ArmorSaveAmt;
-			let armor = CPlayer.mo.FindInventory("BasicArmor");
+			let armor = CPlayerPawn.FindInventory("BasicArmor");
+			int ArmorScavengingLevel = CPlayerPawn.CountInv("ArmorScavengerKit");
 			if (armor != null && armor.Amount > 0)
 			{
-				let ArmorB = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
+				let ArmorB = BasicArmor(armor);
 				if (ArmorB) 
 				{
 					ArmorProtect = ArmorB.SavePercent * 100;
@@ -1572,7 +1580,6 @@ class DDStatusBarMain : BaseStatusBar
 				DrawString(mDDLFont, FormatNumber(mArmorInterpolator.GetValue()), ((49+APDmgShakeX), (-59+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*APPulseScale)); // 41, -43
 				
 				FontScale = (1.0, 1.0);
-				int ArmorScavengingLevel = cplayer.mo.CountInv("ArmorScavengerKit");
 				int ScavModY = 0;
 				if (ArmorScavengingLevel > 0) ScavModY = 3;
 				// Protect %
@@ -1585,23 +1592,23 @@ class DDStatusBarMain : BaseStatusBar
 				string ArmorFlatDef = "";
 				if (MiscItem.KnightGownTier == 1) 
 				{
-					if (CPlayer.mo.CountInv("KnightGownIP1Buff")) BaseArmorFlat = (4 + (VisiblePlayerLevel * 0.125));
-																									 else BaseArmorFlat = (1 + (VisiblePlayerLevel * 0.025));
+					if (CPlayerPawn.CountInv("KnightGownIP1Buff")) BaseArmorFlat = (4 + (VisiblePlayerLevel * 0.125));
+																										else BaseArmorFlat = (1 + (VisiblePlayerLevel * 0.025));
 				}
 				if (MiscItem.KnightGownTier == 2) 
 				{
-					if (CPlayer.mo.CountInv("KnightGownIP2Buff")) BaseArmorFlat = (8 + (VisiblePlayerLevel * 0.250));
-																									 else BaseArmorFlat = (2 + (VisiblePlayerLevel * 0.050));
+					if (CPlayerPawn.CountInv("KnightGownIP2Buff")) BaseArmorFlat = (8 + (VisiblePlayerLevel * 0.250));
+																										else BaseArmorFlat = (2 + (VisiblePlayerLevel * 0.050));
 				}
 				if (MiscItem.KnightGownTier == 3)
 				{
-					if (CPlayer.mo.CountInv("KnightGownIP3Buff")) BaseArmorFlat = (12 + (VisiblePlayerLevel * 0.375));
-																									 else BaseArmorFlat = (3 + (VisiblePlayerLevel * 0.075));
+					if (CPlayerPawn.CountInv("KnightGownIP3Buff")) BaseArmorFlat = (12 + (VisiblePlayerLevel * 0.375));
+																										else BaseArmorFlat = (3 + (VisiblePlayerLevel * 0.075));
 				}
 				if (MiscItem.KnightGownTier == 4) 
 				{
-					if (CPlayer.mo.CountInv("KnightGownIP4Buff")) BaseArmorFlat = (20 + (VisiblePlayerLevel * 0.625));
-																									 else BaseArmorFlat = (5 + (VisiblePlayerLevel * 0.125));
+					if (CPlayerPawn.CountInv("KnightGownIP4Buff")) BaseArmorFlat = (20 + (VisiblePlayerLevel * 0.625));
+																										else BaseArmorFlat = (5 + (VisiblePlayerLevel * 0.125));
 				}
 				double ArmFactor;
 				if (ArmorMax > 0) ArmFactor = double(ValueAmt * 1.0 / ArmorMax);
@@ -1628,7 +1635,6 @@ class DDStatusBarMain : BaseStatusBar
 				FontScale = (1.0, 1.0);
 
 				// + Defense
-				int ArmorScavengingLevel = cplayer.mo.CountInv("ArmorScavengerKit");
 				int BaseFlatDefValue;
 				if (MiscItem) BaseFlatDefValue = ((VisiblePlayerLevel * 0.1) + (VisiblePlayerDEF * 0.1));
 				int ArmorFlatDefValue = 0 + BaseFlatDefValue;
@@ -1690,8 +1696,8 @@ class DDStatusBarMain : BaseStatusBar
 				if (dyduhud_showexperience)
 				{
 					//EXP
-					int EXPPts = CPlayer.mo.CountInv("ExpPts");
-					int EXPNeeded = CPlayer.mo.CountInv("ExpPtsNeeded");
+					int EXPPts = CPlayerPawn.CountInv("ExpPts");
+					int EXPNeeded = CPlayerPawn.CountInv("ExpPtsNeeded");
 					if (EXPNeeded < 100000000) Digits = 8;
 					if (EXPNeeded < 10000000) Digits = 7;
 					if (EXPNeeded < 1000000) Digits = 6;
@@ -1777,7 +1783,7 @@ class DDStatusBarMain : BaseStatusBar
 		
 			if (ShowKeys)
 			{
-				for (let i = CPlayer.mo.Inv; i != null; i = i.Inv)
+				for (let i = CPlayerPawn.Inv; i != null; i = i.Inv)
 				{
 					if (i is "Key" && i.Icon.IsValid())
 					{
@@ -1803,12 +1809,12 @@ class DDStatusBarMain : BaseStatusBar
 			//********
 			//* Dash *
 			//********
-			int candash = CPlayer.mo.CountInv("DashReady");
-			if (candash && CPlayer.mo.CountInv("NoDashing")) candash = 0;
-			int dash = CPlayer.mo.CountInv("DashGauge");
-			int dashcharge = CPlayer.mo.CountInv("DashCharge");
-			int dashtics = CPlayer.mo.CountInv("DashTics");
-			int dashmaxcharge = CPlayer.mo.CountInv("DashMaxCharge");
+			int candash = CPlayerPawn.CountInv("DashReady");
+			if (candash && CPlayerPawn.CountInv("NoDashing")) candash = 0;
+			int dash = CPlayerPawn.CountInv("DashGauge");
+			int dashcharge = CPlayerPawn.CountInv("DashCharge");
+			int dashtics = CPlayerPawn.CountInv("DashTics");
+			int dashmaxcharge = CPlayerPawn.CountInv("DashMaxCharge");
 			double dashmeterlength = (dyduhud_basedashmeterlength + (VisiblePlayerLevel * dyduhud_dashmetergrowperlvl));
 			if (dashmeterlength > dyduhud_dashmetermaxlength) dashmeterlength = dyduhud_dashmetermaxlength;
 			int dashbarunits = dash * dashmeterlength;
@@ -1816,7 +1822,7 @@ class DDStatusBarMain : BaseStatusBar
 			DigY = -122; // -94;
 			textureid dun = TexMan.CheckForTexture("DASHUNI2", TexMan.TYPE_MiscPatch);
 			if (candash) dun = TexMan.CheckForTexture("DASHUNIT", TexMan.TYPE_MiscPatch);
-			int dashcost = CPlayer.mo.CountInv("DashCost");
+			int dashcost = CPlayerPawn.CountInv("DashCost");
 			int dashcostunit;
 			if (dashmaxcharge) dashcostunit = dashcost * 100 / dashmaxcharge;
 			dashcostunit *= dashmeterlength;
@@ -1855,7 +1861,7 @@ class DDStatusBarMain : BaseStatusBar
 				}
 			}
 			
-			int dashcharges = CPlayer.mo.CountInv("DashCharges");
+			int dashcharges = CPlayerPawn.CountInv("DashCharges");
 			if (dydudebug_dashmeter)
 			{
 				DigY = -126;
@@ -1880,18 +1886,18 @@ class DDStatusBarMain : BaseStatusBar
 			}
 			
 			// Air Display
-			double AirMeterCurrent = Cplayer.mo.CountInv("AirMeter");
+			double AirMeterCurrent = CPlayerPawn.CountInv("AirMeter");
 			if (AirMeterCurrent < 0) AirMeterCurrent = 0;
-			double AirMeterMax = Cplayer.mo.CountInv("MaxAirMeter");
+			double AirMeterMax = CPlayerPawn.CountInv("MaxAirMeter");
 			double airmeterlength = 1.0;
-			if (Cplayer.mo.CountInv("PowerStrength") || Cplayer.mo.CountInv("PowerStrengthDD")) airmeterlength *= 1.25;
+			if (CPlayerPawn.CountInv("PowerStrength") || CPlayerPawn.CountInv("PowerStrengthDD")) airmeterlength *= 1.25;
 			int AirUnits;
 			double AirPercent;
 			if (AirMeterMax > 0) 
 			{
 				AirUnits = AirMeterCurrent * 100 / AirMeterMax;
 				AirPercent = AirMeterCurrent * 100.0 / AirMeterMax;
-				if (Cplayer.mo.CountInv("PowerStrength") || Cplayer.mo.CountInv("PowerStrengthDD")) AirPercent = AirMeterCurrent * 125.0 / AirMeterMax;
+				if (CPlayerPawn.CountInv("PowerStrength") || CPlayerPawn.CountInv("PowerStrengthDD")) AirPercent = AirMeterCurrent * 125.0 / AirMeterMax;
 			}
 			if (AirMeterMax > 0 && AirUnits < AirMeterMax)
 			{
@@ -2047,11 +2053,11 @@ class DDStatusBarMain : BaseStatusBar
 					DrawString(mSmallFont, "IP", ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
 					DigX += 65;
 					DigY += 7;
-					if (cplayer.mo.CountInv("GoldRageCups"))
+					if (CPlayerPawn.CountInv("GoldRageCups"))
 					{
 						vector2 IPFScale = (FontScale * 0.75);
 						string IPExt = "[+";
-						IPExt.AppendFormat("%.2f%% Max IP]", ((MiscItem.BaseMaxItemPoints * 0.01) * CPlayer.mo.CountInv("GoldRageCups")));
+						IPExt.AppendFormat("%.2f%% Max IP]", ((MiscItem.BaseMaxItemPoints * 0.01) * CPlayerPawn.CountInv("GoldRageCups")));
 						DrawString(mSmallFont, IPExt, ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_LEFT, font.cr_green, FontAlpha, FontWrapWidth, FontLineSpace, (IPFScale*IPIconPulseScale)); // 41, -43
 					}
 					DigX -= 65;
@@ -2474,7 +2480,7 @@ class DDStatusBarMain : BaseStatusBar
 				{
 					if (exex_hwshieldaltfirekeytype)
 					{
-						if (cplayer.mo.CountInv("EWShieldDefendMode")) LegendStr.AppendFormat(" = \c[blue]UN-SHIELD\c-");
+						if (CPlayerPawn.CountInv("EWShieldDefendMode")) LegendStr.AppendFormat(" = \c[blue]UN-SHIELD\c-");
 																											else LegendStr.AppendFormat(" = \c[blue]SHIELD\c-");
 						LegendStr.AppendFormat(" \c[blue][TAP]\c-");
 					}
@@ -2490,7 +2496,7 @@ class DDStatusBarMain : BaseStatusBar
 				{
 					if (exex_cricketbatguardtype) 
 					{
-						if (cplayer.mo.CountInv("IsInBatGuardFrame")) LegendStr.AppendFormat(" = \c[blue]UNPARRY\c-");
+						if (CPlayerPawn.CountInv("IsInBatGuardFrame")) LegendStr.AppendFormat(" = \c[blue]UNPARRY\c-");
 																										 else LegendStr.AppendFormat(" = \c[blue]PARRY\c-");
 						LegendStr.AppendFormat(" \c[blue][TAP]\c-");
 					}
@@ -2624,7 +2630,7 @@ class DDStatusBarMain : BaseStatusBar
 			y = startposy;
 			// Slot 1
 			wsname = "HandToHand";
-			if (CPlayer.mo.CountInv(wsname))
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				int FlashTimer = level.time % 20;
 				double cost = A_GetIPCost(-1);
@@ -2649,8 +2655,8 @@ class DDStatusBarMain : BaseStatusBar
 			// Slot 2
 			wsname = "CricketBat";
 			wsammoname = "MalletAmmo";
-			let ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			let ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2688,8 +2694,8 @@ class DDStatusBarMain : BaseStatusBar
 			y -= baseinc;
 			wsname = "BlunderAxe";
 			wsammoname = "BlunderAmmo";
-			ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2713,8 +2719,8 @@ class DDStatusBarMain : BaseStatusBar
 			y += (baseinc * 2);
 			wsname = "Scrambler";
 			wsammoname = "EggAmmo";
-			ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2740,8 +2746,8 @@ class DDStatusBarMain : BaseStatusBar
 			x += wsspace;
 			wsname = "AppleJack";
 			wsammoname = "JackAmmo";
-			ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2764,8 +2770,8 @@ class DDStatusBarMain : BaseStatusBar
 			x += wsspace;
 			wsname = "WizardPike";
 			wsammoname = "PikeAmmo";
-			ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2789,8 +2795,8 @@ class DDStatusBarMain : BaseStatusBar
 			y += wsspace;
 			wsname = "SuperVac";
 			wsammoname = "VacAmmo";
-			ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2813,8 +2819,8 @@ class DDStatusBarMain : BaseStatusBar
 			x += wsspace;
 			wsname = "Grimophone";
 			wsammoname = "MusicAmmo";
-			ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2841,8 +2847,8 @@ class DDStatusBarMain : BaseStatusBar
 			x += wsspace;
 			wsname = "SigilDD";
 			wsammoname = "";
-			//ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			//ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = CurrHealth * 100 / PlayerMaxHP;
 				if (CurrHealth <= 0) wsfontclr = font.cr_red;
@@ -2868,8 +2874,8 @@ class DDStatusBarMain : BaseStatusBar
 			y += (baseinc * 2);
 			wsname = "CandleWhip";
 			wsammoname = "CandleAmmo";
-			ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2898,8 +2904,8 @@ class DDStatusBarMain : BaseStatusBar
 			x += wsspace;
 			wsname = "CrazyBallDD";
 			wsammoname = "CzBall";
-			ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2924,8 +2930,8 @@ class DDStatusBarMain : BaseStatusBar
 			y += (baseinc * 2);
 			wsname = "EvilWarriorShield";
 			wsammoname = "PikeAmmo";
-			ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
 				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
@@ -2949,8 +2955,8 @@ class DDStatusBarMain : BaseStatusBar
 			y -= baseinc;
 			x += wsspace;
 			wsname = "";
-			//ammotype = CPlayer.mo.FindInventory(wsammoname);
-			if (CPlayer.mo.CountInv(wsname))
+			//ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
 			{
 				wsfontclr = font.cr_gray;
 				
@@ -2982,7 +2988,7 @@ class DDStatusBarMain : BaseStatusBar
 					double shieldmeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
 					if (shieldmeterlength > 1.5) shieldmeterlength = 1.5;
 					dun = TexMan.CheckForTexture("SHLDUNIT", TexMan.TYPE_MiscPatch);
-					let EWS = EvilWarriorShield(cplayer.mo.FindInventory("EvilWarriorShield"));
+					let EWS = EvilWarriorShield(CPlayerPawn.FindInventory("EvilWarriorShield"));
 					if (EWS && MiscItem)
 					{
 						shieldenergy = EWS.shieldenergy;
@@ -2995,20 +3001,33 @@ class DDStatusBarMain : BaseStatusBar
 						for (int i; i < (100 * shieldmeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (barx+i, bary), 0, HX_SHADOW);
 						for (int i; i < shieldbarunits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
 					}
+					
+					int upgrades = MiscItem.HellWarriorShieldLevel;
+					if (upgrades)
+					{
+						int jx, jy;
+						jx = -50;
+						jy = bary + -40;
+						textureid blimg = TexMan.CheckForTexture("WIEVWASH", TexMan.TYPE_MiscPatch);
+						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.25, 0.25)); // 51, -3
+						jx += 48;
+						jy += 8;
+						DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+					}
 				}
 				if (PlayerWeapon is "Grimophone")
 				{
 					int recordenergy;
 					int recordenergymax = 42;
-					if (cplayer.mo.CountInv("GrimophoneUpgrade") <= 0) recordenergymax = 42;
-					if (cplayer.mo.CountInv("GrimophoneUpgrade") == 1) recordenergymax = 44;
-					if (cplayer.mo.CountInv("GrimophoneUpgrade") == 2) recordenergymax = 46;
-					if (cplayer.mo.CountInv("GrimophoneUpgrade") >= 3) recordenergymax = 48;
+					if (CPlayerPawn.CountInv("GrimophoneUpgrade") <= 0) recordenergymax = 42;
+					if (CPlayerPawn.CountInv("GrimophoneUpgrade") == 1) recordenergymax = 44;
+					if (CPlayerPawn.CountInv("GrimophoneUpgrade") == 2) recordenergymax = 46;
+					if (CPlayerPawn.CountInv("GrimophoneUpgrade") >= 3) recordenergymax = 48;
 					int recordpercent;
 					double recordmeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
 					if (recordmeterlength > 1.5) recordmeterlength = 1.5;
 					dun = TexMan.CheckForTexture("GRIMUNIT", TexMan.TYPE_MiscPatch);
-					let Grim = Grimophone(cplayer.mo.FindInventory("Grimophone"));
+					let Grim = Grimophone(CPlayerPawn.FindInventory("Grimophone"));
 					if (Grim) recordenergy = Grim.recordenergy;
 					if (recordenergymax && (MiscItem && MiscItem.grimophonealt)) 
 					{
@@ -3018,7 +3037,7 @@ class DDStatusBarMain : BaseStatusBar
 						for (int i; i < recordbarunits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
 					}
 
-					int upgrades = cplayer.mo.CountInv("GrimophoneUpgrade");
+					int upgrades = CPlayerPawn.CountInv("GrimophoneUpgrade");
 					if (upgrades)
 					{
 						int jx, jy;
@@ -3035,7 +3054,7 @@ class DDStatusBarMain : BaseStatusBar
 				}
 				if (PlayerWeapon is "SuperVac")
 				{
-					int VacBagUnits = CPlayer.mo.CountInv("VacAmmoCounter");
+					int VacBagUnits = CPlayerPawn.CountInv("VacAmmoCounter");
 					int VacBagPercent;
 					double VacBagMeterLength = 0.4; // 0.2 vertical, 0.4 horizontal
 					if (VacBagMeterLength > 1.5) VacBagMeterLength = 1.5;
@@ -3043,7 +3062,7 @@ class DDStatusBarMain : BaseStatusBar
 					int revbagunits = 100;
 
 					wsammoname = "VacAmmo";
-					ammotype = CPlayer.mo.FindInventory(wsammoname);
+					ammotype = CPlayerPawn.FindInventory(wsammoname);
 					if (ammotype.Amount >= ammotype.MaxAmount) 
 					{
 						DrawString(mConFont, "FULL!", (barx+21, bary-8), DI_TEXT_ALIGN_CENTER, font.cr_sapphire); // -46, -1
@@ -3080,7 +3099,7 @@ class DDStatusBarMain : BaseStatusBar
 						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 12.0)) blimg = TexMan.CheckForTexture("BLUNQKS8", TexMan.TYPE_MiscPatch);
 						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
 					}
-					int upgrades = cplayer.mo.CountInv("BlunderShotUpgrade");
+					int upgrades = CPlayerPawn.CountInv("BlunderShotUpgrade");
 					if (upgrades)
 					{
 						jx = -22;
@@ -3117,7 +3136,7 @@ class DDStatusBarMain : BaseStatusBar
 					int jx, jy;
 					jx = -30;
 					jy = -76;
-					if (MiscItem && VisiblePlayerLevel >= exex_scramblernoArmorBonuslvlreq && cplayer.mo.CountInv("BasicArmor") <= 0)
+					if (MiscItem && VisiblePlayerLevel >= exex_scramblernoArmorBonuslvlreq && CPlayerPawn.CountInv("BasicArmor") <= 0)
 					{
 						textureid blimg = TexMan.CheckForTexture("SCRMBOST", TexMan.TYPE_MiscPatch);
 						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
@@ -3170,16 +3189,16 @@ class DDStatusBarMain : BaseStatusBar
 				if (ammo1.MaxAmount > 99) DigitPush = 5;
 				if (ammo1.MaxAmount > 999) DigitPush = 10;
 
-				if (cplayer.mo.CountInv("BackpackTier2")) DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+4, y+15), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				if (cplayer.mo.CountInv("BackpackTier1")) DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+3, y+14), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				if (CPlayerPawn.CountInv("BackpackTier2")) DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+4, y+15), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				if (CPlayerPawn.CountInv("BackpackTier1")) DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+3, y+14), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 				DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+2, y+13), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 
-				if (cplayer.mo.CountInv("BackpackTier2")) DrawString(mDDMFont, "/", ((x+2-27-DigitPush), y+9), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				if (cplayer.mo.CountInv("BackpackTier1")) DrawString(mDDMFont, "/", ((x+1-27-DigitPush), y+8), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				if (CPlayerPawn.CountInv("BackpackTier2")) DrawString(mDDMFont, "/", ((x+2-27-DigitPush), y+9), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				if (CPlayerPawn.CountInv("BackpackTier1")) DrawString(mDDMFont, "/", ((x+1-27-DigitPush), y+8), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 				DrawString(mDDMFont, "/", ((x-27-DigitPush), y+7), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 
-				if (cplayer.mo.CountInv("BackpackTier2")) DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+4, y-1), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				if (cplayer.mo.CountInv("BackpackTier1")) DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+3, y-2), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				if (CPlayerPawn.CountInv("BackpackTier2")) DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+4, y-1), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				if (CPlayerPawn.CountInv("BackpackTier1")) DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+3, y-2), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 				DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+2, y-3), DI_TEXT_ALIGN_RIGHT, AmmoFontCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 
 				DrawTexture(ammo1.Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (0.75,0.75)); // -17, y
@@ -3265,14 +3284,14 @@ class DDStatusBarMain : BaseStatusBar
 						if ((Sigl.health) >= 5) Sigl1Icon = TexMan.CheckForTexture("WISIGILE", TexMan.TYPE_MiscPatch);
 						DrawTexture(Sigl1Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IconScale); // -17, y
 						string Sigl2Icon;
-						if ((CPlayer.mo.CountInv("SigilModeType")) <= 1) Sigl1Icon = TexMan.CheckForTexture("WISIGIL1", TexMan.TYPE_MiscPatch);
-						if ((CPlayer.mo.CountInv("SigilModeType")) == 2) Sigl1Icon = TexMan.CheckForTexture("WISIGIL2", TexMan.TYPE_MiscPatch);
-						if ((CPlayer.mo.CountInv("SigilModeType")) == 3) Sigl1Icon = TexMan.CheckForTexture("WISIGIL3", TexMan.TYPE_MiscPatch);
-						if ((CPlayer.mo.CountInv("SigilModeType")) == 4) Sigl1Icon = TexMan.CheckForTexture("WISIGIL4", TexMan.TYPE_MiscPatch);
-						if ((CPlayer.mo.CountInv("SigilModeType")) >= 5) Sigl1Icon = TexMan.CheckForTexture("WISIGIL5", TexMan.TYPE_MiscPatch);
+						if ((CPlayerPawn.CountInv("SigilModeType")) <= 1) Sigl1Icon = TexMan.CheckForTexture("WISIGIL1", TexMan.TYPE_MiscPatch);
+						if ((CPlayerPawn.CountInv("SigilModeType")) == 2) Sigl1Icon = TexMan.CheckForTexture("WISIGIL2", TexMan.TYPE_MiscPatch);
+						if ((CPlayerPawn.CountInv("SigilModeType")) == 3) Sigl1Icon = TexMan.CheckForTexture("WISIGIL3", TexMan.TYPE_MiscPatch);
+						if ((CPlayerPawn.CountInv("SigilModeType")) == 4) Sigl1Icon = TexMan.CheckForTexture("WISIGIL4", TexMan.TYPE_MiscPatch);
+						if ((CPlayerPawn.CountInv("SigilModeType")) >= 5) Sigl1Icon = TexMan.CheckForTexture("WISIGIL5", TexMan.TYPE_MiscPatch);
 						DrawTexture(Sigl1Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IconScale); // -17, y
 						string SiglLvl = "";
-						SiglLvl.AppendFormat("\c[gold]%d\c-/\c[yellow]%d\c-", CPlayer.mo.CountInv("SigilModeType"), (Sigl.health));
+						SiglLvl.AppendFormat("\c[gold]%d\c-/\c[yellow]%d\c-", CPlayerPawn.CountInv("SigilModeType"), (Sigl.health));
 						DrawString(mDDMFont, SiglLvl, (x+3, y-41), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 						DrawString(mDDLFont, FormatNumber(Sigl.truedrainamt, 3), (x-25, y-25), DI_TEXT_ALIGN_RIGHT, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
 					}
@@ -3431,8 +3450,23 @@ class DDStatusBarMain : BaseStatusBar
 						IPIconScale2 = 1.75;
 						IPIconScale = (IPIconScale2, IPIconScale2);
 						IPIconTimer = level.time % 8;
-						double sigilcost = (3.0 * cplayer.mo.CountInv("SigilModeType"));
+						double sigilcost = (3.0 * CPlayerPawn.CountInv("SigilModeType"));
 						IPCost = A_GetIPCost(181,true,sigilcost);
+						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+						if (dydudebug_infiniteip) CanUseIPATK = 3;
+					}
+					if (PlayerWeapon is "EvilWarriorShield")
+					{
+						// Hell Warrior Shield [Fireball]
+						IPIconPos = (-50, -10);
+						IPIcon = "IPIconUN";
+						HasIPIcon = true;
+						CanUseIPATK = 0;
+						IPIconScale2 = 1.5;
+						IPIconScale = (IPIconScale2, IPIconScale2);
+						IPIconTimer = level.time % 8;
+						IPCost = A_GetIPCost(191);
 						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
 						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
 						if (dydudebug_infiniteip) CanUseIPATK = 3;
@@ -3543,7 +3577,7 @@ class DDStatusBarMain : BaseStatusBar
 						IPCost = A_GetIPCost(112);
 						int ammocost = 3;
 						if (dydudebug_infiniteip) ammocost = 1;
-						if (cplayer.mo.CountInv("BlunderAmmo") >= ammocost)
+						if (CPlayerPawn.CountInv("BlunderAmmo") >= ammocost)
 						{
 							if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
 							else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
@@ -3593,7 +3627,7 @@ class DDStatusBarMain : BaseStatusBar
 						IPCost = A_GetIPCost(142);
 						int ammocost = 3;
 						if (dydudebug_infiniteip) ammocost = 1;
-						if (cplayer.mo.CountInv("PikeAmmo") >= ammocost)
+						if (CPlayerPawn.CountInv("PikeAmmo") >= ammocost)
 						{
 							if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
 							else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
@@ -3611,7 +3645,7 @@ class DDStatusBarMain : BaseStatusBar
 						IPIconScale = (IPIconScale2, IPIconScale2);
 						IPIconTimer = level.time % 8;
 						IPCost = A_GetIPCost(152);
-						if (cplayer.mo.CountInv("VacAmmo") >= MiscItem.VacCost)
+						if (CPlayerPawn.CountInv("VacAmmo") >= MiscItem.VacCost)
 						{
 							if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
 							else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
@@ -3830,25 +3864,7 @@ class DDStatusBarMain : BaseStatusBar
 				}
 			}
 
-			/*
-			if (CPlayer.mo.InvSel != null)
-			{
-				x = -46;
-				x -= 16;
-				y = -1;
-				y -= 8;
-				// This code was changed to always fit the item into the box, regardless of alignment or sprite size.
-				// Heretic's ARTIBOX is 30x30 pixels. 
-				DrawTexture(TexMan.CheckForTexture("ARTIBOXD", TexMan.TYPE_MiscPatch), (x, y), 0, HX_SHADOW); // -46, -1
-				DrawInventoryIcon(CPlayer.mo.InvSel, (x, y-14), DI_ARTIFLASH|DI_ITEM_CENTER|DI_DIMDEPLETED, boxsize:(28, 28));
-				y += 7;
-				DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.Amount, 3), (x-23, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_LEFT, font.cr_gray);
-				DrawString(HUDFont.Create("INDEXFONT_DD"), "/", (x-2, y - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_CENTER, font.cr_gray);
-				DrawString(HUDFont.Create("INDEXFONT_DD"), FormatNumber(CPlayer.mo.InvSel.MaxAmount, 3), (x+14, y-1 - mIndexFont.mFont.GetHeight()), DI_TEXT_ALIGN_RIGHT, font.cr_gray);
-			}
-			*/
-			
-			if (CPlayer && !automapactive)
+			if (CPlayerPawn && !automapactive)
 			{
 				DigY = 0;
 				string mapnam = "";
@@ -4104,6 +4120,6 @@ class DDStatusBarMain : BaseStatusBar
 			//Console.Printf("End Of ScreenBlocks Check");
 		}
 		
-		if (CPlayer.mo.CountInv("BlackScreenHUD")) DrawTexture(TexMan.CheckForTexture("BLAKSCRN", TexMan.TYPE_MiscPatch), (0, 540), DI_SCREEN_CENTER); // -46, -1
+		if (CPlayerPawn.CountInv("BlackScreenHUD")) DrawTexture(TexMan.CheckForTexture("BLAKSCRN", TexMan.TYPE_MiscPatch), (0, 540), DI_SCREEN_CENTER); // -46, -1
 	}
 }
