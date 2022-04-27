@@ -10,12 +10,20 @@ class DDPlayerPawn : PlayerPawn
 	const SKILL_IMPOSSIBLE = 7;
 	const SKILL_OMEGA = 8;
 	
+	int mobjdmg;
+	int playoutputdmg;
+	int playtookdamage;
+	
 	bool wasongroundprevtic, wasongroundcurrtic;
 	double PlayerDefenseIgnoreFactor;
 	int TruePlayerLevel;
 	int TruePlayerATK;
 	int TruePlayerDEF;
 	int TruePlayerSPD;
+	
+	actor DmgSource;
+	actor DmgInflictor;
+	int DmgFlags;
 
 	mixin HUDRecovery;
 	bool IPAttack;
@@ -1329,22 +1337,22 @@ class DDPlayerPawn : PlayerPawn
 		{
 			if (neverbleeds == 0)
 			{
-				if (bNOBLOOD) bNOBLOOD = 0;
-				if (bNOBLOODDECALS) bNOBLOODDECALS = 1;
+				if (bNOBLOOD) bNOBLOOD = false;
+				if (bNOBLOODDECALS) bNOBLOODDECALS = false;
 			}
 		}
 		else
 		{
-			//Console.Printf("(A_CheckNeverBleed [player], damage: %d)", damage);
 			if (flags & !DMG_EXPLOSION)
 			{
 				if (neverbleeds == 0)
 				{
-					bNOBLOOD = 1;
-					bNOBLOODDECALS = 1;
+					bNOBLOOD = true;
+					bNOBLOODDECALS = true;
 				}
 			}
 		}
+		if (dydudebug_playerdamagemobj) Console.Printf("(A_CheckNeverBleed [player], type: %d, damage: %d)", type, damage);
 	}
 	
 	bool CheckFallDamageDMobj()
@@ -2223,6 +2231,10 @@ class DDPlayerPawn : PlayerPawn
 		if (dydudebug_playerdamagemobj) Console.Printf("PDamage [Final] - Final Damage: %d", damage);
 		
 		if (dydudebug_playerdamagemobj && armoramt) Console.Printf("Armor Amount: %d", armoramt);
+		DmgSource = source;
+		DmgInflictor = inflictor;
+		DmgFlags = flags;
+		mobjdmg = damage;
 		//******************************
 		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
 		//******************************
@@ -2364,8 +2376,6 @@ class DDPlayerPawn : PlayerPawn
 			if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
 			Console.Printf(combatlogmsg);
 		}
-		
-		if (ret <= 0) A_CheckNeverBleed(1, ret, flags);
 		
 		// Item/Ikari Point Gains
 		if (exex_ikaripointsenabled && ret && MiscItem && globalvars && health > 0)

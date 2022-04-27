@@ -2773,11 +2773,19 @@ class EECreature : EEBaseZSC abstract
 			}
 		}
 		
+		if (CountInv("ScramblerConfusion"))
+		{
+			PerkFactor = randompick(2500,3334,3334,3334,3334,3334,5000);
+			SkillFactor = (10000 - NoAtkChance) * PerkFactor / 10000;
+			NoAtkChance += SkillFactor;
+		}
+		
 		if (dydudebug_showactormoveinfo && NoAtkChance > 0) 
 		{
-			if (target) Console.Printf("\cx(%s) (gametic: %d) [A_EEChase]\c- NoAtkChance: %d / 1000, Target: %s \cytics: %d\c-", GetClassName(), gametic, NoAtkChance, target.GetClassName(), tics);
-						 else Console.Printf("\cx(%s) (gametic: %d) [A_EEChase]\c- NoAtkChance: %d / 1000 \cytics: %d\c-", GetClassName(), gametic, NoAtkChance, tics);
+			if (target) Console.Printf("\cx(%s) (gametic: %d) [A_EEChase]\c- NoAtkChance: %d / 10000, Target: %s \cytics: %d\c-", GetClassName(), gametic, NoAtkChance, target.GetClassName(), tics);
+						 else Console.Printf("\cx(%s) (gametic: %d) [A_EEChase]\c- NoAtkChance: %d / 10000 \cytics: %d\c-", GetClassName(), gametic, NoAtkChance, tics);
 		}
+		int BaseWanderChance = 0;
 		if (random(1,10000) <= NoAtkChance)
 		{
 			if (flags & CHF_FASTCHASE) flags &= ~CHF_FASTCHASE;
@@ -2788,20 +2796,27 @@ class EECreature : EEBaseZSC abstract
 					playpawn.CountInv("PowerGhost") ||
 					playpawn.CountInv("PowerGhost2")))
 			{
-				if (random(1,1000) <= 250) 
-				{
-					A_Wander();
-					if (dydudebug_showactormoveinfo) Console.Printf("\cx(%s) (gametic: %d) [A_EEChase]\c- A_Wander Succeed", GetClassName(), gametic);
-				}
-				else 
-				{
-					A_Chase(null,null,flags);
-				}
+				PerkFactor = 2500;
+				SkillFactor = (10000 - BaseWanderChance) * PerkFactor / 10000;
+				BaseWanderChance += SkillFactor;
 			}
-			else
+			if (CountInv("ScramblerConfusion"))
+			{
+				PerkFactor = randompick(2500,3334,3334,3334,3334,3334,5000);
+				SkillFactor = (10000 - BaseWanderChance) * PerkFactor / 10000;
+				BaseWanderChance += SkillFactor;
+			}
+			
+			if (random(1,10000) <= BaseWanderChance) 
+			{
+				A_Wander();
+				if (dydudebug_showactormoveinfo) Console.Printf("\cx(%s) (gametic: %d) [A_EEChase]\c- A_Wander Succeed", GetClassName(), gametic);
+			}
+			else 
 			{
 				A_Chase(null,null,flags);
 			}
+			
 			if (dydudebug_showactormoveinfo) Console.Printf("\cx(%s) (gametic: %d) [A_EEChase]\c- NoAtkChance Succeed \cytics: %d\c-", GetClassName(), gametic, tics);
 		}
 		else

@@ -3947,6 +3947,12 @@ class PlayerStatItem : Inventory
 		if (IsMorphed == 1) basedeffct *= 0.334;
 		if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 		{
+			int predmg = damage;
+			if (playeractor) predmg = playeractor.mobjdmg;
+			double factorchange = 1.00;
+			if (predmg > 0) factorchange = 1.0 * damage / predmg;
+			if (dydudebug_playerdamagemobj) Console.Printf("    (\cz(\cwsuper.DamageMobj\cz) player-StatItem input\c-: \cypredmg\c- / \cydamage\c- = \cy%d\c- /  \cy%d\c-, \cafactorchange\c- = \ca%.8f\c-)", predmg, damage, factorchange);
+
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("FDamage (passive[pre]): %d (basedeffct: %.8f)", damage, basedeffct);
 			
 			// Map Completion [No-RPG Mode]
@@ -4019,25 +4025,32 @@ class PlayerStatItem : Inventory
 			double EWShieldFactor = 1.00;
 			int BerserkFactorblock = frandompick[statitem2](0.334,0.5,0.667);
 			int HellWarriorShieldLevel = owner.CountInv("HellWarriorShieldLevel");
+			double temp1 = 0.00;
+			double temp2 = 0.00;
+			double temp3 = 0.00;
 			If (weapon is "EvilWarriorShield") 
 			{
-				if (!(damageType == 'Slime' || damageType == 'Lava' || damageType == 'Magma' || damageType == 'Drowning' || damageType == 'Falling'))
+				temp1 = ((0.1667 + (HellWarriorShieldLevel * 0.01667)) + (HellWarriorShieldLevel * 0.00625));
+				if (Owner.CountInv("EWShieldDefendMode")) temp2 = ((0.433 + (HellWarriorShieldLevel * 0.0433)) + (HellWarriorShieldLevel * 0.005));
+				if (Owner.CountInv("EWShieldDefendModeExtra")) temp3 = ((0.4866 + (HellWarriorShieldLevel * 0.04866)) + (HellWarriorShieldLevel * 0.001));
+				if ((damageType == 'Slime' || damageType == 'Lava' || damageType == 'Magma' || damageType == 'Drowning' || damageType == 'Falling'))
 				{
-					BerserkFactorblock = frandompick[statitem2](0.334,0.5,0.667);
-					EWShieldFactor *= (0.667 - (HellWarriorShieldLevel * 0.0125));
-					if (Owner.CountInv("EWShieldDefendMode")) EWShieldFactor *= (0.134 - (HellWarriorShieldLevel * 0.01));
-					if (Owner.CountInv("EWShieldDefendModeExtra")) EWShieldFactor *= (0.0268 - (HellWarriorShieldLevel * 0.002));
-					if (EWShieldFactor < 1.00 && ( Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD"))) EWShieldFactor *= BerserkFactorblock;
+					double rand = (random(0,5) * 0.05);
+					temp1 *= rand;
+					temp2 *= rand;
+					temp3 *= rand;
+					BerserkFactorblock *= rand;
 				}
-				else
-				{
-					BerserkFactorblock = frandompick[statitem2](0.8334,0.875,0.9167);
-					EWShieldFactor *= (0.9167 - (HellWarriorShieldLevel * 0.003125));
-					if (Owner.CountInv("EWShieldDefendMode")) EWShieldFactor *= (0.536 - (HellWarriorShieldLevel * 0.0025));
-					if (Owner.CountInv("EWShieldDefendModeExtra")) EWShieldFactor *= (0.1072 - (HellWarriorShieldLevel * 0.002));
-					if (EWShieldFactor < 1.00 && ( Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD"))) EWShieldFactor *= BerserkFactorblock;
-				}
+				temp1 = (1.0 - temp1);
+				temp2 = (1.0 - temp2);
+				temp3 = (1.0 - temp3);
+				BerserkFactorblock = (1.0 - BerserkFactorblock);
+				EWShieldFactor *= temp1;
+				EWShieldFactor *= temp2;
+				EWShieldFactor *= temp3;
+				if (EWShieldFactor < 1.00 && ( Owner.CountInv("PowerStrength") || Owner.CountInv("PowerStrengthDD"))) EWShieldFactor *= (1.0 - BerserkFactorblock);
 			}
+			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - HellWarrior Shield): %.8f, \c[blue]temp1: %.8f, temp2: %.8f, temp3: %.8f, BerserkFactorblock: %.8f", EWShieldFactor, temp1, temp2, temp3, BerserkFactorblock);
 
 			double PlayerFistBlockFactor = 1.00;
 			int UsingFistBlock = 0;
@@ -4170,7 +4183,17 @@ class PlayerStatItem : Inventory
 			
 			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("FDamage (passive - Final): %d", newdamage);
+
+			if (playeractor && newdamage <= 0) 
+			{
+				playeractor.A_CheckNeverBleed(1, newdamage, playeractor.DmgFlags);
+				if (playeractor.DmgFlags & DMG_INFLICTOR_IS_PUFF && playeractor.DmgInflictor)
+				{
+					playeractor.DmgInflictor.bPUFFONACTORS = true;
+				}
+			}
 		}
+
 	}
 	
 	double HUDSpeed;
