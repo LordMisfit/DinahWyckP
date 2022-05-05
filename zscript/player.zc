@@ -1568,6 +1568,22 @@ class DDPlayerPawn : PlayerPawn
 		if (inflictor == null) infl = "NONE"; else infl = inflictor.GetClassName();
 		if (source == null) sour = "NONE"; else sour = source.GetClassName();
 		
+		if (sour == "BlackBearNew" || infl == "BlackBearNew")
+		{
+			mod = 'Melee';
+			flags |= DMG_THRUSTLESS;
+			flags &= ~DMG_EXPLOSION;
+			if (dydudebug_playerdamagemobj) Console.Printf("BlackBear 'Explosion'");
+		}
+		
+		if (sour == "JSkull_Image1" || sour == "JSkull_Image2" || sour == "JSkull_Image3" ||
+				infl == "JSkull_Image1" || infl == "JSkull_Image2" || infl == "JSkull_Image3")
+		{
+			flags &= ~DMG_NO_ARMOR;
+			flags &= ~DMG_NO_PROTECT;
+			if (dydudebug_playerdamagemobj) Console.Printf("Jumping Skull Afterimage");
+		}
+		
 		bool bellefishzap;
 		if (mod == 'Melee' && flags & DMG_EXPLOSION && (BelleFish(Source) || BelleFish(Inflictor)))
 		{
@@ -1999,31 +2015,34 @@ class DDPlayerPawn : PlayerPawn
 				{
 					if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.04) + (TruePlayerDEF * 0.04));
 					flatdefense = random((baseflatdefense*0.5),baseflatdefense);
-					if (armortier == 1) 
+					if (flags & !DMG_NO_ARMOR)
 					{
-						if (CountInv("KnightGownIP1Buff")) basearmorflat = randompick(1,1,2,2,3);
-																					else basearmorflat = randompick(0,0,0,0,1);
-					}
-					if (armortier == 2) 
-					{
-						if (CountInv("KnightGownIP2Buff")) basearmorflat = randompick(2,2,3,3,4);
-																					else basearmorflat = randompick(0,0,0,1,1);
-					}
-					if (armortier == 3)
-					{
-						if (CountInv("KnightGownIP3Buff")) basearmorflat += randompick(3,3,4,4,5);
-																					else basearmorflat += randompick(0,0,1,1,2);
-					}
-					if (armortier >= 4) 
-					{
-						if (CountInv("KnightGownIP4Buff")) basearmorflat += randompick(5,5,6,6,7);
-																					else basearmorflat += randompick(1,1,2,2,3);
-					}
-					if (basearmormax > 0) 
-					{
-						double armfactor = double(armoramt * 1.0 / basearmormax);
-						flatdefense += (basearmorflat * armfactor);
-						if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
+						if (armortier == 1) 
+						{
+							if (CountInv("KnightGownIP1Buff")) basearmorflat = randompick(1,1,2,2,3);
+																						else basearmorflat = randompick(0,0,0,0,1);
+						}
+						if (armortier == 2) 
+						{
+							if (CountInv("KnightGownIP2Buff")) basearmorflat = randompick(2,2,3,3,4);
+																						else basearmorflat = randompick(0,0,0,1,1);
+						}
+						if (armortier == 3)
+						{
+							if (CountInv("KnightGownIP3Buff")) basearmorflat += randompick(3,3,4,4,5);
+																						else basearmorflat += randompick(0,0,1,1,2);
+						}
+						if (armortier >= 4) 
+						{
+							if (CountInv("KnightGownIP4Buff")) basearmorflat += randompick(5,5,6,6,7);
+																						else basearmorflat += randompick(1,1,2,2,3);
+						}
+						if (basearmormax > 0) 
+						{
+							double armfactor = double(armoramt * 1.0 / basearmormax);
+							flatdefense += (basearmorflat * armfactor);
+							if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
+						}
 					}
 					if (CountInv("PowerDouble")) flatdefense *= 1.667;
 					flatdefense *= (1.00 - PlayerDefenseIgnoreFactor);
@@ -2046,31 +2065,34 @@ class DDPlayerPawn : PlayerPawn
 				{
 					if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.1) + (TruePlayerDEF * 0.1));
 					flatdefense = random((baseflatdefense*0.5),baseflatdefense);
-					if (armortier == 1)
+					if (flags & !DMG_NO_ARMOR)
 					{
-						if (CountInv("KnightGownIP1Buff")) basearmorflat += (random(0,4) + (TruePlayerLevel * 0.125));
-																					else basearmorflat += (random(0,1) + (TruePlayerLevel * 0.025));
-					}
-					if (armortier == 2) 
-					{
-						if (CountInv("KnightGownIP2Buff")) basearmorflat += (random(4,8) + (TruePlayerLevel * 0.250));
-																					else basearmorflat += (random(1,2) + (TruePlayerLevel * 0.050));
-					}
-					if (armortier == 3) 
-					{
-						if (CountInv("KnightGownIP3Buff")) basearmorflat += (random(8,12) + (TruePlayerLevel * 0.375));
-																					else basearmorflat += (random(2,3) + (TruePlayerLevel * 0.075));
-					}
-					if (armortier >= 4) 
-					{
-						if (CountInv("KnightGownIP4Buff")) basearmorflat += (random(16,20) + (TruePlayerLevel * 0.625));
-																					else basearmorflat += (random(4,5) + (TruePlayerLevel * 0.125));
-					}
-					if (basearmormax > 0) 
-					{
-						double armfactor = double(armoramt * 1.0 / basearmormax);
-						flatdefense += (basearmorflat * armfactor);
-						if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
+						if (armortier == 1)
+						{
+							if (CountInv("KnightGownIP1Buff")) basearmorflat += (random(0,4) + (TruePlayerLevel * 0.125));
+																						else basearmorflat += (random(0,1) + (TruePlayerLevel * 0.025));
+						}
+						if (armortier == 2) 
+						{
+							if (CountInv("KnightGownIP2Buff")) basearmorflat += (random(4,8) + (TruePlayerLevel * 0.250));
+																						else basearmorflat += (random(1,2) + (TruePlayerLevel * 0.050));
+						}
+						if (armortier == 3) 
+						{
+							if (CountInv("KnightGownIP3Buff")) basearmorflat += (random(8,12) + (TruePlayerLevel * 0.375));
+																						else basearmorflat += (random(2,3) + (TruePlayerLevel * 0.075));
+						}
+						if (armortier >= 4) 
+						{
+							if (CountInv("KnightGownIP4Buff")) basearmorflat += (random(16,20) + (TruePlayerLevel * 0.625));
+																						else basearmorflat += (random(4,5) + (TruePlayerLevel * 0.125));
+						}
+						if (basearmormax > 0) 
+						{
+							double armfactor = double(armoramt * 1.0 / basearmormax);
+							flatdefense += (basearmorflat * armfactor);
+							if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
+						}
 					}
 					if (CountInv("PowerDouble")) flatdefense *= 1.667;
 					flatdefense *= (1.00 - PlayerDefenseIgnoreFactor);
@@ -2094,31 +2116,34 @@ class DDPlayerPawn : PlayerPawn
 			{
 				if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.02) + (TruePlayerDEF * 0.02));
 				flatdefense = random((baseflatdefense*0.5),baseflatdefense);
-				if (armortier == 1) 
+				if (flags & !DMG_NO_ARMOR)
 				{
-					if (CountInv("KnightGownIP1Buff")) basearmorflat += randompick(0,0,0,0,0,0,0,1,1,2,2,3,3);
-																				else basearmorflat += randompick(0,0,0,0,0,0,0,0,0,0,0,0,1);
-				}
-				if (armortier == 2) 
-				{
-					if (CountInv("KnightGownIP2Buff")) basearmorflat += randompick(0,0,0,0,0,0,1,1,2,2,3,3,4);
-																				else basearmorflat += randompick(0,0,0,0,0,0,0,0,0,0,0,1,1);
-				}
-				if (armortier == 3)
-				{
-					if (CountInv("KnightGownIP3Buff")) basearmorflat += randompick(0,0,0,0,0,1,1,2,2,3,3,4,4);
-																				else basearmorflat += randompick(0,0,0,0,0,0,0,0,0,0,1,1,2);
-				}
-				if (armortier >= 4) 
-				{
-					if (CountInv("KnightGownIP4Buff")) basearmorflat += randompick(0,0,0,1,1,2,2,3,3,4,4,5,5);
-																				else basearmorflat += randompick(0,0,0,0,0,0,0,0,1,1,2,2,3);
-				}
-				if (basearmormax > 0) 
-				{
-					double armfactor = double(armoramt * 1.0 / basearmormax);
-					flatdefense += (basearmorflat * armfactor);
-					if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
+					if (armortier == 1) 
+					{
+						if (CountInv("KnightGownIP1Buff")) basearmorflat += randompick(0,0,0,0,0,0,0,1,1,2,2,3,3);
+																					else basearmorflat += randompick(0,0,0,0,0,0,0,0,0,0,0,0,1);
+					}
+					if (armortier == 2) 
+					{
+						if (CountInv("KnightGownIP2Buff")) basearmorflat += randompick(0,0,0,0,0,0,1,1,2,2,3,3,4);
+																					else basearmorflat += randompick(0,0,0,0,0,0,0,0,0,0,0,1,1);
+					}
+					if (armortier == 3)
+					{
+						if (CountInv("KnightGownIP3Buff")) basearmorflat += randompick(0,0,0,0,0,1,1,2,2,3,3,4,4);
+																					else basearmorflat += randompick(0,0,0,0,0,0,0,0,0,0,1,1,2);
+					}
+					if (armortier >= 4) 
+					{
+						if (CountInv("KnightGownIP4Buff")) basearmorflat += randompick(0,0,0,1,1,2,2,3,3,4,4,5,5);
+																					else basearmorflat += randompick(0,0,0,0,0,0,0,0,1,1,2,2,3);
+					}
+					if (basearmormax > 0) 
+					{
+						double armfactor = double(armoramt * 1.0 / basearmormax);
+						flatdefense += (basearmorflat * armfactor);
+						if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
+					}
 				}
 				if (CountInv("PowerDouble")) flatdefense *= 1.667;
 				flatdefense *= (1.00 - PlayerDefenseIgnoreFactor);
