@@ -15,7 +15,7 @@ class DDPlayerPawn : PlayerPawn
 	int playtookdamage;
 	
 	bool wasongroundprevtic, wasongroundcurrtic;
-	double PlayerDefenseIgnoreFactor;
+	double PlayerDefenseIgnoreFactor, PlayerArmorIgnoreFactor, PlayerArmorIgnoreFactorGeneral;
 	int TruePlayerLevel;
 	int TruePlayerATK;
 	int TruePlayerDEF;
@@ -1046,9 +1046,9 @@ class DDPlayerPawn : PlayerPawn
 			int MaxAbsorb = 0;
 			int MaxFullAbsorb = 0;
 			
-			name armorclasstype = "BasicArmor";
+			name armorclasstype = "KGArmor";
 			
-			let armoritem = BasicArmor(player.mo.FindInventory(armorclasstype));
+			let armoritem = KGArmor(player.mo.FindInventory(armorclasstype));
 			if (armoritem != null && armoritem.Amount > 0)
 			{
 				SavePercent = armoritem.SavePercent;
@@ -1383,6 +1383,10 @@ class DDPlayerPawn : PlayerPawn
 	{
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
+		string infl, sour, vict;
+		vict = GetClassName();
+		if (inflictor == null) infl = "NONE"; else infl = inflictor.GetClassName();
+		if (source == null) sour = "NONE"; else sour = source.GetClassName();
 
 		// (Partial) Defense Ignoring Attacks
 		PlayerDefenseIgnoreFactor = 0.00;
@@ -1443,6 +1447,34 @@ class DDPlayerPawn : PlayerPawn
 		if (dydudebug_playerdamagemobj) Console.Printf("PlayerDefenseIgnoreFactor: %.8f", PlayerDefenseIgnoreFactor);
 
 		return PlayerDefenseIgnoreFactor;
+	}
+	
+	double A_ArmorIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool bellefishzap, bool isbarrierbeam)
+	{
+		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+		string infl, sour, vict;
+		vict = GetClassName();
+		if (inflictor == null) infl = "NONE"; else infl = inflictor.GetClassName();
+		if (source == null) sour = "NONE"; else sour = source.GetClassName();
+
+		// Intended to ignore aspects of armor items
+		PlayerArmorIgnoreFactor = 0.00;
+		if (isbarrierbeam) PlayerArmorIgnoreFactor += (0.50 * (1.00 - PlayerArmorIgnoreFactor));
+
+		if (mod == 'Deadlight') 
+		{
+			if ((inflictor && infl == "PennywiseBoss") || 
+					(source && sour == "PennywiseBoss")) PlayerArmorIgnoreFactor += (frandom(0.45,0.55) * (1.00 - PlayerArmorIgnoreFactor));
+
+			if ((inflictor && infl == "BeefyNew") || 
+					(source && sour == "BeefyNew")) PlayerArmorIgnoreFactor += (frandom(0.225,0.275) * (1.00 - PlayerArmorIgnoreFactor));
+		}
+
+		if (PlayerArmorIgnoreFactor <= 0.0) PlayerArmorIgnoreFactor = 0.0;
+		if (PlayerArmorIgnoreFactor > 1.0) PlayerArmorIgnoreFactor = 1.0;
+
+		return PlayerArmorIgnoreFactor;
 	}
 	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
@@ -1612,8 +1644,8 @@ class DDPlayerPawn : PlayerPawn
 		int flatdefense;
 		int baseflatdefense;
 		bool useflatdefense;
-		name armorclasstype = "BasicArmor";
-		let armoritem = BasicArmor(player.mo.FindInventory(armorclasstype));
+		name armorclasstype = "KGArmor";
+		let armoritem = KGArmor(player.mo.FindInventory(armorclasstype));
 		int armoramt = armoritem.Amount;
 		
 		if (armoritem != null && CountInv(armorclasstype) > 0)
@@ -1723,6 +1755,9 @@ class DDPlayerPawn : PlayerPawn
 		
 		// (Partial) Defense Ignoring Attacks
 		PlayerDefenseIgnoreFactor = A_DefenseIgnoreFactor(inflictor, source, damage, mod, flags, angle, bellefishzap, isbarrierbeam);
+
+		// (Partial) Armor Ignoring Attacks
+		PlayerArmorIgnoreFactor = A_ArmorIgnoreFactor(inflictor, source, damage, mod, flags, angle, bellefishzap, isbarrierbeam);
 
 		// Direct Damage Changes
 		if (flags & DMG_INFLICTOR_IS_PUFF)
@@ -2042,6 +2077,8 @@ class DDPlayerPawn : PlayerPawn
 						}
 						if (basearmormax > 0) 
 						{
+							basearmorflat *= (1.0 - PlayerArmorIgnoreFactor);
+							
 							double armfactor = double(armoramt * 1.0 / basearmormax);
 							flatdefense += (basearmorflat * armfactor);
 							if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
@@ -2092,6 +2129,8 @@ class DDPlayerPawn : PlayerPawn
 						}
 						if (basearmormax > 0) 
 						{
+							basearmorflat *= (1.0 - PlayerArmorIgnoreFactor);
+
 							double armfactor = double(armoramt * 1.0 / basearmormax);
 							flatdefense += (basearmorflat * armfactor);
 							if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
@@ -2143,6 +2182,8 @@ class DDPlayerPawn : PlayerPawn
 					}
 					if (basearmormax > 0) 
 					{
+						basearmorflat *= (1.0 - PlayerArmorIgnoreFactor);
+						
 						double armfactor = double(armoramt * 1.0 / basearmormax);
 						flatdefense += (basearmorflat * armfactor);
 						if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
@@ -2275,11 +2316,12 @@ class DDPlayerPawn : PlayerPawn
 	
 	int PostDamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, int ret, int armoramt, int firstdmg, bool isinvuln, int oldhealth, int oldhealthratio, bool SigilDrain, string infl, string sour, string vict)
 	{
+		PlayerArmorIgnoreFactor = 0.00;
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
 		
 		string combatlogmsg = "\c[sapphire]*\c- ";
-		name armorclasstype = "BasicArmor";
+		name armorclasstype = "KGArmor";
 		int armdmg = (armoramt - CountInv(armorclasstype));
 		if (armdmg <= 0) armdmg = 0;
 		if (dydudebug_playerdamagemobj && armdmg) Console.Printf("Armor Damage: %d", armdmg);
