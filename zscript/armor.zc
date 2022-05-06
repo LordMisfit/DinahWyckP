@@ -1,0 +1,129 @@
+// A specialized armor class for KnightGowns to allow future extra functions/features, maybe? V:
+class KGArmor : BasicArmor
+{
+	override bool HandlePickup(Inventory item)
+	{
+		return item.GetClass() == 'KGArmor';
+	}
+	
+	override void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor, Actor source, int flags)
+	{
+		int saved;
+		double initSavePercent = SavePercent;
+		if (damageType == 'Deadlight') SavePercent *= frandom(0.4,0.6);
+
+		if (!DamageTypeDefinition.IgnoreArmor(damageType))
+		{
+			int full = MAX(0, MaxFullAbsorb - AbsorbCount);
+			
+			if (damage < full)
+			{
+				saved = damage;
+			}
+			else
+			{
+				saved = full + int((damage - full) * SavePercent);
+				if (MaxAbsorb > 0 && saved + AbsorbCount > MaxAbsorb) 
+				{
+					saved = MAX(0,  MaxAbsorb - AbsorbCount);
+				}
+			}
+
+			if (Amount < saved)
+			{
+				saved = Amount;
+			}
+			newdamage -= saved;
+			Amount -= saved;
+			AbsorbCount += saved;
+			if (Amount == 0)
+			{
+				// The armor has become useless
+				SavePercent = 0;
+				ArmorType = 'None'; // Not NAME_BasicArmor.
+				// Now see if the player has some more armor in their inventory
+				// and use it if so. As in Strife, the best armor is used up first.
+				BasicArmorPickup best = null;
+				Inventory probe = Owner.Inv;
+				while (probe != null)
+				{
+					let inInv = BasicArmorPickup(probe);
+					if (inInv != null)
+					{
+						if (best == null || best.SavePercent < inInv.SavePercent)
+						{
+							best = inInv;
+						}
+					}
+					probe = probe.Inv;
+				}
+				if (best != null)
+				{
+					Owner.UseInventory (best);
+				}
+			}
+			damage = newdamage;
+		}
+		SavePercent = initSavePercent;
+
+		// Once the armor has absorbed its part of the damage, then apply its damage factor, if any, to the player
+		if ((damage > 0) && (ArmorType != 'None')) // KGArmor is not going to have any damage factor, so skip it.
+		{
+			newdamage = ApplyDamageFactors(ArmorType, damageType, damage, damage);
+		}
+	}
+}
+
+class KGArmorBonus : BasicArmorBonus
+{
+	override bool Use (bool pickup)
+	{
+		let armor = KGArmor(Owner.FindInventory("KGArmor"));
+		bool result = false;
+
+		// This should really never happen but let's be prepared for a broken inventory.
+		if (armor == null)
+		{
+			armor = KGArmor(Spawn("KGArmor"));
+			armor.BecomeItem ();
+			armor.Amount = 0;
+			armor.MaxAmount = MaxSaveAmount;
+			Owner.AddInventory (armor);
+		}
+
+		if (BonusCount > 0 && armor.BonusCount < BonusMax)
+		{
+			armor.BonusCount = min(armor.BonusCount + BonusCount, BonusMax);
+			result = true;
+		}
+
+		int saveAmount = min(GetSaveAmount(), MaxSaveAmount);
+
+		if (saveAmount <= 0)
+		{ // If it can't give you anything, it's as good as used.
+			return BonusCount > 0 ? result : true;
+		}
+
+		// If you already have more armor than this item can give you, you can't
+		// use it.
+		if (armor.Amount >= MaxSaveAmount + armor.BonusCount)
+		{
+			return result;
+		}
+
+		if (armor.Amount <= 0)
+		{ // Should never be less than 0, but might as well check anyway
+			armor.Amount = 0;
+			armor.Icon = Icon;
+			armor.SavePercent = clamp(SavePercent, 0, 100) / 100;
+			armor.MaxAbsorb = MaxAbsorb;
+			armor.ArmorType = GetClassName();
+			armor.MaxFullAbsorb = MaxFullAbsorb;
+			armor.ActualSaveAmount = MaxSaveAmount;
+		}
+
+		armor.Amount = min(armor.Amount + saveAmount, MaxSaveAmount + armor.BonusCount);
+		armor.MaxAmount = max(armor.MaxAmount, MaxSaveAmount);
+		return true;
+	}
+}
