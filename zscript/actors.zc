@@ -252,6 +252,7 @@ class EEPowerup : Powerup
 // Base Projectile Class
 class EEProjectile : EEBaseZSC abstract
 {
+	float user_ignoreaoeimmunity;
 	int saveddmg; // Save damage from things like A_CustomPunch for puffs
 	int user_canafflict;
 	int user_ailmentmaxchance;
@@ -2183,6 +2184,42 @@ class EEPuff : EEProjectile abstract
 		damage = super.DoSpecialDamage(target, damage, damagetype);
 		// New Code goes here
 		return damage;
+	}
+}
+
+class RocketBase : EEProjectile
+{
+	default
+	{
+		Tag "Rocket";
+		Radius 11;
+		Height 8;
+		Speed 20;
+		Damage 20;
+		Projectile;
+		+RANDOMIZE;
+		+DEHEXPLOSION;
+		+ROCKETTRAIL;
+		SeeSound "weapons/rocklf";
+		DeathSound "weapons/rocklx";
+		Obituary "$OB_MPROCKET"; // "%o rode %k's rocket.";
+	}
+	States
+	{
+		Spawn:
+			MISL A 1 Bright;
+			Loop;
+		Death:
+			TNT1 A 0 
+			{
+				A_StartSound("weapons/rocklx",CHAN_7);
+				A_Quake(1, 4, 0, 512, "nosound/silent");
+				A_Quake(4, 4, 0, 256, "nosound/silent");
+			}
+			MISL B 8 Bright A_Explode();
+			MISL C 6 Bright;
+			MISL D 4 Bright;
+			Stop;
 	}
 }
 
