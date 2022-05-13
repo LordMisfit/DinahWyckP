@@ -2825,6 +2825,7 @@ class PlayerStatItem : Inventory
 			TotalMass = 100;
 			BaseMass = TotalMass;
 			double massmulfactor = 0.22223;
+			massmulfactor *= (1.0 + (NumOfAfasDrops * 0.04));
 			let playerset = DDPlayerPawn(owner);
 			if (playerset) TotalMass = playerset.originalmass;
 			BaseMass = TotalMass;
@@ -3067,6 +3068,7 @@ class PlayerStatItem : Inventory
 				{
 					LevelJumpZ += (TruePlayerLevel * (0.0025 * 1.75));
 				}
+				LevelJumpZ *= (1.0 + (NumOfAfasDrops * 0.04));
 				if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Level]: %.8f", LevelJumpZ);
 			}
 			
@@ -3082,6 +3084,7 @@ class PlayerStatItem : Inventory
 				{
 					SpeedJumpZ += (TruePlayerSPD * (0.0025 * 1.75));
 				}
+				LevelJumpZ *= (1.0 + (NumOfAfasDrops * 0.04));
 				if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Speed]: %.8f", SpeedJumpZ);
 			}
 			
@@ -3771,7 +3774,9 @@ class PlayerStatItem : Inventory
 		if (skill == 2) baseatkfct = 0.00625;
 		if (skill == 3) baseatkfct = 0.005625;
 		if (skill >= 4) baseatkfct = 0.005;
+		baseatkfct *= (1.0 + (NumOfAfasDrops * 0.04));
 		if (IsMorphed == 1) baseatkfct *= 0.334;
+		double tempmax;
 		if (!passive && damage > 0) // If the owner [usually the player] of the item is the ATTACKER
 		{
 			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive): %d (baseatkfct: %.8f)", damage, baseatkfct);
@@ -3780,9 +3785,12 @@ class PlayerStatItem : Inventory
 			double MapFactor = 1.00;
 			if (!exex_expenabled) 
 			{
+				tempmax = 5.00;
+				tempmax *= (1.0 + (NumOfAfasDrops * 0.04));
+
 				MapFactor = (1.00 + (totalcompleted * (baseatkfct * 3)) + (totalallkills * (baseatkfct)) + (totalallitems * (baseatkfct)) + (totalallsecrets * (baseatkfct)));
 				MapFactor *= (1.00 + (NumOfAfasDrops * 0.0625));
-				if (MapFactor >= 5.00) MapFactor = 5.00;
+				if (MapFactor >= tempmax) MapFactor = tempmax;
 				if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
 			}
 			
@@ -3791,12 +3799,14 @@ class PlayerStatItem : Inventory
 			if (exex_expenabled) LVLFactor = (1.00 + (TruePlayerLevel * baseatkfct));
 			if (IsMorphed == 1)
 			{
-				if (LVLFactor <= 2.334) LVLFactor = 2.334;
+				tempmax = 2.334;
 			}
 			else
 			{
-				if (LVLFactor >= 5.00) LVLFactor = 5.00;
+				tempmax = 5.00;
 			}
+			tempmax *= (1.0 + (NumOfAfasDrops * 0.04));
+			if (LVLFactor >= tempmax) LVLFactor = tempmax;
 			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - Level): %.8f", LVLFactor);
 
 			// Attack
@@ -3804,12 +3814,15 @@ class PlayerStatItem : Inventory
 			if (exex_extraatkdefspd && exex_expenabled) ATKFactor = (1.00 + (TruePlayerATK * baseatkfct) + (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.125),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.25),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*0.5),(baseatkfct*1),(baseatkfct*1),(baseatkfct*2))));
 			if (IsMorphed == 1)
 			{
-				if (ATKFactor <= 2.334) ATKFactor = 2.334;
+				tempmax = 2.334;
+				tempmax *= (1.0 + (NumOfAfasDrops * 0.04));
 			}
 			else
 			{
-				if (ATKFactor >= 5.00) ATKFactor = 5.00;
+				tempmax = 5.00;
 			}
+			tempmax *= (1.0 + (NumOfAfasDrops * 0.04));
+			if (ATKFactor >= tempmax) ATKFactor = tempmax;
 			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - EAttack): %.8f", ATKFactor);
 
 			double SkillFactor = 1.00;
@@ -3956,6 +3969,7 @@ class PlayerStatItem : Inventory
 		if (skill == 2) basedeffct = 0.0025;
 		if (skill == 3) basedeffct = 0.00225;
 		if (skill >= 4) basedeffct = 0.0020;
+		basedeffct *= (1.0 + (NumOfAfasDrops * 0.04));
 		if (IsMorphed == 1) basedeffct *= 0.334;
 		if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 		{
@@ -3971,9 +3985,11 @@ class PlayerStatItem : Inventory
 			double MapFactor = 1.00;
 			if (!exex_expenabled) 
 			{
+				tempmax = 0.20;
+				tempmax *= (1.0 - (NumOfAfasDrops * 0.04));
 				MapFactor = (1.00 - (totalcompleted * (basedeffct * 3)) - (totalallkills * (basedeffct)) - (totalallitems * (basedeffct)) - (totalallsecrets * (basedeffct)));
 				MapFactor *= (1.00 - (NumOfAfasDrops * 0.0625));
-				if (MapFactor <= 0.20) MapFactor = 0.20;
+				if (MapFactor <= tempmax) MapFactor = tempmax;
 				if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
 				//Console.Printf("totalallkills: %d, totalallitems: %d, totalallitems: %d, totalcompleted: %d", totalallkills, totalallsecrets, totalallitems, totalcompleted);
 			}
@@ -3983,12 +3999,14 @@ class PlayerStatItem : Inventory
 			if (exex_expenabled) LVLFactor = (1.00 - (TruePlayerLevel * basedeffct));
 			if (IsMorphed == 1)
 			{
-				if (LVLFactor <= 0.60) LVLFactor = 0.60;
+				tempmax = 0.60;
 			}
 			else
 			{
-				if (LVLFactor <= 0.20) LVLFactor = 0.20;
+				tempmax = 0.20;
 			}
+			tempmax *= (1.0 - (NumOfAfasDrops * 0.04));
+			if (LVLFactor <= tempmax) LVLFactor = tempmax;
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - Level): %.8f", LVLFactor);
 
 			// Defense
@@ -3996,12 +4014,14 @@ class PlayerStatItem : Inventory
 			if (exex_extraatkdefspd && exex_expenabled) DEFFactor = (1.00 - (TruePlayerDEF * basedeffct) - (random(1,PlayerLuck) * frandompick(0,0,0,0,0,0,(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.125),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.25),(basedeffct*0.5),(basedeffct*0.5),(basedeffct*0.5),(basedeffct),(basedeffct),(basedeffct*2))));
 			if (IsMorphed == 1)
 			{
-				if (DEFFactor <= 0.60) DEFFactor = 0.60;
+				tempmax = 0.60;
 			}
 			else
 			{
-				if (DEFFactor <= 0.20) DEFFactor = 0.20;
+				tempmax = 0.20;
 			}
+			tempmax *= (1.0 - (NumOfAfasDrops * 0.04));
+			if (DEFFactor <= tempmax) DEFFactor = tempmax;
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - EDefense): %.8f", DEFFactor);
 
 			// Difficulty Level
@@ -4224,15 +4244,19 @@ class PlayerStatItem : Inventory
 
 		double BaseFactor = 1.0;
 		double BaseMul = 0.009375;
+		BaseMul *= (1.0 + (NumOfAfasDrops * 0.04));
 		if (IsMorphed == 1) BaseMul *= 3;
+		double tempmax;
 
 		// Map Completion [No-RPG Mode]
 		double MapFactor = 1.00;
 		if (!exex_expenabled) 
 		{
+			tempmax = 2.5;
+			tempmax *= (1.0 + (NumOfAfasDrops * 0.04));
 			MapFactor = (1.00 + (totalcompleted * (BaseMul * 1)) + (totalallkills * (BaseMul * 0.3334)) + (totalallitems * (BaseMul * 0.3334)) + (totalallsecrets * (BaseMul * 0.3334)));
 			MapFactor *= (1.00 + (NumOfAfasDrops * 0.0625));
-			if (MapFactor >= 2.5) MapFactor = 2.5;
+			if (MapFactor >= tempmax) MapFactor = tempmax;
 			Speed *= MapFactor;
 			if (dydudebug_speedcalcs) Console.Printf("SpeedX [map completion (RPG mode off)]: %.8f", MapFactor);
 		}
@@ -4245,12 +4269,14 @@ class PlayerStatItem : Inventory
 
 		if (IsMorphed == 1)
 		{
-			if (BaseFactor >= 7.5) BaseFactor = 7.5;
+			tempmax = 7.5;
 		}
 		else
 		{
-			if (BaseFactor >= 2.5) BaseFactor = 2.5;
+			tempmax = 2.5;
 		}
+		tempmax *= (1.0 + (NumOfAfasDrops * 0.04));
+		if (BaseFactor >= tempmax) BaseFactor = tempmax;
 		Speed *= BaseFactor;
 		if (dydudebug_speedcalcs) Console.Printf("SpeedX [base (level+extra)]: %.8f", BaseFactor);
 		
