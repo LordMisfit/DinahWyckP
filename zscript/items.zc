@@ -1536,9 +1536,8 @@ class CherryBombPickup : ExExInvBarItem
 	} 
 }
 
-class CherryBombShot : EEProjectile
+class CherryBombShot : EEFireworksProj
 {
-	int TruePlayerLevel;
 	default
 	{
 		ProjectileKickback 5;
@@ -1546,7 +1545,7 @@ class CherryBombShot : EEProjectile
 		Radius 3;
 		Height 3;
 		Speed 40;
-		Damage 10;
+		DamageFunction (finaldamagedealt);
 		DamageType "CherryBomb";
 		Projectile;
 		-NOGRAVITY
@@ -1555,12 +1554,20 @@ class CherryBombShot : EEProjectile
 		SeeSound "weapons/cherrywick";
 	}
 	
-	void A_GetPlayerLevel()
+	override void PostBeginPlay()
 	{
-		TruePlayerLevel = 0;
+		Super.PostBeginPlay();
+
 		actor player = players[0].mo;
-		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (10 * random(1,8));
+		
+		if (MiscItem)
+		{
+			finaldamagedealt += (MiscItem.TruePlayerLevel * frandom(1.75,2.25));
+		}
+
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
 	}
 	
 	States
@@ -1587,7 +1594,7 @@ class CherryBombShot : EEProjectile
 				A_Quake(4, 4, 0, 256, "nosound/silent");
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 12 & random(1,12) <= (1 + ((TruePlayerLevel - 12) * 0.1667))) { bFORCERADIUSDMG = true; }
-				A_Explode(16,32,expflags,0,4);
+				A_Explode(A_CalcTrueExpDmg(16,0.02),32,expflags,0,4);
 				A_Quake(1, 4, 0, 128, "nosound/silent");
 				A_Quake(4, 4, 0, 64, "nosound/silent");
 			}
@@ -1604,7 +1611,7 @@ class CherryBombShot : EEProjectile
 				A_AlertMonsters();
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 11 & random(1,11) <= (1 + ((TruePlayerLevel - 11) * 0.1819))) { bFORCERADIUSDMG = true; }
-				A_Explode(24,48,expflags,0,6);
+				A_Explode(A_CalcTrueExpDmg(24,0.02),48,expflags,0,6);
 				A_Quake(1, 4, 0, 192, "nosound/silent");
 				A_Quake(4, 4, 0, 96, "nosound/silent");
 			}
@@ -1616,7 +1623,7 @@ class CherryBombShot : EEProjectile
 				if (IPAttack) expflags = 0;
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 10 & random(1,10) <= (1 + ((TruePlayerLevel - 10) * 0.20))) { bFORCERADIUSDMG = true; }
-				A_Explode(32,64,expflags,0,8);
+				A_Explode(A_CalcTrueExpDmg(32,0.02),64,expflags,0,8);
 				A_Quake(1, 4, 0, 256, "nosound/silent");
 				A_Quake(4, 4, 0, 128, "nosound/silent");
 			}
@@ -1632,7 +1639,7 @@ class CherryBombShot : EEProjectile
 				}
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 9 & random(1,9) <= (1 + ((TruePlayerLevel - 9) * 0.2223))) { bFORCERADIUSDMG = true; }
-				A_Explode(40,80,expflags,0,10);
+				A_Explode(A_CalcTrueExpDmg(40,0.02),80,expflags,0,10);
 				A_Quake(1, 4, 0, 320, "nosound/silent");
 				A_Quake(4, 4, 0, 160, "nosound/silent");
 			}
@@ -1644,7 +1651,7 @@ class CherryBombShot : EEProjectile
 				if (IPAttack) expflags = 0;
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 8 & random(1,8) <= (1 + ((TruePlayerLevel - 8) * 0.25))) { bFORCERADIUSDMG = true; }
-				A_Explode(48,96,expflags,0,12);
+				A_Explode(A_CalcTrueExpDmg(48,0.02),96,expflags,0,12);
 				A_Quake(1, 4, 0, 384, "nosound/silent");
 				A_Quake(4, 4, 0, 192, "nosound/silent");
 			}
@@ -1660,7 +1667,7 @@ class CherryBombShot : EEProjectile
 				}
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 7 & random(1,7) <= (1 + ((TruePlayerLevel - 7) * 0.28572))) { bFORCERADIUSDMG = true; }
-				A_Explode(56,112,expflags,0,14);
+				A_Explode(A_CalcTrueExpDmg(56,0.02),112,expflags,0,14);
 				A_Quake(1, 4, 0, 448, "nosound/silent");
 				A_Quake(4, 4, 0, 224, "nosound/silent");
 			}
@@ -1672,7 +1679,7 @@ class CherryBombShot : EEProjectile
 				if (IPAttack) expflags = 0;
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 6 & random(1,6) <= (1 + ((TruePlayerLevel - 6) * 0.334))) { bFORCERADIUSDMG = true; }
-				A_Explode(64,128,expflags,0,16);
+				A_Explode(A_CalcTrueExpDmg(64,0.02),128,expflags,0,16);
 				A_Quake(1, 4, 0, 512, "nosound/silent");
 				A_Quake(4, 4, 0, 256, "nosound/silent");
 			}
@@ -1690,6 +1697,23 @@ class CherryBombShotBerserk : CherryBombShot
 		Damage 50;
 		DamageType "CherryBomb";
 	}
+
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (50 * random(1,8));
+		
+		if (MiscItem)
+		{
+			finaldamagedealt += (MiscItem.TruePlayerLevel * (frandom(1.75,2.25) * 5));
+		}
+
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+
 	States
 	{
 		Spawn:
@@ -1941,7 +1965,7 @@ class BRocketPickup : ExExInvBarItem
 	} 
 }
 
-class BRocketShot : EEProjectile
+class BRocketShot : EEFireworksProj
 {
 	default
 	{
@@ -1950,7 +1974,7 @@ class BRocketShot : EEProjectile
 		Radius 8;
 		Height 8;
 		Speed 60;
-		Damage 20;
+		DamageFunction (finaldamagedealt);
 		DamageType "BRocket";
 		Projectile;
 		renderstyle "Normal";
@@ -1960,6 +1984,22 @@ class BRocketShot : EEProjectile
 		//+NOEXTREMEDEATH
 		SeeSound "weapons/rocketfire";
 		DeathSound "";
+	}
+	
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (20 * random(1,8));
+		
+		if (MiscItem)
+		{
+			finaldamagedealt += (MiscItem.TruePlayerLevel * frandom(3.5,4.5));
+		}
+
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
 	}
 	
 	States
@@ -1981,6 +2021,7 @@ class BRocketShot : EEProjectile
 			}
 			FSPE A 5 Bright 
 			{
+				A_GetPlayerLevel();
 				int expflags = XF_HURTSOURCE;
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 32;
@@ -1991,7 +2032,7 @@ class BRocketShot : EEProjectile
 					fulldmgminrad = 96;
 				}
 
-				A_Explode(128,fulldmgmaxrad,expflags,true,fulldmgminrad);
+				A_Explode(A_CalcTrueExpDmg(128,0.02),fulldmgmaxrad,expflags,true,fulldmgminrad);
 				A_StartSound("weapons/cherryboom",CHAN_7);
 				A_Quake(1, 4, 0, (fulldmgmaxrad*4), "nosound/silent");
 				A_Quake(4, 4, 0, (fulldmgmaxrad*2), "nosound/silent");
@@ -2051,8 +2092,6 @@ class BRocketShot : EEProjectile
 
 class BigBRocketShot : BRocketShot
 {
-	int user_explosion;
-	int expflags;
 	default
 	{
 		ProjectileKickback 15;
@@ -2060,7 +2099,7 @@ class BigBRocketShot : BRocketShot
 		Radius 12;
 		Height 12;
 		Speed 50;
-		Damage 100;
+		DamageFunction (finaldamagedealt);
 		DamageType "BRocket";
 		Scale 1.5;
 		Projectile;
@@ -2078,7 +2117,18 @@ class BigBRocketShot : BRocketShot
 		if (IPAttack && random(1,32) <= 27) bFORCERADIUSDMG = true;
 		expflags = 0;
 		if (dydudebug_attackfuncinfo) Console.Printf("[%s] IPAttack: %d, expflags: %d", GetClassName(), IPAttack, expflags);
-		super.PostBeginPlay();
+		Super.PostBeginPlay();
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (100 * random(1,8));
+		
+		if (MiscItem)
+		{
+			finaldamagedealt += (MiscItem.TruePlayerLevel * frandom(17.5,22.5));
+		}
+
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
 	}
 	
 	States
@@ -2107,7 +2157,7 @@ class BigBRocketShot : BRocketShot
 					fulldmgminrad = 96;
 				}
 				if (dydudebug_attackfuncinfo) Console.Printf("expflags: %d", expflags);
-				A_Explode(640,fulldmgmaxrad,expflags,true,fulldmgminrad);
+				A_Explode(A_CalcTrueExpDmg(640,0.02),fulldmgmaxrad,expflags,true,fulldmgminrad);
 				A_StartSound("weapons/cherryboom",CHAN_7);
 				A_Quake(1, 4, 0, (fulldmgmaxrad*4), "nosound/silent");
 				A_Quake(4, 4, 0, (fulldmgmaxrad*2), "nosound/silent");
@@ -2211,9 +2261,25 @@ class MultiBRocketShot : BigBRocketShot
 		Radius 18;
 		Height 18;
 		Scale 2.25;
-		Damage 400;
+		DamageFunction (finaldamagedealt);
 	}
 	
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (400 * random(1,8));
+		
+		if (MiscItem)
+		{
+			finaldamagedealt += (MiscItem.TruePlayerLevel * frandom(70,90));
+		}
+
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+
 	States
 	{
 		Spawn:
@@ -2242,7 +2308,7 @@ class MultiBRocketShot : BigBRocketShot
 					fulldmgminrad = 96;
 				}
 
-				A_Explode(2560,fulldmgmaxrad,expflags,true,fulldmgminrad);
+				A_Explode(A_CalcTrueExpDmg(2560,0.02),fulldmgmaxrad,expflags,true,fulldmgminrad);
 				A_StartSound("weapons/cherryboom",CHAN_7);
 				A_Quake(1, 4, 0, (fulldmgmaxrad*4), "nosound/silent");
 				A_Quake(4, 4, 0, (fulldmgmaxrad*2), "nosound/silent");
@@ -2359,14 +2425,69 @@ class BadBrocketShot : BrocketShot
 				A_Quake(4, 4, 0, 256, "nosound/silent");
 			}
 			FSPE B 5 Bright;
-			FSPE C 8 Bright A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
-			FSPE D 8 Bright A_SpawnProjectile("BRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); 
-			FSPE E 8 Bright A_SpawnProjectile("BRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);  
+			FSPE C 8 Bright A_SpawnProjectile("BadBRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);
+			FSPE D 8 Bright A_SpawnProjectile("BadBRocketBoom2",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER); 
+			FSPE E 8 Bright A_SpawnProjectile("BadBRocketBoom1",random(20,64),random(-64,64),random(-64,64),CMF_TRACKOWNER);  
 			Stop;
 	}
 }
 
-class BRocketBoom1 : EEProjectile
+class BRocketBoom1 : EEFireworksProj
+{
+	default
+	{
+		ProjectileKickback 5;
+		radius 10;
+		height 12;
+		DamageType "BRocket";
+		speed 0;
+		Scale 2;
+		renderstyle "Add";
+		Alpha 0.80;
+		Projectile;
+		+NOCLIP
+		+DONTSPLASH
+		+SPAWNSOUNDSOURCE
+	}
+	
+	states
+	{
+		Spawn:
+			TNT1 A 0 
+			{
+				A_Die();
+				if (IPAttack)
+				{
+					ProjectileKickback = 1;
+					bDONTTHRUST = 0;
+					if (random(1,32) <= 27) bFORCERADIUSDMG = true;
+				}
+			}
+		Death:
+			CBAL C 6 Bright 
+			{
+				A_GetPlayerLevel();
+				expflags = XF_HURTSOURCE;
+				int fulldmgmaxrad = 128;
+				int fulldmgminrad = 128;
+				if (IPAttack) 
+				{
+					expflags = 0;
+					fulldmgmaxrad = 192;
+					fulldmgminrad = 192;
+				}
+
+				A_Explode(A_CalcTrueExpDmg(128,0.02),fulldmgmaxrad,expflags,true,fulldmgminrad);
+				A_StartSound("weapons/cherryboom",CHAN_7);
+				A_Quake(1, 4, 0, (fulldmgmaxrad*4), "nosound/silent");
+				A_Quake(4, 4, 0, (fulldmgmaxrad*2), "nosound/silent");
+			}
+			CBAL DEF 6 Bright;
+			stop;
+	}
+}
+
+class BadBRocketBoom1 : EEProjectile
 {
 	int expflags;
 	default
@@ -2448,6 +2569,7 @@ class BRocketBoom1IP : BRocketBoom1
 		Death:
 			CBAL C 6 Bright 
 			{
+				A_GetPlayerLevel();
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 128;
 				if (IPAttack) 
@@ -2457,7 +2579,7 @@ class BRocketBoom1IP : BRocketBoom1
 					fulldmgminrad = 192;
 				}
 
-				A_Explode(128,fulldmgmaxrad,expflags,true,fulldmgminrad);
+				A_Explode(A_CalcTrueExpDmg(128,0.02),fulldmgmaxrad,expflags,true,fulldmgminrad);
 				A_StartSound("weapons/cherryboom",CHAN_7);
 				A_Quake(1, 4, 0, (fulldmgmaxrad*4), "nosound/silent");
 				A_Quake(4, 4, 0, (fulldmgmaxrad*2), "nosound/silent");
@@ -2467,7 +2589,62 @@ class BRocketBoom1IP : BRocketBoom1
 	}
 }
 
-class BRocketBoom2 : EEProjectile
+class BRocketBoom2 : EEFireworksProj
+{
+	default
+	{
+		ProjectileKickback 5;
+		radius 10;
+		height 12;
+		DamageType "BRocket";
+		speed 0;
+		Scale 2;
+		renderstyle "Add";
+		Alpha 0.80;
+		Projectile;
+		+NOCLIP
+		+DONTSPLASH
+		+SPAWNSOUNDSOURCE
+	}
+	
+	states
+	{
+		Spawn:
+			TNT1 A 0 
+			{
+				A_Die();
+				if (IPAttack)
+				{
+					ProjectileKickback = 1;
+					bDONTTHRUST = 0;
+					if (random(1,32) <= 27) bFORCERADIUSDMG = true;
+				}
+			}
+		Death:
+			BROX A 6 Bright 
+			{
+				A_GetPlayerLevel();
+				int expflags = XF_HURTSOURCE;
+				int fulldmgmaxrad = 128;
+				int fulldmgminrad = 128;
+				if (IPAttack) 
+				{
+					expflags = 0;
+					fulldmgmaxrad = 192;
+					fulldmgminrad = 192;
+				}
+
+				A_Explode(A_CalcTrueExpDmg(128,0.02),fulldmgmaxrad,expflags,true,fulldmgminrad);
+				A_StartSound("weapons/cherryboom",CHAN_7);
+				A_Quake(1, 4, 0, (fulldmgmaxrad*4), "nosound/silent");
+				A_Quake(4, 4, 0, (fulldmgmaxrad*2), "nosound/silent");
+			}
+			BROX BCD 6 Bright;
+			stop;
+	}
+}
+
+class BadBRocketBoom2 : EEProjectile
 {
 	int expflags;
 	default
@@ -2558,7 +2735,7 @@ class BRocketBoom2IP : BRocketBoom2
 					fulldmgminrad = 192;
 				}
 
-				A_Explode(128,fulldmgmaxrad,expflags,true,fulldmgminrad);
+				A_Explode(A_CalcTrueExpDmg(128,0.02),fulldmgmaxrad,expflags,true,fulldmgminrad);
 				A_StartSound("weapons/cherryboom",CHAN_7);
 				A_Quake(1, 4, 0, (fulldmgmaxrad*4), "nosound/silent");
 				A_Quake(4, 4, 0, (fulldmgmaxrad*2), "nosound/silent");
@@ -2885,7 +3062,7 @@ class StreamerTrail : EEProjectile
 	}
 }
 
-class PopperPuff1 : EEPuff
+class PopperPuff1 : EEFireworksPuff
 {
 	default
 	{
@@ -2919,7 +3096,7 @@ class PopperPuff1 : EEPuff
 	}
 }
 
-class PopperPuff2 : EEPuff
+class PopperPuff2 : EEFireworksPuff
 {
 	default
 	{
@@ -2950,7 +3127,11 @@ class PopperPuff2 : EEPuff
 	{
 		Spawn:
 			SPNR C 0 A_AlertMonsters;
-			SPNR C 4 Bright A_Explode(128,128,false,0,32,0,0,"","Popper");
+			SPNR C 4 Bright 
+			{
+				A_GetPlayerLevel();
+				A_Explode(A_CalcTrueExpDmg(128,0.02),128,false,0,32,0,0,"","Popper");
+			}
 			SPNR DEFG 4 Bright;
 			Stop;
 	}
@@ -3201,15 +3382,14 @@ class SpinnerPickup : ExExInvBarItem
 	} 
 }
 
-class SpinnerShot : EEProjectile
+class SpinnerShot : EEFireworksProj
 {
-	int expflags;
 	default
 	{
 		Radius 8;
 		Height 6;
 		Speed 14;
-		Damage 5;
+		DamageFunction (finaldamagedealt);
 		DamageType "Spinner";
 		+SEEKERMISSILE
 		//+NOEXTREMEDEATH
@@ -3219,6 +3399,22 @@ class SpinnerShot : EEProjectile
 		DeathSound "";
 	}
 	
+	override void PostBeginPlay()
+	{
+		Super.PostBeginPlay();
+
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		finaldamagedealt = (5 * random(1,8));
+		
+		if (MiscItem)
+		{
+			finaldamagedealt += (MiscItem.TruePlayerLevel * frandom(2.625,3.375));
+		}
+
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+
 	States
 	{
 		Spawn:
@@ -3242,9 +3438,10 @@ class SpinnerShot : EEProjectile
 			}
 			FSPE A 2 Bright 
 			{
+				A_GetPlayerLevel();
 				expflags = XF_HURTSOURCE;
 				if (IPAttack) expflags = 0;
-				A_Explode(128,128,expflags,true,32);
+				A_Explode(A_CalcTrueExpDmg(128,0.02),128,expflags,true,32);
 				A_StartSound("weapons/cherryboom",CHAN_7);
 				A_Quake(1, 4, 0, 512, "nosound/silent");
 				A_Quake(4, 4, 0, 256, "nosound/silent");
@@ -3275,8 +3472,9 @@ class SpinnerShotIP : SpinnerShot
 			}
 			FSPE A 2 Bright 
 			{
+				A_GetPlayerLevel();
 				if (IPAttack) expflags = 0;
-				A_Explode(128,128,expflags,true,32);
+				A_Explode(A_CalcTrueExpDmg(128,0.02),128,expflags,true,32);
 				A_StartSound("weapons/cherryboom",CHAN_7);
 				A_Quake(1, 4, 0, 512, "nosound/silent");
 				A_Quake(4, 4, 0, 256, "nosound/silent");
@@ -3364,13 +3562,14 @@ class SpinnerShotIcy : SpinnerShot
 			}
 			ISPE A 2 Bright 
 			{
+				A_GetPlayerLevel();
 				expflags = XF_HURTSOURCE;
 				if (IPAttack) 
 				{
 					expflags = 0;
 					A_SetTics(1);
 				}
-				A_Explode(128,128,expflags,true,32);
+				A_Explode(A_CalcTrueExpDmg(128,0.02),128,expflags,true,32);
 				A_StartSound("weapons/cherryboom",CHAN_7);
 				A_Quake(1, 4, 0, 512, "nosound/silent");
 				A_Quake(4, 4, 0, 256, "nosound/silent");
@@ -3420,12 +3619,13 @@ class SpinnerShotIcyIP : SpinnerShotIcy
 			}
 			FSPE A 2 Bright 
 			{
+				A_GetPlayerLevel();
 				if (IPAttack) 
 				{
 					expflags = 0;
 					A_SetTics(1);
 				}
-				A_Explode(128,128,expflags,true,32);
+				A_Explode(A_CalcTrueExpDmg(128,0.02),128,expflags,true,32);
 				A_StartSound("weapons/cherryboom",CHAN_7);
 				A_Quake(1, 4, 0, 512, "nosound/silent");
 				A_Quake(4, 4, 0, 256, "nosound/silent");

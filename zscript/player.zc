@@ -1440,6 +1440,10 @@ class DDPlayerPawn : PlayerPawn
 				if (isbarrierbeam) PlayerDefenseIgnoreFactor += (frandom(0.9,1.0) * (1.00 - PlayerDefenseIgnoreFactor));
 			}
 			
+			double BuffFactor = 0.00;
+			if (CountInv("PowerGuard")) BuffFactor += 0.75; // Guard Sphere
+			if (BuffFactor > 0.00) PlayerDefenseIgnoreFactor = (PlayerDefenseIgnoreFactor * (1.00 - BuffFactor));
+			
 			double FoodFactor = 0.00;
 			if (CountInv("PowerRoastBuff")) FoodFactor += 0.0625; // Pig Roast
 			if (CountInv("PowerMealBuff")) FoodFactor += 0.25; // Gourmet Meal
@@ -2040,6 +2044,8 @@ class DDPlayerPawn : PlayerPawn
 		if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'Drowning' || mod == 'Falling'))
 		{
 			olddmg = damage;
+			if (mod == 'Drowning') useflatdefense = false;
+			if (mod == 'SigilDrain') useflatdefense = false;
 			if (mod == 'Crush')
 			{
 				double basecrushdmgfact;
@@ -2058,30 +2064,13 @@ class DDPlayerPawn : PlayerPawn
 
 				if (useflatdefense)
 				{
-					if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.04) + (TruePlayerDEF * 0.04));
+					if (MiscItem) baseflatdefense += (MiscItem.BaseFlatDefValue * 4);
 					flatdefense = random((baseflatdefense*0.5),baseflatdefense);
 					if (flags & !DMG_NO_ARMOR)
 					{
-						if (armortier == 1) 
-						{
-							if (CountInv("KnightGownIP1Buff")) basearmorflat = randompick(1,1,2,2,3);
-																						else basearmorflat = randompick(0,0,0,0,1);
-						}
-						if (armortier == 2) 
-						{
-							if (CountInv("KnightGownIP2Buff")) basearmorflat = randompick(2,2,3,3,4);
-																						else basearmorflat = randompick(0,0,0,1,1);
-						}
-						if (armortier == 3)
-						{
-							if (CountInv("KnightGownIP3Buff")) basearmorflat += randompick(3,3,4,4,5);
-																						else basearmorflat += randompick(0,0,1,1,2);
-						}
-						if (armortier >= 4) 
-						{
-							if (CountInv("KnightGownIP4Buff")) basearmorflat += randompick(5,5,6,6,7);
-																						else basearmorflat += randompick(1,1,2,2,3);
-						}
+						basearmorflat = 0;
+						if (MiscItem) basearmorflat = MiscItem.ArmorDefValueCrush;
+						
 						if (basearmormax > 0) 
 						{
 							basearmorflat *= (1.0 - PlayerArmorIgnoreFactor);
@@ -2091,7 +2080,6 @@ class DDPlayerPawn : PlayerPawn
 							if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
 						}
 					}
-					if (CountInv("PowerDouble")) flatdefense *= 1.667;
 					flatdefense *= (1.00 - PlayerDefenseIgnoreFactor);
 					damage -= flatdefense;
 					if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [Crush Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);
@@ -2110,30 +2098,13 @@ class DDPlayerPawn : PlayerPawn
 				if (mod == 'SigilDrain') useflatdefense = false;
 				if (useflatdefense)
 				{
-					if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.1) + (TruePlayerDEF * 0.1));
+					if (MiscItem) baseflatdefense += (MiscItem.BaseFlatDefValue * 1);
 					flatdefense = random((baseflatdefense*0.5),baseflatdefense);
 					if (flags & !DMG_NO_ARMOR)
 					{
-						if (armortier == 1)
-						{
-							if (CountInv("KnightGownIP1Buff")) basearmorflat += (random(0,4) + (TruePlayerLevel * 0.125));
-																						else basearmorflat += (random(0,1) + (TruePlayerLevel * 0.025));
-						}
-						if (armortier == 2) 
-						{
-							if (CountInv("KnightGownIP2Buff")) basearmorflat += (random(4,8) + (TruePlayerLevel * 0.250));
-																						else basearmorflat += (random(1,2) + (TruePlayerLevel * 0.050));
-						}
-						if (armortier == 3) 
-						{
-							if (CountInv("KnightGownIP3Buff")) basearmorflat += (random(8,12) + (TruePlayerLevel * 0.375));
-																						else basearmorflat += (random(2,3) + (TruePlayerLevel * 0.075));
-						}
-						if (armortier >= 4) 
-						{
-							if (CountInv("KnightGownIP4Buff")) basearmorflat += (random(16,20) + (TruePlayerLevel * 0.625));
-																						else basearmorflat += (random(4,5) + (TruePlayerLevel * 0.125));
-						}
+						basearmorflat = 0;
+						if (MiscItem) basearmorflat = MiscItem.ArmorDefValue;
+						
 						if (basearmormax > 0) 
 						{
 							basearmorflat *= (1.0 - PlayerArmorIgnoreFactor);
@@ -2143,7 +2114,6 @@ class DDPlayerPawn : PlayerPawn
 							if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
 						}
 					}
-					if (CountInv("PowerDouble")) flatdefense *= 1.667;
 					flatdefense *= (1.00 - PlayerDefenseIgnoreFactor);
 					damage -= flatdefense;
 					if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [Non-Crush Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);
@@ -2161,32 +2131,16 @@ class DDPlayerPawn : PlayerPawn
 		else // Slime Damage
 		{
 			if (mod == 'Drowning') useflatdefense = false;
+			if (mod == 'SigilDrain') useflatdefense = false;
 			if (useflatdefense)
 			{
-				if (MiscItem) baseflatdefense += ((TruePlayerLevel * 0.02) + (TruePlayerDEF * 0.02));
+				if (MiscItem) baseflatdefense += (MiscItem.BaseFlatDefValue * 2);
 				flatdefense = random((baseflatdefense*0.5),baseflatdefense);
 				if (flags & !DMG_NO_ARMOR)
 				{
-					if (armortier == 1) 
-					{
-						if (CountInv("KnightGownIP1Buff")) basearmorflat += randompick(0,0,0,0,0,0,0,1,1,2,2,3,3);
-																					else basearmorflat += randompick(0,0,0,0,0,0,0,0,0,0,0,0,1);
-					}
-					if (armortier == 2) 
-					{
-						if (CountInv("KnightGownIP2Buff")) basearmorflat += randompick(0,0,0,0,0,0,1,1,2,2,3,3,4);
-																					else basearmorflat += randompick(0,0,0,0,0,0,0,0,0,0,0,1,1);
-					}
-					if (armortier == 3)
-					{
-						if (CountInv("KnightGownIP3Buff")) basearmorflat += randompick(0,0,0,0,0,1,1,2,2,3,3,4,4);
-																					else basearmorflat += randompick(0,0,0,0,0,0,0,0,0,0,1,1,2);
-					}
-					if (armortier >= 4) 
-					{
-						if (CountInv("KnightGownIP4Buff")) basearmorflat += randompick(0,0,0,1,1,2,2,3,3,4,4,5,5);
-																					else basearmorflat += randompick(0,0,0,0,0,0,0,0,1,1,2,2,3);
-					}
+					basearmorflat = 0;
+					if (MiscItem) basearmorflat = MiscItem.ArmorDefValueDmgFlr;
+					
 					if (basearmormax > 0) 
 					{
 						basearmorflat *= (1.0 - PlayerArmorIgnoreFactor);
@@ -2196,7 +2150,6 @@ class DDPlayerPawn : PlayerPawn
 						if (dydudebug_playerdamagemobj) Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, armfactor: %.8f", basearmorflat, armoramt, basearmormax, armfactor);
 					}
 				}
-				if (CountInv("PowerDouble")) flatdefense *= 1.667;
 				flatdefense *= (1.00 - PlayerDefenseIgnoreFactor);
 				damage -= flatdefense;
 				if (dydudebug_playerdamagemobj) Console.Printf("Flat Defense Calc [DmgFloor Damage]: %d (damage: %d vs %d)", flatdefense, damage, olddmg);

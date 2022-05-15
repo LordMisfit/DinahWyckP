@@ -1534,6 +1534,31 @@ class EEProjectile : EEBaseZSC abstract
 	}
 }
 
+class EEFireworksProj : EEProjectile
+{
+	int user_explosion;
+	int expflags;
+	int TruePlayerLevel;
+	
+	void A_GetPlayerLevel()
+	{
+		TruePlayerLevel = 0;
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+	}
+	
+	double A_CalcTrueExpDmg(double basedmg, double basemul = 0.02)
+	{
+		if (TruePlayerLevel) basedmg *= (1.0 + (TruePlayerLevel * basemul));
+		if (TruePlayerLevel > 25) basedmg *= (1.0 + ((TruePlayerLevel - 25) * (basemul * 1.75)));
+		if (TruePlayerLevel > 50) basedmg *= (1.0 + ((TruePlayerLevel - 50) * (basemul * 2.5)));
+		if (TruePlayerLevel > 75) basedmg *= (1.0 + ((TruePlayerLevel - 75) * (basemul * 3.5)));
+		if (TruePlayerLevel > 100) basedmg *= (1.0 + ((TruePlayerLevel - 100) * (basemul * 4.5)));
+		if (dydudebug_rangedmg) Console.Printf("ExpDamage [%s]: %d", GetClassName(), basedmg);
+		return basedmg;
+	}
+}
 
 class EEEffectProjectile : EEProjectile
 {
@@ -2185,6 +2210,32 @@ class EEPuff : EEProjectile abstract
 		damage = super.DoSpecialDamage(target, damage, damagetype);
 		// New Code goes here
 		return damage;
+	}
+}
+
+class EEFireworksPuff : EEPuff
+{
+	int user_explosion;
+	int expflags;
+	int TruePlayerLevel;
+	
+	void A_GetPlayerLevel()
+	{
+		TruePlayerLevel = 0;
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+	}
+	
+	double A_CalcTrueExpDmg(double basedmg, double basemul = 0.02)
+	{
+		if (TruePlayerLevel) basedmg *= (1.0 + (TruePlayerLevel * basemul));
+		if (TruePlayerLevel > 25) basedmg *= (1.0 + ((TruePlayerLevel - 25) * (basemul * 1.75)));
+		if (TruePlayerLevel > 50) basedmg *= (1.0 + ((TruePlayerLevel - 50) * (basemul * 2.5)));
+		if (TruePlayerLevel > 75) basedmg *= (1.0 + ((TruePlayerLevel - 75) * (basemul * 3.5)));
+		if (TruePlayerLevel > 100) basedmg *= (1.0 + ((TruePlayerLevel - 100) * (basemul * 4.5)));
+		if (dydudebug_rangedmg) Console.Printf("ExpDamage [%s]: %d", GetClassName(), basedmg);
+		return basedmg;
 	}
 }
 

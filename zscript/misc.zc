@@ -9,6 +9,8 @@ class PlayerStatItem : Inventory
 	const SKILL_HARD = 3;
 	const SKILL_VERY_HARD = 4;
 	
+	int BaseFlatDefValue, BaseFlatDefValueCrush, BaseFlatDefValueDmgFlr, BaseFlatDefHUD;
+	int ArmorDefValue, ArmorDefValueCrush, ArmorDefValueDmgFlr, ArmorDefValueHUD;
 	int CompatPackMode;
 	int PlayerWaterLevel;
 	int EWShieldKills;
@@ -1603,6 +1605,108 @@ class PlayerStatItem : Inventory
 					nt = "IsInBatGuardFrame"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
 				}
 				
+				
+				//*********************
+				//* Flat Defense Calc *
+				//*********************
+				double baseflatmul = 0.01;
+				if (skill <= 1) baseflatmul = 0.0125;
+				if (skill == 1) baseflatmul = 0.01125;
+				if (skill == 2) baseflatmul = 0.01;
+				if (skill == 3) baseflatmul = 0.00875;
+				if (skill >= 4) baseflatmul = 0.0075;
+				BaseFlatDefValue = ((TruePlayerLevel * 0.1) + (TruePlayerDEF * 0.1));
+				BaseFlatDefValue *= 1.0 + (((TruePlayerLevel * baseflatmul) + (TruePlayerDEF * baseflatmul)));
+				if (owner.CountInv("FistPlayerBlock")) BaseFlatDefValue *= 1.125;
+				if (owner.CountInv("FistPlayerBlock2")) BaseFlatDefValue *= 1.25;
+				if (owner.CountInv("FistPlayerBlock3")) BaseFlatDefValue *= 1.50;
+				if (owner.CountInv("FistPlayerBlock4")) BaseFlatDefValue *= 2.00;
+				if (owner.CountInv("FistPlayerBlockExtra")) BaseFlatDefValue *= 1.25;
+				if (owner.CountInv("FistPlayerBlockExtra2")) BaseFlatDefValue *= 1.25;
+				if (owner.CountInv("PowerGuard")) BaseFlatDefValue *= 2;
+				
+				//**********************
+				//* Armor Defense Calc *
+				//**********************
+				ArmorDefValue = 0;
+				ArmorDefValueCrush = 0;
+				ArmorDefValueDmgFlr = 0;
+				ArmorDefValueHUD = 0;
+				if (KnightGownTier == 1)
+				{
+					if (owner.CountInv("KnightGownIP1Buff")) 
+					{
+						ArmorDefValue += (random(0,4) + (TruePlayerLevel * 0.125));
+						ArmorDefValueCrush += randompick(1,1,2,2,3);
+						ArmorDefValueDmgFlr += randompick(0,0,0,0,0,0,0,1,1,2,2,3,3);
+						ArmorDefValueHUD = 4 + (TruePlayerLevel * 0.125);
+					}
+					else 
+					{
+						ArmorDefValue += (random(0,1) + (TruePlayerLevel * 0.025));
+						ArmorDefValueCrush += randompick(0,0,0,0,1);
+						ArmorDefValueDmgFlr += randompick(0,0,0,0,0,0,0,0,0,0,0,0,1);
+						ArmorDefValueHUD = 1 + (TruePlayerLevel * 0.025);
+					}
+				}
+				if (KnightGownTier == 2)
+				{
+					if (owner.CountInv("KnightGownIP2Buff"))
+					{
+						ArmorDefValue += (random(4,8) + (TruePlayerLevel * 0.250));
+						ArmorDefValueCrush += randompick(2,2,3,3,4);
+						ArmorDefValueDmgFlr += randompick(0,0,0,0,0,0,1,1,2,2,3,3,4);
+						ArmorDefValueHUD = 8 + (TruePlayerLevel * 0.25);
+					}
+					else 
+					{
+						ArmorDefValue += (random(1,2) + (TruePlayerLevel * 0.050));
+						ArmorDefValueCrush += randompick(0,0,0,1,1);
+						ArmorDefValueDmgFlr += randompick(0,0,0,0,0,0,0,0,0,0,0,1,1);
+						ArmorDefValueHUD = 2 + (TruePlayerLevel * 0.05);
+					}
+				}
+				if (KnightGownTier == 3)
+				{
+					if (owner.CountInv("KnightGownIP3Buff"))
+					{
+						ArmorDefValue += (random(8,12) + (TruePlayerLevel * 0.375));
+						ArmorDefValueCrush += randompick(3,3,4,4,5);
+						ArmorDefValueDmgFlr += randompick(0,0,0,0,0,1,1,2,2,3,3,4,4);
+						ArmorDefValueHUD = 12 + (TruePlayerLevel * 0.375);
+					}
+					else
+					{
+						ArmorDefValue += (random(2,3) + (TruePlayerLevel * 0.075));
+						ArmorDefValueCrush += randompick(0,0,1,1,2);
+						ArmorDefValueDmgFlr += randompick(0,0,0,0,0,0,0,0,0,0,1,1,2);
+						ArmorDefValueHUD = 3 + (TruePlayerLevel * 0.075);
+					}
+				}
+				if (KnightGownTier >= 4)
+				{
+					if (owner.CountInv("KnightGownIP4Buff")) 
+					{
+						ArmorDefValue += (random(16,20) + (TruePlayerLevel * 0.625));
+						ArmorDefValueCrush += randompick(5,5,6,6,7);
+						ArmorDefValueDmgFlr += randompick(0,0,0,1,1,2,2,3,3,4,4,5,5);
+						ArmorDefValueHUD = 20 + (TruePlayerLevel * 0.625);
+					}
+					else
+					{
+						ArmorDefValue += (random(4,5) + (TruePlayerLevel * 0.125));
+						ArmorDefValueCrush += randompick(1,1,2,2,3);
+						ArmorDefValueDmgFlr += randompick(0,0,0,0,0,0,0,0,1,1,2,2,3);
+						ArmorDefValueHUD = 5 + (TruePlayerLevel * 0.125);
+					}
+				}
+				if (owner.CountInv("PowerGuard"))
+				{
+					ArmorDefValue *= 2;
+					ArmorDefValueCrush *= 2;
+					ArmorDefValueDmgFlr *= 2;
+					ArmorDefValueHUD *= 2;
+				}
 				
 				//*************************************
 				//*************************************
@@ -3898,7 +4002,7 @@ class PlayerStatItem : Inventory
 			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - Dashing): %.8f", DashingFactor);
 			
 			double BuffFactor = 1.00;
-			if (Owner.CountInv("PowerDouble")) BuffFactor *= 2;
+			if (Owner.CountInv("PowerGuard")) BuffFactor *= 2;
 			if (Owner.CountInv("DinahTrueIPState")) BuffFactor *= 5;
 			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility")) BuffFactor *= frandompick(1.00,1.00,1.125,1.125,1.25);
 			if (WineDefTier == 1 || WineDefTier == -1) BuffFactor *= frandompick(0.985,1.015);
@@ -4046,7 +4150,7 @@ class PlayerStatItem : Inventory
 			
 			// Buffs
 			double BuffFactor = 1.00;
-			if (Owner.CountInv("PowerDouble")) BuffFactor *= 0.5;
+			if (Owner.CountInv("PowerGuard")) BuffFactor *= 0.5;
 			if (Owner.CountInv("DinahTrueIPState")) BuffFactor *= 0.20;
 			if (berserked) BuffFactor *= frandompick(0.8,0.9,0.9,0.9,1.0);
 			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility")) BuffFactor *= frandompick(1.00,1.00,0.875,0.875,0.75);
