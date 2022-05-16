@@ -496,7 +496,9 @@ class DDPlayerPawn : PlayerPawn
 			player.mo.TickPSprites();
 			// Other Counters
 			if (player.damagecount)	player.damagecount--;
+			if (dydudebug_countdisplays && player.damagecount > 0) Console.Printf("player.damagecount: %d", player.damagecount);
 			if (player.bonuscount) player.bonuscount--;
+			if (dydudebug_countdisplays && player.bonuscount > 0) Console.Printf("player.bonuscount: %d", player.bonuscount);
 
 			if (player.hazardcount)
 			{
@@ -1803,6 +1805,12 @@ class DDPlayerPawn : PlayerPawn
 				
 				if (mod == 'Beats')
 				{
+					damage = ceil(damage * (0.10 - (TruePlayerLevel * 0.002)));
+					if (TruePlayerLevel <= 250 && damage < 1) damage = 1;
+					if (armortier == 1) damage = ceil(damage * 0.9875);
+					if (armortier == 2) damage = ceil(damage * 0.98125);
+					if (armortier == 3) damage = ceil(damage * 0.975);
+					if (armortier == 4) damage = ceil(damage * 0.9625);
 				}
 				else
 				{
@@ -1822,13 +1830,31 @@ class DDPlayerPawn : PlayerPawn
 				set1 = (0.750 - (TruePlayerLevel * 0.0150));
 				set2 = (0.875 - (TruePlayerLevel * 0.0175));
 				set3 = (1.000 - (TruePlayerLevel * 0.0200));
+				if (set1 <= 0.175) set1 = 0.175;
+				if (set2 <= 0.21875) set2 = 0.21875;
+				if (set3 <= 0.25) set3 = 0.25;
 				if (AttackingActor != null)
 				{
-					if (Cyberdemon(source) || CyberdemonNew(source)) 
+					if (Cyberdemon(source) || CyberdemonNew(source) || Annihilator(source)) 
 					{
-						set1 = (0.875 - (TruePlayerLevel * 0.0175));
-						set2 = (0.9375 - (TruePlayerLevel * 0.01875));
-						set3 = (1.0 - (TruePlayerLevel * 0.02));
+						if (RocketMonster(inflictor) || Rocket2(inflictor) || HomRocket1(inflictor))
+						{
+							set1 = (0.875 - (TruePlayerLevel * 0.0175));
+							set2 = (0.9375 - (TruePlayerLevel * 0.01875));
+							set3 = (1.0 - (TruePlayerLevel * 0.02));
+							if (set1 <= 0.21875) set1 = 0.21875;
+							if (set2 <= 0.234375) set2 = 0.234375;
+							if (set3 <= 0.25) set3 = 0.25;
+						}
+						else
+						{
+							set1 = (0.750 - (TruePlayerLevel * 0.0150));
+							set2 = (0.875 - (TruePlayerLevel * 0.0175));
+							set3 = (1.000 - (TruePlayerLevel * 0.0200));
+							if (set1 <= 0.175) set1 = 0.175;
+							if (set2 <= 0.21875) set2 = 0.21875;
+							if (set3 <= 0.25) set3 = 0.25;
+						}
 					}
 					else 
 					if (Archvile(source) || ArchvileNew(source) || Diabloist(source)) 
@@ -1836,8 +1862,12 @@ class DDPlayerPawn : PlayerPawn
 						set1 = (0.50 - (TruePlayerLevel * 0.01));
 						set2 = (0.625 - (TruePlayerLevel * 0.0125));
 						set3 = (0.75 - (TruePlayerLevel * 0.015));
+						if (set1 <= 0.125) set1 = 0.125;
+						if (set2 <= 0.15625) set2 = 0.15625;
+						if (set3 <= 0.1875) set3 = 0.1875;
 					}
 				}
+				if (dydudebug_playerdamagemobj) Console.Printf("set1: %.8f, set2: %.8f, set3: %.8f", set1, set2, set3);
 				damage = ceil(damage * frandompick(set1,set1,set2,set2,set2,set2,set2,set2,set3,set3));
 				if (TruePlayerLevel <= 100 && damage < 1) damage = 1;
 				if (armortier == 1) damage = ceil(damage * 0.9875);
@@ -2488,6 +2518,8 @@ class DDPlayerPawn : PlayerPawn
 				if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
 				if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
 			}
+			player.damagecount = damagetakefactor;
+			if (player.damagecount > 100) player.damagecount = 100;
 		}
 		
 		if (armdmg && armortier)
