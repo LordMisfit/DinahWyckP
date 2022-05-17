@@ -9,6 +9,7 @@ class PlayerStatItem : Inventory
 	const SKILL_HARD = 3;
 	const SKILL_VERY_HARD = 4;
 	
+	int MaxIPExtensions;
 	int BaseFlatDefValue, BaseFlatDefValueCrush, BaseFlatDefValueDmgFlr, BaseFlatDefValueHUD;
 	int ArmorDefValue, ArmorDefValueCrush, ArmorDefValueDmgFlr, ArmorDefValueHUD;
 	int CompatPackMode;
@@ -220,7 +221,7 @@ class PlayerStatItem : Inventory
 			let globalvars = DDGlobalVariables.Get();
 			if (globalvars)
 			{
-				if (itemtimer <= 2 && exex_deathexitaffectsstats) 
+				if (itemtimer <= 2 && exex_deathexitaffectsstats)
 				{
 					if (itemtimer == 0) ClassCheck = globalvars.ClassCheck = 0;
 					PlayerLevel = globalvars.PlayerLevel = 0;
@@ -242,6 +243,7 @@ class PlayerStatItem : Inventory
 					globalvars.MassNoRPGAdd = MassNoRPGAdd = 0;
 					globalvars.MassBonusAdd = MassBonusAdd = 0;
 					globalvars.ItemPoints = ItemPoints = 0;
+					globalvars.MaxIPExtensions = MaxIPExtensions = 0;
 					if (itemtimer == 0 && dydudebug_deathexitdebug) Console.Printf("exex_deathexitaffectsstats: YES", exex_deathexitaffectsstats);
 				}
 				else
@@ -267,6 +269,7 @@ class PlayerStatItem : Inventory
 					MassNoRPGAdd = globalvars.MassNoRPGAdd;
 					MassBonusAdd = globalvars.MassBonusAdd;
 					ItemPoints = globalvars.ItemPoints;
+					MaxIPExtensions = globalvars.MaxIPExtensions;
 					BaseStartMaxHealth = globalvars.BaseStartMaxHealth;
 					if (itemtimer == 0) 
 					{
@@ -589,7 +592,11 @@ class PlayerStatItem : Inventory
 				if (TrueGameSkill == SKILL_HARD) MaxItemPoints += (TruePlayerLevel * 0.75);
 				if (TrueGameSkill == SKILL_VERY_HARD) MaxItemPoints += (TruePlayerLevel * 0.5);
 				BaseMaxItemPoints = MaxItemPoints;
-				if (owner.CountInv("GoldRageCups")) MaxItemPoints += ((MaxItemPoints * 0.01) * owner.CountInv("GoldRageCups"));
+				if (MaxIPExtensions) 
+				{
+					if (MaxIPExtensions > 150) MaxIPExtensions = 150;
+					MaxItemPoints += ((MaxItemPoints * 0.01) * MaxIPExtensions);
+				}
 				if (MaxItemPoints > (BaseMaxItemPoints * 2.5)) MaxItemPoints = (BaseMaxItemPoints * 2.5);
 				if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
 				
@@ -1619,6 +1626,7 @@ class PlayerStatItem : Inventory
 				
 				owner.player.mo.maxhealth = MaxHealthTrue;
 				// Set Global Vars [End]
+				globalvars.MaxIPExtensions = MaxIPExtensions;
 				globalvars.ItemPoints = ItemPoints;
 				globalvars.BaseStartMaxHealth = BaseStartMaxHealth;
 				globalvars.HealthLevelAdd = HealthLevelAdd;
