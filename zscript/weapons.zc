@@ -7979,7 +7979,7 @@ class BlunderShot : EEProjectile
 	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
-		finaldamagedealt = (4 * random(2,16));
+		finaldamagedealt = (randompick(4,4,4,4,5) * random(2,16)); // 8-80
 		int rad, hei;
 		rad = 3;
 		hei = 3;
@@ -7987,36 +7987,39 @@ class BlunderShot : EEProjectile
 		{
 			if (target.CountInv("BlunderShotUpgrade") >= 3) 
 			{
-				finaldamagedealt = (4 * (random(11,16) + randompick(0,0,1,1,2,2,3))); // 44-76
+				finaldamagedealt = (randompick(4,5,5,5,5) * (random(11,16) + randompick(1,2,3))); // 44-95
 				rad = 2;
 				hei = 2;
 			}
 			else if (target.CountInv("BlunderShotUpgrade") >= 2) 
 			{
-				finaldamagedealt = (4 * (random(7,16) + randompick(0,1,2))); // 28-68
+				finaldamagedealt = (randompick(4,4,5,5,5) * (random(7,16) + randompick(0,1,2))); // 28-80
 				rad = randompick(2,2,3);
 				hei = randompick(2,2,3);
 			}
 			else if (target.CountInv("BlunderShotUpgrade") >= 1) 
 			{
-				finaldamagedealt = (4 * (random(4,16) + randompick(0,0,1))); // 16-68
+				finaldamagedealt = (randompick(4,4,4,5,5) * (random(4,16) + randompick(0,0,1))); // 16-85
 				rad = 3;
 				hei = 3;
 			}
 		}
 		if (IPAttack) 
 		{
+			double type1 = 1.1;
+			double type2 = 1.2;
+			double type3 = 1.35;
 			rad *= 0.667;
 			hei *= 0.667;
-			finaldamagedealt *= frandompick(1.025,1.025,1.025,1.025,1.025,1.025,1.025,1.025,1.025,1.05);
+			finaldamagedealt *= frandompick(type1,type1,type1,type1,type1,type1,type1,type1,type1,type2,type2,type2,type2,type3,type3);
 		}
 		if (score == 12) 
 		{
 			//Console.Printf("@!$!");
-			if (target.CountInv("BlunderShotUpgrade") >= 3) finaldamagedealt *= 2;  
-			else if (target.CountInv("BlunderShotUpgrade") >= 2) finaldamagedealt *= 1.775; 
-			else if (target.CountInv("BlunderShotUpgrade") >= 1) finaldamagedealt *= 1.625;
-			else finaldamagedealt *= 1.5;
+			if (target.CountInv("BlunderShotUpgrade") >= 3) finaldamagedealt *= 3;  
+			else if (target.CountInv("BlunderShotUpgrade") >= 2) finaldamagedealt *= 2.55; 
+			else if (target.CountInv("BlunderShotUpgrade") >= 1) finaldamagedealt *= 2.25;
+			else finaldamagedealt *= 2.0;
 		}
 		if (rad <= 1) rad = 1;
 		if (hei <= 1) hei = 1;
@@ -8072,7 +8075,7 @@ class BlunderSmokeSmall : SingleDamageRipper
 	{
 		Height 8;
 		Radius 4;
-		Damage 1;
+		DamageFunction (finaldamagedealt);
 		Speed 2;
 		Projectile;
 		+STRIFEDAMAGE
@@ -8088,6 +8091,17 @@ class BlunderSmokeSmall : SingleDamageRipper
 	{
 		basealpha = alpha;
 		super.PostBeginPlay();
+		finaldamagedealt = 1 * random(1,4);
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		if (MiscItem) 
+		{
+			finaldamagedealt += (TruePlayerLevel * 0.05);
+			finaldamagedealt *= (1.0 + (TruePlayerLevel * 0.02));
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
 	}
 	
 	States
@@ -13535,6 +13549,10 @@ class RecordShot : EEProjectile
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		double sndpitch = 1.0;
 		double sndvol = 1.0;
 		if (IPAttack) 
@@ -13582,13 +13600,16 @@ class RecordShot : EEProjectile
 			if (Stamina >= 5) finaldamagedealt *= 5.15;
 		}
 		if (IPAttack && random(1,8) <= 1) finaldamagedealt *= frandompick(1.125,1.25,1.25,1.25,1.25,1.375);
-		actor player = players[0].mo;
 		if (player.CountInv("GrimophoneUpgrade"))
 		{
 			finaldamagedealt *= (1.0 + (player.CountInv("GrimophoneUpgrade") * frandompick(0.334,0.50,0.50,0.50,0.50,0.667)));
 		}
+		if (MiscItem)
+		{
+			finaldamagedealt *= (1.0 + (TruePlayerLevel * (random(1,6) * 0.005)));
+		}
 		
-		if (dydudebug_rangedmg) Console.Printf("finaldamagedealt: %d", finaldamagedealt);
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
 	}
 	
 	void A_SetPainForcedPain(int basechance = 16, double playerlvlfactor = 0.16)
