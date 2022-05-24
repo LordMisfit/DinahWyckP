@@ -7,7 +7,7 @@ class LostSoulAnnoying : LostSoulNew
 	{
 		Tag "Annoying Lost Soul";
 		Health 125;
-		Damage 4;
+		DamageFunction (finaldamagedealt);
 		Speed 10;
 		Meleerange 80;
 		Mass 75;
@@ -43,7 +43,28 @@ class LostSoulAnnoying : LostSoulNew
 		+MISSILEEVENMORE;
 		-MISSILEMORE;
 	}
-
+	
+	override void Tick()
+	{
+		int baserand = random(1,8);
+		int damage = 4 * baserand;
+		if (exex_monsterlevelenabledflags)
+		{
+			damage += (CountInv("MonsterLevel") * (0.020 * baserand));
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+			{
+				damage += (1.334 * baserand) + (CountInv("MonsterLevel") * (0.00667 * baserand));
+			}
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+			{
+				damage += (0.667 * baserand) + (CountInv("MonsterLevel") * (0.00334 * baserand));
+			}
+			damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+		}
+		finaldamagedealt = damage;
+		super.Tick();
+	}
+	
 	states
 	{
 		Spawn:
@@ -186,7 +207,27 @@ class Diabloist : EECreature
 			DIAB I 3 BRIGHT
 			{
 				A_FaceTarget();
-				A_VileAttack("vile/stop",40,140,140,1.5,"Fire",VAF_DMGTYPEAPPLYTODIRECT);
+				int basedmg = 40;
+				int aoedmg = 140;
+				if (exex_monsterlevelenabledflags)
+				{
+					basedmg += (CountInv("MonsterLevel") * 0.02);
+					aoedmg += (CountInv("MonsterLevel") * 0.07);
+					if (CountInv("MonsterLevel") >= 30)
+					{
+						basedmg += (random(7,9) * 5) + (CountInv("MonsterLevel") * frandom(0.0175,0.0225));
+						aoedmg += (random(25,28) * 5) + (CountInv("MonsterLevel") * frandom(0.0625,0.07));
+					}
+					if (CountInv("MonsterLevel") >= 60)
+					{
+						basedmg += (random(9,12) * 5) + (CountInv("MonsterLevel") * frandom(0.0225,0.03));
+						aoedmg += (random(29,32) * 5) + (CountInv("MonsterLevel") * frandom(0.0725,0.08));
+					}
+					basedmg *= (1.0 + (CountInv("MonsterLevel") * frandom(0.01,0.015)));
+					aoedmg *= (1.0 + (CountInv("MonsterLevel") * frandom(0.01,0.015)));
+				}
+
+				A_VileAttack("vile/stop",basedmg,aoedmg,140,1.5,"Fire",VAF_DMGTYPEAPPLYTODIRECT);
 			}
 			DIAB G 0 BRIGHT A_MonsterRefire(8,"See");
 			DIAB P 0 BRIGHT A_Jump(48,"Missile1");
@@ -492,7 +533,29 @@ class HellClericDVDS : EECreature
 				string atktype = "HellClericBall";
 				if (user_attacktype == 1) atktype = "HellClericDarkBall";
 				
-				A_CustomComboAttack(atktype, user_tempvar1, (7+(12*(random(6,12)))/2), "imp/melee", "Melee", true);
+				int baserand = random(6,12);
+				int dmg = 7;
+				dmg += (12 * baserand);
+				dmg *= 0.5;
+				if (exex_monsterlevelenabledflags)
+				{
+					dmg = (7 + (CountInv("MonsterLevel") * 0.035));
+					dmg += ((12 * baserand) + (CountInv("MonsterLevel") * (0.06 * baserand)));
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+					{
+						dmg += (2.334 + (CountInv("MonsterLevel") * 0.001167));
+						dmg += ((4 * baserand) + (CountInv("MonsterLevel") * (0.02 * baserand)));
+					}
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+					{
+						dmg += (1.167 + (CountInv("MonsterLevel") * 0.000584));
+						dmg += ((2 * baserand) + (CountInv("MonsterLevel") * (0.01 * baserand)));
+					}
+					dmg *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+				}
+				dmg *= 0.5;
+				
+				A_CustomComboAttack(atktype, user_tempvar1, dmg, "imp/melee", "Melee", true);
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
 				{
 					A_SpawnProjectile(atktype,user_tempvar1,0,(user_tempvar2*1));

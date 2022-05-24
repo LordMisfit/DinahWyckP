@@ -27,6 +27,35 @@ class ZombiemanNew : EECreature
 		DropItem "Clip";
 	}
 	
+	void A_PosAttack()
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			double ang = angle;
+			double slope = AimLineAttack(ang, MISSILERANGE);
+			A_StartSound("grunt/attack", CHAN_WEAPON);
+			ang  += Random2[PosAttack]() * (22.5/256);
+
+			int baserand = random(1,5);
+			int damage = (3 * baserand);
+			if (exex_monsterlevelenabledflags)
+			{
+				damage += (CountInv("MonsterLevel") * (0.015 * baserand));
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+				{
+					damage += (1 * baserand) + (CountInv("MonsterLevel") * (0.005 * baserand));
+				}
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+				{
+					damage += (0.5 * baserand) + (CountInv("MonsterLevel") * (0.0025 * baserand));
+				}
+				damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+			}
+			LineAttack(ang, MISSILERANGE, slope, damage, "Hitscan", "Bulletpuff");
+		}
+	}
+	
 	States
 	{
 		Spawn:
@@ -37,7 +66,10 @@ class ZombiemanNew : EECreature
 			Loop;
 		Missile:
 			POSS E 10 A_FaceTarget();
-			POSS F 8 A_PosAttack();
+			POSS F 8 
+			{
+				A_PosAttack();
+			}
 			POSS E 8;
 			Goto See;
 		Pain:
@@ -94,6 +126,47 @@ class ShotgunGuyNew : EECreature
 		Obituary "$OB_SHOTGUY";
 		DropItem "Shotgun";
 	}
+
+	private void A_SPosAttackInternal()
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			double bangle = angle;
+			double slope = AimLineAttack(bangle, MISSILERANGE);
+		
+			for (int i = 0; i < 3; i++)
+			{
+				double ang = bangle + Random2[SPosAttack]() * (22.5/256);
+
+				int baserand = random(1,5);
+				int damage = (3 * baserand);
+				if (exex_monsterlevelenabledflags)
+				{
+					damage += (CountInv("MonsterLevel") * (0.015 * baserand));
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+					{
+						damage += (1 * baserand) + (CountInv("MonsterLevel") * (0.005 * baserand));
+					}
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+					{
+						damage += (0.5 * baserand) + (CountInv("MonsterLevel") * (0.0025 * baserand));
+					}
+					damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+				}
+				LineAttack(ang, MISSILERANGE, slope, damage, "Hitscan", "Bulletpuff");
+			}
+		}
+	}
+	
+	void A_SPosAttackUseAtkSound()
+	{
+		if (target)
+		{
+			A_StartSound(AttackSound, CHAN_WEAPON);
+			A_SPosAttackInternal();
+		}
+	}
 	
 	States
 	{
@@ -105,7 +178,10 @@ class ShotgunGuyNew : EECreature
 			Loop;
 		Missile:
 			SPOS E 10 A_FaceTarget();
-			SPOS F 10 BRIGHT A_SposAttackUseAtkSound();
+			SPOS F 10 BRIGHT 
+			{
+				A_SposAttackUseAtkSound();
+			}
 			SPOS E 10;
 			Goto See;
 		Pain:
@@ -161,6 +237,51 @@ class ChaingunGuyNew : EECreature
 		AttackSound "chainguy/attack";
 		Obituary "$OB_CHAINGUY";
 		Dropitem "Chaingun";
+	}
+	
+	void A_CPosAttack()
+	{
+		if (target)
+		{
+			if (bStealth) visdir = 1;
+			A_StartSound(AttackSound, CHAN_WEAPON);
+			A_FaceTarget();
+			double slope = AimLineAttack(angle, MISSILERANGE);
+			double ang = angle + Random2[CPosAttack]() * (22.5/256);
+
+			int baserand = random(1,5);
+			int damage = (3 * baserand);
+			if (exex_monsterlevelenabledflags)
+			{
+				damage += (CountInv("MonsterLevel") * (0.015 * baserand));
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+				{
+					damage += (1 * baserand) + (CountInv("MonsterLevel") * (0.005 * baserand));
+				}
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+				{
+					damage += (0.5 * baserand) + (CountInv("MonsterLevel") * (0.0025 * baserand));
+				}
+				damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+			}
+			LineAttack(ang, MISSILERANGE, slope, damage, "Hitscan", "Bulletpuff");
+		}
+	}
+	
+	void A_CPosRefire()
+	{
+		// keep firing unless target got out of sight
+		A_FaceTarget();
+		if (Random[CPosRefire](0, 255) >= 40)
+		{
+			if (!target
+				|| HitFriend()
+				|| target.health <= 0
+				|| !CheckSight(target, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES))
+			{
+				SetState(SeeState);
+			}
+		}
 	}
 	
 	States
@@ -228,6 +349,35 @@ class WolfensteinSSNew : EECreature replaces WolfensteinSS
 		AttackSound "wolfss/attack";
 		Obituary "$OB_WOLFSS";
 		Dropitem "Clip";
+	}
+	
+	void A_CPosAttack()
+	{
+		if (target)
+		{
+			if (bStealth) visdir = 1;
+			A_StartSound(AttackSound, CHAN_WEAPON);
+			A_FaceTarget();
+			double slope = AimLineAttack(angle, MISSILERANGE);
+			double ang = angle + Random2[CPosAttack]() * (22.5/256);
+
+			int baserand = random(1,5);
+			int damage = (3 * baserand);
+			if (exex_monsterlevelenabledflags)
+			{
+				damage += (CountInv("MonsterLevel") * (0.015 * baserand));
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+				{
+					damage += (1 * baserand) + (CountInv("MonsterLevel") * (0.005 * baserand));
+				}
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+				{
+					damage += (0.5 * baserand) + (CountInv("MonsterLevel") * (0.0025 * baserand));
+				}
+				damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+			}
+			LineAttack(ang, MISSILERANGE, slope, damage, "Hitscan", "Bulletpuff");
+		}
 	}
 	
 	States
@@ -300,6 +450,40 @@ class DoomImpNew : EECreature
 		Obituary "$OB_IMP";
 	}
 	
+	void A_TroopAttack()
+	{
+		let targ = target;
+		if (targ)
+		{
+			if (CheckMeleeRange())
+			{
+				int baserand = random(1,8);
+				int damage = 3 * baserand;
+				if (exex_monsterlevelenabledflags)
+				{
+					damage += (CountInv("MonsterLevel") * (0.015 * baserand));
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+					{
+						damage += (1 * baserand) + (CountInv("MonsterLevel") * (0.005 * baserand));
+					}
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+					{
+						damage += (0.5 * baserand) + (CountInv("MonsterLevel") * (0.0025 * baserand));
+					}
+					damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+				}
+				A_StartSound ("imp/melee", CHAN_WEAPON);
+				int newdam = targ.DamageMobj (self, self, damage, "Melee");
+				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
+			}
+			else
+			{
+				// launch a missile
+				SpawnMissile (targ, "DoomImpBall");
+			}
+		}
+	}
+	
 	States
 	{
 		Spawn:
@@ -311,7 +495,10 @@ class DoomImpNew : EECreature
 		Melee:
 		Missile:
 			TROO EF 8 A_FaceTarget();
-			TROO G 6 A_TroopAttack();
+			TROO G 6 
+			{
+				A_TroopAttack();
+			}
 			Goto See;
 		Pain:
 			TROO H 2;
@@ -379,6 +566,32 @@ class DemonNew : EECreature
 		Species "Pinky";
 		+DONTHARMCLASS;
 		+DONTHARMSPECIES;
+	}
+	
+	void A_SargAttack()
+	{
+		let targ = target;
+		if (targ && CheckMeleeRange())
+		{
+			int baserand = random(1,10);
+			int damage = 4 * baserand;
+			if (exex_monsterlevelenabledflags)
+			{
+				damage += (CountInv("MonsterLevel") * (0.02 * baserand));
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+				{
+					damage += (1.34 * baserand) + (CountInv("MonsterLevel") * (0.00667 * baserand));
+				}
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+				{
+					damage += (0.67 * baserand) + (CountInv("MonsterLevel") * (0.00334 * baserand));
+				}
+				damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+			}
+
+			int newdam = targ.DamageMobj (self, self, damage, "Melee");
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
+		}
 	}
 	
 	States
@@ -569,6 +782,33 @@ class NightmareSpectre : DemonNew
 		} 
 	}
 	
+	
+	void A_SargAttack()
+	{
+		let targ = target;
+		if (targ && CheckMeleeRange())
+		{
+			int baserand = random(1,10);
+			int damage = random(4,5) * baserand;
+			if (exex_monsterlevelenabledflags)
+			{
+				damage += (CountInv("MonsterLevel") * (frandom(0.02,0.025) * baserand));
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+				{
+					damage += (frandom(1.34,1.67) * baserand) + (CountInv("MonsterLevel") * (frandom(0.00667,0.08334) * baserand));
+				}
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+				{
+					damage += (frandom(0.67,0.834) * baserand) + (CountInv("MonsterLevel") * (frandom(0.00334,0.04167) * baserand));
+				}
+				damage *= (1.0 + (CountInv("MonsterLevel") * frandom(0.005,0.0625)));
+			}
+
+			int newdam = targ.DamageMobj (self, self, damage, "Melee");
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
+		}
+	}
+
 	override void Tick()
 	{
 		A_NightmarePhase();
@@ -707,7 +947,7 @@ class LostSoulNew : EECreature
 		Height 56;
 		Mass 50;
 		Speed 8;
-		Damage 3;
+		DamageFunction (finaldamagedealt);
 		PainChance 256;
 		DamageFactor "Fire", 0.334;
 		Painchance "Fire", 85;
@@ -746,6 +986,27 @@ class LostSoulNew : EECreature
 		DeathSound "skull/death";
 		ActiveSound "skull/active";
 		Obituary "$OB_SKULL";
+	}
+	
+	override void Tick()
+	{
+		int baserand = random(1,8);
+		int damage = 3 * baserand;
+		if (exex_monsterlevelenabledflags)
+		{
+			damage += (CountInv("MonsterLevel") * (0.015 * baserand));
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+			{
+				damage += (1 * baserand) + (CountInv("MonsterLevel") * (0.005 * baserand));
+			}
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+			{
+				damage += (0.5 * baserand) + (CountInv("MonsterLevel") * (0.0025 * baserand));
+			}
+			damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+		}
+		finaldamagedealt = damage;
+		super.Tick();
 	}
 	
 	States
@@ -901,7 +1162,23 @@ class CacodemonNew : EECreature
 				
 				user_tempvar1 = 32; // attack height
 				user_tempvar2 = 15; // base angle
-				A_CustomComboAttack("CacodemonBall", user_tempvar1, (random(1,10)*6), "caco/melee");
+				int baserand = random(1,10);
+				int mldmg = 6 * baserand;
+				if (exex_monsterlevelenabledflags)
+				{
+					mldmg += (CountInv("MonsterLevel") * (0.03 * baserand));
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+					{
+						mldmg += (2 * baserand) + (CountInv("MonsterLevel") * (0.01 * baserand));
+					}
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+					{
+						mldmg += (1 * baserand) + (CountInv("MonsterLevel") * (0.005 * baserand));
+					}
+					mldmg *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+				}
+				
+				A_CustomComboAttack("CacodemonBall", user_tempvar1, mldmg, "caco/melee");
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 45)
 				{
 					A_SpawnProjectile("CacodemonBall",user_tempvar1,0,(user_tempvar2*-1));
@@ -1132,7 +1409,23 @@ class PainElementalNew : EECreature
 			{
 				if (CheckMeleeRange()) 
 				{ 
-					A_CustomMeleeAttack(10*random(1,6),"caco/melee","none","Melee",true);
+					int baserand = random(1,10);
+					int mldmg = 6 * baserand;
+					if (exex_monsterlevelenabledflags)
+					{
+						mldmg += (CountInv("MonsterLevel") * (0.03 * baserand));
+						if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+						{
+							mldmg += (2 * baserand) + (CountInv("MonsterLevel") * (0.01 * baserand));
+						}
+						if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+						{
+							mldmg += (1 * baserand) + (CountInv("MonsterLevel") * (0.005 * baserand));
+						}
+						mldmg *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+					}
+					
+					A_CustomMeleeAttack(mldmg,"caco/melee","none","Melee",true);
 				}
 				else
 				{
@@ -1294,6 +1587,36 @@ class RevenantNew : EECreature
 		MeleeSound "skeleton/melee";
 		HitObituary "%o tried to play a game of punch-out with a Revenant.";
 		Obituary "$OB_UNDEAD";
+	}
+	
+	void A_SkelFist()
+	{
+		let targ = target;
+		if (targ == null) return;
+		A_FaceTarget();
+		
+		if (CheckMeleeRange ())
+		{
+			int baserand = random(1,10);
+			int damage = 6 * baserand;
+			if (exex_monsterlevelenabledflags)
+			{
+				damage += (CountInv("MonsterLevel") * (0.03 * baserand));
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+				{
+					damage += (2 * baserand) + (CountInv("MonsterLevel") * (0.01 * baserand));
+				}
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+				{
+					damage += (1 * baserand) + (CountInv("MonsterLevel") * (0.005 * baserand));
+				}
+				damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+			}
+			
+			A_StartSound("skeleton/melee", CHAN_WEAPON);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
+		}
 	}
 	
 	States
@@ -1564,6 +1887,41 @@ class HellKnightNew : EECreature
 		+DONTHARMSPECIES
 	}
 	
+	void A_BruisAttack()
+	{
+		let targ = target;
+		if (targ)
+		{
+			if (CheckMeleeRange())
+			{
+				int baserand = random(1,8);
+				int damage = (10 * baserand);
+				if (exex_monsterlevelenabledflags)
+				{
+					damage += (CountInv("MonsterLevel") * (0.05 * baserand));
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+					{
+						damage += (3.34 * baserand) + (CountInv("MonsterLevel") * (0.01667 * baserand));
+					}
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+					{
+						damage += (1.67 * baserand) + (CountInv("MonsterLevel") * (0.008334 * baserand));
+					}
+					damage *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+				}
+
+				A_StartSound ("baron/melee", CHAN_WEAPON);
+				int newdam = target.DamageMobj (self, self, damage, "Melee");
+				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
+			}
+			else
+			{
+				// launch a missile
+				SpawnMissile (target, "BaronBall");
+			}
+		}
+	}
+	
 	States
 	{
 		Spawn:
@@ -1632,6 +1990,41 @@ class BaronOfHellNew : EECreature
 		ActiveSound "baron/active";
 		Obituary "$OB_BARON";
 		HitObituary "$OB_BARONHIT";
+	}
+	
+	void A_BruisAttack()
+	{
+		let targ = target;
+		if (targ)
+		{
+			if (CheckMeleeRange())
+			{
+				int baserand = random(1,8);
+				int damage = (10 * baserand);
+				if (exex_monsterlevelenabledflags)
+				{
+					damage += (CountInv("MonsterLevel") * (0.1 * baserand));
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+					{
+						damage += (5.0 * baserand) + (CountInv("MonsterLevel") * (0.05 * baserand));
+					}
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+					{
+						damage += (2.5 * baserand) + (CountInv("MonsterLevel") * (0.025 * baserand));
+					}
+					damage *= (1.0 + (CountInv("MonsterLevel") * frandom(0.005,0.0075)));
+				}
+
+				A_StartSound ("baron/melee", CHAN_WEAPON);
+				int newdam = target.DamageMobj (self, self, damage, "Melee");
+				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
+			}
+			else
+			{
+				// launch a missile
+				SpawnMissile (target, "BaronBall");
+			}
+		}
 	}
 	
 	States
@@ -1724,7 +2117,30 @@ class ArchvileNew : EECreature
 			VILE G 10 BRIGHT A_FaceTarget();
 			VILE H 8 BRIGHT A_VileTarget();
 			VILE IJKLMN 8 BRIGHT A_FaceTarget();
-			VILE O 8 BRIGHT A_VileAttack("vile/stop",20,70,20,1.0,"Fire",VAF_DMGTYPEAPPLYTODIRECT);
+			VILE O 8 BRIGHT 
+			{
+				int basedmg = 20;
+				int aoedmg = 70;
+				if (exex_monsterlevelenabledflags)
+				{
+					basedmg += (CountInv("MonsterLevel") * 0.01);
+					aoedmg += (CountInv("MonsterLevel") * 0.035);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+					{
+						basedmg += (random(3,5) * 5) + (CountInv("MonsterLevel") * frandom(0.0075,0.0125));
+						aoedmg += (random(11,14) * 5) + (CountInv("MonsterLevel") * frandom(0.0275,0.035));
+					}
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+					{
+						basedmg += (random(4,6) * 5) + (CountInv("MonsterLevel") * frandom(0.01,0.015));
+						aoedmg += (random(13,16) * 5) + (CountInv("MonsterLevel") * frandom(0.0325,0.04));
+					}
+					basedmg *= (1.0 + (CountInv("MonsterLevel") * frandom(0.0075,0.0125)));
+					aoedmg *= (1.0 + (CountInv("MonsterLevel") * frandom(0.0075,0.0125)));
+				}
+				
+				A_VileAttack("vile/stop",basedmg,aoedmg,70,1.0,"Fire",VAF_DMGTYPEAPPLYTODIRECT);
+			}
 			VILE P 20 BRIGHT;
 			Goto See;
 		Heal:
