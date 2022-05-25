@@ -348,7 +348,11 @@ class DTracer : EEProjectile
 			loop;
 		Death:
 			FTRA K 4 Bright;
-			FTRA L 4 Bright A_Explode(64,64,0);
+			FTRA L 4 Bright 
+			{
+				int dmg = A_CalcDamageFormula(64,1,0.005,0.3334,0.1667,0.005);
+				A_Explode(dmg,64,0);
+			}
 			FTRA MNO 3 Bright;
 			stop;
 	}
@@ -356,6 +360,7 @@ class DTracer : EEProjectile
 
 class DTracerPuff : EEProjectile
 {
+	int etimer;
 	default
 	{
 		Tag "Diabloist Tracer";
@@ -372,40 +377,31 @@ class DTracerPuff : EEProjectile
 		Species "Diabloist";
 	}
 	
+	void A_TracerExp(int basedmg = 4, int basemult = 1, int baserad = 16, int basefullrad = 8)
+	{
+		int dmg = A_CalcDamageFormula(basedmg,basemult,0.005,0.3334,0.1667,0.005);
+		A_Explode(dmg,baserad,0,0,basefullrad);
+	}
+
 	States
 	{
 		Spawn:
 			FTRA A 0;
-			"####" A 1 Bright A_Explode(4,8,0);
-			"####" A 1 Bright;
-			"####" A 1 Bright;
-			"####" B 1 Bright A_Explode(4,8,0);
-			"####" B 1 Bright;
-			"####" B 1 Bright;
-			"####" C 1 Bright A_Explode(4,8,0);
-			"####" C 1 Bright;
-			"####" C 1 Bright;
-			"####" D 1 Bright A_Explode(4,8,0);
-			"####" D 1 Bright;
-			"####" D 1 Bright;
-			"####" E 1 Bright A_Explode(4,8,0);
-			"####" E 1 Bright;
-			"####" E 1 Bright;
-			"####" F 1 Bright A_Explode(4,8,0);
-			"####" F 1 Bright;
-			"####" F 1 Bright;
-			"####" G 1 Bright A_Explode(4,8,0);
-			"####" G 1 Bright;
-			"####" G 1 Bright;
-			"####" H 1 Bright A_Explode(4,8,0);
-			"####" H 1 Bright;
-			"####" H 1 Bright;
-			"####" I 1 Bright A_Explode(4,8,0);
-			"####" I 1 Bright;
-			"####" I 1 Bright;
-			"####" J 1 Bright A_Explode(4,8,0);
-			"####" J 1 Bright;
-			"####" J 1 Bright;
+			"####" AAABBBCCCDDDEEEFFFGGGHHHIIIJJJ 1 Bright 
+			{
+				int base = 3;
+				if (target)
+				{
+					if (target.CountInv("MonsterLevel") > 30) base = 2;
+					if (target.CountInv("MonsterLevel") > 60) base = 1;
+				}
+				if (etimer <= 0) 
+				{
+					A_TracerExp(4,1,16,8);
+					etimer += base;
+				}
+				etimer--;
+			}
 			stop;
 	}
 }
@@ -446,37 +442,44 @@ class DFire : EEProjectile
 			HLFR A 2 Bright
 			{
 				A_StartFire();
-				A_Explode(4,32,0);
+				int dmg = A_CalcDamageFormula(4,1,0.015,0.3334,0.1667,0.01);
+				A_Explode(dmg,32,0);
 			}
 			HLFR BABCB 2 Bright
 			{
 				A_Fire();
-				A_Explode(4,32,0);
+				int dmg = A_CalcDamageFormula(4,1,0.015,0.3334,0.1667,0.01);
+				A_Explode(dmg,32,0);
 			}
 			HLFR CBCDCDCDEDED 2 Bright
 			{
 				A_Fire();
-				A_Explode(5,32,0);
+				int dmg = A_CalcDamageFormula(5,1,0.015,0.3334,0.1667,0.01);
+				A_Explode(dmg,32,0);
 			}
 			HLFR E 2 Bright
 			{
 				A_FireCrackle();
-				A_Explode(4,32,0);
+				int dmg = A_CalcDamageFormula(4,1,0.015,0.3334,0.1667,0.01);
+				A_Explode(dmg,32,0);
 			}
 			HLFR FEF 2 Bright
 			{
 				A_Fire();
-				A_Explode(3,32,0);
+				int dmg = A_CalcDamageFormula(3,1,0.015,0.3334,0.1667,0.01);
+				A_Explode(dmg,32,0);
 			}
 			HLFR EFG 2 Bright
 			{
 				A_Fire();
-				A_Explode(2,32,0);
+				int dmg = A_CalcDamageFormula(2,1,0.015,0.3334,0.1667,0.01);
+				A_Explode(dmg,32,0);
 			}
 			HLFR HGHGH 2 Bright
 			{
 				A_Fire();
-				A_Explode(1,32,0);
+				int dmg = A_CalcDamageFormula(1,1,0.015,0.3334,0.1667,0.01);
+				A_Explode(dmg,32,0);
 			}
 			stop;
 	}
@@ -1502,7 +1505,7 @@ class BruiserBall : EEProjectile
 		Radius 16;
 		Height 16;
 		Speed 18;
-		DamageFunction (16 * random(1,8));
+		DamageFunction (finaldamagedealt);
 		Projectile;
 		+RANDOMIZE;
 		RenderStyle "Add";
@@ -1511,6 +1514,18 @@ class BruiserBall : EEProjectile
 		DeathSound "imp/shotx";
 		Decal "Scorch";
 		DamageType "Fire";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(16,random(1,8),0.015,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(16,random(1,8),0.015,0.3334,0.1667,0.01);
 	}
 	
 	States
@@ -1532,7 +1547,7 @@ class BruiserBall2 : EEProjectile
 		Radius 8;
 		Height 8;
 		Speed 10;
-		DamageFunction (8 * random(1,8));
+		DamageFunction (finaldamagedealt);
 		Projectile;
 		+RANDOMIZE;
 		RenderStyle "Add";
@@ -1541,6 +1556,18 @@ class BruiserBall2 : EEProjectile
 		DeathSound "imp/shotx";
 		Decal "BaronScorch";
 		DamageType "Fire";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(8,random(1,8),0.015,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(8,random(1,8),0.015,0.3334,0.1667,0.01);
 	}
 	
 	States
@@ -1592,7 +1619,7 @@ class BruiserFire : EEProjectile
 		Radius 1;
 		Height 1;
 		Speed 0;
-		DamageFunction (20 * random(1,8));
+		DamageFunction (finaldamagedealt);
 		PROJECTILE;
 		RENDERSTYLE "Add";
 		ALPHA 0.9;
@@ -1602,11 +1629,27 @@ class BruiserFire : EEProjectile
 		SeeSound "weapons/rocklx";
 	}
 	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(20,random(1,8),0.015,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(20,random(1,8),0.015,0.3334,0.1667,0.01);
+	}
+	
 	States
 	{
 		Spawn:
 			XXBF AB 3 Bright;
-			XXBF C 3 Bright A_Explode(48,128,0,0,32, damagetype:"Fire");
+			XXBF C 3 Bright 
+			{
+				int dmg = A_CalcDamageFormula(48,1,0.015,0.3334,0.1667,0.01);
+				A_Explode(dmg,128,0,0,32, damagetype:"Fire");
+			}
 			XXBF DEFGHIJKLMNOPQRST 3 Bright;
 			Stop;
 	}
@@ -1646,7 +1689,11 @@ class RocketMonster : RocketBase
 				A_Quake(1, 4, 0, 512, "nosound/silent");
 				A_Quake(4, 4, 0, 256, "nosound/silent");
 			}
-			MISL B 8 Bright A_Explode(128,128,XF_HURTSOURCE,false,0,0,10,"BulletPuff","Explosive");
+			MISL B 8 Bright 
+			{
+				int dmg = A_CalcDamageFormula(128,1,0.005,0.3334,0.1667,0.0125);
+				A_Explode(dmg,128,XF_HURTSOURCE,false,0,0,10,"BulletPuff","Explosive");
+			}
 			MISL C 6 Bright;
 			MISL D 4 Bright;
 			Stop;
@@ -1697,7 +1744,9 @@ class Rocket2 : EEProjectile
 				A_StartSound("weapons/rocklx",CHAN_7);
 				A_Quake(1, 4, 0, 512, "nosound/silent");
 				A_Quake(4, 4, 0, 256, "nosound/silent");
-				A_Explode(128,128,XF_HURTSOURCE,false,0,0,10,"BulletPuff","Explosive");
+
+				int dmg = A_CalcDamageFormula(128,1,0.005,0.3334,0.1667,0.0125);
+				A_Explode(dmg,128,XF_HURTSOURCE,false,0,0,10,"BulletPuff","Explosive");
 			}
 			MISL C 6 bright;
 			MISL D 4 bright;
@@ -1752,7 +1801,11 @@ class HomRocket1 : EEProjectile
 				A_Quake(3, 4, 0, 128, "nosound/silent");
 			}
 			BAL3 C 0 Bright A_SetTranslucent (0.67,1);
-			BAL3 C 8 Bright A_Explode(64,96,XF_HURTSOURCE,false,0,0,10,"BulletPuff","Explosive");
+			BAL3 C 8 Bright
+			{
+				int dmg = A_CalcDamageFormula(96,1,0.005,0.3334,0.1667,0.0125);
+				A_Explode(dmg,96,XF_HURTSOURCE,false,0,0,10,"BulletPuff","Explosive");
+			}
 			BAL3 DE 5 Bright;
 			stop;
 	}
@@ -2037,7 +2090,7 @@ class BaronBallNew : EEProjectile replaces BaronBall
 		DeathSound "baron/shotx";
 		Decal "BaronScorch";
 	}
-
+	
 	override void PostBeginPlay()
 	{
 		EEProjectile.PostBeginPlay();
