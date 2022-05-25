@@ -5,6 +5,8 @@ class EEBaseZSC : Actor abstract
 	mixin CollisionChecker;
 	mixin InvWeaponShare;
 	
+	int projprevdmg;
+	int monsprevdmg;
 	// General
 	const SKILL_VERY_EASY = 0;
 	const SKILL_EASY = 1;
@@ -432,7 +434,15 @@ class EEProjectile : EEBaseZSC abstract
 			}
 			damage *= (1.0 + (TargLevel * levelfactor));
 			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EEProjectile] (\c[ice]%s of %s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d [gametic: %d]", GetClassName(), target.GetClassName(), damage, basedmg, baserand, gametic);
+			projprevdmg = damage;
 		}
+		else
+		{
+			if (damage != 0) damage = projprevdmg;
+			if (damage == 0) damage = (basedmg * baserand);
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EEProjectile] (\c[ice]%s\c[fire]): %d\c-, projprevdmg: %d, [gametic: %d]", GetClassName(), damage, projprevdmg, gametic);
+		}
+		
 		return damage;
 	}
 
@@ -460,6 +470,13 @@ class EEProjectile : EEBaseZSC abstract
 			}
 			damage *= (1.0 + (TargLevel * levelfactor));
 			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EEProjectile] (\c[ice]%s of %s\c[fire]): %d\c- [gametic: %d]", GetClassName(), target.GetClassName(), damage, gametic);
+			projprevdmg = damage;
+		}
+		else
+		{
+			if (damage != 0) damage = projprevdmg;
+			if (damage == 0) damage = basedmg;
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EEProjectile] (\c[ice]%s\c[fire]): %d [%d]\c- [gametic: %d]", GetClassName(), damage, projprevdmg, gametic);
 		}
 		return damage;
 	}
@@ -1667,6 +1684,32 @@ class EEFireworksProj : EEProjectile
 	
 	double A_CalcTrueExpDmg(double basedmg, double basemul = 0.02, double tier1 = 0.5, double tier2 = 0.5, double tier3 = 0.5, double tier4 = 0.5)
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (CherryBombShot(self))
+		{
+			if (player.CountInv("CBombUpgrade"))
+			{
+				if (player.CountInv("CBombUpgrade") == 1) 
+				{
+					basedmg *= 1.75;
+					basemul *= 1.75;
+					tier1 *= 1.75;
+					tier2 *= 1.75;
+					tier3 *= 1.75;
+					tier4 *= 1.75;
+				}
+				if (player.CountInv("CBombUpgrade") >= 2) 
+				{
+					basedmg *= 3.25;
+					basemul *= 3.25;
+					tier1 *= 3.25;
+					tier2 *= 3.25;
+					tier3 *= 3.25;
+					tier4 *= 3.25;
+				}
+			}
+		}
 		if (TruePlayerLevel) basedmg *= (1.0 + (TruePlayerLevel * basemul));
 		if (TruePlayerLevel > 25) basedmg *= (1.0 + ((TruePlayerLevel - 25) * (basemul * tier1)));
 		if (TruePlayerLevel > 50) basedmg *= (1.0 + ((TruePlayerLevel - 50) * (basemul * tier2)));
@@ -2539,6 +2582,7 @@ class EECreature : EEBaseZSC abstract
 			}
 			damage *= (1.0 + (CurrLevel * levelfactor));
 			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EECreature] (\c[ice]%s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d [gametic: %d]", GetClassName(), damage, basedmg, baserand, gametic);
+			monsprevdmg = damage;
 		}
 		return damage;
 	}
@@ -2565,6 +2609,7 @@ class EECreature : EEBaseZSC abstract
 				damage += basedmg3 + (CurrLevel * (basedmg3 * factor3));
 			}
 			damage *= (1.0 + (CurrLevel * levelfactor));
+			monsprevdmg = damage;
 			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EECreature] (\c[ice]%s\c[fire]): %d\c- [gametic: %d]", GetClassName(), damage, gametic);
 		}
 		return damage;

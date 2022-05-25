@@ -18,7 +18,7 @@ class MusicBall : BaseMusicAtk
 		Radius 8;
 		Height 6;
 		Speed 14;
-		Damage 2;
+		DamageFunction (finaldamagedealt);
 		+SEEKERMISSILE
 		+NOEXTREMEDEATH
 		+ADDITIVEPOISONDURATION
@@ -30,8 +30,19 @@ class MusicBall : BaseMusicAtk
 		DeathSound "virtuoso/musichit";
 	}
 	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(2,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(32,0.005,5,0.334,2,0.1667,0.005);
+	}
+	
 	override void Tick()
 	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(2,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(32,0.005,5,0.334,2,0.1667,0.005);
+
 		seekintensity = 7;
 		seekintensity2 = 7;
 		if (target)
@@ -44,7 +55,6 @@ class MusicBall : BaseMusicAtk
 		}
 		if (seekintensity > 15) seekintensity = 15;
 		if (seekintensity2 > seekintensity) seekintensity2 = seekintensity;
-		super.Tick();
 	}
 	
 	States
@@ -73,7 +83,7 @@ class MusicBall2 : BaseMusicAtk
 		Radius 8;
 		Height 6;
 		Speed 15;
-		Damage 3;
+		DamageFunction (finaldamagedealt);
 		+SEEKERMISSILE
 		+NOEXTREMEDEATH
 		+ADDITIVEPOISONDURATION
@@ -85,8 +95,20 @@ class MusicBall2 : BaseMusicAtk
 		DeathSound "virtuoso/musichit";
 	}
 	
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(64,0.005,5,0.334,2,0.1667,0.005);
+	}
+	
 	override void Tick()
 	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(64,0.005,5,0.334,2,0.1667,0.005);
+
 		seekintensity = frandom(3,4);
 		seekintensity2 = frandom(3,4);
 		if (target)
@@ -99,7 +121,6 @@ class MusicBall2 : BaseMusicAtk
 		}
 		if (seekintensity > 22.5) seekintensity = 22.5;
 		if (seekintensity2 > seekintensity) seekintensity2 = seekintensity;
-		super.Tick();
 	}
 	
 	States
@@ -1186,10 +1207,55 @@ class FlyingBalrogShot2 : EEProjectile // RevenantTracerNew
 		finaldamagedealt = A_CalcDamageFormula(15,random(1,8),0.005,0.3334,0.1667,0.015);
 	}
 	
+	
+	void A_Tracer(double tang = 12.65625)
+	{
+		// killough 1/18/98: this is why some missiles do not have smoke
+		// and some do. Also, internal demos start at random gametics, thus
+		// the bug in which revenants cause internal demos to go out of sync.
+
+		if (level.maptime & 3)	return;
+	
+		// spawn a puff of smoke behind the rocket
+		SpawnPuff ("BulletPuff", pos, angle, angle, 3);
+		Actor smoke = Spawn ("RevenantTracerSmoke", Vec3Offset(-Vel.X, -Vel.Y, 0.), ALLOW_REPLACE);
+	
+		if (smoke != null)
+		{
+			smoke.Vel.Z = 1.;
+			smoke.tics -= random[Tracer](0, 3);
+			if (smoke.tics < 1)
+				smoke.tics = 1;
+		}
+
+		// The rest of this function was identical with Strife's version, except for the angle being used.
+		A_Tracer2(tang);
+	}
+	
 	States
 	{
 		Spawn:
-			FATB AB 2 Bright A_Tracer();
+			FATB AB 2 Bright 
+			{
+				double s1 = 12.65625;
+				double s2 = 12.65625;
+				if (target && exex_monsterlevelenabledflags)
+				{
+					s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.001875);
+					s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.001875);
+					if (target.CountInv("MonsterLevel") > 30)
+					{
+						s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.0009375);
+						s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.0009375);
+					}
+					if (target.CountInv("MonsterLevel") > 60)
+					{
+						s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.00046875);
+						s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.00046875);
+					}
+				}
+				A_Tracer(s1);
+			}
 			Loop;
 		Death:
 			TNT1 A 0 
@@ -1974,10 +2040,54 @@ class RevenantTracerNew : EEProjectile replaces RevenantTracer
 		finaldamagedealt = A_CalcDamageFormula(10,random(1,8),0.005,0.3334,0.1667,0.005);
 	}
 	
+	void A_Tracer(double tang = 16.875)
+	{
+		// killough 1/18/98: this is why some missiles do not have smoke
+		// and some do. Also, internal demos start at random gametics, thus
+		// the bug in which revenants cause internal demos to go out of sync.
+
+		if (level.maptime & 3)	return;
+	
+		// spawn a puff of smoke behind the rocket
+		SpawnPuff ("BulletPuff", pos, angle, angle, 3);
+		Actor smoke = Spawn ("RevenantTracerSmoke", Vec3Offset(-Vel.X, -Vel.Y, 0.), ALLOW_REPLACE);
+	
+		if (smoke != null)
+		{
+			smoke.Vel.Z = 1.;
+			smoke.tics -= random[Tracer](0, 3);
+			if (smoke.tics < 1)
+				smoke.tics = 1;
+		}
+
+		// The rest of this function was identical with Strife's version, except for the angle being used.
+		A_Tracer2(tang);
+	}
+	
 	States
 	{
 		Spawn:
-			FATB AB 2 BRIGHT A_Tracer;
+			FATB AB 2 BRIGHT 
+			{
+				double s1 = 16.875;
+				double s2 = 16.875;
+				if (target && exex_monsterlevelenabledflags)
+				{
+					s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.0025);
+					s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.0025);
+					if (target.CountInv("MonsterLevel") > 30)
+					{
+						s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.00125);
+						s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.00125);
+					}
+					if (target.CountInv("MonsterLevel") > 60)
+					{
+						s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.000625);
+						s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.000625);
+					}
+				}
+				A_Tracer(s1);
+			}
 			Loop;
 		Death:
 			FBXP A 8 BRIGHT;

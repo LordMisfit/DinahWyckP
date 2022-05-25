@@ -1692,10 +1692,65 @@ class CherryBombShot : EEFireworksProj
 		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
 	}
 	
+	int A_RadiusCheck(int baserad)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("CBombUpgrade"))
+		{
+			if (player.CountInv("CBombUpgrade") == 1) 
+			{
+				baserad *= 1.375;
+				A_SetScale((default.scale.x*1.375),(default.scale.y*1.375));
+			}
+			if (player.CountInv("CBombUpgrade") >= 2)
+			{
+				baserad *= 2.5;
+				A_SetScale((default.scale.x*2.5),(default.scale.y*2.5));
+			}
+		}
+		return baserad;
+	}
+	
+	int A_RadiusCheck2(int baserad)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("CBombUpgrade"))
+		{
+			if (player.CountInv("CBombUpgrade") == 1) baserad *= 1.75;
+			if (player.CountInv("CBombUpgrade") >= 2) baserad *= 4.0;
+		}
+		return baserad;
+	}
+	
 	States
 	{
 		Spawn:
-			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+			CBOM ABCD 2 Bright 
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+				if (player.CountInv("CBombUpgrade"))
+				{
+					if (player.CountInv("CBombUpgrade") == 1) 
+					{
+						A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,3) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,9) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						A_SetScale((default.scale.x*1.375),(default.scale.y*1.375));
+					}
+					if (player.CountInv("CBombUpgrade") >= 2)
+					{
+						A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,2) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,4) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,8) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						A_SetScale((default.scale.x*2.5),(default.scale.y*2.5));
+					}
+				}
+			}
 			loop;
 
 		Death:
@@ -1716,7 +1771,10 @@ class CherryBombShot : EEFireworksProj
 				A_Quake(4, 4, 0, 256, "nosound/silent");
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 12 & random(1,12) <= (1 + ((TruePlayerLevel - 12) * 0.1667))) { bFORCERADIUSDMG = true; }
-				A_Explode(A_CalcTrueExpDmg(16,0.02),32,expflags,0,4);
+
+				int radi = A_RadiusCheck(32);
+				int radi2 = A_RadiusCheck2(radi*0.125);
+				A_Explode(A_CalcTrueExpDmg(16,0.02),radi,expflags,0,radi2);
 				A_Quake(1, 4, 0, 128, "nosound/silent");
 				A_Quake(4, 4, 0, 64, "nosound/silent");
 			}
@@ -1733,7 +1791,10 @@ class CherryBombShot : EEFireworksProj
 				A_AlertMonsters();
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 11 & random(1,11) <= (1 + ((TruePlayerLevel - 11) * 0.1819))) { bFORCERADIUSDMG = true; }
-				A_Explode(A_CalcTrueExpDmg(24,0.02),48,expflags,0,6);
+
+				int radi = A_RadiusCheck(48);
+				int radi2 = A_RadiusCheck2(radi*0.125);
+				A_Explode(A_CalcTrueExpDmg(24,0.02),radi,expflags,0,radi2);
 				A_Quake(1, 4, 0, 192, "nosound/silent");
 				A_Quake(4, 4, 0, 96, "nosound/silent");
 			}
@@ -1745,7 +1806,9 @@ class CherryBombShot : EEFireworksProj
 				if (IPAttack) expflags = 0;
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 10 & random(1,10) <= (1 + ((TruePlayerLevel - 10) * 0.20))) { bFORCERADIUSDMG = true; }
-				A_Explode(A_CalcTrueExpDmg(32,0.02),64,expflags,0,8);
+				int radi = A_RadiusCheck(64);
+				int radi2 = A_RadiusCheck2(radi*0.125);
+				A_Explode(A_CalcTrueExpDmg(32,0.02),radi,expflags,0,radi2);
 				A_Quake(1, 4, 0, 256, "nosound/silent");
 				A_Quake(4, 4, 0, 128, "nosound/silent");
 			}
@@ -1761,7 +1824,9 @@ class CherryBombShot : EEFireworksProj
 				}
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 9 & random(1,9) <= (1 + ((TruePlayerLevel - 9) * 0.2223))) { bFORCERADIUSDMG = true; }
-				A_Explode(A_CalcTrueExpDmg(40,0.02),80,expflags,0,10);
+				int radi = A_RadiusCheck(80);
+				int radi2 = A_RadiusCheck2(radi*0.125);
+				A_Explode(A_CalcTrueExpDmg(40,0.02),radi,expflags,0,radi2);
 				A_Quake(1, 4, 0, 320, "nosound/silent");
 				A_Quake(4, 4, 0, 160, "nosound/silent");
 			}
@@ -1773,7 +1838,9 @@ class CherryBombShot : EEFireworksProj
 				if (IPAttack) expflags = 0;
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 8 & random(1,8) <= (1 + ((TruePlayerLevel - 8) * 0.25))) { bFORCERADIUSDMG = true; }
-				A_Explode(A_CalcTrueExpDmg(48,0.02),96,expflags,0,12);
+				int radi = A_RadiusCheck(96);
+				int radi2 = A_RadiusCheck2(radi*0.125);
+				A_Explode(A_CalcTrueExpDmg(48,0.02),radi,expflags,0,radi2);
 				A_Quake(1, 4, 0, 384, "nosound/silent");
 				A_Quake(4, 4, 0, 192, "nosound/silent");
 			}
@@ -1789,7 +1856,9 @@ class CherryBombShot : EEFireworksProj
 				}
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 7 & random(1,7) <= (1 + ((TruePlayerLevel - 7) * 0.28572))) { bFORCERADIUSDMG = true; }
-				A_Explode(A_CalcTrueExpDmg(56,0.02),112,expflags,0,14);
+				int radi = A_RadiusCheck(112);
+				int radi2 = A_RadiusCheck2(radi*0.125);
+				A_Explode(A_CalcTrueExpDmg(56,0.02),radi,expflags,0,radi2);
 				A_Quake(1, 4, 0, 448, "nosound/silent");
 				A_Quake(4, 4, 0, 224, "nosound/silent");
 			}
@@ -1801,7 +1870,9 @@ class CherryBombShot : EEFireworksProj
 				if (IPAttack) expflags = 0;
 				bFORCERADIUSDMG = false;
 				if (TruePlayerLevel > 6 & random(1,6) <= (1 + ((TruePlayerLevel - 6) * 0.334))) { bFORCERADIUSDMG = true; }
-				A_Explode(A_CalcTrueExpDmg(64,0.02),128,expflags,0,16);
+				int radi = A_RadiusCheck(128);
+				int radi2 = A_RadiusCheck2(radi*0.125);
+				A_Explode(A_CalcTrueExpDmg(64,0.02),radi,expflags,0,radi2);
 				A_Quake(1, 4, 0, 512, "nosound/silent");
 				A_Quake(4, 4, 0, 256, "nosound/silent");
 			}
@@ -1839,173 +1910,31 @@ class CherryBombShotBerserk : CherryBombShot
 	States
 	{
 		Spawn:
-			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+			CBOM ABCD 2 Bright
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+				if (player.CountInv("CBombUpgrade"))
+				{
+					if (player.CountInv("CBombUpgrade") == 1) 
+					{
+						A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,3) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,9) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						A_SetScale((default.scale.x*1.375),(default.scale.y*1.375));
+					}
+					if (player.CountInv("CBombUpgrade") >= 2)
+					{
+						A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,2) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,4) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						if (random(1,8) <= 1) A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+						A_SetScale((default.scale.x*2.5),(default.scale.y*2.5));
+					}
+				}
+			}
 			loop;
-	}
-}
-
-class BadCherryBomb : EEProjectile
-{
-	int MudBomb;
-	default
-	{
-		ProjectileKickback 5;
-		Tag "Cherry Bomb";
-		Radius 3;
-		Height 3;
-		Speed 15;
-		Gravity 0.05;
-		Damage 10;
-		DamageType "CherryBomb";
-		Projectile;
-		-NOGRAVITY
-		//+NOEXTREMEDEATH
-		RENDERSTYLE "Normal";
-		SeeSound "weapons/cherrywick";
-		DeathSound "weapons/cherrywick";
-	}
-	
-	override void Tick()
-	{
-		if (Muddernaut(target))
-		{
-			if (MudBomb > 0)
-			{
-				gravity *= 1.025;
-				if (MudBomb == 1 && (GetAge() >= random(52,53) && GetAge() <= random(60,61))) gravity *= frandom(2,3);
-				if (MudBomb == 2 && (GetAge() >= 105 && GetAge() <= 113)) gravity *= frandom(2,3);
-				if (gravity >= 1.5) gravity = 1.5;
-			}
-		}
-		super.Tick();
-	}
-	
-	States
-	{
-		Spawn:
-			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
-			loop;
-
-		Death:
-		XDeath:
-		Crash:
-			BMX2 A 2 Bright 
-			{
-				A_StartSound("weapons/cherryboom");
-				A_Explode(16,32,XF_HURTSOURCE|XF_THRUSTZ,0,4);
-				A_Quake(1, 4, 0, 128, "nosound/silent");
-				A_Quake(4, 4, 0, 64, "nosound/silent");
-			}
-			BMX2 B 2 Bright 
-			{
-				A_Explode(24,48,XF_HURTSOURCE|XF_THRUSTZ,0,6);
-				A_Quake(1, 4, 0, 192, "nosound/silent");
-				A_Quake(4, 4, 0, 96, "nosound/silent");
-			}
-			BMX2 C 1 Bright 
-			{
-				A_Explode(32,64,XF_HURTSOURCE|XF_THRUSTZ,0,8);
-				A_Quake(1, 4, 0, 256, "nosound/silent");
-				A_Quake(4, 4, 0, 128, "nosound/silent");
-			}
-			BMX2 D 2 Bright 
-			{
-				A_Explode(40,80,XF_HURTSOURCE|XF_THRUSTZ,0,10);
-				A_Quake(1, 4, 0, 320, "nosound/silent");
-				A_Quake(4, 4, 0, 160, "nosound/silent");
-			}
-			BMX2 E 1 Bright 
-			{
-				A_Explode(48,96,XF_HURTSOURCE|XF_THRUSTZ,0,12);
-				A_Quake(1, 4, 0, 384, "nosound/silent");
-				A_Quake(4, 4, 0, 192, "nosound/silent");
-			}
-			BMX2 F 2 Bright 
-			{
-				A_Explode(56,112,XF_HURTSOURCE|XF_THRUSTZ,0,14);
-				A_Quake(1, 4, 0, 448, "nosound/silent");
-				A_Quake(4, 4, 0, 224, "nosound/silent");
-			}
-			BMX2 G 1 Bright 
-			{
-				A_Explode(64,128,XF_HURTSOURCE|XF_THRUSTZ,0,16);
-				A_Quake(1, 4, 0, 512, "nosound/silent");
-				A_Quake(4, 4, 0, 256, "nosound/silent");
-			}
-			stop;
-	}
-}
-
-class BadCherryBomb2 : EEProjectile
-{
-	default
-	{
-		ProjectileKickback 5;
-		Tag "Cherry Bomb";
-		Radius 3;
-		Height 3;
-		Speed 30;
-		Gravity 0.05;
-		Damage 10;
-		DamageType "CherryBomb";
-		Projectile;
-		-NOGRAVITY
-		//+NOEXTREMEDEATH
-		RENDERSTYLE "Normal";
-		SeeSound "weapons/cherrywick";
-	}
-	
-	States
-	{
-		Spawn:
-			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
-			loop;
-
-		Death:
-		XDeath:
-		Crash:
-			BMX2 A 2 Bright 
-			{
-				A_StartSound("weapons/cherryboom",CHAN_7);
-				A_Explode(16,32,XF_HURTSOURCE|XF_THRUSTZ,0,4);
-				A_Quake(1, 4, 0, 128, "nosound/silent");
-				A_Quake(4, 4, 0, 64, "nosound/silent");
-			}
-			BMX2 B 2 Bright 
-			{
-				A_Explode(24,48,XF_HURTSOURCE|XF_THRUSTZ,0,6);
-			}
-			BMX2 C 1 Bright 
-			{
-				A_Explode(32,64,XF_HURTSOURCE|XF_THRUSTZ,0,8);
-				A_Quake(1, 4, 0, 256, "nosound/silent");
-				A_Quake(4, 4, 0, 128, "nosound/silent");
-			}
-			BMX2 D 2 Bright 
-			{
-				A_Explode(40,80,XF_HURTSOURCE|XF_THRUSTZ,0,10);
-				A_Quake(1, 4, 0, 320, "nosound/silent");
-				A_Quake(4, 4, 0, 160, "nosound/silent");
-			}
-			BMX2 E 1 Bright 
-			{
-				A_Explode(48,96,XF_HURTSOURCE|XF_THRUSTZ,0,12);
-				A_Quake(1, 4, 0, 384, "nosound/silent");
-				A_Quake(4, 4, 0, 192, "nosound/silent");
-			}
-			BMX2 F 2 Bright 
-			{
-				A_Explode(56,112,XF_HURTSOURCE|XF_THRUSTZ,0,14);
-				A_Quake(1, 4, 0, 448, "nosound/silent");
-				A_Quake(4, 4, 0, 224, "nosound/silent");
-			}
-			BMX2 G 1 Bright 
-			{
-				A_Explode(64,128,XF_HURTSOURCE|XF_THRUSTZ,0,16);
-				A_Quake(1, 4, 0, 512, "nosound/silent");
-				A_Quake(4, 4, 0, 256, "nosound/silent");
-			}
-			stop;
 	}
 }
 

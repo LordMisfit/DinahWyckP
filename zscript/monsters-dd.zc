@@ -222,13 +222,25 @@ class CroquetBall : EEProjectile
 		Radius 8;
 		Height 12;
 		Speed 18;
-		Damage 3;
+		DamageFunction (finaldamagedealt);
 		DamageType "Cricket";
 		Projectile;
 		+RANDOMIZE
 		//+NOEXTREMEDEATH
 		renderstyle "Normal";
 		DeathSound "croquet/ballhit";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
 	}
 	
 	States
@@ -481,7 +493,7 @@ class BirdBall : EEProjectile
 		Height 12;
 		Speed 9;
 		Health 5;
-		Damage 2;
+		DamageFunction (finaldamagedealt);
 		+SEEKERMISSILE
 		+SHOOTABLE
 		+NOBLOOD
@@ -492,10 +504,42 @@ class BirdBall : EEProjectile
 		DeathSound "birdy/death";
 	}
 	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(2,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(2,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
 	States
 	{
 		Spawn:
-			FFLY AB 2 A_SeekerMissile(10,10);
+			FFLY AB 2 
+			{
+				double s1 = 10.0;
+				double s2 = 10.0;
+				if (target && exex_monsterlevelenabledflags)
+				{
+					s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.0025);
+					s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.0025);
+					if (target.CountInv("MonsterLevel") > 30)
+					{
+						s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.00125);
+						s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.00125);
+					}
+					if (target.CountInv("MonsterLevel") > 60)
+					{
+						s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.000625);
+						s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.000625);
+					}
+				}
+				A_SeekerMissile(s1,s2);
+			}
 			Loop;
 		Death:
 			JSPL AAAA 1 A_Feathers("BirdBallFeather");
@@ -537,7 +581,27 @@ class BirdBombBall : EEProjectile
 	States
 	{
 		Spawn:
-			FFLY CD 2 A_SeekerMissile(8,8);
+			FFLY CD 2 
+			{
+				double s1 = 8.0;
+				double s2 = 8.0;
+				if (target && exex_monsterlevelenabledflags)
+				{
+					s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.0025);
+					s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.0025);
+					if (target.CountInv("MonsterLevel") > 30)
+					{
+						s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.00125);
+						s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.00125);
+					}
+					if (target.CountInv("MonsterLevel") > 60)
+					{
+						s1 *= 1.0 + (target.CountInv("MonsterLevel") * 0.000625);
+						s2 *= 1.0 + (target.CountInv("MonsterLevel") * 0.000625);
+					}
+				}
+				A_SeekerMissile(s1,s2);
+			}
 			Loop;
 		Death:
 			JSPL A 0
@@ -618,7 +682,8 @@ class Manchineel : DDOrigCreature
 			TRNT E 6 A_FaceTarget();
 			TRNT F 6
 			{
-				A_CustomComboAttack("SeedBall", 32, random(15,25), "gard/swing");
+				int dmg = A_CalcDamageFormula2(random(15,25),0.06667,random(5,10),0.0334,random(0,5),0.01667,0.0025);
+				A_CustomComboAttack("SeedBall", 32, (dmg), "gard/swing");
 			}
 			TRNT G 6;
 			TRNT DCB 4;
@@ -653,13 +718,25 @@ class SeedBall : EEProjectile
 		Radius 8;
 		Height 12;
 		Speed 18;
-		Damage 3;
+		DamageFunction (finaldamagedealt);
 		Projectile;
 		+RANDOMIZE
 		+NOEXTREMEDEATH
 		renderstyle "Normal";
 		SeeSound "MalletSwing";
 		DeathSound "croquet/ballhit";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
 	}
 	
 	States
@@ -1258,12 +1335,24 @@ class PupGrenade : EEProjectile
 		Radius 3;
 		Height 3;
 		Speed 10;
-		Damage 1;
+		DamageFunction (finaldamagedealt);
 		Scale 0.25;
 		Projectile;
 		-NOGRAVITY
 		renderstyle "Normal";
 		SeeSound "pdog/sight";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(1,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(1,random(1,8),0.005,0.3334,0.1667,0.01);
 	}
 	
 	States
@@ -1412,12 +1501,24 @@ class JellyBall : EEProjectile
 		Height 6;
 		Speed 15;
 		Health 5;
-		Damage 2;
+		DamageFunction (finaldamagedealt);
 		Projectile;
 		renderstyle "Add";
 		Alpha 0.9;
 		DeathSound "misc/splat";
 		+NOEXTREMEDEATH
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(2,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(2,random(1,8),0.005,0.3334,0.1667,0.01);
 	}
 	
 	States
@@ -2377,6 +2478,207 @@ class Muddernaut : DDOrigCreature
 	}
 }
 
+// Muddernaut Cherry Bomb
+class BadCherryBomb : EEProjectile
+{
+	int MudBomb;
+	default
+	{
+		ProjectileKickback 5;
+		Tag "Cherry Bomb";
+		Radius 3;
+		Height 3;
+		Speed 15;
+		Gravity 0.05;
+		DamageFunction (finaldamagedealt);
+		DamageType "CherryBomb";
+		Projectile;
+		-NOGRAVITY
+		//+NOEXTREMEDEATH
+		RENDERSTYLE "Normal";
+		SeeSound "weapons/cherrywick";
+		DeathSound "weapons/cherrywick";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(10,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(10,random(1,8),0.005,0.3334,0.1667,0.01);
+		if (Muddernaut(target))
+		{
+			if (MudBomb > 0)
+			{
+				gravity *= 1.025;
+				if (MudBomb == 1 && (GetAge() >= random(52,53) && GetAge() <= random(60,61))) gravity *= frandom(2,3);
+				if (MudBomb == 2 && (GetAge() >= 105 && GetAge() <= 113)) gravity *= frandom(2,3);
+				if (gravity >= 1.5) gravity = 1.5;
+			}
+		}
+	}
+	
+	States
+	{
+		Spawn:
+			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+			loop;
+
+		Death:
+		XDeath:
+		Crash:
+			BMX2 A 2 Bright 
+			{
+				A_StartSound("weapons/cherryboom");
+
+				int dmg = A_CalcDamageFormula(16,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,32,XF_HURTSOURCE|XF_THRUSTZ,0,4);
+				A_Quake(1, 4, 0, 128, "nosound/silent");
+				A_Quake(4, 4, 0, 64, "nosound/silent");
+			}
+			BMX2 B 2 Bright 
+			{
+				int dmg = A_CalcDamageFormula(24,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,48,XF_HURTSOURCE|XF_THRUSTZ,0,6);
+				A_Quake(1, 4, 0, 192, "nosound/silent");
+				A_Quake(4, 4, 0, 96, "nosound/silent");
+			}
+			BMX2 C 1 Bright 
+			{
+				int dmg = A_CalcDamageFormula(32,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,64,XF_HURTSOURCE|XF_THRUSTZ,0,8);
+				A_Quake(1, 4, 0, 256, "nosound/silent");
+				A_Quake(4, 4, 0, 128, "nosound/silent");
+			}
+			BMX2 D 2 Bright 
+			{
+				int dmg = A_CalcDamageFormula(40,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,80,XF_HURTSOURCE|XF_THRUSTZ,0,10);
+				A_Quake(1, 4, 0, 320, "nosound/silent");
+				A_Quake(4, 4, 0, 160, "nosound/silent");
+			}
+			BMX2 E 1 Bright 
+			{
+				int dmg = A_CalcDamageFormula(48,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,96,XF_HURTSOURCE|XF_THRUSTZ,0,12);
+				A_Quake(1, 4, 0, 384, "nosound/silent");
+				A_Quake(4, 4, 0, 192, "nosound/silent");
+			}
+			BMX2 F 2 Bright 
+			{
+				int dmg = A_CalcDamageFormula(56,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,112,XF_HURTSOURCE|XF_THRUSTZ,0,14);
+				A_Quake(1, 4, 0, 448, "nosound/silent");
+				A_Quake(4, 4, 0, 224, "nosound/silent");
+			}
+			BMX2 G 1 Bright 
+			{
+				int dmg = A_CalcDamageFormula(64,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,128,XF_HURTSOURCE|XF_THRUSTZ,0,16);
+				A_Quake(1, 4, 0, 512, "nosound/silent");
+				A_Quake(4, 4, 0, 256, "nosound/silent");
+			}
+			stop;
+	}
+}
+
+class BadCherryBomb2 : EEProjectile
+{
+	default
+	{
+		ProjectileKickback 5;
+		Tag "Cherry Bomb";
+		Radius 3;
+		Height 3;
+		Speed 30;
+		Gravity 0.05;
+		DamageFunction (finaldamagedealt);
+		DamageType "CherryBomb";
+		Projectile;
+		-NOGRAVITY
+		//+NOEXTREMEDEATH
+		RENDERSTYLE "Normal";
+		SeeSound "weapons/cherrywick";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(10,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(10,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+
+	States
+	{
+		Spawn:
+			CBOM ABCD 2 Bright A_SpawnItemEx("firetrail",random(-4,4),random(-3,3),random(-3,3));
+			loop;
+
+		Death:
+		XDeath:
+		Crash:
+			BMX2 A 2 Bright 
+			{
+				A_StartSound("weapons/cherryboom",CHAN_7);
+				
+				int dmg = A_CalcDamageFormula(16,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,32,XF_HURTSOURCE|XF_THRUSTZ,0,4);
+				A_Quake(1, 4, 0, 128, "nosound/silent");
+				A_Quake(4, 4, 0, 64, "nosound/silent");
+			}
+			BMX2 B 2 Bright 
+			{
+				int dmg = A_CalcDamageFormula(24,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,48,XF_HURTSOURCE|XF_THRUSTZ,0,6);
+			}
+			BMX2 C 1 Bright 
+			{
+				int dmg = A_CalcDamageFormula(32,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,64,XF_HURTSOURCE|XF_THRUSTZ,0,8);
+				A_Quake(1, 4, 0, 256, "nosound/silent");
+				A_Quake(4, 4, 0, 128, "nosound/silent");
+			}
+			BMX2 D 2 Bright 
+			{
+				int dmg = A_CalcDamageFormula(40,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,80,XF_HURTSOURCE|XF_THRUSTZ,0,10);
+				A_Quake(1, 4, 0, 320, "nosound/silent");
+				A_Quake(4, 4, 0, 160, "nosound/silent");
+			}
+			BMX2 E 1 Bright 
+			{
+				int dmg = A_CalcDamageFormula(48,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,96,XF_HURTSOURCE|XF_THRUSTZ,0,12);
+				A_Quake(1, 4, 0, 384, "nosound/silent");
+				A_Quake(4, 4, 0, 192, "nosound/silent");
+			}
+			BMX2 F 2 Bright 
+			{
+				int dmg = A_CalcDamageFormula(56,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,112,XF_HURTSOURCE|XF_THRUSTZ,0,14);
+				A_Quake(1, 4, 0, 448, "nosound/silent");
+				A_Quake(4, 4, 0, 224, "nosound/silent");
+			}
+			BMX2 G 1 Bright 
+			{
+				int dmg = A_CalcDamageFormula(64,1,0.005,0.3334,0.1667,0.001);
+				A_Explode(dmg,128,XF_HURTSOURCE|XF_THRUSTZ,0,16);
+				A_Quake(1, 4, 0, 512, "nosound/silent");
+				A_Quake(4, 4, 0, 256, "nosound/silent");
+			}
+			stop;
+	}
+}
+
 //JUGGER
 class Jugger : DDOrigCreature
 {
@@ -2462,43 +2764,43 @@ class Jugger : DDOrigCreature
 				}
 				
 				int dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-				A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+				A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 				if (exex_monsterlevelenabledflags)
 				{
 					if (CountInv("MonsterLevel") >= 30)
 					{
 						A_SetAngle(angle-15);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle+15);
 
 						A_SetAngle(angle+15);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle-15);
 					}
 					if (CountInv("MonsterLevel") >= 50)
 					{
 						A_SetAngle(angle-22.5);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle+22.5);
 
 						A_SetAngle(angle+22.5);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle-22.5);
 					}
 					if (CountInv("MonsterLevel") >= 70)
 					{
 						A_SetAngle(angle-7.5);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle+7.5);
 
 						A_SetAngle(angle+7.5);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle-7.5);
 					}
 				}
@@ -2547,43 +2849,43 @@ class Jugger : DDOrigCreature
 				}
 				
 				int dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-				A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+				A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 				if (exex_monsterlevelenabledflags)
 				{
 					if (CountInv("MonsterLevel") >= 30)
 					{
 						A_SetAngle(angle-15);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle+15);
 
 						A_SetAngle(angle+15);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle-15);
 					}
 					if (CountInv("MonsterLevel") >= 50)
 					{
 						A_SetAngle(angle-22.5);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle+22.5);
 
 						A_SetAngle(angle+22.5);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle-22.5);
 					}
 					if (CountInv("MonsterLevel") >= 70)
 					{
 						A_SetAngle(angle-7.5);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle+7.5);
 
 						A_SetAngle(angle+7.5);
 						dmg = A_CalcDamageFormula2(random(25,35),0.08334,random(0,5),0.0334,random(0,10),0.01667,0.0025);
-						A_CustomComboAttack("JuggerAxe", 32, dmg, "gard/swing");
+						A_CustomComboAttack("JuggerAxe", 32, (dmg), "gard/swing");
 						A_SetAngle(angle-7.5);
 					}
 				}
@@ -2633,13 +2935,25 @@ class JuggerAxe : EEProjectile
 		Height 16;
 		Speed 25;
 		Scale 2;
-		Damage 5;
+		DamageFunction (finaldamagedealt);
 		DamageType "Chop";
 		Projectile;
 		renderstyle "Normal";
 		SeeSound "axe/throw";
 		DeathSound "axe/hit";
 		+NOEXTREMEDEATH
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.01);
 	}
 	
 	States
@@ -2896,6 +3210,130 @@ class Juggette : DDOrigCreature
 			BEEF R 5;
 			JGET LKJI 5;
 			Goto See;
+	}
+}
+
+class BadJackShot : EEProjectile
+{
+	default
+	{
+		Tag "Aggro-Apple";
+		Radius 6;
+		Height 6;
+		Speed 20; // 50
+		DamageFunction (finaldamagedealt);
+		DamageType "Bonk";
+		Projectile;
+		+DONTREFLECT
+		+FORCERADIUSDMG
+		//+NOEXTREMEDEATH
+		RENDERSTYLE "Normal";
+		SeeSound "axe/throw";
+		DeathSound "axe/hit";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	void A_JackShotIPPattern()
+	{
+		double ca = cos((angle-90)); // X
+		double sa = sin((angle-90)); // Y
+
+		double basemove = basespreadspeed;
+		if (IPAttack)
+		{
+			if (zspreadtime != 0)
+			{
+				if (zspreadtime > 0) // Goes Up
+				{
+					zspreadtime -= 1;
+					AddZ(basemove,true);
+				}
+				else
+				if (zspreadtime < 0) // Goes Down
+				{
+					zspreadtime += 1; 
+					AddZ(-basemove,true);
+				}
+			}
+			Vector2 dpos = (pos.x, pos.y);
+			if (xyspreadtime != 0)
+			{
+				if (dydudebug_weaponhorizspread)
+				{
+					Console.Printf("\c[sapphire](pre) projid: %d\c-, XVel: %.8f, YVel: %.8f, ZVel: %.8f", ipprojid, vel.x, vel.y, vel.z);
+					Console.Printf("\c[sapphire](pre) projid: %d\c-, xpos: %.8f, ypos: %.8f [tic: %d]", ipprojid, pos.x, pos.y, pos.z, gametic);
+				}
+				if (xyspreadtime > 0) // Goes Left
+				{ 
+					xyspreadtime -= 1;
+					dpos = ((pos.x + (basemove * ca)), (pos.y + (basemove * sa)));
+					TryMove(dpos,true,null); //SetOrigin(dpos,true);
+				}
+				else
+				if (xyspreadtime < 0) // Goes Right
+				{
+					xyspreadtime += 1;
+					dpos = ((pos.x - (basemove * ca)), (pos.y - (basemove * sa)));
+					TryMove(dpos,true,null); //SetOrigin(dpos,true);
+				}
+				if (dydudebug_weaponhorizspread)
+				{
+					Console.Printf("\c[fire](post) projid: %d\c-, XVel: %.8f, YVel: %.8f, ZVel: %.8f", ipprojid, vel.x, vel.y, vel.z);
+					Console.Printf("\c[fire](post) projid: %d\c-, xpos: %.8f, ypos: %.8f, zpos: %.8f, xyspreadtime: %d [tic: %d]", ipprojid, dpos.x, dpos.y, pos.z, xyspreadtime, gametic);
+				}
+			}
+		}
+	}
+
+	void A_JackShotShieldSetupEnemy(actor BombShots, double scaling = 0.0125)
+	{
+		if (BombShots)
+		{
+			int oldrad = BombShots.radius;
+			int oldhei = BombShots.height;
+			double scalebase = 1.0;
+			BombShots.A_SetSize((BombShots.radius * scalebase),(BombShots.height * scalebase));
+			//Console.Printf("rad: %d [%d], hei: %d [%d]", BombShots.radius, oldrad, BombShots.height, oldhei);
+		}
+	}
+
+	States
+	{
+		Spawn:
+			ABAL AABB 1
+			{
+				A_JackShotIPPattern();
+				
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				if (!(ddafd_disableaggroappleblock && (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite"))))
+				{
+					actor BombShots;
+					bool success;
+					[success, BombShots] = A_SpawnItemEx("JackShotShieldPartFoe",0,0,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					if (success) A_JackShotShieldSetupEnemy(BombShots,0.0125);
+					[success, BombShots] = A_SpawnItemEx("JackShotShieldPartFoe",1.5,0,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					if (success) A_JackShotShieldSetupEnemy(BombShots,0.0125);
+					[success, BombShots] = A_SpawnItemEx("JackShotShieldPartFoe",-1.5,0,0,0.0,0.0,0.0,0,SXF_SETTARGET|SXF_NOCHECKPOSITION);
+					if (success) A_JackShotShieldSetupEnemy(BombShots,0.0125);
+				}
+			}
+			Loop;
+		Death:
+			BASH ABC 4 Bright;
+			BASH DE 3 bright;
+			Stop;
 	}
 }
 
@@ -3268,11 +3706,23 @@ class CoinShot : EEProjectile
 		Height 6;
 		Speed 20;
 		Health 5;
-		Damage 2;
+		DamageFunction (finaldamagedealt);
 		Projectile;
 		RenderStyle "Normal";
 		DeathSound "mallethit";
 		+NOEXTREMEDEATH
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(2,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(2,random(1,8),0.005,0.3334,0.1667,0.01);
 	}
 	
 	States
@@ -3286,26 +3736,11 @@ class CoinShot : EEProjectile
 	}
 }
 
-class CoinShotS : EEProjectile
+// DD/AFD ComPack specific coin-shot that can rarely leave behind an arcade token on impact :V
+class CoinShotS : CoinShot
 {
-	default
-	{
-		Radius 8;
-		Height 6;
-		Speed 20;
-		Health 5;
-		Damage 2;
-		Projectile;
-		RenderStyle "Normal";
-		DeathSound "mallethit";
-		+NOEXTREMEDEATH
-	}
-	
 	States
 	{
-		Spawn:
-			CBUL ABCB 2 bright;
-			Loop;
 		Death:
 			BASH A 0
 			{
@@ -3415,15 +3850,31 @@ class IncenseBall : EEProjectile
 		Radius 8;
 		Height 12;
 		Speed 18;
-		Damage 3;
+		DamageFunction (finaldamagedealt);
 		Scale 0.35;
 		Projectile;
 		+RANDOMIZE
 		+NOEXTREMEDEATH
+		+ADDITIVEPOISONDURATION
+		+ADDITIVEPOISONDAMAGE
 		PoisonDamage 15;
 		renderstyle "Add";
 		Alpha 0.7;
 		DeathSound "croquet/ballhit";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage =  A_CalcDamageFormula2(15,0.005,5,0.334,2,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage =  A_CalcDamageFormula2(15,0.005,5,0.334,2,0.1667,0.005);
 	}
 	
 	States
@@ -7250,7 +7701,7 @@ class SphinxBall1 : Musicball
 {
 	default
 	{
-		Damage 5;
+		DamageFunction (finaldamagedealt);
 		Speed 30;
 		PoisonDamage 16;
 		DamageType "Beats";
@@ -7258,6 +7709,21 @@ class SphinxBall1 : Musicball
 		+ADDITIVEPOISONDAMAGE
 		+NOEXTREMEDEATH;
 	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(16,0.005,5,0.334,2,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(16,0.005,5,0.334,2,0.1667,0.005);
+	}
+
 	States
 	{
 		Spawn:
@@ -7274,7 +7740,7 @@ class SphinxBall2 : Musicball
 {
 	default
 	{
-		Damage 3;
+		DamageFunction (finaldamagedealt);
 		Speed 30;
 		Scale 0.5;
 		PoisonDamage 8;
@@ -7283,6 +7749,21 @@ class SphinxBall2 : Musicball
 		+ADDITIVEPOISONDAMAGE
 		+NOEXTREMEDEATH
 	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(8,0.005,5,0.334,2,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(8,0.005,5,0.334,2,0.1667,0.005);
+	}
+
 	States
 	{
 		Spawn:
@@ -8757,10 +9238,12 @@ class DustBall : EEProjectile
 		Radius 8;
 		Height 12;
 		Speed 18;
-		Damage 3;
+		DamageFunction (finaldamagedealt);
 		DamageType "Dust";
 		Scale 0.35;
 		Projectile;
+		+ADDITIVEPOISONDURATION
+		+ADDITIVEPOISONDAMAGE
 		+RANDOMIZE
 		+NOEXTREMEDEATH
 		PoisonDamage 15;
@@ -8768,6 +9251,21 @@ class DustBall : EEProjectile
 		Alpha 0.7;
 		DeathSound "croquet/ballhit";
 	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(15,0.005,5,0.334,2,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(15,0.005,5,0.334,2,0.1667,0.005);
+	}
+	
 	States
 	{
 		Spawn:
@@ -8786,16 +9284,33 @@ class BigDustBall : EEProjectile
 		Radius 8;
 		Height 12;
 		Speed 12;
-		Damage 5;
+		DamageFunction (finaldamagedealt);
 		DamageType "Dust";
 		Projectile;
 		+RANDOMIZE
 		+NOEXTREMEDEATH
+		+ADDITIVEPOISONDURATION
+		+ADDITIVEPOISONDAMAGE
 		PoisonDamage 25;
 		renderstyle "Add";
 		Alpha 0.7;
 		DeathSound "croquet/ballhit";
 	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(25,0.005,5,0.334,2,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.01);
+		PoisonDamage = A_CalcDamageFormula2(25,0.005,5,0.334,2,0.1667,0.005);
+	}
+	
 	States
 	{
 		Spawn:
