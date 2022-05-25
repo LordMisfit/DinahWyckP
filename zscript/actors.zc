@@ -413,17 +413,25 @@ class EEProjectile : EEBaseZSC abstract
 		int damage = (basedmg * baserand);
 		if (target && exex_monsterlevelenabledflags)
 		{
-			damage += (target.CountInv("MonsterLevel") * ((basedmg * factor1base) * baserand));
-			if (target.CountInv("MonsterLevel") >= lvlthreshold1)
+			int TargLevel = target.CountInv("MonsterLevel");
+			if (PlayerPawn(target))
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				if (MiscItem) TargLevel = MiscItem.TruePlayerLevel;
+			}
+			
+			damage += (TargLevel * ((basedmg * factor1base) * baserand));
+			if (TargLevel >= lvlthreshold1)
 			{
 				damage += ((basedmg * factor2) * baserand) + (target.CountInv("MonsterLevel") * ((basedmg * (factor1base * factor2)) * baserand));
 			}
-			if (target.CountInv("MonsterLevel") >= lvlthreshold2)
+			if (TargLevel >= lvlthreshold2)
 			{
 				damage += ((basedmg * factor3) * baserand) + (target.CountInv("MonsterLevel") * ((basedmg * (factor1base * factor3)) * baserand));
 			}
-			damage *= (1.0 + (target.CountInv("MonsterLevel") * levelfactor));
-			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EEProjectile] (\c[ice]%s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d", GetClassName(), damage, basedmg, baserand);
+			damage *= (1.0 + (TargLevel * levelfactor));
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EEProjectile] (\c[ice]%s of %s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d", GetClassName(), target.GetClassName(), damage, basedmg, baserand);
 		}
 		return damage;
 	}
@@ -433,17 +441,25 @@ class EEProjectile : EEBaseZSC abstract
 		int damage = basedmg;
 		if (target && exex_monsterlevelenabledflags)
 		{
-			damage = basedmg + (target.CountInv("MonsterLevel") * (basedmg * factor1));
+			int TargLevel = target.CountInv("MonsterLevel");
+			if (PlayerPawn(target))
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				if (MiscItem) TargLevel = MiscItem.TruePlayerLevel;
+			}
+
+			damage = basedmg + (TargLevel * (basedmg * factor1));
 			if (CountInv("MonsterLevel") >= lvlthreshold1)
 			{
-				damage += basedmg2 + (target.CountInv("MonsterLevel") * (basedmg2 * factor2));
+				damage += basedmg2 + (TargLevel * (basedmg2 * factor2));
 			}
 			if (CountInv("MonsterLevel") >= lvlthreshold2)
 			{
-				damage += basedmg3 + (target.CountInv("MonsterLevel") * (basedmg3 * factor3));
+				damage += basedmg3 + (TargLevel * (basedmg3 * factor3));
 			}
-			damage *= (1.0 + (target.CountInv("MonsterLevel") * levelfactor));
-			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EEProjectile] (\c[ice]%s\c[fire]): %d\c-", GetClassName(), damage);
+			damage *= (1.0 + (TargLevel * levelfactor));
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EEProjectile] (\c[ice]%s of %s\c[fire]): %d\c-", GetClassName(), target.GetClassName(), damage);
 		}
 		return damage;
 	}
@@ -2445,16 +2461,23 @@ class EECreature : EEBaseZSC abstract
 		if (baserand <= 0) baserand = random(1,8);
 		if (exex_monsterlevelenabledflags)
 		{
-			damage += (CountInv("MonsterLevel") * ((basedmg * factor1base) * baserand));
-			if (CountInv("MonsterLevel") >= lvlthreshold1)
+			int CurrLevel = CountInv("MonsterLevel");
+			if (PlayerPawn(self))
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				if (MiscItem) CurrLevel = MiscItem.TruePlayerLevel;
+			}
+			damage += (CurrLevel * ((basedmg * factor1base) * baserand));
+			if (CurrLevel >= lvlthreshold1)
 			{
 				damage += ((basedmg * factor2) * baserand) + (CountInv("MonsterLevel") * ((basedmg * (factor1base * factor2)) * baserand));
 			}
-			if (CountInv("MonsterLevel") >= lvlthreshold2)
+			if (CurrLevel >= lvlthreshold2)
 			{
 				damage += ((basedmg * factor3) * baserand) + (CountInv("MonsterLevel") * ((basedmg * (factor1base * factor3)) * baserand));
 			}
-			damage *= (1.0 + (CountInv("MonsterLevel") * levelfactor));
+			damage *= (1.0 + (CurrLevel * levelfactor));
 			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EECreature] (\c[ice]%s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d", GetClassName(), damage, basedmg, baserand);
 		}
 		return damage;
@@ -2465,16 +2488,23 @@ class EECreature : EEBaseZSC abstract
 		int damage = basedmg;
 		if (exex_monsterlevelenabledflags)
 		{
-			damage = basedmg + (CountInv("MonsterLevel") * (basedmg * factor1));
-			if (CountInv("MonsterLevel") >= lvlthreshold1)
+			int CurrLevel = CountInv("MonsterLevel");
+			if (PlayerPawn(self))
 			{
-				damage += basedmg2 + (CountInv("MonsterLevel") * (basedmg2 * factor2));
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				if (MiscItem) CurrLevel = MiscItem.TruePlayerLevel;
 			}
-			if (CountInv("MonsterLevel") >= lvlthreshold2)
+			damage += (CurrLevel * (basedmg * factor1));
+			if (CurrLevel >= lvlthreshold1)
 			{
-				damage += basedmg3 + (CountInv("MonsterLevel") * (basedmg3 * factor3));
+				damage += basedmg2 + (CurrLevel * (basedmg2 * factor2));
 			}
-			damage *= (1.0 + (CountInv("MonsterLevel") * levelfactor));
+			if (CurrLevel >= lvlthreshold2)
+			{
+				damage += basedmg3 + (CurrLevel * (basedmg3 * factor3));
+			}
+			damage *= (1.0 + (CurrLevel * levelfactor));
 			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EECreature] (\c[ice]%s\c[fire]): %d\c-", GetClassName(), damage);
 		}
 		return damage;
