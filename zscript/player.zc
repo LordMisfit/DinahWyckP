@@ -10,6 +10,7 @@ class DDPlayerPawn : PlayerPawn
 	const SKILL_IMPOSSIBLE = 7;
 	const SKILL_OMEGA = 8;
 	
+	int damagecntfrag;
 	int mobjdmg;
 	int playoutputdmg;
 	int playtookdamage;
@@ -495,8 +496,25 @@ class DDPlayerPawn : PlayerPawn
 			// Cycle psprites.
 			player.mo.TickPSprites();
 			// Other Counters
-			if (player.damagecount)	player.damagecount--;
-			if (dydudebug_countdisplays && player.damagecount > 0) Console.Printf("player.damagecount: %d", player.damagecount);
+			if (player.damagecount)
+			{
+				if (player.damagecount >= random(93,94)) damagecntfrag -= randompick(0,0,0,1,1,1,2,2,2);
+				else if (player.damagecount >= 75) damagecntfrag -= randompick(1,1,2,2,3,3,4,4);
+				else if (player.damagecount >= 50) damagecntfrag -= randompick(3,3,4,4,5,5,6,6);
+				else if (player.damagecount >= 25) damagecntfrag -= randompick(5,6,6,7,7,8,8,9);
+				else damagecntfrag -= randompick(8,8,9,9,9,9,10,10);
+				while (damagecntfrag <= 0)
+				{
+					player.damagecount--;
+					damagecntfrag += 10;
+					if (player.damagecount <= 0) break;
+				}
+			}
+			else
+			{
+				damagecntfrag = 10;
+			}
+			if (dydudebug_countdisplays && player.damagecount > 0) Console.Printf("player.damagecount: %d, damagecntfrag: %d", player.damagecount, damagecntfrag);
 			if (player.bonuscount) player.bonuscount--;
 			if (dydudebug_countdisplays && player.bonuscount > 0) Console.Printf("player.bonuscount: %d", player.bonuscount);
 
@@ -507,6 +525,7 @@ class DDPlayerPawn : PlayerPawn
 					player.hazardinterval = 32; // repair invalid hazardinterval
 				if (!(Level.maptime % player.hazardinterval) && player.hazardcount > 16*TICRATE)
 					player.mo.DamageMobj (NULL, NULL, 5, player.hazardtype);
+				if (dydudebug_countdisplays) Console.Printf("player.hazardcount: %d, player.hazardinterval: %d / 32", player.hazardcount, player.hazardinterval);
 			}
 			player.mo.CheckPoison();
 			player.mo.CheckDegeneration();
@@ -2520,8 +2539,11 @@ class DDPlayerPawn : PlayerPawn
 				if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
 				if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
 			}
+			player.damagecount -= ret;
+			if (player.damagecount < 0) player.damagecount = 0;
 			player.damagecount += damagetakefactor;
 			if (player.damagecount > 100) player.damagecount = 100;
+			if (dydudebug_countdisplays) Console.Printf("player.damagecount: %d, damagetakefactor: %d, dmg: %d / %d", player.damagecount, damagetakefactor, ret, MiscItem.MaxHealthTrue);
 		}
 		
 		if (armdmg && armortier)

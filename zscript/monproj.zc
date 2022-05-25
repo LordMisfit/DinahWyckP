@@ -648,7 +648,7 @@ class DemonFire : SingleDamageRipper
 		Height 8;
 		Speed 8;
 		FastSpeed 16;
-		DamageFunction (random(2,3) * random(2,4));
+		DamageFunction (finaldamagedealt);
 		Projectile;
 		+RANDOMIZE;
 		RenderStyle "Add";
@@ -658,7 +658,85 @@ class DemonFire : SingleDamageRipper
 		DeathSound "imp/shotx";
 		DamageType "Fire";
 	}
+	
+	override void PostBeginPlay()
+	{
+		SingleDamageRipper.PostBeginPlay();
+		int baserand = random(2,3);
+		int baserand2 = random(2,4);
+		int damage = baserand * baserand2;
+		if (target && exex_monsterlevelenabledflags)
+		{
+			damage += (target.CountInv("MonsterLevel") * ((baserand * 0.005) * baserand2));
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+			{
+				damage += ((baserand * 0.334) * baserand2) + (target.CountInv("MonsterLevel") * ((baserand * 0.001667) * baserand2));
+			}
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+			{
+				damage += ((baserand * 0.1667) * baserand2) + (target.CountInv("MonsterLevel") * ((baserand * 0.0008334) * baserand2));
+			}
+			damage *= (1.0 + (target.CountInv("MonsterLevel") * frandom(0.00375,0.00625)));
+		}
+		finaldamagedealt = damage;
+	}
+	
+	States
+	{
+		Spawn:
+			FIRE ABABCBCBCDCDCDEDEDEFEFEFGHGHGH 1 Bright
+			{
+				A_Weave(0, 1, 0.32, 0.32);
+			}
+			Stop;
+	}
+}
 
+class BloodDemonFire : SingleDamageRipper
+{
+	default
+	{
+		Tag "Blood Pinky-Breath";
+		ProjectileKickback 0;
+		+NODAMAGETHRUST;
+		//+DONTREFLECT;
+		Radius 6;
+		Height 8;
+		Speed 8;
+		FastSpeed 16;
+		DamageFunction (finaldamagedealt);
+		Projectile;
+		+RANDOMIZE;
+		RenderStyle "Add";
+		Scale 0.334;
+		Alpha 0.667;
+		SeeSound "vile/firecrkl"; // "imp/attack"
+		DeathSound "imp/shotx";
+		DamageType "Fire";
+	}
+	
+	override void PostBeginPlay()
+	{
+		SingleDamageRipper.PostBeginPlay();
+		int baserand = random(3,4);
+		int baserand2 = random(2,4);
+		int damage = baserand * baserand2;
+		if (target && exex_monsterlevelenabledflags)
+		{
+			damage += (target.CountInv("MonsterLevel") * ((baserand * 0.00667) * baserand2));
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+			{
+				damage += ((baserand * 0.334) * baserand2) + (target.CountInv("MonsterLevel") * ((baserand * 0.002223) * baserand2));
+			}
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+			{
+				damage += ((baserand * 0.1667) * baserand2) + (target.CountInv("MonsterLevel") * ((baserand * 0.001112) * baserand2));
+			}
+			damage *= (1.0 + (target.CountInv("MonsterLevel") * frandom(0.00375,0.00625)));
+		}
+		finaldamagedealt = damage;
+	}
+	
 	States
 	{
 		Spawn:
@@ -676,10 +754,109 @@ class NightmareSpectreFire : DemonFire
 	{
 		Speed 9;
 		FastSpeed 18;
-		DamageFunction (random(2,4) * random(2,5));
+		DamageFunction (finaldamagedealt);
 		RenderStyle "Subtract";
 	}
 	
+	override void PostBeginPlay()
+	{
+		SingleDamageRipper.PostBeginPlay();
+		int baserand = random(2,4);
+		int baserand2 = random(3,5);
+		int damage = baserand * baserand2;
+		if (target && exex_monsterlevelenabledflags)
+		{
+			damage += (target.CountInv("MonsterLevel") * ((baserand * 0.005) * baserand2));
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+			{
+				damage += ((baserand * 0.334) * baserand2) + (target.CountInv("MonsterLevel") * ((baserand * 0.001667) * baserand2));
+			}
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+			{
+				damage += ((baserand * 0.1667) * baserand2) + (target.CountInv("MonsterLevel") * ((baserand * 0.0008334) * baserand2));
+			}
+			damage *= (1.0 + (target.CountInv("MonsterLevel") * frandom(0.00375,0.00625)));
+		}
+		finaldamagedealt = damage;
+	}
+
+	void A_NightmarePhase()
+	{
+		if (GetRenderStyle() == STYLE_Subtract)
+		{
+			double alphavar = 0.00;
+			double alphavarbase = frandom(0.0375,0.0425);
+			if (health > 0)
+			{
+				alphavarbase = frandom(0.0375,0.0425);
+			}
+			else
+			{
+				alphavarbase = frandom(0.00375,0.00425);
+			}
+			nightmarephasetimer = ((level.time + random(-nightmarephaserand,nightmarephaserand)) % 35);
+			if (nightmarephasetimer == 0) alphavar = (alphavarbase * 0);
+			if (nightmarephasetimer == 1 || nightmarephasetimer == 34) alphavar = (alphavarbase * 1);
+			if (nightmarephasetimer == 2 || nightmarephasetimer == 33) alphavar = (alphavarbase * 2);
+			if (nightmarephasetimer == 3 || nightmarephasetimer == 32) alphavar = (alphavarbase * 3);
+			if (nightmarephasetimer == 4 || nightmarephasetimer == 31) alphavar = (alphavarbase * 4);
+			if (nightmarephasetimer == 5 || nightmarephasetimer == 30) alphavar = (alphavarbase * 5);
+			if (nightmarephasetimer == 6 || nightmarephasetimer == 29) alphavar = (alphavarbase * 6);
+			if (nightmarephasetimer == 7 || nightmarephasetimer == 28) alphavar = (alphavarbase * 7);
+			if (nightmarephasetimer == 8 || nightmarephasetimer == 27) alphavar = (alphavarbase * 8);
+			if (nightmarephasetimer == 9 || nightmarephasetimer == 26) alphavar = (alphavarbase * 9);
+			if (nightmarephasetimer == 10 || nightmarephasetimer == 25) alphavar = (alphavarbase * 10);
+			if (nightmarephasetimer == 11 || nightmarephasetimer == 24) alphavar = (alphavarbase * 11);
+			if (nightmarephasetimer == 12 || nightmarephasetimer == 23) alphavar = (alphavarbase * 12);
+			if (nightmarephasetimer == 13 || nightmarephasetimer == 22) alphavar = (alphavarbase * 13);
+			if (nightmarephasetimer == 14 || nightmarephasetimer == 21) alphavar = (alphavarbase * 14);
+			if (nightmarephasetimer == 15 || nightmarephasetimer == 20) alphavar = (alphavarbase * 15);
+			if (nightmarephasetimer == 16 || nightmarephasetimer == 19) alphavar = (alphavarbase * 16);
+			if (nightmarephasetimer == 17 || nightmarephasetimer == 18) alphavar = (alphavarbase * 17);
+			A_SetRenderStyle((0.7-alphavar),STYLE_Subtract);
+			if (dydudebug_nightmarevisuals) Console.Printf("[%s] alphavar: %.2f (%.2f), nightmarephasetimer: %d", GetClassName(), alpha, alphavar, nightmarephasetimer);
+		} 
+	}
+	
+	override void Tick()
+	{
+		A_NightmarePhase();
+		super.Tick();
+	}
+}
+
+class NightmareBloodSpectreFire : BloodDemonFire
+{
+	default
+	{
+		Speed 9;
+		FastSpeed 18;
+		DamageFunction (finaldamagedealt);
+		RenderStyle "Subtract";
+	}
+	
+	override void PostBeginPlay()
+	{
+		SingleDamageRipper.PostBeginPlay();
+		int baserand = random(3,5);
+		int baserand2 = random(3,5);
+		int damage = baserand * baserand2;
+		if (target && exex_monsterlevelenabledflags)
+		{
+			damage += (target.CountInv("MonsterLevel") * ((baserand * 0.00667) * baserand2));
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30)
+			{
+				damage += ((baserand * 0.334) * baserand2) + (target.CountInv("MonsterLevel") * ((baserand * 0.002223) * baserand2));
+			}
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60)
+			{
+				damage += ((baserand * 0.1667) * baserand2) + (target.CountInv("MonsterLevel") * ((baserand * 0.001112) * baserand2));
+			}
+			damage *= (1.0 + (target.CountInv("MonsterLevel") * frandom(0.00375,0.00625)));
+		}
+		finaldamagedealt = damage;
+	}
+
 	void A_NightmarePhase()
 	{
 		if (GetRenderStyle() == STYLE_Subtract)
@@ -1516,5 +1693,47 @@ class HomRocket1 : EEProjectile
 			BAL3 C 8 Bright A_Explode(64,96,XF_HURTSOURCE,false,0,0,10,"BulletPuff","Explosive");
 			BAL3 DE 5 Bright;
 			stop;
+	}
+}
+	
+class DoomImpBallNew : EEProjectile
+{
+	Default
+	{
+		Tag "Imp Fireball";
+		Radius 6;
+		Height 8;
+		Speed 10;
+		FastSpeed 20;
+		DamageFunction (finaldamagedealt);
+		Projectile;
+		+RANDOMIZE
+		+ZDOOMTRANS
+		RenderStyle "Add";
+		Alpha 1;
+		SeeSound "imp/attack";
+		DeathSound "imp/shotx";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.005);
+	}
+	
+	States
+	{
+		Spawn:
+			BAL1 AB 4 BRIGHT;
+			Loop;
+		Death:
+			BAL1 CDE 6 BRIGHT;
+			Stop;
 	}
 }

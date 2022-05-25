@@ -407,6 +407,47 @@ class EEProjectile : EEBaseZSC abstract
 		return damage;
 	}
 	
+	int A_CalcDamageFormula(int basedmg, int baserand, double factor1base = 0.005, double factor2 = 0.3334, double factor3 = 0.1667, double levelfactor = 0.005, int lvlthreshold1 = 30, int lvlthreshold2 = 60)
+	{
+		if (baserand <= 0) baserand = random(1,8);
+		int damage = (basedmg * baserand);
+		if (target && exex_monsterlevelenabledflags)
+		{
+			damage += (target.CountInv("MonsterLevel") * ((basedmg * factor1base) * baserand));
+			if (target.CountInv("MonsterLevel") >= lvlthreshold1)
+			{
+				damage += ((basedmg * factor2) * baserand) + (target.CountInv("MonsterLevel") * ((basedmg * (factor1base * factor2)) * baserand));
+			}
+			if (target.CountInv("MonsterLevel") >= lvlthreshold2)
+			{
+				damage += ((basedmg * factor3) * baserand) + (target.CountInv("MonsterLevel") * ((basedmg * (factor1base * factor3)) * baserand));
+			}
+			damage *= (1.0 + (target.CountInv("MonsterLevel") * levelfactor));
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EEProjectile] (\c[ice]%s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d", GetClassName(), damage, basedmg, baserand);
+		}
+		return damage;
+	}
+
+	int A_CalcDamageFormula2(int basedmg, double factor1 = 0.005, int basedmg2 = 1, double factor2 = 0.3334, int basedmg3 = 1, double factor3 = 0.1667, double levelfactor = 0.005, int lvlthreshold1 = 30, int lvlthreshold2 = 60)
+	{
+		int damage = basedmg;
+		if (target && exex_monsterlevelenabledflags)
+		{
+			damage = basedmg + (target.CountInv("MonsterLevel") * (basedmg * factor1));
+			if (CountInv("MonsterLevel") >= lvlthreshold1)
+			{
+				damage += basedmg2 + (target.CountInv("MonsterLevel") * (basedmg2 * factor2));
+			}
+			if (CountInv("MonsterLevel") >= lvlthreshold2)
+			{
+				damage += basedmg3 + (target.CountInv("MonsterLevel") * (basedmg3 * factor3));
+			}
+			damage *= (1.0 + (target.CountInv("MonsterLevel") * levelfactor));
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EEProjectile] (\c[ice]%s\c[fire]): %d\c-", GetClassName(), damage);
+		}
+		return damage;
+	}
+	
 	void A_HitSparkGetSize()
 	{
 		A_SetScale(0.3125); A_FadeTo(0.6875);
@@ -2398,6 +2439,47 @@ class EECreature : EEBaseZSC abstract
 	}
 	*/
 	
+	int A_CalcDamageFormula(int basedmg, int baserand, double factor1base = 0.005, double factor2 = 0.3334, double factor3 = 0.1667, double levelfactor = 0.005, int lvlthreshold1 = 30, int lvlthreshold2 = 60)
+	{
+		int damage = (basedmg * baserand);
+		if (baserand <= 0) baserand = random(1,8);
+		if (exex_monsterlevelenabledflags)
+		{
+			damage += (CountInv("MonsterLevel") * ((basedmg * factor1base) * baserand));
+			if (CountInv("MonsterLevel") >= lvlthreshold1)
+			{
+				damage += ((basedmg * factor2) * baserand) + (CountInv("MonsterLevel") * ((basedmg * (factor1base * factor2)) * baserand));
+			}
+			if (CountInv("MonsterLevel") >= lvlthreshold2)
+			{
+				damage += ((basedmg * factor3) * baserand) + (CountInv("MonsterLevel") * ((basedmg * (factor1base * factor3)) * baserand));
+			}
+			damage *= (1.0 + (CountInv("MonsterLevel") * levelfactor));
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EECreature] (\c[ice]%s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d", GetClassName(), damage, basedmg, baserand);
+		}
+		return damage;
+	}
+
+	int A_CalcDamageFormula2(int basedmg, double factor1 = 0.005, int basedmg2 = 1, double factor2 = 0.3334, int basedmg3 = 1, double factor3 = 0.1667, double levelfactor = 0.005, int lvlthreshold1 = 30, int lvlthreshold2 = 60)
+	{
+		int damage = basedmg;
+		if (exex_monsterlevelenabledflags)
+		{
+			damage = basedmg + (CountInv("MonsterLevel") * (basedmg * factor1));
+			if (CountInv("MonsterLevel") >= lvlthreshold1)
+			{
+				damage += basedmg2 + (CountInv("MonsterLevel") * (basedmg2 * factor2));
+			}
+			if (CountInv("MonsterLevel") >= lvlthreshold2)
+			{
+				damage += basedmg3 + (CountInv("MonsterLevel") * (basedmg3 * factor3));
+			}
+			damage *= (1.0 + (CountInv("MonsterLevel") * levelfactor));
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EECreature] (\c[ice]%s\c[fire]): %d\c-", GetClassName(), damage);
+		}
+		return damage;
+	}
+	
 	void A_DDAFDOrigBossDie()
 	{
 		actor player = players[0].mo;
@@ -3638,7 +3720,7 @@ class EECreature : EEBaseZSC abstract
 		if (!CountInv("HSphereTeleportCooldown") && target && CheckIfTargetInLOS(0, JLOSF_DEADNOJUMP))
 		{
 			if (random(1,chancemax) <= chance) { SetStateLabel(tele); }
-			//if (dydudebug_monsterspecialai) Console.Printf("HSTele: Target - %s (%d / %d)", target.GetClassName(), chance, chancemax);
+			if (dydudebug_monsterspecialai) Console.Printf("HSTele: Target - %s (%d / %d)", target.GetClassName(), chance, chancemax);
 		}
 	}
 	
