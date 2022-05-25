@@ -1059,15 +1059,15 @@ class CacodemonNew : EECreature
 				
 				int mldmg = A_CalcDamageFormula(6,random(1,10),0.005,0.3334,0.1667,0.005);
 				
-				A_CustomComboAttack("CacodemonBall", user_tempvar1, mldmg, "caco/melee");
+				A_CustomComboAttack("CacodemonBallNew", user_tempvar1, mldmg, "caco/melee");
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 45)
 				{
-					A_SpawnProjectile("CacodemonBall",user_tempvar1,0,(user_tempvar2*-1));
-					A_SpawnProjectile("CacodemonBall",user_tempvar1,0,(user_tempvar2*1));
+					A_SpawnProjectile("CacodemonBallNew",user_tempvar1,0,(user_tempvar2*-1));
+					A_SpawnProjectile("CacodemonBallNew",user_tempvar1,0,(user_tempvar2*1));
 					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 90)
 					{
-						A_SpawnProjectile("CacodemonBall",user_tempvar1,0,(user_tempvar2*-2));
-						A_SpawnProjectile("CacodemonBall",user_tempvar1,0,(user_tempvar2*2));
+						A_SpawnProjectile("CacodemonBallNew",user_tempvar1,0,(user_tempvar2*-2));
+						A_SpawnProjectile("CacodemonBallNew",user_tempvar1,0,(user_tempvar2*2));
 					}
 				}
 			}
@@ -1455,6 +1455,20 @@ class RevenantNew : EECreature
 		Obituary "$OB_UNDEAD";
 	}
 	
+	void A_SkelMissile(class<actor> type = "RevenantTracerNew")
+	{
+		if (target == null) return;
+		A_FaceTarget();
+		AddZ(16);
+		Actor missile = SpawnMissile(target, type);
+		AddZ(-16);
+		if (missile != null)
+		{
+			missile.SetOrigin(missile.Vec3Offset(missile.Vel.X, missile.Vel.Y, 0.), false);
+			missile.tracer = target;
+		}
+	}
+	
 	void A_SkelFist()
 	{
 		let targ = target;
@@ -1488,7 +1502,7 @@ class RevenantNew : EECreature
 		Missile:
 			SKEL J 0 BRIGHT A_FaceTarget();
 			SKEL J 10 BRIGHT A_FaceTarget();
-			SKEL K 10 A_SkelMissile();
+			SKEL K 10 A_SkelMissile("RevenantTracerNew");
 			SKEL K 10 A_FaceTarget();
 			Goto See;
 		Pain:
@@ -1666,20 +1680,20 @@ class MancubusNew : EECreature
 			FATT G 20 A_FatRaise();
 			FATT H 10 BRIGHT 
 			{
-				if (spreadtype == 1) A_FatAttack2();
-				else A_FatAttack1();
+				if (spreadtype == 1) A_FatAttack2("FatShotNew");
+				else A_FatAttack1("FatShotNew");
 			}
 			FATT IG 5 A_FaceTarget();
 			FATT H 10 BRIGHT 
 			{
-				if (spreadtype == 1) A_FatAttack2();
-				else A_FatAttack1();
+				if (spreadtype == 1) A_FatAttack1("FatShotNew");
+				else A_FatAttack2("FatShotNew");
 			}
 			FATT IG 5 A_FaceTarget();
 			FATT H 10 BRIGHT
 			{
-				if (spreadtype == 1) A_FatAttack3();
-				else A_FatAttack3();
+				if (spreadtype == 1) A_FatAttack3("FatShotNew");
+				else A_FatAttack3("FatShotNew");
 			}
 			FATT IG 5 A_FaceTarget();
 			Goto See;
@@ -1755,7 +1769,7 @@ class HellKnightNew : EECreature
 			else
 			{
 				// launch a missile
-				SpawnMissile (target, "BaronBall");
+				SpawnMissile (target, "KnightBallNew");
 			}
 		}
 	}
@@ -1846,7 +1860,7 @@ class BaronOfHellNew : EECreature
 			else
 			{
 				// launch a missile
-				SpawnMissile (target, "BaronBall");
+				SpawnMissile (target, "BaronBallNew");
 			}
 		}
 	}
@@ -3005,7 +3019,20 @@ class BFGBallMonster : BFGBallBase
 {
 	default
 	{
+		DamageFunction (finaldamagedealt);
 		Tag "BFG Ball";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(100,random(1,8),0.02,0.3334,0.1667,0.015);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(100,random(1,8),0.02,0.3334,0.1667,0.015);
 	}
 	
 	States
