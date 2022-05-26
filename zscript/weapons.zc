@@ -3686,6 +3686,14 @@ class CricketBat : DinahWeapon replaces Pistol
 	action int A_BatDamageSet(int type = 0)
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+		int PlayerSTR;
+		int PlayerLevel;
+		int strengthcounter;
+		if (MiscItem) 
+		{
+			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+			PlayerLevel = MiscItem.TruePlayerLevel;
+		}
 		int TruePlayerLevel = 0;
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 
@@ -3744,6 +3752,24 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				dmg *= random(1,8);
 			}
+		}
+		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
+		{
+			int adddmg;
+			int rngroll;
+			if (random(1,128) <= (127 - (PlayerLevel * 0.025)))
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(2,3,4,5,5);
+				else adddmg = randompick(1,2,2,2,3,3);
+			}
+			else
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(3,4,5,6,7);
+				else adddmg = randompick(2,3,4,4,5,6);
+				rngroll = 1;
+			}
+			dmg += adddmg;
+			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Cricket Bat]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
 		}
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
@@ -6887,6 +6913,69 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 			}
 		}
 	}
+	
+	action void A_AxeChopDmg()
+	{
+		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+		int PlayerSTR;
+		int PlayerLevel;
+		int strengthcounter;
+		if (MiscItem) 
+		{
+			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+			PlayerLevel = MiscItem.TruePlayerLevel;
+		}
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		string pufftype = "BlunderPuff";
+		int dmg = (random(16,20) * random(1,8));
+		int range = 96;
+		if (invoker.IPAttackCheck) 
+		{
+			dmg = (random(16,20) * random(5,8));
+			pufftype = "BlunderPuffIP";
+		}
+		else
+		{
+			dmg = (random(16,20) * random(1,8));
+			pufftype = "BlunderPuff";
+		}
+		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
+		{
+			int adddmg;
+			int rngroll;
+			if (random(1,96) <= (95 - (PlayerLevel * 0.0375)))
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(8,9,11,13,14,15);
+				else adddmg = randompick(3,4,4,5,5,6);
+			}
+			else
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(16,18,19,21,23,25);
+				else adddmg = randompick(6,7,8,9,10,11);
+				rngroll = 1;
+			}
+			dmg += adddmg;
+			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Blunderaxe]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
+		}
+		if (invoker.IPAttackCheck) 
+		{
+			dmg *= randompick(7,8,8,8,8,8,8,8,8,9);
+			range *= 1.1875;
+		}
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+		{
+			dmg *= 10;
+			if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0225) + (MiscItem.TruePlayerATK * 0.0225));
+		}
+		else
+		{
+			if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0075) + (MiscItem.TruePlayerATK * 0.0075));
+		}
+		
+		if (dydudebug_meleedmg) Console.Printf("(pufftype: %s) dmg: %d", pufftype, dmg);
+		A_CustomPunch(dmg, true, 0, pufftype, range, IPCostOnHit: true);
+	}
 
 	States
 	{
@@ -7032,34 +7121,8 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 			}
 			BLAX J 2 
 			{
-				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-				string pufftype = "BlunderPuff";
-				int dmg = (random(16,20) * random(1,8));
-				int range = 96;
-				if (invoker.IPAttackCheck) 
-				{
-					dmg = (random(16,20) * random(5,8));
-					pufftype = "BlunderPuffIP";
-					dmg *= randompick(7,8,8,8,8,8,8,8,8,9);
-					range *= 1.1875;
-				}
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					dmg *= 10;
-					if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0225) + (MiscItem.TruePlayerATK * 0.0225));
-				}
-				else
-				{
-					if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0075) + (MiscItem.TruePlayerATK * 0.0075));
-				}
-				
-
 				A_AxeChopSet2Tics3();
-				
-				if (dydudebug_meleedmg) Console.Printf("(pufftype: %s) dmg: %d", pufftype, dmg);
-				A_CustomPunch(dmg, true, 0, pufftype, range, IPCostOnHit: true);
+				A_AxeChopDmg();
 				
 				invoker.A_CheckIPModeOnUse();
 				invoker.meleetimes++;
@@ -8625,6 +8688,80 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		}
 	}
 	
+	action void A_ScramblerBonk()
+	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		int PlayerSTR;
+		int PlayerLevel;
+		int strengthcounter;
+		if (MiscItem) 
+		{
+			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+			PlayerLevel = MiscItem.TruePlayerLevel;
+		}
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+
+		string pufftype = "PanPuff";
+		int dmg = (random(10,12) * random(1,8));
+		if (TruePlayerLevel >= 60) dmg = (random(15,18) * random(3,10));
+		if (TruePlayerLevel >= 150) dmg = (random(20,24) * random(5,12));
+		int range = 72;
+		if (invoker.IPAttackCheck)
+		{
+			dmg = (random(10,12) * random(5,8));
+			if (TruePlayerLevel >= 60) dmg = (random(15,18) * random(7,10));
+			if (TruePlayerLevel >= 150) dmg = (random(20,24) * random(9,12));
+			pufftype = "PanPuffIP";
+			range = 96;
+		}
+		else
+		{
+			pufftype = "PanPuff";
+			dmg = (random(10,12) * random(1,8));
+			if (TruePlayerLevel >= 60) dmg = (random(15,18) * random(3,10));
+			if (TruePlayerLevel >= 150) dmg = (random(20,24) * random(5,12));
+			range = 72;
+		}
+		
+		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
+		{
+			int adddmg;
+			int rngroll;
+			if (random(1,80) <= (79 - (PlayerLevel * 0.03125)))
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(6,7,8,10,11,12);
+				else adddmg = randompick(2,3,3,4,4,5);
+				if (TruePlayerLevel >= 150) adddmg *= 2.0;
+				else if (TruePlayerLevel >= 60) adddmg *= 1.5;
+			}
+			else
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(12,14,15,17,18,19);
+				else adddmg = randompick(5,6,7,7,8,9);
+				if (TruePlayerLevel >= 150) adddmg *= 2.0;
+				else if (TruePlayerLevel >= 60) adddmg *= 1.5;
+				rngroll = 1;
+			}
+			dmg += adddmg;
+			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Scrambler]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
+		}
+		if (invoker.IPAttackCheck) dmg *= frandompick(2.0,2.0,2.0,2.0,2.0,2.25,2.25,2.5);
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+		{
+			dmg *= 10;
+			if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0225) + (MiscItem.TruePlayerATK * 0.0225));
+		}
+		else
+		{
+			if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0075) + (MiscItem.TruePlayerATK * 0.0075));
+		}
+		if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq && A_GetArmorAmt() <= 0) dmg *= 5;
+
+		if (dydudebug_meleedmg) Console.Printf("(pufftype: %s) dmg: %d", pufftype, dmg);
+		A_CustomPunch(dmg, true, 0, pufftype, range, IPCostOnHit: true);
+	}
+	
 	States
 	{
 		Spawn:
@@ -8692,42 +8829,7 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 				int TruePlayerLevel = 0;
 				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 				
-				// Melee Hit
-				string pufftype = "PanPuff";
-				int dmg = (random(10,12) * random(1,8));
-				if (TruePlayerLevel >= 60) dmg = (random(15,18) * random(3,10));
-				if (TruePlayerLevel >= 150) dmg = (random(20,24) * random(5,12));
-				if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
-				{
-					if (A_GetArmorAmt() <= 0) dmg *= 5;
-				}
-				int range = 72;
-				if (invoker.IPAttackCheck)
-				{
-					dmg = (random(10,12) * random(5,8));
-					if (TruePlayerLevel >= 60) dmg = (random(15,18) * random(7,10));
-					if (TruePlayerLevel >= 150) dmg = (random(20,24) * random(9,12));
-					if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
-					{
-						if (A_GetArmorAmt() <= 0) dmg *= 5;
-					}
-					pufftype = "PanPuffIP";
-					dmg *= frandompick(2.0,2.0,2.0,2.0,2.0,2.25,2.25,2.5);
-					range = 96;
-				}
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					dmg *= 10;
-					if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0225) + (MiscItem.TruePlayerATK * 0.0225));
-				}
-				else
-				{
-					if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0075) + (MiscItem.TruePlayerATK * 0.0075));
-				}
-
-				if (dydudebug_meleedmg) Console.Printf("(pufftype: %s) dmg: %d", pufftype, dmg);
-				A_CustomPunch(dmg, true, 0, pufftype, range, IPCostOnHit: true);
-
+				A_ScramblerBonk();
 				A_PanSwingSet2Tics();
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) A_ScramblerSwing(1);
 																																 else A_ScramblerSwing(0);
@@ -8823,43 +8925,10 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 					A_StartSound("panclang",8,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
 				}
 				
-				// Melee Hit
-				int dmg = (random(10,12) * random(1,8));
-				if (TruePlayerLevel >= 60) dmg = (random(15,18) * random(3,10));
-				if (TruePlayerLevel >= 150) dmg = (random(20,24) * random(5,12));
-				if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
-				{
-					if (A_GetArmorAmt() <= 0) dmg *= 5;
-				}
-				int range = 72;
-				if (invoker.IPAttackCheck)
-				{
-					dmg = (random(10,12) * random(5,8));
-					if (TruePlayerLevel >= 60) dmg = (random(15,18) * random(7,10));
-					if (TruePlayerLevel >= 150) dmg = (random(20,24) * random(9,12));
-					if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
-					{
-						if (A_GetArmorAmt() <= 0) dmg *= 5;
-					}
-					pufftype = "PanPuffIP";
-					dmg *= frandompick(1.5,1.5,1.5,1.5,1.5,1.625,1.625,1.75);
-					range = 90;
-				}
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					dmg *= 10;
-					if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0225) + (MiscItem.TruePlayerATK * 0.0225));
-				}
-				else
-				{
-					if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0075) + (MiscItem.TruePlayerATK * 0.0075));
-				}
-
-				if (dydudebug_meleedmg) Console.Printf("(pufftype: %s) dmg: %d", pufftype, dmg);
-				A_CustomPunch(dmg, true, 0, pufftype, range);
-
-				// Projectiles
+				A_ScramblerBonk();
 				A_PanSwingSet2Tics();
+				
+				// Projectiles
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
 					A_ScramblerSwing(1);
@@ -9742,6 +9811,14 @@ class AppleJack : DinahWeapon replaces Chaingun
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = 0;
+		int PlayerSTR;
+		int PlayerLevel;
+		int strengthcounter;
+		if (MiscItem) 
+		{
+			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+			PlayerLevel = MiscItem.TruePlayerLevel;
+		}
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		
 		double decenthealthfactor = 0.125;
@@ -9767,6 +9844,24 @@ class AppleJack : DinahWeapon replaces Chaingun
 				if (player.CountInv("CriticalHealth")) dmg *= (1.0 + crisishealthfactor);
 				if (dydudebug_meleedmg) Console.Printf("decenthealthfactor: %.2f, lowhealthfactor: %.2f, crisishealthfactor: %.2f", decenthealthfactor, lowhealthfactor, crisishealthfactor);
 			}
+		}
+		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
+		{
+			int adddmg;
+			int rngroll;
+			if (random(1,128) <= (127 - (PlayerLevel * 0.025)))
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(2,2,3,3,4,4);
+				else adddmg = randompick(1,1,2,2,2,3);
+			}
+			else
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(3,4,5,5,6,6);
+				else adddmg = randompick(2,3,3,4,4,5);
+				rngroll = 1;
+			}
+			dmg += adddmg;
+			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [AppleJack]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
 		}
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
@@ -11009,6 +11104,74 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 		A_Recoil(baserecoil);
 	}
 	
+	action void A_PikePoke()
+	{
+		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+		int PlayerSTR;
+		int PlayerLevel;
+		int strengthcounter;
+		if (MiscItem) 
+		{
+			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+			PlayerLevel = MiscItem.TruePlayerLevel;
+		}
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		
+		string pufftype = "PikePuff";
+		if (random(1,32) <= 1 && !CountInv("PlayingStrife",AAPTR_PLAYER1)) { A_AlertMonsters(); }
+		int dmg = (random(6,8) * random(1,8));
+		int range = 96;
+		if (invoker.IPAttackCheck) 
+		{
+			dmg = (random(6,8) * random(5,8));
+			pufftype = "PikePuffIP";
+		}
+		else
+		{
+			dmg = (random(6,8) * random(1,8));
+			pufftype = "PikePuff";
+		}
+		
+		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
+		{
+			int adddmg;
+			int rngroll;
+			if (random(1,160) <= (159 - (PlayerLevel * 0.015625)))
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(1,2,2,3,4,4);
+				else adddmg = randompick(0,0,1,1,1,2);
+			}
+			else
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(2,3,3,4,5,5);
+				else adddmg = randompick(1,1,2,2,3,3);
+				rngroll = 1;
+			}
+			dmg += adddmg;
+			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [WizardPike]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
+		}
+		if (invoker.IPAttackCheck) 
+		{
+			dmg *= (randompick(1,1,2) * 4);
+			range *= frandompick(1,1,1.25);
+		}
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+		{
+			dmg *= 10;
+			if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0225) + (MiscItem.TruePlayerATK * 0.0225));
+		}
+		else
+		{
+			if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0075) + (MiscItem.TruePlayerATK * 0.0075));
+		}
+		
+		if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
+		if (invoker.IPAttackCheck) A_CustomPunch(dmg, true, 0, pufftype, range, giveammotype: "PikeAmmo", giveammoamt: 2, IPCostOnHit: true);
+													else A_CustomPunch(dmg, true, 0, pufftype, range, IPCostOnHit: true);
+
+	}
+	
 	States
 	{
 		Spawn:
@@ -11165,32 +11328,7 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-				
-				string pufftype = "PikePuff";
-				if (random(1,32) <= 1 && !CountInv("PlayingStrife",AAPTR_PLAYER1)) { A_AlertMonsters(); }
-				int dmg = (random(6,8) * random(1,8));
-				int range = 96;
-				if (invoker.IPAttackCheck) 
-				{
-					dmg = (random(6,8) * random(5,8));
-					pufftype = "PikePuffIP";
-					dmg *= (randompick(1,1,2) * 4);
-					range *= frandompick(1,1,1.25);
-				}
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					dmg *= 10;
-					if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0225) + (MiscItem.TruePlayerATK * 0.0225));
-				}
-				else
-				{
-					if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0075) + (MiscItem.TruePlayerATK * 0.0075));
-				}
-				
-				if (dydudebug_meleedmg) Console.Printf("dmg: %d", dmg);
-				if (invoker.IPAttackCheck) A_CustomPunch(dmg, true, 0, pufftype, range, giveammotype: "PikeAmmo", giveammoamt: 2, IPCostOnHit: true);
-															else A_CustomPunch(dmg, true, 0, pufftype, range, IPCostOnHit: true);
+				A_PikePoke();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{

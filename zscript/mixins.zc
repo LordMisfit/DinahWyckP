@@ -430,7 +430,12 @@ mixin class DmgCalc
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
-		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+		int PlayerLevel;
+		if (MiscItem) 
+		{
+			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+			PlayerLevel = MiscItem.TruePlayerLevel;
+		}
 		string weaponname;
 		weaponname = weapon.GetClassName();
 		string actorname = GetClassName();
@@ -440,40 +445,37 @@ mixin class DmgCalc
 		String nm, nn, no, np;
 
 		// Character Check [base damage]
+		damage = random(9,15);
 		If (weapon is "HandToHand")
 		{
-			if (altfire == 0)
-			{
-				damage = random(9,15);
-			}
-			else
-			if (altfire == 1)
-			{
-				damage = random(59,101);
-			}
-		}
-		else
-		{
-			damage = random(9,15);
+			if (altfire <= 0) damage = random(9,15);
+			if (altfire == 1) damage = random(59,101);
 		}
 		if (dydudebug_meleedmg) Console.Printf("BaseDmg: %d [%s, %s]", damage, weaponname, actorname);
 
 		// [STRIFE] Stamina Upgrades
 		int stamdamagefactor = player.Stamina;
 		previousdamage = damage;
-		damage = floor(damage * (1.00 + (stamdamagefactor * 0.75)));
+		damage = floor(damage * (1.00 + (stamdamagefactor * 0.375)));
 		if (dydudebug_meleedmg) Console.Printf("StaminaDmg: %d, StamUpgrades: %d - (Previous Dmg: %d)", damage, stamdamagefactor, previousdamage);
 
 		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
 		{
-			if (altfire == 0)
+			int adddmg;
+			int rngroll;
+			if (random(1,256) <= (255 - (PlayerLevel * 0.0125)))
 			{
-				damage += randompick(1,1,2,2);
+				if (altfire == 0) adddmg = randompick(1,1,1,2,2);
+				if (altfire == 1) adddmg = randompick(4,5,6,7,8);
 			}
-			if (altfire == 1)
+			else
 			{
-				damage += randompick(5,6,7,9);
+				if (altfire == 0) adddmg = randompick(2,3,3,4,4);
+				if (altfire == 1) adddmg = randompick(7,8,9,10,11);
+				rngroll = 1;
 			}
+			damage += adddmg;
+			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Punch/Uppercut (type: %d)]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, altfire, adddmg, rngroll);
 		}
 		if (dydudebug_meleedmg) Console.Printf("StrDmg: %d - (Strength: %d) - (Previous Dmg: %d)", damage, PlayerSTR, previousdamage);
 
@@ -487,20 +489,15 @@ mixin class DmgCalc
 		previousdamage = damage;
 		if (shockwave)
 		{
-			if (altfire == 0) damage = floor(damage * (0.04166667 * randompick(1,2,2,2,2,2,3)));
-			if (altfire == 1) damage = floor(damage * (0.05 * randompick(1,2,2,2,2,2,3)));
+			if (altfire == 0) damage = floor(damage * (0.04166667 * randompick(1,1,2,2,2,2,2,3)));
+			if (altfire == 1) damage = floor(damage * (0.05 * randompick(1,1,2,2,2,2,2,3)));
 			if (dydudebug_meleedmg) Console.Printf("MeleeDmg [Shockwave]: (\c[green]%s\c-) %d - (Previous Dmg: %d)", weaponname, damage, previousdamage);
 		}
-		else
-		{
-			previousdamage = damage;
-		}
-
+		
 		previousdamage = damage;
 		If (weapon is "HandToHand")
 		{
 			if (CountInv("DinahTrueIPState")) damage *= 5;
-			if (altfire == 0) damage = damage;
 		}
 		if (dydudebug_meleedmg && altfire == 0) Console.Printf("MeleeDmgAltCheck: (\c[green]%s\c-) %d - (Previous Dmg: %d) [Punch]", weaponname, damage, previousdamage);
 		if (dydudebug_meleedmg && altfire == 1) Console.Printf("MeleeDmgAltCheck: (\c[green]%s\c-) %d - (Previous Dmg: %d) [Uppercut]", weaponname, damage, previousdamage);
@@ -528,7 +525,12 @@ mixin class DmgCalc
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
-		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+		int PlayerLevel;
+		if (MiscItem) 
+		{
+			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+			PlayerLevel = MiscItem.TruePlayerLevel;
+		}
 
 		string weaponname = weapon.GetClassName();
 		string actorname = GetClassName();
@@ -550,7 +552,19 @@ mixin class DmgCalc
 		previousdamage = damage;
 		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
 		{
-			damage += randompick(3,4,5);
+			int adddmg;
+			int rngroll;
+			if (random(1,192) <= (191 - (PlayerLevel * 0.01875)))
+			{
+				adddmg = randompick(2,2,2,3,3,4);
+			}
+			else
+			{
+				adddmg = randompick(5,6,7,9,10,11);
+				rngroll = 1;
+			}
+			damage += adddmg;
+			if (debugmelee) Console.Printf("\c[fire]strengthcounter %d / %d [Kick]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
 		}
 		if (debugmelee) Console.Printf("StrDmg: %d - (Strength: %d) - (Previous Dmg: %d)", damage, PlayerSTR, previousdamage);
 
@@ -756,6 +770,78 @@ mixin class MonsterCollider
 	class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
 	string nm, nn, no, np;
 	
+	//
+	void A_RecoverHUD(int recovery, int type, bool acculmuatepulse)
+	{
+		if (dydudebug_hudrecdmgdisplays) Console.Printf("A_RecoverHUD called");
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+
+		if (MiscItem && dyduhud_showhpapdmgrec)
+		{
+			if (dydudebug_hudrecdmgdisplays) Console.Printf("A_RecoverHUD [MiscItem]");
+			if (type == 0) // HP
+			{
+				// HP Recovery [HUD]
+				if (MiscItem.HPRecHUDTimer <= 0) MiscItem.HPRecHUDTimer = 105;
+				else
+				{
+					MiscItem.HPRecHUDTimer += 35;
+					if (MiscItem.HPRecHUDTimer < 105 && recovery > (MiscItem.MaxHealthTrue * 0.01)) MiscItem.HPRecHUDTimer = 105;
+					if (MiscItem.HPRecHUDTimer > 175) MiscItem.HPRecHUDTimer = 175;
+				}
+				MiscItem.HPRecHUDAmt += recovery;
+				if (acculmuatepulse && recovery > 0)
+				{
+					if (MiscItem.HPRecHUDAmt > 0 && recovery > 0)
+					{
+						int healfactor = MiscItem.HPRecHUDAmt * 100 / MiscItem.MaxHealthTrue;
+						if (healfactor < 10) MiscItem.HPHUDPulseType = 1;
+						if (healfactor >= 10) MiscItem.HPHUDPulseType = 2;
+						if (healfactor >= 50) MiscItem.HPHUDPulseType = 3;
+						if (healfactor >= 100) MiscItem.HPHUDPulseType = 4;
+						MiscItem.HPHUDPulseTimeP = (level.time % randompick(15,25,35));
+					}
+				}
+				if (dydudebug_hudrecdmgdisplays) Console.Printf("HP Gain: %d [%d] (timer: %d)", MiscItem.HPRecHUDAmt, recovery, MiscItem.HPRecHUDTimer);
+			}
+
+			if (type == 1) // AP
+			{
+				// AP Recovery [HUD]
+				if (MiscItem.APRecHUDTimer <= 0) MiscItem.APRecHUDTimer = 105;
+				else
+				{
+					MiscItem.APRecHUDTimer += 35;
+					if (MiscItem.APRecHUDTimer < 105 && recovery > 1) MiscItem.APRecHUDTimer = 105;
+					if (MiscItem.APRecHUDTimer > 175) MiscItem.APRecHUDTimer = 175;
+				}
+				MiscItem.APRecHUDAmt += recovery;
+				if (acculmuatepulse && recovery > 0)
+				{
+					int armmax;
+					if (player.CountInv("KnightGownItem")) armmax = 250;
+					if (player.CountInv("KnightGownItem2")) armmax = 500;
+					if (player.CountInv("KnightGownItem3")) armmax = 1000;
+					if (player.CountInv("KnightGownItem4")) armmax = 2000;
+					if (armmax)
+					{
+						if (MiscItem.APRecHUDAmt > 0 && recovery > 0)
+						{
+							int healfactor = MiscItem.APRecHUDAmt * 100 / armmax;
+							if (healfactor < 10) MiscItem.APHUDPulseType = 1;
+							if (healfactor >= 10) MiscItem.APHUDPulseType = 2;
+							if (healfactor >= 50) MiscItem.APHUDPulseType = 3;
+							if (healfactor >= 100) MiscItem.APHUDPulseType = 4;
+							MiscItem.APHUDPulseTimeP = (level.time % randompick(15,25,35));
+						}
+					}
+				}
+				if (dydudebug_hudrecdmgdisplays) Console.Printf("AP Gain: %d [%d] (timer: %d)", MiscItem.APRecHUDAmt, recovery, MiscItem.APRecHUDTimer);
+			}
+		}
+	}
+
 	// Resurrections
 	override bool CanResurrect(Actor other, bool passive)
 	{
@@ -1063,8 +1149,12 @@ mixin class MonsterCollider
 	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		DDPlayerPawn playpawn;
+		playpawn = DDPlayerPawn(source);
+		
 		EECreature selfEE;
 		selfEE = EECreature(self);
+		
 		if (selfEE && EEUniqueBoss(selfEE)) 
 		{
 			nm = "PennywiseBoss";
@@ -1207,10 +1297,11 @@ mixin class MonsterCollider
 		
 		initdmg = damage;
 		if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
+		double critdmgmulti = 2.0 + (0.01 * random(-10,10));
 		if (criticalhit)
 		{
 			A_SetInventory("TookCriticalHit",1);
-			damage *= frandom(1.9,2.1);
+			damage *= critdmgmulti;
 			if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critical Hit Dealth: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
 			A_StartSound("misc/critsnd2", 214, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.75,1.25));
 		}
@@ -1575,6 +1666,47 @@ mixin class MonsterCollider
 			}
 		}
 		
+		// Healing from Punching/Kicking Practice Targets ala SW
+		if (PracticeTarget(self) || PracticeTarget2(self))
+		{
+			if ((mod == 'Fist' || mod == 'Kick'))
+			{
+				if (!(flags & DMG_EXPLOSION))
+				{
+					double multfactorHP = 1.0;
+					int randbonusincreaseHP = randompick(3,3,4) * frandom(3.75,5.25) * frandom(0.5,1.5);
+					if (mod == 'Fist' && infl == "UppercutPuff") multfactorHP *= frandompick(1.125,1.1875);
+					if (mod == 'Kick') multfactorHP *= frandompick(1.0834,1.1667);
+					randbonusincreaseHP *= multfactorHP;
+					if (criticalhit) randbonusincreaseHP *= critdmgmulti;
+					//if (dydudebug_regenpenaltydisplay) Console.Printf("HPBonusTimeAdd: %d", randbonusincreaseHP);
+					if (MiscItem) MiscItem.HPRegenBoostTimer += randbonusincreaseHP;
+					
+					if (playpawn)
+					{
+						int prehealth = playpawn.player.mo.health;
+						int phealmax;
+						if (MiscItem) 
+						{
+							phealmax = MiscItem.MaxHealthTrue;
+							phealmax *= (1.0 + (MiscItem.TruePlayerLevel * 0.005));
+							if (phealmax > MiscItem.MaxHealthTrue * 3.0) phealmax = (MiscItem.MaxHealthTrue * 3.0);
+						}
+						if ((prehealth < phealmax) && random(1,16) <= random(7,9))
+						{
+							int targhealamt = (randompick(1,1,1,1,1,1,1,1,1,1,1,2) * critdmgmulti * multfactorHP);
+							prehealth += targhealamt;
+							A_RecoverHUD(targhealamt, 0, true);
+							//if ((dvds_showdamagemessages & 1) && targhealamt > 0) A_PrintHealingMessage(playpawn, targhealamt);
+							Console.Printf("prehealth: %d, phealmax: %d, targhealamt: %d", prehealth, phealmax, targhealamt);
+							if (prehealth > phealmax) prehealth = phealmax;
+							playpawn.player.mo.health = playpawn.player.health = prehealth;
+						}
+					}
+				}
+			}
+		}
+
 		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Pre-Function Call: damage: %d (initdmg: %d)", GetClassName(), damage, initdmg);
 		//************************************************************************
 		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
