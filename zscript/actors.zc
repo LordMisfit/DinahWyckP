@@ -480,6 +480,43 @@ class EEProjectile : EEBaseZSC abstract
 		}
 		return damage;
 	}
+
+	int A_CalcDamageFormulaEx(int basedmg, int baserand, double factor1base = 0.005, double factor2 = 0.3334, double factor3 = 0.1667, double levelfactor = 0.005, int lvlthreshold1 = 30, int lvlthreshold2 = 60)
+	{
+		if (baserand <= 0) baserand = random(1,8);
+		int damage = (basedmg * baserand);
+		if (target && target.target && exex_monsterlevelenabledflags)
+		{
+			int TargLevel = target.target.CountInv("MonsterLevel");
+			if (PlayerPawn(target.target))
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				if (MiscItem) TargLevel = MiscItem.TruePlayerLevel;
+			}
+			
+			damage += (TargLevel * ((basedmg * factor1base) * baserand));
+			if (TargLevel >= lvlthreshold1)
+			{
+				damage += ((basedmg * factor2) * baserand) + (target.CountInv("MonsterLevel") * ((basedmg * (factor1base * factor2)) * baserand));
+			}
+			if (TargLevel >= lvlthreshold2)
+			{
+				damage += ((basedmg * factor3) * baserand) + (target.CountInv("MonsterLevel") * ((basedmg * (factor1base * factor3)) * baserand));
+			}
+			damage *= (1.0 + (TargLevel * levelfactor));
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormulaEx - EEProjectile] (\c[ice]%s of %s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d [gametic: %d]", GetClassName(), target.GetClassName(), damage, basedmg, baserand, gametic);
+			projprevdmg = damage;
+		}
+		else
+		{
+			if (damage != 0) damage = projprevdmg;
+			if (damage == 0) damage = (basedmg * baserand);
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormulaEx - EEProjectile] (\c[ice]%s\c[fire]): %d\c-, projprevdmg: %d, [gametic: %d]", GetClassName(), damage, projprevdmg, gametic);
+		}
+		
+		return damage;
+	}
 	
 	void A_HitSparkGetSize()
 	{
