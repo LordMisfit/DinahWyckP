@@ -5089,6 +5089,28 @@ class MalletShot : EEProjectile
 		if (random(1,100) <= user_randompain) { bFORCEPAIN = true; }
 	}
 	
+	void A_SelfDropC(int chance1 = 8, int chance2 = 40)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite"))
+		{
+			if (random(1,250) <= chance1 || (player.CountInv("MalletAmmo") <= 6 && random(1,250) <= chance2))
+			{
+				A_SpawnItemEx("MalletAmmoSingle",xvel:frandom(-1,1),yvel:frandom(-1,1),zvel:frandom(-1,1),flags:SXF_NOCHECKPOSITION);
+				self.Destroy();
+			}
+		}
+		else
+		{
+			if (random(1,100) <= chance1 || (player.CountInv("MalletAmmo") <= 3 && random(1,100) <= chance2))
+			{
+				A_SpawnItemEx("MalletAmmoSingle",xvel:frandom(-1,1),yvel:frandom(-1,1),zvel:frandom(-1,1),flags:SXF_NOCHECKPOSITION);
+				self.Destroy();
+			}
+		}
+	}
+	
 	States
 	{
 		Spawn:
@@ -5111,6 +5133,7 @@ class MalletShot : EEProjectile
 			{
 				bNOGRAVITY = true;
 				if (dydudebug_projectilecollisions) Console.Printf("State: Death [%d], NoGrav: %d", frame, bNOGRAVITY);
+				A_SelfDropC(12,56);
 			}
 			CBAL CDEF 4 Bright;
 			stop;
@@ -5119,6 +5142,7 @@ class MalletShot : EEProjectile
 			{
 				bNOGRAVITY = true;
 				if (dydudebug_projectilecollisions) Console.Printf("State: Crash [%d], NoGrav: %d", frame, bNOGRAVITY);
+				A_SelfDropC(8,40);
 			}
 			CBAL CDEF 4 Bright;
 			stop;
@@ -5127,6 +5151,7 @@ class MalletShot : EEProjectile
 			{
 				bNOGRAVITY = true;
 				if (dydudebug_projectilecollisions) Console.Printf("State: XDeath [%d], NoGrav: %d", frame, bNOGRAVITY);
+				A_SelfDropC(10,48);
 			}
 			stop;
 		Bounce:
@@ -5331,6 +5356,30 @@ class MalletAmmo : Ammo
 		Inventory.Amount 2; // 3
 		Inventory.MaxAmount 60; // 45
 		Ammo.BackpackAmount 2; // 3
+		Ammo.BackpackMaxAmount 90;
+		Inventory.Icon "CBAMA0";
+		Inventory.PickupMessage "A cricket ball";
+		Inventory.PickupSound "pickup/cricketammo";
+		+FLOATBOB
+	}
+	
+	States
+	{
+		Spawn:
+			CBAM A -1;
+			Loop;
+	}
+}
+
+class MalletAmmoSingle : MalletAmmo
+{
+	default
+	{
+		//$Category EE Ammo
+		Scale 0.75;
+		Inventory.Amount 1; // 3
+		Inventory.MaxAmount 60; // 45
+		Ammo.BackpackAmount 1; // 3
 		Ammo.BackpackMaxAmount 90;
 		Inventory.Icon "CBAMA0";
 		Inventory.PickupMessage "A cricket ball";
