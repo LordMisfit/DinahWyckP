@@ -5091,23 +5091,27 @@ class MalletShot : EEProjectile
 	
 	void A_SelfDropC(int chance1 = 8, int chance2 = 40)
 	{
+		bool drop = false;
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite"))
 		{
 			if (random(1,250) <= chance1 || (player.CountInv("MalletAmmo") <= 6 && random(1,250) <= chance2))
 			{
-				A_SpawnItemEx("MalletAmmoSingle",xvel:frandom(-1,1),yvel:frandom(-1,1),zvel:frandom(-1,1),flags:SXF_NOCHECKPOSITION);
-				self.Destroy();
+				drop = true;
 			}
 		}
 		else
 		{
 			if (random(1,100) <= chance1 || (player.CountInv("MalletAmmo") <= 3 && random(1,100) <= chance2))
 			{
-				A_SpawnItemEx("MalletAmmoSingle",xvel:frandom(-1,1),yvel:frandom(-1,1),zvel:frandom(-1,1),flags:SXF_NOCHECKPOSITION);
-				self.Destroy();
+				drop = true;
 			}
+		}
+		if (drop)
+		{
+			A_SpawnItemEx("MalletAmmoSingle",xvel:frandom(-4,4),yvel:frandom(-4,4),zvel:frandom(-2,4),flags:SXF_NOCHECKPOSITION);
+			self.Destroy();
 		}
 	}
 	
@@ -5382,7 +5386,7 @@ class MalletAmmoSingle : MalletAmmo
 		Ammo.BackpackAmount 1; // 3
 		Ammo.BackpackMaxAmount 90;
 		Inventory.Icon "CBAMA0";
-		Inventory.PickupMessage "A cricket ball";
+		Inventory.PickupMessage "A singular, salvaged cricket ball. Use it wisely...";
 		Inventory.PickupSound "pickup/cricketammo";
 		+FLOATBOB
 	}
@@ -14262,9 +14266,88 @@ class CandleWhip : DinahWeapon
 	
 	action void A_CandleWhipHit(string pufftype, string pufftypeip, double rangemult, double turnang)
 	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		int PlayerSTR;
+		int PlayerLevel;
+		int strengthcounter;
+		if (MiscItem) 
+		{
+			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+			PlayerLevel = MiscItem.TruePlayerLevel;
+		}
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		
+		invoker.rangebase = randompick(112,120,120,128,128,128,128,128,136,136,144);
+		invoker.dmg = (random(8,12) * randompick(1,2,2,2,3,3,3,3,3,4,4,4,5));
+		if (TruePlayerLevel >= 0 && TruePlayerLevel <= 25) invoker.dmg = (random(8,12) * randompick(1,2,2,2,3,3,3,3,3,4,4,4,5));
+		if (TruePlayerLevel >= 26 && TruePlayerLevel <= 50) invoker.dmg = (random(8,12) * randompick(2,2,2,3,3,3,3,3,4,4,4,5,5));
+		if (TruePlayerLevel >= 51 && TruePlayerLevel <= 75) invoker.dmg = (random(9,13) * randompick(2,2,3,3,3,3,3,4,4,4,5,5,5));
+		if (TruePlayerLevel >= 76 && TruePlayerLevel <= 100) invoker.dmg = (random(9,13) * randompick(2,3,3,3,3,3,4,4,4,5,5,5,6));
+		if (TruePlayerLevel >= 101 && TruePlayerLevel <= 125) invoker.dmg = (random(10,14) * randompick(3,3,3,3,3,4,4,4,5,5,5,6,6));
+		if (TruePlayerLevel >= 126 && TruePlayerLevel <= 150) invoker.dmg = (random(11,15) * randompick(3,3,3,3,4,4,4,5,5,5,6,6,6));
+		if (TruePlayerLevel >= 151 && TruePlayerLevel <= 175) invoker.dmg = (random(11,15) * randompick(3,3,3,4,4,4,5,5,5,6,6,6,7));
+		if (TruePlayerLevel >= 176 && TruePlayerLevel <= 200) invoker.dmg = (random(12,16) * randompick(3,3,4,4,4,5,5,5,6,6,6,7,7));
+		if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0]: %d dmg", invoker.dmg);
+		if (invoker.IPAttackCheck) 
+		{
+			invoker.rangebase *= 1.5;
+			invoker.dmg = (random(7,13) * randompick(5,6,6,6,7,7,7,7,7,8,8,8,9));
+			if (TruePlayerLevel >= 0 && TruePlayerLevel <= 25) invoker.dmg = (random(7,13) * randompick(2,2,3,3,3,3,3,4,4,4,5,5,5));
+			if (TruePlayerLevel >= 26 && TruePlayerLevel <= 50) invoker.dmg = (random(7,13) * randompick(2,2,3,3,3,3,3,4,4,4,5,5,5));
+			if (TruePlayerLevel >= 51 && TruePlayerLevel <= 75) invoker.dmg = (random(8,12) * randompick(2,2,3,3,3,3,3,4,4,4,5,5,5));
+			if (TruePlayerLevel >= 76 && TruePlayerLevel <= 100) invoker.dmg = (random(8,12) * randompick(2,3,3,3,3,3,4,4,4,5,5,5,6));
+			if (TruePlayerLevel >= 101 && TruePlayerLevel <= 125) invoker.dmg = (random(9,13) * randompick(3,3,3,3,3,4,4,4,5,5,5,6,6));
+			if (TruePlayerLevel >= 126 && TruePlayerLevel <= 150) invoker.dmg = (random(12,14) * randompick(3,3,3,3,4,4,4,5,5,5,6,6,6));
+			if (TruePlayerLevel >= 151 && TruePlayerLevel <= 175) invoker.dmg = (random(12,14) * randompick(3,3,3,4,4,4,5,5,5,6,6,6,7));
+			if (TruePlayerLevel >= 176 && TruePlayerLevel <= 200) invoker.dmg = (random(13,15) * randompick(3,3,4,4,4,5,5,5,6,6,6,7,7));
+			invoker.dmg *= frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.75);
+			if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0 (IP Attack)]: %d dmg", invoker.dmg);
+		}
+		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
+		{
+			int adddmg;
+			int rngroll;
+			if (random(1,128) <= (127 - (PlayerLevel * 0.025)))
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(2,2,3,4,5);
+				else adddmg = randompick(1,1,2,2,2,3);
+			}
+			else
+			{
+				if (invoker.IPAttackCheck) adddmg = randompick(3,3,4,5,6);
+				else adddmg = randompick(2,2,3,4,4,5);
+				rngroll = 1;
+			}
+			invoker.dmg += adddmg;
+			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Cricket Bat]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
+		}
+		if (!invoker.IPAttackCheck)
+		{
+			if (TruePlayerLevel >= 0 && TruePlayerLevel <= 50) invoker.dmg *= frandompick(0.25,0.334,0.334,0.334,0.5);
+			if (TruePlayerLevel >= 51 && TruePlayerLevel <= 100) invoker.dmg *= frandompick(0.334,0.5,0.5,0.5,0.667);
+			if (TruePlayerLevel >= 101 && TruePlayerLevel <= 150) invoker.dmg *= frandompick(0.5,0.667,0.667,0.667,0.75);
+			if (TruePlayerLevel >= 151 && TruePlayerLevel <= 200) invoker.dmg *= frandompick(0.667,0.75,0.75,0.75,0.834);
+			if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0 (not IP)]: %d dmg", invoker.dmg);
+		}
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+		{
+			invoker.dmg *= 10;
+			if (MiscItem) invoker.dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.045) + (MiscItem.TruePlayerATK * 0.045));
+			invoker.rangebase *= frandompick(1.0,1.0,1.0,1.125,1.125,1.25);
+			if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0 (berserk)]: %d dmg", invoker.dmg);
+		}
+		else
+		{
+			if (MiscItem) invoker.dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.015) + (MiscItem.TruePlayerATK * 0.015));
+		}
+		if (invoker.dmg < 1) invoker.dmg = 1;
+		if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0]: %d dmg, %d rangebase", invoker.dmg, invoker.rangebase);
+		
 		A_SetAngle(angle+turnang);
 		invoker.range = (invoker.rangebase * rangemult);
 		if (invoker.IPAttackCheck) pufftype = pufftypeip;
+		if (dydudebug_meleedmg) Console.Printf("Whip dmg: %d", invoker.dmg);
 		A_CustomPunch((invoker.dmg), true, CPF_NOTURN, pufftype, invoker.range, IPCostOnHit: true);
 		invoker.A_CheckIPModeOnUse();
 		A_SetAngle(angle-turnang);
@@ -14568,56 +14651,9 @@ class CandleWhip : DinahWeapon
 				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 				
 				A_CheckIPState1();
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.795,75);
+				
 				A_ConfirmIPAttack(171,0,5,8,false);
-
-				invoker.rangebase = randompick(112,120,120,128,128,128,128,128,136,136,144);
-				invoker.dmg = (random(8,12) * randompick(1,2,2,2,3,3,3,3,3,4,4,4,5));
-				if (TruePlayerLevel >= 0 && TruePlayerLevel <= 25) invoker.dmg = (random(8,12) * randompick(1,2,2,2,3,3,3,3,3,4,4,4,5));
-				if (TruePlayerLevel >= 26 && TruePlayerLevel <= 50) invoker.dmg = (random(8,12) * randompick(2,2,2,3,3,3,3,3,4,4,4,5,5));
-				if (TruePlayerLevel >= 51 && TruePlayerLevel <= 75) invoker.dmg = (random(9,13) * randompick(2,2,3,3,3,3,3,4,4,4,5,5,5));
-				if (TruePlayerLevel >= 76 && TruePlayerLevel <= 100) invoker.dmg = (random(9,13) * randompick(2,3,3,3,3,3,4,4,4,5,5,5,6));
-				if (TruePlayerLevel >= 101 && TruePlayerLevel <= 125) invoker.dmg = (random(10,14) * randompick(3,3,3,3,3,4,4,4,5,5,5,6,6));
-				if (TruePlayerLevel >= 126 && TruePlayerLevel <= 150) invoker.dmg = (random(11,15) * randompick(3,3,3,3,4,4,4,5,5,5,6,6,6));
-				if (TruePlayerLevel >= 151 && TruePlayerLevel <= 175) invoker.dmg = (random(11,15) * randompick(3,3,3,4,4,4,5,5,5,6,6,6,7));
-				if (TruePlayerLevel >= 176 && TruePlayerLevel <= 200) invoker.dmg = (random(12,16) * randompick(3,3,4,4,4,5,5,5,6,6,6,7,7));
-				if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0]: %d dmg", invoker.dmg);
-				if (invoker.IPAttackCheck) 
-				{
-					invoker.rangebase *= 1.5;
-					invoker.dmg = (random(7,13) * randompick(5,6,6,6,7,7,7,7,7,8,8,8,9));
-					if (TruePlayerLevel >= 0 && TruePlayerLevel <= 25) invoker.dmg = (random(7,13) * randompick(2,2,3,3,3,3,3,4,4,4,5,5,5));
-					if (TruePlayerLevel >= 26 && TruePlayerLevel <= 50) invoker.dmg = (random(7,13) * randompick(2,2,3,3,3,3,3,4,4,4,5,5,5));
-					if (TruePlayerLevel >= 51 && TruePlayerLevel <= 75) invoker.dmg = (random(8,12) * randompick(2,2,3,3,3,3,3,4,4,4,5,5,5));
-					if (TruePlayerLevel >= 76 && TruePlayerLevel <= 100) invoker.dmg = (random(8,12) * randompick(2,3,3,3,3,3,4,4,4,5,5,5,6));
-					if (TruePlayerLevel >= 101 && TruePlayerLevel <= 125) invoker.dmg = (random(9,13) * randompick(3,3,3,3,3,4,4,4,5,5,5,6,6));
-					if (TruePlayerLevel >= 126 && TruePlayerLevel <= 150) invoker.dmg = (random(12,14) * randompick(3,3,3,3,4,4,4,5,5,5,6,6,6));
-					if (TruePlayerLevel >= 151 && TruePlayerLevel <= 175) invoker.dmg = (random(12,14) * randompick(3,3,3,4,4,4,5,5,5,6,6,6,7));
-					if (TruePlayerLevel >= 176 && TruePlayerLevel <= 200) invoker.dmg = (random(13,15) * randompick(3,3,4,4,4,5,5,5,6,6,6,7,7));
-					invoker.dmg *= frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.75);
-					if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0 (IP Attack)]: %d dmg", invoker.dmg);
-				}
-				if (!invoker.IPAttackCheck)
-				{
-					if (TruePlayerLevel >= 0 && TruePlayerLevel <= 50) frandompick(0.25,0.334,0.334,0.334,0.5);
-					if (TruePlayerLevel >= 51 && TruePlayerLevel <= 100) invoker.dmg *= frandompick(0.334,0.5,0.5,0.5,0.667);
-					if (TruePlayerLevel >= 101 && TruePlayerLevel <= 150) invoker.dmg *= frandompick(0.5,0.667,0.667,0.667,0.75);
-					if (TruePlayerLevel >= 151 && TruePlayerLevel <= 200) invoker.dmg *= frandompick(0.667,0.75,0.75,0.75,0.834);
-					if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0 (not IP)]: %d dmg", invoker.dmg);
-				}
-
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-				{
-					invoker.dmg *= 10;
-					if (MiscItem) invoker.dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.045) + (MiscItem.TruePlayerATK * 0.045));
-					invoker.rangebase *= frandompick(1.0,1.0,1.0,1.125,1.125,1.25);
-					if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0 (berserk)]: %d dmg", invoker.dmg);
-				}
-				else
-				{
-					if (MiscItem) invoker.dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.015) + (MiscItem.TruePlayerATK * 0.015));
-				}
-				if (invoker.dmg < 1) invoker.dmg = 1;
-				if (dydudebug_meleedmg) Console.Printf("Whip [frame Z0]: %d dmg, %d rangebase", invoker.dmg, invoker.rangebase);
 			}
 			RCAN Z 3 bright
 			{
