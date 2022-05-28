@@ -11108,6 +11108,7 @@ class JackAmmoBig : JackAmmo
 class WizardPike : DinahWeapon replaces RocketLauncher
 {
 	int IPATKAmmoAmt;
+	int InvisoCost;
 	default
 	{
 		//$Category EE Weapons
@@ -11238,6 +11239,12 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 		Ready:
 			SCEP A 1
 			{
+				invoker.InvisoCost = 3;
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				int TruePlayerLevel = 0;
+				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				if (TruePlayerLevel > 50) invoker.InvisoCost = 2;
 				A_WeaponReady();
 			}
 			loop;
@@ -11256,9 +11263,16 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 		Fire:
 			SCEP E 1 bright 
 			{
-				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = 0;
 				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				Console.Printf("Fire input: %d", buttons);
+				if (TruePlayerLevel >= 15 && (buttons & BT_ALTATTACK && buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT) && CountInv("PikeAmmo") > invoker.InvisoCost)
+				{
+					return resolvestate("Inviso");
+				}
 				
 				A_CheckIPState1();
 				A_ConfirmIPAttack(141,0,2,12,false);
@@ -11295,6 +11309,7 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 						if (TruePlayerLevel >= 45) A_SetTics(0);
 					}
 				}
+				return resolvestate(null);
 			}
 			SCEP F 1 
 			{
@@ -11562,6 +11577,16 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 		AltFire:
 			SCEP A 0
 			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				int TruePlayerLevel = 0;
+				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				Console.Printf("AltFire input: %d", buttons);
+				if (TruePlayerLevel >= 15 && (buttons & BT_ATTACK && buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT) && CountInv("PikeAmmo") > invoker.InvisoCost)
+				{
+					return resolvestate("Inviso");
+				}
 				if (!CountInv("PikeAmmo")) { return resolvestate("Fire"); }
 				return resolvestate(null);
 			}
@@ -11777,6 +11802,58 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 					}
 				}
 				invoker.A_CheckIPModeOnUse();
+			}
+			goto Ready;
+		Inviso:
+			SCEP A 3 bright
+			{
+				A_SetTics(random(3,5));
+			}
+			SCEP BABCBC 2 bright
+			{
+				A_SetTics(random(2,3));
+			}
+			SCEP D 12 bright
+			{
+				A_SetTics(random(8,12));
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				int TruePlayerLevel = 0;
+				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				double invistime = frandom(6.75,8.25);
+				if (TruePlayerLevel >= 15)
+				{
+					invistime = ((TruePlayerLevel - 15) * 0.025);
+					invistime *= 1.0 + ((TruePlayerLevel - 15) * 0.025);
+				}
+
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				A_TakeInventory("PikeAmmo",invoker.InvisoCost);
+				//A_GiveInventory("BlurSphere2",1);
+				if (!player.CountInv("PowerInvisibility2"))
+				{
+					player.SetInventory("PowerInvisibility2",1);
+					let InvisoItem = PowerInvisibility2(player.FindInventory("PowerInvisibility2"));
+					if (InvisoItem) InvisoItem.EffectTics = frandom(5.5,7.5) * TICRATE;
+				}
+				else
+				{
+					let InvisoItem = PowerInvisibility2(player.FindInventory("PowerInvisibility2"));
+					if (InvisoItem) InvisoItem.EffectTics += frandom(5.5,7.5) * TICRATE;
+				}
+				A_StopSound(CHAN_BODY);
+				A_StopSound(CHAN_WEAPON);
+				A_StopSound(CHAN_VOICE);
+				A_StopSound(CHAN_7);
+				A_StartSound("pike/inviso",CHAN_BODY,CHANF_DEFAULT,frandom(1.25,1.5),ATTN_NORM,frandom(0.99,1.01));
+				A_StartSound("pike/inviso",CHAN_WEAPON,CHANF_DEFAULT,frandom(1.125,1.25),ATTN_NORM,frandom(0.9,1.1));
+				A_StartSound("pike/inviso",CHAN_VOICE,CHANF_DEFAULT,frandom(1.125,1.25),ATTN_NORM,frandom(0.825,1.175));
+				A_StartSound("pike/inviso",CHAN_7,CHANF_DEFAULT,frandom(1.125,1.25),ATTN_NORM,frandom(0.667,1.334));
+				player.A_SetBlend("6e 0a 51", (0.375 + ((TruePlayerLevel - 15) * 0.0025)), random(25,32));
+			}
+			SCEP CBA 2 bright
+			{
+				A_SetTics(random(2,3));
 			}
 			goto Ready;
 	}
