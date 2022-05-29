@@ -15429,17 +15429,38 @@ class FosnianCandle : DinahWeapon
 		Weapon.AmmoType2 "FCandleAmmo";
 		Weapon.AmmoUse1 1;
 		Weapon.AmmoUse2 1;
-		Weapon.AmmoGive 99;
+		Weapon.AmmoGive 99999999;
 		Weapon.SlotNumber 8;
 		Weapon.KickBack 125;
 		+FLOATBOB;
 		inventory.pickupsound "Dinah/marvelous";
+		DDWeapon.PickupVoice true;
+		DDWeapon.PickupSound2 "misc/w_pkup";
+		DDWeapon.PickupVoice2 false;
 		Inventory.Pickupmessage "\c[gold]Ohohoho...! Delila's Fosnian CandleVulcan! Heck yeah! This thing would easily decimate Napoleon's entire army!\c- \cx[Slot 0]\c-";
 		Tag "Fosnian CandleVulcan: Fires a fast and perfectly accurate 3-shot explosive burst akin to a vulcan cannon. <ALT-FIRE> fires a speedier, less accurate trio of shots. <USER4> Swaps the damage type between FIRE and ICE. Light though it might be, it has very strong recoil, be weary on ledges.";
 	}
 	
 	action void A_FCandleShot(double angleerr = 0.0, double pitcherr = 0.0, double recoilerr = 0.0)
 	{
+		bool debugrecoil = false;
+		let player = self.player;
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+
+		double baserecoil = 1.0;
+		double crouchrefa;
+		if (player.onground) 
+		{
+			crouchrefa = ((1.0 - player.crouchfactor) * 1.5);
+		}
+		else 
+		{
+			crouchrefa = ((1.0 - player.crouchfactor) * 1.125);
+		}
+		baserecoil *= 1.0 - crouchrefa;
+		
 		double sndpitch = 1.0;
 		double sndvol = 1.0;
 		if (invoker.IPAttackCheck)
@@ -15463,7 +15484,7 @@ class FosnianCandle : DinahWeapon
 			}
 			A_FireProjectile(atktype, frandom(-angleerr,angleerr), true, 0, 0, 0, frandom(-pitcherr,pitcherr));
 			A_Quake(random(4,5),random(2,3),0,32,0);
-			A_Recoil(0.5+(recoilerr*0.5));
+			baserecoil *= (random(45,55) * 0.01);
 		}
 		else 
 		{
@@ -15472,8 +15493,13 @@ class FosnianCandle : DinahWeapon
 			A_StartSound("weapons/fcandlefire",CHAN_WEAPON);
 			A_FireProjectile(atktype, frandom(-angleerr,angleerr), true, 0, 0, 0, frandom(-pitcherr,pitcherr));
 			A_Quake(9,5,0,64,0);
-			A_Recoil(1+recoilerr);
 		}
+		baserecoil *= (1.0 - (TruePlayerLevel * 0.025));
+		if (baserecoil < 0.0) baserecoil = 0.0;
+		
+		double truerecoil = baserecoil + (recoilerr * baserecoil);
+		if (debugrecoil) Console.Printf("\c[fire]Recoil: %.8f,\c- Base: %.8f, Error: %.8f, crouchrefa, %.8f, \c[sapphire]player.crouchfactor: %.8f", truerecoil, baserecoil, recoilerr, crouchrefa, player.crouchfactor);
+		A_Recoil(truerecoil);
 	}
 	
 	States
@@ -16036,7 +16062,10 @@ class CandleTrail : EEProjectile
 	{
 		Spawn:
 			//FSPE A 0 Bright A_Explode(10,80,true,true,20);
-			FSPE BCDE 4 Bright;
+			FSPE BCDE 4 Bright
+			{
+				A_SetRenderStyle(alpha-0.08,STYLE_Add);
+			}
 			Stop;
 	}
 }
@@ -16066,7 +16095,10 @@ class CandleTrailIcy : EEProjectile
 	{
 		Spawn:
 			//ISPE A 0 Bright A_Explode(10,80,true,true,20);
-			ISPE BCDE 4 Bright;
+			ISPE BCDE 4 Bright
+			{
+				A_SetRenderStyle(alpha-0.08,STYLE_Add);
+			}
 			Stop;
 	}
 }
@@ -16091,7 +16123,10 @@ class CandleTrailIP : EEProjectile
 	{
 		Spawn:
 			FSPE A 0 Bright A_Explode(20,80,false,true,40);
-			FSPE BCDE 4 Bright;
+			FSPE BCDE 2 Bright
+			{
+				A_SetRenderStyle(alpha-0.08,STYLE_Add);
+			}
 			Stop;
 	}
 }
@@ -16115,7 +16150,10 @@ class CandleTrailIcyIP : EEProjectile
 	{
 		Spawn:
 			ISPE A 0 Bright A_Explode(20,80,false,true,40);
-			ISPE BCDE 4 Bright;
+			ISPE BCDE 2 Bright
+			{
+				A_SetRenderStyle(alpha-0.08,STYLE_Add);
+			}
 			Stop;
 	}
 }
@@ -16125,8 +16163,10 @@ class FCandleAmmo : Ammo
 	default
 	{
 		//$Category RPAmmo
-		Inventory.Amount 1;
-		Inventory.MaxAmount 99;
+		Inventory.Amount 99999999;
+		Inventory.MaxAmount 99999999;
+		Ammo.BackpackAmount 0;
+		Ammo.BackpackMaxAmount 150;
 		Inventory.Icon "FCNDI0";
 		Inventory.PickupMessage "Light and get away!";
 	}
