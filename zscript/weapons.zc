@@ -15416,3 +15416,696 @@ class CandleAmmoBig : CandleAmmo
 			Loop;
 	}
 }
+
+//FOSNIAN CANDLE - FROM CARNIVAL OF SOULS V:
+class FosnianCandle : DinahWeapon
+{
+	int shottype;
+	default
+	{
+		//$Category RPWeapons
+		Weapon.SelectionOrder 800;
+		Weapon.AmmoType1 "FCandleAmmo";
+		Weapon.AmmoType2 "FCandleAmmo";
+		Weapon.AmmoUse1 1;
+		Weapon.AmmoUse2 1;
+		Weapon.AmmoGive 99;
+		Weapon.SlotNumber 8;
+		Weapon.KickBack 125;
+		+FLOATBOB;
+		inventory.pickupsound "Dinah/marvelous";
+		Inventory.Pickupmessage "\c[gold]Ohohoho...! Delila's Fosnian CandleVulcan! Heck yeah! This thing would easily decimate Napoleon's entire army!\c- \cx[Slot 0]\c-";
+		Tag "Fosnian CandleVulcan: Fires a fast and perfectly accurate 3-shot explosive burst akin to a vulcan cannon. <ALT-FIRE> fires a speedier, less accurate trio of shots. <USER4> Swaps the damage type between FIRE and ICE. Light though it might be, it has very strong recoil, be weary on ledges.";
+	}
+	
+	action void A_FCandleShot(double angleerr = 0.0, double pitcherr = 0.0, double recoilerr = 0.0)
+	{
+		double sndpitch = 1.0;
+		double sndvol = 1.0;
+		if (invoker.IPAttackCheck)
+		{
+			string atktype = "CandleShotIP";
+			if (invoker.shottype >= 1) atktype = "CandleShotIcyIP";
+			A_StartSound("weapons/fcandlefire",CHAN_WEAPON,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+			if (random(1,10) <= 7) 
+			{
+				sndpitch = frandom(0.75,0.875);
+				sndvol = 1.2;
+				A_StopSound(CHAN_7);
+				A_StartSound("weapons/fcandlefire",CHAN_7,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				if (random(1,10) <= 5) 
+				{
+					sndpitch = frandom(0.625,0.75);
+					sndvol = 1.4;
+					A_StopSound(8);
+					A_StartSound("weapons/fcandlefire",8,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
+				}
+			}
+			A_FireProjectile(atktype, frandom(-angleerr,angleerr), true, 0, 0, 0, frandom(-pitcherr,pitcherr));
+			A_Quake(random(4,5),random(2,3),0,32,0);
+			A_Recoil(0.5+(recoilerr*0.5));
+		}
+		else 
+		{
+			string atktype = "CandleShot";
+			if (invoker.shottype >= 1) atktype = "CandleShotIcy";
+			A_StartSound("weapons/fcandlefire",CHAN_WEAPON);
+			A_FireProjectile(atktype, frandom(-angleerr,angleerr), true, 0, 0, 0, frandom(-pitcherr,pitcherr));
+			A_Quake(9,5,0,64,0);
+			A_Recoil(1+recoilerr);
+		}
+	}
+	
+	States
+	{
+		Spawn:
+			FCND P -1;
+			Stop;
+		Ready:
+			FCND A 1 A_WeaponReady(WRF_ALLOWUSER4);
+			Loop;
+		Deselect:
+			FCND A 1 A_Lower(12);
+			Loop;
+		Select:
+			FCND A 1 A_Raise(12);
+			Loop;
+		Fire:
+			FCND B 0 Bright
+			{
+				if (invoker.shottype >= 1) return resolvestate("FireIce");
+				A_CheckIPState1();
+				A_ConfirmIPAttack(201,0,3,11,true);
+				return resolvestate(null);
+			}
+			FCND B 2 Bright 
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(1,2));
+				}
+				A_FCandleShot(0,0,0);
+			}
+			FCND A 1
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,5) <= 4) A_SetTics(0);
+				}
+			}
+			FCND C 2 Bright
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(1,2));
+				}
+				A_FCandleShot(0,0,0);
+			}
+			FCND A 1
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,5) <= 4) A_SetTics(0);
+				}
+			}
+			FCND D 2 Bright
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(1,2));
+				}
+				A_FCandleShot(0,0,0);
+			}
+			FCND A 1 
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,5) <= 4) A_SetTics(0);
+				}
+				invoker.A_CheckIPModeOnUse();
+				A_ReFire();
+			}
+			goto Ready;
+		FireIce:
+			FCND E 0 Bright
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(201,0,3,11,true);
+				return resolvestate(null);
+			}
+			FCND E 2 Bright 
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(1,2));
+				}
+				A_FCandleShot(0,0,0);
+			}
+			FCND A 1
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,5) <= 4) A_SetTics(0);
+				}
+			}
+			FCND F 2 Bright
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(1,2));
+				}
+				A_FCandleShot(0,0,0);
+			}
+			FCND A 1
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,5) <= 4) A_SetTics(0);
+				}
+			}
+			FCND G 2 Bright
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(1,2));
+				}
+				A_FCandleShot(0,0,0);
+			}
+			FCND A 1 
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,5) <= 4) A_SetTics(0);
+				}
+				invoker.A_CheckIPModeOnUse();
+				A_ReFire();
+			}
+			goto Ready;
+		AltFire:
+			FCND B 0 Bright
+			{
+				if (invoker.shottype >= 1) return resolvestate("AltFireIce");
+				A_CheckIPState1();
+				A_ConfirmIPAttack(201,0,3,11,true);
+				return resolvestate(null);
+			}
+			FCND B 1 Bright 
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(0,1));
+				}
+				A_FCandleShot(2.5,2.5,1.25);
+			}
+			FCND A 1
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,15) <= 14) A_SetTics(0);
+				}
+			}
+			FCND C 1 Bright
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(0,1));
+				}
+				A_FCandleShot(2.5,2.5,1.25);
+			}
+			FCND A 1
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,15) <= 14) A_SetTics(0);
+				}
+			}
+			FCND D 1 Bright
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(0,1));
+				}
+				A_FCandleShot(2.5,2.5,1.25);
+			}
+			FCND A 1 
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,15) <= 14) A_SetTics(0);
+				}
+				invoker.A_CheckIPModeOnUse();
+				A_ReFire();
+			}
+			goto Ready;
+		AltFireIce:
+			FCND E 0 Bright
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(201,0,3,11,true);
+			}
+			FCND E 1 Bright 
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(0,1));
+				}
+				A_FCandleShot(2.5,2.5,1.25);
+			}
+			FCND A 1
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,15) <= 14) A_SetTics(0);
+				}
+			}
+			FCND F 1 Bright
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(0,1));
+				}
+				A_FCandleShot(2.5,2.5,1.25);
+			}
+			FCND A 1
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,15) <= 14) A_SetTics(0);
+				}
+			}
+			FCND G 1 Bright
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,4) <= 1) A_SetTics(random(0,1));
+				}
+				A_FCandleShot(2.5,2.5,1.25);
+			}
+			FCND A 1 
+			{
+				if (invoker.IPAttackCheck)
+				{
+					if (random(1,15) <= 14) A_SetTics(0);
+				}
+				invoker.A_CheckIPModeOnUse();
+				A_ReFire();
+			}
+			goto Ready;
+		User4:
+			"####" # 8
+			{
+				A_StopSound(10);
+				A_StartSound("weapons/fcandlemode",10,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.8,1.2));
+				if (invoker.shottype == 0) invoker.shottype = 1;
+															else invoker.shottype = 0;
+			}
+			goto Ready;
+	}
+}
+
+class CandleShot : EEFastProjectile
+{
+	default
+	{
+		Radius 2;
+		Height 2;
+		Speed 160;
+		Damage 8;
+		Scale 0.5;
+		DamageType "Fire";
+		RenderStyle "Add";
+		PROJECTILE;
+		+RANDOMIZE;
+		+BLOODSPLATTER;
+		+DONTREFLECT;
+	}
+	
+	states
+	{
+		Spawn:
+			TNT1 A 1 bright 
+			{
+				A_SpawnItemEx("CandleTrail",0,0,0, 0,0,0, 0,SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION|SXF_TRANSFERAMBUSHFLAG);
+				double spawndistance = -53.3334;
+				double spawnheight = 0;
+				A_SpawnItemEx("CandleTrail", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+				spawndistance = -106.6667;
+				spawnheight = 0;
+				A_SpawnItemEx("CandleTrail", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+			}
+			loop;
+		Death:
+			SPNR C 0 A_AlertMonsters();
+			FSPE A 4 Bright 
+			{
+				A_Explode(10,80,true,true,20);
+			}
+			FSPE BCDE 4 Bright;
+			Stop;
+	}
+}
+
+class CandleShotIcy : EEFastProjectile
+{
+	default
+	{
+		Radius 2;
+		Height 2;
+		Speed 160;
+		Damage 8;
+		Scale 0.5;
+		DamageType "Ice";
+		RenderStyle "Add";
+		PROJECTILE;
+		+RANDOMIZE;
+		+BLOODSPLATTER;
+		+DONTREFLECT;
+	}
+	
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		DDPlayerPawn playpawn;
+		DDPlayerPawn playpawn2;
+		Actor DDActor;
+		Actor DDActor2;
+		playpawn = DDPlayerPawn(target);
+		playpawn2 = DDPlayerPawn(other);
+		DDActor = Actor(target);
+		DDActor2 = Actor(other);
+
+		// Non-passive means the one moving into the other is performing the checks.
+		if (!passive)
+		{
+			// if fired by a player actor, check for friendliness from the passive actor
+			if (playpawn) 
+			{
+				// Pass through different species of select types.
+				if (other.bFRIENDLY == 1)
+				{
+					if (A_CheckFriendCollisionProjTypePlayer(self) > 0) return false;
+					if (A_CheckFriendCollisionProjTypePlayer2(self) > 0) return false;
+				}
+			}
+			else
+			if (DDActor && DDActor.bFRIENDLY)
+			{
+				// Pass through different species of select types or players
+				if (other.bFRIENDLY == 1 || playpawn2)
+				{
+					if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
+				}
+			}
+			
+			let checkedenemy = Actor(other);
+			if (!checkedenemy.bICECORPSE == 0) return false; else return true; // Makes the ice projectiles move PAST the frozen monster to hit other monsters.
+		}
+		// We don't really care about others making the check.
+
+		return true;
+	}
+
+	states
+	{
+		Spawn:
+			TNT1 A 1 bright 
+			{
+				A_SpawnItemEx("CandleTrailIcy",0,0,0, 0,0,0, 0,SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION|SXF_TRANSFERAMBUSHFLAG);
+				double spawndistance = -53.3334;
+				double spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIcy", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+				spawndistance = -106.6667;
+				spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIcy", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+			}
+			loop;
+		Death:
+			SPNR C 0 A_AlertMonsters();
+			ISPE A 4 Bright 
+			{
+				A_Explode(10,80,true,true,20);
+			}
+			ISPE BCDE 4 Bright;
+			Stop;
+	}
+}
+
+class CandleShotIP : SingleDamageFastRipper
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		Speed 160;
+		Damage 12;
+		Scale 0.667;
+		DamageType "Fire";
+		RenderStyle "Add";
+		PROJECTILE;
+		+RANDOMIZE;
+		+BLOODSPLATTER;
+		+DONTREFLECT;
+	}
+	
+	states
+	{
+		Spawn:
+			TNT1 A 1 bright 
+			{
+				A_SpawnItemEx("CandleTrailIP",0,0,0, 0,0,0, 0,SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION|SXF_TRANSFERAMBUSHFLAG);
+				double spawndistance = -32;
+				double spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIP", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+				spawndistance = -64;
+				spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIP", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+				spawndistance = -96;
+				spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIP", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+				spawndistance = -128;
+				spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIP", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+			}
+			loop;
+		Death:
+			SPNR C 0 A_AlertMonsters();
+			FSPE A 4 Bright 
+			{
+				A_Explode(16,80,false,true,32);
+			}
+			FSPE BCDE 4 Bright;
+			Stop;
+	}
+}
+
+class CandleShotIcyIP : SingleDamageFastRipper
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		Speed 160;
+		Damage 12;
+		Scale 0.667;
+		DamageType "Ice";
+		RenderStyle "Add";
+		PROJECTILE;
+		+RANDOMIZE;
+		+BLOODSPLATTER;
+		+DONTREFLECT;
+	}
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		DDPlayerPawn playpawn;
+		DDPlayerPawn playpawn2;
+		Actor DDActor;
+		Actor DDActor2;
+		playpawn = DDPlayerPawn(target);
+		playpawn2 = DDPlayerPawn(other);
+		DDActor = Actor(target);
+		DDActor2 = Actor(other);
+
+		// Non-passive means the one moving into the other is performing the checks.
+		if (!passive)
+		{
+			// if fired by a player actor, check for friendliness from the passive actor
+			if (playpawn) 
+			{
+				// Pass through different species of select types.
+				if (other.bFRIENDLY == 1)
+				{
+					if (A_CheckFriendCollisionProjTypePlayer(self) > 0) return false;
+					if (A_CheckFriendCollisionProjTypePlayer2(self) > 0) return false;
+				}
+			}
+			else
+			if (DDActor && DDActor.bFRIENDLY)
+			{
+				// Pass through different species of select types or players
+				if (other.bFRIENDLY == 1 || playpawn2)
+				{
+					if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
+				}
+			}
+			
+			let checkedenemy = Actor(other);
+			if (!checkedenemy.bICECORPSE == 0) return false; else return true; // Makes the ice projectiles move PAST the frozen monster to hit other monsters.
+		}
+		// We don't really care about others making the check.
+
+		return true;
+	}
+	
+	states
+	{
+		Spawn:
+			TNT1 A 1 bright 
+			{
+				A_SpawnItemEx("CandleTrailIcyIP",0,0,0, 0,0,0, 0,SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION|SXF_TRANSFERAMBUSHFLAG);
+				double spawndistance = -32;
+				double spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIcyIP", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+				spawndistance = -64;
+				spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIcyIP", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+				spawndistance = -96;
+				spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIcyIP", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+				spawndistance = -128;
+				spawnheight = 0;
+				A_SpawnItemEx("CandleTrailIcyIP", cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+			}
+			loop;
+		Death:
+			SPNR C 0 A_AlertMonsters();
+			ISPE A 4 Bright 
+			{
+				A_Explode(16,80,false,true,32);
+			}
+			ISPE BCDE 4 Bright;
+			Stop;
+	}
+}
+
+class CandleTrail : EEProjectile
+{
+	default
+	{
+		Radius 2;
+		Height 2;
+		Speed 0;
+		renderstyle "Add";
+		Alpha 0.4;
+		Scale 0.25;
+		PROJECTILE;
+		+CLIENTSIDEONLY;
+		+NOINTERACTION;
+	}
+	
+	States
+	{
+		Spawn:
+			//FSPE A 0 Bright A_Explode(10,80,true,true,20);
+			FSPE BCDE 4 Bright;
+			Stop;
+	}
+}
+
+class CandleTrailIcy : EEProjectile
+{
+	default
+	{
+		Radius 2;
+		Height 2;
+		Speed 0;
+		renderstyle "Add";
+		Alpha 0.4;
+		Scale 0.25;
+		PROJECTILE;
+		+CLIENTSIDEONLY;
+		+NOINTERACTION;
+	}
+	
+	States
+	{
+		Spawn:
+			//ISPE A 0 Bright A_Explode(10,80,true,true,20);
+			ISPE BCDE 4 Bright;
+			Stop;
+	}
+}
+
+class CandleTrailIP : EEProjectile
+{
+	default
+	{
+		Radius 2;
+		Height 2;
+		Speed 0;
+		renderstyle "Add";
+		Alpha 0.4;
+		Scale 0.25;
+		PROJECTILE;
+		+CLIENTSIDEONLY;
+		+NOINTERACTION;
+	}
+	
+	States
+	{
+		Spawn:
+			FSPE A 0 Bright A_Explode(16,80,false,true,32);
+			FSPE BCDE 4 Bright;
+			Stop;
+	}
+}
+class CandleTrailIcyIP : EEProjectile
+{
+	default
+	{
+		Radius 2;
+		Height 2;
+		Speed 0;
+		renderstyle "Add";
+		Alpha 0.4;
+		Scale 0.25;
+		PROJECTILE;
+		+CLIENTSIDEONLY;
+		+NOINTERACTION;
+	}
+	
+	States
+	{
+		Spawn:
+			ISPE A 0 Bright A_Explode(16,80,false,true,32);
+			ISPE BCDE 4 Bright;
+			Stop;
+	}
+}
+
+class FCandleAmmo : Ammo 
+{
+	default
+	{
+		//$Category RPAmmo
+		Inventory.Amount 1;
+		Inventory.MaxAmount 99;
+		Inventory.Icon "FCNDI0";
+		Inventory.PickupMessage "Light and get away!";
+	}
+	
+	States
+	{
+		Spawn:
+			FCNA P -1;
+			Loop;
+	}
+}
