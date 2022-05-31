@@ -553,7 +553,7 @@ class EEProjectile : EEBaseZSC abstract
 		if (target)
 		{
 			if (target.GetClassName() == "UppercutPuff") base *= frandom(1.5,1.75);
-			if (target.GetClassName() == "KickPuff" || GetClassName() == "KickPuffNoThrust") base *= frandom(2.0,2.25);
+			if (target.GetClassName() == "KickPuff" || GetClassName() == "KickPuffNoThrust" || GetClassName() == "BadKickPuff") base *= frandom(2.0,2.25);
 			if (target.target && target.target.CountInv("PowerStrength") || target.target.CountInv("PowerStrengthDD")) base *= frandom(1.5,2.25);
 		}
 
@@ -3946,6 +3946,59 @@ class EECreature : EEBaseZSC abstract
 	
 	void A_MonsterStatsHP_ATK_DEF_SPD(int type = 0, int extraflags = 0)
 	{
+	}
+	
+	int A_CheckMeleeDestroyProj(int type = 0)
+	{
+		int TruePlayerLevel = CountInv("MonsterLevel");
+
+		int debugmelee = dydudebug_meleeinformation;
+		int MeleeDestroyProjectiles = 0;
+		int MaxCheck = 16;
+		double checkvalfactor = frandom(0.075,0.125);
+		if (type == 0) // Punch
+		{
+			if (skill <= 0) checkvalfactor = frandom(0.09,0.15);
+			if (skill == 1) checkvalfactor = frandom(0.0825,0.1375);
+			if (skill == 2) checkvalfactor = frandom(0.075,0.125);
+			if (skill == 3) checkvalfactor = frandom(0.0675,0.1125);
+			if (skill >= 4) checkvalfactor = frandom(0.06,0.10);
+		}
+		if (type == 1) // Uppercut
+		{
+			if (skill <= 0) checkvalfactor = frandom(0.09,0.15);
+			if (skill == 1) checkvalfactor = frandom(0.0825,0.1375);
+			if (skill == 2) checkvalfactor = frandom(0.075,0.125);
+			if (skill == 3) checkvalfactor = frandom(0.0675,0.1125);
+			if (skill >= 4) checkvalfactor = frandom(0.06,0.10);
+			checkvalfactor *= 1.75;
+		}
+		if (type == 2) // Kick
+		{
+			if (skill <= 0) checkvalfactor = frandom(0.09,0.15);
+			if (skill == 1) checkvalfactor = frandom(0.0825,0.1375);
+			if (skill == 2) checkvalfactor = frandom(0.075,0.125);
+			if (skill == 3) checkvalfactor = frandom(0.0675,0.1125);
+			if (skill >= 4) checkvalfactor = frandom(0.06,0.10);
+			checkvalfactor *= frandompick(1.75,2,2.25);
+			if (CountInv("DinahTrueIPState")) checkvalfactor *= 10;
+		}
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) checkvalfactor *= frandompick(1.75,1.875,1.875,2.0,2.0,2.0,2.125,2.125,2.125,2.125,2.125,2.25,2.25,2.25,2.375,2.375,2.5);
+		if (CountInv("DinahTrueIPState")) MaxCheck = ceil(16 - (TruePlayerLevel * checkvalfactor));
+																 else MaxCheck = ceil(randompick(1,1,1,2,2) - (TruePlayerLevel * checkvalfactor));
+
+		MaxCheck = clamp(MaxCheck, 1, MaxCheck);
+		int randomroll = random(1,MaxCheck);
+		if (randomroll <= 1) MeleeDestroyProjectiles = 1;
+		if (debugmelee) Console.Printf("\c[green]MeleeDestroyProjectiles:\c- RandomRoll / MaxCheck: %d / %d, MeleeDestroyProjectiles: %d, checkvalfactor: %.4f (\c[gold]%.4f\c-)", randomroll, MaxCheck, MeleeDestroyProjectiles, checkvalfactor, (checkvalfactor * TruePlayerLevel));
+
+		return MeleeDestroyProjectiles;
+	}
+
+	// Used to Create Multiple "Shields" for Punches/Melee
+	action void A_MeleeShieldPiece(string attackname = "", int spawnheight = 32, int spawndistance = 0)
+	{
+		A_SpawnItemEx(attackname, cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
 	}
 }
 
