@@ -1542,7 +1542,48 @@ class DDPlayerPawn : PlayerPawn
 		// Intended to ignore aspects of armor items
 		PlayerArmorIgnoreFactor = 0.00;
 		if (isbarrierbeam) PlayerArmorIgnoreFactor += (0.50 * (1.00 - PlayerArmorIgnoreFactor));
-
+		
+		if (source && exex_enemyarmorignorefactor >= 0.001)
+		{
+			if (dydudebug_playerdamagemobj) Console.Printf("\c[orange]Enemy Bypasses armor [attempt]");
+			EECreature EESource;
+			EESource = EECreature(source);
+			if (EESource)
+			{
+				if (dydudebug_playerdamagemobj) Console.Printf("\c[sapphire]EESource found [armor bypass]");
+				int rand1;
+				double randarmign = exex_enemyarmorignorefactor;
+				if (sour == "EvilDinah")
+				{
+					rand1 = 5 + ((source.CountInv("MonsterLevel")) * 0.5);
+					randarmign = (frandompick(0.0075,0.00875,0.01,0.01125,0.0125) * exex_enemyarmorignorefactor);
+					PlayerArmorIgnoreFactor += ((random(0,rand1) * randarmign) * (1.00 - PlayerArmorIgnoreFactor));
+					if (dydudebug_playerdamagemobj) Console.Printf("EvilDinah is attacker: [Level: %d] %.8f", source.CountInv("MonsterLevel"), PlayerArmorIgnoreFactor);
+				}
+				else
+				{
+					if (source.bBOSS)
+					{
+						rand1 = random(2,3) + ((source.CountInv("MonsterLevel")) * 0.25);
+						randarmign = (frandompick(0.00375,0.004375,0.005,0.005625,0.00625) * exex_enemyarmorignorefactor);
+						PlayerArmorIgnoreFactor += ((random(0,rand1) * randarmign) * (1.00 - PlayerArmorIgnoreFactor));
+					}
+					else
+					{
+						rand1 = randompick(1,1,1,2) + ((source.CountInv("MonsterLevel")) * 0.125);
+						randarmign = (frandompick(0.001875,0.0021875,0.0025,0.0028125,0.003125) * exex_enemyarmorignorefactor);
+						PlayerArmorIgnoreFactor += ((random(0,rand1) * randarmign) * (1.00 - PlayerArmorIgnoreFactor));
+					}
+					if (dydudebug_playerdamagemobj) Console.Printf("Attack ArmorIgnore: [Level: %d] %.8f", source.CountInv("MonsterLevel"), PlayerArmorIgnoreFactor);
+				}
+			}
+		}
+		
+		if (inflictor && (infl == 'RecordShot' || infl == 'BadRecordShot')) 
+		{
+			PlayerArmorIgnoreFactor += (frandom(0.225,0.275) * (1.00 - PlayerArmorIgnoreFactor));
+		}
+		
 		if (mod == 'Deadlight') 
 		{
 			if ((inflictor && infl == "PennywiseBoss") || 
@@ -2381,8 +2422,6 @@ class DDPlayerPawn : PlayerPawn
 	
 	int PostDamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, int ret, int armoramt, int firstdmg, bool isinvuln, int oldhealth, int oldhealthratio, bool SigilDrain, string infl, string sour, string vict)
 	{
-		PlayerArmorIgnoreFactor = 0.00;
-		PlayerDefenseIgnoreFactor = 0.00;
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
 		
@@ -2509,6 +2548,14 @@ class DDPlayerPawn : PlayerPawn
 				combatlogmsg.AppendFormat("!");
 			}
 			combatlogmsg.AppendFormat(" [%s]", mod);
+			//Console.Printf("armoramt: %d, PlayerArmorIgnoreFactor: %.8f", armoramt, PlayerArmorIgnoreFactor);
+			if ((ret || armdmg) && armoramt && PlayerArmorIgnoreFactor)
+			{
+				double temp = (PlayerArmorIgnoreFactor * 100.0);
+				combatlogmsg.AppendFormat(" \c[orange](");
+				combatlogmsg.AppendFormat("%.2f%%", temp);
+				combatlogmsg.AppendFormat("  armor bypass)\c-");
+			}
 			if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-");
 			if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
 			Console.Printf(combatlogmsg);
@@ -2624,6 +2671,8 @@ class DDPlayerPawn : PlayerPawn
 		A_LossHUD(ret, 0, true);
 		A_LossHUD(armdmg, 1, true);
 		
+		PlayerArmorIgnoreFactor = 0.00;
+		PlayerDefenseIgnoreFactor = 0.00;
 		return ret;
 	}
 
