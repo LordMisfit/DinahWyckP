@@ -763,7 +763,7 @@ mixin class CollisionChecker
 
 mixin class DynMusicControl
 {
-	void A_DynamicMusic(int timerset = 200, int patktype = 0, bool bossfight = false, int bossmusic = -1)
+	void A_DynamicMusic(int timerset = 200, int patktype = 0, bool bossfight = false, int bossmusic = -1, bool forcedplay = false)
 	{
 		bool changemusic;
 		actor dmtarget;
@@ -776,7 +776,7 @@ mixin class DynMusicControl
 		}
 		else
 		{
-			if (dydudebug_dynmusdisplays && exex_dynamicmusic) Console.Printf("DynMusActionAttempt [%s]", self.GetClassName());
+			if (dydudebug_dynmusdisplays && exex_dynamicmusic && !forcedplay) Console.Printf("DynMusActionAttempt [%s]", self.GetClassName());
 			// Uses the mod's own system
 			DDPlayerPawn playpawn;
 			playpawn = DDPlayerPawn(self);
@@ -828,7 +828,7 @@ mixin class DynMusicControl
 						if (playpawn.CountInv("PowerStrength") || playpawn.CountInv("PowerStrengthDD")) actionmult = 1.5;
 						else actionmult = 0.05;
 					}
-					if (dydudebug_dynmusdisplays && exex_dynamicmusic) Console.Printf("actionmult: %.4f [patktype: %d]", actionmult, patktype);
+					if (dydudebug_dynmusdisplays && exex_dynamicmusic && !forcedplay) Console.Printf("actionmult: %.4f [patktype: %d]", actionmult, patktype);
 					if (MiscItem)
 					{
 						MiscItem.playeractiontimer += (randompick(1,2,2,2,2,2,3) * actionmult);
@@ -856,12 +856,12 @@ mixin class DynMusicControl
 					}
 				}
 				
-				if (dydudebug_dynmusdisplays && exex_dynamicmusic && dmtarget) Console.Printf("DynMusActionAttempt [AimTarget: %s]", dmtarget.GetClassName());
+				if (dydudebug_dynmusdisplays && exex_dynamicmusic && dmtarget && !forcedplay) Console.Printf("DynMusActionAttempt [AimTarget: %s]", dmtarget.GetClassName());
 			}
 			else 
 			{
 				dmtarget = target;
-				if (dydudebug_dynmusdisplays && exex_dynamicmusic && dmtarget) Console.Printf("DynMusActionAttempt [target: %s]", dmtarget.GetClassName());
+				if (dydudebug_dynmusdisplays && exex_dynamicmusic && dmtarget && !forcedplay) Console.Printf("DynMusActionAttempt [target: %s]", dmtarget.GetClassName());
 			}
 
 			if (dmtarget)
@@ -870,6 +870,7 @@ mixin class DynMusicControl
 				if (((bFRIENDLY == true || self == player) && dmtarget.bFRIENDLY == false) ||
 						 (bFRIENDLY == false && (dmtarget.bFRIENDLY == true || dmtarget == player))) changemusic = true;
 			}
+			if (forcedplay) changemusic = true;
 			if (exex_dynamicmusic && changemusic)
 			{
 				if (dmtarget && (dmtarget.bBOSS && !dmtarget.bFRIENDLY) || (!self.bFRIENDLY && self.bBOSS && dmtarget == player)) timerset *= 1.75;
@@ -901,7 +902,7 @@ mixin class MonsterCollider
 	class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
 	string nm, nn, no, np;
 	
-	void A_DynamicMusic(int timerset = 200, bool bossfight = false, int bossmusic = -1)
+	void A_DynamicMusic(int timerset = 200, bool bossfight = false, int bossmusic = -1, bool forcedplay = false)
 	{
 		bool changemusic;
 		actor dmtarget;
@@ -914,17 +915,18 @@ mixin class MonsterCollider
 		}
 		else
 		{
-			if (dydudebug_dynmusdisplays && exex_dynamicmusic) Console.Printf("DynMusActionAttempt [%s]", self.GetClassName());
+			if (dydudebug_dynmusdisplays && exex_dynamicmusic && !forcedplay) Console.Printf("DynMusActionAttempt [%s]", self.GetClassName());
 			// Uses the mod's own system
 			dmtarget = target;
-			if (dydudebug_dynmusdisplays && exex_dynamicmusic && dmtarget) Console.Printf("DynMusActionAttempt [target: %s]", dmtarget.GetClassName());
+			if (dydudebug_dynmusdisplays && exex_dynamicmusic && dmtarget && !forcedplay) Console.Printf("DynMusActionAttempt [target: %s]", dmtarget.GetClassName());
 
 			if (dmtarget)
 			{
-				if (dydudebug_dynmusdisplays && exex_dynamicmusic) Console.Printf("DynMusActionAttempt [dmtarget: %s]", dmtarget.GetClassName());
+				if (dydudebug_dynmusdisplays && exex_dynamicmusic && !forcedplay) Console.Printf("DynMusActionAttempt [dmtarget: %s]", dmtarget.GetClassName());
 				if (((bFRIENDLY == true || self == player) && dmtarget.bFRIENDLY == false) ||
 						 (bFRIENDLY == false && (dmtarget.bFRIENDLY == true || dmtarget == player))) changemusic = true;
 			}
+			if (forcedplay) changemusic = true;
 			if (exex_dynamicmusic && changemusic)
 			{
 				if (dmtarget && (dmtarget.bBOSS && !dmtarget.bFRIENDLY) || (!self.bFRIENDLY && self.bBOSS && dmtarget == player)) timerset *= 1.75;
@@ -1916,23 +1918,48 @@ mixin class MonsterCollider
 		if (mod == 'DashingBG' && ret > 0) 
 		{
 			A_SetInventory("JustBatDashed",1);
-			if (FoundPlayer) A_DynamicMusic();
 		}
 		else
 		if (mod == 'DashingSD' && ret > 0) 
 		{
 			A_SetInventory("JustShieldDashed",1);
-			if (FoundPlayer) A_DynamicMusic();
 		}
-		else
 		if (ret > 0)
 		{
-			if (FoundPlayer) A_DynamicMusic();
+			if (FoundPlayer) 
+			{
+				if (!bFRIENDLY) A_DynamicMusic(forcedplay:true);
+			}
+			else
+			{
+				if (bFRIENDLY)
+				{
+					if (source)
+					{
+						if (source.bISMONSTER && !source.bFRIENDLY) A_DynamicMusic(forcedplay:true);
+					}
+					if (inflictor)
+					{
+						if (inflictor.bISMONSTER && !inflictor.bFRIENDLY) A_DynamicMusic(forcedplay:true);
+					}
+				}
+				else
+				{
+					if (source)
+					{
+						if (source.bISMONSTER && source.bFRIENDLY) A_DynamicMusic(forcedplay:true);
+					}
+					if (inflictor)
+					{
+						if (inflictor.bISMONSTER && inflictor.bFRIENDLY) A_DynamicMusic(forcedplay:true);
+					}
+				}
+			}
 		}
 		
 		if ((initdmg > 0 && ret == 0) || bINVULNERABLE || bNODAMAGE)
 		{
-			if (FoundPlayer) A_DynamicMusic();
+			if (FoundPlayer) A_DynamicMusic(forcedplay:true);
 			bool showdmglog;
 			int tempdmgval = 10000;
 			double tempdmgfactor = damagefactor;
