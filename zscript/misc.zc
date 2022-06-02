@@ -11,9 +11,13 @@ class PlayerStatItem : Inventory
 	
 	actor weapon;
 	
+	int playeractiontimer;
+	int playeractiontimerfrag;
+	int randmusroll;
 	int DynMusSetUsed;
 	int DynMusCalmTimer;
 	int DynMusFightTimer;
+	bool DynMusActCall;
 	
 	int FCandleAntipodeShot;
 	int FCandleShotType;
@@ -1698,19 +1702,37 @@ class PlayerStatItem : Inventory
 	
 	void HandleDynamicMusic()
 	{
+		let playeractor = DDPlayerPawn(owner);
 		DynMusSetUsed = dydudebug_misc8;
-		if (dydudebug_dynmusdisplays) Console.Printf("DynMusSetUsed: %d", DynMusSetUsed);
+
+		if (playeractiontimer > 0)
+		{
+			playeractiontimerfrag++;
+			if (DynMusFightTimer) playeractiontimerfrag += randompick(1,2,3);
+			while (playeractiontimerfrag > 10)
+			{
+				playeractiontimerfrag -= 10;
+				playeractiontimer--;
+				if (playeractiontimer < 0) playeractiontimer = 0;
+				if (playeractiontimerfrag < 0) playeractiontimerfrag = 0;
+				if (dydudebug_dynmusdisplays) Console.Printf("playeractiontimer: %d", playeractiontimer);
+			}
+		}
+
 		if (exex_dynamicmusic)
 		{
+			if (dydudebug_dynmusdisplays) Console.Printf("DynMusSetUsed: %d", DynMusSetUsed);
 			if (exex_deathmusic && owner.health <= 0)
 			{
 				DynMusCalmTimer = -1;
 				DynMusFightTimer = -1;
+				randmusroll = -1;
 			}
 			else
 			{
 				if (DynMusFightTimer <= 0)
 				{
+					randmusroll = -1;
 					DynMusCalmTimer++;
 					if (DynMusCalmTimer % 35)
 					{
@@ -1742,18 +1764,108 @@ class PlayerStatItem : Inventory
 							if (DynMusSetUsed == 21) S_ChangeMusic("BGMPURGC", 0, true, true); // ?5
 							if (DynMusSetUsed == 22) S_ChangeMusic("BGMHELLC", 0, true, true); // ?6
 							if (DynMusSetUsed == 23) S_ChangeMusic("BGMMOTHC", 0, true, true); // ?7
+							
+							if (DynMusSetUsed == 101) S_ChangeMusic("SILONORM", 0, true, true); // SiN - Silo
+							if (DynMusSetUsed == 102) S_ChangeMusic("GORGNORM", 0, true, true); // SiN - Gorge
+							if (DynMusSetUsed == 103) S_ChangeMusic("BIONORM", 0, true, true); // SiN - BioTech
+							if (DynMusSetUsed == 104) S_ChangeMusic("CORNORM", 0, true, true); // SiN - Coral
+							if (DynMusSetUsed == 105) S_ChangeMusic("MUNTNORM", 0, true, true); // SiN - Munt
+							if (DynMusSetUsed == 106) S_ChangeMusic("MANENORM", 0, true, true); // SiN - Mane
+							if (DynMusSetUsed == 107) S_ChangeMusic("BANKNORM", 0, true, true); // SiN - Bank
+							if (DynMusSetUsed == 108) S_ChangeMusic("CHEMNORM", 0, true, true); // SiN - Chem
+							if (DynMusSetUsed == 109) S_ChangeMusic("CASINORM", 0, true, true); // SiN - Casino
+							if (DynMusSetUsed == 110) S_ChangeMusic("AQUANORM", 0, true, true); // SiN - Aqua
 						}
 						else
 						{
 							S_ChangeMusic("*", 0, true, true);
 						}
 					}
-					if (dydudebug_dynmusdisplays) Console.Printf("DynMusCalmTimer: %d", DynMusCalmTimer);
+					if (dydudebug_dynmusdisplays) Console.Printf("DynMusCalmTimer: %d, Roll: %d", DynMusCalmTimer, randmusroll);
 				}
 				else
 				{
+					if (DynMusActCall)
+					{
+						DynMusCalmTimer = -1;
+						if (exex_dynamicmusic == 1)
+						{
+							randmusroll = -1;
+							if (dydudebug_dynmusdisplays) Console.Printf("Calling Paired Dynamic Music [%d]", DynMusFightTimer);
+							if (DynMusSetUsed == 0) S_ChangeMusic("BGMBAT4", 0, true, true); // Party
+							if (DynMusSetUsed == 1) S_ChangeMusic("BGMBAT2", 0, true, true); // Observation
+							if (DynMusSetUsed == 2) S_ChangeMusic("BGMBAT2", 0, true, true); // Dining
+							if (DynMusSetUsed == 3) S_ChangeMusic("BGMBAT1", 0, true, true); // Garden
+							if (DynMusSetUsed == 4) S_ChangeMusic("BGMBAT3", 0, true, true); // Hedges
+							if (DynMusSetUsed == 5) S_ChangeMusic("BGMBAT3", 0, true, true); // Springs
+							if (DynMusSetUsed == 6) S_ChangeMusic("BGMBAT2", 0, true, true); // Cricket
+							if (DynMusSetUsed == 7) S_ChangeMusic("BGMBAT3", 0, true, true); // House
+
+							if (DynMusSetUsed == 8) S_ChangeMusic("BGMBAT3", 0, true, true); // Villa
+							if (DynMusSetUsed == 9) S_ChangeMusic("BGMBAT3", 0, true, true); // Heroes
+							if (DynMusSetUsed == 10) S_ChangeMusic("BGMBAT2", 0, true, true); // School
+							if (DynMusSetUsed == 11) S_ChangeMusic("BGMBATM", 0, true, true); // Magic
+							if (DynMusSetUsed == 12) S_ChangeMusic("BGMBAT2", 0, true, true); // Manse
+							if (DynMusSetUsed == 13) S_ChangeMusic("BGMBAT2", 0, true, true); // Embassy
+							if (DynMusSetUsed == 14) S_ChangeMusic("BGMBATA", 0, true, true); // Abbey
+							if (DynMusSetUsed == 15) S_ChangeMusic("BGMBAT1", 0, true, true); // Zepp1
+							if (DynMusSetUsed == 16) S_ChangeMusic("BGMBAT3", 0, true, true); // Zepp2
+
+							if (DynMusSetUsed == 17) S_ChangeMusic("BGMBATC", 0, true, true); // ?1
+							if (DynMusSetUsed == 18) S_ChangeMusic("BGMBATH", 0, true, true); // ?2
+							if (DynMusSetUsed == 19) S_ChangeMusic("BGMBATH2", 0, true, true); // ?3
+							if (DynMusSetUsed == 20) S_ChangeMusic("BGMBATH3", 0, true, true); // ?4
+							if (DynMusSetUsed == 21) S_ChangeMusic("BGMPURGF", 0, true, true); // ?5
+							if (DynMusSetUsed == 22) S_ChangeMusic("BGMHELLF", 0, true, true); // ?6
+							if (DynMusSetUsed == 23) S_ChangeMusic("BGMMOTHF", 0, true, true); // ?7
+							
+							if (DynMusSetUsed == 101) S_ChangeMusic("SILOACT", 0, true, true); // SiN - Silo
+							if (DynMusSetUsed == 102) S_ChangeMusic("GORGACT", 0, true, true); // SiN - Gorge
+							if (DynMusSetUsed == 103) S_ChangeMusic("BIOACT", 0, true, true); // SiN - BioTech
+							if (DynMusSetUsed == 104) S_ChangeMusic("CORACT", 0, true, true); // SiN - Coral
+							if (DynMusSetUsed == 105) S_ChangeMusic("MUNTACT", 0, true, true); // SiN - Munt
+							if (DynMusSetUsed == 106) S_ChangeMusic("MANEACT", 0, true, true); // SiN - Mane
+							if (DynMusSetUsed == 107) S_ChangeMusic("BANKACT", 0, true, true); // SiN - Bank
+							if (DynMusSetUsed == 108) S_ChangeMusic("CHEMACT", 0, true, true); // SiN - Chem
+							if (DynMusSetUsed == 109) S_ChangeMusic("CASIACT", 0, true, true); // SiN - Casino
+							if (DynMusSetUsed == 110) S_ChangeMusic("AQUAACT", 0, true, true); // SiN - Aqua
+						}
+						else
+						{
+							if (dydudebug_dynmusdisplays) Console.Printf("Calling Randomized Combat Music [%d, roll: %d]", DynMusFightTimer, randmusroll);
+							if (randmusroll <= -1)
+							{
+								randmusroll = random(-7,22);
+								if (randmusroll == 0) S_ChangeMusic("BGMBAT1", 0, true, true);
+								if (randmusroll == 1) S_ChangeMusic("BGMBAT2", 0, true, true);
+								if (randmusroll == 2) S_ChangeMusic("BGMBAT4", 0, true, true);
+								if (randmusroll == 3) S_ChangeMusic("BGMBAT3", 0, true, true);
+								if (randmusroll == 4) S_ChangeMusic("BGMBATM", 0, true, true);
+								if (randmusroll == 5) S_ChangeMusic("BGMBATA", 0, true, true);
+								if (randmusroll == 6) S_ChangeMusic("BGMBATC", 0, true, true);
+								if (randmusroll == 7) S_ChangeMusic("BGMBATH", 0, true, true);
+								if (randmusroll == 8) S_ChangeMusic("BGMBATH2", 0, true, true);
+								if (randmusroll == 9) S_ChangeMusic("BGMBATH3", 0, true, true);
+								if (randmusroll == 10) S_ChangeMusic("BGMPURGF", 0, true, true);
+								if (randmusroll == 11) S_ChangeMusic("BGMHELLF", 0, true, true);
+								if (randmusroll == 12) S_ChangeMusic("BGMMOTHF", 0, true, true);
+								if (randmusroll == 13) S_ChangeMusic("SILOACT", 0, true, true); // SiN - Silo
+								if (randmusroll == 14) S_ChangeMusic("GORGACT", 0, true, true); // SiN - Gorge
+								if (randmusroll == 15) S_ChangeMusic("BIOACT", 0, true, true); // SiN - BioTech
+								if (randmusroll == 16) S_ChangeMusic("CORACT", 0, true, true); // SiN - Coral
+								if (randmusroll == 17) S_ChangeMusic("MUNTACT", 0, true, true); // SiN - Munt
+								if (randmusroll == 18) S_ChangeMusic("MANEACT", 0, true, true); // SiN - Mane
+								if (randmusroll == 19) S_ChangeMusic("BANKACT", 0, true, true); // SiN - Bank
+								if (randmusroll == 20) S_ChangeMusic("CHEMACT", 0, true, true); // SiN - Chem
+								if (randmusroll == 21) S_ChangeMusic("CASIACT", 0, true, true); // SiN - Casino
+								if (randmusroll == 22) S_ChangeMusic("AQUAACT", 0, true, true); // SiN - Aqua
+							}
+						}
+						DynMusActCall = false;
+					}
 					DynMusFightTimer--;
-					if (dydudebug_dynmusdisplays) Console.Printf("DynMusFightTimer: %d", DynMusFightTimer);
+					if (dydudebug_dynmusdisplays) Console.Printf("DynMusFightTimer: %d, Roll: %d", DynMusFightTimer, randmusroll);
+					if (playeractiontimer >= 0) playeractiontimer = 0;
 					if (DynMusFightTimer <= 0) DynMusFightTimer = 0;
 				}
 			}
@@ -1764,6 +1876,7 @@ class PlayerStatItem : Inventory
 			{
 				DynMusFightTimer = -1;
 				DynMusCalmTimer = -1;
+				randmusroll = -1;
 				S_ChangeMusic("*", 0, true, true);
 			}
 		}
@@ -3961,10 +4074,17 @@ class PlayerStatItem : Inventory
 						globalvars.AllSecrets[i])
 				{
 					globalvars.AllCompletion[i] = true;
+					if (globalvars.AllCompletionSound[i] == false) 
+					{
+						owner.A_StartSound("stats/allcompletion",1004,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.8,1.2));
+						owner.A_PrintBold(String.Format("\c[gold]Level 100% Completed!\c-"), frandom(0.685,0.8));
+						globalvars.AllCompletionSound[i] = true;
+					}
 				}
 				else
 				{
 					globalvars.AllCompletion[i] = false;
+					globalvars.AllCompletionSound[i] = false;
 				}
 
 				totalkillsgame += globalvars.NumKills[i];
