@@ -1356,6 +1356,7 @@ class DinahWeapon : DDWeapon
 		if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (final [QuickMelee]): %d", flags);
 	}
 	
+	// Kick Force State for Player
 	action void A_ForcePlayState(statelabel fstate = "Kick")
 	{
 		actor player = players[0].mo;
@@ -1364,6 +1365,7 @@ class DinahWeapon : DDWeapon
 		player.A_SetInventory("PKicking",1);
 	}
 	
+	// Bat-Guard Force State for Player
 	action void A_ForcePlayState2(statelabel fstate = "BatGuard")
 	{
 		actor player = players[0].mo;
@@ -1374,6 +1376,7 @@ class DinahWeapon : DDWeapon
 		}
 	}
 	
+	// Spin-Attack Force State for Player
 	action void A_ForcePlayState3(statelabel fstate = "SpinAttackBat")
 	{
 		actor player = players[0].mo;
@@ -1384,7 +1387,19 @@ class DinahWeapon : DDWeapon
 		}
 	}
 	
+	//
 	action void A_ForcePlayState4(statelabel fstate = "ShieldGuard")
+	{
+		actor player = players[0].mo;
+		if (!player.CountInv("PKicking"))
+		{
+			state meleestate = player.FindState(fstate);
+			if (meleestate != null) player.SetState(meleestate);
+		}
+	}
+	
+	//
+	action void A_ForcePlayStateMelee(statelabel fstate = "Melee")
 	{
 		actor player = players[0].mo;
 		if (!player.CountInv("PKicking"))
@@ -2151,6 +2166,7 @@ class HandToHand : DinahWeapon replaces Fist
 		Fire:
 			TNT1 A 0
 			{
+				A_ForcePlayStateMelee("Melee");
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 				int basechance = 31;
@@ -2405,6 +2421,7 @@ class HandToHand : DinahWeapon replaces Fist
 		UppercutStart:
 			DNUP A 1
 			{ 
+				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = 0;
 				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
@@ -3834,6 +3851,7 @@ class CricketBat : DinahWeapon replaces Pistol
 		Fire:
 			DBID A 1
 			{
+				A_ForcePlayStateMelee("Melee");
 				A_CheckIPState1();
 				int PlayerLevel;
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
@@ -4041,6 +4059,7 @@ class CricketBat : DinahWeapon replaces Pistol
 			}
 			DBID A 1
 			{
+				A_ForcePlayStateMelee("Melee");
 				A_CheckIPState1();
 				A_BatGuardDashOff();
 				A_ConfirmIPAttack(102,0,4,10);
@@ -7075,6 +7094,7 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 		Fire:
 			BLAX D 1
 			{
+				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = 0;
 				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
@@ -8812,6 +8832,7 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		Fire:
 			SCRM A 2
 			{
+				A_ForcePlayStateMelee("Melee");
 				A_CheckIPState1();
 				A_ConfirmIPAttack(121,0,4,13,false);
 				A_PanSwingSet2Tics();
@@ -8886,6 +8907,7 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			}
 			SCRM A 2
 			{
+				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				A_CheckIPState1();
 				A_ConfirmIPAttack(122,0,3,11);
@@ -10287,6 +10309,7 @@ class AppleJack : DinahWeapon replaces Chaingun
 		Fire:
 			AJAK B 2
 			{
+				A_ForcePlayStateMelee("Melee");
 				A_CheckIPState1();
 				A_ConfirmIPAttack(131,0,9,20,false);
 				A_AppleJackMainAtk2Tics();
@@ -10353,6 +10376,7 @@ class AppleJack : DinahWeapon replaces Chaingun
 			}
 			AJAF C 2
 			{
+				A_ForcePlayStateMelee("Melee");
 				A_CheckIPState1();
 				A_AppleJackAltAtk2Tics();
 				
@@ -11251,6 +11275,10 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 				if (TruePlayerLevel >= exex_pikeinvisolvlreq && (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT) && CountInv("PikeAmmo") > invoker.InvisoCost)
 				{
 					return resolvestate("Inviso");
+				}
+				else
+				{
+					A_ForcePlayStateMelee("Melee");
 				}
 				
 				A_CheckIPState1();
@@ -12728,6 +12756,7 @@ class SuperVac : DinahWeapon replaces PlasmaRifle
 			}
 			VACM BA 2
 			{
+				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = 0;
 				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
@@ -14199,7 +14228,10 @@ class RatNose : DDBeak
 			}
 			Loop;
 		Fire:
-			RATW A 0 A_StartSound("Rat/Attack", CHAN_WEAPON);
+			RATW A 0 
+			{
+				A_StartSound("Rat/Attack", CHAN_WEAPON);
+			}
 			RATW A 8
 			{
 				actor player = players[0].mo;
@@ -14846,6 +14878,7 @@ class CandleWhip : DinahWeapon
 		Fire:
 			RCAN Z 0 bright
 			{
+				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = 0;
 				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
