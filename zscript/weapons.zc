@@ -8223,7 +8223,6 @@ class BlunderShot : EEProjectile
 
 class BlunderSmokeSmall : SingleDamageRipper
 {
-	double basealpha;
 	default
 	{
 		Height 8;
@@ -12684,7 +12683,8 @@ class SuperVac : DinahWeapon replaces PlasmaRifle
 			{
 				if (CountInv("SuperVac",AAPTR_PLAYER1))
 				{
-					A_SpawnItemEx("VacAmmo",0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+					if (random(1,16) <= 13) A_SpawnItemEx("VacAmmoBig",0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+														 else A_SpawnItemEx("VacAmmo",0,0,0,0,0,0,SXF_NOCHECKPOSITION);
 					Thing_Remove(0); 
 				}
 			}
@@ -15433,12 +15433,15 @@ class FosnianCandle : DinahWeapon
 	
 	action void A_FCandleShot(double angleerr = 0.0, double pitcherr = 0.0, double recoilerr = 0.0, int element = 0)
 	{
-		bool debugrecoil = false;
+		bool debugrecoil = true;
 		let player = self.player;
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = 0;
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 
+		double quakeint = 9;
+		double quakedurtime = 5;
+		double quaketremrad = 64;
 		double baserecoil = 1.0;
 		double crouchrefa;
 		if (player.onground) 
@@ -15450,6 +15453,9 @@ class FosnianCandle : DinahWeapon
 			crouchrefa = ((1.0 - player.crouchfactor) * 1.125);
 		}
 		baserecoil *= 1.0 - crouchrefa;
+		quakeint *= 1.0 - crouchrefa;
+		quakedurtime *= 1.0 - crouchrefa;
+		quaketremrad *= 1.0 - crouchrefa;
 		
 		double sndpitch = 1.0;
 		double sndvol = 1.0;
@@ -15477,8 +15483,11 @@ class FosnianCandle : DinahWeapon
 				}
 			}
 			A_FireProjectile(atktype, frandom(-angleerr,angleerr), true, 0, 0, 0, frandom(-pitcherr,pitcherr));
-			A_Quake(random(4,5),random(2,3),0,32,0);
-			baserecoil *= (random(45,55) * 0.01);
+			double mult = (random(45,55) * 0.01);
+			quakeint *= mult;
+			quakedurtime *= mult;
+			quaketremrad *= mult;
+			baserecoil *= mult;
 		}
 		else 
 		{
@@ -15486,14 +15495,24 @@ class FosnianCandle : DinahWeapon
 			if (element % 2 == 1) atktype = "CandleShotIcy";
 			A_StartSound("weapons/fcandlefire",CHAN_WEAPON);
 			A_FireProjectile(atktype, frandom(-angleerr,angleerr), true, 0, 0, 0, frandom(-pitcherr,pitcherr));
-			A_Quake(9,5,0,64,0);
 		}
 		baserecoil *= (1.0 - (TruePlayerLevel * 0.025));
 		if (baserecoil < 0.0) baserecoil = 0.0;
+		quakeint *= (1.0 - (TruePlayerLevel * 0.025));
+		if (quakeint < 1.0) quakeint = 1.0;
+		quakedurtime *= (1.0 - (quakedurtime * 0.025));
+		if (quakedurtime < 4) quakedurtime = 4;
+		quaketremrad *= (1.0 - (quaketremrad * 0.025));
+		if (quaketremrad < 8) quaketremrad = 8;
+		A_Quake(quakeint,quakedurtime,0,quaketremrad,0);
 		
 		double truerecoil = baserecoil + (recoilerr * baserecoil);
-		if (debugrecoil) Console.Printf("\c[fire]Recoil: %.8f,\c- Base: %.8f, Error: %.8f, crouchrefa, %.8f, \c[sapphire]player.crouchfactor: %.8f", truerecoil, baserecoil, recoilerr, crouchrefa, player.crouchfactor);
 		A_Recoil(truerecoil);
+		if (debugrecoil) 
+		{
+			Console.Printf("\c[fire]quakeint: %.8f, quakedurtime: %.8f, quaketremrad: %.8f\c-, crouchrefa, %.8f, \c[sapphire]player.crouchfactor: %.8f", quakeint, quakedurtime, quaketremrad, crouchrefa, player.crouchfactor);
+			Console.Printf("\c[fire]Recoil: %.8f,\c- Base: %.8f, Error: %.8f, crouchrefa, %.8f, \c[sapphire]player.crouchfactor: %.8f", truerecoil, baserecoil, recoilerr, crouchrefa, player.crouchfactor);
+		}
 	}
 	
 	States

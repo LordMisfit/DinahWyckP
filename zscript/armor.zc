@@ -60,10 +60,6 @@ class KGArmor : BasicArmor
 		PlayPawn = DDPlayerPawn(owner);
 		if (PlayPawn)
 		{
-			if (PlayPawn.CountInv("KnightGownIP1Buff")) PlayPawn.PlayerArmorIgnoreFactor *= 0.5;
-			if (PlayPawn.CountInv("KnightGownIP2Buff")) PlayPawn.PlayerArmorIgnoreFactor *= 0.25;
-			if (PlayPawn.CountInv("KnightGownIP3Buff")) PlayPawn.PlayerArmorIgnoreFactor *= 0.125;
-			if (PlayPawn.CountInv("KnightGownIP4Buff")) PlayPawn.PlayerArmorIgnoreFactor *= 0.0625;
 			SavePercent *= (1.0 - PlayPawn.PlayerArmorIgnoreFactor);
 			if (dydudebug_playerdamagemobj) Console.Printf("\c[darkgreen]SavePercent:\c- \c[brick]%.4f\c- \c[gold][%.4f]\c", SavePercent, initSavePercent);
 		}
@@ -86,12 +82,39 @@ class KGArmor : BasicArmor
 			}
 			
 			int oldsaved = saved;
+			double savebase;
 			// IP Buffs for Armor also reduce the amount of armor actually LOST :V
-			if (PlayPawn.CountInv("KnightGownIP1Buff")) saved *= 0.875;
-			if (PlayPawn.CountInv("KnightGownIP2Buff")) saved *= 0.8125;
-			if (PlayPawn.CountInv("KnightGownIP3Buff")) saved *= 0.78125;
-			if (PlayPawn.CountInv("KnightGownIP4Buff")) saved *= 0.765625;
-			if (dydudebug_playerdamagemobj) Console.Printf("\c[darkgreen]armor - saved:\c- \c[brick]%d\c- \c[gold][%d]\c", saved, oldsaved);
+			if (PlayPawn.CountInv("KnightGownIP1Buff")) savebase = 0.125;
+			if (PlayPawn.CountInv("KnightGownIP2Buff")) savebase = 0.1875;
+			if (PlayPawn.CountInv("KnightGownIP3Buff")) savebase = 0.21875;
+			if (PlayPawn.CountInv("KnightGownIP4Buff")) savebase = 0.234375;
+			if (exex_armoritemdifficulty == 1) savebase *= 1.5;
+			if (exex_armoritemdifficulty == 2) savebase *= 1.75;
+			if (exex_armoritemdifficulty >= 3) savebase *= 3.0;
+			if (savebase >= 0.75) savebase = 0.75;
+			saved *= (1.0 - savebase);
+			if (dydudebug_playerdamagemobj) Console.Printf("\c[darkgreen]armor - saved [post IP]:\c- \c[brick]%d\c- \c[gold][%d]\c", saved, oldsaved);
+			
+			if (MiscItem)
+			{
+				savebase = 0.00;
+				if (MiscItem.WineDefTier == 1) savebase = 0.0025;
+				else if (MiscItem.WineDefTier == 2) savebase = 0.0075;
+				else if (MiscItem.WineDefTier == 3) savebase = 0.015;
+				else if (MiscItem.WineDefTier == 4) savebase = 0.025;
+				else if (MiscItem.WineDefTier == 5) savebase = 0.0375;
+				else if (MiscItem.WineDefTier == -1) savebase = 0.0075;
+				else if (MiscItem.WineDefTier == -2) savebase = 0.0225;
+				else if (MiscItem.WineDefTier == -3) savebase = 0.075;
+				else if (MiscItem.WineDefTier == -4) savebase = 0.125;
+				else if (MiscItem.WineDefTier == -5) savebase = 0.175;
+				if (exex_armoritemdifficulty == 1) savebase *= 1.5;
+				if (exex_armoritemdifficulty == 2) savebase *= 1.75;
+				if (exex_armoritemdifficulty >= 3) savebase *= 3.0;
+				if (savebase >= 0.75) savebase = 0.75;
+				saved *= (1.0 - savebase);
+				if (dydudebug_playerdamagemobj) Console.Printf("\c[darkgreen]armor - saved [post Wine]:\c- \c[brick]%d\c- \c[gold][%d]\c", saved, oldsaved);
+			}
 
 			if (Amount < saved)
 			{
@@ -371,6 +394,19 @@ class ArmorScrap : KGArmorBonus
 		
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int ArmorItemMax1;
+		int ArmorItemMax2;
+		int ArmorItemMax3;
+		int ArmorItemMax4;
+		if (MiscItem) MaxSaveAmount = MiscItem.ArmorItemMax4;
+						 else MaxSaveAmount = 2000;
+		if (MiscItem)
+		{
+			ArmorItemMax1 = MiscItem.ArmorItemMax1;
+			ArmorItemMax2 = MiscItem.ArmorItemMax2;
+			ArmorItemMax3 = MiscItem.ArmorItemMax3;
+			ArmorItemMax4 = MiscItem.ArmorItemMax4;
+		}
 		if (spawntype >= 4) owner.A_GiveInventory("ArmorScavengerKit",randompick(3,4,4,5,5,5,6,6,7));
 		int PrevArmorAmt = Owner.CountInv(armorclasstype);
 		int PrevArmorType;
@@ -433,7 +469,7 @@ class ArmorScrap : KGArmorBonus
 			}
 			if (PrevArmorType == 1)
 			{
-				if (armor.Amount > 249)
+				if (armor.Amount > (ArmorItemMax1-1))
 				{
 					armor.SavePercent = clamp(75.0, 0, 100.0) / 100.0;
 					armor.Icon = TexMan.checkForTexture("KGWNJ0");
@@ -441,7 +477,7 @@ class ArmorScrap : KGArmorBonus
 				}
 				else 
 				{
-					if (armor.Amount >= 124)
+					if (armor.Amount >= ((ArmorItemMax1*0.5)-1))
 					{
 						if (armor.Icon != TexMan.checkForTexture("KGWNI0")) armor.Icon = TexMan.checkForTexture("KGWNI0");
 					}
@@ -453,7 +489,7 @@ class ArmorScrap : KGArmorBonus
 			else
 			if (PrevArmorType == 2)
 			{
-				if (armor.Amount > 499)
+				if (armor.Amount > (ArmorItemMax2-1))
 				{
 					armor.SavePercent = clamp(87.5, 0, 100.0) / 100.0;
 					armor.Icon = TexMan.checkForTexture("KGWNK0");
@@ -469,7 +505,7 @@ class ArmorScrap : KGArmorBonus
 			else
 			if (PrevArmorType == 3)
 			{
-				if (armor.Amount > 999)
+				if (armor.Amount > (ArmorItemMax3-1))
 				{
 					armor.SavePercent = clamp(93.75, 0, 100.0) / 100.0;
 					armor.Icon = TexMan.checkForTexture("KGWNL0");
@@ -608,6 +644,21 @@ class ArmorScrapKit : ArmorScrap
 		
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int ArmorItemMax1;
+		int ArmorItemMax2;
+		int ArmorItemMax3;
+		int ArmorItemMax4;
+		if (MiscItem) MaxSaveAmount = MiscItem.ArmorItemMax4;
+						 else MaxSaveAmount = 2000;
+		if (MiscItem)
+		{
+			ArmorItemMax1 = MiscItem.ArmorItemMax1;
+			ArmorItemMax2 = MiscItem.ArmorItemMax2;
+			ArmorItemMax3 = MiscItem.ArmorItemMax3;
+			ArmorItemMax4 = MiscItem.ArmorItemMax4;
+		}
+		
 		owner.A_GiveInventory("ArmorScavengerKit",randompick(3,4,4,5,5,5,6,6,7));
 		int PrevArmorAmt = Owner.CountInv(armorclasstype);
 		int PrevArmorType;
@@ -670,7 +721,7 @@ class ArmorScrapKit : ArmorScrap
 			}
 			if (PrevArmorType == 1)
 			{
-				if (armor.Amount > 249)
+				if (armor.Amount > (ArmorItemMax1-1))
 				{
 					armor.SavePercent = clamp(75.0, 0, 100.0) / 100.0;
 					armor.Icon = TexMan.checkForTexture("KGWNJ0");
@@ -678,7 +729,7 @@ class ArmorScrapKit : ArmorScrap
 				}
 				else 
 				{
-					if (armor.Amount >= 124)
+					if (armor.Amount >= ((ArmorItemMax1*0.5)-1))
 					{
 						if (armor.Icon != TexMan.checkForTexture("KGWNI0")) armor.Icon = TexMan.checkForTexture("KGWNI0");
 					}
@@ -690,7 +741,7 @@ class ArmorScrapKit : ArmorScrap
 			else
 			if (PrevArmorType == 2)
 			{
-				if (armor.Amount > 499)
+				if (armor.Amount > (ArmorItemMax2-1))
 				{
 					armor.SavePercent = clamp(87.5, 0, 100.0) / 100.0;
 					armor.Icon = TexMan.checkForTexture("KGWNK0");
@@ -706,7 +757,7 @@ class ArmorScrapKit : ArmorScrap
 			else
 			if (PrevArmorType == 3)
 			{
-				if (armor.Amount > 999)
+				if (armor.Amount > (ArmorItemMax3-1))
 				{
 					armor.SavePercent = clamp(93.75, 0, 100.0) / 100.0;
 					armor.Icon = TexMan.checkForTexture("KGWNL0");
@@ -776,6 +827,22 @@ class WineArmor : KGArmorBonus
 		
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int ArmorItemMax0;
+		int ArmorItemMax1;
+		int ArmorItemMax2;
+		int ArmorItemMax3;
+		int ArmorItemMax4;
+		if (MiscItem) MaxSaveAmount = MiscItem.ArmorItemMax4;
+						 else MaxSaveAmount = 2000;
+		if (MiscItem)
+		{
+			ArmorItemMax0 = MiscItem.ArmorItemMax0;
+			ArmorItemMax1 = MiscItem.ArmorItemMax1;
+			ArmorItemMax2 = MiscItem.ArmorItemMax2;
+			ArmorItemMax3 = MiscItem.ArmorItemMax3;
+			ArmorItemMax4 = MiscItem.ArmorItemMax4;
+		}
+		
 		int PrevArmorAmt = Owner.CountInv(armorclasstype);
 		int PrevArmorType;
 		if (owner.CountInv("KnightGownItem")) PrevArmorType = 1;
@@ -837,7 +904,7 @@ class WineArmor : KGArmorBonus
 			}
 			if (PrevArmorType == 1)
 			{
-				if (armor.Amount > 249)
+				if (armor.Amount > (ArmorItemMax1-1))
 				{
 					armor.SavePercent = clamp(75.0, 0, 100.0) / 100.0;
 					armor.Icon = TexMan.checkForTexture("KGWNJ0");
@@ -845,7 +912,7 @@ class WineArmor : KGArmorBonus
 				}
 				else 
 				{
-					if (armor.Amount >= 124)
+					if (armor.Amount >= ((ArmorItemMax1*0.5)-1))
 					{
 						if (armor.Icon != TexMan.checkForTexture("KGWNI0")) armor.Icon = TexMan.checkForTexture("KGWNI0");
 					}
@@ -857,7 +924,7 @@ class WineArmor : KGArmorBonus
 			else
 			if (PrevArmorType == 2)
 			{
-				if (armor.Amount > 499)
+				if (armor.Amount > (ArmorItemMax2-1))
 				{
 					armor.SavePercent = clamp(87.5, 0, 100.0) / 100.0;
 					armor.Icon = TexMan.checkForTexture("KGWNK0");
@@ -873,7 +940,7 @@ class WineArmor : KGArmorBonus
 			else
 			if (PrevArmorType == 3)
 			{
-				if (armor.Amount > 999)
+				if (armor.Amount > (ArmorItemMax3-1))
 				{
 					armor.SavePercent = clamp(93.75, 0, 100.0) / 100.0;
 					armor.Icon = TexMan.checkForTexture("KGWNL0");
@@ -940,6 +1007,17 @@ class KnightGown : KGArmorPickup
 		
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int ArmorItemMax1;
+		int ArmorItemMax2;
+		int ArmorItemMax3;
+		int ArmorItemMax4;
+		if (MiscItem)
+		{
+			ArmorItemMax1 = MiscItem.ArmorItemMax1;
+			ArmorItemMax2 = MiscItem.ArmorItemMax2;
+			ArmorItemMax3 = MiscItem.ArmorItemMax3;
+			ArmorItemMax4 = MiscItem.ArmorItemMax4;
+		}
 		int PrevArmorAmt = Owner.CountInv(armorclasstype);
 		int PrevArmorType;
 		if (owner.CountInv("KnightGownItem")) PrevArmorType = 1;
@@ -948,8 +1026,11 @@ class KnightGown : KGArmorPickup
 		if (owner.CountInv("KnightGownItem4")) PrevArmorType = 4;
 		if (dydudebug_armordisplays) Console.Printf("PrevArmorType: %d", PrevArmorType);
 
-		int SaveAmount = GetSaveAmount();
+		int SaveAmount;
+		if (MiscItem) SaveAmount = MiscItem.ArmorItemGive1;
+		//SaveAmount = GetSaveAmount();
 		let armor = KGArmor(Owner.FindInventory(armorclasstype));
+		if (dydudebug_armordisplays) Console.Printf("SaveAmount: %d", SaveAmount);
 
 		// This should really never happen but let's be prepared for a broken inventory.
 		if (armor == null)
@@ -962,11 +1043,11 @@ class KnightGown : KGArmorPickup
 		{
 			// If you already have more armor than this item gives you, you can't
 			// use it.
-			int maxa = (250 + (armor.BonusCount*2));
-			if (PrevArmorType == 1) maxa = (250 + (armor.BonusCount*2));
-			if (PrevArmorType == 2) maxa = (500 + (armor.BonusCount*4));
-			if (PrevArmorType == 3) maxa = (1000 + (armor.BonusCount*8));
-			if (PrevArmorType == 4) maxa = (2000 + (armor.BonusCount*16));
+			int maxa = ArmorItemMax1;
+			if (PrevArmorType == 1) maxa = ArmorItemMax1;
+			if (PrevArmorType == 2) maxa = ArmorItemMax2;
+			if (PrevArmorType == 3) maxa = ArmorItemMax3;
+			if (PrevArmorType == 4) maxa = ArmorItemMax4;
 			if (dydudebug_armordisplays) Console.Printf("Amt: %d, Max: %d", armor.Amount, maxa);
 			if (armor.Amount >= maxa)
 			{
@@ -1010,20 +1091,19 @@ class KnightGown : KGArmorPickup
 		
 		if (PrevArmorType <= 1)
 		{
-			armor.MaxAmount = ((SaveAmount*2) + (armor.BonusCount*2));
-			if (armor.Amount > armor.MaxAmount) armor.Amount = armor.MaxAmount;
+			if (armor.Amount > ArmorItemMax1) armor.Amount = ArmorItemMax1;
 		}
 		if (PrevArmorType == 2)
 		{
-			if (armor.Amount > 500) armor.Amount = 500;
+			if (armor.Amount > ArmorItemMax2) armor.Amount = ArmorItemMax2;
 		}
 		if (PrevArmorType == 3)
 		{
-			if (armor.Amount > 1000) armor.Amount = 1000;
+			if (armor.Amount > ArmorItemMax3) armor.Amount = ArmorItemMax3;
 		}
 		if (PrevArmorType == 4)
 		{
-			if (armor.Amount > 2000) armor.Amount = 2000;
+			if (armor.Amount > ArmorItemMax4) armor.Amount = ArmorItemMax4;
 		}
 
 		if (PrevArmorType <= 1)
@@ -1100,6 +1180,17 @@ class KnightGown2 : KGArmorPickup
 		
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int ArmorItemMax1;
+		int ArmorItemMax2;
+		int ArmorItemMax3;
+		int ArmorItemMax4;
+		if (MiscItem)
+		{
+			ArmorItemMax1 = MiscItem.ArmorItemMax1;
+			ArmorItemMax2 = MiscItem.ArmorItemMax2;
+			ArmorItemMax3 = MiscItem.ArmorItemMax3;
+			ArmorItemMax4 = MiscItem.ArmorItemMax4;
+		}
 		int PrevArmorAmt = Owner.CountInv(armorclasstype);
 		int PrevArmorType;
 		if (owner.CountInv("KnightGownItem")) PrevArmorType = 1;
@@ -1108,8 +1199,11 @@ class KnightGown2 : KGArmorPickup
 		if (owner.CountInv("KnightGownItem4")) PrevArmorType = 4;
 		if (dydudebug_armordisplays) Console.Printf("PrevArmorType: %d", PrevArmorType);
 
-		int SaveAmount = GetSaveAmount();
+		int SaveAmount;
+		if (MiscItem) SaveAmount = MiscItem.ArmorItemGive2;
+		//SaveAmount = GetSaveAmount();
 		let armor = KGArmor(Owner.FindInventory(armorclasstype));
+		if (dydudebug_armordisplays) Console.Printf("SaveAmount: %d", SaveAmount);
 
 		// This should really never happen but let's be prepared for a broken inventory.
 		if (armor == null)
@@ -1122,10 +1216,10 @@ class KnightGown2 : KGArmorPickup
 		{
 			// If you already have more armor than this item gives you, you can't
 			// use it.
-			int maxa = (500 + (armor.BonusCount*4));
-			if (PrevArmorType <= 2) maxa = (500 + (armor.BonusCount*4));
-			if (PrevArmorType == 3) maxa = (1000 + (armor.BonusCount*8));
-			if (PrevArmorType == 4) maxa = (2000 + (armor.BonusCount*16));
+			int maxa = ArmorItemMax2;
+			if (PrevArmorType <= 2) maxa = ArmorItemMax2;
+			if (PrevArmorType == 3) maxa = ArmorItemMax3;
+			if (PrevArmorType == 4) maxa = ArmorItemMax4;
 			if (dydudebug_armordisplays) Console.Printf("Amt: %d, Max: %d", armor.Amount, maxa);
 			if (armor.Amount >= maxa)
 			{
@@ -1165,16 +1259,15 @@ class KnightGown2 : KGArmorPickup
 
 		if (PrevArmorType <= 2)
 		{
-			armor.MaxAmount = ((SaveAmount*2) + (armor.BonusCount*2));
-			if (armor.Amount > armor.MaxAmount) armor.Amount = armor.MaxAmount;
+			if (armor.Amount > ArmorItemMax2) armor.Amount = ArmorItemMax2;
 		}
 		if (PrevArmorType == 3)
 		{
-			if (armor.Amount > 1000) armor.Amount = 1000;
+			if (armor.Amount > ArmorItemMax3) armor.Amount = ArmorItemMax3;
 		}
 		if (PrevArmorType == 4)
 		{
-			if (armor.Amount > 2000) armor.Amount = 2000;
+			if (armor.Amount > ArmorItemMax4) armor.Amount = ArmorItemMax4;
 		}
 		
 		if (PrevArmorType <= 2)
@@ -1234,6 +1327,17 @@ class KnightGown3 : KGArmorPickup
 		
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int ArmorItemMax1;
+		int ArmorItemMax2;
+		int ArmorItemMax3;
+		int ArmorItemMax4;
+		if (MiscItem)
+		{
+			ArmorItemMax1 = MiscItem.ArmorItemMax1;
+			ArmorItemMax2 = MiscItem.ArmorItemMax2;
+			ArmorItemMax3 = MiscItem.ArmorItemMax3;
+			ArmorItemMax4 = MiscItem.ArmorItemMax4;
+		}
 		int PrevArmorAmt = Owner.CountInv(armorclasstype);
 		int PrevArmorType;
 		if (owner.CountInv("KnightGownItem")) PrevArmorType = 1;
@@ -1242,8 +1346,11 @@ class KnightGown3 : KGArmorPickup
 		if (owner.CountInv("KnightGownItem4")) PrevArmorType = 4;
 		if (dydudebug_armordisplays) Console.Printf("PrevArmorType: %d", PrevArmorType);
 
-		int SaveAmount = GetSaveAmount();
+		int SaveAmount;
+		if (MiscItem) SaveAmount = MiscItem.ArmorItemGive3;
+		//SaveAmount = GetSaveAmount();
 		let armor = KGArmor(Owner.FindInventory(armorclasstype));
+		if (dydudebug_armordisplays) Console.Printf("SaveAmount: %d", SaveAmount);
 
 		// This should really never happen but let's be prepared for a broken inventory.
 		if (armor == null)
@@ -1256,9 +1363,9 @@ class KnightGown3 : KGArmorPickup
 		{
 			// If you already have more armor than this item gives you, you can't
 			// use it.
-			int maxa = (1000 + (armor.BonusCount*8));
-			if (PrevArmorType <= 3) maxa = (1000 + (armor.BonusCount*8));
-			if (PrevArmorType == 4) maxa = (2000 + (armor.BonusCount*16));
+			int maxa = ArmorItemMax3;
+			if (PrevArmorType <= 3) maxa = ArmorItemMax3;
+			if (PrevArmorType == 4) maxa = ArmorItemMax4;
 			if (dydudebug_armordisplays) Console.Printf("Amt: %d, Max: %d", armor.Amount, maxa);
 			if (armor.Amount >= maxa)
 			{
@@ -1294,12 +1401,11 @@ class KnightGown3 : KGArmorPickup
 		
 		if (PrevArmorType <= 3)
 		{
-			armor.MaxAmount = ((SaveAmount*2) + (armor.BonusCount*2));
-			if (armor.Amount > armor.MaxAmount) armor.Amount = armor.MaxAmount;
+			if (armor.Amount > ArmorItemMax3) armor.Amount = ArmorItemMax3;
 		}
 		if (PrevArmorType == 4)
 		{
-			if (armor.Amount > 2000) armor.Amount = 2000;
+			if (armor.Amount > ArmorItemMax4) armor.Amount = ArmorItemMax4;
 		}
 
 		if (PrevArmorType <= 3)
@@ -1359,6 +1465,17 @@ class KnightGown4 : KGArmorPickup
 		
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int ArmorItemMax1;
+		int ArmorItemMax2;
+		int ArmorItemMax3;
+		int ArmorItemMax4;
+		if (MiscItem)
+		{
+			ArmorItemMax1 = MiscItem.ArmorItemMax1;
+			ArmorItemMax2 = MiscItem.ArmorItemMax2;
+			ArmorItemMax3 = MiscItem.ArmorItemMax3;
+			ArmorItemMax4 = MiscItem.ArmorItemMax4;
+		}
 		int PrevArmorAmt = Owner.CountInv(armorclasstype);
 		int PrevArmorType;
 		if (owner.CountInv("KnightGownItem")) PrevArmorType = 1;
@@ -1367,8 +1484,11 @@ class KnightGown4 : KGArmorPickup
 		if (owner.CountInv("KnightGownItem4")) PrevArmorType = 4;
 		if (dydudebug_armordisplays) Console.Printf("PrevArmorType: %d", PrevArmorType);
 
-		int SaveAmount = GetSaveAmount();
+		int SaveAmount;
+		if (MiscItem) SaveAmount = MiscItem.ArmorItemGive4;
+		//SaveAmount = GetSaveAmount();
 		let armor = KGArmor(Owner.FindInventory(armorclasstype));
+		if (dydudebug_armordisplays) Console.Printf("SaveAmount: %d", SaveAmount);
 
 		// This should really never happen but let's be prepared for a broken inventory.
 		if (armor == null)
@@ -1381,8 +1501,8 @@ class KnightGown4 : KGArmorPickup
 		{
 			// If you already have more armor than this item gives you, you can't
 			// use it.
-			int maxa = (2000 + (armor.BonusCount*16));
-			if (PrevArmorType <= 4) maxa = (2000 + (armor.BonusCount*16));
+			int maxa = ArmorItemMax4;
+			if (PrevArmorType <= 4) maxa = ArmorItemMax4;
 			if (dydudebug_armordisplays) Console.Printf("Amt: %d, Max: %d", armor.Amount, maxa);
 			if (armor.Amount >= maxa)
 			{
@@ -1406,8 +1526,7 @@ class KnightGown4 : KGArmorPickup
 		
 		if (PrevArmorType <= 4)
 		{
-			armor.MaxAmount = ((SaveAmount*2) + (armor.BonusCount*2));
-			if (armor.Amount > armor.MaxAmount) armor.Amount = armor.MaxAmount;
+			if (armor.Amount > ArmorItemMax4) armor.Amount = ArmorItemMax4;
 		}
 
 		if (PrevArmorType <= 4)

@@ -481,6 +481,7 @@ class DDPlayerPawn : PlayerPawn
 			{
 				player.jumpTics = 0;
 			}
+			//Console.Printf("player.jumpTics: %d", player.jumpTics);
 		}
 		if (player.morphTics && !(player.cheats & CF_PREDICTING))
 		{
@@ -1553,6 +1554,7 @@ class DDPlayerPawn : PlayerPawn
 		
 		if (source && exex_enemyarmorignorefactor >= 0.001)
 		{
+			int ignoretier = 0;
 			if (dydudebug_playerdamagemobj) Console.Printf("\c[orange]Enemy Bypasses armor [attempt]");
 			EECreature EESource;
 			EESource = EECreature(source);
@@ -1560,36 +1562,93 @@ class DDPlayerPawn : PlayerPawn
 			{
 				if (dydudebug_playerdamagemobj) Console.Printf("\c[sapphire]EESource found [armor bypass]");
 				int rand1;
-				double randarmign = exex_enemyarmorignorefactor;
-				if (sour == "EvilDinah")
+				double randarmign;
+
+				// Tier 2 Enemies [i.e. very-high armor bypass, usually named bosses [Serpent Riders, Pennywise in HTC2, and the Dinah Doppelgangers] V:]
+				if (sour == "PennywiseBoss" ||
+						sour == "ThamuzNew" ||
+						sour == "TchernobogNew" ||
+						EvilDinah(EESource) || 
+						Sorcerer2New(EESource) || 
+						KoraxNew(EESource))
 				{
-					rand1 = 5 + ((source.CountInv("MonsterLevel")) * 0.5);
-					randarmign = (frandompick(0.0075,0.00875,0.01,0.01125,0.0125) * exex_enemyarmorignorefactor);
-					PlayerArmorIgnoreFactor += ((random(0,rand1) * randarmign) * (1.00 - PlayerArmorIgnoreFactor));
-					if (dydudebug_playerdamagemobj) Console.Printf("EvilDinah is attacker: [Level: %d] %.8f", source.CountInv("MonsterLevel"), PlayerArmorIgnoreFactor);
+					ignoretier = 2;
+					rand1 += 5 + ((source.CountInv("MonsterLevel")) * 0.5);
+					randarmign += (frandompick(0.015,0.0175,0.02,0.0225,0.025) * exex_enemyarmorignorefactor);
 				}
-				else
+				else // Tier 1 Enemies [i.e. medium-high armor bypass, usually standard boss/mini-bosses, and BlackBears V:]
+				if (sour == "BlackBearNew" ||
+						RailArachnotron(EESource) ||
+						ArchvileNew(EESource) ||
+						Diabloist(EESource) ||
+						FlyingBalrogDVDS(EESource) ||
+						BruiserDemon(EESource) ||
+						FighterBossNew(EESource) ||
+						ClericBossNew(EESource) ||
+						MageBossNew(EESource) ||
+						Minotaur(EESource) ||
+						MinotaurFriend(EESource) ||
+						CyberdemonNew(EESource) ||
+						Annihilator(EESource) ||
+						SpiderMastermindNew(EESource) ||
+						Demolisher(EESource) ||
+						HandMotherVac(EESource) ||
+						HandMotherPhaseA(EESource) ||
+						HandMotherPhaseB(EESource) ||
+						HandMotherPhaseC(EESource) ||
+						GlobeMother(EESource) ||
+						MossMother(EESource) ||
+						SphinxMother(EESource) ||
+						RoseMother(EESource) ||
+						GameMother(EESource) ||
+						Teacher_Krag(EESource) ||
+						Teacher_Lauritz(EESource) ||
+						Teacher_Quis(EESource) ||
+						Teacher_Jorg(EESource) ||
+						JorgSphereCannon(EESource) ||
+						Teacher_Vokter(EESource) ||
+						Sorcerer1New(EESource))
 				{
-					if (source.bBOSS)
-					{
-						rand1 = random(2,3) + ((source.CountInv("MonsterLevel")) * 0.25);
-						randarmign = (frandompick(0.00375,0.004375,0.005,0.005625,0.00625) * exex_enemyarmorignorefactor);
-						PlayerArmorIgnoreFactor += ((random(0,rand1) * randarmign) * (1.00 - PlayerArmorIgnoreFactor));
-					}
-					else
-					{
-						rand1 = randompick(1,1,1,2) + ((source.CountInv("MonsterLevel")) * 0.125);
-						randarmign = (frandompick(0.001875,0.0021875,0.0025,0.0028125,0.003125) * exex_enemyarmorignorefactor);
-						PlayerArmorIgnoreFactor += ((random(0,rand1) * randarmign) * (1.00 - PlayerArmorIgnoreFactor));
-					}
-					if (dydudebug_playerdamagemobj) Console.Printf("Attack ArmorIgnore: [Level: %d] %.8f", source.CountInv("MonsterLevel"), PlayerArmorIgnoreFactor);
+					ignoretier = 1;
+					rand1 += randompick(2,3) + ((source.CountInv("MonsterLevel")) * 0.25);
+					randarmign += (frandompick(0.0075,0.00875,0.01,0.01125,0.0125) * exex_enemyarmorignorefactor);
 				}
+				else // Tier -1 Enemies (enemies with WEAKER armor bypass on average versus even Tier 0s :V)
+				if (sour == "EvilDeadHandNew" ||
+						sour == "JumpingSkullNew" ||
+						sour == "TinyBingoNew" ||
+						sour == "BabyClownNew" ||
+						sour == "BabyClown2New" ||
+						sour == "PossessedBalloonNew")
+				{
+					ignoretier = -1;
+					rand1 += randompick(0,0,0,0,0,1,1,1) + ((source.CountInv("MonsterLevel")) * 0.0625);
+					randarmign += ((frandompick(0.00375,0.004375,0.005,0.0056125,0.00625) * 0.5) * exex_enemyarmorignorefactor);
+				}
+				else // Tier 0 Enemies [i.e. average armor bypass]
+				{
+					ignoretier = 0;
+					rand1 += randompick(1,1,1,2) + ((source.CountInv("MonsterLevel")) * 0.125);
+					randarmign += (frandompick(0.00375,0.004375,0.005,0.0056125,0.00625) * exex_enemyarmorignorefactor);
+				}
+
+				if (source.bBOSS)
+				{
+					rand1 *= int(frandom(1.75,2.25));
+					randarmign *= frandom(1.75,2.25);
+				}
+				
+				double finalsourceignore = (random(0,rand1) * randarmign);
+				if (finalsourceignore > 0.75) finalsourceignore = 0.75;
+				PlayerArmorIgnoreFactor += (finalsourceignore * (1.00 - PlayerArmorIgnoreFactor));
+				if (dydudebug_playerdamagemobj) Console.Printf("Tier %d Armor Ignoring Type: [Level: %d], rand1: %d, randarmign: %.8f, PlayerArmorIgnoreFactor: %.8f", ignoretier, source.CountInv("MonsterLevel"), rand1, randarmign, PlayerArmorIgnoreFactor);
 			}
 		}
 		
-		if (inflictor && (infl == 'RecordShot' || infl == 'BadRecordShot')) 
+		if (inflictor)
 		{
-			PlayerArmorIgnoreFactor += (frandom(0.225,0.275) * (1.00 - PlayerArmorIgnoreFactor));
+			if (infl == 'RecordShot' || infl == 'BadRecordShot') PlayerArmorIgnoreFactor += (frandom(0.225,0.275) * (1.00 - PlayerArmorIgnoreFactor));
+			if (infl == 'HellWarriorBall2') PlayerArmorIgnoreFactor += (frandom(0.1125,0.1375) * (1.00 - PlayerArmorIgnoreFactor));
 		}
 		
 		if (mod == 'Deadlight') 
@@ -1604,6 +1663,31 @@ class DDPlayerPawn : PlayerPawn
 		if (PlayerArmorIgnoreFactor <= 0.0) PlayerArmorIgnoreFactor = 0.0;
 		if (PlayerArmorIgnoreFactor > 1.0) PlayerArmorIgnoreFactor = 1.0;
 		if (dydudebug_playerdamagemobj) Console.Printf("\c[darkgreen]PlayerArmorIgnoreFactor: %.8f", PlayerArmorIgnoreFactor);
+		
+		if (CountInv("PowerGuard")) PlayerArmorIgnoreFactor *= 0.25;
+		
+		if (CountInv("KnightGownIP1Buff")) PlayerArmorIgnoreFactor *= 0.5;
+		if (CountInv("KnightGownIP2Buff")) PlayerArmorIgnoreFactor *= 0.25;
+		if (CountInv("KnightGownIP3Buff")) PlayerArmorIgnoreFactor *= 0.125;
+		if (CountInv("KnightGownIP4Buff")) PlayerArmorIgnoreFactor *= 0.0625;
+		
+		if (MiscItem)
+		{
+			if (MiscItem.WineDefTier == 1) PlayerArmorIgnoreFactor *= 0.995;
+			else if (MiscItem.WineDefTier == 2) PlayerArmorIgnoreFactor *= 0.985;
+			else if (MiscItem.WineDefTier == 3) PlayerArmorIgnoreFactor *= 0.970;
+			else if (MiscItem.WineDefTier == 4) PlayerArmorIgnoreFactor *= 0.950;
+			else if (MiscItem.WineDefTier == 5) PlayerArmorIgnoreFactor *= 0.925;
+			else if (MiscItem.WineDefTier == -1) PlayerArmorIgnoreFactor *= 0.975;
+			else if (MiscItem.WineDefTier == -2) PlayerArmorIgnoreFactor *= 0.925;
+			else if (MiscItem.WineDefTier == -3) PlayerArmorIgnoreFactor *= 0.850;
+			else if (MiscItem.WineDefTier == -4) PlayerArmorIgnoreFactor *= 0.750;
+			else if (MiscItem.WineDefTier == -5) PlayerArmorIgnoreFactor *= 0.625;
+		}
+		
+		if (exex_armoritemdifficulty == 1) PlayerArmorIgnoreFactor *= 0.8;
+		if (exex_armoritemdifficulty == 2) PlayerArmorIgnoreFactor *= 0.75;
+		if (exex_armoritemdifficulty >= 3) PlayerArmorIgnoreFactor *= 0.5;
 
 		return PlayerArmorIgnoreFactor;
 	}
@@ -2186,10 +2270,10 @@ class DDPlayerPawn : PlayerPawn
 		// Armor/Defense Checks
 		int basearmorflat;
 		int basearmormax = 1;
-		if (armortier == 1) basearmormax = 250;
-		if (armortier == 2) basearmormax = 500;
-		if (armortier == 3) basearmormax = 1000;
-		if (armortier == 4) basearmormax = 2000;
+		if (armortier == 1) basearmormax = MiscItem.ArmorItemMax1;
+		if (armortier == 2) basearmormax = MiscItem.ArmorItemMax2;
+		if (armortier == 3) basearmormax = MiscItem.ArmorItemMax3;
+		if (armortier == 4) basearmormax = MiscItem.ArmorItemMax4;
 		if (dydudebug_playerdamagemobj) Console.Printf("useflatdefense: %d", useflatdefense);
 		if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'Drowning' || mod == 'Falling'))
 		{
@@ -2667,10 +2751,10 @@ class DDPlayerPawn : PlayerPawn
 		if (armdmg && armortier)
 		{
 			int armmax;
-			if (armortier == 1) armmax = 250;
-			if (armortier == 2) armmax = 500;
-			if (armortier == 3) armmax = 1000;
-			if (armortier == 4) armmax = 2000;
+			if (armortier == 1) armmax = MiscItem.ArmorItemMax1;
+			if (armortier == 2) armmax = MiscItem.ArmorItemMax2;
+			if (armortier == 3) armmax = MiscItem.ArmorItemMax3;
+			if (armortier == 4) armmax = MiscItem.ArmorItemMax4;
 			if (armmax > 0)
 			{
 				int damagetakefactor = armdmg * 100 / armmax;

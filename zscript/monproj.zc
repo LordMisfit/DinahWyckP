@@ -1,3 +1,67 @@
+// Bullet Tracers
+class ZombieBulletTracer : EEBulletTracer
+{
+	default
+	{
+		Tag "shot";
+		DamageFunction ((Random(1,5) * 3));
+		Damagetype "Bullet";
+		Radius 1;
+		Height 1;
+		Mass 5;
+		Speed 160; // 80
+		PROJECTILE;
+		+DONTREFLECT;
+		+BLOODSPLATTER;
+		+NODAMAGETHRUST;
+		Renderstyle "Add";
+		Alpha 1.0;
+		Scale 0.5;
+		decal "BulletChip";
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 0 NoDelay bright;
+		Idle:
+			TNT1 A 1 bright A_SpawnTracerTrail("ZombieBulletTracerTrail",6,-2.5);
+			loop;
+		XDeath:
+			TNT1 A 1; //A_SpawnItem("BulletPuff");
+			stop;
+		Death:
+		Crash:
+			TNT1 A 1 A_SpawnItem("BulletPuff");
+			stop;
+	}
+}
+
+class ZombieBulletTracerTrail : EEBaseZSC
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		Speed 0;
+		Damage 0;
+		Projectile;
+		+CLIENTSIDEONLY;
+		+NOINTERACTION;
+		+NOCLIP;
+		+DONTSPLASH;
+		Scale 0.5;
+		Renderstyle "Add";
+	}
+	
+	States
+	{
+		Spawn:
+			CTAC A 2 bright;
+			stop;
+	}
+}
+
 //MusicBall
 class BaseMusicAtk : EEProjectile
 {
@@ -911,6 +975,18 @@ class NightmareBloodSpectreFire : BloodDemonFire
 			A_SetRenderStyle((0.7-alphavar),STYLE_Subtract);
 			if (dydudebug_nightmarevisuals) Console.Printf("[%s] alphavar: %.2f (%.2f), nightmarephasetimer: %d", GetClassName(), alpha, alphavar, nightmarephasetimer);
 		} 
+	}
+}
+
+class EESpawnedItem : EEBaseZSC abstract
+{
+	override void PostBeginPlay()
+	{
+		basealpha = alpha;
+		if (GetClassName() == "DSFX3") basealpha *= 0.90;
+
+		//This space for rent.
+		super.PostBeginPlay(); // KEEP THIS HERE ELSE OTHER FUNCTIONS RELATED TO THIS BREAK :V
 	}
 }
 
@@ -2241,3 +2317,37 @@ class BaronBallNew : EEProjectile replaces BaronBall
 			Stop;
 	}
 }
+
+class BelphegorBall : BaronBallNew
+{
+	default
+	{
+		Tag "Belphegor Plasma";
+		decal "BaronScorch";
+		Speed 20;
+		DamageFunction (finaldamagedealt);
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(8,random(9,12),0.01,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(8,random(9,12),0.01,0.3334,0.1667,0.01);
+	}
+	
+	States
+	{
+		Spawn:
+			BAL7 AB 4 Bright;
+			Loop;
+		Death:
+			BAL7 CDE 6 Bright;
+			Stop;
+	}
+}
+
