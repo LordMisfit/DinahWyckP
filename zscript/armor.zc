@@ -533,7 +533,6 @@ class ArmorScrap : KGArmorBonus
 		if (dydudebug_armordisplays) Console.Printf("%d", Owner.CountInv(armorclasstype));
 		if (armordiff) A_RecoverHUD(armordiff, 1, true);
 		
-
 		return true;
 	}
 
@@ -607,6 +606,156 @@ class ArmorScrap : KGArmorBonus
 		Idle4:
 			DACL E -1 BRIGHT;
 			stop;
+	}
+}
+
+class ArmorScrapSilent : ArmorScrap
+{
+	override bool Use (bool pickup)
+	{
+		name armorclasstype = "KGArmor";
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int ArmorItemMax1;
+		int ArmorItemMax2;
+		int ArmorItemMax3;
+		int ArmorItemMax4;
+		if (MiscItem) MaxSaveAmount = MiscItem.ArmorItemMax4;
+						 else MaxSaveAmount = 2000;
+		if (MiscItem)
+		{
+			ArmorItemMax1 = MiscItem.ArmorItemMax1;
+			ArmorItemMax2 = MiscItem.ArmorItemMax2;
+			ArmorItemMax3 = MiscItem.ArmorItemMax3;
+			ArmorItemMax4 = MiscItem.ArmorItemMax4;
+		}
+		if (spawntype >= 4) owner.A_GiveInventory("ArmorScavengerKit",randompick(3,4,4,5,5,5,6,6,7));
+		int PrevArmorAmt = Owner.CountInv(armorclasstype);
+		int PrevArmorType;
+		if (owner.CountInv("KnightGownItem")) PrevArmorType = 1;
+		if (owner.CountInv("KnightGownItem2")) PrevArmorType = 2;
+		if (owner.CountInv("KnightGownItem3")) PrevArmorType = 3;
+		if (owner.CountInv("KnightGownItem4")) PrevArmorType = 4;
+		if (dydudebug_armordisplays) Console.Printf("PrevArmorType: %d, PrevArmorAmt: %d", PrevArmorType, PrevArmorAmt);
+
+		let armor = KGArmor(Owner.FindInventory(armorclasstype));
+		bool result = false;
+
+		// This should really never happen but let's be prepared for a broken inventory.
+		if (armor == null)
+		{
+			armor = KGArmor(Spawn(armorclasstype));
+			armor.BecomeItem();
+			armor.Amount = 0;
+			armor.MaxAmount = MaxSaveAmount;
+			Owner.AddInventory (armor);
+		}
+
+		if (BonusCount > 0 && armor.BonusCount < BonusMax)
+		{
+			armor.BonusCount = min(armor.BonusCount + BonusCount, BonusMax);
+			result = true;
+		}
+
+		int saveAmount = min(GetSaveAmount(), MaxSaveAmount);
+
+		if (saveAmount <= 0)
+		{ // If it can't give you anything, it's as good as used.
+			return BonusCount > 0 ? result : true;
+		}
+
+		// If you already have more armor than this item can give you, you can't
+		// use it.
+		if (armor.Amount >= MaxSaveAmount + armor.BonusCount)
+		{
+			return result;
+		}
+
+		if (armor.Amount <= 0)
+		{ // Should never be less than 0, but might as well check anyway
+			armor.Amount = 0;
+			armor.Icon = Icon;
+			armor.SavePercent = clamp(SavePercent, 0, 100) / 100;
+			armor.MaxAbsorb = MaxAbsorb;
+			armor.ArmorType = GetClassName();
+			armor.MaxFullAbsorb = MaxFullAbsorb;
+			armor.ActualSaveAmount = MaxSaveAmount;
+		}
+		else
+		{
+			if (dydudebug_armordisplays) Console.Printf("armor.Amount: %d", armor.Amount);
+			if (PrevArmorType == 0)
+			{
+				armor.SavePercent = clamp(50.0, 0, 100.0) / 100.0;
+				if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+			}
+			if (PrevArmorType == 1)
+			{
+				if (armor.Amount > (ArmorItemMax1-1))
+				{
+					armor.SavePercent = clamp(75.0, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNJ0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+				else 
+				{
+					if (armor.Amount >= ((ArmorItemMax1*0.5)-1))
+					{
+						if (armor.Icon != TexMan.checkForTexture("KGWNI0")) armor.Icon = TexMan.checkForTexture("KGWNI0");
+					}
+					//armor.SavePercent = clamp(50, 0, 100) / 100;
+					armor.SavePercent = clamp(50.0, 0, 100.0) / 100.0;
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+			}
+			else
+			if (PrevArmorType == 2)
+			{
+				if (armor.Amount > (ArmorItemMax2-1))
+				{
+					armor.SavePercent = clamp(87.5, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNK0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+				else
+				{
+					armor.SavePercent = clamp(75.0, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNJ0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+			}
+			else
+			if (PrevArmorType == 3)
+			{
+				if (armor.Amount > (ArmorItemMax3-1))
+				{
+					armor.SavePercent = clamp(93.75, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNL0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+				else
+				{
+					armor.SavePercent = clamp(87.5, 0, 100.0) / 100.0;
+					armor.Icon = TexMan.checkForTexture("KGWNK0");
+					if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+				}
+			}
+			if (PrevArmorType == 4)
+			{
+				armor.SavePercent = clamp(93.75, 0, 100.0) / 100.0;
+				armor.Icon = TexMan.checkForTexture("KGWNL0");
+				if (dydudebug_armordisplays) Console.Printf("armor.SavePercent: %.4f", armor.SavePercent);
+			}
+		}
+		
+		armor.Amount = min(armor.Amount + saveAmount, MaxSaveAmount + armor.BonusCount);
+		armor.MaxAmount = max(armor.MaxAmount, MaxSaveAmount);
+		
+		int armordiff = Owner.CountInv(armorclasstype) - PrevArmorAmt;
+		if (dydudebug_armordisplays) Console.Printf("%d", Owner.CountInv(armorclasstype));
+		
+		return true;
 	}
 }
 

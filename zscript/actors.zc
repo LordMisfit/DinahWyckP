@@ -192,6 +192,12 @@ class EEBaseZSC : Actor abstract
 	{
 		self.Destroy();
 	}
+	
+	void A_GenericFreezeDeath()
+	{
+		A_SetTranslation('Ice');
+		A_FreezeDeath();
+	}
 }
 
 class EECustomGib : EEBaseZSC abstract
@@ -952,6 +958,30 @@ class EEProjectile : EEBaseZSC abstract
 				if (IPCompat)
 				{
 					IPCompat.target = player;
+					IPCompat.IPattack = true;
+				}
+			}
+			if (EggShots.target && dydudebug_eggfractals) Console.Printf("EggShots.\c[fire]target [\c[sapphire]%s\c-]:\c- %s", GetClassName(), EggShots.target.GetClassName());
+		}
+	}
+
+	// Handle Bad Fractal Egg Split Offs
+	void A_EvilEggGrenades(string eggname = "EvilEggGrenade", double zheight = 2, double zheightadd = 35, double xyvelmin = 6, double xyvelmax = 6, double zvelmin = 6, double zvelmax = 12)
+	{
+		bool success;
+		actor EggShots;
+		if (hitaceiling) { [success, EggShots] = A_ThrowGrenadeAngle(eggname,-zheight,-zheightadd,random(xyvelmin,xyvelmax),random(-zvelmax,-zvelmin),checkspawn:false); }
+								else { [success, EggShots] = A_ThrowGrenadeAngle(eggname,zheight,zheightadd,random(xyvelmin,xyvelmax),random(zvelmin,zvelmax),checkspawn:false); }
+		if (dydudebug_eggfractals) Console.Printf("\c[blue]success [%s]:\c- %d", GetClassName(), success);
+		if (EggShots) // && success) 
+		{
+			if (IPAttack)
+			{
+				EEProjectile IPCompat; 
+				IPCompat = EEProjectile(EggShots);
+				if (IPCompat)
+				{
+					IPCompat.target = target;
 					IPCompat.IPattack = true;
 				}
 			}
