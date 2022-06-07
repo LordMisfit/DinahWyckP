@@ -361,18 +361,24 @@ class DD_EventHandler : EventHandler
 					}
 			
 					// Final Calcs
+					double tempfinmulti = 1.0;
 					if (spdmulti || spdmulti2) 
 					{
+						tempfinmulti = 1.0;
 						double SpeedErrorRange = (spdmulti * 0.125);
 						spdmulti += frandom(-SpeedErrorRange,SpeedErrorRange);
-						spawnee.Speed *= (1.0 + spdmulti);
+						tempfinmulti *= (1.0 + spdmulti);
 
 						SpeedErrorRange = (spdmulti2 * 0.0625);
 						spdmulti2 += frandom(-SpeedErrorRange,SpeedErrorRange);
-						spawnee.Speed *= (1.0 + spdmulti2);
+						tempfinmulti *= (1.0 + spdmulti2);
+
+						double maxtempfin = 3.34 + (monsterrating * (1.25 * 0.334));
+						if (tempfinmulti > maxtempfin) tempfinmulti = maxtempfin;
+						spawnee.Speed *= tempfinmulti;
+						
 						if (dydudebug_monsterscaling) Console.Printf("\c[lightblue]Speed: %.8f [old: %.8f, multi: %.8f, multi2: %.8f]\c-", spawnee.Speed, origSpd, spdmulti, spdmulti2);
 					}
-					double tempfinmulti = 1.0;
 					if (atkmulti || atkmulti2) 
 					{
 						tempfinmulti = 1.0;
@@ -383,7 +389,9 @@ class DD_EventHandler : EventHandler
 						AttackErrorRange = (atkmulti2 * 0.0625);
 						atkmulti2 += frandom(-AttackErrorRange,AttackErrorRange);
 						tempfinmulti *= (1.0 + atkmulti2);
-						if (tempfinmulti > 10.0) tempfinmulti = 10.0;
+						
+						double maxtempfin = 10.0 + (monsterrating * 1.25);
+						if (tempfinmulti > maxtempfin) tempfinmulti = maxtempfin;
 
 						spawnee.DamageMultiply = tempfinmulti;
 						if (dydudebug_monsterscaling) Console.Printf("\c[red]DamageMultiply: %.8f [old: %.8f, multi: %.8f, multi2: %.8f]\c-", spawnee.DamageMultiply, origDmgMul, atkmulti, atkmulti2);
@@ -398,7 +406,8 @@ class DD_EventHandler : EventHandler
 						DefenseErrorRange = (defmulti2 * 0.0625);
 						defmulti2 += frandom(-DefenseErrorRange,DefenseErrorRange);
 						tempfinmulti *= (1.0 + defmulti2);
-						if (tempfinmulti < 0.1) tempfinmulti = 0.1;
+						double maxtempfin = (0.1 - (monsterrating * 0.005));
+						if (tempfinmulti < maxtempfin) maxtempfin = maxtempfin;
 
 						spawnee.DamageFactor = tempfinmulti;
 						if (dydudebug_monsterscaling) Console.Printf("\c[olive]DamageFactor: %.8f [old: %.8f, multi: %.8f, multi2: %.8f]\c-", spawnee.DamageFactor, origDmgFct, defmulti, defmulti2);
@@ -414,7 +423,10 @@ class DD_EventHandler : EventHandler
 						hpmulti2 += frandom(-MaxHPErrorRange,MaxHPErrorRange);
 						tempfinmulti += hpmulti2;
 
-						if (tempfinmulti > (spawnee.SpawnHealth() * 1.5)) tempfinmulti = (spawnee.SpawnHealth() * 1.5);
+						double maxtempfin = 2.5 + (monsterrating * 0.25);
+						if (tempfinmulti > maxtempfin) tempfinmulti = maxtempfin;
+						if (tempfinmulti > (spawnee.SpawnHealth() * maxtempfin)) tempfinmulti = (spawnee.SpawnHealth() * maxtempfin);
+
 						spawnee.health *= (1.0 + tempfinmulti);
 						spawnee.Stamina = (spawnee.health - spawnee.SpawnHealth());
 						if (dydudebug_monsterscaling) Console.Printf("\c[brick]Health: %d (stam: %d) [old: %d, diff: %d, diff2: %d]\c-", spawnee.health, spawnee.Stamina, origHealth, hpmulti, hpmulti2);
@@ -430,7 +442,10 @@ class DD_EventHandler : EventHandler
 						massmulti2 += frandom(-MassErrorRange,MassErrorRange);
 						tempfinmulti += massmulti2;
 
-						if (tempfinmulti > (spawnee.default.mass * 1.5)) tempfinmulti = (spawnee.default.mass * 1.5);
+						double maxtempfin = 2.5 + (monsterrating * 0.25);
+						if (tempfinmulti > maxtempfin) tempfinmulti = maxtempfin;
+						if (tempfinmulti > (spawnee.default.mass * maxtempfin)) tempfinmulti = (spawnee.default.mass * maxtempfin);
+
 						spawnee.mass *= (1.0 + tempfinmulti);
 						spawnee.Accuracy = (spawnee.mass - spawnee.default.mass);
 						if (dydudebug_monsterscaling) Console.Printf("\c[brown]Mass: %d (Acc: %d) [old: %d, diff: %d, diff2: %d]\c-", spawnee.Mass, spawnee.Accuracy, origMass, massmulti, massmulti2);
