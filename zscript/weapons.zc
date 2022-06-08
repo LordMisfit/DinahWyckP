@@ -263,13 +263,13 @@ class DDWeapon : Weapon
 		{
 			if (IsMoving) spread *= 1.2;
 			if (IsMoving2) spread *= 1.2;
-			if ((buttons & BT_CROUCH) && sv_allowcrouch) spread *= 0.8;
+			if ((buttons & BT_CROUCH) && sv_allowcrouch && player.jumpTics == 0) spread *= 0.8;
 		}
 		else
 		{
 			if (IsMoving) spread *= 1.075;
 			if (IsMoving2) spread *= 1.075;
-			if ((buttons & BT_CROUCH) && sv_allowcrouch) spread *= 0.925;
+			if ((buttons & BT_CROUCH) && sv_allowcrouch && player.jumpTics == 0) spread *= 0.925;
 		}
 
 		spread *= spreadfactor;
@@ -427,13 +427,13 @@ class DDWeapon : Weapon
 		{
 			if (IsMoving) spread *= 1.2;
 			if (IsMoving2) spread *= 1.2;
-			if ((buttons & BT_CROUCH) && sv_allowcrouch) spread *= 0.8;
+			if ((buttons & BT_CROUCH) && sv_allowcrouch && player.jumpTics == 0) spread *= 0.8;
 		}
 		else
 		{
 			if (IsMoving) spread *= 1.075;
 			if (IsMoving2) spread *= 1.075;
-			if ((buttons & BT_CROUCH) && sv_allowcrouch) spread *= 0.925;
+			if ((buttons & BT_CROUCH) && sv_allowcrouch && player.jumpTics == 0) spread *= 0.925;
 		}
 
 		spread *= spreadfactor;
@@ -14345,9 +14345,9 @@ class CandleWhip : DinahWeapon
 		HitObituary "%k gave %o some major whiplash with their Roman Candlewhip.";
 	}
 	
-	action void A_CandleWhipCrack(int type = 0, double dist = 128.0)
+	action void A_CandleWhipCrack(int type = 0, double dist = 128.0, double turnang = 0.0)
 	{
-		//A_BatGuardDashOff();
+		A_SetAngle(angle+turnang);
 		string vispart = "WhipShieldPartNoReflect";
 		if (random(1,64) <= 1) vispart = "WhipShieldPart";
 
@@ -14470,6 +14470,7 @@ class CandleWhip : DinahWeapon
 			distz = (height * (heightmulti - heightmultivari)) + yoffset;
 			A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
 		}
+		A_SetAngle(angle-turnang);
 	}
 	
 	action void A_CandleWhipHit(string pufftype, string pufftypeip, double rangemult, double turnang)
@@ -14561,7 +14562,7 @@ class CandleWhip : DinahWeapon
 		A_SetAngle(angle-turnang);
 	}
 	
-	action void A_WhipCrack2Tics(int baseshieldpartchance, int shieldpartchance, int shieldpartchance2)
+	action void A_WhipCrack2Tics(int baseshieldpartchance, int shieldpartchance, int shieldpartchance2, double turnang)
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = 0;
@@ -14600,7 +14601,7 @@ class CandleWhip : DinahWeapon
 				}
 			}
 
-			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
+			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range, turnang); }
 		}
 		else
 		{
@@ -14640,7 +14641,7 @@ class CandleWhip : DinahWeapon
 					A_SetTics(random(2,3));
 				}
 			}
-			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
+			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range, turnang); }
 		}
 	}
 
@@ -14746,7 +14747,7 @@ class CandleWhip : DinahWeapon
 		}
 	}
 
-	action void A_WhipCrack3Tics(int baseshieldpartchance, int shieldpartchance, int shieldpartchance2)
+	action void A_WhipCrack3Tics(int baseshieldpartchance, int shieldpartchance, int shieldpartchance2, double turnang)
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = 0;
@@ -14777,7 +14778,7 @@ class CandleWhip : DinahWeapon
 					A_SetTics(random(1,2));
 				}
 			}
-			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range); }
+			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(1,invoker.range, turnang); }
 		}
 		else
 		{
@@ -14817,7 +14818,7 @@ class CandleWhip : DinahWeapon
 					A_SetTics(random(2,3));
 				}
 			}
-			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range); }
+			if (random(1,baseshieldpartchance) <= shieldpartchance) { A_CandleWhipCrack(0,invoker.range, turnang); }
 		}
 	}
 
@@ -14860,19 +14861,17 @@ class CandleWhip : DinahWeapon
 				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 				
 				A_CheckIPState1();
-				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.795,75);
-				
 				A_ConfirmIPAttack(171,0,5,8,false);
 			}
 			RCAN Z 3 bright
 			{
-				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.795,75);
-				A_WhipCrack3Tics(8,5,randompick(7,7,8,8,8));
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.795,75.0);
+				A_WhipCrack3Tics(8,5,randompick(7,7,8,8,8),75.0);
 			}
 			RCAN F 2 bright 
 			{
 				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.865,56.25);
-				A_WhipCrack2Tics(8,5,randompick(7,7,8,8,8));
+				A_WhipCrack2Tics(8,5,randompick(7,7,8,8,8),56.25);
 				
 				double sndpitch = 1.0;
 				double sndvol = 1.0;
@@ -14909,37 +14908,37 @@ class CandleWhip : DinahWeapon
 			RCAN G 2 bright
 			{
 				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.925,37.5);
-				A_WhipCrack2Tics(16,9,(randompick(7,7,8,8,8) * 1.8));
+				A_WhipCrack2Tics(16,9,(randompick(7,7,8,8,8) * 1.8),37.5);
 			}
 			RCAN H 2 bright
 			{
 				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.97,18.75);
-				A_WhipCrack2Tics(1,1,1);
+				A_WhipCrack2Tics(1,1,1,18.75);
 			}
 			RCAN H 2 bright
 			{
 				A_CandleWhipHit("WhipPuff","WhipPuffIP",1.0,0);
-				A_WhipCrack2Tics(1,1,1);
+				A_WhipCrack2Tics(1,1,1,0);
 			}
 			RCAN I 3 bright
 			{
 				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.97,-18.75);
-				A_WhipCrack3Tics(32,25,randompick(33,33,34,34,34,35,35));
+				A_WhipCrack3Tics(32,25,randompick(33,33,34,34,34,35,35),-18.75);
 			}
 			RCAN J 3 bright
 			{
 				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.925,-37.5);
-				A_WhipCrack3Tics(16,9,(randompick(7,7,8,8,8) * 1.8));
+				A_WhipCrack3Tics(16,9,(randompick(7,7,8,8,8) * 1.8),-37.5);
 			}
 			RCAN K 3 bright
 			{
 				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.865,-56.25);
-				A_WhipCrack3Tics(8,5,randompick(7,7,8,8,8));
+				A_WhipCrack3Tics(8,5,randompick(7,7,8,8,8),-56.25);
 			}
 			RCAN L 3 bright
 			{
-				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.795,-75);
-				A_WhipCrack3Tics(4,1,randompick(2,2,3,3,3,4));
+				A_CandleWhipHit("WhipPuff","WhipPuffIP",0.795,-75.0);
+				A_WhipCrack3Tics(4,1,randompick(2,2,3,3,3,4),-75.0);
 			}
 			RCAN A 1
 			{
@@ -15395,7 +15394,7 @@ class FosnianCandle : DinahWeapon
 		DDWeapon.PickupVoice true;
 		DDWeapon.PickupSound2 "misc/w_pkup";
 		DDWeapon.PickupVoice2 false;
-		Inventory.Pickupmessage "\c[gold]Ohohoho...! Delila's Fosnian CandleVulcan! Heck yeah! This thing would easily decimate Napoleon's entire army!\c- \cx[Slot 0]\c-";
+		Inventory.Pickupmessage "\c[gold]Ohohoho...! \c[green]Delila's\c- Fosnian CandleVulcan! Heck yeah! This thing would easily decimate Napoleon's entire army!\c- \cx[Slot 0]\c-";
 		Tag "Fosnian CandleVulcan: Fires a fast and perfectly accurate 3-shot explosive burst akin to a vulcan cannon. <ALT-FIRE> fires a speedier, less accurate trio of shots. <USER4> Swaps the damage type between FIRE and ICE. Light though it might be, it has very strong recoil, be weary on ledges.";
 	}
 	
