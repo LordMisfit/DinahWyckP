@@ -2566,6 +2566,17 @@ class FractalChicken : EECreature
 			CHKS A 5;
 			CHKS DDEE 3 A_EEChase("Melee","Missile",0,1,3,1,1);
 			CHKS FC 3;
+			CHKS A 5;
+			CHKS DDEE 3 A_EEChase("Melee","Missile",0,1,3,1,1);
+			CHKS FC 3;
+			CHKS A 5;
+			CHKS DDEE 3 A_EEChase("Melee","Missile",0,1,3,1,1);
+			CHKS FC 3;
+			CHKS A 0
+			{
+				if (random(1,256) <= (0 + (CountInv("MonsterLevel") * 0.03125))) return resolvestate("Grow");
+				return resolvestate(null);
+			}
 			Loop;
 		Missile:
 			CHKS G 0 A_DynamicMusic();
@@ -2687,6 +2698,17 @@ class FractalChick : EECreature
 			CHKS A 3;
 			CHKS DDEE 2 A_EEChase("Melee","Missile",0,1,3,1,1);
 			CHKS FC 2;
+			CHKS A 3;
+			CHKS DDEE 2 A_EEChase("Melee","Missile",0,1,3,1,1);
+			CHKS FC 2;
+			CHKS A 3;
+			CHKS DDEE 2 A_EEChase("Melee","Missile",0,1,3,1,1);
+			CHKS FC 2;
+			CHKS A 0
+			{
+				if (random(1,256) <= (0 + (CountInv("MonsterLevel") * 0.0625))) return resolvestate("Grow");
+				return resolvestate(null);
+			}
 			Loop;
 		Missile:
 			CHKS G 0 A_DynamicMusic();
@@ -2785,12 +2807,65 @@ class FractalHen : DDOrigBoss
 			CHKB A 6 A_Look();
 			Loop;
 		See:
+			CHKB A 0 
+			{
+				bFLOAT = false;
+				bNOGRAVITY = false;
+				bDROPOFF = false;
+				A_SetInventory("Chase_Fly",0);
+			}
 			CHKB C 5;
 			CHKB DDEE 3 A_EEChase("Melee","Missile",0,1,3,1,1);
 			CHKB CA 4;
+			CHKB C 0
+			{
+				if (random(1,256) <= 16) return resolvestate("TakeOff");
+				else
+				{
+					state JumpState;
+					if (target && (target.pos.z >= pos.z + (random(1,4) * 8.0)))
+					{
+						if (random(1,12) <= random(1,3)) JumpState = FindState("TakeOff");
+					}
+					else
+					{
+						if (random(1,random(18,24)) <= random(1,random(2,4))) JumpState = FindState("TakeOff");
+					}
+					if (JumpState != null) 
+					{
+						A_FaceTarget();
+						SetState(JumpState);
+					}
+				}
+				return resolvestate(null);
+			}
 			Loop;
+		Takeoff: 
+			TNT1 A 0 A_JumpIf(pos.Z + height + 64 >= CeilingZ, "See");
+			TNT1 A 0 
+			{
+				bFLOAT = true;
+				bNOGRAVITY = true;
+				bDROPOFF = true;
+				A_SetInventory("Chase_Fly",1);
+			}
+			Goto Fly;
+		Fly:
+			CHKB E 0 ThrustThingZ(0,frandom(12,18),0,0);
+			CHKB DDEEDDEE 3
+			{
+				A_EEChase(null,null,0,1,3,1,1);
+				if (random(1,8) <= 1) ThrustThingZ(0,frandom(0,2),0,0);
+				A_SetInventory("Chase_Fly",1);
+			}
+			Goto Hover;
 		Missile:
-			CHKB A 0 A_DynamicMusic();
+			CHKB A 0 A_Jump(48,"Takeoff");
+			CHKB A 0 
+			{
+				A_DynamicMusic();
+				A_SetInventory("Chase_Fly",0);
+			}
 			CHKB AB 5 A_FaceTarget();
 			CHKB F 8 
 			{
@@ -2805,11 +2880,71 @@ class FractalHen : DDOrigBoss
 			}
 			CHKB A 5;
 			Goto See;
+		MissileF:
+			GGRL D 0 A_Jump(32,"Land");
+			CHKB D 0 
+			{
+				A_DynamicMusic();
+				A_SetInventory("Chase_Fly",1);
+			}
+			CHKB D 6 A_FaceTarget();
+			CHKB D 6 
+			{
+				A_StartSound("chook/sight",1);
+				A_Throwgrenade("ChookEggShot",2,random(8,12),random(6,12),0);
+			}
+			CHKB E 6 A_FaceTarget();
+			CHKB E 6 
+			{
+				A_StartSound("chook/sight",1);
+				A_Throwgrenade("ChookEggShot",2,random(8,12),random(6,12),0);
+			}
+			Goto Hover;
+		Land:
+			CHKB DD 4 ThrustThingZ(0,-25,0,0);
+			CHKB D 1 A_CheckFloor("See");
+			CHKB DDEEDDEE 2 
+			{
+				A_EEChase(null,null,0,1,3,1,1);
+				A_CheckFloor("See");
+			}
+			CHKB E 1 A_CheckFloor("See");
+			Goto Hover;
+		Hover:
+			CHKB DDEEDDEE 2
+			{
+				A_EEChase(null,"MissileF",0,1,3,1,1);
+				if (random(1,16) <= 1) ThrustThingZ(0,frandom(-1,1),0,0);
+				A_SetInventory("Chase_Fly",1);
+			}
+			CHKB E 0
+			{
+				if (random(1,256) <= 32) return resolvestate("Fly");
+				else if (random(1,256) <= 16) return resolvestate("Land");
+				return resolvestate(null);
+			}
+			Loop;
 		Pain:
-			CHKB C 6 A_EEPain();
+			CHKB C 6 
+			{
+				A_EEPain();
+				if (random(1,6) <= 1) 
+				{
+					bFLOAT = false;
+					bNOGRAVITY = false;
+					bDROPOFF = false;
+					A_SetInventory("Chase_Fly",0);
+					ThrustThingZ(0,-25,0,0);
+				}
+			}
 			CHKB A 3 A_Jump(192,2);
 			CHKB B 3 A_ThrowGrenade("BigChookGrenade",2,random(2,6),random(6,10),0);
 			CHKB AA 1;
+			CHKB A 0
+			{
+				if (CountInv("Chase_Fly")) return resolvestate("Hover");
+				return resolvestate("See");
+			}
 			Goto See;
 		Death.Suck:
 			CHKB C 5 A_StartSound("VacDed",CHAN_BODY);
