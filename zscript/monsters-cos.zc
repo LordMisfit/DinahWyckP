@@ -1493,7 +1493,7 @@ class RealBadJackShot : EEProjectile
 				
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (!(ddafd_disableaggroappleblock && (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite"))))
+				if (!(ddafd_disableaggroappleblock && (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls"))))
 				{
 					actor BombShots;
 					bool success;
@@ -2551,10 +2551,14 @@ class FractalChicken : DDOrigCreature
 		DeathSound "aqua/kill1";
 		Obituary "%o chooked out thanks to a Fractal Chicken.";
 		Tag "Fractal Chicken";
+		Species "FractalChicken";
+		DropItem "Scrambler", 4;
 		DropItem "EggAmmo", 96;
 		DropItem "EggAmmo", 32;
 		DropItem "EggAmmo", 10;
-		Species "FractalChicken";
+		DropItem "EggAmmoBig", 10;
+		DropItem "EggAmmoBig", 3;
+		DropItem "EggAmmoBig", 1;
 	}
 	
 	States
@@ -2820,6 +2824,7 @@ class ChookGrenade : EEProjectile
 		-NOGRAVITY;
 		+DONTHARMSPECIES;
 		RENDERSTYLE "Normal";
+		Tag "Fractal Chicken [Spectral]";
 		Species "FractalChicken";
 	}
 	
@@ -2835,6 +2840,37 @@ class ChookGrenade : EEProjectile
 	}
 }
 
+class ChookGrenadeSpectral : ChookGrenade
+{
+	default
+	{
+		Radius 3;
+		Height 3;
+		Speed 10;
+		Damage 1;
+		Scale 0.25;
+		PROJECTILE;
+		-NOGRAVITY;
+		+DONTHARMSPECIES;
+		RenderStyle "OptFuzzy";
+		+SHADOW;
+		Alpha 0.5;
+		Tag "Fractal Chicken [Spectral]";
+		Species "FractalChicken";
+	}
+	
+	States
+	{
+		Spawn:
+			CHKS D 3;
+			loop;
+		Death:
+			CHKS DEDE 2;
+			CHKS E 0 A_SpawnItemEx("SpectralFractalChick",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+			Stop;
+	}
+}
+
 class SpectralFractalChicken : FractalChicken
 {
 	default
@@ -2842,6 +2878,22 @@ class SpectralFractalChicken : FractalChicken
 		RenderStyle "OptFuzzy";
 		+SHADOW
 		Alpha 0.5;
+	}
+	
+	states
+	{
+		Death.GrowingPains:
+			DANS S 2 bright A_SpawnItemEx("SpectralFractalHen",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+			DANS TUVWXYZ 2 bright;
+			Stop;
+		Death:
+			CHKS F 3 A_Scream();
+			DANS R 1 bright A_ThrowGrenade("ChookGrenadeSpectral",2,random(2,6),random(6,10),0);
+			DANS R 1 bright A_ThrowGrenade("ChookGrenadeSpectral",2,random(2,6),random(6,10),0);
+			DANS R 1 bright A_ThrowGrenade("ChookGrenadeSpectral",2,random(2,6),random(6,10),0);
+			DANS S 3 bright A_NoBlocking();
+			DANS TUVWXYZ 2 bright;
+			Stop;
 	}
 }
 
@@ -2874,6 +2926,13 @@ class FractalChick : DDOrigCreature
 		Obituary "%o chooked out thanks to a Fractal Chick.";
 		Tag "Fractal Chick";
 		Species "FractalChicken";
+		DropItem "Scrambler", 1;
+		DropItem "EggAmmo", 24;
+		DropItem "EggAmmo", 6;
+		DropItem "EggAmmo", 2;
+		DropItem "EggAmmoBig", 2;
+		DropItem "EggAmmoBig", 1;
+		DropItem "EggAmmoBig", 1;
 	}
 	
 	States
@@ -3130,7 +3189,16 @@ class SpectralFractalChick : FractalChick
 	{
 		RenderStyle "OptFuzzy";
 		+SHADOW
+		Tag "Fractal Chick [Spectral]";
 		Alpha 0.5;
+	}
+	
+	states
+	{
+		Death.GrowingPains:
+			DANS S 2 bright A_SpawnItemEx("SpectralFractalChicken",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+			DANS TUVWXYZ 2 bright;
+			Stop;
 	}
 }
 
@@ -3146,6 +3214,7 @@ class FractalHen : DDOrigBoss
 		Mass 1000;
 		Speed 20;
 		PainChance 160;
+		DamageFactor "Lead", 1.25;
 		MONSTER;
 		+FLOORCLIP;
 		+NOINFIGHTING;
@@ -3162,6 +3231,7 @@ class FractalHen : DDOrigBoss
 		DeathSound "aqua/kill1";
 		Obituary "%o chooked out thanks to a Great Fractal Hen.";
 		Tag "Fractal Hen";
+		DropItem "Scrambler", 16;
 		DropItem "EggAmmo";
 		DropItem "EggAmmo", 224;
 		DropItem "EggAmmo", 192;
@@ -3217,7 +3287,7 @@ class FractalHen : DDOrigBoss
 				return resolvestate(null);
 			}
 			Loop;
-		Takeoff: 
+		Takeoff:
 			TNT1 A 0 A_JumpIf(pos.Z + height + (random(1,8) * 7) >= CeilingZ, "See");
 			TNT1 A 0 
 			{
@@ -3377,6 +3447,52 @@ class SpectralFractalHen : FractalHen
 		RenderStyle "OptFuzzy";
 		+SHADOW
 		Alpha 0.5;
+		Tag "Fractal Hen [Spectral]";
+	}
+	
+	states
+	{
+		Pain:
+			CHKB C 6 
+			{
+				A_EEPain();
+				if (random(1,6) <= 1 || !exex_fractalchickflyoptions & 1) 
+				{
+					if (CountInv("Chase_Fly"))
+					{
+						bFLOAT = false;
+						bNOGRAVITY = false;
+						bDROPOFF = false;
+						ThrustThingZ(0,-25,0,0);
+						A_SetInventory("Chase_Fly",0);
+					}
+				}
+			}
+			CHKB A 3 A_Jump(192,2);
+			CHKB B 3 A_ThrowGrenade("SpectralBigChookGrenade",2,random(2,6),random(6,10),0);
+			CHKB AA 1;
+			CHKB A 0
+			{
+				if (CountInv("Chase_Fly")) return resolvestate("Hover");
+				return resolvestate("See");
+			}
+			Goto See;
+		Death:
+			CHKB C 0 A_StartSound("weapons/cherryboom");
+			CHKB C 3 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			CHKB C 0 A_StartSound("weapons/cherryboom");
+			CHKB C 3 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			CHKB C 0 A_StartSound("weapons/cherryboom");
+			CHKB C 3 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			CHKB C 0 A_StartSound("weapons/cherryboom");
+			CHKB C 3 Bright A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			CHKB C 0 A_StartSound("weapons/cherryboom");
+			DANS R 1 bright A_ThrowGrenade("SpectralBigChookGrenade",2,random(2,6),random(6,10),0);
+			DANS R 1 bright A_ThrowGrenade("SpectralBigChookGrenade",2,random(2,6),random(6,10),0);
+			DANS R 1 bright A_ThrowGrenade("SpectralBigChookGrenade",2,random(2,6),random(6,10),0);
+			DANS S 3 bright A_NoBlocking();
+			DANS TUVWXYZ 2 bright;
+			Stop;
 	}
 }
 
@@ -3404,6 +3520,36 @@ class BigChookGrenade : EEProjectile
 		Death:
 			CHKS DEDE 2;
 			CHKS E 0 A_SpawnItemEx("FractalChicken",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+			Stop;
+	}
+}
+
+class SpectralBigChookGrenade : BigChookGrenade
+{
+	default
+	{
+		Radius 3;
+		Height 3;
+		Speed 10;
+		Damage 1;
+		Scale 0.5;
+		PROJECTILE;
+		-NOGRAVITY;
+		RenderStyle "OptFuzzy";
+		+SHADOW;
+		Alpha 0.5;
+		+DONTHARMSPECIES;
+		Species "FractalChicken";
+	}
+	
+	States
+	{
+		Spawn:
+			CHKS D 3;
+			loop;
+		Death:
+			CHKS DEDE 2;
+			CHKS E 0 A_SpawnItemEx("SpectralFractalChicken",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
 			Stop;
 	}
 }
