@@ -2533,6 +2533,7 @@ mixin class IPCostCheck
 			if (skill == 3) cost = 98.4375;
 			if (skill >= 4) cost = 103.125;
 		}
+			if (dydudebug_ipdisplays) Console.Printf("\c[olive]cost: %.4f", cost);
 		
 		if (player) 
 		{
@@ -2541,24 +2542,34 @@ mixin class IPCostCheck
 			{
 				if (MiscItem.TimeFreezeTimer && MiscItem.TimeFreezeIPBuff)
 				{
-					if (ipid == 8) cost = ceil(cost * 2.0);
-										else cost = floor(cost * 0.5);
+					if (ipid == 8) cost *= 2.0;
+										else cost *= 0.5;
 				}
 
 				if (cost > MiscItem.MaxItemPoints) cost = MiscItem.MaxItemPoints;
+				if (dydudebug_ipdisplays) Console.Printf("\c[olive]cost [freeze timer]: %.4f", cost);
 			}
 		}
 		
 		// Double Sphere reduces IP Cost by 25%
-		if (player && player.CountInv("PowerDouble") && ipid != -1) cost = floor(cost * 0.875);
+		if (player && player.CountInv("PowerDouble") && ipid != -1) 
+		{
+			cost *= 0.875;
+			if (dydudebug_ipdisplays) Console.Printf("\c[olive]cost [post-DoubSphere]: %.4f", cost);
+		}
 		
 		// "Mystery Item" reduces IP Cost by 33.3%
-		if (player && player.CountInv("MysteryItem") && ipid != -1) cost = floor(cost * 0.667);
+		if (player && player.CountInv("MysteryItem") && ipid != -1) 
+		{
+			cost *= 0.667;
+			if (dydudebug_ipdisplays) Console.Printf("\c[olive]cost [post-MI]: %.4f", cost);
+		}
 		
 		if (player && (player.CountInv("AngerLevelEvent") > 0 || player.CountInv("AngerLevelEventN")))
 		{
-			if (ipid != -1) cost = floor(cost * (1.0 - (player.CountInv("AngerLevelEvent") * 0.001) - (player.CountInv("AngerLevelEventN") * 0.0001)));
-								 else cost = floor(cost * (1.0 - (player.CountInv("AngerLevelEvent") * 0.0025) - (player.CountInv("AngerLevelEvent") * 0.00025)));
+			if (ipid != -1) cost *= (1.0 - (player.CountInv("AngerLevelEvent") * 0.001) - (player.CountInv("AngerLevelEventN") * 0.0001));
+								 else cost *= (1.0 - (player.CountInv("AngerLevelEvent") * 0.0025) - (player.CountInv("AngerLevelEvent") * 0.00025));
+			if (dydudebug_ipdisplays) Console.Printf("\c[olive]cost [post-anger-event]: %.4f", cost);
 		}
 		
 		// Armor IPs Reduce Costs for Non-Armor IP Abilities
@@ -2566,21 +2577,22 @@ mixin class IPCostCheck
 		{
 			if (!(ipid >= 1000 && ipid <= 1004))
 			{
-				if (player && player.CountInv("KnightGownIP1Buff")) cost = floor(cost * 0.8);
-				if (player && player.CountInv("KnightGownIP2Buff")) cost = floor(cost * 0.6);
-				if (player && player.CountInv("KnightGownIP3Buff")) cost = floor(cost * 0.4);
-				if (player && player.CountInv("KnightGownIP4Buff")) cost = floor(cost * 0.2);
+				if (player && player.CountInv("KnightGownIP1Buff")) cost *= 0.8;
+				if (player && player.CountInv("KnightGownIP2Buff")) cost *= 0.6;
+				if (player && player.CountInv("KnightGownIP3Buff")) cost *= 0.4;
+				if (player && player.CountInv("KnightGownIP4Buff")) cost *= 0.2;
 			}
 			else
 			{
 				if (player && !player.CountInv("MysteryItem"))
 				{
-					if (player && player.CountInv("KnightGownIP1Buff")) cost = ceil(cost * 1.075);
-					if (player && player.CountInv("KnightGownIP2Buff")) cost = ceil(cost * 1.15);
-					if (player && player.CountInv("KnightGownIP3Buff")) cost = ceil(cost * 1.225);
-					if (player && player.CountInv("KnightGownIP4Buff")) cost = ceil(cost * 1.30);
+					if (player && player.CountInv("KnightGownIP1Buff")) cost *= 1.075;
+					if (player && player.CountInv("KnightGownIP2Buff")) cost *= 1.15;
+					if (player && player.CountInv("KnightGownIP3Buff")) cost *= 1.225;
+					if (player && player.CountInv("KnightGownIP4Buff")) cost *= 1.30;
 				}
 			}
+			if (dydudebug_ipdisplays) Console.Printf("\c[olive]cost [post-ArmorIP]: %.4f", cost);
 		}
 		
 		if (player) 
@@ -2594,10 +2606,10 @@ mixin class IPCostCheck
 					{
 						if (MiscItem.IPMortalBlowReduceTimer)
 						{
-							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 2) - 1)) cost = ceil(cost * 0.8334);
-							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 3) - 1)) cost = ceil(cost * 0.75);
-							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 4) - 1)) cost = ceil(cost * 0.666);
-							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 5) - 1)) cost = ceil(cost * 0.583);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 2) - 1)) cost *= 0.8334;
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 3) - 1)) cost *= 0.75;
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 4) - 1)) cost *= 0.666;
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 5) - 1)) cost *= 0.583;
 							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 5)) cost = 0.5;
 						}
 					}
@@ -2605,15 +2617,16 @@ mixin class IPCostCheck
 					{
 						if (MiscItem.IPMortalBlowReduceTimer)
 						{
-							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 2) - 1)) cost = ceil(cost * 0.666);
-							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 3) - 1)) cost = ceil(cost * 0.5);
-							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 4) - 1)) cost = ceil(cost * 0.333);
-							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 5) - 1)) cost = ceil(cost * 0.166);
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 2) - 1)) cost *= 0.666;
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 2) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 3) - 1)) cost *= 0.5;
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 3) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 4) - 1)) cost *= 0.333;
+							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 4) && TruePlayerLevel <= ((exex_mortalblowipcostlvlrequirement * 5) - 1)) cost *= 0.166;
 							if (TruePlayerLevel >= (exex_mortalblowipcostlvlrequirement * 5)) cost = 0;
 						}
 					}
 				}
 			}
+			if (dydudebug_ipdisplays) Console.Printf("\c[olive]cost [post mortal-blow]: %.4f", cost);
 		}
 
 		if (ipid == -1)
