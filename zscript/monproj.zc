@@ -4,10 +4,10 @@ class ZombieBulletTracer : EEBulletTracer
 	default
 	{
 		Tag "shot";
-		DamageFunction ((Random(1,5) * 3));
-		Damagetype "Bullet";
-		Radius 1;
-		Height 1;
+		DamageFunction (finaldamagedealt);
+		Damagetype "Hitscan";
+		Radius 2;
+		Height 2;
 		Mass 5;
 		Speed 160; // 80
 		PROJECTILE;
@@ -18,6 +18,14 @@ class ZombieBulletTracer : EEBulletTracer
 		Alpha 1.0;
 		Scale 0.5;
 		decal "BulletChip";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEFastProjectile.PostBeginPlay();
+		A_ScaleVelocity(exex_tracervelmulti);
+		
+		if (finaldamagedealt <= 0) finaldamagedealt = (5 * random(1,3));
 	}
 	
 	States
@@ -58,6 +66,181 @@ class ZombieBulletTracerTrail : EEBaseZSC
 	{
 		Spawn:
 			CTAC A 2 bright;
+			stop;
+	}
+}
+
+
+class RepeaterPuff : EEProjectile
+{
+	default
+	{
+		Tag "Plasma Repeater";
+		Radius 3;
+		Height 3;
+		RenderStyle "Add";
+		Alpha 0.75;
+		+ALWAYSPUFF;
+		+PUFFONACTORS;
+		+NOGRAVITY;
+		+NOBLOCKMAP
+		+PUFFGETSOWNER;
+		+FORCERADIUSDMG;
+		+BLOODLESSIMPACT;
+		-BLOODSPLATTER;
+		DamageType "Plasma";
+		Decal "MummyScorch";
+	}
+	
+	States
+	{
+		Spawn:
+			RPUF A 1 Bright;
+			RPUF A 0 Bright A_StartSound("Weapons/RepeaterHit");
+			RPUF A 2 Bright A_Explode(14, 44, 0, 0, 22);
+			RPUF BCDEFG 3 Bright;
+			Stop;
+	}
+}
+
+class ZombieRepeaterTracer : EEBulletTracer
+{
+	default
+	{
+		Tag "Plasma Repeater";
+		DamageFunction (finaldamagedealt);
+		Damagetype "Hitscan";
+		Radius 2;
+		Height 2;
+		Mass 5;
+		Speed 160; // 80
+		PROJECTILE;
+		+DONTREFLECT;
+		+NODAMAGETHRUST;
+		Renderstyle "Add";
+		Alpha 1.0;
+		Scale 1.0;
+		decal "BulletChip";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEFastProjectile.PostBeginPlay();
+		A_ScaleVelocity(exex_tracervelmulti);
+		
+		if (finaldamagedealt <= 0) finaldamagedealt = (6 * random(2,6));
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 0 NoDelay bright;
+		Idle:
+			TNT1 A 1 bright A_SpawnTracerTrail("ZombieRepeaterTracerTrail",6,-2.5);
+			loop;
+		XDeath:
+			TNT1 A 1 A_SpawnItem("RepeaterPuff");
+			stop;
+		Death:
+		Crash:
+			TNT1 A 1 A_SpawnItem("RepeaterPuff");
+			stop;
+	}
+}
+
+class ZombieRepeaterTracerTrail : EEBaseZSC
+{
+	default
+	{
+		Radius 2;
+		Height 2;
+		Speed 0;
+		Damage 0;
+		Projectile;
+		+CLIENTSIDEONLY;
+		+NOINTERACTION;
+		+NOCLIP;
+		+DONTSPLASH;
+		Scale 1;
+		Renderstyle "Add";
+	}
+	
+	States
+	{
+		Spawn:
+			CTAC A 2 bright;
+			stop;
+	}
+}
+
+// Death Incarnate Glare Tracer
+class IncarnateGlareTracer : EEBulletTracer
+{
+	default
+	{
+		Tag "Dark Glare";
+		DamageFunction (finaldamagedealt);
+		Damagetype "Hitscan";
+		Radius 1;
+		Height 1;
+		Mass 5;
+		Speed 160; // 80
+		PROJECTILE;
+		+DONTREFLECT;
+		+BLOODSPLATTER;
+		+NODAMAGETHRUST;
+		Renderstyle "Add";
+		Alpha 1.0;
+		Scale 0.5;
+		decal "BulletChip";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEFastProjectile.PostBeginPlay();
+		A_ScaleVelocity(exex_tracervelmulti);
+		
+		if (finaldamagedealt <= 0) finaldamagedealt = (5 * random(1,3));
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 0 NoDelay bright;
+		Idle:
+			TNT1 A 1 bright A_SpawnTracerTrail("IncarnateGlareTracerTrail",6,-2.5);
+			loop;
+		XDeath:
+			INPF ABCDE 3 Bright;
+			stop;
+		Death:
+		Crash:
+			INPF ABCDE 3 Bright;
+			stop;
+	}
+}
+
+class IncarnateGlareTracerTrail : EEBaseZSC
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		Speed 0;
+		Damage 0;
+		Projectile;
+		+CLIENTSIDEONLY;
+		+NOINTERACTION;
+		+NOCLIP;
+		+DONTSPLASH;
+		Scale 0.5;
+		Renderstyle "Add";
+	}
+	
+	States
+	{
+		Spawn:
+			RTAC A 2 bright;
 			stop;
 	}
 }
