@@ -3677,7 +3677,8 @@ class CricketBat : DinahWeapon replaces Pistol
 			{
 				dmg *= random(5,8);
 			}
-			dmg *= frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.75);
+			
+			dmg *= frandompick(1.75,1.875,1.875,2.0,2.0,2.0,2.0,2.0,2.125,2.125,2.25);
 		}
 		else
 		{
@@ -3920,6 +3921,12 @@ class CricketBat : DinahWeapon replaces Pistol
 			}
 			DBID G 1 
 			{
+				int PlayerLevel;
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+				let globalvars = DDGlobalVariables.Get();
+				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
+
 				string pufftype = "BatPuff";
 				int dmg = A_BatDamageSet(0);
 				int atkrange = 112;
@@ -3929,16 +3936,45 @@ class CricketBat : DinahWeapon replaces Pistol
 				double shotangleinc = 0;
 				double origangle = angle;
 				int maxshots = 1;
+				double levlfactor = 0.25;
+				if (PlayerLevel >= 4) levlfactor = 0.3125;
+				if (PlayerLevel >= 16) levlfactor = 0.375;
+				if (PlayerLevel >= 40) levlfactor = 0.5;
+				if (PlayerLevel >= 72) levlfactor = 0.75;
+				if (PlayerLevel >= 112) levlfactor = 1.25;
+				levlfactor *= frandom(0.95,1.05);
 				if (invoker.IPAttackCheck) // >.> <.<
 				{
 					pufftype = "BatPuffIP";
-					if (random(1,128) <= 1)
+					if (random(1,128) <= (1 + (PlayerLevel * levlfactor)))
 					{
-						shotangle = -33.75;
-						shotangleend = 33.75;
-						shotangleinc = 11.25;
-						maxshots = 7;
-						atkrange *= 1.5;
+						if (random(1,128) <= (1 + (PlayerLevel * (levlfactor * 0.25))))
+						{
+							if (random(1,128) <= (1 + (PlayerLevel * (levlfactor * 0.0625))))
+							{
+								shotangle = -67.5;
+								shotangleend = 67.5;
+								shotangleinc = 11.25;
+								maxshots = 13;
+								atkrange *= 1.75;
+							}
+							else
+							{
+								shotangle = -45.0;
+								shotangleend = 45.0;
+								shotangleinc = 11.25;
+								maxshots = 9;
+								atkrange *= 1.667;
+							}
+						}
+						else
+						{
+							shotangle = -33.75;
+							shotangleend = 33.75;
+							shotangleinc = 11.25;
+							maxshots = 7;
+							atkrange *= 1.5;
+						}
 					}
 					else
 					{
@@ -6966,20 +7002,20 @@ class Blunderaxe : DinahWeapon replaces Shotgun
 			if (random(1,96) <= (95 - (PlayerLevel * 0.0375)))
 			{
 				if (invoker.IPAttackCheck) adddmg = randompick(8,9,11,13,14,15);
-				else adddmg = randompick(3,4,4,5,5,6);
+															else adddmg = randompick(3,4,4,5,5,6);
 			}
 			else
 			{
 				if (invoker.IPAttackCheck) adddmg = randompick(16,18,19,21,23,25);
-				else adddmg = randompick(6,7,8,9,10,11);
+															else adddmg = randompick(6,7,8,9,10,11);
 				rngroll = 1;
 			}
 			dmg += adddmg;
 			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Blunderaxe]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
 		}
-		if (invoker.IPAttackCheck) 
+		if (invoker.IPAttackCheck) // IP Attack: Octo-strike [~8x damage]
 		{
-			dmg *= randompick(7,8,8,8,8,8,8,8,8,9);
+			dmg *= frandompick(7,7.5,7.5,8,8,8,8,8,8,8,8,8.5,8.5,9);
 			range *= 1.1875;
 		}
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
