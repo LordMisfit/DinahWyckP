@@ -6257,3 +6257,44 @@ Class DashCollisionChecker : Actor
 		}
 	}
 }
+
+
+class ForsakenCloakResist : TempDefenseBuff
+{
+	default
+	{
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "";
+		Powerup.Duration 2147483646;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
+	{
+		if (passive && damage > 0)
+		{
+			double TOTALFactor = 1.0;
+			if (!(damageType == 'Suck' || 
+						damageType == 'Sigil' || 
+						damageType == 'SpectralLow' || 
+						damageType == 'Massacre' || 
+						damageType == 'SilentMassacre' ||
+						damageType == 'Telefrag' ||
+						damageType == 'TrueIP'))
+			{
+				if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(30,45) + random(-15,15)) * 0.01;
+				else if (damageType == 'Beats') TOTALFactor = (random(20,30) + random(-10,10)) * 0.01;
+				else TOTALFactor = (random(10,15) + random(-5,5)) * 0.01;
+			}
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+			//Console.Printf("[passive] newdamage: %d, olddmg: %d", newdamage, damage);
+		}
+		else
+		{
+			//Console.Printf("[!passive] newdamage: %d, olddmg: %d", newdamage, damage);
+		}
+	}
+}
