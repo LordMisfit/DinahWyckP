@@ -815,7 +815,8 @@ class EvilDinah : DDOrigBoss
 			}
 			DINA G 4 
 			{
-				A_CustomMeleeAttack (random(25,40), "mallethit", "malletswing", "", 1);
+				int dmg = A_CalcDamageFormula2(random(25,40),0.0667,random(10,20),0.05,random(5,15),0.035,0.005);
+				A_CustomMeleeAttack (dmg, "mallethit", "malletswing", "", 1);
 				A_DynamicMusic();
 			}
 			Goto See;
@@ -4075,6 +4076,7 @@ class Reaper : DDOrigCreature
 		+FLOORCLIP;
 		+NOBLOOD;
 		+NOINFIGHTING;
+		+NOTARGET;
 		+FLOAT;
 		+FLOATBOB;
 		+NOGRAVITY;
@@ -4148,9 +4150,288 @@ class Reaper : DDOrigCreature
 	}
 }
 
-// Big Red Devil
+// Big Hulking Devil
+class Devil : DDOrigCreature
+{
+	default
+	{
+		//$Category RPMonsters
+		Health 450;
+		Radius 32;
+		Height 80;
+		Speed 18; // 18
+		PainChance 200; // 200
+		DamageFactor "Suck", 0.96;
+		Painchance "Suck", 192;
+		DamageFactor "Chop", 0.75;
+		PainChance "Chop", 150;
+		DamageFactor "Bonk", 0.75;
+		PainChance "Bonk", 150;
+		DamageFactor "Cricket", 1.25;
+		PainChance "Cricket", 250;
+		DamageFactor "Zap", 3; // 5
+		PainChance "Zap", 256;
+		MeleeThreshold 208;
+		MeleeRange 88; // 80
+		MaxTargetRange 2048; // 512
+		Mass 50000; // 5000
+		Scale 1.5;
+		MONSTER;
+		+FLOORCLIP;
+		+NOBLOOD;
+		+NOINFIGHTING;
+		+NOTARGET;
+		+DONTHARMCLASS;
+		SeeSound "muddy/sight";
+		PainSound "muddy/pain";
+		DeathSound "virtuoso/death";
+		ActiveSound "muddy/active";
+		MeleeSound "mallethit";
+		Obituary "%o was flattened by a big hulking devil.";
+		Tag "Big Hulking Devil";
+		MissileType "BadJackshot";
+		DropItem "AppleJack", 192;
+		DropItem "AppleJack", 48;
+		DropItem "AppleJack", 12;
+		DropItem "AppleJack", 3;
+		DropItem "JackAmmo";
+		DropItem "JackAmmo", 64;
+		DropItem "JackAmmo", 16;
+		DropItem "JackAmmo", 4;
+		DropItem "JackAmmoBig", 200;
+		DropItem "JackAmmoBig", 50;
+		DropItem "JackAmmoBig", 13;
+		DropItem "JackAmmoBig", 4;
+	}
+	
+	override void Tick()
+	{
+		if (health > 0)
+		{
+			if (InStateSequence(curstate,ResolveState("Melee")))
+			{
+				A_SetInventory("DevilMeleeWeakness",1);
+			}
+			else
+			{
+				A_SetInventory("DevilMeleeWeakness",0);
+			}
+			//Console.Printf("visdir: %d, Cloak: %d [tic: %d]", visdir, CountInv("ForsakenCloakResist"), gametic);
+		}
+		DDOrigCreature.Tick();
+	}
+
+	States
+	{
+		Spawn:
+			ONII A 10 A_Look();
+			Loop;
+		See:
+			ONII AABBCCDD 3 fast
+			{
+				if (random(1,128) <= (1 + (CountInv("MonsterLevel") * 0.75))) A_EEChase("Melee","Missile",CHF_FASTCHASE,1,3,1,1);
+				else A_EEChase("Melee","Missile",0,1,3,1,1);
+			}
+			Loop;
+		Melee:
+			ONII E 0 fast A_DynamicMusic();
+			ONII EF 4 fast A_FaceTarget();
+			ONII G 6 fast
+			{
+				int dmg = A_CalcDamageFormula2(random(70,100),0.0667,random(10,20),0.05,random(5,15),0.035,0.005);
+				A_CustomMeleeAttack (dmg, "mallethit", "malletswing", "bonk", 1);
+			}
+			ONII HIJ 6 fast;
+			Goto See;
+		Missile:
+			ONII J 0 fast A_StartSound("muddy/sight",CHAN_BODY);
+			ONII J 0 fast A_DynamicMusic();
+			ONII JI 6 fast A_FaceTarget();
+			ONII F 7 fast
+			{
+				string projtype = "BadJackshot";
+				if (random(1,100) <= (20 + CountInv("MonsterLevel") * 0.334)) projtype = "KragBall";
+				int dmg = A_CalcDamageFormula2(random(50,80),0.0667,random(10,20),0.05,random(5,15),0.035,0.005);
+				A_CustomComboAttack(projtype, 32, (dmg), "malletswing");
+			}
+			ONII J 6 fast;
+			Goto See;
+		Pain:
+			ONII E 6 fast A_EEPain(1,random(36,66),12,0,0,46);
+			ONII J 3 fast; //A_DynamicMusic();
+			Goto See;
+		Death.Suck:
+			ONII E 5 A_StartSound("VacDed",CHAN_BODY);
+			ONII E 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,12);
+			Stop;
+		Death:
+			ONII E 8 A_StartSound("slots/death",1);
+			ONII K 8 bright A_Scream();
+			DANS R 5 bright A_NoBlocking();
+			DANS STUVWXYZ 5 bright;
+			Stop;
+	}
+}
 
 // Pushy Angel
+class PushyAngel : DDOrigCreature
+{
+	default
+	{
+		//$Category RPMonsters;
+		Health 350;
+		Radius 20;
+		Height 80;
+		Speed 10;
+		PainChance 256;
+		Mass 1500;
+		DamageFactor "Fire", 2;
+		DamageFactor "CherryBomb", 1.5;
+		DamageFactor "Spinner", 1.5;
+		DamageFactor "BRocket", 1.5;
+		DamageFactor "Popper", 0.125;
+		PainChance "Popper", 32;
+		DamageFactor "Chop", 2;
+		DamageFactor "Holy", 0.125;
+		PainChance "Holy", 32;
+		DamageFactor "Sigil", 0.25;
+		PainChance "Sigil", 64;
+		DamageFactor "SpectralLow", 0.25;
+		PainChance "SpectralLow", 64;
+		DamageFactor "Zap", 2.5; // 5
+		MONSTER;
+		+FLOORCLIP;
+		+NOINFIGHTING;
+		+NOTARGET;
+		+NOBLOOD;
+		+FLOAT;
+		+NOGRAVITY;
+		+FLOATBOB;
+		+DONTFALL;
+		SeeSound "angel/active";
+		ActiveSound "angel/active";
+		DeathSound "virtuoso/death";
+		Obituary "%o was punished by a pushy angel.";
+		Tag "Angel (Pushy)";
+		DropItem "ItemSatchel", 1;
+		DropItem "Grimophone", 1;
+		DropItem "MusicAmmo", 96;
+		DropItem "MusicAmmo", 24;
+		DropItem "MusicAmmo", 6;
+		DropItem "MusicAmmo", 1;
+		DropItem "AppleWine", 96;
+		DropItem "AppleWine", 6;
+	}
+	
+	States
+	{
+		Spawn:
+			ANGL C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+			ANGL ABC 8 fast A_FloatLook(16);
+			Loop;
+		See:
+			ANGL AABBCC 3 fast
+			{
+				A_FloatChaseCheck(4,8,12,16,0.2,0.2);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 15) { bAVOIDMELEE = true; }
+				
+				A_FastChaseCalc(4,16);
+				if (random(1,256) <= user_fastchasechance) { A_EEChase("Melee","Missile",CHF_FASTCHASE,1,3,1,1); A_FloatSetFChaseT(randompick(0,4)); } else { A_EEChase("Melee","Missile",0,1,3,1,1); }
+				user_painfastchase = 0;
+			}
+			ANGL C 0 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+			Loop;
+		Missile:
+			ANGA A 0 fast A_DynamicMusic();
+			ANGA A 0 fast A_Jump(128,"DeathSong");
+			ANGA A 0 fast A_Jump(160,"AnnoyingSong");
+			ANGA A 0 fast A_StartSound("Handmother/Zap");
+			ANGA AB 5 fast bright A_FaceTarget();
+			ANGA C 3 fast bright A_SpawnProjectile("BadZapShot",48);
+			ANGA B 3 fast bright A_FaceTarget();
+			ANGA C 3 fast bright A_SpawnProjectile("BadZapShot",48);
+			ANGA B 3 fast bright A_FaceTarget();
+			ANGA C 3 fast bright A_SpawnProjectile("BadZapShot",48);
+			ANGA C 5 fast bright;
+			ANGL A 3 fast;
+			Goto See;
+		AnnoyingSong:
+			ANGL A 0 fast A_StartSound("angel/ballattack",CHAN_VOICE);
+			ANGL A 8 fast A_FaceTarget();
+			ANGA D 8 fast A_StartSound("virtuoso/musicfire");
+			ANGA D 6 fast 
+			{
+				A_SpawnProjectile("MusicBall",48);
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") >= 30)
+					{
+						if (CountInv("MonsterLevel") >= 45)
+						{
+							A_SpawnProjectile("MusicBall",48,24);
+							A_SpawnProjectile("MusicBall",48,-24);
+							if (random(1,4) <= random(1,3))
+							{
+								A_SpawnProjectile("MusicBall",48,12);
+								A_SpawnProjectile("MusicBall",48,-12);
+							}
+						}
+						else
+						{
+							if (random(1,4) <= random(1,3))
+							{
+								A_SpawnProjectile("MusicBall",48,24);
+								A_SpawnProjectile("MusicBall",48,-24);
+								if (random(1,16) <= random(1,3))
+								{
+									A_SpawnProjectile("MusicBall",48,12);
+									A_SpawnProjectile("MusicBall",48,-12);
+								}
+							}
+						}
+					}
+					else
+					{
+						if (random(1,16) <= random(1,3))
+						{
+							A_SpawnProjectile("MusicBall",48,24);
+							A_SpawnProjectile("MusicBall",48,-24);
+						}
+					}
+				}
+			}
+			ANGA D 10 fast;
+			ANGL BA 4 fast;
+			Goto See;
+		DeathSong:
+			ANGL A 0 fast A_StartSound("angel/deathsong",CHAN_VOICE);
+			ANGL A 8 fast A_FaceTarget();
+			ANGA D 8 fast;
+			ANGA DDDDDD 6 fast A_SpawnProjectile("JorgSong",48);
+			ANGA D 10 fast;
+			ANGL BA 4 fast;
+			Goto See;
+		Pain:
+			ANGP A 3 fast
+			{
+				A_FloatPain(0,8,64);
+				A_EEPain(1,random(36,66),12,0,0,46);
+				user_painfastchase = 8 * random(4,12);
+			}
+			ANGP A 6 fast; //A_DynamicMusic
+			ANGA A 6 fast;
+			Goto See;
+		Death.Suck:
+			ANGP A 5 A_StartSound("VacDed",CHAN_BODY);
+			ANGP A 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,12);
+			Stop;
+		Death:
+			ANGL D 6 bright A_Scream();
+			ANGL EF 5 bright;
+			ANGL G 4 bright A_NoBlocking();
+			Stop;
+	}
+}
 
 // Pushy [Arch]-Angel*
 

@@ -6258,6 +6258,45 @@ Class DashCollisionChecker : Actor
 	}
 }
 
+class DevilMeleeWeakness : TempDefenseBuff
+{
+	default
+	{
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "";
+		Powerup.Duration 2147483646;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
+	{
+		if (passive && damage > 0)
+		{
+			double TOTALFactor = 1.0;
+			if (damageType == "Melee" ||
+					damageType == "Fist" ||
+					damageType == "Kick" ||
+					damageType == "Stomp" ||
+					damageType == "Dashing" ||
+					damageType == "DashingBG" ||
+					damageType == "DashingSD")
+			{
+				TOTALFactor = 2.5;
+			}
+			else
+			if (damageType == "Zap" ||
+					damageType == "Eldritch")
+			{
+				if (!(PushyAngel(source))) TOTALFactor = 0.4;
+			}
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+			//Console.Printf("[passive] newdamage: %d, olddmg: %d", newdamage, damage);
+		}
+	}
+}
 
 class ForsakenCloakResist : TempDefenseBuff
 {
