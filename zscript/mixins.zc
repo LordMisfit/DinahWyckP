@@ -1198,7 +1198,7 @@ mixin class MonsterCollider
 	// Damage Tracking
 	int initdmg;
 	
-	double, double, double A_DefenseIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool wasblastedimpact, bool bellefishzap, bool surprisehit)
+	double, double, double A_DefenseIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool wasblastedimpact, bool bellefishzap, bool surprisehit, int angvstype)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -1298,6 +1298,16 @@ mixin class MonsterCollider
 			
 			double RailFactor = frandom(0.3,0.334);
 			if (mod == 'Railgun') ActorDefenseIgnoreFactor += (RailFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double AngelFactor = 0.00;
+			if ((source && PushyArchAngel(source)) || (inflictor && PushyArchAngel(inflictor)))
+			{
+				if (angvstype == 0) ActorDefenseIgnoreFactor += (frandom(0.000,0.250) * (1.00 - ActorDefenseIgnoreFactor));
+				if (angvstype == 1) ActorDefenseIgnoreFactor += (1.000 * (1.00 - ActorDefenseIgnoreFactor));
+				if (angvstype == 2) ActorDefenseIgnoreFactor += (0.500 * (1.00 - ActorDefenseIgnoreFactor));
+				if (angvstype == 3) ActorDefenseIgnoreFactor += (0.250 * (1.00 - ActorDefenseIgnoreFactor));
+				if (angvstype == 4) ActorDefenseIgnoreFactor += (0.750 * (1.00 - ActorDefenseIgnoreFactor));
+			}
 			
 			if (bellefishzap) ActorDefenseIgnoreFactor += (0.334 * (1.00 - ActorDefenseIgnoreFactor));
 				
@@ -1402,7 +1412,8 @@ mixin class MonsterCollider
 				if (type == 4) damage /= frandompick(2.125,2.3125,2.5); // Hades Scion foes
 			}
 		}
-
+		
+		int angvstype;
 		if ((source && PushyArchAngel(source)) || (inflictor && PushyArchAngel(inflictor)))
 		{
 			if (PushyAngel(self) ||
@@ -1413,11 +1424,11 @@ mixin class MonsterCollider
 			}
 			else
 			{
-				int type = A_ArchAngelCheckTarg(self);
-				if (type == 1) damage *= frandompick(2.5,2.75,3.0); // Demonic foes
-				if (type == 2) damage *= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
-				if (type == 3) damage *= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
-				if (type == 4) damage *= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+				angvstype = A_ArchAngelCheckTarg(self);
+				if (angvstype == 1) damage *= frandompick(2.5,2.75,3.0); // Demonic foes
+				if (angvstype == 2) damage *= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
+				if (angvstype == 3) damage *= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
+				if (angvstype == 4) damage *= frandompick(2.125,2.3125,2.5); // Hades Scion foes
 			}
 		}
 
@@ -1899,7 +1910,7 @@ mixin class MonsterCollider
 		int predmginr = damage;
 		// (Partial) Defense Ignoring Attacks
 		double prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor;
-		[prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor] = A_DefenseIgnoreFactor(inflictor, source, damage, mod, flags, angle, wasblastedimpact, bellefishzap, surprisehit);
+		[prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor] = A_DefenseIgnoreFactor(inflictor, source, damage, mod, flags, angle, wasblastedimpact, bellefishzap, surprisehit, angvstype);
 		
 		predmginr = damage;
 		// Defense Checks
