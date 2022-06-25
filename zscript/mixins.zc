@@ -1345,6 +1345,39 @@ mixin class MonsterCollider
 		return prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor;
 	}
 	
+	int A_ArchAngelCheckTarg(actor input)
+	{
+		int type = 0;
+		if (Zombieman(input) || ZombiemanNew(input)) type == 2; // Zombie/Undead
+		if (ShotgunGuy(input) || ShotgunGuyNew(input)) type == 2; // Zombie/Undead
+		if (ChaingunGuy(input) || ChaingunGuyNew(input)) type == 2; // Zombie/Undead
+		if (SuicideBomber(input)) type == 2; // Zombie/Undead
+		if (DoomImp(input) || DoomImpNew(input)) type == 1; // Demonic
+		if (Demon(input) || DemonNew(input)) type == 1; // Demonic
+		if (BloodDemon(input)) type == 1; // Demonic
+		if (LostSoul(input) || LostSoulNew(input) || LostSoulAnnoying(input) || BetaLostSoul(input)) type == 1; // Demonic
+		if (Cacodemon(input) || CacodemonNew(input)) type == 1; // Demonic
+		if (PainElemental(input) || PainElementalNew(input)) type == 1; // Demonic
+		if (Arachnotron(input) || ArachnotronNew(input) || RailArachnotron(input)) type == 1; // Demonic
+		if (Revenant(input) || RevenantNew(input)) type == 2; // Zombie/Undead
+		if (DeathIncarnate(input)) type == 2; // Zombie/Undead
+		if (Fatso(input) || MancubusNew(input)) type == 1; // Demonic
+		if (HellKnight(input) || HellKnightNew(input)) type == 1; // Demonic
+		if (BaronOfHell(input) || BaronOfHellNew(input)) type == 1; // Demonic
+		if (HellWarrior(input)) type == 1; // Demonic
+		if (BruiserDemon(input)) type == 1; // Demonic
+		if (Archvile(input) || ArchvileNew(input)) type == 1; // Demonic
+		if (Diabloist(input)) type == 1; // Demonic
+		if (Cyberdemon(input) || CyberdemonNew(input) || Annihilator(input)) type == 1; // Demonic
+		if (SpiderMastermind(input) || SpiderMastermindNew(input) || Demolisher(input)) type == 1; // Demonic
+		if (FlyingBalrog(input)) type == 1; // Demonic
+		if (HellClericDVDS(input)) type == 3; // Human/Demon
+		if (HadesSphere(input)) type == 4; // Hades Scion
+		if (Galgoyle(input)) type == 2; // Demonic
+		if (Devil(input)) type == 2; // Demonic
+		return type;
+	}
+	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
 		DDPlayerPawn playpawn;
@@ -1355,14 +1388,36 @@ mixin class MonsterCollider
 		
 		if (PushyArchAngel(self))
 		{
-			if ((source && PushyAngel(source)) || (inflictor && PushyAngel(inflictor)))
+			if (source)
+			{
+				int type = A_ArchAngelCheckTarg(source);
+			}
+			else
+			if (inflictor)
+			{
+				int type = A_ArchAngelCheckTarg(inflictor);
+				if (type == 1) damage /= frandompick(2.5,2.75,3.0); // Demonic foes
+				if (type == 2) damage /= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
+				if (type == 3) damage /= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
+				if (type == 4) damage /= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+			}
+		}
+
+		if ((source && PushyArchAngel(source)) || (inflictor && PushyArchAngel(inflictor)))
+		{
+			if (PushyAngel(self) ||
+					PushyArchAngel(self))
 			{
 				damage = 0;
 				return 0;
 			}
 			else
 			{
-				damage *= frandompick(2.5,2.75,3.0);
+				int type = A_ArchAngelCheckTarg(self);
+				if (type == 1) damage *= frandompick(2.5,2.75,3.0); // Demonic foes
+				if (type == 2) damage *= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
+				if (type == 3) damage *= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
+				if (type == 4) damage *= frandompick(2.125,2.3125,2.5); // Hades Scion foes
 			}
 		}
 
