@@ -1358,33 +1358,33 @@ mixin class MonsterCollider
 	int A_ArchAngelCheckTarg(actor input)
 	{
 		int type = 0;
-		if (Zombieman(input) || ZombiemanNew(input)) type == 2; // Zombie/Undead
-		if (ShotgunGuy(input) || ShotgunGuyNew(input)) type == 2; // Zombie/Undead
-		if (ChaingunGuy(input) || ChaingunGuyNew(input)) type == 2; // Zombie/Undead
-		if (SuicideBomber(input)) type == 2; // Zombie/Undead
-		if (DoomImp(input) || DoomImpNew(input)) type == 1; // Demonic
-		if (Demon(input) || DemonNew(input)) type == 1; // Demonic
-		if (BloodDemon(input)) type == 1; // Demonic
-		if (LostSoul(input) || LostSoulNew(input) || LostSoulAnnoying(input) || BetaLostSoul(input)) type == 1; // Demonic
-		if (Cacodemon(input) || CacodemonNew(input)) type == 1; // Demonic
-		if (PainElemental(input) || PainElementalNew(input)) type == 1; // Demonic
-		if (Arachnotron(input) || ArachnotronNew(input) || RailArachnotron(input)) type == 1; // Demonic
-		if (Revenant(input) || RevenantNew(input)) type == 2; // Zombie/Undead
-		if (DeathIncarnate(input)) type == 2; // Zombie/Undead
-		if (Fatso(input) || MancubusNew(input)) type == 1; // Demonic
-		if (HellKnight(input) || HellKnightNew(input)) type == 1; // Demonic
-		if (BaronOfHell(input) || BaronOfHellNew(input)) type == 1; // Demonic
-		if (HellWarrior(input)) type == 1; // Demonic
-		if (BruiserDemon(input)) type == 1; // Demonic
-		if (Archvile(input) || ArchvileNew(input)) type == 1; // Demonic
-		if (Diabloist(input)) type == 1; // Demonic
-		if (Cyberdemon(input) || CyberdemonNew(input) || Annihilator(input)) type == 1; // Demonic
-		if (SpiderMastermind(input) || SpiderMastermindNew(input) || Demolisher(input)) type == 1; // Demonic
-		if (FlyingBalrog(input)) type == 1; // Demonic
-		if (HellClericDVDS(input)) type == 3; // Human/Demon
-		if (HadesSphere(input)) type == 4; // Hades Scion
-		if (Galgoyle(input)) type == 2; // Demonic
-		if (Devil(input)) type == 2; // Demonic
+		if (Zombieman(input) || ZombiemanNew(input)) type = 2; // Zombie/Undead
+		if (ShotgunGuy(input) || ShotgunGuyNew(input)) type = 2; // Zombie/Undead
+		if (ChaingunGuy(input) || ChaingunGuyNew(input)) type = 2; // Zombie/Undead
+		if (SuicideBomber(input)) type = 2; // Zombie/Undead
+		if (DoomImp(input) || DoomImpNew(input)) type = 1; // Demonic
+		if (Demon(input) || DemonNew(input)) type = 1; // Demonic
+		if (BloodDemon(input)) type = 1; // Demonic
+		if (LostSoul(input) || LostSoulNew(input) || LostSoulAnnoying(input) || BetaLostSoul(input)) type = 1; // Demonic
+		if (Cacodemon(input) || CacodemonNew(input)) type = 1; // Demonic
+		if (PainElemental(input) || PainElementalNew(input)) type = 1; // Demonic
+		if (Arachnotron(input) || ArachnotronNew(input) || RailArachnotron(input)) type = 1; // Demonic
+		if (Revenant(input) || RevenantNew(input)) type = 2; // Zombie/Undead
+		if (DeathIncarnate(input)) type = 2; // Zombie/Undead
+		if (Fatso(input) || MancubusNew(input)) type = 1; // Demonic
+		if (HellKnight(input) || HellKnightNew(input)) type = 1; // Demonic
+		if (BaronOfHell(input) || BaronOfHellNew(input)) type = 1; // Demonic
+		if (HellWarrior(input)) type = 1; // Demonic
+		if (BruiserDemon(input)) type = 1; // Demonic
+		if (Archvile(input) || ArchvileNew(input)) type = 1; // Demonic
+		if (Diabloist(input)) type = 1; // Demonic
+		if (Cyberdemon(input) || CyberdemonNew(input) || Annihilator(input)) type = 1; // Demonic
+		if (SpiderMastermind(input) || SpiderMastermindNew(input) || Demolisher(input)) type = 1; // Demonic
+		if (FlyingBalrog(input) || FlyingBalrogDVDS(input)) type = 1; // Demonic
+		if (HellClericDVDS(input)) type = 3; // Human/Demon
+		if (HadesSphere(input)) type = 4; // Hades Scion
+		if (Galgoyle(input)) type = 2; // Demonic
+		if (Devil(input)) type = 2; // Demonic
 		return type;
 	}
 	
@@ -1401,6 +1401,36 @@ mixin class MonsterCollider
 			if (source)
 			{
 				int type = A_ArchAngelCheckTarg(source);
+				if (type == 1) damage /= frandompick(2.5,2.75,3.0); // Demonic foes
+				if (type == 2) damage /= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
+				if (type == 3) damage /= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
+				if (type == 4) damage /= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+				if (FlyingBalrog(source) || FlyingBalrogDVDS(source))
+				{
+					damage = 0;
+					target = source;
+					return 0;
+				}
+				else
+				{
+					if (target)
+					{
+						if (PlayerPawn(target))
+						{
+							if (type == 1 && random(1,100) <= 95) target = source;
+							if (type == 2 && random(1,100) <= 45) target = source;
+							if (type == 3 && random(1,100) <= 20) target = source;
+							if (type == 4 && random(1,100) <= 70) target = source;
+						}
+						else
+						{
+							if (type == 1 && random(1,100) <= 80) target = source;
+							if (type == 2 && random(1,100) <= 30) target = source;
+							if (type == 3 && random(1,100) <= 5) target = source;
+							if (type == 4 && random(1,100) <= 55) target = source;
+						}
+					}
+				}
 			}
 			else
 			if (inflictor)
@@ -1410,6 +1440,32 @@ mixin class MonsterCollider
 				if (type == 2) damage /= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
 				if (type == 3) damage /= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
 				if (type == 4) damage /= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+				if (FlyingBalrog(inflictor) || FlyingBalrogDVDS(inflictor))
+				{
+					damage = 0;
+					target = inflictor;
+					return 0;
+				}
+				else
+				{
+					if (target)
+					{
+						if (PlayerPawn(target))
+						{
+							if (type == 1 && random(1,100) <= 95) target = inflictor;
+							if (type == 2 && random(1,100) <= 45) target = inflictor;
+							if (type == 3 && random(1,100) <= 20) target = inflictor;
+							if (type == 4 && random(1,100) <= 70) target = inflictor;
+						}
+						else
+						{
+							if (type == 1 && random(1,100) <= 80) target = inflictor;
+							if (type == 2 && random(1,100) <= 30) target = inflictor;
+							if (type == 3 && random(1,100) <= 5) target = inflictor;
+							if (type == 4 && random(1,100) <= 55) target = inflictor;
+						}
+					}
+				}
 			}
 		}
 		
@@ -1429,6 +1485,31 @@ mixin class MonsterCollider
 				if (angvstype == 2) damage *= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
 				if (angvstype == 3) damage *= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
 				if (angvstype == 4) damage *= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+				Console.Printf("angvstype: %d", angvstype);
+				if (FlyingBalrog(self) || FlyingBalrogDVDS(self))
+				{
+					damage += ((SpawnHealth() + Stamina) * frandom(2.5,3.25));
+				}
+				else
+				{
+					if (source && PushyArchAngel(source))
+					{
+						if (angvstype == 1 && random(1,100) <= 80) target = source;
+						if (angvstype == 2 && random(1,100) <= 30) target = source;
+						if (angvstype == 3 && random(1,100) <= 5) target = source;
+						if (angvstype == 4 && random(1,100) <= 55) target = source;
+					}
+					else
+					{
+						if (inflictor && PushyArchAngel(inflictor))
+						{
+							if (angvstype == 1 && random(1,100) <= 80) target = inflictor;
+							if (angvstype == 2 && random(1,100) <= 30) target = inflictor;
+							if (angvstype == 3 && random(1,100) <= 5) target = inflictor;
+							if (angvstype == 4 && random(1,100) <= 55) target = inflictor;
+						}
+					}
+				}
 			}
 		}
 
