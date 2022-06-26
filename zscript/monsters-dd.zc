@@ -4286,6 +4286,7 @@ class Knucklehead : DDOrigCreature
 //SHILLFISH
 class Shillfish : DDOrigCreature
 {
+	int surpriselol;
 	default
 	{
 		//$Angled
@@ -4311,10 +4312,13 @@ class Shillfish : DDOrigCreature
 		+NOBLOOD
 		+NOINFIGHTING
 		+NOTARGET
+		+DONTHARMCLASS
+		+DONTHARMSPECIES
 		Obituary "%o was sunk by a shillfish.";
 		Painsound "aqua/kill2";
 		Deathsound "aqua/kill2";
 		Tag "Shillfish";
+		Species "Shillfish";
 	}
 	
 	States
@@ -4324,21 +4328,74 @@ class Shillfish : DDOrigCreature
 			SHEL E 10 A_Look();
 			Loop;
 		See:
-			SHEL AA 5 A_EEChase("Melee","Missile",0,1,3,1,1);
-			SHEL BB 5;
+			SHEL AA 5 
+			{
+				if (surpriselol > 0) 
+				{
+					A_SetTics(random(2,3));
+					if (random(1,4) <= 3) A_EEChase("Melee","Missile",CHF_FASTCHASE,1,3,1,1);
+													 else A_EEChase("Melee","Missile",0,1,3,1,1);
+				}
+				else 
+				{
+					A_EEChase("Melee","Missile",0,1,3,1,1);
+				}
+			}
+			SHEL BB 5
+			{
+				if (surpriselol > 0) 
+				{
+					A_SetTics(random(2,3));
+					if (random(1,8) <= 1) A_EEChase("Melee","Missile",CHF_FASTCHASE,1,3,1,1);
+													 else A_EEChase("Melee","Missile",0,1,3,1,1);
+				}
+			}
+			SHEL B 0
+			{
+				double chancebase = (128.0 - (CountInv("MonsterLevel") * 1.03125));
+				if (chancebase < 25.0) chancebase = 25.0;
+				double chancebase2 = (1.0 + (CountInv("MonsterLevel") * 0.02));
+				if (chancebase2 > 5.0) chancebase2 = 5.0;
+
+				if (target && HellClericDVDS(target))
+				{
+					surpriselol = 1;
+				}
+				else
+				{
+					if (frandom(0.1,chancebase) <= chancebase2)
+					{
+						if (surpriselol <= 0) surpriselol = (randompick(4,5,5) * randompick(1,1,1,1,1,1,2,2,3));
+					}
+					else
+					{
+						surpriselol--;
+					}
+				}
+				if (surpriselol < 0) surpriselol = 0;
+				if (dydudebug_monsterspecialai) Console.Printf("chancebase: %d (%d), surpriselol: %d", chancebase, chancebase2, surpriselol);
+			}
 			Loop;
 		Melee:
 			SHEL C 0 A_DynamicMusic();
-			SHEL C 6 A_FaceTarget();
-			SHEL D 6 
+			SHEL C 6 
 			{
+				if (target && HellClericDVDS(target)) A_SetTics(random(2,3));
+				A_FaceTarget();
+			}
+			SHEL D 6
+			{
+				if (target && HellClericDVDS(target)) A_SetTics(random(2,3));
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30) A_SetTics(5);
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60) A_SetTics(4);
 				int dmg = A_CalcDamageFormula2(random(15,35),0.0667,random(10,20),0.05,random(5,15),0.035,0.005);
 				
 				A_CustomMeleeAttack(dmg, "gard/swing", "gard/swing", "", 1);
 			}
-			SHEL E 6;
+			SHEL E 6
+			{
+				if (target && HellClericDVDS(target)) A_SetTics(random(2,3));
+			}
 			Goto See;
 		Pain:
 			SHEL E 6 A_Pain();
@@ -4356,6 +4413,18 @@ class Shillfish : DDOrigCreature
 			SHEL GH 7 Bright;
 			SHEL I 7 Bright A_NoBlocking();
 			Stop;
+	}
+}
+
+class ShillfishFuzzy : Shillfish
+{
+	default
+	{
+		+DONTHARMCLASS
+		+DONTHARMSPECIES
+		+SHADOW
+		RenderStyle "OptFuzzy";
+		Species "Shillfish";
 	}
 }
 
@@ -4383,6 +4452,8 @@ class Shillfish_Fly : Shillfish
 		DamageFactor "Bap", 0;
 		PainChance "Bap", 0;
 		MONSTER;
+		+DONTHARMCLASS
+		+DONTHARMSPECIES
 		+FLOORCLIP
 		+NOBLOOD
 		+NOINFIGHTING
@@ -4391,6 +4462,7 @@ class Shillfish_Fly : Shillfish
 		Painsound "aqua/kill2";
 		Deathsound "aqua/kill2";
 		Tag "Shillfish";
+		Species "Shillfish";
 	}
 	
 	States
@@ -4400,8 +4472,37 @@ class Shillfish_Fly : Shillfish
 			SHEL E 10 A_Look();
 			Loop;
 		See:
-			SHEL AA 5 A_EEChase("Melee","Missile",0,1,3,1,1);
-			SHEL BB 5;
+			SHEL AA 5 
+			{
+				if (surpriselol) 
+				{
+					A_SetTics(random(2,3));
+					A_EEChase("Melee","Missile",CHF_FASTCHASE,1,3,1,1);
+				}
+				else 
+				{
+					A_EEChase("Melee","Missile",0,1,3,1,1);
+				}
+			}
+			SHEL BB 5
+			{
+				if (surpriselol) 
+				{
+					A_SetTics(random(2,3));
+					A_EEChase("Melee","Missile",CHF_FASTCHASE,1,3,1,1);
+				}
+			}
+			SHEL B 0
+			{
+				if (random(1,128) <= 1)
+				{
+					if (!surpriselol) surpriselol = 10;
+				}
+				else
+				{
+					surpriselol--;
+				}
+			}
 			Loop;
 		Melee:
 			SHEL C 6 A_FaceTarget();
@@ -4409,7 +4510,7 @@ class Shillfish_Fly : Shillfish
 			{
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30) A_SetTics(5);
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60) A_SetTics(4);
-				int dmg = A_CalcDamageFormula2(random(15,35),0.0667,random(10,20),0.05,random(5,15),0.035,0.005);
+				int dmg = A_CalcDamageFormula2(random(15,35),0.1334,random(10,20),0.1,random(5,15),0.07,0.01);
 				
 				A_CustomMeleeAttack(dmg, "gard/swing", "gard/swing", "", 1);
 			}
@@ -4433,6 +4534,19 @@ class Shillfish_Fly : Shillfish
 			Stop;
 	}
 }
+
+class Shillfish_FlyFuzzy : Shillfish_Fly
+{
+	default
+	{
+		+DONTHARMCLASS
+		+DONTHARMSPECIES
+		+SHADOW
+		RenderStyle "OptFuzzy";
+		Species "Shillfish";
+	}
+}
+
 
 //BELLEFISH
 class Chase_Water : CustomInventoryExt
