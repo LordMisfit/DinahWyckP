@@ -8,6 +8,7 @@ class EvilDinah : DDOrigBoss
 	int candleshottype;
 	int candleshotalttype;
 	int shotangerror;
+	int lastweaponused;
 	default
 	{
 		//$Category RPMonsters
@@ -58,6 +59,7 @@ class EvilDinah : DDOrigBoss
 		if (atktype == 6) ATKState = FindState("MusicAttk");
 		if (atktype == 7) ATKState = FindState("SuckAttk");
 		if (atktype == 8) ATKState = FindState("CandleAttk");
+		lastweaponused = atktype;
 		if (ATKState != null) 
 		{
 			A_JumpPreAttack();
@@ -117,14 +119,46 @@ class EvilDinah : DDOrigBoss
 			if (random(1,256) >= 32)
 			{
 				state ATKState;
-				if (PlayerWeapon is "CricketBat") ATKState = FindState("CricketAttk");
-				else if (PlayerWeapon is "BlunderAxe") ATKState = FindState("BlunderAttk");
-				else if (PlayerWeapon is "AppleJack") ATKState = FindState("JackAttk");
-				else if (PlayerWeapon is "Scrambler") ATKState = FindState("EggAttk");
-				else if (PlayerWeapon is "WizardPike") ATKState = FindState("PikeAttk");
-				else if (PlayerWeapon is "Grimophone") ATKState = FindState("MusicAttk");
-				else if (PlayerWeapon is "SuperVac") ATKState = FindState("SuckAttk");
-				else if (PlayerWeapon is "FosnianCandle") ATKState = FindState("CandleAttk");
+				if (PlayerWeapon is "CricketBat") 
+				{
+					lastweaponused = 1;
+					ATKState = FindState("CricketAttk");
+				}
+				else if (PlayerWeapon is "BlunderAxe")
+				{
+					lastweaponused = 2;
+					ATKState = FindState("BlunderAttk");
+				}
+				else if (PlayerWeapon is "AppleJack")
+				{
+					lastweaponused = 3;
+					ATKState = FindState("JackAttk");
+				}
+				else if (PlayerWeapon is "Scrambler")
+				{
+					lastweaponused = 4;
+					ATKState = FindState("EggAttk");
+				}
+				else if (PlayerWeapon is "WizardPike") 
+				{
+					lastweaponused = 5;
+					ATKState = FindState("PikeAttk");
+				}
+				else if (PlayerWeapon is "Grimophone")
+				{
+					lastweaponused = 6;
+					ATKState = FindState("MusicAttk");
+				}
+				else if (PlayerWeapon is "SuperVac")
+				{
+					lastweaponused = 7;
+					ATKState = FindState("SuckAttk");
+				}
+				else if (PlayerWeapon is "FosnianCandle")
+				{
+					lastweaponused = 8;
+					ATKState = FindState("CandleAttk");
+				}
 				else 
 				{
 					A_UseRandomWeapon();
@@ -249,7 +283,8 @@ class EvilDinah : DDOrigBoss
 			if (FndBomb) FndBomb.MudBomb = level;
 		}
 	}
-
+	
+	int numpikeglows;
 	int lasthealth;
 	int targlasthealth;
 	override void PostBeginPlay()
@@ -257,6 +292,7 @@ class EvilDinah : DDOrigBoss
 		DDOrigBoss.PostBeginPlay();
 		lasthealth = health;
 	}
+	
 	override void Tick()
 	{
 		DDOrigBoss.Tick();
@@ -276,6 +312,58 @@ class EvilDinah : DDOrigBoss
 			if (dydudebug_monsterspecialai) Console.Printf("(%s) target.health: %d, targlasthealth: %d", target.GetClassName(), target.health, targlasthealth);
 		}
 		else targlasthealth = 0;
+		
+		// Allow her Pike to emit dynlights when "equipped"
+		if (health > 0)
+		{
+			//Console.Printf("Attempt - lastweaponused: %d, exex_glowingpike: %d", lastweaponused, exex_glowingpike);
+			if (lastweaponused == 5 && exex_glowingpike)
+			{
+				//Console.Printf("Found");
+				numpikeglows = 0;
+				ThinkerIterator GlowAttach = ThinkerIterator.Create("PikeGlowAttachED");
+				Actor mo;
+				while (mo = PikeGlowAttachED(GlowAttach.Next()))
+				{
+					//Console.Printf("Attach");
+					numpikeglows++;
+					if (numpikeglows) break;
+				}
+				if (!numpikeglows)
+				{
+					bool success;
+					actor PGAED;
+					[success, PGAED] = A_SpawnItemEx("PikeGlowAttachED",self.pos.x,self.pos.y,self.pos.z,0,0,0,0,SXF_NOCHECKPOSITION);
+					if (success && PGAED)
+					{
+						numpikeglows++;
+						PGAED.target = self;
+						//Console.Printf("Add PGA-ED");
+					}
+					else 
+					{
+						//Console.Printf("PGA-ED Failed");
+					}
+				}
+			}
+			else
+			{
+				if (numpikeglows)
+				{
+					//Console.Printf("Check 1");
+					ThinkerIterator GlowAttach = ThinkerIterator.Create("PikeGlowAttachED");
+					Actor mo;
+					while (mo = PikeGlowAttachED(GlowAttach.Next()))
+					{
+						//Console.Printf("Destroy");
+						mo.Destroy();
+						numpikeglows--;
+					}
+					if (numpikeglows) numpikeglows = 0;
+				}
+			}
+		}
+		
 	}
 	
 	States
