@@ -477,6 +477,7 @@ class DDWeapon : Weapon
 		double pitch;
 		FTranslatedLineTarget t;
 		int actualdamage;
+		Name modtype = 'Melee';
 
 		if (!norandom)
 			damage *= random[cwpunch](1, 8);
@@ -537,9 +538,13 @@ class DDWeapon : Weapon
 					}
 				}
 			}
-			
 			if (pufftype == 'PikePuff' || pufftype == 'PikePuffIP')
 			{
+				if (DeathIncarnate(t.linetarget) && pufftype == 'PikePuffIP')
+				{
+					damage += ((t.linetarget.SpawnHealth() + t.linetarget.Stamina) * 8);
+					modtype = 'KillPoke';
+				}
 				if ((Teacher_VokterClone(t.linetarget) && !(t.linetarget.CountInv("VokterCloneShield") || t.linetarget.CountInv("VokterCloneShield2"))) || Teacher_QuisClone(t.linetarget))
 				{
 					damage *= frandompick(4.8,5.4,5.4,5.4,6.0,6.0,6.0,6.0,6.0,6.0,6.6,6.6,6.6,7.2);
@@ -556,7 +561,7 @@ class DDWeapon : Weapon
 		int puffFlags = LAF_ISMELEEATTACK | ((flags & CPF_NORANDOMPUFFZ) ? LAF_NORANDOMPUFFZ : 0);
 
 		Actor puff;
-		[puff, actualdamage] = LineAttack (angle, range, pitch, damage, 'Melee', pufftype, puffFlags, t);
+		[puff, actualdamage] = LineAttack (angle, range, pitch, damage, modtype, pufftype, puffFlags, t);
 		if (puff)
 		{
 			let IPPuff = EEProjectile(puff);
@@ -768,6 +773,17 @@ class DDWeapon : Weapon
 					player.mo.A_SetBlend("44 22 ff",0.42,random(47,59));
 					giveammoamt *= 3.5;
 					BaseTimeAdd *= 3.5;
+				}
+				else
+				if (DeathIncarnate(t.linetarget))
+				{
+					player.mo.A_StopSound(17);
+					player.mo.A_StartSound("misc/ammodrain1",17,CHANF_DEFAULT,frandom(1.0,1.5),ATTN_NORM,frandom(0.6,0.8));
+					player.mo.A_StopSound(18);
+					player.mo.A_StartSound("misc/ammodrain2",18,CHANF_DEFAULT,frandom(1.0,1.5),ATTN_NORM,frandom(1.0,1.4));
+					player.mo.A_SetBlend("44 22 ff",0.42,random(47,59));
+					giveammoamt *= 2.5;
+					BaseTimeAdd *= 2.5;
 				}
 				else
 				{
@@ -8506,6 +8522,73 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		Obituary "%k scored a point with %o.";
 	}
 	
+	action bool A_ScramblerEggHCheck()
+	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		if (MiscItem)
+		{
+			if (player.mo.waterlevel < 3 || (player.mo.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2))
+			{
+				int CurrHealth = player.mo.health;
+				int maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.005)));
+				if (TruePlayerLevel >= 26 && TruePlayerLevel <= 50) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.075)));
+				if (TruePlayerLevel >= 51 && TruePlayerLevel <= 75) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.0875)));
+				if (TruePlayerLevel >= 76 && TruePlayerLevel <= 100) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.09375)));
+				if (TruePlayerLevel >= 101 && TruePlayerLevel <= 150) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.096875)));
+				if (TruePlayerLevel >= 151) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.0125)));
+				if (maxheal > (MiscItem.MaxHealthTrue * 3)) maxheal = (MiscItem.MaxHealthTrue * 3);
+				if (CurrHealth < maxheal) return true;
+			}
+			return false;
+		}
+		return false;
+	}
+	
+	action void A_ScramblerEggH()
+	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = 0;
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		if (MiscItem)
+		{
+			int CurrHealth = player.mo.health;
+			int OldHealth = player.mo.health;
+			int maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.005)));
+			if (TruePlayerLevel >= 26 && TruePlayerLevel <= 50) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.075)));
+			if (TruePlayerLevel >= 51 && TruePlayerLevel <= 75) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.0875)));
+			if (TruePlayerLevel >= 76 && TruePlayerLevel <= 100) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.09375)));
+			if (TruePlayerLevel >= 101 && TruePlayerLevel <= 150) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.096875)));
+			if (TruePlayerLevel >= 151) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.0125)));
+			if (maxheal > (MiscItem.MaxHealthTrue * 3)) maxheal = (MiscItem.MaxHealthTrue * 3);
+			int healamt = ((randompick(1,1,2,2,2) * randompick(1,2,2,3,4)));
+			healamt += (TruePlayerLevel * (frandompick(0.75,1.0,1.25,1.5,1.75) * randompick(1,1,1,1,1,2,2,2,3)));
+			if (random(1,8) <= 1) healamt *= frandompick(0.5,2);
+			double healmul = ((1.00 + ((MiscItem.UsedEggHeal * frandom(0.00667,0.01334)) * frandompick(0.25,0.25,0.25,0.5))) * 0.5);
+			if (healmul >= 2.0) healmul = 2.0;
+			healamt *= healmul;
+			//Console.Printf("TruePlayerLevel: %d, CurrHealth: %d, healamt: %d, maxheal: %d", TruePlayerLevel, CurrHealth, healamt, maxheal);
+			
+			if (CurrHealth < maxheal)
+			{
+				player.mo.A_TakeInventory("EggAmmo",1);
+				CurrHealth += healamt;
+				if (CurrHealth > maxheal) CurrHealth = maxheal;
+				player.mo.health = player.health = CurrHealth;
+				double maskpitch = 1.00;
+				if (player.mo.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+				player.mo.A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+				player.BonusCount += (healamt * frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.75));
+				
+				int healdiff = CurrHealth - OldHealth;
+				if (healdiff > 0) invoker.A_RecoverHUD(healdiff, 0, true);
+				MiscItem.HPRegenBoostTimer += (randompick(9,10,10,11,11,12,13) * 1.25);
+				MiscItem.UsedEggHeal++;
+			}
+		}
+	}
+	
 	action void A_ScramblerSwing(int type = 0, double dist = 72.0)
 	{
 		string vispart = "ScramblerSwingPartNoReflect";
@@ -8850,6 +8933,24 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			}
 			loop;
 		Fire:
+			SCRM A 0
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				int TruePlayerLevel = 0;
+				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				//Console.Printf("Fire input: %d", buttons);
+				if (TruePlayerLevel >= exex_scramblerelnomolvlreq && (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT) && CountInv("EggAmmo") > 1 && A_ScramblerEggHCheck())
+				{
+					return resolvestate("ElNomo");
+				}
+				else
+				{
+					A_ForcePlayStateMelee("Melee");
+				}
+				return resolvestate(null);
+			}
 			SCRM A 2
 			{
 				A_ForcePlayStateMelee("Melee");
@@ -8922,6 +9023,17 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		AltFire:
 			SCRM A 0
 			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+				int TruePlayerLevel = 0;
+				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				//Console.Printf("AltFire input: %d", buttons);
+				if (TruePlayerLevel >= exex_scramblerelnomolvlreq && (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT) && CountInv("EggAmmo") > 1 && A_ScramblerEggHCheck())
+				{
+					return resolvestate("ElNomo");
+				}
+
 				if (!CountInv("EggAmmo")) { return resolvestate("Fire"); }
 				return resolvestate(null);
 			}
@@ -9028,6 +9140,42 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			SCRM B 1
 			{
 				A_PanSwingSet1Tic();
+			}
+			goto Ready;
+		ElNomo:
+			SCRM BC 2
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+				{
+					A_SetTics(1);
+				}
+			}
+			#### ####################### 1 
+			{
+				//A_Lower(3);
+			}
+			#### # 8
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+				{
+					A_SetTics(random(3,5));
+				}
+				else
+				{
+					A_SetTics(random(3,5)*2);
+				}
+				A_ScramblerEggH();
+			}
+			#### ####################### 1 
+			{
+				//A_Raise(3);
+			}
+			SCRM CB 2
+			{
+				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+				{
+					A_SetTics(1);
+				}
 			}
 			goto Ready;
 	}
@@ -12126,12 +12274,14 @@ class WizardPike : DinahWeapon replaces RocketLauncher
 				A_TakeInventory("PikeAmmo",invoker.InvisoCost);
 				if (!player.CountInv("PowerInvisibility2"))
 				{
+					invistime *= frandompick(1.0,1.0,1.0,1.0,1.0,1.0,1.125);
 					player.SetInventory("PowerInvisibility2",1);
 					let InvisoItem = PowerInvisibility2(player.FindInventory("PowerInvisibility2"));
 					if (InvisoItem) InvisoItem.EffectTics = invistime * TICRATE;
 				}
 				else
 				{
+					invistime *= frandompick(1.0,1.0,1.0,1.125,1.125,1.125,1.25);
 					let InvisoItem = PowerInvisibility2(player.FindInventory("PowerInvisibility2"));
 					if (InvisoItem) InvisoItem.EffectTics += invistime * TICRATE;
 				}
