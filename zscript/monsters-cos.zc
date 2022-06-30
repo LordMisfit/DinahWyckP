@@ -6306,6 +6306,32 @@ class Delila_Boss : DDOrigBoss
 		Tag "Delila Dorsey";
 	}
 	
+	bool A_DownedCheckForTempest()
+	{
+		// Send the healing projectile to Tempest.
+		if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) { }
+		else
+		{
+			ThinkerIterator TempestFinder = ThinkerIterator.Create("Tempest_Boss");
+			Actor mo;
+			Tempest_Boss mo2;
+			int numfound = 0;
+			while (mo = Actor(TempestFinder.Next()))
+			{
+				mo2 = Tempest_Boss(mo);
+				if (mo2 && mo2.health > 0) 
+				{
+					target = mo2;
+					Console.Printf("Found a Tempest_Boss! - health: %d, [%s]", mo2.health, mo2.GetClassName());
+					return true;
+				}
+				return false;
+			}
+			return false;
+		}
+		return false;
+	}
+
 	States
 	{
 		Spawn:
@@ -6338,6 +6364,16 @@ class Delila_Boss : DDOrigBoss
 			DLIL III 3;
 			Goto See;
 		Death:
+			DLIL E 0
+			{
+				if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) { }
+				else
+				{
+					if (A_DownedCheckForTempest() == false) return resolvestate("Death.Defeated");
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
 			DLIL E 20 { bFLOATBOB = false; }
 			DLIL FFFFFF 20;
 			DLIL F 1 A_CheckProximity("Death","DinahPlayer",40);
@@ -6361,8 +6397,24 @@ class Delila_Boss : DDOrigBoss
 				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
 			}
 			DLIL F 0 A_NoBlocking();
+			DLIL F 0
+			{
+				if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) return resolvestate(null);
+																								else return resolvestate("FadeOut");
+			}
 			DLIL F -1;
 			Stop;
+		FadeOut:
+			DLIL F 105;
+			DLIL F 0 
+			{
+				A_StartSound("vokter/tele",18,CHANF_DEFAULT,1.0,ATTN_NONE,1.0);
+				A_StartSound("vokter/tele",19,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.925,1.075));
+				A_StartSound("vokter/tele",20,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.85,1.15));
+				A_StartSound("vokter/tele",21,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.775,1.225));
+			}
+			DLIL F 1 A_Fadeout(frandompick(0.019,0.020,0.021),FTF_REMOVE);
+			wait;
 	}
 }
 
