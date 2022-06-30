@@ -1014,8 +1014,9 @@ class DDWeapon : Weapon
 			if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 			if (MiscItem) movespeed *= (1.0 + (TruePlayerLevel * 0.025));
 			if (player.mo.CountInv("PowerRoastBuff")) bufffactor += 0.125;
-			if (player.mo.CountInv("PowerEggBuff") || player.mo.CountInv("PowerEggBuff2")) bufffactor += 0.0625;
+			if (player.mo.CountInv("PowerEggBuff") || player.mo.CountInv("PowerEggBuff2")) bufffactor += 0.125;
 			if (player.mo.CountInv("PowerFruitBuff") || player.mo.CountInv("PowerFruitBuff2")) bufffactor += 0.0625;
+			if (player.mo.CountInv("PowerRoastBuff")) bufffactor += 0.125;
 			if (player.mo.CountInv("PowerMealBuff") || player.mo.CountInv("PowerMealBuff2")) bufffactor += 0.25;
 			if (player.mo.CountInv("PowerMeal2Buff") || player.mo.CountInv("PowerMeal2Buff2")) bufffactor += 0.25;
 			if (player.ReadyWeapon is "HandToHand") bufffactor += 0.25;
@@ -8530,22 +8531,7 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = 0;
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-		if (MiscItem)
-		{
-			if (player.mo.waterlevel < 3 || (player.mo.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2))
-			{
-				int CurrHealth = player.mo.health;
-				int maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.005)));
-				if (TruePlayerLevel >= 26 && TruePlayerLevel <= 50) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.075)));
-				if (TruePlayerLevel >= 51 && TruePlayerLevel <= 75) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.0875)));
-				if (TruePlayerLevel >= 76 && TruePlayerLevel <= 100) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.09375)));
-				if (TruePlayerLevel >= 101 && TruePlayerLevel <= 150) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.096875)));
-				if (TruePlayerLevel >= 151) maxheal = (MiscItem.MaxHealthTrue * (1.00 + (TruePlayerLevel * 0.0125)));
-				if (maxheal > (MiscItem.MaxHealthTrue * 3)) maxheal = (MiscItem.MaxHealthTrue * 3);
-				if (CurrHealth < maxheal) return true;
-			}
-			return false;
-		}
+		if (MiscItem && player.mo.waterlevel < 3 || (player.mo.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2)) return true;
 		return false;
 	}
 	
@@ -8575,23 +8561,51 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			
 			if (CurrHealth < maxheal)
 			{
-				player.mo.A_TakeInventory("EggAmmo",1);
 				CurrHealth += healamt;
 				if (CurrHealth > maxheal) CurrHealth = maxheal;
 				player.mo.health = player.health = CurrHealth;
-				double maskpitch = 1.00;
-				if (player.mo.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
-				player.mo.A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
 				player.BonusCount += (healamt * frandompick(1.25,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.75));
-				
-				player.mo.A_GiveInventory("PowerEggBuff");
-				player.mo.A_GiveInventory("PowerEggBuff2");
 				
 				int healdiff = CurrHealth - OldHealth;
 				if (healdiff > 0) invoker.A_RecoverHUD(healdiff, 0, true);
 				MiscItem.HPRegenBoostTimer += (randompick(9,10,10,11,11,12,13) * 1.25);
-				MiscItem.UsedEggHeal++;
 			}
+			
+			player.mo.A_TakeInventory("EggAmmo",1);
+			double maskpitch = 1.00;
+			if (player.mo.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+			player.mo.A_StartSound("Dinah/eat",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+
+			if (MiscItem)
+			{
+				double timegive = ((3.00 + (TruePlayerLevel * frandompick(0.02,0.025,0.03)) + (MiscItem.UsedEggHeal * frandompick(0.03125,0.0625,0.09375))) * TICRATE);
+				//Console.Printf("timegive: %.8f", timegive);
+
+				if (!player.mo.CountInv("PowerEggBuff"))
+				{
+					player.mo.SetInventory("PowerEggBuff",1);
+					let BerserkItem = PowerEggBuff(player.mo.FindInventory("PowerEggBuff"));
+					if (BerserkItem) BerserkItem.EffectTics = timegive;
+				}
+				else
+				{
+					let BerserkItem = PowerEggBuff(player.mo.FindInventory("PowerEggBuff"));
+					if (BerserkItem) BerserkItem.EffectTics += timegive;
+				}
+				if (!player.mo.CountInv("PowerEggBuff2"))
+				{
+					player.mo.SetInventory("PowerEggBuff2",1);
+					let BerserkItem = PowerEggBuff2(player.mo.FindInventory("PowerEggBuff2"));
+					if (BerserkItem) BerserkItem.EffectTics = timegive;
+				}
+				else
+				{
+					let BerserkItem = PowerEggBuff2(player.mo.FindInventory("PowerEggBuff2"));
+					if (BerserkItem) BerserkItem.EffectTics += timegive;
+				}
+			}
+
+			MiscItem.UsedEggHeal++;
 		}
 	}
 	
@@ -9149,6 +9163,12 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 			}
 			goto Ready;
 		ElNomo:
+			SCRM A 0
+			{
+				A_StartSound("eggz/sizzle1",443,CHANF_DEFAULT,1.25,ATTN_NORM,frandom(0.90,1.10));
+				A_StartSound("eggz/sizzle1",444,CHANF_DEFAULT,1.375,ATTN_NORM,frandom(0.875,1.125));
+				A_StartSound("eggz/sizzle1",445,CHANF_DEFAULT,1.5,ATTN_NORM,frandom(0.85,1.15));
+			}
 			SCRM BC 2
 			{
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
@@ -9182,6 +9202,12 @@ class Scrambler : DinahWeapon replaces SuperShotgun
 				{
 					A_SetTics(1);
 				}
+			}
+			SCRM A 0
+			{
+				A_StopSound(443);
+				A_StopSound(444);
+				A_StopSound(445);
 			}
 			goto Ready;
 	}

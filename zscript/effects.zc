@@ -1300,12 +1300,25 @@ class PowerEggBuff : PowerFoodATK
 {
 	default
 	{
-		DamageFactor "Normal", 1.125;
+		DamageFactor "Normal", 1.0;
 		Inventory.Icon "FOODEA";
 		Powerup.Duration -3;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
+	}
+	
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (!passive && damage > 0)
+		{
+			double TOTALFactor = 1.25;
+			if (MiscItem) TOTALFactor = (1.25 + (MiscItem.UsedEggHeal * 0.00125));
+			if (TOTALFactor >= 2.5) TOTALFactor = 2.5;
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+		}
 	}
 }
 
@@ -1313,33 +1326,26 @@ class PowerEggBuff2 : PowerFoodDEF
 {
 	default
 	{
-		DamageFactor "Normal", 0.925;
-		DamageFactor "Melee", 0.925;
-		DamageFactor "Bonk", 0.925;
-		DamageFactor "Cricket", 0.925;
-		DamageFactor "Chop", 0.925;
-		DamageFactor "Lead", 0.925;
-		DamageFactor "Breakfast", 0.925;
-		DamageFactor "Zap", 0.925;
-		DamageFactor "Suck", 0.925;
-		DamageFactor "Dust", 0.925;
-		DamageFactor "Beats", 0.925;
-		DamageFactor "Cherrybomb", 0.925;
-		DamageFactor "BRocket", 0.925;
-		DamageFactor "Spinner", 0.925;
-		DamageFactor "Popper", 0.925;
-		DamageFactor "Dashing", 0.925;
-		DamageFactor "DashingBG", 0.925;
-		DamageFactor "DashingSD", 0.925;
-		DamageFactor "Bap", 0.925;
-		DamageFactor "Fire", 0.925;
-		DamageFactor "Boiling", 0.925;
+		DamageFactor "Normal", 1.0;
 
 		Inventory.Icon "FOODED";
 		Powerup.Duration -3;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
+	}
+	
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (passive && damage > 0)
+		{
+			double TOTALFactor = 0.8;
+			if (MiscItem) TOTALFactor = (0.8 - (MiscItem.UsedEggHeal * 0.0020));
+			if (TOTALFactor <= 0.4) TOTALFactor = 0.4;
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+		}
 	}
 }
 
