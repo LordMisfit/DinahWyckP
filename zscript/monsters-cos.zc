@@ -5991,7 +5991,7 @@ class TempSpawnCookie2 : TempSpawnCookie
 {
 }
 
-class KillCard : EEProjectile
+class KillCard : EECreature
 {
 	default
 	{
@@ -6010,6 +6010,8 @@ class KillCard : EEProjectile
 		+MISSILEMORE;
 		+MISSILEEVENMORE;
 		-COUNTKILL;
+		+NOTARGET;
+		+NOINFIGHTING;
 		Tag "Killer Card";
 		Obituary "%o was struck down by one of Delila Dorsey's magic cards.";
 	}
@@ -6020,7 +6022,11 @@ class KillCard : EEProjectile
 			DCRD A 1 A_Look();
 			Loop;
 		See:
-			DCRD ABCB 2 Bright A_Chase();
+			DCRD ABCB 2 Bright 
+			{
+				A_Chase();
+				if (tracer) Console.Printf("tracer [KillCard]: %s", tracer.GetClassName());
+			}
 			Loop;
 		Missile:
 			DCRD D 10 A_Stop();
@@ -6036,7 +6042,7 @@ class KillCard : EEProjectile
 	}
 }
 
-class HealCard : EEProjectile
+class HealCard : EECreature
 {
 	default
 	{
@@ -6054,29 +6060,83 @@ class HealCard : EEProjectile
 		+LOOKALLAROUND;
 		+MISSILEMORE;
 		+MISSILEEVENMORE;
+		+NOTARGET;
+		+NOINFIGHTING;
 		-COUNTKILL;
 		Tag "Healing Card";
 		Obituary "%o was struck down by one of Delila Dorsey's magic cards.";
 	}
 	
+	void A_CheckForTempest()
+	{
+		// Send the healing projectile to Tempest.
+		if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) 
+		{
+			Thing_Hate(0,996,0); 
+		}
+		else
+		{
+			ThinkerIterator TempestFinder = ThinkerIterator.Create("Tempest_Boss");
+			Actor mo;
+			Tempest_Boss mo2;
+			int numfound = 0;
+			while (mo = Actor(TempestFinder.Next()))
+			{
+				mo2 = Tempest_Boss(mo);
+				if (mo2 && mo2.health > 0) 
+				{
+					target = mo2;
+					Console.Printf("Found a Tempest_Boss! - health: %d, [%s]", mo2.health, mo2.GetClassName());
+				}
+			}
+		}
+	}
+	
 	States
 	{
 		Spawn:
-			DCRD A 0;
-			DCRD A 0 
-			{
-				if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) { Thing_Hate(0,996,0); } // Send the healing projectile to Tempest.
-			}
+			DCRD A 0 NoDelay;
+			DCRD A 0 A_CheckForTempest();
 			DCRD A 1 A_Look();
 			Loop;
 		See:
-			DCRD ABCB 2 Bright A_Chase();
+			DCRD ABCB 2 Bright 
+			{
+				A_Chase();
+				if (tracer) Console.Printf("tracer [KillCard]: %s", tracer.GetClassName());
+			}
 			Loop;
 		Missile:
 			DCRD E 10 A_Stop();
-			DCRD E 1 A_FaceTarget();
-			DCRD E 0 A_StartSound("aqua/kill1");
-			DCRD E 1 Bright A_SpawnProjectile("HealBall",8,0);
+			DCRD E 1
+			{
+				A_FaceTarget();
+			}
+			DCRD E 1 Bright 
+			{
+				A_StartSound("aqua/kill1");
+				if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1))
+				{ 
+					A_SpawnProjectile("HealBall",8,0);
+				}
+				else
+				{
+					ThinkerIterator TempestFinder = ThinkerIterator.Create("Tempest_Boss");
+					Actor mo;
+					Tempest_Boss mo2;
+					int numfound = 0;
+					while (mo = Actor(TempestFinder.Next()))
+					{
+						mo2 = Tempest_Boss(mo);
+						if (mo2 && mo2.health > 0) 
+						{
+							target = mo2;
+							A_SpawnProjectile("HealBall",8,0);
+							Console.Printf("Found a Tempest_Boss to Shoot HealBall at! - health: %d, [%s]", mo2.health, mo2.GetClassName());
+						}
+					}
+				}
+			}
 			DCRD E 0 A_Die();
 			Goto Death;
 		Death:
@@ -6086,37 +6146,133 @@ class HealCard : EEProjectile
 	}
 }
 
-class HealBall : EEProjectile
+class HealBall : EEEffectProjectile
 {
 	default
 	{
 		Radius 8;
 		Height 6;
 		Speed 14;
-		Damage 2;
+		DamageFunction (0);
 		+SEEKERMISSILE;
 		+NOEXTREMEDEATH;
 		PROJECTILE;
 		DamageType "HealingSpell";
-		PoisonDamage 32;
 		DeathSound "virtuoso/musichit";
+	}
+	
+	override int SpecialMissileHit (Actor victim) // HealMissile
+ 	{
+		EECreature healee;
+		DDPlayerPawn healee2;
+		if (victim) healee = EECreature(victim);
+		if (victim) healee2 = DDPlayerPawn(victim);
+
+		if (healee && healee.bISMONSTER)
+		{
+			int maxhp = (healee.SpawnHealth() + healee.Stamina);
+			if (healee.health > 0 && healee.health < maxhp)
+			{
+				healee.health += (maxhp * 0.166667); 
+				if (healee.health > maxhp) healee.health = maxhp;
+			}
+			else
+			{
+				healee.health += (maxhp * 0.053334); 
+				if (healee.health > maxhp*1.5) healee.health = (maxhp*1.5);
+			}
+		}
+		else
+		{
+			if (healee2)
+			{
+				int PlayerHP = healee2.health;
+				let MiscItem = PlayerStatItem(healee2.FindInventory("PlayerStatItem"));
+				if (MiscItem)
+				{
+					int maxhp = MiscItem.MaxHealthTrue;
+					Console.Printf("health: %d, maxhp: %d", PlayerHP, maxhp);
+					if (PlayerHP > 0 && PlayerHP < maxhp)
+					{
+						PlayerHP += (maxhp * 0.33334);
+						if (PlayerHP > maxhp) PlayerHP = maxhp;
+					}
+					else
+					{
+						PlayerHP += (maxhp * 0.11112); 
+						if (PlayerHP > maxhp*3) PlayerHP = (maxhp*3);
+					}
+				}
+				Console.Printf("PlayerHP: %d, healee.health: %d", PlayerHP, healee2.health);
+				if (PlayerHP > healee2.health) 
+				{
+					actor player = players[0].mo;
+					player.health = PlayerHP;
+					healee2.health = PlayerHP;
+					player.A_StartSound("Dinah/Giggle",CHAN_VOICE);
+				}
+			}
+		}
+		return -1;
+	}
+
+	void A_CheckForTempest()
+	{
+		// Send the healing projectile to Tempest.
+		if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) 
+		{
+			Thing_Hate(0,996,0); 
+		}
+		else
+		{
+			ThinkerIterator TempestFinder = ThinkerIterator.Create("Tempest_Boss");
+			Actor mo;
+			Tempest_Boss mo2;
+			int numfound = 0;
+			while (mo = Actor(TempestFinder.Next()))
+			{
+				mo2 = Tempest_Boss(mo);
+				if (mo2 && mo2.health > 0) 
+				{
+					tracer = mo2;
+					Console.Printf("Found a Tempest_Boss! - health: %d, [%s]", mo2.health, mo2.GetClassName());
+				}
+			}
+		}
+	}
+	
+	void A_TracerCheck()
+	{
+		if (tracer)
+		{
+			if (!Tempest_Boss(tracer)) A_CheckForTempest();
+			Console.Printf("\c[green]tracer: %s", tracer.GetClassName());
+		}
+		else 
+		{
+			Console.Printf("\c[orange]no tracer");
+			A_CheckForTempest();
+		}
+		//if (target) Console.Printf("target: %s", target.GetClassName());
+		//			 else Console.Printf("no target");
+		A_SeekerMissile(10,10,SMF_LOOK);
 	}
 	
 	States
 	{
 		Spawn:
-			CBOM A 1 Bright A_SeekerMissile(10,10,SMF_LOOK);
+			CBOM A 1 Bright A_TracerCheck();
 			CBOM A 1 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
-			CBOM B 1 Bright A_SeekerMissile(10,10,SMF_LOOK);
+			CBOM B 1 Bright A_TracerCheck();
 			CBOM B 1 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
-			CBOM C 1 Bright A_SeekerMissile(10,10,SMF_LOOK);
+			CBOM C 1 Bright A_TracerCheck();
 			CBOM C 1 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
-			CBOM D 1 Bright A_SeekerMissile(10,10,SMF_LOOK);
+			CBOM D 1 Bright A_TracerCheck();
 			CBOM D 1 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
 			Loop;
 		
 		Death:
-			TNT1 A 0 A_Explode(1,128,0,0,1);
+			TNT1 A 0; //A_Explode(1,128,0,0,1);
 			TNT1 AAAAAAAAAAAA 1 A_SpawnItemEx("Mininote", 0, 0, 25, 2, 0, random(-2,2), random(0,359));
 			Stop;
 	}
@@ -6217,6 +6373,7 @@ class Delila_BossClone : Delila_Boss
 // ???????? ???????
 class Tempest_Boss : DDOrigBoss
 {
+	int healint;
 	default
 	{
 		//$Category RPBosses
@@ -6264,15 +6421,24 @@ class Tempest_Boss : DDOrigBoss
 			GVNR A 3 A_SetTranslucent(0.6,0);
 			GVNR A 3 A_SetTranslucent(0.8,0);
 			GVNR A 3 A_SetTranslucent(1,0);
-			GVNR A 0 { bINVULNERABLE = false; }
-			GVNR A 0 { bNONSHOOTABLE = false; }
+			GVNR A 0 
+			{
+				//Become hurtable again
+				A_SetShootable();
+				A_SetSolid();
+				A_UnSetInvulnerable();
+			}
 			goto See3;
 		See3:
-			GVNR C 1 A_Chase();
+			GVNR C 1 A_EEChase("Melee","Missile",0,1,3,1,1);
 			Goto Missile;
 		SpawnClones:
-			GVNR A 0 { bINVULNERABLE = true; }
-			GVNR A 0 { bNONSHOOTABLE = true; }
+			GVNR A 0
+			{
+				A_UnsetShootable();
+				A_UnsetSolid();
+				A_SetInvulnerable();
+			}
 			GVNR A 3 A_SetTranslucent(0.8,0);
 			GVNR A 3 A_SetTranslucent(0.6,0);
 			GVNR A 3 A_SetTranslucent(0.4,0);
@@ -6285,19 +6451,32 @@ class Tempest_Boss : DDOrigBoss
 			GVNR A 3 A_SetTranslucent(0.6,0);
 			GVNR A 3 A_SetTranslucent(0.8,0);
 			GVNR A 3 A_SetTranslucent(1,0);
-			GVNR A 0 { bINVULNERABLE = false; }
-			GVNR A 0 { bNONSHOOTABLE = false; } //Become hurtable again
+			GVNR A 0 
+			{
+				//Become hurtable again
+				A_SetShootable();
+				A_SetSolid();
+				A_UnSetInvulnerable();
+			}
 			goto See3;
 		Missile:
 			GVNR C 0 A_Jump(128,"MissileZap");
 			GVNR C 0 A_StartSound("tempest/sight");
 			GVNR C 8 A_FaceTarget();
 			GVNR DDD 2 A_Recoil(-16);
-			GVNR EEE 2 A_CustomMeleeAttack (random(20,35), "mallethit", "malletmiss","chop", 1);
+			GVNR EEE 2 
+			{
+				int dmg = A_CalcDamageFormula2(random(20,35),0.11356,random(10,20),0.085,random(5,15),0.0595,0.01);
+				A_CustomMeleeAttack (random(20,35), "mallethit", "malletmiss","chop", 1);
+			}
 			GVNR F 2 A_Jump(128,8);
 			GVNR F 8 A_FaceTarget();
 			GVNR GGG 2 A_Recoil(-10);
-			GVNR HHH 2 A_CustomMeleeAttack (random(35,50), "mallethit", "malletmiss","chop", 1);
+			GVNR HHH 2 
+			{
+				int dmg = A_CalcDamageFormula2(random(35,50),0.11356,random(17,34),0.085,random(8,24),0.0595,0.01);
+				A_CustomMeleeAttack (dmg, "mallethit", "malletmiss","chop", 1);
+			}
 			GVNR IC 10;
 			Goto Flee;
 		MissileZap:
@@ -6306,50 +6485,50 @@ class Tempest_Boss : DDOrigBoss
 			GVNR L 8 bright;
 			GVNR M 3 bright A_SpawnProjectile("badZapshot",40);
 			GVNR M 3 bright;
-			GVNR M 0 bright A_SpawnProjectile("badZapshot",40,-48);
-			GVNR M 3 bright A_SpawnProjectile("badZapshot",40,48);
+			GVNR M 3 bright 
+			{
+				A_SpawnProjectile("badZapshot",40,-48);
+				A_SpawnProjectile("badZapshot",40,48);
+			}
 			GVNR M 3 bright;
 			GVNR M 3 bright A_SpawnProjectile("badZapshot",40);
 			GVNR NN 3;
 			GVNR JC 3;
 			Goto See3;
 		Pain:
-			GVNR O 10 A_Pain;
+			GVNR O 10 A_EEPain();
 			Goto Flee;
 		Pain.Fire: //Make Governor Tempest less cheesable with Fosnian Candle mainly
 			GVNR O 4 A_Pain();
-			GVNR O 0 { bINVULNERABLE = true; }
-			GVNR O 0 { bNONSHOOTABLE = true; }
+			GVNR L 0
+			{ 
+				A_UnSetshootable();
+				A_UnsetSolid();
+				A_SetInvulnerable();
+			}
 			GVNR O 6;
-			Goto Flee+2;
+			Goto Flee+1;
 		Pain.HealingSpell:
-			GVNR L 0 { bINVULNERABLE = true; }
-			GVNR L 0 { bNONSHOOTABLE = true; }
-			GVNR L 0 healthing(2,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
-			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
-			GVNR L 1 healthing(25,1500);
+			GVNR L 0
+			{ 
+				A_UnSetshootable();
+				A_UnsetSolid();
+				A_SetInvulnerable();
+			}
+			GVNR LLLLLLLLLLLLLLLLLLLL 1 
+			{
+				//healint++;
+				//HealThing((12 + (healint % 2)),(SpawnHealth() + Stamina));
+				A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			}
 			Goto Flee;
 		Flee:
-			GVNR C 0 { bINVULNERABLE = true; }
-			GVNR A 0 { bNONSHOOTABLE = true; }
+			GVNR C 0
+			{ 
+				A_UnSetshootable();
+				A_UnsetSolid();
+				A_SetInvulnerable();
+			}
 			GVNR C 3 A_SetTranslucent(0.8,0);
 			GVNR C 3 A_SetTranslucent(0.6,0);
 			GVNR C 3 A_SetTranslucent(0.4,0);
