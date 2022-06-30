@@ -5979,5 +5979,393 @@ class Forsaken_Jorgensen : CoSForsaken
 }
 
 // ?????? [????]
+class TempSpawnCookie : CustomInventoryExt
+{
+	default
+	{
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+	}
+}
+class TempSpawnCookie2 : TempSpawnCookie
+{
+}
+
+class KillCard : EEProjectile
+{
+	default
+	{
+		Radius 3;
+		Height 3;
+		Health 1;
+		Speed 0; //SpawnItemEx handles the movement of the cards now
+		Scale 1;
+		MONSTER;
+		RENDERSTYLE "Normal";
+		+NOEXTREMEDEATH;
+		+NOGRAVITY;
+		+DONTFALL;
+		-SOLID;
+		+LOOKALLAROUND;
+		+MISSILEMORE;
+		+MISSILEEVENMORE;
+		-COUNTKILL;
+		Tag "Killer Card";
+		Obituary "%o was struck down by one of Delila Dorsey's magic cards.";
+	}
+	
+	States
+	{
+		Spawn:
+			DCRD A 1 A_Look();
+			Loop;
+		See:
+			DCRD ABCB 2 Bright A_Chase();
+			Loop;
+		Missile:
+			DCRD D 10 A_Stop();
+			DCRD D 1 A_FaceTarget();
+			DCRD D 0 A_StartSound("zappo");
+			DCRD D 1 Bright A_SpawnProjectile("BadZapShot",8,0);
+			DCRD D 0 A_Die();
+			Goto Death;
+		Death:
+			ZBUX A 4 bright;
+			ZBUX BCD 4 Bright;
+			stop;
+	}
+}
+
+class HealCard : EEProjectile
+{
+	default
+	{
+		Radius 3;
+		Height 3;
+		Health 1;
+		Speed 0;
+		Scale 1;
+		MONSTER;
+		RENDERSTYLE "Normal";
+		+NOEXTREMEDEATH;
+		+NOGRAVITY;
+		+DONTFALL;
+		-SOLID;
+		+LOOKALLAROUND;
+		+MISSILEMORE;
+		+MISSILEEVENMORE;
+		-COUNTKILL;
+		Tag "Healing Card";
+		Obituary "%o was struck down by one of Delila Dorsey's magic cards.";
+	}
+	
+	States
+	{
+		Spawn:
+			DCRD A 0;
+			DCRD A 0 
+			{
+				if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) { Thing_Hate(0,996,0); } // Send the healing projectile to Tempest.
+			}
+			DCRD A 1 A_Look();
+			Loop;
+		See:
+			DCRD ABCB 2 Bright A_Chase();
+			Loop;
+		Missile:
+			DCRD E 10 A_Stop();
+			DCRD E 1 A_FaceTarget();
+			DCRD E 0 A_StartSound("aqua/kill1");
+			DCRD E 1 Bright A_SpawnProjectile("HealBall",8,0);
+			DCRD E 0 A_Die();
+			Goto Death;
+		Death:
+			SPNR C 4 bright;
+			SPNR DEFG 4 Bright;
+			stop;
+	}
+}
+
+class HealBall : EEProjectile
+{
+	default
+	{
+		Radius 8;
+		Height 6;
+		Speed 14;
+		Damage 2;
+		+SEEKERMISSILE;
+		+NOEXTREMEDEATH;
+		PROJECTILE;
+		DamageType "HealingSpell";
+		PoisonDamage 32;
+		DeathSound "virtuoso/musichit";
+	}
+	
+	States
+	{
+		Spawn:
+			CBOM A 1 Bright A_SeekerMissile(10,10,SMF_LOOK);
+			CBOM A 1 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
+			CBOM B 1 Bright A_SeekerMissile(10,10,SMF_LOOK);
+			CBOM B 1 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
+			CBOM C 1 Bright A_SeekerMissile(10,10,SMF_LOOK);
+			CBOM C 1 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
+			CBOM D 1 Bright A_SeekerMissile(10,10,SMF_LOOK);
+			CBOM D 1 Bright A_SpawnItemEx("notetrail", 0, 0, 0, 0, 0, 0, 180, 128);
+			Loop;
+		
+		Death:
+			TNT1 A 0 A_Explode(1,128,0,0,1);
+			TNT1 AAAAAAAAAAAA 1 A_SpawnItemEx("Mininote", 0, 0, 25, 2, 0, random(-2,2), random(0,359));
+			Stop;
+	}
+}
+
+// ?????? ??????
+class Delila_Boss : DDOrigBoss
+{
+	default
+	{
+		//$Category RPBosses;
+		Health 30;
+		Radius 20;
+		Height 56;
+		Speed 0;
+		Scale 1;
+		PainChance 256;
+		Mass 5000;
+		DamageFactor "HealingSpell", 0;
+		MONSTER;
+		+FLOORCLIP;
+		+NOINFIGHTING;
+		+NOBLOOD;
+		+DONTTHRUST;
+		+LOOKALLAROUND;
+		+NOGRAVITY;
+		+FLOATBOB;
+		+NOTARGET;
+		+MISSILEMORE;
+		+MISSILEEVENMORE;
+		Tag "Delila Dorsey";
+	}
+	
+	States
+	{
+		Spawn:
+			DLIL G 0 ThrustThingz(0,0,0,0);
+			DLIL GG 10 A_Look();
+			Goto See;
+		See:
+			DLIL GGGG 2 A_Chase();
+			Loop;
+		Pain:
+			DLIL E 8;
+			Goto See;
+		Missile:
+			DLIL G 0 A_FaceTarget();
+			DLIL G 0 A_StartSound("dancer/danceattk");
+			DLIL HHHHHHHHHHHH 2 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
+			DLIL G 2 A_Jump(128,"HealCardAttk");
+			DLIL I 0 A_SpawnItemEx("KillCard",0,0,0,8,0,0,90); //Cards are spawned via SpawnItemEx now.
+			DLIL I 12 A_SpawnItemEx("KillCard",0,0,0,8,0,0,-90);
+			Goto Teleporting;
+		HealCardAttk:
+			DLIL I 12 A_SpawnItemEx("HealCard",0,0,0,8,0,0,90);
+			Goto Teleporting;
+		Teleporting:
+			DLIL I 6 A_Jump(160,3);
+			DLIL I 12
+			{
+				if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) { ACS_Execute(897,0,0,0,0); }
+			}
+			DLIL III 3;
+			Goto See;
+		Death:
+			DLIL E 20 { bFLOATBOB = false; }
+			DLIL FFFFFF 20;
+			DLIL F 1 A_CheckProximity("Death","DinahPlayer",40);
+			DLIL F -1 Thing_Raise(0);
+		Raise:
+			DLIL GG 2 ThrustThingz(0,16,0,1);
+			DLIL GG 2 ThrustThingz(0,8,1,1);
+			DLIL G 0 { bFLOATBOB = true; }
+			DLIL G 2
+			{
+				if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) { ACS_Execute(995,0,0,0,0); } // Teleport(897,0,FALSE);
+			}
+			Goto Spawn;
+		Death.Defeated:
+			DLIL E 0 { bFLOATBOB = false; }
+			DLIL E 0 A_SetGravity(0.25);
+			DLIL E 0;
+			DLIL EEEEEEEE 7 Bright
+			{
+				A_StartSound("weapons/cherryboom");
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			DLIL F 0 A_NoBlocking();
+			DLIL F -1;
+			Stop;
+	}
+}
+
+class Delila_BossClone : Delila_Boss
+{
+}
 
 // ???????? ???????
+class Tempest_Boss : DDOrigBoss
+{
+	default
+	{
+		//$Category RPBosses
+		Health 1500;
+		Radius 20;
+		Height 80;
+		Speed 10;
+		MeleeRange 80;
+		PainChance 200;
+		Painchance "Suck", 64;
+		DamageFactor "Bonk", 2;
+		DamageFactor "Chop", 2;
+		DamageFactor "Zap", 0.25;
+		DamageFactor "Beats", 0.25;
+		DamageFactor "Suck", 0;
+		Painchance "HealingSpell", 256;
+		RenderStyle "Normal";
+		Mass 5000;
+		Scale 1;
+		MONSTER;
+		+FLOORCLIP;
+		+NOBLOOD;
+		+NOINFIGHTING;
+		+DONTHARMCLASS;
+		+NOTARGET;
+		+DONTRIP;
+		+LOOKALLAROUND;
+		Seesound "tempest/sight";
+		PainSound "tempest/pain";
+		DeathSound "krag/death";
+		Obituary "%o lost a duel with the former Governor Tempest.";
+		Tag "Governor Tempest";
+	}
+	
+	States
+	{
+		Spawn:
+			GVNR A 10 A_Look();
+			Loop;
+		See:
+			TNT1 A 0 A_JumpIfInventory ("TempSpawnCookie2", 1, "See3");
+			TNT1 A 0 A_GiveInventory ("TempSpawnCookie2");
+			GVNR A 3 A_SetTranslucent(0.2,0);
+			GVNR A 3 A_SetTranslucent(0.4,0);
+			GVNR A 3 A_SetTranslucent(0.6,0);
+			GVNR A 3 A_SetTranslucent(0.8,0);
+			GVNR A 3 A_SetTranslucent(1,0);
+			GVNR A 0 { bINVULNERABLE = false; }
+			GVNR A 0 { bNONSHOOTABLE = false; }
+			goto See3;
+		See3:
+			GVNR C 1 A_Chase();
+			Goto Missile;
+		SpawnClones:
+			GVNR A 0 { bINVULNERABLE = true; }
+			GVNR A 0 { bNONSHOOTABLE = true; }
+			GVNR A 3 A_SetTranslucent(0.8,0);
+			GVNR A 3 A_SetTranslucent(0.6,0);
+			GVNR A 3 A_SetTranslucent(0.4,0);
+			GVNR A 3 A_SetTranslucent(0.2,0);
+			GVNR A 3 A_SetTranslucent(0,0);
+			GVNR AAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_Wander();
+			GVNR AAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_Wander();
+			GVNR A 3 A_SetTranslucent(0.2,0);
+			GVNR A 3 A_SetTranslucent(0.4,0);
+			GVNR A 3 A_SetTranslucent(0.6,0);
+			GVNR A 3 A_SetTranslucent(0.8,0);
+			GVNR A 3 A_SetTranslucent(1,0);
+			GVNR A 0 { bINVULNERABLE = false; }
+			GVNR A 0 { bNONSHOOTABLE = false; } //Become hurtable again
+			goto See3;
+		Missile:
+			GVNR C 0 A_Jump(128,"MissileZap");
+			GVNR C 0 A_StartSound("tempest/sight");
+			GVNR C 8 A_FaceTarget();
+			GVNR DDD 2 A_Recoil(-16);
+			GVNR EEE 2 A_CustomMeleeAttack (random(20,35), "mallethit", "malletmiss","chop", 1);
+			GVNR F 2 A_Jump(128,8);
+			GVNR F 8 A_FaceTarget();
+			GVNR GGG 2 A_Recoil(-10);
+			GVNR HHH 2 A_CustomMeleeAttack (random(35,50), "mallethit", "malletmiss","chop", 1);
+			GVNR IC 10;
+			Goto Flee;
+		MissileZap:
+			GVNR CJ 3;
+			GVNR K 5 bright A_StartSound("Handmother/Zap");
+			GVNR L 8 bright;
+			GVNR M 3 bright A_SpawnProjectile("badZapshot",40);
+			GVNR M 3 bright;
+			GVNR M 0 bright A_SpawnProjectile("badZapshot",40,-48);
+			GVNR M 3 bright A_SpawnProjectile("badZapshot",40,48);
+			GVNR M 3 bright;
+			GVNR M 3 bright A_SpawnProjectile("badZapshot",40);
+			GVNR NN 3;
+			GVNR JC 3;
+			Goto See3;
+		Pain:
+			GVNR O 10 A_Pain;
+			Goto Flee;
+		Pain.Fire: //Make Governor Tempest less cheesable with Fosnian Candle mainly
+			GVNR O 4 A_Pain();
+			GVNR O 0 { bINVULNERABLE = true; }
+			GVNR O 0 { bNONSHOOTABLE = true; }
+			GVNR O 6;
+			Goto Flee+2;
+		Pain.HealingSpell:
+			GVNR L 0 { bINVULNERABLE = true; }
+			GVNR L 0 { bNONSHOOTABLE = true; }
+			GVNR L 0 healthing(2,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			GVNR LL 1 A_SpawnItemEx("NoteTrail", 0, 0, 25, random(2,3), 0, random(-4,4), random(0,359));
+			GVNR L 1 healthing(25,1500);
+			Goto Flee;
+		Flee:
+			GVNR C 0 { bINVULNERABLE = true; }
+			GVNR A 0 { bNONSHOOTABLE = true; }
+			GVNR C 3 A_SetTranslucent(0.8,0);
+			GVNR C 3 A_SetTranslucent(0.6,0);
+			GVNR C 3 A_SetTranslucent(0.4,0);
+			GVNR C 3 A_SetTranslucent(0.2,0);
+			GVNR C 3 A_SetTranslucent(0,0);
+			Goto SpawnClones+25;
+		Death:
+			GVNR O 10 A_Scream();
+			GVNR P 5 bright;
+			TBUM A 0 A_StartSound("teacher/death");
+			TBUM ABCDEFGH 5 bright;
+			TBUM I 5 bright A_NoBlocking();
+			Stop;
+	}
+}
+
+class Tempest_BossClone : Tempest_Boss
+{
+}
