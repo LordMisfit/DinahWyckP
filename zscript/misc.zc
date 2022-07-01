@@ -11,6 +11,8 @@ class PlayerStatItem : Inventory
 	
 	actor weapon;
 	
+	bool isDDTrilogy;
+	int CoSHealPoolInt;
 	int UsedEggHeal;
 	int AngerLevelEventNTimer;
 	int prevarmordifficulty;
@@ -310,6 +312,7 @@ class PlayerStatItem : Inventory
 				if (playeractor.GetClassName() == "DinahPlayer" || playeractor.GetClassName() == "RatPlayer") CharacterClass = 10;
 				
 				cankick = true;
+
 				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
 				{
 					if (ddafd_disablehandtohand == 1)
@@ -610,6 +613,9 @@ class PlayerStatItem : Inventory
 				}
 				if (dydudebug_airmeter) Console.Printf("CanTalkUnderwater %d", CanTalkUnderwater);
 				
+				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls"))) isDDTrilogy = true;
+				//Console.Printf("isDDTrilogy: %d", isDDTrilogy);
+
 				// Ikari/Item Points
 				MaxItemPoints = 100;
 				if (TrueGameSkill == SKILL_VERY_EASY) MaxItemPoints += (TruePlayerLevel * 1.5);
@@ -2457,6 +2463,45 @@ class PlayerStatItem : Inventory
 		let globalvars = DDGlobalVariables.Get();
 		let playeractor = DDPlayerPawn(owner);
 		
+		bool healpoolaccel = false;
+		// Handles Carnival of Souls' Healing Pool in the Wyck Suite V:
+		if (owner.CountInv("IsCarnOfSouls") && level.levelnum == 41)
+		{
+			//CurrentHealth = owner.player.mo.health;
+			//if (owner.cursector) Console.Printf("Sector #: %d", owner.cursector.Index());
+			if (owner.cursector && owner.cursector.Index() == 582)
+			{
+				healpoolaccel = true;
+				CoSHealPoolInt++;
+				//Console.Printf("CurrentHealth: %d / %d, CoSHealPoolInt: %d / 16", CurrentHealth, MaxHealthTrue, CoSHealPoolInt);
+				if (CurrentHealth < MaxHealthTrue)
+				{
+					if (CoSHealPoolInt >= 16)
+					{
+						int rec = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2) * (MaxHealthTrue * 0.4) / 100;
+						if (berserked) rec = randompick(1,1,1,1,1,1,1,1,1,2) * (MaxHealthTrue * 0.8) / 100;
+						rec *= 1.0 + (GoldApples * 0.005) + (PlatinumApples * 0.0125) + (PrismaticApples * 0.05);
+						if (rec < 1) rec = 1;
+						if (rec && dyduhud_showhpapdmgrecregen) A_RecoverHUD(rec, 0, false);
+						
+						CurrentHealth += rec;
+						if (CurrentHealth >= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
+						owner.player.health = owner.player.mo.health = CurrentHealth;
+						owner.A_SetBlend("00 00 FF",0.125,random(6,9));
+						CoSHealPoolInt = 0;
+					}
+				}
+				else
+				{
+					CoSHealPoolInt = 0;
+				}
+			}
+			else
+			{
+				CoSHealPoolInt = 0;
+			}
+		}
+		
 		if (weapon is "EvilWarriorShield")
 		{
 		}
@@ -3204,6 +3249,7 @@ class PlayerStatItem : Inventory
 							}
 							
 							if (afasdroptimer) inc = floor(inc * 0.5);
+							if (healpoolaccel) inc *= 2.5;
 							
 							if (BaseRegenMulti) BaseRegenMulti = (inc / BaseRegenMulti);
 							if (dydudebug_hpregen) Console.Printf("BaseRegenMulti [Regen]: %.8f", BaseRegenMulti);
@@ -3327,6 +3373,7 @@ class PlayerStatItem : Inventory
 							}
 							
 							if (afasdroptimer) inc = ceil(inc * 2.0);
+							if (healpoolaccel) inc *= 0.4;
 							
 							if (BaseRegenMulti) BaseRegenMulti = (inc / BaseRegenMulti);
 							if (dydudebug_hpregen) Console.Printf("BaseDegenMulti [Degen]: %.8f", BaseRegenMulti);
