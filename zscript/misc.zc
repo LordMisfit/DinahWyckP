@@ -13,6 +13,7 @@ class PlayerStatItem : Inventory
 	
 	int cutsceneskipusehold;
 	bool isDDTrilogy;
+	int DDChapter;
 	int CoSHealPoolInt;
 	int UsedEggHeal;
 	int AngerLevelEventNTimer;
@@ -628,6 +629,9 @@ class PlayerStatItem : Inventory
 					isDDTrilogy = true;
 					if (buttons & BT_USE)
 					{
+						if (owner.CountInv("IsDynDuchess")) DDChapter == 1;
+						if (owner.CountInv("IsAppetite")) DDChapter == 2;
+						if (owner.CountInv("IsCarnOfSouls")) DDChapter == 3;
 						if (owner.CountInv("IsDynDuchess") && level.levelnum == 1)
 						{
 							cutsceneskipusehold++;
@@ -3226,6 +3230,37 @@ class PlayerStatItem : Inventory
 							int inc = 20;
 							inc += ((TruePlayerLevel * 0.1) + (TruePlayerDEF * 0.1));
 							inc += ((GoldApples * 0.2) + (PlatinumApples * 0.5) + (PrismaticApples + 2.00));
+							// DD Trilogy NO-Rpg Bonuses
+							if (!exex_expenabled)
+							{
+								double DDTFactor = 0.0;
+								if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+								{
+									if (DD_RoseMother) DDTFactor += 0.14286;
+									if (DD_GameMother) DDTFactor += 0.14286;
+									if (DD_MossMother) DDTFactor += 0.14286;
+									if (DD_GlobeMother) DDTFactor += 0.14286;
+									if (DD_SphinxMother) DDTFactor += 0.14286;
+									if (DD_HandMother1) DDTFactor += 0.14286;
+									if (DD_HandMother2) DDTFactor += 0.14286;
+									if (DD_TrueHandMother) DDTFactor += 0.14286;
+									if (AFD_Krag) DDTFactor += 0.2;
+									if (AFD_Quisling) DDTFactor += 0.2;
+									if (AFD_Lauritz) DDTFactor += 0.2;
+									if (AFD_Jorgensen1) DDTFactor += 0.2;
+									if (AFD_Jorgensen2) DDTFactor += 0.2;
+									if (AFD_JorgCannon) DDTFactor += 0.2;
+									if (CoS_Fafnir) DDTFactor += 0.25;
+									if (CoS_FractalHens) DDTFactor += 0.25;
+									if (CoS_ForsakenJorg) DDTFactor += 0.25;
+									if (CoS_EvilDinah) DDTFactor += 0.25;
+									if (CoS_Tempest) DDTFactor += 0.25;
+									DDTFactor *= 0.125;
+									DDTFactor += 1.0;
+									inc *= DDTFactor;
+									if (dydudebug_hpregen) Console.Printf("inc: %d, DDTFactor: %.8f", inc, DDTFactor);
+								}
+							}
 							BaseRegenMulti = inc;
 							if (HPRegenBoostTimer) inc *= 2.5;
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Regen]: %d", HPRegenBoostTimer);
@@ -3341,6 +3376,37 @@ class PlayerStatItem : Inventory
 							int inc = 20;
 							inc -= ((TruePlayerLevel * 0.05) + (TruePlayerDEF * 0.05));
 							inc -= ((GoldApples * 0.05) + (PlatinumApples * 0.0125) + (PrismaticApples + 0.5));
+							// DD Trilogy NO-Rpg Bonuses
+							if (!exex_expenabled)
+							{
+								double DDTFactor = 0.0;
+								if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+								{
+									if (DD_RoseMother) DDTFactor -= 0.14286;
+									if (DD_GameMother) DDTFactor -= 0.14286;
+									if (DD_MossMother) DDTFactor -= 0.14286;
+									if (DD_GlobeMother) DDTFactor -= 0.14286;
+									if (DD_SphinxMother) DDTFactor -= 0.14286;
+									if (DD_HandMother1) DDTFactor -= 0.14286;
+									if (DD_HandMother2) DDTFactor -= 0.14286;
+									if (DD_TrueHandMother) DDTFactor -= 0.14286;
+									if (AFD_Krag) DDTFactor -= 0.2;
+									if (AFD_Quisling) DDTFactor -= 0.2;
+									if (AFD_Lauritz) DDTFactor -= 0.2;
+									if (AFD_Jorgensen1) DDTFactor -= 0.2;
+									if (AFD_Jorgensen2) DDTFactor -= 0.2;
+									if (AFD_JorgCannon) DDTFactor -= 0.2;
+									if (CoS_Fafnir) DDTFactor -= 0.25;
+									if (CoS_FractalHens) DDTFactor -= 0.25;
+									if (CoS_ForsakenJorg) DDTFactor -= 0.25;
+									if (CoS_EvilDinah) DDTFactor -= 0.25;
+									if (CoS_Tempest) DDTFactor -= 0.25;
+									DDTFactor *= 0.25;
+									DDTFactor += 1.0;
+									inc *= DDTFactor;
+									if (dydudebug_hpregen) Console.Printf("inc: %d, DDTFactor: %.8f", inc, DDTFactor);
+								}
+							}
 							BaseRegenMulti = inc;
 							if (HPRegenBoostTimer) inc *= 0.4;
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Degen]: %d", HPRegenBoostTimer);
@@ -4085,7 +4151,7 @@ class PlayerStatItem : Inventory
 
 			// Map Completion [No-RPG Mode]
 			double MapNoRPGJumpZ = 1.00;
-			double DDTNoRPGJumpZ = 1.0;
+			double DDTNoRPGJumpZ = 0.0;
 			if (!exex_expenabled) 
 			{
 				if (IsMorphed == 1)
@@ -4126,6 +4192,7 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) DDTNoRPGJumpZ += 0.025;
 					if (CoS_EvilDinah) DDTNoRPGJumpZ += 0.025;
 					if (CoS_Tempest) DDTNoRPGJumpZ += 0.025;
+					DDTNoRPGJumpZ += 1.0;
 					
 					if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [DDT NoRPG]: %.8f", DDTNoRPGJumpZ);
 				}
@@ -4436,6 +4503,36 @@ class PlayerStatItem : Inventory
 				let isammo = Ammo(currentitemtype);
 
 				itemname = currentitemtype.GetClassName();
+
+				if (!exex_expenabled)
+				{
+					double PerkFactor2 = 0.0;
+					if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+					{
+						if (DD_RoseMother) PerkFactor2 += 0.142857;
+						if (DD_GameMother) PerkFactor2 += 0.142857;
+						if (DD_MossMother) PerkFactor2 += 0.142857;
+						if (DD_GlobeMother) PerkFactor2 += 0.142857;
+						if (DD_SphinxMother) PerkFactor2 += 0.142857;
+						if (DD_HandMother1) PerkFactor2 += 0.142857;
+						if (DD_HandMother2) PerkFactor2 += 0.142857;
+						if (DD_TrueHandMother) PerkFactor2 += 0.142857;
+						if (AFD_Krag) PerkFactor2 += 0.20;
+						if (AFD_Quisling) PerkFactor2 += 0.20;
+						if (AFD_Lauritz) PerkFactor2 += 0.20;
+						if (AFD_Jorgensen1) PerkFactor2 += 0.20;
+						if (AFD_Jorgensen2) PerkFactor2 += 0.20;
+						if (AFD_JorgCannon) PerkFactor2 += 0.20;
+						if (CoS_Fafnir) PerkFactor2 += 0.25;
+						if (CoS_FractalHens) PerkFactor2 += 0.25;
+						if (CoS_ForsakenJorg) PerkFactor2 += 0.25;
+						if (CoS_EvilDinah) PerkFactor2 += 0.25;
+						if (CoS_Tempest) PerkFactor2 += 0.25;
+						PerkFactor2 += 1.0;
+						baseholdamount *= PerkFactor2;
+					}
+				}
+				
 				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
 				{
 					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
@@ -4921,6 +5018,7 @@ class PlayerStatItem : Inventory
 			{
 				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
 				{
+					DDTFactor = 0.00;
 					if (DD_RoseMother) DDTFactor += 0.057144;
 					if (DD_GameMother) DDTFactor += 0.057144;
 					if (DD_MossMother) DDTFactor += 0.057144;
@@ -4940,6 +5038,7 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) DDTFactor += 0.1;
 					if (CoS_EvilDinah) DDTFactor += 0.1;
 					if (CoS_Tempest) DDTFactor += 0.1;
+					DDTFactor += 1.00;
 					if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - DDT NoRPG): %.8f", DDTFactor);
 				}
 			}
@@ -5152,6 +5251,7 @@ class PlayerStatItem : Inventory
 			{
 				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
 				{
+					DDTFactor = 0.00;
 					if (DD_RoseMother) DDTFactor -= 0.014286;
 					if (DD_GameMother) DDTFactor -= 0.014286;
 					if (DD_MossMother) DDTFactor -= 0.014286;
@@ -5171,6 +5271,7 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) DDTFactor -= 0.025;
 					if (CoS_EvilDinah) DDTFactor -= 0.025;
 					if (CoS_Tempest) DDTFactor -= 0.025;
+					DDTFactor += 1.00;
 					if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - DDT NoRPG): %.8f", DDTFactor);
 				}
 			}
@@ -5440,7 +5541,7 @@ class PlayerStatItem : Inventory
 			// DD Trilogy NO-Rpg Bonuses
 			if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
 			{
-				double DDTFactor = 1.0;
+				double DDTFactor = 0.0;
 				if (DD_RoseMother) DDTFactor += 0.014286;
 				if (DD_GameMother) DDTFactor += 0.014286;
 				if (DD_MossMother) DDTFactor += 0.014286;
@@ -5460,7 +5561,7 @@ class PlayerStatItem : Inventory
 				if (CoS_ForsakenJorg) DDTFactor += 0.025;
 				if (CoS_EvilDinah) DDTFactor += 0.025;
 				if (CoS_Tempest) DDTFactor += 0.025;
-				
+				DDTFactor += 1.0;
 				Speed *= DDTFactor;
 				if (dydudebug_speedcalcs) Console.Printf("SpeedX [base (DDT No RPGMode)]: %.8f", DDTFactor);
 			}
@@ -6495,7 +6596,7 @@ class PlayerDashJump : Inventory
 				// DD Trilogy NO-Rpg Bonuses
 				if (!exex_expenabled && MiscItem)
 				{
-					double DDTFactor = 1.0;
+					double DDTFactor = 0.0;
 					if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
 					{
 						if (MiscItem.DD_RoseMother) DDTFactor += 0.14286;
@@ -6517,6 +6618,7 @@ class PlayerDashJump : Inventory
 						if (MiscItem.CoS_ForsakenJorg) DDTFactor += 0.25;
 						if (MiscItem.CoS_EvilDinah) DDTFactor += 0.25;
 						if (MiscItem.CoS_Tempest) DDTFactor += 0.25;
+						DDTFactor += 1.0;
 						if (dydudebug_dashing) Console.Printf("DDTFactor: %.8f", DDTFactor);
 						DDTFactor = int(floor(DDTFactor));
 						basecharge *= DDTFactor;
