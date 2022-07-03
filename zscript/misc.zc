@@ -155,7 +155,7 @@ class PlayerStatItem : Inventory
 	int MaxHealthTrueRF;
 	int HealthLevelAdd;
 	int HealthNoRPGAdd;
-	int HealthNoRPGAdd2;
+	double HealthNoRPGAdd2;
 	int HealthBonusAdd;
 	int MaxHealthLimit;
 	double MaxItemPoints;
@@ -170,7 +170,7 @@ class PlayerStatItem : Inventory
 	int TotalMass, BaseMass;
 	int MassLevelAdd;
 	int MassNoRPGAdd;
-	int MassNoRPGAdd2;
+	double MassNoRPGAdd2;
 	int MassBonusAdd;
 
 	int PlayerLevel, TruePlayerLevel;
@@ -1161,7 +1161,7 @@ class PlayerStatItem : Inventory
 						if (CoS_Tempest) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
 					}
 				}
-				MaxHealthTrue = (BaseStartMaxHealth + HealthNoRPGAdd2 + HealthLevelAdd2 + HealthBonusAdd2);
+				MaxHealthTrue = (BaseStartMaxHealth + int(HealthNoRPGAdd2) + HealthLevelAdd2 + HealthBonusAdd2);
 				
 				
 				//***************
@@ -3892,7 +3892,7 @@ class PlayerStatItem : Inventory
 			BaseMass = TotalMass;
 			if (dydudebug_masscalcs) Console.Printf("Mass [No-RPG Add]: %d", TotalMass);
 			
-			TotalMass += MassNoRPGAdd2;
+			TotalMass += int(MassNoRPGAdd2);
 			BaseMass = TotalMass;
 			if (dydudebug_masscalcs) Console.Printf("Mass [No-RPG Add 2]: %d", TotalMass);
 			
@@ -5947,6 +5947,7 @@ class PlayerDashJump : Inventory
 
 		int ExDashCharge2 = ExtraDashCharge;
 		int AddDashLevel2 = AddDashLevel;
+		int PerkFactor2 = 0;
 		if (!exex_expenabled) 
 		{
 			if (skill <= 0) ExDashCharge2 *= 4.0;
@@ -5963,9 +5964,37 @@ class PlayerDashJump : Inventory
 				AddDashLevel2 += (MiscItem.totalallsecrets * 0.3334);
 				if (berserked) AddDashLevel2 *= 1.125;
 			}
+
+			// DD Trilogy NO-Rpg Bonuses
+			if (MiscItem)
+			{
+				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				{
+					if (MiscItem.DD_RoseMother) PerkFactor2 += 14.2857;
+					if (MiscItem.DD_GameMother) PerkFactor2 += 14.2857;
+					if (MiscItem.DD_MossMother) PerkFactor2 += 14.2857;
+					if (MiscItem.DD_GlobeMother) PerkFactor2 += 14.2857;
+					if (MiscItem.DD_SphinxMother) PerkFactor2 += 14.2857;
+					if (MiscItem.DD_HandMother1) PerkFactor2 += 14.2857;
+					if (MiscItem.DD_HandMother2) PerkFactor2 += 14.2857;
+					if (MiscItem.DD_TrueHandMother) PerkFactor2 += 14.2857;
+					if (MiscItem.AFD_Krag) PerkFactor2 += 20;
+					if (MiscItem.AFD_Quisling) PerkFactor2 += 20;
+					if (MiscItem.AFD_Lauritz) PerkFactor2 += 20;
+					if (MiscItem.AFD_Jorgensen1) PerkFactor2 += 20;
+					if (MiscItem.AFD_Jorgensen2) PerkFactor2 += 20;
+					if (MiscItem.AFD_JorgCannon) PerkFactor2 += 20;
+					if (MiscItem.CoS_Fafnir) PerkFactor2 += 25;
+					if (MiscItem.CoS_FractalHens) PerkFactor2 += 25;
+					if (MiscItem.CoS_ForsakenJorg) PerkFactor2 += 25;
+					if (MiscItem.CoS_EvilDinah) PerkFactor2 += 25;
+					if (MiscItem.CoS_Tempest) PerkFactor2 += 25;
+					PerkFactor2 *= 0.5;
+				}
+			}
 		}
-		DashMaxCharge = BaseDashChargeMax + AddDashLevel2 + ExDashCharge2;
-		if (dydudebug_dashing) Console.Printf("DashMaxCharge: %d (BaseDashChargeMax: %d, AddDashLevel2: %d (%d), ExtraDashCharge2: %d (%d)", DashMaxCharge, BaseDashChargeMax, AddDashLevel2, AddDashLevel, ExDashCharge2, ExtraDashCharge);
+		DashMaxCharge = BaseDashChargeMax + AddDashLevel2 + ExDashCharge2 + PerkFactor2;
+		if (dydudebug_dashing) Console.Printf("DashMaxCharge: %d (BaseDashChargeMax: %d, AddDashLevel2: %d (%d), ExtraDashCharge2: %d (%d), PerkFactor2: %d", DashMaxCharge, BaseDashChargeMax, AddDashLevel2, AddDashLevel, ExDashCharge2, ExtraDashCharge, PerkFactor2);
 
 		if (berserked) DashMaxCharge *= 1.125;
 		if (itemtimer == 0) DashCharge = DashMaxCharge;
@@ -6432,13 +6461,13 @@ class PlayerDashJump : Inventory
 		
 		if (DashCharge < DashMaxCharge)
 		{
-			int basecharge;
+			int basecharge = 0;
 			if (!DashTics)
 			{
 				if (dydudebug_dashing) Console.Printf("(!DashTics)");
 				if (berserked)
 				{
-					if (level.time % 4) 
+					if (level.time % 4 == 0)
 					{
 						basecharge += 2; 
 					}
@@ -6449,7 +6478,7 @@ class PlayerDashJump : Inventory
 				}
 				else
 				{
-					if (level.time % 40) 
+					if (level.time % 40 == 0) 
 					{
 						basecharge += 2; 
 					}
@@ -6462,7 +6491,37 @@ class PlayerDashJump : Inventory
 				if (pushingdirection != 0) basechargeint *= 0.25;
 				if (owner.CountInv("DinahTrueIPState")) basecharge *= (5.0 + (TruePlayerLevel * (basechargeint * 2.5)) + (TruePlayerSPD * (basechargeint * 2.5)));
 				basecharge *= (1.0 + (TruePlayerLevel * basechargeint) + (TruePlayerSPD * basechargeint));
-				if (dydudebug_dashing) Console.Printf("basecharge [dash]: %d", basecharge);
+				if (dydudebug_dashing) Console.Printf("basecharge [dash]: %d, basechargeint: %.8f", basecharge, basechargeint);
+				// DD Trilogy NO-Rpg Bonuses
+				if (!exex_expenabled && MiscItem)
+				{
+					double DDTFactor = 1.0;
+					if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+					{
+						if (MiscItem.DD_RoseMother) DDTFactor += 0.14286;
+						if (MiscItem.DD_GameMother) DDTFactor += 0.14286;
+						if (MiscItem.DD_MossMother) DDTFactor += 0.14286;
+						if (MiscItem.DD_GlobeMother) DDTFactor += 0.14286;
+						if (MiscItem.DD_SphinxMother) DDTFactor += 0.14286;
+						if (MiscItem.DD_HandMother1) DDTFactor += 0.14286;
+						if (MiscItem.DD_HandMother2) DDTFactor += 0.14286;
+						if (MiscItem.DD_TrueHandMother) DDTFactor += 0.14286;
+						if (MiscItem.AFD_Krag) DDTFactor += 0.2;
+						if (MiscItem.AFD_Quisling) DDTFactor += 0.2;
+						if (MiscItem.AFD_Lauritz) DDTFactor += 0.2;
+						if (MiscItem.AFD_Jorgensen1) DDTFactor += 0.2;
+						if (MiscItem.AFD_Jorgensen2) DDTFactor += 0.2;
+						if (MiscItem.AFD_JorgCannon) DDTFactor += 0.2;
+						if (MiscItem.CoS_Fafnir) DDTFactor += 0.25;
+						if (MiscItem.CoS_FractalHens) DDTFactor += 0.25;
+						if (MiscItem.CoS_ForsakenJorg) DDTFactor += 0.25;
+						if (MiscItem.CoS_EvilDinah) DDTFactor += 0.25;
+						if (MiscItem.CoS_Tempest) DDTFactor += 0.25;
+						if (dydudebug_dashing) Console.Printf("DDTFactor: %.8f", DDTFactor);
+						DDTFactor = int(floor(DDTFactor));
+						basecharge *= DDTFactor;
+					}
+				}
 				DashCharge += basecharge;
 				if (DashCharge > DashMaxCharge) DashCharge = DashMaxCharge;
 			}
