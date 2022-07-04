@@ -2549,6 +2549,41 @@ class PlayerStatItem : Inventory
 		let playeractor = DDPlayerPawn(owner);
 		
 		bool healpoolaccel = false;
+		// The Bath in the Upper Level above the Manse Entrance
+		if (owner.CountInv("IsAppetite") && level.levelnum == 21)
+		{
+			if (owner.cursector && owner.cursector.Index() == 424)
+			{
+				healpoolaccel = true;
+				CoSHealPoolInt++;
+				//Console.Printf("CurrentHealth: %d / %d, CoSHealPoolInt: %d / 16", CurrentHealth, MaxHealthTrue, CoSHealPoolInt);
+				if (CurrentHealth < MaxHealthTrue)
+				{
+					if (CoSHealPoolInt >= 32)
+					{
+						int rec = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2) * (MaxHealthTrue * 0.4) / 100;
+						if (berserked) rec = randompick(1,1,1,1,1,1,1,1,1,2) * (MaxHealthTrue * 0.8) / 100;
+						rec *= 1.0 + (GoldApples * 0.005) + (PlatinumApples * 0.0125) + (PrismaticApples * 0.05);
+						if (rec < 1) rec = 1;
+						if (rec && dyduhud_showhpapdmgrecregen) A_RecoverHUD(rec, 0, false);
+						
+						CurrentHealth += rec;
+						if (CurrentHealth >= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
+						owner.player.health = owner.player.mo.health = CurrentHealth;
+						owner.A_SetBlend("00 00 FF",0.125,random(6,9));
+						CoSHealPoolInt = 0;
+					}
+				}
+				else
+				{
+					CoSHealPoolInt = 0;
+				}
+			}
+			else
+			{
+				CoSHealPoolInt = 0;
+			}
+		}
 		// Handles Carnival of Souls' Healing Pool in the Wyck Suite V:
 		if (owner.CountInv("IsCarnOfSouls") && level.levelnum == 41)
 		{

@@ -1574,10 +1574,13 @@ class CherryBombPickup : ExExInvBarItem
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = 0;
 				int TruePlayerATK = 0;
-				if (exex_expenabled && MiscItem) 
+				if (MiscItem)
 				{
-					TruePlayerLevel = MiscItem.PlayerLevel;
-					TruePlayerATK = MiscItem.PlayerATK;
+					if (exex_expenabled) 
+					{
+						TruePlayerLevel = MiscItem.PlayerLevel;
+						TruePlayerATK = MiscItem.PlayerATK;
+					}
 				}
 				let globalvars = DDGlobalVariables.Get();
 				double throwpowerxy = frandom(14.0,18.0);
@@ -1590,10 +1593,51 @@ class CherryBombPickup : ExExInvBarItem
 				double throwmaxangle = 3.5;
 				if (MiscItem)
 				{
-					throwpowerxy += (((TruePlayerLevel * throwmulvelxy) + (TruePlayerATK * throwmulvelxy)) * throwmulvelext);
-					throwpowerz += (((TruePlayerLevel * throwmulvelz) + (TruePlayerATK * throwmulvelz)) * throwmulvelext);
-					throwminangle *= (1.0 - (TruePlayerLevel * 0.01875));
-					throwmaxangle *= (1.0 - (TruePlayerLevel * 0.01875));
+					if (exex_expenabled)
+					{
+						throwpowerxy += (((TruePlayerLevel * throwmulvelxy) + (TruePlayerATK * throwmulvelxy)) * throwmulvelext);
+						throwpowerz += (((TruePlayerLevel * throwmulvelz) + (TruePlayerATK * throwmulvelz)) * throwmulvelext);
+						throwminangle *= (1.0 - (TruePlayerLevel * 0.01875));
+						throwmaxangle *= (1.0 - (TruePlayerLevel * 0.01875));
+					}
+					else
+					{
+						if ((player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls")))
+						{
+							double PerkFactor2 = 0.0;
+							if (MiscItem.DD_RoseMother) PerkFactor2 += 0.0142857;
+							if (MiscItem.DD_GameMother) PerkFactor2 += 0.0142857;
+							if (MiscItem.DD_MossMother) PerkFactor2 += 0.0142857;
+							if (MiscItem.DD_GlobeMother) PerkFactor2 += 0.0142857;
+							if (MiscItem.DD_SphinxMother) PerkFactor2 += 0.0142857;
+							if (MiscItem.DD_HandMother1) PerkFactor2 += 0.0142857;
+							if (MiscItem.DD_HandMother2) PerkFactor2 += 0.0142857;
+							if (MiscItem.DD_TrueHandMother) PerkFactor2 += 0.0142857;
+							if (MiscItem.AFD_Krag) PerkFactor2 += 0.020;
+							if (MiscItem.AFD_Quisling) PerkFactor2 += 0.020;
+							if (MiscItem.AFD_Lauritz) PerkFactor2 += 0.020;
+							if (MiscItem.AFD_Jorgensen1) PerkFactor2 += 0.020;
+							if (MiscItem.AFD_Jorgensen2) PerkFactor2 += 0.020;
+							if (MiscItem.AFD_JorgCannon) PerkFactor2 += 0.020;
+							if (MiscItem.CoS_Fafnir) PerkFactor2 += 0.025;
+							if (MiscItem.CoS_FractalHens) PerkFactor2 += 0.025;
+							if (MiscItem.CoS_ForsakenJorg) PerkFactor2 += 0.025;
+							if (MiscItem.CoS_EvilDinah) PerkFactor2 += 0.025;
+							if (MiscItem.CoS_Tempest) PerkFactor2 += 0.025;
+							PerkFactor2 *= 3.0;
+							PerkFactor2 += 1.0;
+							if (dydudebug_attackstuff) Console.Printf("PerkFactor2 [throwpower]: %.4f", PerkFactor2);
+							throwpowerxy *= PerkFactor2;
+							throwpowerz *= PerkFactor2;
+							PerkFactor2 -= 1.0;
+							PerkFactor2 *= 0.6667;
+							if (dydudebug_attackstuff) Console.Printf("PerkFactor2 [throwangle]: %.4f", PerkFactor2);
+							throwminangle *= (1.0 - PerkFactor2);
+							if (throwminangle > 0.000) throwminangle = 0.000;
+							throwmaxangle *= (1.0 - PerkFactor2);
+							if (throwmaxangle < 0.000) throwmaxangle = 0.000;
+						}
+					}
 				}
 				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1))
 				{
