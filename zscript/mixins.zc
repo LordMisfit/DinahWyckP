@@ -1454,7 +1454,7 @@ mixin class MonsterCollider
 		return type;
 	}
 	
-	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
+	Actor, Actor, int, Name, int, double, int CheckMonType(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
 		DDPlayerPawn playpawn;
 		playpawn = DDPlayerPawn(source);
@@ -1462,17 +1462,91 @@ mixin class MonsterCollider
 		EECreature selfEE;
 		selfEE = EECreature(self);
 		
+		int angvstype;
+		
 		if (Tempest_BossClone(self))
 		{
 			if (mod == 'HeelExplosion' || (source && (ReelHeel(source) || ReelHeelNew(source)))) damage *= 2.5;
+			else
+			{
+				if ((source && source.bBOSS) || (inflictor && inflictor.bBOSS))
+				{
+					damage *= 0.25;
+					if (flags & DMG_EXPLOSION) damage *= 0.25;
+					if (health <= ((SpawnHealth() + Stamina) * 0.25))
+					{
+						damage *= 0.25;
+						if (flags & DMG_EXPLOSION) damage *= 0.25;
+					}
+				}
+			}
 		}
 		
-		if (Delila_BossClone(self))
+		Delila_BossClone DBC;
+		DBC = Delila_BossClone(self);
+		if (DBC)
 		{
-			if ((source && BadZapShot(source)) || (inflictor && BadZapShot(inflictor)))
+			if (DBC.NoUCooldown > 0) DBC.NoUCooldown *= 0.875;
+			let NoU = D_NoUCard(DBC.FindInventory("D_NoUCard"));
+			if (NoU)
 			{
+				DBC.A_StopSound(104);
+				DBC.A_StartSound("ReflectDmg1",104,CHANF_DEFAULT,1.5,ATTN_NORM,frandom(0.875,1.125));
+				flags |= DMG_NO_ARMOR;
+				flags |= DMG_NO_PROTECT;
+				flags |= DMG_THRUSTLESS;
+				//Console.Printf("NoU Found!");
+				if (source && source != self)
+				{
+					//Console.Printf("NoU Found! [source]");
+					source.A_StopSound(104);
+					source.A_StartSound("ReflectDmg2",104,CHANF_DEFAULT,1.5,ATTN_NORM,frandom(0.875,1.125));
+					source.DamageMobj(self, self, damage, mod, flags, angle);
+				}
+				else
+				{
+					if (inflictor && inflictor != self)
+					{
+						//Console.Printf("NoU Found! [inflictor]");
+						inflictor.A_StopSound(104);
+						inflictor.A_StartSound("ReflectDmg2",104,CHANF_DEFAULT,1.5,ATTN_NORM,frandom(0.875,1.125));
+						inflictor.DamageMobj(self, self, damage, mod, flags, angle);
+					}
+				}
 				damage = 0;
-				return 0;
+				return inflictor, source, -1, mod, flags, angle, angvstype;
+			}
+			else
+			{
+				if ((source && source.bBOSS) || (inflictor && inflictor.bBOSS))
+				{
+					damage *= 0.25;
+					if (flags & DMG_EXPLOSION) damage *= 0.25;
+					if (health <= ((SpawnHealth() + Stamina) * 0.25))
+					{
+						damage *= 0.25;
+						if (flags & DMG_EXPLOSION) damage *= 0.25;
+					}
+				}
+				if ((source && BadZapShot(source)) || (inflictor && BadZapShot(inflictor)))
+				{
+					damage = 0;
+					return inflictor, source, -1, mod, flags, angle, angvstype;
+				}
+			}
+		}
+		
+		if (DDOrigBoss(self) && !(Delila_BossClone(self) || Tempest_BossClone(self)))
+		{
+			if ((source && source.bBOSS) || (inflictor && inflictor.bBOSS))
+			{
+				damage *= 0.5;
+				if (flags & DMG_EXPLOSION) damage *= 0.5;
+				if (health <= ((SpawnHealth() + Stamina) * 0.5))
+				{
+					damage *= 0.5;
+					if (flags & DMG_EXPLOSION) damage *= 0.5;
+				}
 			}
 		}
 		
@@ -1545,14 +1619,14 @@ mixin class MonsterCollider
 				{
 					damage = 0;
 					target = source;
-					return 0;
+					return inflictor, source, -1, mod, flags, angle, angvstype;
 				}
 				else
 				{
 					if (AAngelSong(source) || BadZapShot(source) || MusicBall2(source))
 					{
 						damage = 0;
-						return 0;
+						return inflictor, source, -1, mod, flags, angle, angvstype;
 					}
 					
 					if (target)
@@ -1591,14 +1665,14 @@ mixin class MonsterCollider
 				{
 					damage = 0;
 					target = inflictor;
-					return 0;
+					return inflictor, source, -1, mod, flags, angle, angvstype;
 				}
 				else
 				{
 					if (AAngelSong(inflictor) || BadZapShot(inflictor) || MusicBall2(inflictor))
 					{
 						damage = 0;
-						return 0;
+						return inflictor, source, -1, mod, flags, angle, angvstype;
 					}
 					
 					if (target)
@@ -1625,14 +1699,13 @@ mixin class MonsterCollider
 			}
 		}
 		
-		int angvstype;
 		if ((source && PushyArchAngel(source)) || (inflictor && PushyArchAngel(inflictor)))
 		{
 			if (PushyAngel(self) ||
 					PushyArchAngel(self))
 			{
 				damage = 0;
-				return 0;
+				return inflictor, source, -1, mod, flags, angle, angvstype;
 			}
 			else
 			{
@@ -1710,7 +1783,7 @@ mixin class MonsterCollider
 			if ((source && PushyArchAngel(source)) || (inflictor && PushyArchAngel(inflictor)))
 			{
 				damage = 0;
-				return 0;
+				return inflictor, source, -1, mod, flags, angle, angvstype;
 			}
 		}
 		
@@ -1740,6 +1813,23 @@ mixin class MonsterCollider
 			if (vict != nm) damage *= 0.5;
 		}
 		
+		return inflictor, source, damage, mod, flags, angle, angvstype;
+	}
+	
+	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
+	{
+		DDPlayerPawn playpawn;
+		playpawn = DDPlayerPawn(source);
+		
+		EECreature selfEE;
+		selfEE = EECreature(self);
+		
+		int angvstype;
+
+		[inflictor, source, damage, mod, flags, angle, angvstype] = CheckMonType(inflictor,source,damage,mod,flags,angle);
+		if (damage <= -1) return -1;
+
+		//
 		if (Level.MapName == "TITLEMAP")
 		{
 			let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
