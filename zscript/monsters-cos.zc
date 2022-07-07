@@ -7360,9 +7360,27 @@ class Tempest_Boss : DDOrigBoss
 		+LOOKALLAROUND;
 		Seesound "tempest/sight";
 		PainSound "tempest/pain";
-		DeathSound "krag/death";
+		//DeathSound "tempest/death";
 		Obituary "%o lost a duel with the former Governor Tempest.";
 		Tag "Governor Tempest";
+	}
+	
+	void A_TempestTele(int type = 0)
+	{	
+		if (type == 0) // Teleport In
+		{
+			A_SetShootable();
+			bCANTSEEK = false;
+			A_SetSolid();
+			A_UnSetInvulnerable();
+		}
+		else
+		{
+			A_UnsetShootable();
+			bCANTSEEK = true;
+			A_UnsetSolid();
+			A_SetInvulnerable();
+		}
 	}
 	
 	States
@@ -7380,10 +7398,7 @@ class Tempest_Boss : DDOrigBoss
 			GVNR A 3 A_SetTranslucent(1,0);
 			GVNR A 0 
 			{
-				//Become hurtable again
-				A_SetShootable();
-				A_SetSolid();
-				A_UnSetInvulnerable();
+				A_TempestTele(0);
 			}
 			goto See3;
 		See3:
@@ -7392,9 +7407,7 @@ class Tempest_Boss : DDOrigBoss
 		SpawnClones:
 			GVNR A 0
 			{
-				A_UnsetShootable();
-				A_UnsetSolid();
-				A_SetInvulnerable();
+				A_TempestTele(1);
 			}
 			GVNR A 3 A_SetTranslucent(0.8,0);
 			GVNR A 3 A_SetTranslucent(0.6,0);
@@ -7410,10 +7423,7 @@ class Tempest_Boss : DDOrigBoss
 			GVNR A 3 A_SetTranslucent(1,0);
 			GVNR A 0 
 			{
-				//Become hurtable again
-				A_SetShootable();
-				A_SetSolid();
-				A_UnSetInvulnerable();
+				A_TempestTele(0);
 			}
 			goto See3;
 		Missile:
@@ -7459,18 +7469,14 @@ class Tempest_Boss : DDOrigBoss
 			GVNR O 4 A_Pain();
 			GVNR L 0
 			{ 
-				A_UnSetshootable();
-				A_UnsetSolid();
-				A_SetInvulnerable();
+				A_TempestTele(1);
 			}
 			GVNR O 6;
 			Goto Flee+1;
 		Pain.HealingSpell:
 			GVNR L 0
 			{ 
-				A_UnSetshootable();
-				A_UnsetSolid();
-				A_SetInvulnerable();
+				A_TempestTele(1);
 			}
 			GVNR LLLLLLLLLLLLLLLLLLLL 1 
 			{
@@ -7482,9 +7488,7 @@ class Tempest_Boss : DDOrigBoss
 		Flee:
 			GVNR C 0
 			{ 
-				A_UnSetshootable();
-				A_UnsetSolid();
-				A_SetInvulnerable();
+				A_TempestTele(1);
 			}
 			GVNR C 3 A_SetTranslucent(0.8,0);
 			GVNR C 3 A_SetTranslucent(0.6,0);
@@ -7506,12 +7510,69 @@ class Tempest_Boss : DDOrigBoss
 					}
 				}
 			}
-			GVNR O 10 A_Scream();
+			GVNR O 10 
+			{
+				A_StopSound(CHAN_VOICE);
+				A_StopSound(8);
+				A_StopSound(9);
+				A_StartSound("Tempest/death",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NONE,1.0); //A_Scream();
+				A_StartSound("Tempest/death",8,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.95,1.05)); //A_Scream();
+				A_StartSound("Tempest/death",9,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.90,1.10)); //A_Scream();
+			}
 			GVNR P 5 bright;
 			TBUM A 0 A_StartSound("teacher/death");
 			TBUM ABCDEFGH 5 bright;
 			TBUM I 5 bright A_NoBlocking();
 			Stop;
+	}
+}
+
+class TempestBadZapShot : BadZapShot
+{
+	default
+	{
+		Tag "Pike Blast";
+		Radius 3;
+		Height 3;
+		Speed 20;
+		DamageFunction (finaldamagedealt);
+		Scale 0.75;
+		DamageType "Zap";
+		Projectile;
+		RENDERSTYLE "Normal";
+		deathsound "croquet/ballhit";
+		+FORCERADIUSDMG;
+		+DONTHARMSPECIES;
+		//+NOEXTREMEDEATH
+		ProjectileKickback 62; // 25
+		Species "T1";
+	}
+	
+	override void PostBeginPlay()
+	{
+		EEProjectile.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	override void Tick()
+	{
+		EEProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.01);
+	}
+	
+	States
+	{
+		Spawn:
+			ZBUL ABCD 3 Bright;
+			loop;
+		Death:
+			ZBUX A 4 Bright
+			{
+				int dmg = A_CalcDamageFormula(25,1,0.005,0.3334,0.1667,0.005);
+				A_Explode(dmg,25,0,true,6);
+			}
+			ZBUX BCD 4 Bright;
+			stop;
 	}
 }
 
@@ -7556,17 +7617,55 @@ class Tempest_BossClone : DDOrigBoss
 		+NOTARGET;
 		+DONTRIP;
 		+LOOKALLAROUND;
+		+DONTHARMSPECIES;
 		Seesound "tempest/sight";
 		PainSound "tempest/pain";
-		DeathSound "krag/death";
+		//DeathSound "Tempest/death";
 		Obituary "%o lost a duel with a clone of the former Governor Tempest.";
 		Tag "Governor Tempest!?";
+		Species "T1";
 	}
 	
 	override void Tick()
 	{
 		super.tick();
 		if (GetAge() % 35 == 5) A_CheckTag();
+	}
+	
+	void A_TempestTele(int type = 0)
+	{	
+		if (type == 0) // Teleport In
+		{
+			//Become hurtable again
+			A_SetTempWeakened(0);
+			A_SetShootable();
+			bCANTSEEK = false;
+			A_SetSolid();
+			A_UnSetInvulnerable();
+		}
+		else
+		{
+			A_SetTempWeakened(0);
+			A_UnsetShootable();
+			bCANTSEEK = true;
+			A_UnsetSolid();
+			A_SetInvulnerable();
+		}
+	}
+	
+	void A_SetTempWeakened(int type = 1)
+	{
+		if (type == 1)
+		{
+			bNOPAIN = true;
+			A_SetInventory("Tempest_Weakened",1);
+		}
+		else
+		if (type == 1)
+		{
+			bNOPAIN = false;
+			A_SetInventory("Tempest_Weakened",0);
+		}
 	}
 	
 	States
@@ -7589,19 +7688,26 @@ class Tempest_BossClone : DDOrigBoss
 			GVNR A 1 A_SetTranslucent(1,0);
 			GVNR A 0 
 			{
-				//Become hurtable again
-				A_SetShootable();
-				A_SetSolid();
-				A_UnSetInvulnerable();
+				A_TempestTele(0);
 			}
 			goto See3;
 		See3:
-			GVNR C 1 
+			GVNR A 1 
 			{
+				A_SetTempWeakened(0);
 				if (target && CheckIfTargetInLOS(360.0, JLOSF_DEADNOJUMP))
 				{
 					A_EEChase(null,"Missile",0,1,3,1,1);
 					return resolvestate("Missile");
+				}
+				else
+				{
+					if (target && Distance3D(target) <= 4096)
+					{
+						if (random(1,32) <= 1) return resolvestate("Missile");
+						return resolvestate(null);
+					}
+					return resolvestate(null);
 				}
 				return resolvestate(null);
 			}
@@ -7609,9 +7715,7 @@ class Tempest_BossClone : DDOrigBoss
 		Teleport:
 			GVNR A 0
 			{
-				A_UnsetShootable();
-				A_UnsetSolid();
-				A_SetInvulnerable();
+				A_TempestTele(1);
 				A_StopSound(18);
 				A_StopSound(19);
 				A_StartSound("vokter/tele",18,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
@@ -7648,10 +7752,7 @@ class Tempest_BossClone : DDOrigBoss
 			#### # 1 A_SetTranslucent(1,0);
 			#### # 0 
 			{
-				//Become hurtable again
-				A_SetShootable();
-				A_SetSolid();
-				A_UnSetInvulnerable();
+				A_TempestTele(0);
 				A_StopSound(18);
 				A_StopSound(19);
 				A_StartSound("vokter/tele2",18,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
@@ -7659,6 +7760,19 @@ class Tempest_BossClone : DDOrigBoss
 			}
 			goto See3;
 		Missile:
+			GVNR C 0 
+			{
+				if (random(1,256) <= random(16,24)) 
+				{
+					return resolvestate("SummonHeels");
+				}
+				else
+				{
+					if (random(1,256) <= 128) return resolvestate("MissileZap");
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
 			GVNR C 0 A_Jump(128,"MissileZap");
 		MissileSlash:
 			GVNR C 0 A_StartSound("tempest/sight");
@@ -7679,8 +7793,16 @@ class Tempest_BossClone : DDOrigBoss
 			}
 			GVNR I 0
 			{
-				if (random(1,6) <= 1) return resolvestate("MissileSlash");
-												 else return resolvestate(null);
+				if (Distance3D(target) <= randompick(1024,2048,2048))
+				{
+					if (random(1,3) <= randompick(1,1,1,2)) return resolvestate("MissileSlash");
+																						 else return resolvestate(null);
+				}
+				else
+				{
+					if (random(1,6) <= 1) return resolvestate("MissileSlash");
+													 else return resolvestate(null);
+				}
 			}
 			GVNR IC 10;
 			Goto Flee;
@@ -7688,23 +7810,74 @@ class Tempest_BossClone : DDOrigBoss
 			GVNR CJ 3;
 			GVNR K 5 bright A_StartSound("Handmother/Zap");
 			GVNR L 8 bright;
-			GVNR M 3 bright A_SpawnProjectile("badZapshot",40);
+			GVNR M 3 bright A_SpawnProjectile("TempestBadZapShot",40);
 			GVNR M 3 bright;
 			GVNR M 3 bright 
 			{
-				A_SpawnProjectile("badZapshot",40,-48);
-				A_SpawnProjectile("badZapshot",40,48);
+				A_SpawnProjectile("TempestBadZapShot",40,-48);
+				A_SpawnProjectile("TempestBadZapShot",40,48);
 			}
 			GVNR M 3 bright;
-			GVNR M 3 bright A_SpawnProjectile("badZapshot",40);
+			GVNR M 3 bright A_SpawnProjectile("TempestBadZapShot",40);
 			GVNR NN 3;
 			GVNR JC 3;
 			GVNR C 0
 			{
-				if (random(1,6) <= 1) return resolvestate("MissileZap");
-												 else return resolvestate(null);
+				if (random(1,6) <= 1) 
+				{
+					if (Distance3D(target) >= randompick(1024,2048,2048)) return resolvestate("MissileSlash");
+																													 else return resolvestate("MissileZap");
+				}
+				else return resolvestate(null);
 			}
 			Goto See3;
+		SummonHeels:
+			GVNR AA 5;
+			GVNR J 5;
+			GVNR K 5;
+			GVNR K 0
+			{
+				double randang = frandompick(0,22.5,45,67.5);
+				int zoff = 24;
+				int xoff = random(8,12);
+				int xvel = random(8,12);
+				if (health <= (SpawnHealth() + Stamina) * 0.1667)
+				{
+					xoff *= 1.5; 
+					xvel *= 1.5; 
+					A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(0+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(180+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(90+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(270+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+				}
+				else
+				{
+					if (health <= (SpawnHealth() + Stamina) * 0.5)
+					{
+						xoff *= 1.25; 
+						xvel *= 1.25; 
+						int atktype = random(1,2);
+						if (atktype == 1)
+						{
+							A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(90+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+							A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(270+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+						}
+						if (atktype == 2)
+						{
+							A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(0+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+							A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(180+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+						}
+					}
+					else
+					{
+						int baseang = randompick(0,90,180,270);
+						A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(baseang+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					}
+				}
+			}
+			GVNR J 5;
+			GVNR AA 5;
+			Goto Flee;
 		Pain:
 			GVNR O 10 A_EEPain();
 			GVNR O 0
@@ -7739,12 +7912,43 @@ class Tempest_BossClone : DDOrigBoss
 				if (random(1,16) <= 5) return resolvestate("Pain");
 													else return resolvestate(null);
 			}
-			GVNR O 4 A_Pain();
+			GVNR O 4 A_EEPain();
 			GVNR L 0
 			{ 
-				A_UnSetshootable();
-				A_UnsetSolid();
-				A_SetInvulnerable();
+				A_TempestTele(1);
+				A_StopSound(18);
+				A_StopSound(19);
+				A_StartSound("vokter/tele",18,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+				A_StartSound("vokter/tele",19,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.925,1.075));
+			}
+			GVNR O 6;
+			Goto Flee+1;
+		Pain.HeelExplosion:
+			GVNR B 0
+			{
+				A_SetTempWeakened(1);
+			}
+			GVNR B 35
+			{
+				A_EEPain();
+				A_SetTics(random(5,7)*5);
+			}
+			GVNR B 35
+			{
+				A_SetTics(random(3,7)*5);
+			}
+			GVNR B 35
+			{
+				A_SetTics(random(1,7)*5);
+			}
+			GVNR A 5
+			{
+				A_SetTempWeakened(0);
+				A_SetTics(random(1,7));
+			}
+			GVNR L 0
+			{ 
+				A_TempestTele(1);
 				A_StopSound(18);
 				A_StopSound(19);
 				A_StartSound("vokter/tele",18,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
@@ -7755,9 +7959,7 @@ class Tempest_BossClone : DDOrigBoss
 		Flee:
 			GVNR C 0
 			{ 
-				A_UnSetshootable();
-				A_UnsetSolid();
-				A_SetInvulnerable();
+				A_TempestTele(1);
 				A_StopSound(18);
 				A_StopSound(19);
 				A_StartSound("vokter/tele",18,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
@@ -7779,8 +7981,17 @@ class Tempest_BossClone : DDOrigBoss
 			{
 				let globalvars = DDGlobalVariables.Get();
 				globalvars.KilledTempestClone = true;
+				A_KillChildren("SilentMassacre");
 			}
-			GVNR O 10 A_Scream();
+			GVNR O 10 
+			{
+				A_StopSound(CHAN_VOICE);
+				A_StopSound(8);
+				A_StopSound(9);
+				A_StartSound("Tempest/death",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NONE,1.0); //A_Scream();
+				A_StartSound("Tempest/death",8,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.95,1.05)); //A_Scream();
+				A_StartSound("Tempest/death",9,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.90,1.10)); //A_Scream();
+			}
 			GVNR P 5 bright;
 			TBUM A 0 A_StartSound("teacher/death");
 			TBUM ABCDEFGH 5 bright;
