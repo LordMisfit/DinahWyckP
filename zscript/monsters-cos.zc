@@ -5921,7 +5921,14 @@ class Forsaken : CoSForsaken
 			GOST N 3 A_NoBlocking();
 			Stop;
 		Death:
-			GOST J 5 A_Scream();
+			GOST J 5 
+			{
+				A_Scream();
+				A_StopSound(CHAN_6);
+				A_StopSound(CHAN_7);
+				A_StartSound("forsaken/death",CHAN_6,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+				A_StartSound("forsaken/death2",CHAN_7,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+			}
 			GOST KLM 4 A_SpawnItemEx("GhostCloudSpawner", 0, 0, 30, 0, 0, 0, 0, 128);
 			GOST N 5 A_NoBlocking();
 			Stop;
@@ -8002,6 +8009,15 @@ class Tempest_BossClone : DDOrigBoss
 		}
 	}
 	
+	bool, actor A_TempHeelSpawn(bool success, actor RHeel)
+	{
+		if (success && RHeel)
+		{
+			if (RHeel.master) RHeel.target = RHeel.master.target;
+		}
+		return success, RHeel;
+	}
+	
 	States
 	{
 		Spawn:
@@ -8039,6 +8055,12 @@ class Tempest_BossClone : DDOrigBoss
 					if (target && Distance3D(target) <= 4096)
 					{
 						if (random(1,32) <= 1) return resolvestate("Missile");
+						else
+						{
+							int basec = random(8,12);
+							if (random(1,256) <= (basec + (CountInv("MonsterLevel") * (basec * 0.05)))) return resolvestate("SummonHeels");
+							return resolvestate(null);
+						}
 						return resolvestate(null);
 					}
 					return resolvestate(null);
@@ -8096,7 +8118,8 @@ class Tempest_BossClone : DDOrigBoss
 		Missile:
 			GVNR C 0 
 			{
-				if (random(1,256) <= random(16,24)) 
+				int baserhc = random(16,24);
+				if (random(1,256) <= (baserhc + (CountInv("MonsterLevel") * (baserhc * 0.025)))) 
 				{
 					return resolvestate("SummonHeels");
 				}
@@ -8175,14 +8198,20 @@ class Tempest_BossClone : DDOrigBoss
 				int zoff = 24;
 				int xoff = random(8,12);
 				int xvel = random(8,12);
+				bool success;
+				actor RHeel;
 				if (health <= (SpawnHealth() + Stamina) * 0.1667)
 				{
 					xoff *= 1.5; 
 					xvel *= 1.5; 
-					A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(0+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
-					A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(180+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
-					A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(90+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
-					A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(270+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					[success, RHeel] = A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(0+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					if (success && RHeel) A_TempHeelSpawn(success,RHeel);
+					[success, RHeel] = A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(180+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					if (success && RHeel) A_TempHeelSpawn(success,RHeel);
+					[success, RHeel] = A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(90+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					if (success && RHeel) A_TempHeelSpawn(success,RHeel);
+					[success, RHeel] = A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(270+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					if (success && RHeel) A_TempHeelSpawn(success,RHeel);
 				}
 				else
 				{
@@ -8193,19 +8222,24 @@ class Tempest_BossClone : DDOrigBoss
 						int atktype = random(1,2);
 						if (atktype == 1)
 						{
-							A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(90+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
-							A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(270+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+							[success, RHeel] = A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(90+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+							if (success && RHeel) A_TempHeelSpawn(success,RHeel);
+							[success, RHeel] = A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(270+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+							if (success && RHeel) A_TempHeelSpawn(success,RHeel);
 						}
 						if (atktype == 2)
 						{
-							A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(0+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
-							A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(180+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+							[success, RHeel] = A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(0+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+							if (success && RHeel) A_TempHeelSpawn(success,RHeel);
+							[success, RHeel] = A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(180+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+							if (success && RHeel) A_TempHeelSpawn(success,RHeel);
 						}
 					}
 					else
 					{
 						int baseang = randompick(0,90,180,270);
-						A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(baseang+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+						[success, RHeel] = A_SpawnItemEx("ReelHeelNew",xoff,0,zoff,xvel,0,0,(baseang+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+						if (success && RHeel) A_TempHeelSpawn(success,RHeel);
 					}
 				}
 			}
