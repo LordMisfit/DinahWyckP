@@ -5053,6 +5053,27 @@ class Devil : DDOrigCreature
 		}
 		DDOrigCreature.Tick();
 	}
+	
+	void A_DevilAtk(int type = 0, double xyoff = 0.0)
+	{
+		//Console.Printf("type: %d, angle: %.8f", type, angle);
+		string projtype = "BadJackshot";
+		if (random(1,100) <= (20 + CountInv("MonsterLevel") * 0.334)) projtype = "KragBall";
+		int dmg = A_CalcDamageFormula2(random(50,80),0.0667,random(10,20),0.05,random(5,15),0.035,0.005);
+		if (type == 0) A_CustomComboAttack(projtype, 32, (dmg), "malletswing");
+		else
+		{
+			if (CheckMeleeRange())
+			{
+				A_EECustomMeleeAttack((dmg), "malletswing", "", 'Melee', true, false);
+			}
+			else
+			{
+				A_SpawnProjectile(projtype,32,(0+xyoff),0.0,0,0.0,AAPTR_TARGET);
+			}
+		}
+		//Console.Printf("angle: %.8f", angle);
+	}
 
 	States
 	{
@@ -5082,10 +5103,40 @@ class Devil : DDOrigCreature
 			ONII JI 6 fast A_FaceTarget();
 			ONII F 7 fast
 			{
-				string projtype = "BadJackshot";
-				if (random(1,100) <= (20 + CountInv("MonsterLevel") * 0.334)) projtype = "KragBall";
-				int dmg = A_CalcDamageFormula2(random(50,80),0.0667,random(10,20),0.05,random(5,15),0.035,0.005);
-				A_CustomComboAttack(projtype, 32, (dmg), "malletswing");
+				A_DevilAtk(0,0.0);
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") >= 30)
+					{
+						angle -= 15;
+						A_DevilAtk(1,-15.0);
+						angle += 15;
+
+						angle += 15;
+						A_DevilAtk(1,15.0);
+						angle -= 15;
+					}
+					if (CountInv("MonsterLevel") >= 45)
+					{
+						angle -= 22.5;
+						A_DevilAtk(1,-22.5);
+						angle += 22.5;
+
+						angle += 22.5;
+						A_DevilAtk(1,22.5);
+						angle -= 22.5;
+					}
+					if (CountInv("MonsterLevel") >= 60)
+					{
+						angle -= 7.5;
+						A_DevilAtk(1,-7.5);
+						angle += 7.5;
+
+						angle += 7.5;
+						A_DevilAtk(1,7.5);
+						angle -= 7.5;
+					}
+				}
 			}
 			ONII J 6 fast;
 			Goto See;
