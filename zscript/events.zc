@@ -1216,7 +1216,18 @@ class DD_EventHandler : EventHandler
 			int TruePlayerLevel = 0;
 			bool isCCardsIllusion = false;
 			if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-			
+
+			if (dydudebug_worlddamaged) 
+			{
+				string debugmsg = "WorldThingDamaged";
+				debugmsg.AppendFormat(" [gametic: %d]:", gametic);
+				if (victim) debugmsg.AppendFormat(" %p [%s],", victim, victim.GetClassName());
+				if (source) debugmsg.AppendFormat(" source: %p [%s]", source, source.GetClassName()); else debugmsg.AppendFormat("\c[red] no source\c-");
+				if (inflicter) debugmsg.AppendFormat(" inflicter: %p [%s]", inflicter, inflicter.GetClassName()); else debugmsg.AppendFormat("\c[orange] no inflicter\c-");
+				debugmsg.AppendFormat(", damage: %d, damagetype: %s, flags: %d", dmg, mod, flags);
+				Console.Printf(debugmsg);
+			}
+
 			let globalvars = DDGlobalVariables.Get();
 			if (MiscItem) 
 			{
@@ -1643,7 +1654,8 @@ class DD_EventHandler : EventHandler
 						if (victim.CountInv("JustSurprised") > 0) comblog.AppendFormat(" \c[sapphire]SURPRISE\c-");
 						if (victim.CountInv("TookCriticalHit") > 0) comblog.AppendFormat(" \c[orange]CRITICAL\c-");
 						comblog.AppendFormat(" damage dealt to \c[red]%s\c- by", victname);
-						if (inflicter && source && (inflicter != source)) comblog.AppendFormat(" \c[purple]%s's", attkernam);
+						if (source && !inflicter) comblog.AppendFormat(" \c[purple]%s\c-", attkernam);
+						else if (inflicter && source && (inflicter != source)) comblog.AppendFormat(" \c[purple]%s's\c-", attkernam);
 						if (inflicter) comblog.AppendFormat(" \c[red]%s\c-!", atkrname);
 						comblog.AppendFormat(" [\c[lightblue]%s\c-]", mod);
 						if (flags & DMG_EXPLOSION) comblog.AppendFormat(" \c[brick][AOE]\c-");
@@ -3370,7 +3382,9 @@ class DD_EventHandler : EventHandler
 			actor source;
 			actor mastor;
 			if (inflicter && inflicter.target) source = inflicter.target;
+																		else source = e.Thing.target;
 			if (inflicter && inflicter.master) mastor = inflicter.master;
+																		else mastor = e.Thing.target;
 			string vict = "NONE";
 			string infl = "NONE";
 			string sour = "NONE";
@@ -3411,7 +3425,7 @@ class DD_EventHandler : EventHandler
 				if (skill >= 4) TrueLuck = random((PLuck*0.25),PLuck);
 				TrueLuck *= exex_pluckfactor;
 			}
-			if (dydudebug_worlddied) Console.Printf("[%s] WorldThingDied", vict);
+			if (dydudebug_worlddied) Console.Printf("[%p (%s)] WorldThingDied", victim, vict);
 			
 			class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
 			string nm, nn, no, np;
@@ -3434,7 +3448,7 @@ class DD_EventHandler : EventHandler
 					if (!victim.CountInv("DedMonsterFlag") && !sv_monsterrespawn) victim.A_SetInventory("DedMonsterFlag",1);
 					
 					if (dydudebug_worlddied) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", infl, sour);
-					if ((victim.bCOUNTKILL || specialtype) && !victim.bFRIENDLY && inflicter)
+					if ((victim.bCOUNTKILL || specialtype) && !victim.bFRIENDLY && (inflicter || source))
 					{
 						if (inflicter) 
 						{
@@ -3445,8 +3459,9 @@ class DD_EventHandler : EventHandler
 								if (IPAttack == null) IPAttack = EEProjectile(inflicter);
 								giveexp = true;
 							}
-							//Console.Printf("inflictor: %s [%d]", infl, inflicter.bFRIENDLY);
+							if (dydudebug_worlddied) Console.Printf("inflictor: %s [%d]", infl, inflicter.bFRIENDLY);
 						}
+						else
 						if (source) 
 						{
 							if (PlayerPawn(source)) playerkill = true;
@@ -3456,7 +3471,7 @@ class DD_EventHandler : EventHandler
 								if (IPAttack == null) IPAttack = EEProjectile(source);
 								giveexp = true;
 							}
-							//Console.Printf("inflictor.target: %s [%d]", sour, source.bFRIENDLY);
+							if (dydudebug_worlddied) Console.Printf("source: %s [%d]", sour, source.bFRIENDLY);
 						}
 						if (mastor) 
 						{
@@ -3464,12 +3479,12 @@ class DD_EventHandler : EventHandler
 							if (mastor.bFRIENDLY) allykill = true;
 							if (IPAttack == null) IPAttack = EEProjectile(mastor);
 							if (mastor.bFRIENDLY || DDPlayerPawn(mastor)) giveexp = true;
-							//Console.Printf("mastor: %s [%d]", mast, mastor.bFRIENDLY);
+							if (dydudebug_worlddied) Console.Printf("mastor: %s [%d]", mast, mastor.bFRIENDLY);
 						}
 						if (EvilWarriorShieldBall(inflicter) && playerkill && MiscItem)
 						{
 							MiscItem.EWShieldKills++;
-							//Console.Printf("MiscItem.EWShieldKills: %d [inflicter]", MiscItem.EWShieldKills);
+							if (dydudebug_worlddied) Console.Printf("MiscItem.EWShieldKills: %d [inflicter]", MiscItem.EWShieldKills);
 						}
 						nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) giveexp = false;
 						if (Delila_Boss(victim)) giveexp = false;
