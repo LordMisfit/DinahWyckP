@@ -1846,7 +1846,17 @@ mixin class MonsterCollider
 		selfEE = EECreature(self);
 		
 		int angvstype;
+		
+		bool isCCardsIllusion = false;
+		if (bNOBLOOD == true && 
+				bNOPAIN == true &&
+				bNOTARGETSWITCH == true &&
+				bNOINFIGHTING == true &&
+				bFULLVOLACTIVE == false && 
+				bFULLVOLDEATH == false &&
+				bBOSS == false) isCCardsIllusion = true;
 
+		
 		[inflictor, source, damage, mod, flags, angle, angvstype] = CheckMonType(inflictor,source,damage,mod,flags,angle);
 		if (damage <= -1) return -1;
 
@@ -2340,18 +2350,30 @@ mixin class MonsterCollider
 		if (PikePuff(inflictor) || PikePuff(source))
 		{
 			int basepoke = 64;
+			if (MiscItem) 
+			{
+				if (MiscItem.TruePlayerLevel >= 100) basepoke *= 0.375;
+				else if (MiscItem.TruePlayerLevel >= 40) basepoke *= 0.75;
+			}
 			if (PikePuffIP(inflictor) || PikePuffIP(source)) basepoke *= 0.125;
-			if (bBOSS) basepoke *= 4;
+			if (bBOSS || EEUniqueBoss(self)) basepoke *= 4;
 			if (random(1,basepoke) <= 1 || criticalhit || (check && check.MonsterFamily == "Balloon"))
 			{
-				if (bREFLECTIVE && bINVULNERABLE)
+				if (Centaurion(self) && bREFLECTIVE && bINVULNERABLE)
 				{
 					bREFLECTIVE = false;
 					bINVULNERABLE = false;
 				}
 				mod = 'KillPoke';
-				if (bBOSS || EEUniqueBoss(self)) damage += (((SpawnHealth() + Stamina) * random(1,2)) / 8); 
-																		else damage += ((SpawnHealth() + Stamina) * random(3,5));
+				if (bBOSS || EEUniqueBoss(self)) 
+				{
+					damage += (((SpawnHealth() + Stamina) * randompick(1,1,1,1,1,1,1,1,1,2)) / randompick(1,2,2,4,4,4,4,4,4,4,4,8,8,16));
+				}
+				else 
+				{
+					if (DeathIncarnate(self)) damage += ((SpawnHealth() + Stamina) * random(7,9));
+															 else damage += ((SpawnHealth() + Stamina) * random(3,5));
+				}
 				A_StartSound("pike/pokeykill",213,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.75,1.25));
 			}
 		}
@@ -2404,18 +2426,17 @@ mixin class MonsterCollider
 		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Post-Function Call: ret: %d (pre-function damage: %d) (initdmg: %d)", GetClassName(), ret, damage, initdmg);
 		
 		// Stun Inflict Items to give if they take damage from specific attacks
-		if ((KickPuff(inflictor) || KickPuffNoThrust(inflictor) || BadKickPuff(inflictor) || mod == 'Kick') && ret > 0) A_SetInventory("JustKicked",1);
-		if ((UppercutPuff(inflictor) && mod == 'Fist') && ret > 0) A_SetInventory("JustUppercutted",1);
-		if ((FistPuff(inflictor) && mod == 'Fist') && ret > 0) A_SetInventory("JustPunched",1);
-		if (mod == 'DashingBG' && ret > 0) 
+		bool givemeleeitem = true;
+		if (isCCardsIllusion) givemeleeitem = false;
+		if (givemeleeitem)
 		{
-			A_SetInventory("JustBatDashed",1);
+			if ((KickPuff(inflictor) || KickPuffNoThrust(inflictor) || BadKickPuff(inflictor) || mod == 'Kick') && ret > 0) A_SetInventory("JustKicked",1);
+			if ((UppercutPuff(inflictor) && mod == 'Fist') && ret > 0) A_SetInventory("JustUppercutted",1);
+			if ((FistPuff(inflictor) && mod == 'Fist') && ret > 0) A_SetInventory("JustPunched",1);
+			if (mod == 'DashingBG' && ret > 0) A_SetInventory("JustBatDashed",1);
+			if (mod == 'DashingSD' && ret > 0) A_SetInventory("JustShieldDashed",1);
 		}
-		else
-		if (mod == 'DashingSD' && ret > 0) 
-		{
-			A_SetInventory("JustShieldDashed",1);
-		}
+
 		if (ret > 0)
 		{
 			if (FoundPlayer) 
