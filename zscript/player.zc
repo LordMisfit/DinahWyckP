@@ -2614,13 +2614,30 @@ class DDPlayerPawn : PlayerPawn
 	{
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
+		bool isCCardsIllusion = false;
+
 		if (source)
 		{
-			if (source.bISMONSTER && !source.bFRIENDLY) A_DynamicMusic(forcedplay:true);
+			if (source.bNOBLOOD == true && 
+					source.bNOPAIN == true &&
+					source.bNOTARGETSWITCH == true &&
+					source.bNOINFIGHTING == true &&
+					source.bFULLVOLACTIVE == false && 
+					source.bFULLVOLDEATH == false &&
+					source.bBOSS == false) isCCardsIllusion = true;
+			if (source.bISMONSTER && !source.bFRIENDLY && !isCCardsIllusion) A_DynamicMusic(forcedplay:true);
 		}
+		else
 		if (inflictor)
 		{
-			if (inflictor.bISMONSTER && !inflictor.bFRIENDLY) A_DynamicMusic(forcedplay:true);
+			if (inflictor.bNOBLOOD == true && 
+					inflictor.bNOPAIN == true &&
+					inflictor.bNOTARGETSWITCH == true &&
+					inflictor.bNOINFIGHTING == true &&
+					inflictor.bFULLVOLACTIVE == false && 
+					inflictor.bFULLVOLDEATH == false &&
+					inflictor.bBOSS == false) isCCardsIllusion = true;
+			if (inflictor.bISMONSTER && !inflictor.bFRIENDLY && !isCCardsIllusion) A_DynamicMusic(forcedplay:true);
 		}
 		
 		string combatlogmsg = "\c[sapphire]*\c- ";
@@ -2628,139 +2645,142 @@ class DDPlayerPawn : PlayerPawn
 		int armdmg = (armoramt - CountInv(armorclasstype));
 		if (armdmg <= 0) armdmg = 0;
 		if (dydudebug_playerdamagemobj && armdmg) Console.Printf("Armor Damage: %d", armdmg);
-		if (armdmg && exex_armordmgsounds)
+		if (armdmg && exex_armordmgsounds && !isCCardsIllusion)
 		{
 			A_StopSound(213);
 			if (CountInv(armorclasstype)) A_StartSound("armordamaged",213,CHANF_DEFAULT,1.0,ATTN_NORM);
-														 else A_StartSound("armorbroken",213,CHANF_DEFAULT,1.0,ATTN_NORM);
+															 else A_StartSound("armorbroken",213,CHANF_DEFAULT,1.0,ATTN_NORM);
 		}
 		if (exex_playerdmglog)
 		{
-			if (ret || armdmg)
+			if (!isCCardsIllusion)
 			{
-				if (armdmg && !ret) combatlogmsg.AppendFormat("\c[darkgreen]%d AP\c- ", armdmg);
-				else if (armdmg && ret) combatlogmsg.AppendFormat("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- ", ret, armdmg);
-				else combatlogmsg.AppendFormat("\c[darkred]%d HP\c- ", ret);
-				if (dydudebug_dmgdiffdebug)
+				if (ret || armdmg)
 				{
-					int dmgdiff = ((ret + armdmg) - firstdmg);
-					if (dmgdiff)
+					if (armdmg && !ret) combatlogmsg.AppendFormat("\c[darkgreen]%d AP\c- ", armdmg);
+					else if (armdmg && ret) combatlogmsg.AppendFormat("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- ", ret, armdmg);
+					else combatlogmsg.AppendFormat("\c[darkred]%d HP\c- ", ret);
+					if (dydudebug_dmgdiffdebug)
 					{
-						//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
-						if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
+						int dmgdiff = ((ret + armdmg) - firstdmg);
+						if (dmgdiff)
 						{
-							combatlogmsg.AppendFormat("[", dmgdiff);
-							if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
-							if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
-							if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
-							if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
-						}
-						else
-						{
-							combatlogmsg.AppendFormat("[", dmgdiff);
-						}
-						if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
-						{
-							double dmgdiffper;
-							if (firstdmg) 
+							//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
+							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
 							{
-								dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
-								if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
-								if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
-								if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
-								if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
-																						else combatlogmsg.AppendFormat(")", dmgdiff);
+								combatlogmsg.AppendFormat("[", dmgdiff);
+								if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
+								if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
+								if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
+								if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
 							}
+							else
+							{
+								combatlogmsg.AppendFormat("[", dmgdiff);
+							}
+							if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
+							{
+								double dmgdiffper;
+								if (firstdmg) 
+								{
+									dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
+									if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
+									if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
+									if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
+									if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
+																							else combatlogmsg.AppendFormat(")", dmgdiff);
+								}
+							}
+							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
 						}
-						if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
 					}
-				}
-				if (mod == 'SigilDrain') combatlogmsg.AppendFormat("of damage drained");
-														else combatlogmsg.AppendFormat("of damage taken");
-			}
-			else
-			{
-				if (isinvuln) 
-				{
-					combatlogmsg.AppendFormat("\c[green]Invulnerable!\c- No Damage \c-");
+					if (mod == 'SigilDrain') combatlogmsg.AppendFormat("of damage drained");
+															else combatlogmsg.AppendFormat("of damage taken");
 				}
 				else
 				{
-					A_StartSound("Player/TookNoDamage",199,CHANF_DEFAULT,frandom(0.5,0.75),ATTN_NORM);
-					combatlogmsg.AppendFormat("\c[white]No Damage \c-");
-				}
-				if (dydudebug_dmgdiffdebug)
-				{
-					int dmgdiff = ((ret + armdmg) - firstdmg);
-					if (dmgdiff)
+					if (isinvuln) 
 					{
-						//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
-						if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
-						{
-							combatlogmsg.AppendFormat("[", dmgdiff);
-							if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
-							if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
-							if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
-							if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
-						}
-						else
-						{
-							combatlogmsg.AppendFormat("[", dmgdiff);
-						}
-						if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
-						{
-							double dmgdiffper;
-							if (firstdmg) 
-							{
-								dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
-								if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
-								if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
-								if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
-								if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
-																						else combatlogmsg.AppendFormat(")", dmgdiff);
-							}
-						}
-						if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
+						combatlogmsg.AppendFormat("\c[green]Invulnerable!\c- No Damage \c-");
 					}
+					else
+					{
+						A_StartSound("Player/TookNoDamage",199,CHANF_DEFAULT,frandom(0.5,0.75),ATTN_NORM);
+						combatlogmsg.AppendFormat("\c[white]No Damage \c-");
+					}
+					if (dydudebug_dmgdiffdebug)
+					{
+						int dmgdiff = ((ret + armdmg) - firstdmg);
+						if (dmgdiff)
+						{
+							//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
+							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
+							{
+								combatlogmsg.AppendFormat("[", dmgdiff);
+								if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
+								if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
+								if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
+								if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
+							}
+							else
+							{
+								combatlogmsg.AppendFormat("[", dmgdiff);
+							}
+							if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
+							{
+								double dmgdiffper;
+								if (firstdmg) 
+								{
+									dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
+									if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
+									if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
+									if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
+									if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
+																							else combatlogmsg.AppendFormat(")", dmgdiff);
+								}
+							}
+							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
+						}
+					}
+					combatlogmsg.AppendFormat("\c[white]taken\c-");
 				}
-				combatlogmsg.AppendFormat("\c[white]taken\c-");
+				if (source) // Has a source
+				{
+					combatlogmsg.AppendFormat(" from \c[purple]%s\c-", source.GetTag());
+					if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[purple]'s\c- \c[brick]%s\c-", inflictor.GetTag());
+				}
+				else
+				if (inflictor) // No source, but has an inflictor
+				{
+					if (mod == 'SigilDrain') combatlogmsg.AppendFormat(" by the Sigil!");
+															else combatlogmsg.AppendFormat(" from \c[brick]%s!", inflictor.GetTag());
+				}
+				else // If no source OR inflictor
+				{
+					if (mod == 'Slime') combatlogmsg.AppendFormat(" from a damaging surface");
+					else if (mod == 'Lava' || mod == 'Magma') combatlogmsg.AppendFormat(" from a damaging surface");
+					else if (mod == 'Crush') combatlogmsg.AppendFormat(" from a crushing ceiling");
+					else if (mod == 'Falling') combatlogmsg.AppendFormat(" from falling");
+					else if (mod == 'Drowning') combatlogmsg.AppendFormat(" from drowning");
+					combatlogmsg.AppendFormat("!");
+				}
+				combatlogmsg.AppendFormat(" [%s]", mod);
+				//Console.Printf("armoramt: %d, PlayerArmorIgnoreFactor: %.8f", armoramt, PlayerArmorIgnoreFactor);
+				if ((ret || armdmg) && armoramt && PlayerArmorIgnoreFactor)
+				{
+					double temp = (PlayerArmorIgnoreFactor * 100.0);
+					combatlogmsg.AppendFormat(" \c[orange](");
+					combatlogmsg.AppendFormat("%.2f%%", temp);
+					combatlogmsg.AppendFormat("  armor bypass)\c-");
+				}
+				if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-");
+				if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
+				Console.Printf(combatlogmsg);
 			}
-			if (source) // Has a source
-			{
-				combatlogmsg.AppendFormat(" from \c[purple]%s\c-", source.GetTag());
-				if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[purple]'s\c- \c[brick]%s\c-", inflictor.GetTag());
-			}
-			else
-			if (inflictor) // No source, but has an inflictor
-			{
-				if (mod == 'SigilDrain') combatlogmsg.AppendFormat(" by the Sigil!");
-														else combatlogmsg.AppendFormat(" from \c[brick]%s!", inflictor.GetTag());
-			}
-			else // If no source OR inflictor
-			{
-				if (mod == 'Slime') combatlogmsg.AppendFormat(" from a damaging surface");
-				else if (mod == 'Lava' || mod == 'Magma') combatlogmsg.AppendFormat(" from a damaging surface");
-				else if (mod == 'Crush') combatlogmsg.AppendFormat(" from a crushing ceiling");
-				else if (mod == 'Falling') combatlogmsg.AppendFormat(" from falling");
-				else if (mod == 'Drowning') combatlogmsg.AppendFormat(" from drowning");
-				combatlogmsg.AppendFormat("!");
-			}
-			combatlogmsg.AppendFormat(" [%s]", mod);
-			//Console.Printf("armoramt: %d, PlayerArmorIgnoreFactor: %.8f", armoramt, PlayerArmorIgnoreFactor);
-			if ((ret || armdmg) && armoramt && PlayerArmorIgnoreFactor)
-			{
-				double temp = (PlayerArmorIgnoreFactor * 100.0);
-				combatlogmsg.AppendFormat(" \c[orange](");
-				combatlogmsg.AppendFormat("%.2f%%", temp);
-				combatlogmsg.AppendFormat("  armor bypass)\c-");
-			}
-			if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-");
-			if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
-			Console.Printf(combatlogmsg);
 		}
 		
 		// Item/Ikari Point Gains
-		if (exex_ikaripointsenabled && ret && MiscItem && globalvars && health > 0)
+		if (exex_ikaripointsenabled && ret && MiscItem && globalvars && health > 0 && !isCCardsIllusion)
 		{
 			int gain = 0;
 			if ((source && source != self) && (inflictor && inflictor != self)) gain += 1;
