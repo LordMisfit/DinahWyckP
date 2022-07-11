@@ -1400,7 +1400,41 @@ class AppleWine : ExExInvBarItem
 		CustomInventoryExt.PickUpVoice true;
 		Tag "Apple Wine Goblet: Heals 18-22% Health and Gives Defense Buff up to 4 tiers. Cannot be drank when buff is at max.";
 	}
-
+	
+	override void Tick()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		bool IPReqsMet = false;
+		string itemname = GetClassName();
+		if (MiscItem && MiscItem.ItemPoints >= A_GetIPCost(9) && MiscItem.IPUseMode) IPReqsMet = true;
+		string tagg = "Apple Wine Goblet";
+		if (player.CountInv(itemname) > 0)
+		{
+			if (player.health >= MiscItem.MaxHealthTrue)
+			{
+				tagg.AppendFormat(": \c[fire]Over\c[brick]heals");
+				if (IPReqsMet) tagg.AppendFormat("\c[brick] \c[fire][\c-6.75-8.25\c[fire]]\c-");
+									else tagg.AppendFormat("\c[brick] 4.5-5.5");
+			}
+			else
+			{
+				tagg.AppendFormat(": \c[brick]Heals");
+				if (IPReqsMet) tagg.AppendFormat("\c[brick] \c[fire][\c-29.25-30.75\c[fire]]\c-");
+									else tagg.AppendFormat("\c[brick] 18-22");
+			}
+			tagg.AppendFormat("\c[brick]% HP\c- and Gives \c[sapphire]Defense Buff\c- up to ");
+			if (IPReqsMet) tagg.AppendFormat("\c[fire][\c-5\c[fire]]\c-");
+								else tagg.AppendFormat("4");
+			tagg.AppendFormat(" tiers.");
+			if (IPReqsMet) tagg.AppendFormat(" \c[fire][\c-Also gives \c[green]22-28 Armor Points\c-, and can increase armor tier if armor is raised high enough.\c[fire]]\c-");
+			tagg.AppendFormat(" \c[red]Cannot be drank when buff is at max.\c-");
+		}
+		else tagg.AppendFormat(" \c[purple][you must have one or more of this item to see its effect(s)]\c-");
+		SetTag(tagg);
+		super.Tick();
+	}
+	
 	States
 	{
 		Spawn:
@@ -5198,12 +5232,32 @@ class BowlingBallShot : EEProjectile
 		Gravity 0.25;
 		Projectile;
 		BounceType "Grenade";
+		DamageType "LOLEBowling";
 		BounceFactor 0.5;
 		BounceCount 10;
 		-NOGRAVITY;
 		+TELESTOMP;
 		-NOTELEPORT;
+		+DONTREFLECT;
+		+NOEXTREMEDEATH;
 		+RIPPER;
+	}
+	
+	override void OnDestroy()
+	{
+		Console.Printf("BowlingBall go poof!");
+		actor player = players[0].mo;
+		if (player.CountInv("IsDynDuchess"))
+		{
+			ACS_Execute(728,8,0,0,0);
+			if (ddafddebug_ACS) Console.Printf("Script 728 should have activated on MAP08");
+		}
+		if (player.CountInv("IsCarnOfSouls"))
+		{
+			ACS_Execute(728,42,0,0,0);
+			if (ddafddebug_ACS) Console.Printf("Script 728 should have activated on MAP42");
+		}
+		super.OnDestroy();
 	}
 	
 	States
@@ -5213,20 +5267,6 @@ class BowlingBallShot : EEProjectile
 			Loop;
 		Death:
 			BWBL A 1;
-			TNT1 A 1
-			{
-				actor player = players[0].mo;
-				if (player.CountInv("IsDynDuchess"))
-				{
-					ACS_Execute(728,8,0,0,0);
-					if (ddafddebug_ACS) Console.Printf("Script 728 should have activated on MAP08");
-				}
-				if (player.CountInv("IsCarnOfSouls"))
-				{
-					ACS_Execute(728,42,0,0,0);
-					if (ddafddebug_ACS) Console.Printf("Script 728 should have activated on MAP42");
-				}
-			}
 			Stop;
 	}
 }

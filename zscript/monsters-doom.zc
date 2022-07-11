@@ -492,7 +492,7 @@ class DoomImpNew : EECreature
 			else
 			{
 				// launch a missile
-				SpawnMissile (targ, "DoomImpBallNew");
+				A_SpawnProjectile("DoomImpBallNew",32,ptr:AAPTR_TARGET); // SpawnMissile (targ, "DoomImpBallNew");
 			}
 		}
 	}
@@ -1573,9 +1573,9 @@ class RevenantNew : EECreature
 	{
 		if (target == null) return;
 		A_FaceTarget();
-		AddZ(16);
+		if (A_CheckCCInvertGrav()) AddZ(-16); else AddZ(16);
 		Actor missile = SpawnMissile(target, type);
-		AddZ(-16);
+		if (A_CheckCCInvertGrav()) AddZ(16); else AddZ(-16);
 		if (missile != null)
 		{
 			missile.SetOrigin(missile.Vec3Offset(missile.Vel.X, missile.Vel.Y, 0.), false);
@@ -1686,6 +1686,15 @@ class ArachnotronNew : EECreature
 		+DONTHARMSPECIES;
 	}
 	
+	void A_BspiAttack()
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			A_SpawnProjectile("ArachnotronPlasma",32,ptr:AAPTR_TARGET); // SpawnMissile(target, "ArachnotronPlasma");
+		}
+	}
+
 	States
 	{
 		Spawn:
@@ -1897,7 +1906,7 @@ class HellKnightNew : EECreature
 			else
 			{
 				// launch a missile
-				SpawnMissile (target, "KnightBallNew");
+				A_SpawnProjectile("KnightBallNew",32,ptr:AAPTR_TARGET); // SpawnMissile (target, "KnightBallNew");
 			}
 		}
 	}
@@ -1989,7 +1998,7 @@ class BaronOfHellNew : EECreature
 			else
 			{
 				// launch a missile
-				SpawnMissile (target, "BaronBallNew");
+				A_SpawnProjectile("BaronBallNew",32,ptr:AAPTR_TARGET); //SpawnMissile (target, "BaronBallNew");
 			}
 		}
 	}
@@ -2202,18 +2211,22 @@ class CyberdemonNew : EECreature
 	
 	state A_CybCheckStompDist(int basedist = 24, int minc = 1, int maxc = 5, bool domissile = false)
 	{
-		float basechance;
-		if (A_JumpIfCloser((basedist*random(1,5)), "Stomp"))
+		if (A_CheckCCInvertGrav() == false)
 		{
-			basechance = 0 + (CountInv("MonsterLevel") * 3.3334);
-			if (frandom(0.1,100.0) <= basechance) return resolvestate("Stomp");
-			else 
+			float basechance;
+			if (A_JumpIfCloser((basedist*random(1,5)), "Stomp"))
 			{
-				if (domissile)
+				basechance = 0 + (CountInv("MonsterLevel") * 3.3334);
+				if (frandom(0.1,100.0) <= basechance) return resolvestate("Stomp");
+				else 
 				{
-					basechance = 0 + (CountInv("MonsterLevel") * 6.6667);
-					if (frandom(0.1,100.0) <= basechance) return resolvestate("Missile");
-					else return resolvestate(null);
+					if (domissile)
+					{
+						basechance = 0 + (CountInv("MonsterLevel") * 6.6667);
+						if (frandom(0.1,100.0) <= basechance) return resolvestate("Missile");
+						else return resolvestate(null);
+					}
+					return resolvestate(null);
 				}
 				return resolvestate(null);
 			}

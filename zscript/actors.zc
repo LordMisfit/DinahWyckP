@@ -280,6 +280,28 @@ class EEBaseZSC : Actor abstract
 
 		A_Remove(AAPTR_DEFAULT);
 	}
+	
+	bool A_CheckCCInvertGrav()
+	{
+		string nm;
+		nm = "CCards_Actor_ReverseGravityBuff";
+		if (CountInv(nm) >= 1 && bYFLIP == true) return true;
+		
+		return false;
+	}
+	
+	actor A_SpawnProjectile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET)
+	{
+		double newspawnheight = spawnheight;
+		double newangle = angle;
+		if (A_CheckCCInvertGrav()) 
+		{
+			newspawnheight = (default.height - spawnheight);
+			newangle = (angle * -1);
+			Console.Printf("newspawnheight: %d [%d], newangle: %.4f [%.4f]", newspawnheight, spawnheight, newangle, angle);
+		}
+		return Super.A_SpawnProjectile(missiletype, newspawnheight, spawnofs_xy, angle, flags, pitch, ptr);
+	}
 }
 
 class SingleTickDecoration : EEBaseZSC abstract
@@ -4253,6 +4275,37 @@ class EECreature : EEBaseZSC abstract
 	{
 		if (random(1,32) <= (1 + (CountInv("MonsterLevel") * 0.083334))) A_EEChase("Melee","Missile",CHF_FASTCHASE,1,3,1,1);
 		else A_EEChase("Melee","Missile",0,1,3,1,1);
+	}
+	
+	const FATSPREAD = 90./8;
+	void A_FatAttack1(class<Actor> spawntype = "FatShot")
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			A_SpawnProjectile(spawntype,32,0,FATSPREAD,ptr:AAPTR_TARGET);
+			A_SpawnProjectile(spawntype,32,0,0,ptr:AAPTR_TARGET);
+		}
+	}
+	
+	void A_FatAttack2(class<Actor> spawntype = "FatShot")
+	{
+		if (target)
+		{
+			A_FaceTarget ();
+			A_SpawnProjectile(spawntype,32,0,-FATSPREAD,ptr:AAPTR_TARGET);
+			A_SpawnProjectile(spawntype,32,0,0,ptr:AAPTR_TARGET);
+		}
+	}
+	
+	void A_FatAttack3(class<Actor> spawntype = "FatShot")
+	{
+		if (target)
+		{
+			A_FaceTarget();
+			A_SpawnProjectile(spawntype,32,0,(-FATSPREAD*0.5),ptr:AAPTR_TARGET);
+			A_SpawnProjectile(spawntype,32,0,(FATSPREAD*0.5),ptr:AAPTR_TARGET);
+		}
 	}
 }
 
