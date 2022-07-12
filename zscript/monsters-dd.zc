@@ -826,6 +826,151 @@ class Manchineel : DDOrigCreature
 	}
 }
 
+// EE Manchineel - turret type
+class ManchineelEE : DDOrigCreature
+{
+	default
+	{
+		//$Angled
+		//$Color 12
+		//$Category "EE Monsters"
+		Health 100;
+		Radius 20;
+		Height 56;
+		ProjectilePassHeight 76;
+		Mass 100000;
+		Speed 0;
+		PainChance 256;
+		DamageFactor "Fire", 2.5;
+		DamageFactor "CherryBomb", 2.5;
+		DamageFactor "Spinner", 2.5;
+		DamageFactor "Popper", 2.5;
+		DamageFactor "BRocket", 2.5;
+		DamageFactor "Chop", 2.5;
+		DamageFactor "Cricket", 1.5;
+		DamageFactor "Lead", 0.75;
+		DamageFactor "Bap", 0;
+		PainChance "Bap", 0;
+		DamageFactor 0.5;
+		MONSTER;
+		+FLOORCLIP;
+		+NOBLOOD;
+		+NOINFIGHTING;
+		+NOTARGET;
+		+CANNOTPUSH;
+		+DONTTHRUST;
+		+MISSILEMORE;
+		+MISSILEEVENMORE;
+		PainSound "gard/pain";
+		DeathSound "gard/death";
+		MeleeSound "gard/swing";
+		Obituary "%o was clipped by a man-chineel.";
+		MeleeDamage 3;
+		MissileType "SeedBall";
+		Tag "Man-Chineel";
+		DropItem "GalaApple", 32;
+		DropItem "GalaApple", 8;
+	}
+	
+	void A_ManchineelAtk(int type = 0, double xyoff = 0.0)
+	{
+		//Console.Printf("type: %d, angle: %.8f", type, angle);
+		int dmg = A_CalcDamageFormula2(random(15,25),0.06667,random(5,10),0.0334,random(0,5),0.01667,0.0025);
+		if (type == 0) A_CustomComboAttack("SeedBall", 32, (dmg), "gard/swing");
+		else
+		{
+			if (CheckMeleeRange())
+			{
+				A_EECustomMeleeAttack((dmg), "gard/swing", "", 'Melee', true, false);
+			}
+			else
+			{
+				A_SpawnProjectile("SeedBall",32,(0+xyoff),0.0,0,0.0,AAPTR_TARGET);
+			}
+		}
+		//Console.Printf("angle: %.8f", angle);
+	}
+	
+	States
+	{
+		Spawn:
+			TRNT A 10 A_Look();
+			Loop;
+		See:
+			TRNT AA 3 A_EEChase("Melee","Missile",0,1,3,1,1);
+			Loop;
+		Melee:
+		Missile:
+			TRNT BCD 3;
+			TRNT E 0 
+			{
+				A_DynamicMusic();
+				A_StartSound("gard/sight",CHAN_VOICE);
+			}
+			TRNT E 3 A_FaceTarget();
+			TRNT F 3
+			{
+				A_ManchineelAtk(0,0.0);
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") >= 25)
+					{
+						angle -= 15;
+						A_ManchineelAtk(1,-15.0);
+						angle += 15;
+
+						angle += 15;
+						A_ManchineelAtk(1,15.0);
+						angle -= 15;
+					}
+					if (CountInv("MonsterLevel") >= 50)
+					{
+						angle -= 22.5;
+						A_ManchineelAtk(1,-22.5);
+						angle += 22.5;
+
+						angle += 22.5;
+						A_ManchineelAtk(1,22.5);
+						angle -= 22.5;
+					}
+					if (CountInv("MonsterLevel") >= 75)
+					{
+						angle -= 7.5;
+						A_ManchineelAtk(1,-7.5);
+						angle += 7.5;
+
+						angle += 7.5;
+						A_ManchineelAtk(1,7.5);
+						angle -= 7.5;
+					}
+				}
+			}
+			TRNT G 3;
+			TRNT DCB 2;
+			Goto See;
+		Pain:
+			TRNT H 3 A_EEPain();
+			TRNT DCB 1;
+			Goto See;
+		/*
+		Death.Suck:
+			TRNT H 5 A_StartSound("VacDed",CHAN_BODY);
+			TRNT H 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,6);
+			Stop;
+		*/
+		Death:
+			TRNT I 5 Bright A_Scream();
+			TRNT JK 5 Bright;
+			GARD LMN 4 Bright;
+			GARD O 5 Bright A_NoBlocking();
+			Stop;
+		Raise:
+			GARD ONML 5;
+			TRNT KJI 5;
+			Goto See;
+	}
+}
+
 class SeedBall : EEProjectile
 {
 	default
@@ -3858,7 +4003,7 @@ class SpiderCenser : DDOrigCreature
 		MissileType "CroquetBall";
 		SeeSound "spidercen/sight";
 		PainSound "birdy/sight";
-		DeathSound "spidercen/death";
+		DeathSound "spidercen/death2";
 		ActiveSound "spidercen/sight";
 		Obituary "%o was smothered by a spider-censer.";
 		Tag "Spider-Censer";
@@ -3873,29 +4018,47 @@ class SpiderCenser : DDOrigCreature
 			SPRS AABB 3;
 			Goto Patrol;
 		Patrol:
-			SPCN AABBCCDD 1 A_EEChase("Melee","Missile",0,1,3,1,1);
+			SPCN AABBCCDD 1 
+			{
+				int flag2 = 0;
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") >= 45) { bAVOIDMELEE == true; bAVOIDHAZARDS == true; }
+					if (random(1,64) <= (1 + (CountInv("MonsterLevel") * 0.064))) flag2 |= CHF_FASTCHASE;
+				}
+				A_EEChase("Melee","Missile",flag2,1,3,1,1);
+			}
 			Loop;
 		Melee:
-			SPCN E 3 A_DynamicMusic();
-			SPCN FG 3 bright A_FaceTarget();
-			SPCN H 0 A_StartSound("Weapons/SpinnerFire",CHAN_BODY);
-			SPCN H 5 bright A_SpawnProjectile("IncenseBall",40,0);
-			SPCN K 5 bright;
-			SPCN M 5 bright;
-			SPCN G 3 bright;
-			SPCN FE 3;
-			Goto Patrol;
 		Missile:
 			SPCN E 3 A_DynamicMusic();
 			SPCN FG 3 bright A_FaceTarget();
-			SPCN H 0 A_StartSound("Weapons/SpinnerFire",CHAN_BODY);
-			SPCN H 0 bright A_SpawnProjectile("IncenseBall",48,24);
-			SPCN H 5 bright A_SpawnProjectile("IncenseBall",48,-24);
-			SPCN I 5 bright;
-			SPCN J 5 bright A_SpawnProjectile("IncenseBall",48,0);
-			SPCN K 5 bright;
-			SPCN L 5 bright;
-			SPCN M 5 bright;
+			SPCN H 5 bright 
+			{
+				if (CountInv("MonsterLevel") >= 75) { A_SetTics(3); }
+				else if (CountInv("MonsterLevel") >= 30) { A_SetTics(4); }
+				
+				A_StartSound("Weapons/SpinnerFire",CHAN_BODY);
+				A_SpawnProjectile("IncenseBall",48,24);
+				A_SpawnProjectile("IncenseBall",48,-24);
+			}
+			SPCN I 5 bright
+			{
+				if (CountInv("MonsterLevel") >= 75) { A_SetTics(3); }
+				else if (CountInv("MonsterLevel") >= 30) { A_SetTics(4); }
+			}
+			SPCN J 5 bright 
+			{
+				if (CountInv("MonsterLevel") >= 75) { A_SetTics(3); }
+				else if (CountInv("MonsterLevel") >= 30) { A_SetTics(4); }
+				
+				A_SpawnProjectile("IncenseBall",48,0);
+			}
+			SPCN KLM 5 bright
+			{
+				if (CountInv("MonsterLevel") >= 75) { A_SetTics(3); }
+				else if (CountInv("MonsterLevel") >= 30) { A_SetTics(4); }
+			}
 			SPCN G 3 bright;
 			SPCN FE 3;
 			Goto Patrol;
@@ -3910,7 +4073,20 @@ class SpiderCenser : DDOrigCreature
 			Stop;
 		*/
 		Death:
-			SPCN N 7 bright A_Scream();
+			SPCN N 7 bright 
+			{
+				int type = random(-1,1);
+				double pit1 = 1.0 + (0.05 * type);
+				double pit2 = 1.0 + (0.10 * type);
+				double pit3 = 1.0 + (0.15 * type);
+				A_Scream();
+				A_StopSound(65);
+				A_StopSound(66);
+				A_StopSound(67);
+				A_StartSound("spidercen/death2",65,CHANF_DEFAULT,1.0,ATTN_NORM,pit1);
+				A_StartSound("spidercen/death2",66,CHANF_DEFAULT,1.0,ATTN_NORM,pit2);
+				A_StartSound("spidercen/death2",67,CHANF_DEFAULT,1.0,ATTN_NORM,pit3);
+			}
 			SPCN OPQR 3 bright;
 			SPCN S 3 bright A_NoBlocking();
 			Stop;
