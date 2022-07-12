@@ -1871,6 +1871,16 @@ mixin class MonsterCollider
 				bFULLVOLACTIVE == false && 
 				bFULLVOLDEATH == false &&
 				bBOSS == false) isCCardsIllusion = true;
+		bool isCCardsGhost = false;
+		if (bISMONSTER == false &&
+				bBRIGHT == true &&
+				bNOBLOOD == true &&
+				bNOTARGET == true &&
+				bNOCLIP == true &&
+				bCANUSEWALLS == false &&
+				bACTIVATEMCROSS == false &&
+				bCANPUSHWALLS == false &&
+				bSHOOTABLE == false) isCCardsGhost = true;
 
 		
 		[inflictor, source, damage, mod, flags, angle, angvstype] = CheckMonType(inflictor,source,damage,mod,flags,angle);
@@ -2024,7 +2034,16 @@ mixin class MonsterCollider
 		int shieldtype;
 		if (dydudebug_actordmgdisplays && source) Console.Printf("(\c[green]%s\c-): dmgsource: \c[brick]%p\c- (\c[red]%s\c-)", GetClassName(), source, source.GetClassName());
 		if (dydudebug_actordmgdisplays && inflictor) Console.Printf("(\c[green]%s\c-): dmginflictor: \c[brick]%p\c- (\c[red]%s\c-)", GetClassName(), inflictor, inflictor.GetClassName());
-		nm = "CCards_Actor_Ghost"; if (CountInv(nm)) A_SetInventory("CCardGhostMarker",1);
+		bool isaghost;
+		nm = "CCards_Actor_Ghost"; 
+		{
+			if (CountInv(nm)) 
+			{
+				A_SetInventory("CCardGhostMarker",1);
+				isaghost = true;
+				if (dydudebug_actordmgdisplays) Console.Printf("CCardGhostMarker: %d [health: %d], isaghost: %d", CountInv("CCardGhostMarker"), health, isaghost);
+			}
+		}
 		nm = "CCards_Actor_HasRespawned"; if (CountInv(nm)) A_SetInventory("CCardRespawnedMarker",1);
 		nm = "CCards_Actor_AssassinBuff"; if (CountInv(nm)) A_SetInventory("CCardAssassinMarker",1);
 		
@@ -2435,15 +2454,17 @@ mixin class MonsterCollider
 			}
 		}
 
-		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Pre-Function Call: damage: %d (initdmg: %d)", GetClassName(), damage, initdmg);
+		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Pre-Function Call: damage: %d (initdmg: %d) isaghost: %d", GetClassName(), damage, initdmg, isaghost);
 		//************************************************************************
 		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
 		//************************************************************************
-		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Post-Function Call: ret: %d (pre-function damage: %d) (initdmg: %d)", GetClassName(), ret, damage, initdmg);
+		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Post-Function Call: ret: %d (pre-function damage: %d) (initdmg: %d), isaghost: %d", GetClassName(), ret, damage, initdmg, isaghost);
 		
 		// Stun Inflict Items to give if they take damage from specific attacks
 		bool givemeleeitem = true;
 		if (isCCardsIllusion) givemeleeitem = false;
+		if ((isCCardsGhost || isaghost) && health <= 0) givemeleeitem = false;
+		if (dydudebug_actordmgdisplays) Console.Printf("givemeleeitem: %d [%p (%s)], isCCardsIllusion: %d, isCCardsGhost: %d, isaghost: %d", givemeleeitem, self, GetClassName(), isCCardsIllusion, isCCardsGhost, isaghost);
 		if (givemeleeitem)
 		{
 			if ((KickPuff(inflictor) || KickPuffNoThrust(inflictor) || BadKickPuff(inflictor) || mod == 'Kick') && ret > 0) A_SetInventory("JustKicked",1);
