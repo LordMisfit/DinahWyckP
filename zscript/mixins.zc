@@ -715,6 +715,74 @@ mixin class CollisionChecker
 		return type;
 	}
 	
+	// Sets up what projectiles can be eaten by the active SuperVac, and how many units they give V:
+	int, int A_CheckCollisionProjShieldExemptionSV(Actor actr)
+	{
+		if (actr)
+		{
+			infl = actr.GetClassName();
+	
+			int type = 1;
+			int vacgive = ((actr.height * (actr.radius * 2)) * frandom(0.1667,0.3334));
+			
+			//**********************************************************************************
+			//* Special Calls for Guaranteed Devours [i.e. boosting/lessening their bag units] *
+			//**********************************************************************************
+			if (BadBlundershot(actr)) return type, (vacgive * frandom(2.5,3.25));
+	
+			if (exex_supervaccaneatprojectiles < 2) // If set to 2, SuperVac will eat all projectiles and ignore the lists below V:
+			{
+				//**********************************************************************************
+				//* Things that have a random chance of being devoured instead of being guaranteed *
+				//**********************************************************************************
+				if (EEBulletTracer(actr) || EEPuff(actr))
+				{
+					if (random(1,40) <= random(2,3)) return type, vacgive;
+					return 0, 0;
+				}
+				If (RocketMonster(actr) || 
+						Rocket2(actr) || 
+						HomRocket1(actr)) 
+				{
+					if (random(1,32) <= random(2,3)) return type, vacgive;
+					return 0, 0;
+				}
+				if (BadCherryBomb(actr) ||
+						BadCherryBomb2(actr))
+				{
+					if (random(1,20) <= random(2,3)) return type, vacgive;
+					return 0, 0;
+				}
+				if (SpinnerShotEvil(actr))
+				{
+					if (random(1,12) <= random(2,3)) return type, vacgive;
+					return 0, 0;
+				}
+				if (BadBRocketShot(actr))
+				{
+					if (random(1,40) <= random(2,3)) return type, vacgive;
+					return 0, 0;
+				}
+				if (BadZapShot(actr)) 
+				{
+					if (random(1,60) <= random(2,3)) return type, vacgive;
+					return 0, 0;
+				}
+				
+				//*****************************************************
+				//* Things that will NOT get devoured below this line *
+				//*****************************************************
+				If (VacShot(actr) || 
+						VacShotMini(actr) ||
+						BadVacShot(actr)) return 0, 0;
+			}
+			
+			// Else, Default to "yes"
+			return type, vacgive;
+		}
+		else return 0, 0;
+	}
+
 	// Checks for certain projectiles from players to pass through friendlies instead of colliding
 	int A_CheckCollisionProjShieldExemptionE(Actor actr)
 	{
@@ -724,7 +792,7 @@ mixin class CollisionChecker
 		If (BadJackShot(actr)) type = 1;
 		If (RealBadJackShot(actr)) type = 1;
 	
-		if (dydudebug_generalcollisions) Console.Printf("\c[brick]A_CheckCollisionProjShieldExemption:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
+		if (dydudebug_generalcollisions) Console.Printf("\c[brick]A_CheckCollisionProjShieldExemptionE:\c- %s [type: %d] {gametic: %d}", infl, type, gametic);
 		return type;
 	}
 	
@@ -794,31 +862,42 @@ mixin class DynMusicControl
 						if (ShieldPartBase(dmtarget)) dmtarget == null;
 						if (ShieldPart(dmtarget)) dmtarget == null;
 						if (ShieldPartMeleeNoReflect(dmtarget)) dmtarget == null;
+
 						if (SwingShieldPart(dmtarget)) dmtarget == null;
 						if (SwingShieldPartNoReflect(dmtarget)) dmtarget == null;
 						if (ShieldPartMeleeNoReflect(dmtarget)) dmtarget == null;
 						if (ShieldPartMeleeReflect(dmtarget)) dmtarget == null;
+
 						if (KickShieldNoReflect(dmtarget)) dmtarget == null;
 						if (KickShieldReflect(dmtarget)) dmtarget == null;
+
 						if (CricketShieldPart(dmtarget)) dmtarget == null;
 						if (CricketShieldPartNoReflect(dmtarget)) dmtarget == null;
 						if (CricketSwingShieldPart(dmtarget)) dmtarget == null;
 						if (CricketSwingShieldShort(dmtarget)) dmtarget == null;
 						if (CricketSwingPartNoReflect(dmtarget)) dmtarget == null;
 						if (CricketSwingShortNoReflect(dmtarget)) dmtarget == null;
+
+						if (SuperVacAbsorbsionPart(dmtarget)) dmtarget == null;
+
 						if (ScramblerSwingShieldPart(dmtarget)) dmtarget == null;
 						if (ScramblerSwingPartNoReflect(dmtarget)) dmtarget == null;
+
 						if (AppleJackSwingShieldPart(dmtarget)) dmtarget == null;
 						if (AppleJackSwingPartNoReflect(dmtarget)) dmtarget == null;
 						if (JackShotShieldPart(dmtarget)) dmtarget == null;
 						if (JackShotShieldPartFoe(dmtarget)) dmtarget == null;
 						if (JackShotShieldPartBerserk(dmtarget)) dmtarget == null;
+
 						if (WhipShieldPart(dmtarget)) dmtarget == null;
 						if (WhipShieldPartNoReflect(dmtarget)) dmtarget == null;
+
 						if (EvilKickShieldNoReflect(dmtarget)) dmtarget == null;
 						if (EvilKickShieldReflect(dmtarget)) dmtarget == null;
+
 						if (ShieldPartBig(dmtarget)) dmtarget == null;
 						if (ShieldPartBigVisual(dmtarget)) dmtarget == null;
+
 						if (ExplosiveBarrel(dmtarget)) dmtarget == null;
 						if (ExplosiveBarrelNew(dmtarget)) dmtarget == null;
 						if (!dmtarget.bISMONSTER) dmtarget == null;
@@ -1177,8 +1256,14 @@ mixin class MonsterCollider
 			if (shieldpiece)
 			{
 				if (dydudebug_generalcollisions) Console.Printf("\c[sapphire]Collision:  Passive - \c[green]%s\c- [ShieldPiece] vs (\c[orange]%s\c-) {gametic: %d}", GetClassName(), other.GetClassName(), gametic);
-				if (shieldpiece.GetClassName() == "CricketShieldPart" || shieldpiece.GetClassName() == "CricketShieldPartNoReflect" ||
-						shieldpiece.GetClassName() == "ShieldPartMeleeNoReflect" || shieldpiece.GetClassName() == "ShieldPartMeleeNoReflect")
+				if (CricketShieldPart(shieldpiece) || CricketShieldPartNoReflect(shieldpiece) ||
+						CricketSwingShieldPart(shieldpiece) || CricketSwingPartNoReflect(shieldpiece) ||
+						CricketSwingShieldShort(shieldpiece) || CricketSwingShortNoReflect(shieldpiece) ||
+						AppleJackSwingShieldPart(shieldpiece) || AppleJackSwingPartNoReflect(shieldpiece) ||
+						ShieldPartMeleeNoReflect(shieldpiece) || ShieldPartMeleeNoReflect(shieldpiece) ||
+						KickShieldReflect(shieldpiece) || KickShieldNoReflect(shieldpiece) ||
+						EvilKickShieldReflect(shieldpiece) || EvilKickShieldNoReflect(shieldpiece) ||
+						SuperVacAbsorbsionPart(shieldpiece))
 				{
 					if (dydudebug_generalcollisions) Console.Printf("\c[sapphire]Collision:  Passive - \c[green]%s\c- [MeleeShieldPart] vs (\c[orange]%s\c-) {gametic: %d}", GetClassName(), other.GetClassName(), gametic);
 					if (ExplosiveBarrel(self)) return false;
@@ -1981,12 +2066,23 @@ mixin class MonsterCollider
 			}
 		}
 		
-		if ((BlunderSmokeSmall(inflictor) || BlunderSmokeSmall(source)))
+		if ((BlunderSmokeSmall(inflictor) || BlunderSmokeSmall(source)) ||
+				(BlunderSmokeSmallD(inflictor) || BlunderSmokeSmallD(source)) ||
+				(BlunderSmokeSmallF(inflictor) || BlunderSmokeSmallF(source)) ||
+				(BlunderSmokeSmallH(inflictor) || BlunderSmokeSmallH(source)))
 		{
-			if (random(1,4) <= 3)
+			if (random(1,4) <= random(1,2)) flags &= ~DMG_NO_PROTECT;
+			if (random(1,4) <= 2)
 			{
 				damage *= 0.5;
 				if (damage < 1) damage = 1;
+			}
+			else
+			{
+				if (random(1,4) <= 2)
+				{
+					damage *= 2.0;
+				}
 			}
 			if (dydudebug_actordmgdisplays) Console.Printf("Blundershot Smoke");
 		}
