@@ -3312,10 +3312,6 @@ class CricketShieldPart : ShieldPart
 		Spawn:
 			HEXA C 2 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
@@ -3340,10 +3336,6 @@ class CricketShieldPartNoReflect : ShieldPartNoReflect
 		Spawn:
 			HEXA A 2 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
@@ -3370,14 +3362,28 @@ class CricketSwingShieldPart : SwingShieldPart
 		Spawn:
 			HEXA C 3 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
 			TNT1 A 1 bright 
+			{
+				A_StartSound("CricketBat/ShieldHit", CHAN_WEAPON, CHANF_DEFAULT, frandom(0.9,1.1), ATTN_NORM, frandom(0.9,1.1));
+			}
+			stop;
+	}
+}
+
+class CricketSwingShieldShort : CricketSwingShieldPart
+{
+	states
+	{
+		Spawn:
+			HEXA C 2 bright NoDelay
+			{
+			}
+			stop;
+		Pain:
+			TNT1 A 0 bright 
 			{
 				A_StartSound("CricketBat/ShieldHit", CHAN_WEAPON, CHANF_DEFAULT, frandom(0.9,1.1), ATTN_NORM, frandom(0.9,1.1));
 			}
@@ -3398,14 +3404,28 @@ class CricketSwingPartNoReflect : SwingShieldPartNoReflect
 		Spawn:
 			HEXA A 3 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
 			TNT1 A 1 bright 
+			{
+				A_StartSound("CricketBat/ShieldHit", CHAN_WEAPON, CHANF_DEFAULT, frandom(0.9,1.1), ATTN_NORM, frandom(0.9,1.1));
+			}
+			stop;
+	}
+}
+
+class CricketSwingShortNoReflect : CricketSwingPartNoReflect
+{
+	states
+	{
+		Spawn:
+			HEXA A 2 bright NoDelay
+			{
+			}
+			stop;
+		Pain:
+			TNT1 A 0 bright 
 			{
 				A_StartSound("CricketBat/ShieldHit", CHAN_WEAPON, CHANF_DEFAULT, frandom(0.9,1.1), ATTN_NORM, frandom(0.9,1.1));
 			}
@@ -3537,16 +3557,27 @@ class CricketBat : DinahWeapon replaces Pistol
 							else A_GiveGuardBuff(0);
 	}
 
-	action void A_CricketBatSwing(int type = 0, double dist = 112.0)
+	action void A_CricketBatSwing(int type = 0, double dist = 112.0, bool spinning = false)
 	{
+		//Console.Printf("type: %d, dist: %.8f, spinning: %d [gametic: %d]", type, dist, spinning, gametic);
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		bool berserked = false;
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) berserked = true;
 
-		A_BatGuardDashOff();
 		string vispart = "CricketSwingPartNoReflect";
-		if (MiscItem && random(1,64) <= (20 + ((MiscItem.TruePlayerLevel * 0.125)))) vispart = "CricketSwingShieldPart";
-		else if (random(1,16) <= 5) vispart = "CricketSwingShieldPart";
+		A_BatGuardDashOff();
+		if (spinning)
+		{
+			vispart = "CricketSwingShortNoReflect";
+			if (MiscItem && random(1,64) <= (20 + ((MiscItem.TruePlayerLevel * 0.125)))) vispart = "CricketSwingShieldShort";
+			else if (random(1,16) <= 5) vispart = "CricketSwingShieldShort";
+		}
+		else
+		{
+			vispart = "CricketSwingPartNoReflect";
+			if (MiscItem && random(1,64) <= (20 + ((MiscItem.TruePlayerLevel * 0.125)))) vispart = "CricketSwingShieldPart";
+			else if (random(1,16) <= 5) vispart = "CricketSwingShieldPart";
+		}
 		
 		double yoffset = frandompick(-0.1625,0,0.1625);
 		
@@ -3649,6 +3680,40 @@ class CricketBat : DinahWeapon replaces Pistol
 		}
 		
 		A_GiveGuardBuff(0);
+	}
+	
+	action void A_SpinAtkHit(int dmg, int range, string pufftype, bool rangedatk, int type, int i)
+	{
+		actor BombShots;
+		EEProjectile IPCompat;
+		if (type == 0)
+		{
+			if (invoker.IPAttackCheck) A_FireBullets(0,0,1,dmg,pufftype,FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
+			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1,range,true); } else { A_CricketBatSwing(0,range,true); }
+		}
+		else
+		{
+			A_FireBullets(0,0,1,dmg,pufftype,FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
+			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
+			{
+				if (invoker.IPAttackCheck && rangedatk && (i == 0 || i == 3)) BombShots = A_FireProjectile("MalletShotBerserk",0,1,0,0);
+				A_CricketBatSwing(1,range,true); 
+			}
+			else 
+			{
+				if (invoker.IPAttackCheck && rangedatk && (i == 0 || i == 3)) BombShots = A_FireProjectile("MalletShot",0,1,0,0);
+				A_CricketBatSwing(0,range,true); 
+			}
+			if (BombShots && invoker.IPAttackCheck)
+			{
+				IPCompat = EEProjectile(BombShots);
+				if (IPCompat)
+				{
+					IPCompat.IPattack = true;
+					IPCompat.Speed *= frandompick(1.125,1.25,1.375);
+				}
+			}
+		}
 	}
 	
 	int guardstate;
@@ -4417,45 +4482,15 @@ class CricketBat : DinahWeapon replaces Pistol
 				int maxspintimes = 5;
 				for (int i = 0; i < maxspintimes; i++)
 				{
-					A_SetAngle(angle+22.5);
-					if (invoker.IPAttackCheck) A_FireBullets(0,0,1,dmg,pufftypenosnd,FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
-					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1,range); } else { A_CricketBatSwing(0,range); }
-					A_SetAngle(angle+22.5);
-					if (invoker.IPAttackCheck) A_FireBullets(0,0,1,dmg,pufftypenosnd,FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
-					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1,range); } else { A_CricketBatSwing(0,range); }
-					A_SetAngle(angle+22.5);
-					A_FireBullets(0,0,1,dmg,pufftypenosnd,FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
-					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1,range); } else { A_CricketBatSwing(0,range); }
-					A_SetAngle(angle-135);
-					A_FireBullets(0,0,1,dmg,pufftype,FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
-					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
-					{
-						if (invoker.IPAttackCheck && rangedatk && (i == 0 || i == 3)) BombShots = A_FireProjectile("MalletShotBerserk",0,1,0,0);
-						A_CricketBatSwing(1,range); 
-					}
-					else 
-					{
-						if (invoker.IPAttackCheck && rangedatk && (i == 0 || i == 3)) BombShots = A_FireProjectile("MalletShot",0,1,0,0);
-						A_CricketBatSwing(0,range); 
-					}
-					if (BombShots && invoker.IPAttackCheck)
-					{
-						IPCompat = EEProjectile(BombShots);
-						if (IPCompat)
-						{
-							IPCompat.IPattack = true;
-							IPCompat.Speed *= frandompick(1.125,1.25,1.375);
-						}
-					}
-					A_SetAngle(angle+22.5);
-					A_FireBullets(0,0,1,dmg,pufftypenosnd,FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
-					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1,range); } else { A_CricketBatSwing(0,range); }
-					A_SetAngle(angle+22.5);
-					if (invoker.IPAttackCheck) A_FireBullets(0,0,1,dmg,pufftypenosnd,FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
-					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1,range); } else { A_CricketBatSwing(0,range); }
-					A_SetAngle(angle+22.5);
-					if (invoker.IPAttackCheck) A_FireBullets(0,0,1,dmg,pufftypenosnd,FBF_NORANDOM|FBF_NORANDOMPUFFZ|FBF_NOFLASH,range,"",0,0);
-					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) { A_CricketBatSwing(1,range); } else { A_CricketBatSwing(0,range); }
+					
+					A_SetAngle(angle-22.5); A_SpinAtkHit(dmg,range,pufftypenosnd,rangedatk,0,i);
+					A_SetAngle(angle-22.5); A_SpinAtkHit(dmg,range,pufftypenosnd,rangedatk,0,i);
+					A_SetAngle(angle+45); A_SpinAtkHit(dmg,range,pufftype,rangedatk,1,i);
+					A_SetAngle(angle-22.5); A_SpinAtkHit(dmg,range,pufftypenosnd,rangedatk,0,i);
+					A_SetAngle(angle+22.5); 
+					//A_SetAngle(angle-22.5); A_SpinAtkHit(dmg,range,pufftypenosnd,rangedatk,0,i);
+					//A_SetAngle(angle-22.5); A_SpinAtkHit(dmg,range,pufftypenosnd,rangedatk,0,i);
+					//A_SetAngle(angle-22.5); A_SpinAtkHit(dmg,range,pufftypenosnd,rangedatk,0,i);
 					
 					A_SetAngle(angle+6);
 				}
@@ -8463,10 +8498,6 @@ class ScramblerSwingShieldPart : SwingShieldPart
 		Spawn:
 			HEXA C 2 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
@@ -8492,10 +8523,6 @@ class ScramblerSwingPartNoReflect : SwingShieldPartNoReflect
 		Spawn:
 			HEXA A 2 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
@@ -9999,10 +10026,6 @@ class AppleJackSwingShieldPart : SwingShieldPart
 		Spawn:
 			HEXA C 4 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
@@ -10028,10 +10051,6 @@ class AppleJackSwingPartNoReflect : SwingShieldPartNoReflect
 		Spawn:
 			HEXA A 2 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
@@ -14774,10 +14793,6 @@ class WhipShieldPart : ShieldPart
 		Spawn:
 			HEXA C 2 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
@@ -14801,10 +14816,6 @@ class WhipShieldPartNoReflect : ShieldPartNoReflect
 		Spawn:
 			HEXA A 2 bright NoDelay
 			{
-				//A_SetTics(randompick(1,2,2,2,3));
-				actor player = players[0].mo;
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (player.CountInv("PlayingDoom64")) { A_SetSize((radius*1.2),(height*1.2),false); }
 			}
 			stop;
 		Pain:
