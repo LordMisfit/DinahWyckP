@@ -387,6 +387,7 @@ class EEPowerup : Powerup
 // Base Projectile Class
 class EEProjectile : EEBaseZSC abstract
 {
+	bool isillusionaryproj;
 	int vacgiveamt;
 	bool gavevac;
 	int user_projtimer;
@@ -423,6 +424,7 @@ class EEProjectile : EEBaseZSC abstract
 	
 	int PlayerLevel;
 	PlayerPawn playpawn;
+	EECreature eeactor;
 	
 	private class<Inventory> iDTech1Check, iDTech1Check2, iDTech1Check3, iDTech1Check4, iDTech1Check5, iDTech1Check6, iDTech1Check7, iDTech1Check8;
 
@@ -436,11 +438,22 @@ class EEProjectile : EEBaseZSC abstract
 	{
 		Super.PostBeginPlay();
 		if (bonusmultiplier <= 0.0) bonusmultiplier = 1.0;
-		if (target) playpawn = PlayerPawn(target);
-		if (playpawn)
+		if (target) 
 		{
-			let MiscItem = PlayerStatItem(playpawn.FindInventory("PlayerStatItem"));
-			if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
+			playpawn = PlayerPawn(target);
+			if (playpawn)
+			{
+				let MiscItem = PlayerStatItem(playpawn.FindInventory("PlayerStatItem"));
+				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
+			}
+			
+			if (target.bNOBLOOD == true && 
+					target.bNOPAIN == true &&
+					target.bNOTARGETSWITCH == true &&
+					target.bNOINFIGHTING == true &&
+					target.bFULLVOLACTIVE == false && 
+					target.bFULLVOLDEATH == false &&
+					target.bBOSS == false) isillusionaryproj = true;
 		}
 	}
 
@@ -1869,9 +1882,16 @@ class EEProjectile : EEBaseZSC abstract
 		{
 			actor player = players[0].mo;
 			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-			player.A_StartSound("VacDed",210,CHANF_DEFAULT,frandom(0.75,0.90),ATTN_NORM,frandom(1.8,2.7));
-			player.A_GiveInventory("VacAmmoCounter",vacgiveamt);
-			Console.Printf("+%d Vacuum Bag Units", vacgiveamt);
+			if (vacgiveamt > 0)
+			{
+				player.A_StartSound("VacDed",210,CHANF_DEFAULT,frandom(0.75,0.90),ATTN_NORM,frandom(1.8,2.7));
+				player.A_GiveInventory("VacAmmoCounter",vacgiveamt);
+				Console.Printf("+%d Vacuum Bag Units", vacgiveamt);
+			}
+			else
+			{
+				Console.Printf("No Bag Units. Not an actual projectile...");
+			}
 			gavevac = true;
 			A_Remove(AAPTR_DEFAULT);
 		}
