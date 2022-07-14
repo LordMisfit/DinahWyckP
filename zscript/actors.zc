@@ -2242,6 +2242,58 @@ class EEFastProjectile : EEProjectile abstract
 	}
 }
 
+class EEFireworksFastProj : EEFastProjectile
+{
+	int user_explosion;
+	int expflags;
+	int TruePlayerLevel;
+	
+	void A_GetPlayerLevel()
+	{
+		TruePlayerLevel = 0;
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+	}
+	
+	double A_CalcTrueExpDmg(double basedmg, double basemul = 0.02, double tier1 = 0.5, double tier2 = 0.5, double tier3 = 0.5, double tier4 = 0.5)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (CherryBombShot(self))
+		{
+			if (player.CountInv("CBombUpgrade"))
+			{
+				if (player.CountInv("CBombUpgrade") == 1) 
+				{
+					basedmg *= 1.75;
+					basemul *= 1.75;
+					tier1 *= 1.75;
+					tier2 *= 1.75;
+					tier3 *= 1.75;
+					tier4 *= 1.75;
+				}
+				if (player.CountInv("CBombUpgrade") >= 2) 
+				{
+					basedmg *= 3.25;
+					basemul *= 3.25;
+					tier1 *= 3.25;
+					tier2 *= 3.25;
+					tier3 *= 3.25;
+					tier4 *= 3.25;
+				}
+			}
+		}
+		if (TruePlayerLevel) basedmg *= (1.0 + (TruePlayerLevel * basemul));
+		if (TruePlayerLevel > 25) basedmg *= (1.0 + ((TruePlayerLevel - 25) * (basemul * tier1)));
+		if (TruePlayerLevel > 50) basedmg *= (1.0 + ((TruePlayerLevel - 50) * (basemul * tier2)));
+		if (TruePlayerLevel > 75) basedmg *= (1.0 + ((TruePlayerLevel - 75) * (basemul * tier3)));
+		if (TruePlayerLevel > 100) basedmg *= (1.0 + ((TruePlayerLevel - 100) * (basemul * tier4)));
+		if (dydudebug_rangedmg) Console.Printf("ExpDamage [%s]: %d", GetClassName(), basedmg);
+		return basedmg;
+	}
+}
+
 // Base Bullet Tracer Class
 class EEBulletTracer : EEFastProjectile
 {
