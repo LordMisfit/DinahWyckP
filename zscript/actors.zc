@@ -387,6 +387,8 @@ class EEPowerup : Powerup
 // Base Projectile Class
 class EEProjectile : EEBaseZSC abstract
 {
+	int vacgiveamt;
+	bool gavevac;
 	int user_projtimer;
 	float user_ignoreaoeimmunity;
 	int saveddmg; // Save damage from things like A_CustomPunch for puffs
@@ -1861,13 +1863,27 @@ class EEProjectile : EEBaseZSC abstract
 		if (user_noseektimer <= 0) A_SeekerMissile(threshold,turnmax,flags,chance,distance);
 	}
 	
+	void A_VacUpProjectile()
+	{
+		if (!gavevac)
+		{
+			actor player = players[0].mo;
+			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+			player.A_StartSound("VacDed",210,CHANF_DEFAULT,frandom(0.75,0.90),ATTN_NORM,frandom(1.8,2.7));
+			player.A_GiveInventory("VacAmmoCounter",vacgiveamt);
+			Console.Printf("+%d Vacuum Bag Units", vacgiveamt);
+			gavevac = true;
+			A_Remove(AAPTR_DEFAULT);
+		}
+	}
+	
 	states
 	{
 		VaccedUp:
 			TNT1 A 0
 			{
 				//Console.Printf("VaccedUp (EEProjectile)");
-				A_Remove(AAPTR_DEFAULT);
+				A_VacUpProjectile();
 			}
 			stop;
 	}
@@ -2220,7 +2236,7 @@ class EEFastProjectile : EEProjectile abstract
 			TNT1 A -1
 			{
 				//Console.Printf("VaccedUp (EEFastProjectile)");
-				A_Remove(AAPTR_DEFAULT);
+				A_VacUpProjectile();
 			}
 			stop;
 	}
