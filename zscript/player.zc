@@ -1775,6 +1775,36 @@ class DDPlayerPawn : PlayerPawn
 	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		let NoU = D_NoUCard(FindInventory("D_NoUCard"));
+		if (NoU)
+		{
+			A_StopSound(104);
+			A_StartSound("ReflectDmg1",104,CHANF_DEFAULT,1.5,ATTN_NORM,frandom(0.875,1.125));
+			flags |= DMG_NO_ARMOR;
+			flags |= DMG_NO_PROTECT;
+			flags |= DMG_THRUSTLESS;
+			//Console.Printf("NoU Found!");
+			if (source && source != self)
+			{
+				//Console.Printf("NoU Found! [source]");
+				source.A_StopSound(104);
+				source.A_StartSound("ReflectDmg2",104,CHANF_DEFAULT,1.5,ATTN_NORM,frandom(0.875,1.125));
+				source.DamageMobj(self, self, damage, mod, flags, angle);
+			}
+			else
+			{
+				if (inflictor && inflictor != self)
+				{
+					//Console.Printf("NoU Found! [inflictor]");
+					inflictor.A_StopSound(104);
+					inflictor.A_StartSound("ReflectDmg2",104,CHANF_DEFAULT,1.5,ATTN_NORM,frandom(0.875,1.125));
+					inflictor.DamageMobj(self, self, damage, mod, flags, angle);
+				}
+			}
+			damage = 0;
+			return 0;
+		}
+
 		bool isbarrierbeam = false;
 		if (BarrierBeam(inflictor) || BarrierBeam(source)) isbarrierbeam = true;
 		if (mod == 'Falling')
