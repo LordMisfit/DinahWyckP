@@ -13166,24 +13166,33 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 
 			if (UniqueProjectile || UniqueProjectileFast)
 			{
-				bool suckup;
-				int vacgive;
-				[suckup, vacgive] = A_CheckCollisionProjShieldExemptionSV(other);
-				
-				if (suckup)
+				if (UniqueProjectile.willbevacced > -1)
 				{
-					if (UniqueProjectile.isillusionaryproj) vacgive = 0;
-					//Console.Printf("%s", other.GetClassName());
-					if (vacgive > 0)
+					bool suckup;
+					int vacgive;
+					[suckup, vacgive] = A_CheckCollisionProjShieldExemptionSV(other);
+					
+					if (suckup)
 					{
-					if (UniqueProjectile) UniqueProjectile.vacgiveamt = vacgive;
-					if (UniqueProjectileFast) UniqueProjectileFast.vacgiveamt = vacgive;
+						UniqueProjectile.willbevacced = 1;
+						if (UniqueProjectile.isillusionaryproj) vacgive = 0;
+						//Console.Printf("%s", other.GetClassName());
+						if (vacgive > 0)
+						{
+							if (UniqueProjectile) UniqueProjectile.vacgiveamt = vacgive;
+							if (UniqueProjectileFast) UniqueProjectileFast.vacgiveamt = vacgive;
+						}
+						other.SetStateLabel("VaccedUp");
+						if (UniqueProjectileFast) UniqueProjectileFast.tics = -1;
+						return false;
 					}
-					other.SetStateLabel("VaccedUp");
-					if (UniqueProjectileFast) UniqueProjectileFast.tics = -1;
+					else
+					{
+						UniqueProjectile.willbevacced = -1;
+						return false;
+					}
 					return false;
 				}
-				
 				return false;
 			}
 
