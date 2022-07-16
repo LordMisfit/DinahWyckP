@@ -302,6 +302,57 @@ class EEBaseZSC : Actor abstract
 		}
 		return Super.A_SpawnProjectile(missiletype, newspawnheight, spawnofs_xy, angle, flags, pitch, ptr);
 	}
+	
+	const ADI_FULLAMMO = 1;
+	Actor A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256, int flags = 0)
+	{
+		if (item != NULL && random[DropItem]() <= chance)
+		{
+			Actor mo;
+			double spawnz = 0;
+
+			if (!(Level.compatflags & COMPATF_NOTOSSDROPS))
+			{
+				int style = sv_dropstyle;
+				if (style == 0)
+				{
+					style = gameinfo.defaultdropstyle;
+				}
+				if (style == 2)
+				{
+					spawnz = 24;
+				}
+				else
+				{
+					spawnz = Height / 2;
+				}
+			}
+			mo = Spawn(item, pos + (0, 0, spawnz), ALLOW_REPLACE);
+			if (mo != NULL)
+			{
+				mo.bDropped = true;
+				mo.bNoGravity = false;	// [RH] Make sure it is affected by gravity
+				if (!(Level.compatflags & COMPATF_NOTOSSDROPS))
+				{
+					mo.TossItem ();
+				}
+				let inv = Inventory(mo);
+				if (inv)
+				{
+					if (!(flags & ADI_FULLAMMO)) inv.ModifyDropAmount(dropamount);
+					inv.bTossed = true;
+					if (inv.SpecialDropAction(self))
+					{
+						// The special action indicates that the item should not spawn
+						inv.Destroy();
+						return null;
+					}
+				}
+				return mo;
+			}
+		}
+		return NULL;
+	}
 }
 
 class SingleTickDecoration : EEBaseZSC abstract
@@ -5151,7 +5202,7 @@ class PoisonCloudEE : EEBaseZSC replaces PoisonCloud
 	{
 		Spawn:
 			PSBG D 1;
-			PSBG D 1 A_Scream;
+			PSBG D 1 A_Scream();
 			PSBG DEEEFFFGGGHHHII 2 A_PoisonBagDamage;
 			PSBG I 2 A_PoisonBagCheck;
 			PSBG I 1 A_PoisonBagCheck;
