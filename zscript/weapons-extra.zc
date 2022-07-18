@@ -769,17 +769,17 @@ class SigilDD : DinahWeapon replaces Sigil
 		{
 			if (random(1,8) <= 1)
 			{
-				shotangle = -40;
-				shotangleend = 40;
-				shotangleinc = 20;
+				shotangle = -45.0;
+				shotangleend = 45.0;
+				shotangleinc = 22.5;
 				maxshots = 5;
 				extrabounces = randompick(1,1,1,1,2);
 			}
 			else
 			{
-				shotangle = -30;
-				shotangleend = 30;
-				shotangleinc = 30;
+				shotangle = -22.5;
+				shotangleend = 22.5;
+				shotangleinc = 22.5;
 				maxshots = 3;
 				extrabounces = 0;
 			}
@@ -836,11 +836,17 @@ class SigilDD : DinahWeapon replaces Sigil
 
 		DamageMobj (self, null, draindmg, 'SigilDrain', DMG_NO_ARMOR);
 		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
+		double startangle = 90.0;
+		if (invoker.IPAttackCheck) startangle = 180.0;
+		int shotcount = 20;
+		if (invoker.IPAttackCheck) shotcount = 60;
+		double anginc = 9.0;
+		if (invoker.IPAttackCheck) anginc = 6.0;
 
-		angle -= 90.;
-		for (int i = 0; i < 20; ++i)
+		angle -= startangle;
+		for (int i = 0; i < shotcount; ++i)
 		{
-			angle += 9.;
+			angle += anginc;
 			Actor spot = SpawnSubMissile("SpectralLightningBall1New", self);
 			if (spot != null)
 			{
@@ -859,14 +865,11 @@ class SigilDD : DinahWeapon replaces Sigil
 					spot.bCANBOUNCEWATER = true;
 					spot.bDONTBOUNCEONSHOOTABLES = true;
 					spot2 = EEProjectile(spot);
-					if (spot2)
-					{
-						spot2.IPAttack = true;
-					}
+					if (spot2) spot2.IPAttack = true;
 				}
 			}
 		}
-		angle -= 90.;
+		angle -= startangle;
 		
 		A_SigilFireTics(ticduration,0.075,1);
 	}
@@ -892,46 +895,59 @@ class SigilDD : DinahWeapon replaces Sigil
 		DamageMobj (self, null, draindmg, 'SigilDrain', DMG_NO_ARMOR);
 		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 		
-		Actor spot;
-		BulletSlope (t, ALF_PORTALRESTRICT);
-		if (t.linetarget != null)
+		double startangle = 0;
+		if (invoker.IPAttackCheck) startangle = 22.5;
+		int shotcount = 1;
+		if (invoker.IPAttackCheck) shotcount = 3;
+		double anginc = 0;
+		if (invoker.IPAttackCheck) anginc = 22.5;
+
+		angle -= startangle;
+		for (int i = 0; i < shotcount; ++i)
 		{
-			spot = SpawnPlayerMissile ("SpectralLightningBigV1New", angle, pLineTarget: t, aimFlags: ALF_PORTALRESTRICT);
-			if (spot != null)
+			if (i > 0) angle += anginc;
+			Actor spot;
+			BulletSlope (t, ALF_PORTALRESTRICT);
+			if (t.linetarget != null)
 			{
-				spot.tracer = t.linetarget;
-			}
-		}
-		else
-		{
-			spot = SpawnPlayerMissile ("SpectralLightningBigV1New");
-			if (spot != null)
-			{
-				spot.VelFromAngle(spot.Speed, angle);
-			}
-		}
-		if (spot != null)
-		{
-			spot.target = self;
-			if (invoker.IPAttackCheck)
-			{
-				spot.Speed *= 1.5;
-				spot.BounceFactor = 1.00;
-				spot.WallBounceFactor = 1.00;
-				spot.BounceCount = 2;
-				spot.bSKYEXPLODE = true;
-				spot.bBOUNCEONWALLS = true;
-				spot.bBOUNCEONFLOORS = true;
-				spot.bBOUNCEONCEILINGS = true;
-				spot.bCANBOUNCEWATER = true;
-				spot.bDONTBOUNCEONSHOOTABLES = true;
-				spot2 = EEProjectile(spot);
-				if (spot2)
+				spot = SpawnPlayerMissile ("SpectralLightningBigV1New", angle, pLineTarget: t, aimFlags: ALF_PORTALRESTRICT);
+				if (spot != null)
 				{
-					spot2.IPAttack = true;
+					spot.tracer = t.linetarget;
+				}
+			}
+			else
+			{
+				spot = SpawnPlayerMissile ("SpectralLightningBigV1New");
+				if (spot != null)
+				{
+					spot.VelFromAngle(spot.Speed, angle);
+				}
+			}
+			if (spot != null)
+			{
+				spot.target = self;
+				if (invoker.IPAttackCheck)
+				{
+					spot.Speed *= 1.5;
+					spot.BounceFactor = 1.00;
+					spot.WallBounceFactor = 1.00;
+					spot.BounceCount = 2;
+					spot.bSKYEXPLODE = true;
+					spot.bBOUNCEONWALLS = true;
+					spot.bBOUNCEONFLOORS = true;
+					spot.bBOUNCEONCEILINGS = true;
+					spot.bCANBOUNCEWATER = true;
+					spot.bDONTBOUNCEONSHOOTABLES = true;
+					spot2 = EEProjectile(spot);
+					if (spot2)
+					{
+						spot2.IPAttack = true;
+					}
 				}
 			}
 		}
+		angle -= startangle;
 		
 		A_SigilFireTics(ticduration,0.075,1);
 	}
@@ -953,24 +969,37 @@ class SigilDD : DinahWeapon replaces Sigil
 
 		DamageMobj (self, null, draindmg, 'SigilDrain', DMG_NO_ARMOR);
 		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
+		
+		double startangle = 0;
+		if (invoker.IPAttackCheck) startangle = 22.5;
+		int shotcount = 1;
+		if (invoker.IPAttackCheck) shotcount = 3;
+		double anginc = 0;
+		if (invoker.IPAttackCheck) anginc = 22.5;
 
-		Actor spot = SpawnPlayerMissile("SpectralLightningBigBall1New");
-		if (spot != null)
+		angle -= startangle;
+		for (int i = 0; i < shotcount; ++i)
 		{
-			if (invoker.IPAttackCheck)
+			if (i > 0) angle += anginc;
+			Actor spot = SpawnPlayerMissile("SpectralLightningBigBall1New");
+			if (spot != null)
 			{
-				spot.Speed *= 1.5;
-				spot.BounceFactor = 1.00;
-				spot.WallBounceFactor = 1.00;
-				spot.BounceCount = 2;
-				spot.bSKYEXPLODE = true;
-				spot.bBOUNCEONWALLS = true;
-				spot.bBOUNCEONFLOORS = true;
-				spot.bBOUNCEONCEILINGS = true;
-				spot.bCANBOUNCEWATER = true;
-				spot.bDONTBOUNCEONSHOOTABLES = true;
+				if (invoker.IPAttackCheck)
+				{
+					spot.Speed *= 1.5;
+					spot.BounceFactor = 1.00;
+					spot.WallBounceFactor = 1.00;
+					spot.BounceCount = 2;
+					spot.bSKYEXPLODE = true;
+					spot.bBOUNCEONWALLS = true;
+					spot.bBOUNCEONFLOORS = true;
+					spot.bBOUNCEONCEILINGS = true;
+					spot.bCANBOUNCEWATER = true;
+					spot.bDONTBOUNCEONSHOOTABLES = true;
+				}
 			}
 		}
+		angle -= startangle;
 		
 		A_SigilFireTics(ticduration,0.075,1);
 	}
@@ -1384,7 +1413,9 @@ class SpectralLightningBigV1New : SpectralLightningDeath1New
 			ZOT2 ABCDE 4 Bright 
 			{
 				A_GetSigilDamage(3,0);
-				A_Tracer2();
+				double tang = 19.6875;
+				if (IPAttack) tang = (19.6875 * 3);
+				A_SeekerMissile(tang,tang,SMF_LOOK|SMF_PRECISE); // A_Tracer2(tang);
 			}
 			Loop;
 	}
@@ -1411,6 +1442,18 @@ class SpectralLightningBigBall1New : SpectralLightningDeath2New
 		DamageFunction (finaldamagedealt); // 130
 		Projectile;
 		+SPECTRAL
+	}
+	
+	override void Tick()
+	{
+		if (IPAttack) 
+		{
+			double tang = 19.6875;
+			double tang2 = 2.4609375;
+			if (GetAge() % 12 == 0) A_SeekerMissile(tang,tang,SMF_LOOK|SMF_PRECISE);
+			if (GetAge() % 3 == 0) A_SeekerMissile(tang2,tang2,SMF_LOOK|SMF_PRECISE);
+		}
+		Super.Tick();
 	}
 	
 	States
