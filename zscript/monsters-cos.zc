@@ -6945,6 +6945,7 @@ class KillCard : EECreature
 
 class HealCard : EECreature
 {
+	bool wut;
 	default
 	{
 		Radius 3;
@@ -6972,9 +6973,21 @@ class HealCard : EECreature
 	void A_CheckForTempest()
 	{
 		// Send the healing projectile to Tempest.
-		if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) 
+		if (wut) 
 		{
-			Thing_Hate(0,996,0); 
+			ThinkerIterator DinahFinder = ThinkerIterator.Create("DinahPlayer");
+			Actor mo;
+			DinahPlayer mo2;
+			int numfound = 0;
+			while (mo = Actor(DinahFinder.Next()))
+			{
+				mo2 = DinahPlayer(mo);
+				if (mo2 && mo2.health > 0) 
+				{
+					target = mo2;
+					//Console.Printf("Found a Tempest_Boss! - health: %d, [%s]", mo2.health, mo2.GetClassName());
+				}
+			}
 		}
 		else
 		{
@@ -7005,7 +7018,7 @@ class HealCard : EECreature
 			DCRD ABCB 2 Bright 
 			{
 				A_Chase();
-				if (tracer) Console.Printf("tracer [KillCard]: %s", tracer.GetClassName());
+				//if (tracer) Console.Printf("tracer [HealCard]: %s", tracer.GetClassName());
 			}
 			Loop;
 		Missile:
@@ -7016,27 +7029,13 @@ class HealCard : EECreature
 			}
 			DCRD E 1 Bright 
 			{
-				A_StartSound("aqua/kill1");
-				if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1))
-				{ 
-					A_SpawnProjectile("HealBall",8,0);
-				}
-				else
+				A_CheckForTempest();
+				actor mo = A_SpawnProjectile("HealBall",8,0);
+				if (mo)
 				{
-					ThinkerIterator TempestFinder = ThinkerIterator.Create("Tempest_Boss");
-					Actor mo;
-					Tempest_Boss mo2;
-					int numfound = 0;
-					while (mo = Actor(TempestFinder.Next()))
-					{
-						mo2 = Tempest_Boss(mo);
-						if (mo2 && mo2.health > 0) 
-						{
-							target = mo2;
-							A_SpawnProjectile("HealBall",8,0);
-							//Console.Printf("Found a Tempest_Boss to Shoot HealBall at! - health: %d, [%s]", mo2.health, mo2.GetClassName());
-						}
-					}
+					HealBall mo2;
+					mo2 = HealBall(mo);
+					if (mo2 && wut) mo2.wut = true;
 				}
 			}
 			DCRD E 0 A_Die();
@@ -7050,6 +7049,7 @@ class HealCard : EECreature
 
 class HealBall : EEEffectProjectile
 {
+	bool wut;
 	default
 	{
 		Radius 8;
@@ -7120,10 +7120,21 @@ class HealBall : EEEffectProjectile
 
 	void A_CheckForTempest()
 	{
-		// Send the healing projectile to Tempest.
-		if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) 
+		if (wut)
 		{
-			Thing_Hate(0,996,0); 
+			ThinkerIterator DinahFinder = ThinkerIterator.Create("DinahPlayer");
+			Actor mo;
+			DinahPlayer mo2;
+			int numfound = 0;
+			while (mo = Actor(DinahFinder.Next()))
+			{
+				mo2 = DinahPlayer(mo);
+				if (mo2 && mo2.health > 0)
+				{
+					tracer = mo2;
+					//Console.Printf("Found a DinahPlayer! - health: %d, [%s]", mo2.health, mo2.GetClassName());
+				}
+			}
 		}
 		else
 		{
@@ -7134,7 +7145,7 @@ class HealBall : EEEffectProjectile
 			while (mo = Actor(TempestFinder.Next()))
 			{
 				mo2 = Tempest_Boss(mo);
-				if (mo2 && mo2.health > 0) 
+				if (mo2 && mo2.health > 0)
 				{
 					tracer = mo2;
 					//Console.Printf("Found a Tempest_Boss! - health: %d, [%s]", mo2.health, mo2.GetClassName());
@@ -7232,7 +7243,13 @@ class Delila_Boss : DDOrigBoss
 		}
 		return false;
 	}
-
+	
+	override void Tick()
+	{
+		if (bFRIENDLY) Thing_Hate(0,996,4);
+		super.Tick();
+	}
+	
 	States
 	{
 		Spawn:
@@ -7254,7 +7271,19 @@ class Delila_Boss : DDOrigBoss
 			DLIL I 12 A_SpawnItemEx("KillCard",0,0,0,8,0,0,-90);
 			Goto Teleporting;
 		HealCardAttk:
-			DLIL I 12 A_SpawnItemEx("HealCard",0,0,0,8,0,0,90);
+			DLIL I 12 
+			{
+				bool success;
+				actor mo;
+				[success, mo] = A_SpawnItemEx("HealCard",0,0,0,8,0,0,90);
+				if (mo && success)
+				{
+					HealCard mo2;
+					mo2 = HealCard(mo);
+					if (mo2 && bFRIENDLY) mo2.wut = true;
+				}
+				
+			}
 			Goto Teleporting;
 		Teleporting:
 			DLIL I 6 A_Jump(160,3);
@@ -7277,21 +7306,49 @@ class Delila_Boss : DDOrigBoss
 			}
 			DLIL E 20 { bFLOATBOB = false; }
 			DLIL FFFFFF 20;
-			DLIL F 1 A_CheckProximity("Death","DinahPlayer",40);
+			DLIL F 1 
+			{
+				if (bFRIENDLY) A_CheckProximity("Death","Tempest_Boss",40);
+				else A_CheckProximity("Death","DinahPlayer",40);
+			}
 			DLIL F -1 Thing_Raise(0);
 		Raise:
 			DLIL GG 2 ThrustThingz(0,16,0,1);
 			DLIL GG 2 ThrustThingz(0,8,1,1);
-			DLIL G 0 { bFLOATBOB = true; }
+			DLIL G 0 
+			{
+				bFLOATBOB = false; 
+				bNOGRAVITY = false;
+			}
 			DLIL G 2
 			{
 				if (CountInv("IsCarnOfSouls",AAPTR_PLAYER1)) { ACS_Execute(995,0,0,0,0); } // Teleport(897,0,FALSE);
 			}
 			Goto Spawn;
 		Death.Defeated:
-			DLIL E 0 { bFLOATBOB = false; }
-			DLIL E 0 A_SetGravity(0.25);
-			DLIL E 0;
+			DLIL E 0 
+			{
+				bFLOATBOB = false; 
+				bNOGRAVITY = false;
+				if (bFRIENDLY) 
+				{
+					ThrustThingz(0,-16,0,1);
+					ThrustThingz(0,-8,1,1);
+				}
+			}
+			DLIL E 0 
+			{
+				if (bFRIENDLY) A_SetGravity(0.75);
+									else A_SetGravity(0.25);
+			}
+			DLIL E 0
+			{
+				if (bFRIENDLY) 
+				{
+					ThrustThingz(0,-16,0,1);
+					ThrustThingz(0,-8,1,1);
+				}
+			}
 			DLIL EEEEEEEE 7 Bright
 			{
 				A_StartSound("weapons/cherryboom");
