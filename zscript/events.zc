@@ -184,20 +184,46 @@ class DD_EventHandler : EventHandler
 					if (monsterrating >= 8) baseadd = 7.75; // <SSS>
 					baseadd *= 0.5;
 					multbase += baseadd;
-			
-					if (DDOrigCreature(spawnee)) 
+					if (dydudebug_monsterscaling) Console.Printf("multbase: %.8f, monsterrating: %d", multbase, monsterrating);
+					
+					// Gives the DD Trilogy Enemies bigger stat gains per level than the gamemode's default monsters if the option is enabled
+					if (DDOrigCreature(spawnee) && exex_ddmonstersboostedstats)
 					{
 						double baseextra = frandompick(0.25,0.5,1.25,1.25,2,2.25);
 						baseextra *= 0.5;
 						baseextra += 1.0;
-						if (DDOrigBoss(spawnee)) baseextra *= 1.5;
+						if (DDOrigBoss(spawnee) || spawnee.bBOSS) baseextra *= 1.5;
 						multbase *= baseextra;
+						if (dydudebug_monsterscaling) 
+						{
+							if (DDOrigBoss(spawnee)) Console.Printf("[EEOrigBoss Found! (boost)] multbase: %.8f, baseextra: %.8f", multbase, baseextra);
+																	else Console.Printf("[EEOrigCreature Found! (boost)] multbase: %.8f, baseextra: %.8f", multbase, baseextra);
+						}
+					}
+					// This can give the gamemode's DEFAULT monsters boosted stats if the option is enabled
+					if (!DDOrigCreature(spawnee) && exex_defaultmonstersboostedstats)
+					{
+						double baseextra = frandompick(0.25,0.5,1.25,1.25,2,2.25);
+						baseextra *= 0.5;
+						baseextra += 1.0;
+						if (spawnee.bBOSS) baseextra *= 1.5;
+						multbase *= baseextra;
+						if (dydudebug_monsterscaling) 
+						{
+							if (DDOrigBoss(spawnee)) Console.Printf("[Default Boss Found! (boost)] multbase: %.8f, baseextra: %.8f", multbase, baseextra);
+																	else Console.Printf("[Default Monster Found! (boost)] multbase: %.8f, baseextra: %.8f", multbase, baseextra);
+						}
 					}
 					
 					if (random(1,32) <= (1 + (monsterrating * 1)))
 					{
 						multbase *= 2;
-						if (random(1,32) <= (1 + (monsterrating * 0.667))) multbase *= 2;
+						if (dydudebug_monsterscaling) Console.Printf("Boosted [1] - multbase: %.8f", multbase);
+						if (random(1,32) <= (0.5 + (monsterrating * 0.5)))
+						{
+							multbase *= 2;
+							if (dydudebug_monsterscaling) Console.Printf("Boosted [2] - multbase: %.8f", multbase);
+						}
 					}
 					
 					//***********************
@@ -256,6 +282,7 @@ class DD_EventHandler : EventHandler
 						if (spawnee2 && spawnee2.user_levelpreset) spawnee2.A_SetInventory("MonsterLevel",spawnee2.user_levelpreset);
 						//
 						double truemultbase = multbase *= exex_enemyscalelevelmultiplier;
+						if (dydudebug_monsterscaling) Console.Printf("truemultbase: %.8f, exex_enemyscalelevelmultiplier: %.8f", truemultbase, exex_enemyscalelevelmultiplier);
 						if (spawnee.bFRIENDLY)
 						{
 							if (skill <= 0) mult = 0.00275;
@@ -275,6 +302,7 @@ class DD_EventHandler : EventHandler
 						mult *= 0.9;
 						mult *= (1.0 + (0.125 * monsterrating));
 						mult *= truemultbase;
+						if (dydudebug_monsterscaling) Console.Printf("\c[red]mult [pre-attack]: %.8f\c-, FRIENDLY?: %d", mult, spawnee.bFRIENDLY);
 
 						// Attack
 						double baseatkmulti = (LevelCheck * mult);
