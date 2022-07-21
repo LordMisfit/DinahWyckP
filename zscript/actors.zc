@@ -104,7 +104,7 @@ class EEBaseZSC : Actor abstract
 		return;
 	}
 	
-	void A_PrintPowerupDDTNoRPG()
+	void A_PrintPowerupDDTNoRPG(int type = 0)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
@@ -115,7 +115,7 @@ class EEBaseZSC : Actor abstract
 				player.A_StartSound("player/statsup8",324,CHANF_DEFAULT,frandom(0.335,0.5),ATTN_NORM,frandom(0.8,1.25));
 				player.A_StartSound("player/statsup",325,CHANF_DEFAULT,frandom(0.90,1.10),ATTN_NORM,frandom(0.9,1.125));
 				player.A_StartSound("stats/allcompletion",326,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.8,1.2));
-				player.A_PrintBold(String.Format("\c[fire]New power wells up from within!\n\n\c[fire]HP, HP Regen/Degen, Attack, Defense, Movement Speed,\n\c[fire]Jump Power, Dash Meter, Air Meter, Inventory/Ammo Limits, etc. Increased!"), frandom(2.1,2.4));
+				if (type == 0) player.A_PrintBold(String.Format("\c[fire]New power wells up from within!\n\n\c[fire]HP, HP Regen/Degen, Attack, Defense, Movement Speed,\n\c[fire]Jump Power, Dash Meter, Air Meter, Inventory/Ammo Limits, etc. Increased!"), frandom(2.1,2.4));
 				player.A_SetBlend("00 00 FF",0.3,random(65,90),"00 00 FF",0.0);
 			}
 		}
@@ -4726,6 +4726,7 @@ class ShieldPartBase : EEBaseZSC
 
 			if (other)
 			{
+				if (HealBall(other) || HealBallEE(other)) return false;
 				if (PopperPuff1(other) && playpawn) return false;
 				if (PopperPuff2(other) && playpawn) return false;
 				if (BarrierBeam(other)) return false;
@@ -4765,6 +4766,10 @@ class ShieldPartBase : EEBaseZSC
 		}
 		else // Non-passive means the one moving into the other is performing the checks.
 		{
+			if (other)
+			{
+				if (HealBall(other) || HealBallEE(other)) return false;
+			}
 			if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart (gametic %d):\c- non-passive: %s", gametic, GetClassName());
 			playpawn = PlayerPawn(other.target);
 			playpawn2 = PlayerPawn(master);

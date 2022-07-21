@@ -2781,6 +2781,61 @@ class DD_EventHandler : EventHandler
 				}
 			}
 			
+			// Wrath Chests
+			if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls")) { }
+			else
+			{
+				droptimes = 1;
+				if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
+				if (monsterrating == 2) droptimes = randompick(1,1,1,2,2);
+				if (monsterrating == 3) droptimes = randompick(1,1,2,2,2);
+				if (monsterrating == 4) droptimes = randompick(1,2,2,2,2);
+				if (monsterrating == 5) droptimes = randompick(2,2,2,2,3);
+				if (monsterrating == 6) droptimes = randompick(2,2,2,3,3);
+				if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
+				if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
+				luckbase = 0.0625 + (monsterrating * 0.015625);
+				lvldivider = 35;
+				if (IPAttack) 
+				{
+					luckbase *= baseIPLuckMul;
+					lvldivider *= baseIPLvlDivider;
+				}
+				if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
+				if (inflicter && ((source && DDPlayerPawn(source))))
+				{
+					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
+				}
+				else
+				if (inflicter && DDPlayerPawn(inflicter))
+				{
+					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
+				}
+				if (victim.bBOSS) droptimes *= 8;
+				for (int i; i < droptimes; i++)
+				{
+					basechance = exex_inventorydroprate7;
+					luckbase = 0.5;
+					if (IPAttack) 
+					{
+						basechance *= baseIPBaseChanceMul;
+						luckbase *= baseIPLuckMul;
+					}
+					if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
+					maxchance = basechance;
+					if (BatPuff(inflicter)) maxchance = (basechance * 0.5);
+					if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+					if (BlunderPuff(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+					if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+					if (VacPuff(inflicter)) maxchance = (basechance * 16);
+					if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx("WrathChest",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (random(1,(maxchance*4)) == 1) victim.A_SpawnItemEx("WrathChest",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [wrath chest]: %d (%d)", maxchance, basechance);
+				}
+			}
+			
 			// Heal Items
 			droptimes = 1;
 			if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
@@ -3929,7 +3984,7 @@ class DD_EventHandler : EventHandler
 											if (victim.tid == 994 && level.levelnum == 44 && MiscItem && !MiscItem.CoS_ForsakenJorg) 
 											{
 												MiscItem.CoS_ForsakenJorg += 1;
-												if (check) check.A_PrintPowerupDDTNoRPG();
+												if (check) check.A_PrintPowerupDDTNoRPG(0);
 											}
 										}
 									}
@@ -3943,7 +3998,7 @@ class DD_EventHandler : EventHandler
 											if (victim.tid == 21 && level.levelnum == 45 && MiscItem && !MiscItem.CoS_Fafnir)
 											{
 												MiscItem.CoS_Fafnir += 1;
-												if (check) check.A_PrintPowerupDDTNoRPG();
+												if (check) check.A_PrintPowerupDDTNoRPG(0);
 											}
 										}
 									}

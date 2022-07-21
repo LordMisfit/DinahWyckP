@@ -186,7 +186,7 @@ class EvilDinah : DDOrigBoss
 					if (MiscItem && !MiscItem.CoS_EvilDinah)
 					{
 						MiscItem.CoS_EvilDinah += 1;
-						A_PrintPowerupDDTNoRPG();
+						A_PrintPowerupDDTNoRPG(0);
 					}
 				}
 			}
@@ -6848,7 +6848,7 @@ class Forsaken_Jorgensen : CoSForsaken
 					if (tid == 994 && level.levelnum == 44 && MiscItem && !MiscItem.CoS_ForsakenJorg)
 					{
 						MiscItem.CoS_ForsakenJorg += 1;
-						A_PrintPowerupDDTNoRPG();
+						A_PrintPowerupDDTNoRPG(0);
 					}
 				}
 			}
@@ -6867,7 +6867,7 @@ class Forsaken_Jorgensen : CoSForsaken
 					if (tid == 994 && level.levelnum == 44 && MiscItem && !MiscItem.CoS_ForsakenJorg)
 					{
 						MiscItem.CoS_ForsakenJorg += 1;
-						A_PrintPowerupDDTNoRPG();
+						A_PrintPowerupDDTNoRPG(0);
 					}
 				}
 			}
@@ -6893,6 +6893,7 @@ class TempSpawnCookie2 : TempSpawnCookie
 
 class KillCard : EECreature
 {
+	bool wut;
 	default
 	{
 		Radius 3;
@@ -6932,8 +6933,64 @@ class KillCard : EECreature
 		Missile:
 			DCRD D 10 A_Stop();
 			DCRD D 1 A_FaceTarget();
-			DCRD D 0 A_StartSound("zappo");
-			DCRD D 1 Bright A_SpawnProjectile("BadZapShot",8,0);
+			DCRD D 1 Bright 
+			{
+				A_StartSound("zappo");
+				A_SpawnProjectile("BadZapShot",8,0);
+			}
+			DCRD D 0
+			{
+				if (wut) A_SetTics(2);
+			}
+			DCRD D 0 Bright
+			{
+				if (wut) 
+				{
+					A_SetTics(1);
+					A_StartSound("zappo");
+					A_SpawnProjectile("BadZapShot",8,0);
+				}
+			}
+			DCRD D 0
+			{
+				if (wut) A_SetTics(2);
+			}
+			DCRD D 0 Bright
+			{
+				if (wut) 
+				{
+					A_SetTics(1);
+					A_StartSound("zappo");
+					A_SpawnProjectile("BadZapShot",8,0);
+				}
+			}
+			DCRD D 0
+			{
+				if (wut) A_SetTics(2);
+			}
+			DCRD D 0 Bright
+			{
+				if (wut) 
+				{
+					A_SetTics(1);
+					A_StartSound("zappo");
+					A_SpawnProjectile("BadZapShot",8,0);
+				}
+			}
+			DCRD D 0 A_Die();
+			DCRD D 0
+			{
+				if (wut) A_SetTics(2);
+			}
+			DCRD D 0 Bright
+			{
+				if (wut) 
+				{
+					A_SetTics(1);
+					A_StartSound("zappo");
+					A_SpawnProjectile("BadZapShot",8,0);
+				}
+			}
 			DCRD D 0 A_Die();
 			Goto Death;
 		Death:
@@ -7038,6 +7095,63 @@ class HealCard : EECreature
 					if (mo2 && wut) mo2.wut = true;
 				}
 			}
+			DCRD E 0
+			{
+				if (wut) A_SetTics(2);
+			}
+			DCRD E 0 Bright
+			{
+				if (wut) 
+				{
+					A_SetTics(1);
+					A_CheckForTempest();
+					actor mo = A_SpawnProjectile("HealBall",8,0);
+					if (mo)
+					{
+						HealBall mo2;
+						mo2 = HealBall(mo);
+						if (mo2 && wut) mo2.wut = true;
+					}
+				}
+			}
+			DCRD E 0
+			{
+				if (wut) A_SetTics(2);
+			}
+			DCRD E 0 Bright
+			{
+				if (wut) 
+				{
+					A_SetTics(1);
+					A_CheckForTempest();
+					actor mo = A_SpawnProjectile("HealBall",8,0);
+					if (mo)
+					{
+						HealBall mo2;
+						mo2 = HealBall(mo);
+						if (mo2 && wut) mo2.wut = true;
+					}
+				}
+			}
+			DCRD E 0
+			{
+				if (wut) A_SetTics(2);
+			}
+			DCRD E 0 Bright
+			{
+				if (wut) 
+				{
+					A_SetTics(1);
+					A_CheckForTempest();
+					actor mo = A_SpawnProjectile("HealBall",8,0);
+					if (mo)
+					{
+						HealBall mo2;
+						mo2 = HealBall(mo);
+						if (mo2 && wut) mo2.wut = true;
+					}
+				}
+			}
 			DCRD E 0 A_Die();
 			Goto Death;
 		Death:
@@ -7061,6 +7175,25 @@ class HealBall : EEEffectProjectile
 		PROJECTILE;
 		DamageType "HealingSpell";
 		DeathSound "virtuoso/musichit";
+	}
+	
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		if (dydudebug_shieldcollision) Console.Printf("\cyHealBall [%s] (gametic %d):\c- other: %s", GetClassName(), gametic, other.GetClassName());
+		if (passive)
+		{
+			If (ShieldPartBase(other)) return false;
+			if (dydudebug_shieldcollision) Console.Printf("\cyHealBall (gametic %d):\c- passive: %s", gametic, GetClassName());
+		}
+		else // Non-passive means the one moving into the other is performing the checks.
+		{
+			If (ShieldPartBase(other)) return false;
+			if (dydudebug_shieldcollision) Console.Printf("\cyHealBall (gametic %d):\c- non-passive: %s", gametic, GetClassName());
+			return true;
+		}
+
+		// We don't really care about others making the check.
+		return true;
 	}
 	
 	override int SpecialMissileHit (Actor victim) // HealMissile
@@ -7274,11 +7407,41 @@ class Delila_Boss : DDOrigBoss
 			DLIL G 0 A_StartSound("dancer/danceattk");
 			DLIL HHHHHHHHHHHH 2 A_SpawnItemEx("Mininote", 0, 0, 25, 0, random(-1, 1), random(-1, 1));
 			DLIL G 2 A_Jump(128,"HealCardAttk");
-			DLIL I 0 A_SpawnItemEx("KillCard",0,0,0,8,0,0,90); //Cards are spawned via SpawnItemEx now.
 			DLIL I 12
 			{
-				A_SpawnItemEx("KillCard",0,0,0,8,0,0,-90);
-				if (bFRIENDLY) { A_SetTics(6); }
+				bool success;
+				actor mo;
+				if (bFRIENDLY) 
+				{
+					A_SetTics(6); 
+					[success, mo] = A_SpawnItemEx("KillCard",0,0,0,8,0,0,90,SXF_NOCHECKPOSITION|SXF_SETMASTER); //Cards are spawned via SpawnItemEx now.
+					if (mo && success)
+					{
+						KillCard mo2;
+						mo2 = KillCard(mo);
+						if (mo2 && bFRIENDLY) 
+						{
+							mo2.wut = true;
+							mo2.A_SetInventory("OhaiTharDinah",1);
+						}
+					}
+					[success, mo] = A_SpawnItemEx("KillCard",0,0,0,8,0,0,-90,SXF_NOCHECKPOSITION|SXF_SETMASTER);
+					if (mo && success)
+					{
+						KillCard mo2;
+						mo2 = KillCard(mo);
+						if (mo2 && bFRIENDLY) 
+						{
+							mo2.wut = true;
+							mo2.A_SetInventory("OhaiTharDinah",1);
+						}
+					}
+				}
+				else
+				{
+					A_SpawnItemEx("KillCard",0,0,0,8,0,0,90,SXF_NOCHECKPOSITION|SXF_SETMASTER); //Cards are spawned via SpawnItemEx now.
+					A_SpawnItemEx("KillCard",0,0,0,8,0,0,-90,SXF_NOCHECKPOSITION|SXF_SETMASTER);
+				}
 			}
 			Goto Teleporting;
 		HealCardAttk:
@@ -7286,14 +7449,18 @@ class Delila_Boss : DDOrigBoss
 			{
 				bool success;
 				actor mo;
-				[success, mo] = A_SpawnItemEx("HealCard",0,0,0,8,0,0,90);
+				[success, mo] = A_SpawnItemEx("HealCard",0,0,0,8,0,0,90,SXF_NOCHECKPOSITION|SXF_SETMASTER);
 				if (mo && success)
 				{
 					HealCard mo2;
 					mo2 = HealCard(mo);
-					if (mo2 && bFRIENDLY) mo2.wut = true;
+					if (mo2 && bFRIENDLY) 
+					{
+						mo2.wut = true;
+						mo2.A_SetInventory("OhaiTharDinah",1);
+					}
 				}
-				if (bFRIENDLY) { A_SetTics(6); }
+				if (bFRIENDLY) A_SetTics(6); 
 			}
 			Goto Teleporting;
 		Teleporting:
@@ -7305,7 +7472,6 @@ class Delila_Boss : DDOrigBoss
 					A_SetTics(3);
 					chance *= 0.75;
 					A_FaceTarget();
-					if (random(1,256) <= 32) A_SpawnItemEx("AppleWine",0,0,0,frandom(6,12),0,frandom(6,12));
 				}
 				if (random(1,256) <= 160) return resolvestate("TeleportEnd");
 				return resolvestate(null);
@@ -7316,7 +7482,10 @@ class Delila_Boss : DDOrigBoss
 				if (bFRIENDLY) { A_SetTics(6); }
 			}
 		TeleportEnd:
-			DLIL III 3;
+			DLIL III 3
+			{
+				if (bFRIENDLY) { A_SetTics(2); }
+			}
 			Goto See;
 		Death:
 			DLIL E 0
@@ -8655,7 +8824,7 @@ class Tempest_Boss : DDOrigBoss
 					if (MiscItem && !MiscItem.CoS_Tempest)
 					{
 						MiscItem.CoS_Tempest += 1;
-						A_PrintPowerupDDTNoRPG();
+						A_PrintPowerupDDTNoRPG(1);
 					}
 				}
 			}
