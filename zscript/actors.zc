@@ -4129,6 +4129,8 @@ class EECreature : EEBaseZSC abstract
 		}
 	}
 	
+	const PAF_INDIVIDUALLIMIT = 256;
+	const PAF_LIMITCOUNTALLTYPES = 512;
 	void A_PainShootSkull(Class<Actor> spawntype, double angle, int flags = 0, int limit = -1)
 	{
 		// Don't spawn if we get massacred.
@@ -4150,20 +4152,105 @@ class EECreature : EEBaseZSC abstract
 
 		// [RH] make this optional
 		if (limit < 0 && (Level.compatflags & COMPATF_LIMITPAIN))
-			limit = 21;
+		{
+			if (!flags & PAF_INDIVIDUALLIMIT) limit = 21;
+			else limit = 10;
+		}
 
 		if (limit > 0)
 		{
 			// count total number of skulls currently on the level
 			// if there are already 21 skulls on the level, don't spit another one
 			int count = limit;
-			ThinkerIterator it = ThinkerIterator.Create(spawntype);
-			Thinker othink;
-
-			while ( (othink = it.Next ()) )
+			if (flags & PAF_LIMITCOUNTALLTYPES && flags & PAF_INDIVIDUALLIMIT)
 			{
-				if (--count == 0)
-					return;
+				ThinkerIterator it = ThinkerIterator.Create("LostSoulNew");
+				Thinker othink;
+				while ( (othink = it.Next ()) )
+				{
+					if (flags & PAF_INDIVIDUALLIMIT)
+					{
+						actor othink2;
+						othink2 = actor(othink);
+						if (othink2 && othink2.master == self)
+						{
+							if (--count == 0)
+								return;
+						}
+					}
+					else
+					{
+						if (--count == 0)
+							return;
+					}
+				}
+
+				it = ThinkerIterator.Create("LostSoulAnnoying");
+				while ( (othink = it.Next ()) )
+				{
+					if (flags & PAF_INDIVIDUALLIMIT)
+					{
+						actor othink2;
+						othink2 = actor(othink);
+						if (othink2 && othink2.master == self)
+						{
+							if (--count == 0)
+								return;
+						}
+					}
+					else
+					{
+						if (--count == 0)
+							return;
+					}
+				}
+				
+				it = ThinkerIterator.Create("BetaLostSoul");
+				while ( (othink = it.Next ()) )
+				{
+					if (flags & PAF_INDIVIDUALLIMIT)
+					{
+						actor othink2;
+						othink2 = actor(othink);
+						if (othink2 && othink2.master == self)
+						{
+							if (--count == 0)
+								return;
+						}
+					}
+					else
+					{
+						if (--count == 0)
+							return;
+					}
+				}
+				if (dydudebug_monsterspecialai) Console.Printf("[A_PainShootSkull %p (PAF_LIMITCOUNTALLTYPES)] count: %d / %d", self, count, limit);
+			}
+			else
+			{
+				ThinkerIterator it = ThinkerIterator.Create(spawntype);
+				Thinker othink;
+
+				while ( (othink = it.Next ()) )
+				{
+					if (flags & PAF_INDIVIDUALLIMIT)
+					{
+						actor othink2;
+						othink2 = actor(othink);
+						if (othink2 && othink2.master == self)
+						{
+							if (--count == 0)
+								return;
+						}
+					}
+					else
+					{
+						if (--count == 0)
+							return;
+					}
+				}
+				//if (dydudebug_monsterspecialai)
+				Console.Printf("[A_PainShootSkull (%s) - %p] count: %d / %d", spawntype.GetClassName(), self, count, limit);
 			}
 		}
 
@@ -4252,6 +4339,8 @@ class EECreature : EEBaseZSC abstract
 			
 			// Inherit the PE's Master if they have a IoS master
 			if (master && BossBrainNew(master)) other.master = master;
+			else other.master = self; // otherwise set the Lost Soul's master to be the PE [to help enforce individual PE limits].
+
 			if (dydudebug_bossbraininfo2 && other.master)
 			{
 				Console.Printf("%s Master: \c[gold]%p\c-", other.GetClassName(), other.master);
@@ -4273,13 +4362,13 @@ class EECreature : EEBaseZSC abstract
 		}
 	}
 	
-	void A_DualPainAttack(class<Actor> spawntype = "LostSoul")
+	void A_DualPainAttack(class<Actor> spawntype = "LostSoul", double addangle = 45, int flags = 0, int limit = -1)
 	{
 		if (target)
 		{
 			A_FaceTarget();
-			A_PainShootSkull(spawntype, angle + 45);
-			A_PainShootSkull(spawntype, angle - 45);
+			A_PainShootSkull(spawntype, angle + addangle, flags, limit);
+			A_PainShootSkull(spawntype, angle - addangle, flags, limit);
 		}
 	}
 	
