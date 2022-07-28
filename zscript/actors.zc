@@ -386,14 +386,14 @@ class EEBaseZSC : Actor abstract
 				damage += ((basedmg * factor3) * baserand) + (TargLevel * ((basedmg * (factor1 * factor3)) * baserand));
 			}
 			damage *= (1.0 + (TargLevel * levelfactor));
-			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula] (\c[ice]%s of %s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d [gametic: %d]", GetClassName(), target.GetClassName(), damage, basedmg, baserand, gametic);
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EEProjectile] (\c[ice]%s of %s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d [gametic: %d]", GetClassName(), target.GetClassName(), damage, basedmg, baserand, gametic);
 			projprevdmg = damage;
 		}
 		else
 		{
 			if (damage != 0) damage = projprevdmg;
 			if (damage == 0) damage = (basedmg * baserand);
-			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula] (\c[ice]%s\c[fire]): %d\c-, projprevdmg: %d, [gametic: %d]", GetClassName(), damage, projprevdmg, gametic);
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EEProjectile] (\c[ice]%s\c[fire]): %d\c-, projprevdmg: %d, [gametic: %d]", GetClassName(), damage, projprevdmg, gametic);
 		}
 		
 		return damage;
@@ -430,14 +430,14 @@ class EEBaseZSC : Actor abstract
 				damage += basedmg3 + (TargLevel * (basedmg3 * factor3));
 			}
 			damage *= (1.0 + (TargLevel * levelfactor));
-			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2] (\c[ice]%s of %s\c[fire]): %d\c- [gametic: %d]", GetClassName(), target.GetClassName(), damage, gametic);
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EEProjectile] (\c[ice]%s of %s\c[fire]): %d\c- [gametic: %d]", GetClassName(), target.GetClassName(), damage, gametic);
 			projprevdmg = damage;
 		}
 		else
 		{
 			if (damage != 0) damage = projprevdmg;
 			if (damage == 0) damage = basedmg;
-			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2] (\c[ice]%s\c[fire]): %d [%d]\c- [gametic: %d]", GetClassName(), damage, projprevdmg, gametic);
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EEProjectile] (\c[ice]%s\c[fire]): %d [%d]\c- [gametic: %d]", GetClassName(), damage, projprevdmg, gametic);
 		}
 		return damage;
 	}
@@ -473,14 +473,14 @@ class EEBaseZSC : Actor abstract
 				damage += ((basedmg * factor3) * baserand) + (TargLevel * ((basedmg * (factor1 * factor3)) * baserand));
 			}
 			damage *= (1.0 + (TargLevel * levelfactor));
-			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormulaEx] (\c[ice]%s of %s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d [gametic: %d]", GetClassName(), target.GetClassName(), damage, basedmg, baserand, gametic);
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormulaEx - EEProjectile] (\c[ice]%s of %s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d [gametic: %d]", GetClassName(), target.GetClassName(), damage, basedmg, baserand, gametic);
 			projprevdmg = damage;
 		}
 		else
 		{
 			if (damage != 0) damage = projprevdmg;
 			if (damage == 0) damage = (basedmg * baserand);
-			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormulaEx] (\c[ice]%s\c[fire]): %d\c-, projprevdmg: %d, [gametic: %d]", GetClassName(), damage, projprevdmg, gametic);
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormulaEx - EEProjectile] (\c[ice]%s\c[fire]): %d\c-, projprevdmg: %d, [gametic: %d]", GetClassName(), damage, projprevdmg, gametic);
 		}
 		
 		return damage;
@@ -3068,6 +3068,78 @@ class EECreature : EEBaseZSC abstract
 			else if (monsterrating == 1) origtag.AppendFormat(" \c[sapphire][E]\c-");
 		}
 		SetTag(origtag);
+	}
+	
+	int A_CalcDamageFormula(int basedmg,
+													int baserand,
+													double factor1 = 0.005,
+													double factor2 = 0.3334,
+													double factor3 = 0.1667,
+													double levelfactor = 0.005,
+													int lvlthreshold1 = 30,
+													int lvlthreshold2 = 60)
+	{
+		int damage = (basedmg * baserand);
+		if (baserand <= 0) baserand = random(1,8);
+		if (exex_monsterlevelenabledflags)
+		{
+			int CurrLevel = CountInv("MonsterLevel");
+			if (PlayerPawn(self))
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				if (MiscItem) CurrLevel = MiscItem.TruePlayerLevel;
+			}
+			damage += (CurrLevel * ((basedmg * factor1) * baserand));
+			if (CurrLevel >= lvlthreshold1)
+			{
+				damage += ((basedmg * factor2) * baserand) + (CountInv("MonsterLevel") * ((basedmg * (factor1 * factor2)) * baserand));
+			}
+			if (CurrLevel >= lvlthreshold2)
+			{
+				damage += ((basedmg * factor3) * baserand) + (CountInv("MonsterLevel") * ((basedmg * (factor1 * factor3)) * baserand));
+			}
+			damage *= (1.0 + (CurrLevel * levelfactor));
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula - EECreature] (\c[ice]%s\c[fire]): %d\c-, basedmg: %d, baserand: 1 to %d [gametic: %d]", GetClassName(), damage, basedmg, baserand, gametic);
+			monsprevdmg = damage;
+		}
+		return damage;
+	}
+
+	int A_CalcDamageFormula2(int basedmg,
+													 double factor1 = 0.005,
+													 int basedmg2 = 1,
+													 double factor2 = 0.3334,
+													 int basedmg3 = 1,
+													 double factor3 = 0.1667,
+													 double levelfactor = 0.005,
+													 int lvlthreshold1 = 30,
+													 int lvlthreshold2 = 60)
+	{
+		int damage = basedmg;
+		if (exex_monsterlevelenabledflags)
+		{
+			int CurrLevel = CountInv("MonsterLevel");
+			if (PlayerPawn(self))
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				if (MiscItem) CurrLevel = MiscItem.TruePlayerLevel;
+			}
+			damage += (CurrLevel * (basedmg * factor1));
+			if (CurrLevel >= lvlthreshold1)
+			{
+				damage += basedmg2 + (CurrLevel * (basedmg2 * factor2));
+			}
+			if (CurrLevel >= lvlthreshold2)
+			{
+				damage += basedmg3 + (CurrLevel * (basedmg3 * factor3));
+			}
+			damage *= (1.0 + (CurrLevel * levelfactor));
+			monsprevdmg = damage;
+			if (dydudebug_monsterdmgcalc) Console.Printf("\c[fire]damage [A_CalcDamageFormula2 - EECreature] (\c[ice]%s\c[fire]): %d\c- [gametic: %d]", GetClassName(), damage, gametic);
+		}
+		return damage;
 	}
 	
 	void A_DDAFDOrigBossDie()

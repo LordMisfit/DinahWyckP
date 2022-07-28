@@ -2884,6 +2884,63 @@ class PowerIronFeet2 : PowerIronFeet
 	}
 }
 
+class PowerDoubleFiringSpeed2 : PowerDoubleFiringSpeed
+{
+	string texname;
+	int timer;
+	double ticpiece;
+	Default
+	{
+		Powerup.Duration -40;
+		Inventory.Icon "RAGSA0";
+	}
+	
+	override void Tick()
+	{
+		timer++;
+		if (timer % 30 >= 0 && timer % 30 <= 4) texname = "RAGSA0";
+		if (timer % 30 >= 5 && timer % 30 <= 9) texname = "RAGSB0";
+		if (timer % 30 >= 10 && timer % 30 <= 14) texname = "RAGSC0";
+		if (timer % 30 >= 15 && timer % 30 <= 19) texname = "RAGSD0";
+		if (timer % 30 >= 20 && timer % 30 <= 24) texname = "RAGSC0";
+		if (timer % 30 >= 25 && timer % 30 <= 29) texname = "RAGSB0";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		
+		int fadeouttic = 64;
+		//if (EffectTics == fadeouttic && owner) owner.A_StartSound("buffs/invisfading",202,CHANF_DEFAULT,2.25,ATTN_NORM);
+		//if (EffectTics > fadeouttic && owner) owner.A_StopSound(202);
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner)
+		{
+			if (!owner.CountInv("INTERMAPChecker"))
+			{
+				if (owner.CountInv("TimePotionTimeFreezer"))
+				{
+					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
+					while (ticpiece >= 10)
+					{
+						EffectTics--;
+						ticpiece -= 10;
+					}
+				}
+				else
+				{
+					EffectTics--;
+				}
+			}
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy ();
+		if (EffectTics <= 0) Destroy();
+		//Console.Printf("EffectTics: %d", EffectTics);
+	}
+}
+
 class PowerInvisibility2 : PowerInvisibility
 {
 	string texname;
