@@ -1832,7 +1832,13 @@ class SpinnerShotEvil : EEProjectile
 	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
-		finaldamagedealt = (5 * random(1,8));
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		Super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(5,random(1,8),0.005,0.3334,0.1667,0.005);
 	}
 
 	States
@@ -1890,7 +1896,13 @@ class BadBlunderSmokeSmall : SingleDamageRipper
 	{
 		basealpha = alpha;
 		super.PostBeginPlay();
-		finaldamagedealt = 1 * random(1,4);
+		finaldamagedealt = A_CalcDamageFormula(1,random(1,4),0.005,0.3334,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(1,random(1,4),0.005,0.3334,0.1667,0.005);
 	}
 	
 	States
@@ -1949,6 +1961,7 @@ class RealBadCroquetBall : EEProjectile
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(12,random(1,8),0.005,0.3334,0.1667,0.005);
 		if (target)
 		{
 			minbouncelvl = 8;
@@ -2004,6 +2017,12 @@ class RealBadCroquetBall : EEProjectile
 			}
 			if (dydudebug_attackstuff) Console.Printf("[%s] BounceCount: %d", GetClassName(), BounceCount);
 		}
+	}
+	
+	override void Tick()
+	{
+		Super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(12,random(1,8),0.005,0.3334,0.1667,0.005);
 	}
 	
 	States
@@ -2091,6 +2110,7 @@ class RealBadJackShot : EEProjectile
 	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
+		finaldamagedealt = A_CalcDamageFormula(20,random(1,8),0.005,0.3334,0.1667,0.005);
 		if (target)
 		{
 			int TruePlayerLevel = target.CountInv("MonsterLevel");
@@ -2099,7 +2119,7 @@ class RealBadJackShot : EEProjectile
 			double lowhealthfactor = 0.09375;
 			double crisishealthfactor = 0.4375;
 			
-			finaldamagedealt = (3 * random(1,8));
+			finaldamagedealt = A_CalcDamageFormula(20,random(1,8),0.005,0.3334,0.1667,0.005);
 			if (TruePlayerLevel >= exex_jackcrisislvlrequirement && exex_jackcrisislvlrequirement > 0)
 			{
 				decenthealthfactor *= (1.0 + ((TruePlayerLevel / exex_jackcrisislvlrequirement) * 0.5));
@@ -2114,7 +2134,32 @@ class RealBadJackShot : EEProjectile
 		
 		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
 	}
-	
+
+	override void Tick()
+	{
+		Super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(20,random(1,8),0.005,0.3334,0.1667,0.005);
+		if (target)
+		{
+			int TruePlayerLevel = target.CountInv("MonsterLevel");
+			
+			double decenthealthfactor = 0.03125;
+			double lowhealthfactor = 0.09375;
+			double crisishealthfactor = 0.4375;
+			
+			finaldamagedealt = A_CalcDamageFormula(20,random(1,8),0.005,0.3334,0.1667,0.005);
+			if (TruePlayerLevel >= exex_jackcrisislvlrequirement && exex_jackcrisislvlrequirement > 0)
+			{
+				decenthealthfactor *= (1.0 + ((TruePlayerLevel / exex_jackcrisislvlrequirement) * 0.5));
+				lowhealthfactor *= (1.0 + ((TruePlayerLevel / exex_jackcrisislvlrequirement) * 0.667));
+				crisishealthfactor *= (1.0 + ((TruePlayerLevel / exex_jackcrisislvlrequirement) * 1.0));
+				if (target.CountInv("DecentHealth")) finaldamagedealt *= (1.0 + decenthealthfactor);
+				if (target.CountInv("LowHealth")) finaldamagedealt *= (1.0 + lowhealthfactor);
+				if (target.CountInv("CriticalHealth")) finaldamagedealt *= (1.0 + crisishealthfactor);
+				if (dydudebug_rangedmg) Console.Printf("decenthealthfactor: %.2f, lowhealthfactor: %.2f, crisishealthfactor: %.2f", decenthealthfactor, lowhealthfactor, crisishealthfactor);
+			}
+		}
+	}
 	void A_JackShotIPPattern()
 	{
 		double ca = cos((angle-90)); // X
@@ -2216,7 +2261,7 @@ class BadCandleShot : EEFastProjectile
 		Radius 2;
 		Height 2;
 		Speed 60;
-		Damage 6;
+		DamageFunction (finaldamagedealt);
 		Scale 0.5;
 		DamageType "Fire";
 		RenderStyle "Add";
@@ -2230,6 +2275,13 @@ class BadCandleShot : EEFastProjectile
 	{
 		EEFastProjectile.PostBeginPlay();
 		if (random(1,2) <= 1) bFORCERADIUSDMG = true;
+		finaldamagedealt = A_CalcDamageFormula(6,random(1,8),0.005,0.3334,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		EEFastProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(6,random(1,8),0.005,0.3334,0.1667,0.005);
 	}
 	
 	states
@@ -2265,7 +2317,7 @@ class BadCandleShotIcy : EEFastProjectile
 		Radius 2;
 		Height 2;
 		Speed 60;
-		Damage 6;
+		DamageFunction (finaldamagedealt);
 		Scale 0.5;
 		DamageType "Ice";
 		RenderStyle "Add";
@@ -2279,6 +2331,13 @@ class BadCandleShotIcy : EEFastProjectile
 	{
 		EEFastProjectile.PostBeginPlay();
 		if (random(1,2) <= 1) bFORCERADIUSDMG = true;
+		finaldamagedealt = A_CalcDamageFormula(6,random(1,8),0.005,0.3334,0.1667,0.005);
+	}
+	
+	override void Tick()
+	{
+		EEFastProjectile.Tick();
+		finaldamagedealt = A_CalcDamageFormula(6,random(1,8),0.005,0.3334,0.1667,0.005);
 	}
 	
 	override bool CanCollideWith(Actor other, bool passive)
@@ -2432,7 +2491,7 @@ class BadRecordShot : EEProjectile
 			}
 		}
 
-		finaldamagedealt = (12*random(1,8));
+		finaldamagedealt = A_CalcDamageFormula(12,random(1,8),0.005,0.3334,0.1667,0.005);
 		if (Stamina == 3) 
 		{
 			finaldamagedealt *= 3;
@@ -2445,18 +2504,48 @@ class BadRecordShot : EEProjectile
 		}
 		if (IPAttack)
 		{
-			finaldamagedealt = (48*random(1,2));
+			finaldamagedealt = A_CalcDamageFormula(48,random(1,2),0.005,0.3334,0.1667,0.005);
 			if (Stamina == 3) finaldamagedealt *= 3.09;
 			if (Stamina >= 5) finaldamagedealt *= 5.15;
 		}
 		if (IPAttack && random(1,8) <= 1) finaldamagedealt *= frandompick(1.125,1.25,1.25,1.25,1.25,1.375);
 		if (player.CountInv("GrimophoneUpgrade"))
 		{
-			finaldamagedealt *= (1.0 + (target.CountInv("GrimophoneUpgrade") * frandompick(0.334,0.50,0.50,0.50,0.50,0.667)));
+			finaldamagedealt *= (1.0 + (player.CountInv("GrimophoneUpgrade") * frandompick(0.334,0.50,0.50,0.50,0.50,0.667)));
 		}
-		finaldamagedealt *= (1.0 + (target.CountInv("MonsterLevel") * (random(1,6) * 0.005)));
+		if (target) finaldamagedealt *= (1.0 + (target.CountInv("MonsterLevel") * (random(1,6) * 0.005)));
 		
 		//if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+	
+	override void Tick()
+	{
+		super.Tick();
+		actor player = players[0].mo;
+
+		finaldamagedealt = A_CalcDamageFormula(12,random(1,8),0.005,0.3334,0.1667,0.005);
+		if (Stamina == 3) 
+		{
+			finaldamagedealt *= 3;
+			ProjectileKickback *= 3;
+		}
+		if (Stamina >= 5) 
+		{
+			finaldamagedealt *= 5;
+			ProjectileKickback *= 5;
+		}
+		if (IPAttack)
+		{
+			finaldamagedealt = A_CalcDamageFormula(48,random(1,2),0.005,0.3334,0.1667,0.005);
+			if (Stamina == 3) finaldamagedealt *= 3.09;
+			if (Stamina >= 5) finaldamagedealt *= 5.15;
+		}
+		if (IPAttack && random(1,8) <= 1) finaldamagedealt *= frandompick(1.125,1.25,1.25,1.25,1.25,1.375);
+		if (player.CountInv("GrimophoneUpgrade"))
+		{
+			finaldamagedealt *= (1.0 + (player.CountInv("GrimophoneUpgrade") * frandompick(0.334,0.50,0.50,0.50,0.50,0.667)));
+		}
+		if (target) finaldamagedealt *= (1.0 + (target.CountInv("MonsterLevel") * (random(1,6) * 0.005)));
 	}
 
 	States
@@ -2585,7 +2674,29 @@ class BadVacShot : EEProjectile
 	{
 		Super.PostBeginPlay();
 		int baserand = random(1,8);
-		finaldamagedealt = (20 * baserand);
+		finaldamagedealt = A_CalcDamageFormula(20,baserand,0.005,0.3334,0.1667,0.005);
+
+		if (target)
+		{
+			int TruePlayerLevel = target.CountInv("MonsterLevel");
+			finaldamagedealt += (TruePlayerLevel * (0.10 * baserand));
+			finaldamagedealt *= 1.0 + (TruePlayerLevel * 0.0125);
+			
+			if (IPAttack) 
+			{
+				finaldamagedealt *= frandompick(1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.5,1.5,1.5);
+			}
+		}
+
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+	
+	override void Tick()
+	{
+		Super.Tick();
+		int baserand = random(1,8);
+		finaldamagedealt = A_CalcDamageFormula(20,baserand,0.005,0.3334,0.1667,0.005);
+
 		if (target)
 		{
 			int TruePlayerLevel = target.CountInv("MonsterLevel");
@@ -2690,7 +2801,26 @@ class EvilZapShot : EEFastProjectile
 	{
 		Super.PostBeginPlay();
 		int baserand = random(1,8);
-		finaldamagedealt = (12 * baserand);
+		finaldamagedealt = A_CalcDamageFormula(12,baserand,0.005,0.3334,0.1667,0.005);
+		if (target)
+		{
+			int TruePlayerLevel = target.CountInv("MonsterLevel");
+			finaldamagedealt += (TruePlayerLevel * (0.06 * baserand));
+			finaldamagedealt *= 1.0 + (TruePlayerLevel * 0.0125);
+			if (IPAttack) 
+			{
+				finaldamagedealt *= frandompick(1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.5,1.5,1.5);
+			}
+		}
+
+		//if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+	
+	override void Tick()
+	{
+		Super.Tick();
+		int baserand = random(1,8);
+		finaldamagedealt = A_CalcDamageFormula(12,baserand,0.005,0.3334,0.1667,0.005);
 		if (target)
 		{
 			int TruePlayerLevel = target.CountInv("MonsterLevel");
@@ -2780,7 +2910,26 @@ class EvilMiniZapShot : EvilZapShot
 	{
 		Super.PostBeginPlay();
 		int baserand = random(1,8);
-		finaldamagedealt = (8 * baserand);
+		finaldamagedealt = A_CalcDamageFormula(8,baserand,0.005,0.3334,0.1667,0.005);
+		if (target)
+		{
+			int TruePlayerLevel = target.CountInv("MonsterLevel");
+			finaldamagedealt += (TruePlayerLevel * (0.04 * baserand));
+			finaldamagedealt *= 1.0 + (TruePlayerLevel * 0.0125);
+			if (IPAttack) 
+			{
+				finaldamagedealt *= frandompick(1.25,1.25,1.25,1.25,1.25,1.25,1.25,1.5,1.5,1.5);
+			}
+		}
+
+		//if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+	
+	override void Tick()
+	{
+		Super.Tick();
+		int baserand = random(1,8);
+		finaldamagedealt = A_CalcDamageFormula(8,baserand,0.005,0.3334,0.1667,0.005);
 		if (target)
 		{
 			int TruePlayerLevel = target.CountInv("MonsterLevel");
@@ -2881,7 +3030,7 @@ class EvilEggShot : EEProjectile
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
-		finaldamagedealt = (12 * random(1,8));
+		finaldamagedealt = A_CalcDamageFormula(12,random(1,8),0.005,0.3334,0.1667,0.005);
 		if (target)
 		{
 			int TruePlayerLevel = target.CountInv("MonsterLevel");
@@ -2889,6 +3038,16 @@ class EvilEggShot : EEProjectile
 		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
 	}
 	
+	override void Tick()
+	{
+		super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(12,random(1,8),0.005,0.3334,0.1667,0.005);
+		if (target)
+		{
+			int TruePlayerLevel = target.CountInv("MonsterLevel");
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
 	
 	States
 	{
@@ -2994,7 +3153,18 @@ class EvilEggGrenade : EEProjectile
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
-		finaldamagedealt = (9 * random(1,8));
+		finaldamagedealt = A_CalcDamageFormula(9,random(1,8),0.005,0.3334,0.1667,0.005);
+		if (target)
+		{
+			int TruePlayerLevel = target.CountInv("MonsterLevel");
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+	
+	override void Tick()
+	{
+		super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(9,random(1,8),0.005,0.3334,0.1667,0.005);
 		if (target)
 		{
 			int TruePlayerLevel = target.CountInv("MonsterLevel");
@@ -3088,7 +3258,18 @@ class EvilEggMini : EEProjectile
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
-		finaldamagedealt = (6 * random(1,8));
+		finaldamagedealt = A_CalcDamageFormula(6,random(1,8),0.005,0.3334,0.1667,0.005);
+		if (target)
+		{
+			int TruePlayerLevel = target.CountInv("MonsterLevel");
+		}
+		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+	
+	override void Tick()
+	{
+		super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(6,random(1,8),0.005,0.3334,0.1667,0.005);
 		if (target)
 		{
 			int TruePlayerLevel = target.CountInv("MonsterLevel");
@@ -4677,6 +4858,12 @@ class ChookEggShot : EEProjectile
 		finaldamagedealt = A_CalcDamageFormula(8,random(1,8),0.005,0.3334,0.1667,0.005);
 	}
 	
+	override void Tick()
+	{
+		super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(8,random(1,8),0.005,0.3334,0.1667,0.005);
+	}
+	
 	
 	States
 	{
@@ -4786,6 +4973,12 @@ class ChookEggGrenade : EEProjectile
 		finaldamagedealt = A_CalcDamageFormula(6,random(1,8),0.005,0.3334,0.1667,0.005);
 	}
 	
+	override void Tick()
+	{
+		super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(6,random(1,8),0.005,0.3334,0.1667,0.005);
+	}
+	
 	States
 	{
 		Spawn:
@@ -4876,6 +5069,12 @@ class ChookEggMini : EEProjectile
 		finaldamagedealt = A_CalcDamageFormula(4,random(1,8),0.005,0.3334,0.1667,0.005);
 	}
 	
+	override void Tick()
+	{
+		super.Tick();
+		finaldamagedealt = A_CalcDamageFormula(4,random(1,8),0.005,0.3334,0.1667,0.005);
+	}
+	
 	States
 	{
 		Spawn:
@@ -4962,36 +5161,136 @@ class CremeDeBratte : DDOrigCreature
 			TART AB 10 A_Look();
 			Loop;
 		See:
-			TART AB 5;
-			TART C 0 A_StartSound("tart/hop",CHAN_BODY);
-			TART CCDD 3 A_EEChase("Melee","Missile",0,1,3,1,1);
-			TART EAE 2;
-			TART A 2;
+			TART AB 5
+			{
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") > random(67,68)) A_SetTics(2);
+					else if (CountInv("MonsterLevel") > 45) A_SetTics(3);
+					else if (CountInv("MonsterLevel") > random(22,23)) A_SetTics(4);
+				}
+			}
+			TART C 0 
+			{
+				A_StartSound("tart/hop",CHAN_BODY);
+			}
+			TART CCDD 3 
+			{
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45)
+				{
+					A_SetTics(2);
+				}
+			}
+			TART EAE 2
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60)
+				{
+					A_SetTics(1);
+				}
+			}
+			TART A 2
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60)
+				{
+					A_SetTics(1);
+				}
+			}
 			Loop;
 		Missile:
 			TART H 0 A_DynamicMusic();
 			TART H 0 A_StartSound("aqua/kill2",1);
-			TART HIJ 5;
-			TART K 12 A_SpawnProjectile("SeedBall",40,0,0);
-			TART H 3;
+			TART HIJ 5
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(2);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) A_SetTics(3);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 25) A_SetTics(4);
+			}
+			TART K 12 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) A_SetTics(6);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(7);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) A_SetTics(8);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) A_SetTics(9);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(10);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 15) A_SetTics(11);
+
+				user_tempvar1 = 40; // attack height
+				user_tempvar2 = frandompick(7.5,10,10,12.5,12.5,12.5,15,15,15,15,15,15,15,17.5,17.5,17.5,20,20,22.5); // base angle
+				string shottype = "SeedBall";
+				A_SpawnProjectile(shottype,user_tempvar1,0,0);
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") >= 30)
+					{
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*-1));
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*1));
+					}
+					if (CountInv("MonsterLevel") >= 60)
+					{
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*-2));
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*2));
+					}
+					if (CountInv("MonsterLevel") >= 90)
+					{
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*-1.5));
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*1.5));
+					}
+				}
+			}
+			TART H 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) A_SetTics(2);
+			}
 			Goto See;
 		Pain:
-			TART F 3 A_EEPain();
-			TART GFG 3;
+			TART F 3 
+			{
+				A_EEPain();
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+			}
+			TART GFG 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+			}
 			Goto See;
 		Pain.Fire:
 		Pain.BRocket:
 		Pain.Spinner:
-			BART F 3 A_EEPain();
-			BART G 3 A_Die("Fire");
+			BART F 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+				A_EEPain();
+			}
+			BART G 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+				A_Die("Fire");
+			}
 			Goto Death.Fire;
 		Pain.Cherrybomb:
-			TART F 3 A_EEPain();
+			TART F 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+				A_EEPain();
+			}
 			TART G 3 
 			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
 				if (random(1,2) <= 1) A_Die("Cherrybomb");
 			}
-			TART FG 3;
+			TART FG 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+			}
 			Goto See;
 		/*
 		Death.Suck:
@@ -5010,7 +5309,11 @@ class CremeDeBratte : DDOrigCreature
 		Death.Cherrybomb:
 		Death.BRocket:
 		Death.Spinner:
-			BART F 3 bright;
+			BART F 3 bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+			}
 			BART G 0 
 			{
 				actor TorchedBratte;
@@ -5181,26 +5484,115 @@ class CremeDeBratte_Torched : DDOrigCreature
 		See:
 			BART AB 4 bright
 			{
-				if (peeved) A_SetTics(2);
+				if (peeved) 
+				{
+					if (exex_monsterlevelenabledflags)
+					{
+						if (CountInv("MonsterLevel") > random(112,113)) A_SetTics(1);
+						else if (CountInv("MonsterLevel") > 75) A_SetTics(randompick(1,2,2));
+						else if (CountInv("MonsterLevel") > random(37,38)) A_SetTics(randompick(1,2,2,2));
+						else A_SetTics(2);
+					}
+					else A_SetTics(2);
+				}
+				else
+				{
+					if (exex_monsterlevelenabledflags)
+					{
+						if (CountInv("MonsterLevel") > 75) A_SetTics(2);
+						else if (CountInv("MonsterLevel") > random(37,38)) A_SetTics(3);
+						else A_SetTics(4);
+					}
+					else A_SetTics(4);
+				}
 			}
 			BART C 0 bright A_StartSound("tart/hop",CHAN_BODY);
 			BART CCDD 3 bright 
 			{
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") > 75) 
+					{
+						if (peeved) A_SetTics(1);
+									 else A_SetTics(randompick(1,1,2));
+					}
+					else if (CountInv("MonsterLevel") > random(37,38)) 
+					{
+						if (peeved) A_SetTics(randompick(1,1,1,1,2));
+									 else A_SetTics(randompick(1,2,2));
+						
+					}
+					else
+					{
+						if (peeved) A_SetTics(randompick(1,1,2));
+									 else A_SetTics(3);
+					}
+				}
+				else
+				{
+					if (peeved) A_SetTics(randompick(1,1,2));
+								 else A_SetTics(3);
+				}
 				if (peeved) A_EEChase("Melee",null,0,1,3,1,1);
 							 else A_EEChase(null,"Missile",0,1,3,1,1);
-				if (peeved) A_SetTics(randompick(1,1,2));
+				
 			}
 			BART E 2 bright
 			{
-				if (peeved) A_SetTics(1);
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") > random(37,38))
+					{
+						if (peeved) A_SetTics(randompick(0,1,1));
+									 else A_SetTics(1);
+					}
+					else
+					{
+						if (peeved) A_SetTics(1);
+					}
+				}
+				else
+				{
+					if (peeved) A_SetTics(1);
+				}
 			}
 			BART AE 2 bright
 			{
-				if (peeved) A_SetTics(0);
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") > random(37,38))
+					{
+						if (peeved) A_SetTics(randompick(0,0,1,1,1));
+									 else A_SetTics(0);
+					}
+					else
+					{
+						if (peeved) A_SetTics(0);
+					}
+				}
+				else
+				{
+					if (peeved) A_SetTics(0);
+				}
 			}
 			BART A 2 bright
 			{
-				if (peeved) A_SetTics(1);
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") > random(37,38))
+					{
+						if (peeved) A_SetTics(randompick(0,1,1));
+									 else A_SetTics(1);
+					}
+					else
+					{
+						if (peeved) A_SetTics(1);
+					}
+				}
+				else
+				{
+					if (peeved) A_SetTics(1);
+				}
 			}
 			Loop;
 		Melee:
@@ -5223,21 +5615,73 @@ class CremeDeBratte_Torched : DDOrigCreature
 		Missile:
 			BART B 0 bright A_DynamicMusic();
 			BART B 0 bright A_StartSound("aqua/kill2",1);
-			BART BE 5 bright;
-			BART E 12 bright A_SpawnProjectile("StarBall",40,0,0);
-			BART A 3 bright;
+			BART BE 5 bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(2);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) A_SetTics(3);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 25) A_SetTics(4);
+			}
+			BART E 12 bright 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) A_SetTics(6);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(7);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) A_SetTics(8);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) A_SetTics(9);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(10);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 15) A_SetTics(11);
+
+				user_tempvar1 = 40; // attack height
+				user_tempvar2 = frandompick(7.5,10,10,12.5,12.5,12.5,15,15,15,15,15,15,15,17.5,17.5,17.5,20,20,22.5); // base angle
+				string shottype = "StarBall";
+				A_SpawnProjectile(shottype,user_tempvar1,0,0);
+				if (exex_monsterlevelenabledflags)
+				{
+					if (CountInv("MonsterLevel") >= 30)
+					{
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*-1));
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*1));
+					}
+					if (CountInv("MonsterLevel") >= 60)
+					{
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*-2));
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*2));
+					}
+					if (CountInv("MonsterLevel") >= 90)
+					{
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*-1.5));
+						A_SpawnProjectile(shottype,user_tempvar1,0,(user_tempvar2*1.5));
+					}
+				}
+			}
+			BART A 3 bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) A_SetTics(2);
+			}
 			Goto See;
 		Pain:
 			BART F 3 bright
 			{
+				if (peeved) A_SetTics(randompick(1,1,2));
+				else
+				{
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+				}
 				A_EEPain();
 				if ((health < ((SpawnHealth() + Stamina) * 0.25)) && random(1,4) <= 1) peeved = true;
 				else if ((health < ((SpawnHealth() + Stamina) * 0.10)) && random(1,4) <= 3) peeved = true;
-				if (peeved) A_SetTics(randompick(1,1,2));
 			}
 			BART GFG 3 bright
 			{
 				if (peeved) A_SetTics(randompick(1,1,2));
+				else
+				{
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+				}
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
 			}
 			Goto See;
 		/*
@@ -5249,12 +5693,22 @@ class CremeDeBratte_Torched : DDOrigCreature
 		Death:
 			BART F 3 bright 
 			{
-				A_EEPain();
 				if (peeved) A_SetTics(randompick(1,1,2));
+				else
+				{
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+				}
+				A_EEPain();
 			}
 			BART GFG 3 bright
 			{
 				if (peeved) A_SetTics(randompick(1,1,2));
+				else
+				{
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) A_SetTics(1);
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) A_SetTics(2);
+				}
 			}
 			BMX2 A 0 Bright
 			{
@@ -5270,56 +5724,77 @@ class CremeDeBratte_Torched : DDOrigCreature
 				A_AlertMonsters();
 				A_SetTics(randompick(2,2,3,3,3,4,4));
 				int expdmg = random(28,32);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { expdmg *= 2.0; A_SetScale(2.0); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) { expdmg *= 1.625; A_SetScale(1.625); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 25) { expdmg *= 1.25; A_SetScale(1.25); }
 				int exprad = expdmg;
-				if (peeved) expdmg *= frandom(0.667,0.75);
+				if (peeved) expdmg *= frandom(1.25,1.5);
 				A_Explode(expdmg,exprad,XF_NOTMISSILE|XF_NOSPLASH|XF_THRUSTZ,false,(exprad*0.25),0,0,"","Explosive");
 			}
 			BMX2 B 3 Bright 
 			{
 				A_SetTics(randompick(2,2,3,3,3,4,4));
 				int expdmg = random(42,48);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { expdmg *= 2.0; A_SetScale(2.0); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) { expdmg *= 1.625; A_SetScale(1.625); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 25) { expdmg *= 1.25; A_SetScale(1.25); }
 				int exprad = expdmg;
-				if (peeved) expdmg *= frandom(0.667,0.75);
+				if (peeved) expdmg *= frandom(1.25,1.5);
 				A_Explode(expdmg,exprad,XF_NOTMISSILE|XF_NOSPLASH|XF_THRUSTZ,false,(exprad*0.25),0,0,"","Explosive");
 			}
 			BMX2 C 3 Bright
 			{
 				A_SetTics(randompick(2,2,3,3,3,4,4));
 				int expdmg = random(56,64);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { expdmg *= 2.0; A_SetScale(2.0); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) { expdmg *= 1.625; A_SetScale(1.625); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 25) { expdmg *= 1.25; A_SetScale(1.25); }
 				int exprad = expdmg;
-				if (peeved) expdmg *= frandom(0.667,0.75);
+				if (peeved) expdmg *= frandom(1.25,1.5);
 				A_Explode(expdmg,exprad,XF_NOTMISSILE|XF_NOSPLASH|XF_THRUSTZ,false,(exprad*0.25),0,0,"","Explosive");
 			}
 			BMX2 D 3 Bright
 			{
 				A_SetTics(randompick(2,2,3,3,3,4,4));
 				int expdmg = random(70,80);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { expdmg *= 2.0; A_SetScale(2.0); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) { expdmg *= 1.625; A_SetScale(1.625); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 25) { expdmg *= 1.25; A_SetScale(1.25); }
 				int exprad = expdmg;
-				if (peeved) expdmg *= frandom(0.667,0.75);
+				if (peeved) expdmg *= frandom(1.25,1.5);
 				A_Explode(expdmg,exprad,XF_NOTMISSILE|XF_NOSPLASH|XF_THRUSTZ,false,(exprad*0.25),0,0,"","Explosive");
 			}
 			BMX2 E 3 Bright
 			{
 				A_SetTics(randompick(2,2,3,3,3,4,4));
 				int expdmg = random(84,96);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { expdmg *= 2.0; A_SetScale(2.0); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) { expdmg *= 1.625; A_SetScale(1.625); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 25) { expdmg *= 1.25; A_SetScale(1.25); }
 				int exprad = expdmg;
-				if (peeved) expdmg *= frandom(0.667,0.75);
+				if (peeved) expdmg *= frandom(1.25,1.5);
 				A_Explode(expdmg,exprad,XF_NOTMISSILE|XF_NOSPLASH|XF_THRUSTZ,false,(exprad*0.25),0,0,"","Explosive");
 			}
 			BMX2 F 3 Bright
 			{
 				A_SetTics(randompick(2,2,3,3,3,4,4));
 				int expdmg = random(98,112);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { expdmg *= 2.0; A_SetScale(2.0); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) { expdmg *= 1.625; A_SetScale(1.625); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 25) { expdmg *= 1.25; A_SetScale(1.25); }
 				int exprad = expdmg;
-				if (peeved) expdmg *= frandom(0.667,0.75);
+				if (peeved) expdmg *= frandom(1.25,1.5);
 				A_Explode(expdmg,exprad,XF_NOTMISSILE|XF_NOSPLASH|XF_THRUSTZ,false,(exprad*0.25),0,0,"","Explosive");
 			}
 			BMX2 G 3 Bright
 			{
 				A_SetTics(randompick(2,2,3,3,3,4,4));
 				int expdmg = random(112,128);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { expdmg *= 2.0; A_SetScale(2.0); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) { expdmg *= 1.625; A_SetScale(1.625); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 25) { expdmg *= 1.25; A_SetScale(1.25); }
 				int exprad = expdmg;
-				if (peeved) expdmg *= frandom(0.667,0.75);
+				if (peeved) expdmg *= frandom(1.25,1.5);
 				A_Explode(expdmg,exprad,XF_NOTMISSILE|XF_NOSPLASH|XF_THRUSTZ,false,(exprad*0.25),0,0,"","Explosive");
 			}
 			Stop;
