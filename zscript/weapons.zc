@@ -835,7 +835,7 @@ class DDWeapon : Weapon
 
 		int debugmelee = dydudebug_meleeinformation;
 		int MeleeDestroyProjectiles = 0;
-		int MaxCheck = 16;
+		double MaxCheck = 16;
 		double checkvalfactor = frandom(0.075,0.125);
 		if (type == 0) // Punch
 		{
@@ -844,6 +844,7 @@ class DDWeapon : Weapon
 			if (skill == 2) checkvalfactor = frandom(0.075,0.125);
 			if (skill == 3) checkvalfactor = frandom(0.0675,0.1125);
 			if (skill >= 4) checkvalfactor = frandom(0.06,0.10);
+			checkvalfactor *= 0.5;
 		}
 		if (type == 1) // Uppercut
 		{
@@ -852,7 +853,7 @@ class DDWeapon : Weapon
 			if (skill == 2) checkvalfactor = frandom(0.075,0.125);
 			if (skill == 3) checkvalfactor = frandom(0.0675,0.1125);
 			if (skill >= 4) checkvalfactor = frandom(0.06,0.10);
-			checkvalfactor *= 1.75;
+			checkvalfactor *= 0.875;
 		}
 		if (type == 2) // Kick
 		{
@@ -861,20 +862,28 @@ class DDWeapon : Weapon
 			if (skill == 2) checkvalfactor = frandom(0.075,0.125);
 			if (skill == 3) checkvalfactor = frandom(0.0675,0.1125);
 			if (skill >= 4) checkvalfactor = frandom(0.06,0.10);
-			checkvalfactor *= frandompick(1.75,2,2.25);
-			if (CountInv("DinahTrueIPState")) checkvalfactor *= 10;
+			checkvalfactor *= frandompick(0.875,1,1.125);
 		}
-		if (A_CheckBerserk()) checkvalfactor *= frandompick(1.75,1.875,1.875,2.0,2.0,2.0,2.125,2.125,2.125,2.125,2.125,2.25,2.25,2.25,2.375,2.375,2.5);
+		checkvalfactor *= 1.5;
+		if (A_CheckBerserk()) checkvalfactor *= frandompick(3,3.5,3.5,4.0,4.0,4.0,4.375,4.375,4.375,4.375,4.375,4.75,4.75,4.75,5.125,5.125,5.5);
 		if (MiscItem) 
 		{
-			if (CountInv("DinahTrueIPState")) MaxCheck = ceil(16 - (TruePlayerLevel * checkvalfactor));
-																	 else MaxCheck = ceil(randompick(1,1,1,2,2) - (TruePlayerLevel * checkvalfactor));
+			if (CountInv("DinahTrueIPState")) 
+			{
+				if (A_CheckBerserk()) MaxCheck = (randompick(0,0,0,1,1) - (((TruePlayerLevel+1) * checkvalfactor) * 6));
+												 else MaxCheck = (randompick(1,1,1,2,2) - ((TruePlayerLevel+1) * checkvalfactor));
+			}
+			else 
+			{
+				if (A_CheckBerserk()) MaxCheck = (2.6667 - (((TruePlayerLevel+1) * checkvalfactor) * 6));
+												 else MaxCheck = (16 - ((TruePlayerLevel+1) * checkvalfactor));
+			}
 		}
 
-		MaxCheck = clamp(MaxCheck, 1, MaxCheck);
-		int randomroll = random(1,MaxCheck);
-		if (randomroll <= 1) MeleeDestroyProjectiles = 1;
-		if (debugmelee) Console.Printf("\c[green]MeleeDestroyProjectiles:\c- RandomRoll / MaxCheck: %d / %d, MeleeDestroyProjectiles: %d, checkvalfactor: %.4f (\c[gold]%.4f\c-)", randomroll, MaxCheck, MeleeDestroyProjectiles, checkvalfactor, (checkvalfactor * TruePlayerLevel));
+		if (MaxCheck <= 0.01) MaxCheck = 0.01;
+		double randomroll = frandom(0.01,MaxCheck);
+		if (randomroll <= 1.0) MeleeDestroyProjectiles = 1;
+		if (debugmelee) Console.Printf("\c[green]MeleeDestroyProjectiles [weapon]:\c- type: %d, RandomRoll / MaxCheck: %.4f / %.4f, MeleeDestroyProjectiles: %d, checkvalfactor: %.4f (\c[gold]%.4f\c-)", type, randomroll, MaxCheck, MeleeDestroyProjectiles, checkvalfactor, (checkvalfactor * (TruePlayerLevel+1)));
 
 		return MeleeDestroyProjectiles;
 	}
