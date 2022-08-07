@@ -1620,6 +1620,16 @@ class CherryBombPickup : ExExInvBarItem
 	States
 	{
 		Spawn:
+			CBOP A 0 NoDelay
+			{
+				actor player = players[0].mo;
+				if (random(1,1024) <= 1 && player.CountInv("CBombUpgrade") < 2)
+				{
+					A_SpawnItemEx("CherryBombSchematic",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
+					Thing_Remove(0); 
+				}
+			}
+		Idle:
 			CBOP A -1;
 			Stop;
 		Use:
@@ -1723,9 +1733,9 @@ class CherryBombPickup : ExExInvBarItem
 				if (CountInv("PowerStrength",AAPTR_PLAYER1) || CountInv("PowerStrengthDD",AAPTR_PLAYER1))
 				{
 					throwpowerxy *= 2.5;
-					throwpowerz *= 1.75;
-					throwminangle *= 0.625;
-					throwmaxangle *= 0.625;
+					throwpowerz *= 2.5;
+					throwminangle *= 0.4;
+					throwmaxangle *= 0.4;
 				}
 				if (dydudebug_attackstuff) Console.Printf("throwpowerxy: %.4f, throwpowerz: %.4f, throwangles: %.4f/%.4f", throwpowerxy, throwpowerz, throwminangle, throwmaxangle);
 				
@@ -2102,6 +2112,56 @@ class CherryBombShotBerserk : CherryBombShot
 				}
 			}
 			loop;
+	}
+}
+
+class CherryBombSchematic : CustomInventoryExt
+{
+	Default
+	{
+		Height 12;
+		Radius 6;
+		Scale 0.375;
+		+FLOATBOB
+		+INVENTORY.AUTOACTIVATE
+		+INVENTORY.ALWAYSPICKUP
+		Inventory.MaxAmount 0;
+		Inventory.PickupMessage "\c[gold]Wait, this book's some kind of document on cherry bomb improvements...? Where the blazes did THIS come from?!";
+		Inventory.PickupSound "Dinah/Ooh1";
+		CustomInventoryExt.PickUpVoice true;
+	}
+	
+	override String PickupMessage()
+	{
+		actor player = players[0].mo;
+		string msg = PickupMsg;
+		if (player.CountInv("CBombUpgrade") == 1) msg = "\c[gold]Wait, this book's some kind of document on cherry bomb improvements...? Where the blazes did THIS come from?!";
+		if (player.CountInv("CBombUpgrade") >= 2) msg = "\c[gold]Another Cherry Bomb schematic booklet? This should make them even stronger, but even bulkier than before...";
+		return msg;
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 0 NoDelay
+			{
+				actor player = players[0].mo;
+				if (player.CountInv("CBombUpgrade") >= 2)
+				{
+					A_SpawnItemEx("CBombSchematicReplacer",0.0,0.0,0.0, 0.0,0.0,0.0, 0.0, SXF_NOCHECKPOSITION);
+					Destroy();
+				}
+			}
+		Idle:
+			CBMU A 6;
+			CBMU A 6 bright;
+			loop;
+		Pickup:
+			TNT1 A 0
+			{
+				A_GiveInventory("CBombUpgrade",1);
+			}
+			stop;
 	}
 }
 
