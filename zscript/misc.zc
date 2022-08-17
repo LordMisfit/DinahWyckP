@@ -242,7 +242,7 @@ class PlayerStatItem : Inventory
 			{
 				IsMorphed = 1;
 			}
-			//Console.Printf("%s, IsMorphed: %d, WasMorphed: %d, MorphTimer: %d", playeractor.GetClassName(), IsMorphed, WasMorphed, MorphTimer);
+			if (dydudebug_morphdisplays) Console.Printf("%s, IsMorphed: %d, WasMorphed: %d, MorphTimer: %d", playeractor.GetClassName(), IsMorphed, WasMorphed, MorphTimer);
 			CompatPackMode = 0;
 			if (playeractor.CountInv("PlayingGoingDown")) CompatPackMode += 1;
 			if (playeractor.CountInv("PlayingAugerZenith")) CompatPackMode += 2;
@@ -1968,7 +1968,7 @@ class PlayerStatItem : Inventory
 				else
 				{
 					if (WasMorphed == 1 && MorphTimer > 0) owner.health = MaxHealthTrue;
-					MorphTimer == 0;
+					MorphTimer = 0;
 				}
 				WasMorphed = IsMorphed;
 				
@@ -2765,9 +2765,11 @@ class PlayerStatItem : Inventory
 			//****************************************
 			//*Get Health Ratio & Health Level Checks*
 			//****************************************
-			if (playeractor && MaxHealthTrue > 0)
+			int TempMaxHealthTrue = MaxHealthTrue;
+			if (IsMorphed == 1) TempMaxHealthTrue *= 0.3;
+			if (playeractor && TempMaxHealthTrue > 0)
 			{
-				HealthRatio = (CurrentHealth * 1000) / MaxHealthTrue;
+				HealthRatio = (CurrentHealth * 1000) / TempMaxHealthTrue;
 				HealthRatio = clamp(HealthRatio, 0, 3000);
 				
 				if (HealthRatio != PrevHealthRatio)
@@ -2840,7 +2842,7 @@ class PlayerStatItem : Inventory
 							Owner.A_SetInventory("CriticalHealth", 0);
 						}
 					}
-					if (CurrentHealth >= MaxHealthTrue) Owner.A_SetInventory("FullHealth", 1); else Owner.A_SetInventory("FullHealth", 0);
+					if (CurrentHealth >= TempMaxHealthTrue) Owner.A_SetInventory("FullHealth", 1); else Owner.A_SetInventory("FullHealth", 0);
 					
 					PrevHealthRatio = HealthRatio;
 				}
