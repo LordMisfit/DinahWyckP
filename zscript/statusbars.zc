@@ -1084,7 +1084,744 @@ class DDStatusBarMain : BaseStatusBar
 			}
 		}
 	}
+	
+	void DrawFSArmorDisplays()
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		
+	}
 
+	double, Vector2, int, int, int, int, int, double, string, int, int, int DrawFSEXPDisplays(double FontAlpha, Vector2 FontScale, int FontWrapWidth, int FontLineSpace, int DigX, int DigY, int VisiblePlayerLevel, double HUDHitAlpha, string HUDStringHit, int HUDNumHitValue, int Digits, int spacing)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		
+		//***************
+		//* level / EXP *
+		//***************
+		DigX = 32; // 48;
+		DigY = -80; // -82;
+		if (exex_expenabled)
+		{
+			if (dyduhud_showexplevel)
+			{
+				DrawString(mDDLFont, FormatNumber(VisiblePlayerLevel, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mSmallFont, "LVL", (DigX, DigY-9), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
+			if (dyduhud_showexperience)
+			{
+				//EXP
+				int EXPPts = CPlayerPawn.CountInv("ExpPts");
+				int EXPNeeded = CPlayerPawn.CountInv("ExpPtsNeeded");
+				if (EXPNeeded < 100000000) Digits = 8;
+				if (EXPNeeded < 10000000) Digits = 7;
+				if (EXPNeeded < 1000000) Digits = 6;
+				if (EXPNeeded < 100000) Digits = 5;
+				if (EXPNeeded < 10000) Digits = 4;
+				if (EXPNeeded < 1000) Digits = 3;
+				if (EXPNeeded < 100) Digits = 2;
+				if (EXPNeeded < 10) Digits = 1;
+				Spacing = 6; // 6
+				Spacing *= 1.25;
+				DigX += 16 + (Digits * Spacing);
+				DrawString(mDDMFont, FormatNumber(mEXPInterpolator.GetValue(), Digits), (DigX, DigY-6), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mDDMFont, "/", ((DigX+(Spacing*1.334)), DigY-2), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				DrawString(mDDMFont, FormatNumber(EXPNeeded, Digits), (DigX, DigY+4), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
+			
+			//*************************
+			//* EXP Gain / Kill Combo *
+			//*************************
+			double EXPBaseScale = 1.0;
+			int EXPScaleTimer; 
+			int EXPScaleTimerMod = 35;
+			if (MiscItem) EXPScaleTimer = MiscItem.EXPGainHUDTimer % EXPScaleTimerMod;
+			double BaseEXPScaleFrame = 0.125 / double(EXPScaleTimerMod * 0.5);
+			int ExpPulseFrame = (EXPScaleTimerMod * 0.5);
+			ExpPulseFrame = abs(ExpPulseFrame - EXPScaleTimer);
+			double ExpTrueScale = EXPBaseScale + (ExpPulseFrame * BaseEXPScaleFrame);
+			vector2 EXPScale = (ExpTrueScale, ExpTrueScale); //(0.875, 0.875);
+
+			HUDNumHitValue = 0;
+			HUDHitAlpha = 1.00;
+			If (MiscItem)
+			{
+				if (MiscItem.EXPGainHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.EXPGainHUDTimer))));
+				else HUDHitAlpha = 1.00;
+			}
+			HUDNumHitValue = 0;
+			If (MiscItem) HUDNumHitValue = MiscItem.EXPGainHUDAmt;
+			HUDStringHit = "+";
+			HUDStringHit.AppendFormat("%d", HUDNumHitValue);
+			if (MiscItem && MiscItem.KillComboCount) HUDStringHit.AppendFormat(" [%d]", MiscItem.KillComboCount);
+			DigX = 3;
+			DigY = -67;
+			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.CR_Gold, HUDHitAlpha, FontWrapWidth, FontLineSpace, EXPScale); // 41, -43
+		}
+		
+		return FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, VisiblePlayerLevel, HUDHitAlpha, HUDStringHit, HUDNumHitValue, Digits, spacing;
+	}
+	
+	double, Vector2, int, int, int, int, Vector2, textureid, int, int, int, int DrawFSDashMeterDisplays(double FontAlpha, Vector2 FontScale, int FontWrapWidth, int FontLineSpace, int DigX, int DigY, vector2 unitscale, textureid dun, int VisiblePlayerLevel, int candash, int dashcost, int dashmaxcharge)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		
+		//********
+		//* Dash *
+		//********
+		candash = CPlayerPawn.CountInv("DashReady");
+		if (candash && CPlayerPawn.CountInv("NoDashing")) candash = 0;
+		int dash = CPlayerPawn.CountInv("DashGauge");
+		int dashcharge = CPlayerPawn.CountInv("DashCharge");
+		int dashtics = CPlayerPawn.CountInv("DashTics");
+		dashmaxcharge = CPlayerPawn.CountInv("DashMaxCharge");
+		double dashmeterlength = (dyduhud_basedashmeterlength + (VisiblePlayerLevel * dyduhud_dashmetergrowperlvl));
+		if (dashmeterlength > dyduhud_dashmetermaxlength) dashmeterlength = dyduhud_dashmetermaxlength;
+		int dashbarunits = dash * dashmeterlength;
+		DigX = 5; // 5;
+		DigY = -122; // -94;
+		dun = TexMan.CheckForTexture("DASHUNI2", TexMan.TYPE_MiscPatch);
+		if (candash) dun = TexMan.CheckForTexture("DASHUNIT", TexMan.TYPE_MiscPatch);
+		dashcost = CPlayerPawn.CountInv("DashCost");
+		int dashcostunit;
+		if (dashmaxcharge) dashcostunit = dashcost * 100 / dashmaxcharge;
+		dashcostunit *= dashmeterlength;
+		int ix;
+		unitscale = (1, 1);
+		if (DashMaxCharge >= dashcost)
+		{
+			DrawString(mSmallFont, "DASH", (DigX+38, DigY-19), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			for (int i; i < (100 * dashmeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (DigX+i, DigY), 0, HX_SHADOW, (-1, -1), unitscale);
+			
+			for (int i; i < dashbarunits; i++) 
+			{
+				if (candash)
+				{
+					dun = TexMan.CheckForTexture("DASHUNI1", TexMan.TYPE_MiscPatch);
+					unitscale = (1, 1);
+					ix = (i % dashcostunit);
+					if (i != 0 && ix == 0) 
+					{
+						unitscale = (1.125, 1.125);
+						dun = TexMan.CheckForTexture("DASHUNI3", TexMan.TYPE_MiscPatch);
+					}
+				}
+				else
+				{
+					dun = TexMan.CheckForTexture("DASHUNI2", TexMan.TYPE_MiscPatch);
+					ix = (i % dashcostunit);
+					if (i != 0 && ix == 0) 
+					{
+						unitscale = (1.125, 1.125);
+						dun = TexMan.CheckForTexture("DASHUNI4", TexMan.TYPE_MiscPatch);
+					}
+				}
+				
+				DrawTexture(dun, (DigX+i, DigY), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+			}
+		}
+		
+		int dashcharges = CPlayerPawn.CountInv("DashCharges");
+		if (dydudebug_dashmeter)
+		{
+			DigY = -126;
+			DigX = 48;
+			if (candash) DrawString(mDDMFont, FormatNumber(dash, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+							else DrawString(mDDMFont, FormatNumber(dash, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			DigY = -134;
+			DigX = 48;
+			if (candash) DrawString(mDDMFont, FormatNumber(dashcharge, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+							else DrawString(mDDMFont, FormatNumber(dashcharge, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			DigY = -126;
+			DigX = 80;
+			if (candash) DrawString(mDDMFont, FormatNumber(dashcharges, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+							else DrawString(mDDMFont, FormatNumber(dashcharges, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			if (dashtics)
+			{
+				DigY = -132;
+				DigX = 80;
+				if (candash) DrawString(mDDMFont, FormatNumber(dashtics, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+								else DrawString(mDDMFont, FormatNumber(dashtics, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			}
+		}
+		return FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, unitscale, dun, VisiblePlayerLevel, candash, dashcost, dashmaxcharge;
+	}
+
+	double, Vector2, int, int, int, int, vector2, textureid DrawFSAirMeterDisplays(double FontAlpha, Vector2 FontScale, int FontWrapWidth, int FontLineSpace, int DigX, int DigY, vector2 unitscale, textureid dun)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+
+		//***************
+		//* Air Display *
+		//***************
+		double AirMeterCurrent = CPlayerPawn.CountInv("AirMeter");
+		if (AirMeterCurrent < 0) AirMeterCurrent = 0;
+		double AirMeterMax = CPlayerPawn.CountInv("MaxAirMeter");
+		double airmeterlength = 1.0;
+		if (CPlayerPawn.CountInv("PowerStrength") || CPlayerPawn.CountInv("PowerStrengthDD")) airmeterlength *= 1.25;
+		int AirUnits;
+		double AirPercent;
+		if (AirMeterMax > 0) 
+		{
+			AirUnits = AirMeterCurrent * 100 / AirMeterMax;
+			AirPercent = AirMeterCurrent * 100.0 / AirMeterMax;
+			if (CPlayerPawn.CountInv("PowerStrength") || CPlayerPawn.CountInv("PowerStrengthDD")) AirPercent = AirMeterCurrent * 125.0 / AirMeterMax;
+		}
+		if (AirMeterMax > 0 && AirUnits < AirMeterMax)
+		{
+			int airlow = 0;
+			int airlowmod = 999;
+			if (AirUnits <= randompick(33,33,34)) 
+			{
+				airlow = 1;
+				airlowmod = 64;
+			}
+			if (AirUnits <= 10)
+			{
+				airlow = 2;
+				airlowmod = 32;
+			}
+			if (AirUnits <= 4)
+			{
+				airlow = 3;
+				airlowmod = 16;
+			}
+			if (AirUnits <= 1) 
+			{
+				airlow = random(3,5);
+				airlowmod = 8;
+			}
+			int airlowFlashTimer;
+			if (airlow > 0)
+			{
+				airlowFlashTimer = level.time % airlowmod;
+			}
+			AirUnits *= airmeterlength;
+			unitscale = (1, 1);
+			DigX = 5;
+			DigY = -148;
+			int lowairx, lowairy;
+			double airmeterscale = 0.875;
+			if (airlow)
+			{
+				lowairx = random(-airlow,airlow);
+				lowairy = random(-airlow,airlow);
+			}
+			if (AirMeterMax > 0 && dyduhud_showairmeter)
+			{
+				if ((AirMeterCurrent < AirMeterMax || MiscItem.PlayerWaterLevel >= 3) && AirMeterMax > 0)
+				{
+					if (dydudebug_airmeter == 1) Console.Printf("[HUD] %d / %d (AirUnits: %d)", AirMeterCurrent, AirMeterMax, AirUnits);
+					DrawString(mSmallFont, "AIR", (DigX+29+lowairx, DigY-18+lowairy), DI_TEXT_ALIGN_RIGHT, font.CR_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+					for (int i; i < (100 * airmeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (DigX+i+lowairx, DigY+lowairy), 0, HX_SHADOW, (-1, -1), unitscale);
+					
+					for (int i; i < AirUnits; i++) 
+					{
+						dun  = TexMan.CheckForTexture("DASHUNI1", TexMan.TYPE_MiscPatch);
+						unitscale = (1, 1);
+						if (airlow > 0 && airlowmod > 0)
+						{
+							if (airlowFlashTimer >= (airlowmod*0.5)) dun = TexMan.CheckForTexture("DASHUNI2", TexMan.TYPE_MiscPatch);
+						}
+						DrawTexture(dun, (DigX+i+lowairx, DigY+lowairy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
+					}
+					double airseconds = (AirMeterCurrent / TICRATE);
+					string airsecstring = "";
+					if (dyduhud_airmeterdisplay)
+					{
+						if (dyduhud_airmeterdisplay & 1) airsecstring.AppendFormat("%.1f", airseconds);
+						if (dyduhud_airmeterdisplay & 1 && dyduhud_airmeterdisplay & 2) 
+						{
+							airmeterscale = 0.75;
+							airsecstring.AppendFormat(" (");
+						}
+						if (dyduhud_airmeterdisplay & 2) airsecstring.AppendFormat("%.1f%%", AirPercent);
+						if (dyduhud_airmeterdisplay & 1 && dyduhud_airmeterdisplay & 2)
+						{
+							airsecstring.AppendFormat(")");
+						}
+						int AirSecsFont = font.CR_sapphire;
+						if (AirMeterCurrent <= 0) AirSecsFont = font.CR_Red;
+						DrawString(mSmallFont, airsecstring, (DigX+(46*airmeterlength)+lowairx, DigY-9+lowairy), DI_TEXT_ALIGN_CENTER, AirSecsFont, FontAlpha, FontWrapWidth, FontLineSpace, FontScale*airmeterscale); // 41, -43
+					}
+				}
+			}
+		}
+		
+		return FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, unitscale, dun;
+	}
+
+	double, Vector2, int, int, int, int, int, int, int, int, int, double, string, int DrawFSIPDisplays(double FontAlpha, Vector2 FontScale, int FontWrapWidth, int FontLineSpace, int DigX, int DigY, int Spacing, int VisiblePlayerLevel, int VisiblePlayerATK, int VisiblePlayerDEF, int VisiblePlayerSPD, double HUDHitAlpha, string HUDStringHit, int Digits)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		
+		//****************
+		//* IP % Display *
+		//****************
+		double IPIconPulseScale = 1.00;
+		int IPIconScaleTimer;
+		if (MiscItem) IPIconScaleTimer = (level.time + MiscItem.IPHUDPulseTimeP) % 40;
+		if (exex_ikaripointsenabled)
+		{
+			if (MiscItem)
+			{
+				if (MiscItem.IPHUDPulseType <= 1) IPRecPulseSpd = 0.02;
+				if (MiscItem.IPHUDPulseType == 2) IPRecPulseSpd = 0.03;
+				if (MiscItem.IPHUDPulseType == 3) IPRecPulseSpd = 0.05;
+				if (MiscItem.IPHUDPulseType >= 4) IPRecPulseSpd = 0.08;
+
+				if (MiscItem.IPHUDPulseTimer)
+				{
+					if (IPIconScaleTimer == 0 || IPIconScaleTimer == 20) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 0));
+					if (IPIconScaleTimer == 1 || IPIconScaleTimer == 19) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 0.25));
+					if (IPIconScaleTimer == 2 || IPIconScaleTimer == 18) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 0.5));
+					if (IPIconScaleTimer == 3 || IPIconScaleTimer == 17) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 0.75));
+					if (IPIconScaleTimer == 4 || IPIconScaleTimer == 16) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 1.0));
+					if (IPIconScaleTimer == 5 || IPIconScaleTimer == 15) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 1.25));
+					if (IPIconScaleTimer == 6 || IPIconScaleTimer == 14) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 1.5));
+					if (IPIconScaleTimer == 7 || IPIconScaleTimer == 13) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 1.75));
+					if (IPIconScaleTimer == 8 || IPIconScaleTimer == 12) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 2.0));
+					if (IPIconScaleTimer == 9 || IPIconScaleTimer == 11) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 2.25));
+					if (IPIconScaleTimer == 10) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 2.5));
+
+					if (IPIconScaleTimer == 21 || IPIconScaleTimer == 39) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -0.25));
+					if (IPIconScaleTimer == 22 || IPIconScaleTimer == 38) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -0.5));
+					if (IPIconScaleTimer == 23 || IPIconScaleTimer == 37) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -0.75));
+					if (IPIconScaleTimer == 24 || IPIconScaleTimer == 36) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -1.0));
+					if (IPIconScaleTimer == 25 || IPIconScaleTimer == 35) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -1.25));
+					if (IPIconScaleTimer == 26 || IPIconScaleTimer == 34) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -1.5));
+					if (IPIconScaleTimer == 27 || IPIconScaleTimer == 33) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -1.75));
+					if (IPIconScaleTimer == 28 || IPIconScaleTimer == 32) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -2.0));
+					if (IPIconScaleTimer == 29 || IPIconScaleTimer == 31) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -2.25));
+					if (IPIconScaleTimer == 30) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -2.5));
+					
+					//Console.Printf("IPHUDPulseTimer: %d, Pulse: IPIconScaleTimer: %d, IPRecPulseSpd: %.4f", MiscItem.IPHUDPulseTimer, IPIconScaleTimer, IPRecPulseSpd);
+				}
+			}
+
+			int IPx;
+			int IPy;
+			double ItemPoints;
+			string IPPts = "";
+			int IPDigits;
+			int IPdigitcolor = 0;
+			int IPdigittimer = level.time % 30;
+			if (MiscItem && MiscItem.ItemPoints >= MiscItem.MaxItemPoints)
+			{
+				//Console.Printf("IPdigittimer: %d", IPdigittimer);
+				if (IPdigittimer >= 0 && IPdigittimer <= 4) IPdigitcolor = font.cr_red;
+				if (IPdigittimer >= 5 && IPdigittimer <= 9) IPdigitcolor = font.cr_brick;
+				if (IPdigittimer >= 10 && IPdigittimer <= 14) IPdigitcolor = font.cr_orange;
+				if (IPdigittimer >= 15 && IPdigittimer <= 19) IPdigitcolor = font.cr_fire;
+				if (IPdigittimer >= 20 && IPdigittimer <= 24) IPdigitcolor = font.cr_orange;
+				if (IPdigittimer >= 25 && IPdigittimer <= 29) IPdigitcolor = font.cr_brick;
+			}
+			else IPdigitcolor = font.cr_red;
+			
+			if (MiscItem) 
+			{
+				ItemPoints = MiscItem.ItemPoints;
+				IPPts.AppendFormat("%.2f%%", ItemPoints);
+
+				DigX = 34; // 68
+				DigY = -108; // -108
+				DrawString(mDDLFont2, IPPts, ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
+				DigY -= 8;
+				DrawString(mSmallFont, "IP", ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
+				DigX += 65;
+				DigY += 7;
+				if (MiscItem.MaxIPExtensions)
+				{
+					vector2 IPFScale = (FontScale * 0.75);
+					string IPExt = "[+";
+					IPExt.AppendFormat("%.2f%% Max IP]", ((MiscItem.BaseMaxItemPoints * 0.01) * MiscItem.MaxIPExtensions));
+					DrawString(mSmallFont, IPExt, ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_LEFT, font.cr_green, FontAlpha, FontWrapWidth, FontLineSpace, (IPFScale*IPIconPulseScale)); // 41, -43
+				}
+				DigX -= 65;
+				DigY -= 7;
+			}
+			
+			string IPInputIcon = "IPINPUT0";
+			if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT1";
+			if (MiscItem)
+			{
+				if (MiscItem.IPNoGainTimer)
+				{
+					IPInputIcon = "IPINPUT2";
+					if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT3";
+				}
+				else
+				if (MiscItem.IPMortalBlowReduceTimer)
+				{
+					IPInputIcon = "IPINPUT4";
+					if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT5";
+				}
+				else
+				{
+					IPInputIcon = "IPINPUT0";
+					if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT1";
+				}
+			}
+			else
+			{
+				IPInputIcon = "IPINPUT0";
+				if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT1";
+			}
+
+			vector2 IPIconScale = (1.5, 1.5);
+			DigX += 50; // +50
+			DigY += 22; // +22
+			DrawTexture(TexMan.CheckForTexture(IPInputIcon, TexMan.TYPE_MiscPatch), ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, 1.0, (-1, -1), (IPIconScale*IPIconPulseScale));
+			
+			// Disipation Meter
+			int DissipateTimer;
+			if (MiscItem) DissipateTimer = MiscItem.IPDissipateTimer;
+			string IPDisipateIcon = "";
+			double IPDisipatePulse = 0.25;
+			double IPDisipatePulseInc = frandompick(0.25,0.325,0.325,0.325,0.325,0.325,0.375);
+			if (DissipateTimer > 2065)
+			{
+				IPDisipatePulseInc /= 2;
+				if (level.time % 5) IPDisipatePulse += (IPDisipatePulseInc * 0);
+				if (level.time % 5 == 1 || level.time % 9 == 4) IPDisipatePulse += (IPDisipatePulseInc * 1);
+				if (level.time % 5 == 2 || level.time % 9 == 3) IPDisipatePulse += (IPDisipatePulseInc * 2);
+			}
+			else
+			if (DissipateTimer > 1875)
+			{
+				IPDisipatePulseInc /= 5;
+				if (level.time % 9) IPDisipatePulse += (IPDisipatePulseInc * 0);
+				if (level.time % 9 == 1 || level.time % 9 == 8) IPDisipatePulse += (IPDisipatePulseInc * 1);
+				if (level.time % 9 == 2 || level.time % 9 == 7) IPDisipatePulse += (IPDisipatePulseInc * 2);
+				if (level.time % 9 == 3 || level.time % 9 == 6) IPDisipatePulse += (IPDisipatePulseInc * 3);
+				if (level.time % 9 == 4 || level.time % 9 == 5) IPDisipatePulse += (IPDisipatePulseInc * 4);
+			}
+			else
+			if (DissipateTimer > 1750)
+			{
+				IPDisipatePulseInc /= 9;
+				if (level.time % 18) IPDisipatePulse += (IPDisipatePulseInc * 0);
+				if (level.time % 18 == 1 || level.time % 18 == 17) IPDisipatePulse += (IPDisipatePulseInc * 1);
+				if (level.time % 18 == 2 || level.time % 18 == 16) IPDisipatePulse += (IPDisipatePulseInc * 2);
+				if (level.time % 18 == 3 || level.time % 18 == 15) IPDisipatePulse += (IPDisipatePulseInc * 3);
+				if (level.time % 18 == 4 || level.time % 18 == 14) IPDisipatePulse += (IPDisipatePulseInc * 4);
+				if (level.time % 18 == 5 || level.time % 18 == 13) IPDisipatePulse += (IPDisipatePulseInc * 5);
+				if (level.time % 18 == 6 || level.time % 18 == 12) IPDisipatePulse += (IPDisipatePulseInc * 6);
+				if (level.time % 18 == 7 || level.time % 18 == 11) IPDisipatePulse += (IPDisipatePulseInc * 7);
+				if (level.time % 18 == 8 || level.time % 18 == 10) IPDisipatePulse += (IPDisipatePulseInc * 8);
+				if (level.time % 18 == 9) IPDisipatePulse += (IPDisipatePulseInc * 9);
+			}
+			else
+			if (DissipateTimer > 980)
+			{
+				IPDisipatePulseInc /= 17;
+				if (level.time % 35) IPDisipatePulse += (IPDisipatePulseInc * 0);
+				if (level.time % 35 == 1 || level.time % 35 == 34) IPDisipatePulse += (IPDisipatePulseInc * 1);
+				if (level.time % 35 == 2 || level.time % 35 == 33) IPDisipatePulse += (IPDisipatePulseInc * 2);
+				if (level.time % 35 == 3 || level.time % 35 == 32) IPDisipatePulse += (IPDisipatePulseInc * 3);
+				if (level.time % 35 == 4 || level.time % 35 == 31) IPDisipatePulse += (IPDisipatePulseInc * 4);
+				if (level.time % 35 == 5 || level.time % 35 == 30) IPDisipatePulse += (IPDisipatePulseInc * 5);
+				if (level.time % 35 == 6 || level.time % 35 == 29) IPDisipatePulse += (IPDisipatePulseInc * 6);
+				if (level.time % 35 == 7 || level.time % 35 == 28) IPDisipatePulse += (IPDisipatePulseInc * 7);
+				if (level.time % 35 == 8 || level.time % 35 == 27) IPDisipatePulse += (IPDisipatePulseInc * 8);
+				if (level.time % 35 == 9 || level.time % 35 == 26) IPDisipatePulse += (IPDisipatePulseInc * 9);
+				if (level.time % 35 == 10 || level.time % 35 == 25) IPDisipatePulse += (IPDisipatePulseInc * 10);
+				if (level.time % 35 == 11 || level.time % 35 == 24) IPDisipatePulse += (IPDisipatePulseInc * 11);
+				if (level.time % 35 == 12 || level.time % 35 == 23) IPDisipatePulse += (IPDisipatePulseInc * 12);
+				if (level.time % 35 == 13 || level.time % 35 == 22) IPDisipatePulse += (IPDisipatePulseInc * 13);
+				if (level.time % 35 == 14 || level.time % 35 == 21) IPDisipatePulse += (IPDisipatePulseInc * 14);
+				if (level.time % 35 == 15 || level.time % 35 == 20) IPDisipatePulse += (IPDisipatePulseInc * 15);
+				if (level.time % 35 == 16 || level.time % 35 == 19) IPDisipatePulse += (IPDisipatePulseInc * 16);
+				if (level.time % 35 == 17 || level.time % 35 == 18) IPDisipatePulse += (IPDisipatePulseInc * 17);
+			}
+			else
+			if (DissipateTimer > 0)
+			{
+				IPDisipatePulseInc /= 27;
+				if (level.time % 55) IPDisipatePulse += (IPDisipatePulseInc * 0);
+				if (level.time % 55 == 1 || level.time % 55 == 54) IPDisipatePulse += (IPDisipatePulseInc * 1);
+				if (level.time % 55 == 2 || level.time % 55 == 53) IPDisipatePulse += (IPDisipatePulseInc * 2);
+				if (level.time % 55 == 3 || level.time % 55 == 52) IPDisipatePulse += (IPDisipatePulseInc * 3);
+				if (level.time % 55 == 4 || level.time % 55 == 51) IPDisipatePulse += (IPDisipatePulseInc * 4);
+				if (level.time % 55 == 5 || level.time % 55 == 50) IPDisipatePulse += (IPDisipatePulseInc * 5);
+				if (level.time % 55 == 6 || level.time % 55 == 49) IPDisipatePulse += (IPDisipatePulseInc * 6);
+				if (level.time % 55 == 7 || level.time % 55 == 48) IPDisipatePulse += (IPDisipatePulseInc * 7);
+				if (level.time % 55 == 8 || level.time % 55 == 47) IPDisipatePulse += (IPDisipatePulseInc * 8);
+				if (level.time % 55 == 9 || level.time % 55 == 46) IPDisipatePulse += (IPDisipatePulseInc * 9);
+				if (level.time % 55 == 10 || level.time % 55 == 45) IPDisipatePulse += (IPDisipatePulseInc * 10);
+				if (level.time % 55 == 11 || level.time % 55 == 44) IPDisipatePulse += (IPDisipatePulseInc * 11);
+				if (level.time % 55 == 12 || level.time % 55 == 43) IPDisipatePulse += (IPDisipatePulseInc * 12);
+				if (level.time % 55 == 13 || level.time % 55 == 42) IPDisipatePulse += (IPDisipatePulseInc * 13);
+				if (level.time % 55 == 14 || level.time % 55 == 41) IPDisipatePulse += (IPDisipatePulseInc * 14);
+				if (level.time % 55 == 15 || level.time % 55 == 40) IPDisipatePulse += (IPDisipatePulseInc * 15);
+				if (level.time % 55 == 16 || level.time % 55 == 39) IPDisipatePulse += (IPDisipatePulseInc * 16);
+				if (level.time % 55 == 17 || level.time % 55 == 38) IPDisipatePulse += (IPDisipatePulseInc * 17);
+				if (level.time % 55 == 18 || level.time % 55 == 37) IPDisipatePulse += (IPDisipatePulseInc * 18);
+				if (level.time % 55 == 19 || level.time % 55 == 36) IPDisipatePulse += (IPDisipatePulseInc * 19);
+				if (level.time % 55 == 20 || level.time % 55 == 35) IPDisipatePulse += (IPDisipatePulseInc * 20);
+				if (level.time % 55 == 21 || level.time % 55 == 34) IPDisipatePulse += (IPDisipatePulseInc * 21);
+				if (level.time % 55 == 22 || level.time % 55 == 33) IPDisipatePulse += (IPDisipatePulseInc * 22);
+				if (level.time % 55 == 23 || level.time % 55 == 32) IPDisipatePulse += (IPDisipatePulseInc * 23);
+				if (level.time % 55 == 24 || level.time % 55 == 31) IPDisipatePulse += (IPDisipatePulseInc * 24);
+				if (level.time % 55 == 25 || level.time % 55 == 30) IPDisipatePulse += (IPDisipatePulseInc * 25);
+				if (level.time % 55 == 26 || level.time % 55 == 29) IPDisipatePulse += (IPDisipatePulseInc * 26);
+				if (level.time % 55 == 27 || level.time % 55 == 28) IPDisipatePulse += (IPDisipatePulseInc * 27);
+			}
+			else
+			if (DissipateTimer < 0)
+			{
+				double IPDisipatePulseInc = frandompick(0.5,0.65,0.65,0.65,0.65,0.65,0.75);
+				IPDisipatePulseInc /= 27;
+				if (level.time % 55) IPDisipatePulse += (IPDisipatePulseInc * 0);
+				if (level.time % 55 == 1 || level.time % 55 == 54) IPDisipatePulse += (IPDisipatePulseInc * 1);
+				if (level.time % 55 == 2 || level.time % 55 == 53) IPDisipatePulse += (IPDisipatePulseInc * 2);
+				if (level.time % 55 == 3 || level.time % 55 == 52) IPDisipatePulse += (IPDisipatePulseInc * 3);
+				if (level.time % 55 == 4 || level.time % 55 == 51) IPDisipatePulse += (IPDisipatePulseInc * 4);
+				if (level.time % 55 == 5 || level.time % 55 == 50) IPDisipatePulse += (IPDisipatePulseInc * 5);
+				if (level.time % 55 == 6 || level.time % 55 == 49) IPDisipatePulse += (IPDisipatePulseInc * 6);
+				if (level.time % 55 == 7 || level.time % 55 == 48) IPDisipatePulse += (IPDisipatePulseInc * 7);
+				if (level.time % 55 == 8 || level.time % 55 == 47) IPDisipatePulse += (IPDisipatePulseInc * 8);
+				if (level.time % 55 == 9 || level.time % 55 == 46) IPDisipatePulse += (IPDisipatePulseInc * 9);
+				if (level.time % 55 == 10 || level.time % 55 == 45) IPDisipatePulse += (IPDisipatePulseInc * 10);
+				if (level.time % 55 == 11 || level.time % 55 == 44) IPDisipatePulse += (IPDisipatePulseInc * 11);
+				if (level.time % 55 == 12 || level.time % 55 == 43) IPDisipatePulse += (IPDisipatePulseInc * 12);
+				if (level.time % 55 == 13 || level.time % 55 == 42) IPDisipatePulse += (IPDisipatePulseInc * 13);
+				if (level.time % 55 == 14 || level.time % 55 == 41) IPDisipatePulse += (IPDisipatePulseInc * 14);
+				if (level.time % 55 == 15 || level.time % 55 == 40) IPDisipatePulse += (IPDisipatePulseInc * 15);
+				if (level.time % 55 == 16 || level.time % 55 == 39) IPDisipatePulse += (IPDisipatePulseInc * 16);
+				if (level.time % 55 == 17 || level.time % 55 == 38) IPDisipatePulse += (IPDisipatePulseInc * 17);
+				if (level.time % 55 == 18 || level.time % 55 == 37) IPDisipatePulse += (IPDisipatePulseInc * 18);
+				if (level.time % 55 == 19 || level.time % 55 == 36) IPDisipatePulse += (IPDisipatePulseInc * 19);
+				if (level.time % 55 == 20 || level.time % 55 == 35) IPDisipatePulse += (IPDisipatePulseInc * 20);
+				if (level.time % 55 == 21 || level.time % 55 == 34) IPDisipatePulse += (IPDisipatePulseInc * 21);
+				if (level.time % 55 == 22 || level.time % 55 == 33) IPDisipatePulse += (IPDisipatePulseInc * 22);
+				if (level.time % 55 == 23 || level.time % 55 == 32) IPDisipatePulse += (IPDisipatePulseInc * 23);
+				if (level.time % 55 == 24 || level.time % 55 == 31) IPDisipatePulse += (IPDisipatePulseInc * 24);
+				if (level.time % 55 == 25 || level.time % 55 == 30) IPDisipatePulse += (IPDisipatePulseInc * 25);
+				if (level.time % 55 == 26 || level.time % 55 == 29) IPDisipatePulse += (IPDisipatePulseInc * 26);
+				if (level.time % 55 == 27 || level.time % 55 == 28) IPDisipatePulse += (IPDisipatePulseInc * 27);
+			}
+			
+			if (DissipateTimer >= 1961) IPDisipateIcon = "IPDSTM15";
+			if (DissipateTimer >= 1821 && DissipateTimer <= 1960) IPDisipateIcon = "IPDSTM14";
+			if (DissipateTimer >= 1681 && DissipateTimer <= 1820) IPDisipateIcon = "IPDSTM13";
+			if (DissipateTimer >= 1541 && DissipateTimer <= 1680) IPDisipateIcon = "IPDSTM12";
+			if (DissipateTimer >= 1401 && DissipateTimer <= 1540) IPDisipateIcon = "IPDSTM11";
+			if (DissipateTimer >= 1261 && DissipateTimer <= 1400) IPDisipateIcon = "IPDSTM10";
+			if (DissipateTimer >= 1121 && DissipateTimer <= 1260) IPDisipateIcon = "IPDSTM09";
+			if (DissipateTimer >= 981 && DissipateTimer <= 1120) IPDisipateIcon = "IPDSTM08";
+			if (DissipateTimer >= 841 && DissipateTimer <= 980) IPDisipateIcon = "IPDSTM07";
+			if (DissipateTimer >= 701 && DissipateTimer <= 840) IPDisipateIcon = "IPDSTM06";
+			if (DissipateTimer >= 561 && DissipateTimer <= 700) IPDisipateIcon = "IPDSTM05";
+			if (DissipateTimer >= 421 && DissipateTimer <= 560) IPDisipateIcon = "IPDSTM04";
+			if (DissipateTimer >= 281 && DissipateTimer <= 420) IPDisipateIcon = "IPDSTM03";
+			if (DissipateTimer >= 141 && DissipateTimer <= 280) IPDisipateIcon = "IPDSTM02";
+			if (DissipateTimer >= 1 && DissipateTimer <= 140) IPDisipateIcon = "IPDSTM01";
+			if (DissipateTimer >= -139 && DissipateTimer <= -1) IPDisipateIcon = "IPDRTM01";
+			if (DissipateTimer >= -279 && DissipateTimer <= -140) IPDisipateIcon = "IPDRTM02";
+			if (DissipateTimer >= -419 && DissipateTimer <= -280) IPDisipateIcon = "IPDRTM03";
+			if (DissipateTimer >= -559 && DissipateTimer <= -420) IPDisipateIcon = "IPDRTM04";
+			if (DissipateTimer >= -699 && DissipateTimer <= -560) IPDisipateIcon = "IPDRTM05";
+			if (DissipateTimer >= -839 && DissipateTimer <= -700) IPDisipateIcon = "IPDRTM06";
+			if (DissipateTimer >= -979 && DissipateTimer <= -840) IPDisipateIcon = "IPDRTM07";
+			if (DissipateTimer >= -1119 && DissipateTimer <= -980) IPDisipateIcon = "IPDRTM08";
+			if (DissipateTimer >= -1259 && DissipateTimer <= -1120) IPDisipateIcon = "IPDRTM09";
+			if (DissipateTimer >= -1399 && DissipateTimer <= -1260) IPDisipateIcon = "IPDRTM10";
+			if (DissipateTimer >= -1539 && DissipateTimer <= -1400) IPDisipateIcon = "IPDRTM11";
+			if (DissipateTimer >= -1679 && DissipateTimer <= -1540) IPDisipateIcon = "IPDRTM12";
+			if (DissipateTimer >= -1819 && DissipateTimer <= -1680) IPDisipateIcon = "IPDRTM13";
+			if (DissipateTimer >= -1959 && DissipateTimer <= -1820) IPDisipateIcon = "IPDRTM14";
+			if (DissipateTimer >= -2100 && DissipateTimer <= -1960) IPDisipateIcon = "IPDRTM15";
+			if (MiscItem && MiscItem.IPDissipateTimer != 0) DrawTexture(TexMan.CheckForTexture(IPDisipateIcon, TexMan.TYPE_MiscPatch), ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, IPDisipatePulse, (-1, -1), (IPIconScale*IPIconPulseScale));
+			if (dydudebug_ipdisplays2) Console.Printf(IPDisipateIcon);
+		}
+		
+		// IP Gains
+		if (exex_ikaripointsenabled)
+		{
+			FontScale = (0.9375, 0.9375);
+			double HUDNumHitValueD = 0;
+			HUDHitAlpha = 1.00;
+			If (MiscItem)
+			{
+				if (MiscItem.IPGainHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.IPGainHUDTimer))));
+				else HUDHitAlpha = 1.00;
+				//if (MiscItem.IPGainHUDTimer) Console.Printf("IPGainHUDTimer: %d, IPGainHUDAmt: %.8f", MiscItem.IPGainHUDTimer, MiscItem.IPGainHUDAmt);
+			}
+			HUDNumHitValueD = 0;
+			If (MiscItem) HUDNumHitValueD = MiscItem.IPGainHUDAmt;
+			HUDStringHit = "+";
+			HUDStringHit.AppendFormat("%.2f%%", HUDNumHitValueD);
+			DigX = 35; // 35;
+			DigY = -95; // -95;
+			if (HUDNumHitValueD > 0.00) DrawString(mConFont, HUDStringHit, (DigX, DigY), DI_TEXT_ALIGN_CENTER, font.CR_DarkGreen, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			
+			// IP Loss
+			FontScale = (0.9375, 0.9375);
+			HUDNumHitValueD = 0;
+			HUDHitAlpha = 1.00;
+			If (MiscItem)
+			{
+				if (MiscItem.IPLossHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.IPGainHUDTimer))));
+				else HUDHitAlpha = 1.00;
+				//if (MiscItem.IPLossHUDTimer) Console.Printf("IPLossHUDTimer: %d, IPLossHUDAmt: %.8f", MiscItem.IPLossHUDTimer, MiscItem.IPGainHUDAmt);
+			}
+			HUDNumHitValueD = 0;
+			If (MiscItem) HUDNumHitValueD = MiscItem.IPLossHUDAmt;
+			HUDStringHit = "-";
+			HUDStringHit.AppendFormat("%.2f%%", HUDNumHitValueD);
+			DigX = 35; // 35;
+			DigY = -115; // -95;
+			if (HUDNumHitValueD > 0.00) DrawString(mConFont, HUDStringHit, (DigX, DigY), DI_TEXT_ALIGN_CENTER, font.CR_Red, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			FontScale = (1.25, 1.25);
+		}
+		
+		//
+		if (MiscItem && dyduhud_showextraatkdefspd && exex_expenabled)
+		{
+			FontScale = (1.0, 1.0);
+			int sepery = 6;
+			DigX = 68 + (Digits * Spacing); // 176
+			DigY = -90; // -90
+			string hudstat;
+			hudstat = "ATK+: ";
+			hudstat.AppendFormat("%d", VisiblePlayerATK);
+			if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
+			DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_red, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			hudstat = "DEF+: ";
+			hudstat.AppendFormat("%d", VisiblePlayerDEF);
+			if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
+			DigY += sepery; // -82 / -132
+			DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_olive, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			hudstat = "SPD+: ";
+			hudstat.AppendFormat("%d", VisiblePlayerSPD);
+			if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
+			DigY += sepery; // -82 / -132
+			DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_blue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			if (dyduhud_showluck)
+			{
+				hudstat = "LUCK: ";
+				hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
+				DigY += sepery; // -82 / -132
+				DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
+			FontScale = (1.25, 1.25);
+		}
+		else
+		{
+			FontScale = (1.0, 1.0);
+			if (dyduhud_showluck && exex_expenabled)
+			{
+				int sepery = 6;
+				DigX = 68 + (Digits * Spacing); // 176
+				DigY = -90; // -90
+				string hudstat;
+				if (MiscItem)
+				{
+					hudstat = "LUCK: ";
+					hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
+					DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				}
+			}
+			FontScale = (1.25, 1.25);
+		}
+		return FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, Spacing, VisiblePlayerLevel, VisiblePlayerATK, VisiblePlayerDEF, VisiblePlayerSPD, HUDHitAlpha, HUDStringHit, Digits;
+	}
+
+	void DrawFSHUDKeys()
+	{
+		//********
+		//* Keys *
+		//********
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		Vector2 KeyPos = (240, -6); // (-10, 24)
+		int RowSize = 6;
+		Vector2 KeyScale = (1.0, 1.0);
+		if (gameinfo.gametype == GAME_Doom) 
+		{
+			KeyPos = (240, -6);
+			RowSize = 3;
+			KeyScale = (1.25, 1.25);
+		}
+		if (gameinfo.gametype == GAME_Heretic) 
+		{
+			KeyPos = (240, -6);
+			RowSize = 3;
+			KeyScale = (1.25, 1.25);
+		}
+		if (gameinfo.gametype == GAME_Hexen) 
+		{ 
+			KeyPos = (212, -8); // 256, -6
+			RowSize = 2; // Hexen's key icons are far and away the largest, so this is capped to 11, the number of keys Hexen uses.
+			KeyScale = (0.625, 0.625);
+		}
+		if (gameinfo.gametype == GAME_Strife) 
+		{
+			KeyPos = (216, -5); // 256, -6
+			RowSize = 4; // Strife has an absurd TWENTY-EIGHT key types, at least the ones that the HUD normalLY shows. :V
+			KeyScale = (0.575, 0.575);
+		}
+		int BaseXPos = KeyPos.x;
+		int BaseYPos = KeyPos.y;
+
+		int RowC = 0;
+		double RowW = 0;
+		bool ShowKeys = true;
+	
+		if (ShowKeys)
+		{
+			for (let i = CPlayerPawn.Inv; i != null; i = i.Inv)
+			{
+				if (i is "Key" && i.Icon.IsValid())
+				{
+					//Console.Printf("x: %d, y: %d, type: %s", KeyPos.x, KeyPos.y, i.GetClassName());
+					DrawTexture(i.Icon, KeyPos, DI_SCREEN_LEFT_BOTTOM|DI_ITEM_CENTER, 1.0, (-1, -1), KeyScale);
+					Vector2 size = TexMan.GetScaledSize(i.Icon);
+					size.x *= KeyScale.x;
+					size.y *= KeyScale.y;
+					KeyPos.Y -= size.Y + 2; // + = down, - = up
+					RowW = max(RowW, size.X);
+					if (++RowC == RowSize)
+					{
+						KeyPos.Y = BaseYPos;
+						KeyPos.X += RowW + 2;
+						RowW = 0;
+						RowC = 0;
+					}
+				}
+			}
+		}
+	}
+	
+	void DrawFSHUDLowerLeft()
+	{
+		int VisiblePlayerLevel = 0;
+		int VisiblePlayerATK = 0;
+		int VisiblePlayerDEF = 0;
+		int VisiblePlayerSPD = 0;
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+	}
+
+	void DrawFSHUDLowerRight()
+	{
+	}
+
+	void DrawFSHUDLowerCenter()
+	{
+	}
+	
 	protected void DrawFullScreenStuff()
 	{
 		int VisiblePlayerLevel = 0;
@@ -1578,7 +2315,8 @@ class DDStatusBarMain : BaseStatusBar
 				FontScale = (1.25, 1.25);
 			}
 			
-			
+			// Armor
+			DrawFSArmorDisplays();
 			//*********
 			//* Armor *
 			//*********
@@ -1834,7 +2572,6 @@ class DDStatusBarMain : BaseStatusBar
 				FontScale = (1.25, 1.25);
 			}
 			
-			
 			//*************************
 			//* AP Gain [Upper Right] *
 			//*************************
@@ -1863,675 +2600,29 @@ class DDStatusBarMain : BaseStatusBar
 			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -56), DI_TEXT_ALIGN_LEFT, font.CR_Red, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 			
 			
+			// Level / EXP
 			int Digits;
-			//***************
-			//* level / EXP *
-			//***************
-			DigX = 32; // 48;
-			DigY = -80; // -82;
-			if (exex_expenabled)
-			{
-				if (dyduhud_showexplevel)
-				{
-					DrawString(mDDLFont, FormatNumber(VisiblePlayerLevel, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-					DrawString(mSmallFont, "LVL", (DigX, DigY-9), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				}
-				if (dyduhud_showexperience)
-				{
-					//EXP
-					int EXPPts = CPlayerPawn.CountInv("ExpPts");
-					int EXPNeeded = CPlayerPawn.CountInv("ExpPtsNeeded");
-					if (EXPNeeded < 100000000) Digits = 8;
-					if (EXPNeeded < 10000000) Digits = 7;
-					if (EXPNeeded < 1000000) Digits = 6;
-					if (EXPNeeded < 100000) Digits = 5;
-					if (EXPNeeded < 10000) Digits = 4;
-					if (EXPNeeded < 1000) Digits = 3;
-					if (EXPNeeded < 100) Digits = 2;
-					if (EXPNeeded < 10) Digits = 1;
-					Spacing = 6; // 6
-					Spacing *= 1.25;
-					DigX += 16 + (Digits * Spacing);
-					DrawString(mDDMFont, FormatNumber(mEXPInterpolator.GetValue(), Digits), (DigX, DigY-6), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-					DrawString(mDDMFont, "/", ((DigX+(Spacing*1.334)), DigY-2), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-					DrawString(mDDMFont, FormatNumber(EXPNeeded, Digits), (DigX, DigY+4), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				}
-				
-				//*************************
-				//* EXP Gain / Kill Combo *
-				//*************************
-				double EXPBaseScale = 1.0;
-				int EXPScaleTimer; 
-				int EXPScaleTimerMod = 35;
-				if (MiscItem) EXPScaleTimer = MiscItem.EXPGainHUDTimer % EXPScaleTimerMod;
-				double BaseEXPScaleFrame = 0.125 / double(EXPScaleTimerMod * 0.5);
-				int ExpPulseFrame = (EXPScaleTimerMod * 0.5);
-				ExpPulseFrame = abs(ExpPulseFrame - EXPScaleTimer);
-				double ExpTrueScale = EXPBaseScale + (ExpPulseFrame * BaseEXPScaleFrame);
-				vector2 EXPScale = (ExpTrueScale, ExpTrueScale); //(0.875, 0.875);
-
-				HUDNumHitValue = 0;
-				HUDHitAlpha = 1.00;
-				If (MiscItem)
-				{
-					if (MiscItem.EXPGainHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.EXPGainHUDTimer))));
-					else HUDHitAlpha = 1.00;
-				}
-				HUDNumHitValue = 0;
-				If (MiscItem) HUDNumHitValue = MiscItem.EXPGainHUDAmt;
-				HUDStringHit = "+";
-				HUDStringHit.AppendFormat("%d", HUDNumHitValue);
-				if (MiscItem && MiscItem.KillComboCount) HUDStringHit.AppendFormat(" [%d]", MiscItem.KillComboCount);
-				DigX = 3;
-				DigY = -67;
-				if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.CR_Gold, HUDHitAlpha, FontWrapWidth, FontLineSpace, EXPScale); // 41, -43
-			}
-
-			//********
-			//* Keys *
-			//********
-			Vector2 KeyPos = (240, -6); // (-10, 24)
-			int RowSize = 6;
-			Vector2 KeyScale = (1.0, 1.0);
-			if (gameinfo.gametype == GAME_Doom) 
-			{
-				KeyPos = (240, -6);
-				RowSize = 3;
-				KeyScale = (1.25, 1.25);
-			}
-			if (gameinfo.gametype == GAME_Heretic) 
-			{
-				KeyPos = (240, -6);
-				RowSize = 3;
-				KeyScale = (1.25, 1.25);
-			}
-			if (gameinfo.gametype == GAME_Hexen) 
-			{ 
-				KeyPos = (212, -8); // 256, -6
-				RowSize = 2; // Hexen's key icons are far and away the largest, so this is capped to 11, the number of keys Hexen uses.
-				KeyScale = (0.625, 0.625);
-			}
-			if (gameinfo.gametype == GAME_Strife) 
-			{
-				KeyPos = (216, -5); // 256, -6
-				RowSize = 4; // Strife has an absurd TWENTY-EIGHT key types, at least the ones that the HUD normalLY shows. :V
-				KeyScale = (0.575, 0.575);
-			}
-			int BaseXPos = KeyPos.x;
-			int BaseYPos = KeyPos.y;
-
-			int RowC = 0;
-			double RowW = 0;
-			bool ShowKeys = true;
-		
-			if (ShowKeys)
-			{
-				for (let i = CPlayerPawn.Inv; i != null; i = i.Inv)
-				{
-					if (i is "Key" && i.Icon.IsValid())
-					{
-						//Console.Printf("x: %d, y: %d, type: %s", KeyPos.x, KeyPos.y, i.GetClassName());
-						DrawTexture(i.Icon, KeyPos, DI_SCREEN_LEFT_BOTTOM|DI_ITEM_CENTER, 1.0, (-1, -1), KeyScale);
-						Vector2 size = TexMan.GetScaledSize(i.Icon);
-						size.x *= KeyScale.x;
-						size.y *= KeyScale.y;
-						KeyPos.Y -= size.Y + 2; // + = down, - = up
-						RowW = max(RowW, size.X);
-						if (++RowC == RowSize)
-						{
-							KeyPos.Y = BaseYPos;
-							KeyPos.X += RowW + 2;
-							RowW = 0;
-							RowC = 0;
-						}
-					}
-				}
-			}
+			[FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, VisiblePlayerLevel, HUDHitAlpha, HUDStringHit, HUDNumHitValue, Digits, spacing] = DrawFSEXPDisplays(FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, VisiblePlayerLevel, HUDHitAlpha, HUDStringHit, HUDNumHitValue, Digits, spacing);
 			
-			
-			//********
-			//* Dash *
-			//********
-			int candash = CPlayerPawn.CountInv("DashReady");
-			if (candash && CPlayerPawn.CountInv("NoDashing")) candash = 0;
-			int dash = CPlayerPawn.CountInv("DashGauge");
-			int dashcharge = CPlayerPawn.CountInv("DashCharge");
-			int dashtics = CPlayerPawn.CountInv("DashTics");
-			int dashmaxcharge = CPlayerPawn.CountInv("DashMaxCharge");
-			double dashmeterlength = (dyduhud_basedashmeterlength + (VisiblePlayerLevel * dyduhud_dashmetergrowperlvl));
-			if (dashmeterlength > dyduhud_dashmetermaxlength) dashmeterlength = dyduhud_dashmetermaxlength;
-			int dashbarunits = dash * dashmeterlength;
-			DigX = 5; // 5;
-			DigY = -122; // -94;
-			textureid dun = TexMan.CheckForTexture("DASHUNI2", TexMan.TYPE_MiscPatch);
-			if (candash) dun = TexMan.CheckForTexture("DASHUNIT", TexMan.TYPE_MiscPatch);
-			int dashcost = CPlayerPawn.CountInv("DashCost");
-			int dashcostunit;
-			if (dashmaxcharge) dashcostunit = dashcost * 100 / dashmaxcharge;
-			dashcostunit *= dashmeterlength;
-			int ix;
+			// Dash
 			vector2 unitscale = (1, 1);
-			if (DashMaxCharge >= dashcost)
-			{
-				DrawString(mSmallFont, "DASH", (DigX+38, DigY-19), DI_TEXT_ALIGN_RIGHT, font.CR_Gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				for (int i; i < (100 * dashmeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (DigX+i, DigY), 0, HX_SHADOW, (-1, -1), unitscale);
-				
-				for (int i; i < dashbarunits; i++) 
-				{
-					if (candash)
-					{
-						dun = TexMan.CheckForTexture("DASHUNI1", TexMan.TYPE_MiscPatch);
-						unitscale = (1, 1);
-						ix = (i % dashcostunit);
-						if (i != 0 && ix == 0) 
-						{
-							unitscale = (1.125, 1.125);
-							dun = TexMan.CheckForTexture("DASHUNI3", TexMan.TYPE_MiscPatch);
-						}
-					}
-					else
-					{
-						dun = TexMan.CheckForTexture("DASHUNI2", TexMan.TYPE_MiscPatch);
-						ix = (i % dashcostunit);
-						if (i != 0 && ix == 0) 
-						{
-							unitscale = (1.125, 1.125);
-							dun = TexMan.CheckForTexture("DASHUNI4", TexMan.TYPE_MiscPatch);
-						}
-					}
-					
-					DrawTexture(dun, (DigX+i, DigY), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
-				}
-			}
+			textureid dun;
+			int candash = CPlayerPawn.CountInv("DashReady");
+			int dashcost = CPlayerPawn.CountInv("DashCost");
+			int dashmaxcharge = CPlayerPawn.CountInv("DashMaxCharge");
+			[FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, unitscale, dun, VisiblePlayerLevel, candash, dashcost, dashmaxcharge] = DrawFSDashMeterDisplays(FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, unitscale, dun, VisiblePlayerLevel, candash, dashcost, dashmaxcharge);
 			
-			int dashcharges = CPlayerPawn.CountInv("DashCharges");
-			if (dydudebug_dashmeter)
-			{
-				DigY = -126;
-				DigX = 48;
-				if (candash) DrawString(mDDMFont, FormatNumber(dash, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-								else DrawString(mDDMFont, FormatNumber(dash, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				DigY = -134;
-				DigX = 48;
-				if (candash) DrawString(mDDMFont, FormatNumber(dashcharge, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-								else DrawString(mDDMFont, FormatNumber(dashcharge, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				DigY = -126;
-				DigX = 80;
-				if (candash) DrawString(mDDMFont, FormatNumber(dashcharges, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-								else DrawString(mDDMFont, FormatNumber(dashcharges, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				if (dashtics)
-				{
-					DigY = -132;
-					DigX = 80;
-					if (candash) DrawString(mDDMFont, FormatNumber(dashtics, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_LightBlue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-									else DrawString(mDDMFont, FormatNumber(dashtics, 3), (DigX, DigY), DI_TEXT_ALIGN_RIGHT, font.cr_Brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				}
-			}
+			// Air Displays
+			[FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, unitscale, dun] = DrawFSAirMeterDisplays(FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, unitscale, dun);
 			
-			// Air Display
-			double AirMeterCurrent = CPlayerPawn.CountInv("AirMeter");
-			if (AirMeterCurrent < 0) AirMeterCurrent = 0;
-			double AirMeterMax = CPlayerPawn.CountInv("MaxAirMeter");
-			double airmeterlength = 1.0;
-			if (CPlayerPawn.CountInv("PowerStrength") || CPlayerPawn.CountInv("PowerStrengthDD")) airmeterlength *= 1.25;
-			int AirUnits;
-			double AirPercent;
-			if (AirMeterMax > 0) 
-			{
-				AirUnits = AirMeterCurrent * 100 / AirMeterMax;
-				AirPercent = AirMeterCurrent * 100.0 / AirMeterMax;
-				if (CPlayerPawn.CountInv("PowerStrength") || CPlayerPawn.CountInv("PowerStrengthDD")) AirPercent = AirMeterCurrent * 125.0 / AirMeterMax;
-			}
-			if (AirMeterMax > 0 && AirUnits < AirMeterMax)
-			{
-				int airlow = 0;
-				int airlowmod = 999;
-				if (AirUnits <= randompick(33,33,34)) 
-				{
-					airlow = 1;
-					airlowmod = 64;
-				}
-				if (AirUnits <= 10)
-				{
-					airlow = 2;
-					airlowmod = 32;
-				}
-				if (AirUnits <= 4)
-				{
-					airlow = 3;
-					airlowmod = 16;
-				}
-				if (AirUnits <= 1) 
-				{
-					airlow = random(3,5);
-					airlowmod = 8;
-				}
-				int airlowFlashTimer;
-				if (airlow > 0)
-				{
-					airlowFlashTimer = level.time % airlowmod;
-				}
-				AirUnits *= airmeterlength;
-				unitscale = (1, 1);
-				DigX = 5;
-				DigY = -148;
-				int lowairx, lowairy;
-				double airmeterscale = 0.875;
-				if (airlow)
-				{
-					lowairx = random(-airlow,airlow);
-					lowairy = random(-airlow,airlow);
-				}
-				if (AirMeterMax > 0 && dyduhud_showairmeter)
-				{
-					if ((AirMeterCurrent < AirMeterMax || MiscItem.PlayerWaterLevel >= 3) && AirMeterMax > 0)
-					{
-						if (dydudebug_airmeter == 1) Console.Printf("[HUD] %d / %d (AirUnits: %d)", AirMeterCurrent, AirMeterMax, AirUnits);
-						DrawString(mSmallFont, "AIR", (DigX+29+lowairx, DigY-18+lowairy), DI_TEXT_ALIGN_RIGHT, font.CR_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-						for (int i; i < (100 * airmeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (DigX+i+lowairx, DigY+lowairy), 0, HX_SHADOW, (-1, -1), unitscale);
-						
-						for (int i; i < AirUnits; i++) 
-						{
-							dun  = TexMan.CheckForTexture("DASHUNI1", TexMan.TYPE_MiscPatch);
-							unitscale = (1, 1);
-							if (airlow > 0 && airlowmod > 0)
-							{
-								if (airlowFlashTimer >= (airlowmod*0.5)) dun = TexMan.CheckForTexture("DASHUNI2", TexMan.TYPE_MiscPatch);
-							}
-							DrawTexture(dun, (DigX+i+lowairx, DigY+lowairy), 0, HX_SHADOW, (-1, -1), unitscale); // -46, -1
-						}
-						double airseconds = (AirMeterCurrent / TICRATE);
-						string airsecstring = "";
-						if (dyduhud_airmeterdisplay)
-						{
-							if (dyduhud_airmeterdisplay & 1) airsecstring.AppendFormat("%.1f", airseconds);
-							if (dyduhud_airmeterdisplay & 1 && dyduhud_airmeterdisplay & 2) 
-							{
-								airmeterscale = 0.75;
-								airsecstring.AppendFormat(" (");
-							}
-							if (dyduhud_airmeterdisplay & 2) airsecstring.AppendFormat("%.1f%%", AirPercent);
-							if (dyduhud_airmeterdisplay & 1 && dyduhud_airmeterdisplay & 2)
-							{
-								airsecstring.AppendFormat(")");
-							}
-							int AirSecsFont = font.CR_sapphire;
-							if (AirMeterCurrent <= 0) AirSecsFont = font.CR_Red;
-							DrawString(mSmallFont, airsecstring, (DigX+(46*airmeterlength)+lowairx, DigY-9+lowairy), DI_TEXT_ALIGN_CENTER, AirSecsFont, FontAlpha, FontWrapWidth, FontLineSpace, FontScale*airmeterscale); // 41, -43
-						}
-					}
-				}
-			}
+			// IP Displays
+			[FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, Spacing, VisiblePlayerLevel, VisiblePlayerATK, VisiblePlayerDEF, VisiblePlayerSPD, HUDHitAlpha, HUDStringHit, Digits] = DrawFSIPDisplays(FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, spacing, VisiblePlayerLevel, VisiblePlayerATK, VisiblePlayerDEF, VisiblePlayerSPD, HUDHitAlpha, HUDStringHit, digits);
 			
-			// IP % Display
-			double IPIconPulseScale = 1.00;
-			int IPIconScaleTimer;
-			if (MiscItem) IPIconScaleTimer = (level.time + MiscItem.IPHUDPulseTimeP) % 40;
-			if (exex_ikaripointsenabled)
-			{
-				if (MiscItem)
-				{
-					if (MiscItem.IPHUDPulseType <= 1) IPRecPulseSpd = 0.02;
-					if (MiscItem.IPHUDPulseType == 2) IPRecPulseSpd = 0.03;
-					if (MiscItem.IPHUDPulseType == 3) IPRecPulseSpd = 0.05;
-					if (MiscItem.IPHUDPulseType >= 4) IPRecPulseSpd = 0.08;
-
-					if (MiscItem.IPHUDPulseTimer)
-					{
-						if (IPIconScaleTimer == 0 || IPIconScaleTimer == 20) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 0));
-						if (IPIconScaleTimer == 1 || IPIconScaleTimer == 19) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 0.25));
-						if (IPIconScaleTimer == 2 || IPIconScaleTimer == 18) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 0.5));
-						if (IPIconScaleTimer == 3 || IPIconScaleTimer == 17) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 0.75));
-						if (IPIconScaleTimer == 4 || IPIconScaleTimer == 16) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 1.0));
-						if (IPIconScaleTimer == 5 || IPIconScaleTimer == 15) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 1.25));
-						if (IPIconScaleTimer == 6 || IPIconScaleTimer == 14) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 1.5));
-						if (IPIconScaleTimer == 7 || IPIconScaleTimer == 13) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 1.75));
-						if (IPIconScaleTimer == 8 || IPIconScaleTimer == 12) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 2.0));
-						if (IPIconScaleTimer == 9 || IPIconScaleTimer == 11) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 2.25));
-						if (IPIconScaleTimer == 10) IPIconPulseScale = (1.00 + (IPRecPulseSpd * 2.5));
-
-						if (IPIconScaleTimer == 21 || IPIconScaleTimer == 39) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -0.25));
-						if (IPIconScaleTimer == 22 || IPIconScaleTimer == 38) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -0.5));
-						if (IPIconScaleTimer == 23 || IPIconScaleTimer == 37) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -0.75));
-						if (IPIconScaleTimer == 24 || IPIconScaleTimer == 36) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -1.0));
-						if (IPIconScaleTimer == 25 || IPIconScaleTimer == 35) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -1.25));
-						if (IPIconScaleTimer == 26 || IPIconScaleTimer == 34) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -1.5));
-						if (IPIconScaleTimer == 27 || IPIconScaleTimer == 33) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -1.75));
-						if (IPIconScaleTimer == 28 || IPIconScaleTimer == 32) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -2.0));
-						if (IPIconScaleTimer == 29 || IPIconScaleTimer == 31) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -2.25));
-						if (IPIconScaleTimer == 30) IPIconPulseScale = (1.00 + (IPRecPulseSpd * -2.5));
-						
-						//Console.Printf("IPHUDPulseTimer: %d, Pulse: IPIconScaleTimer: %d, IPRecPulseSpd: %.4f", MiscItem.IPHUDPulseTimer, IPIconScaleTimer, IPRecPulseSpd);
-					}
-				}
-
-				int IPx;
-				int IPy;
-				double ItemPoints;
-				string IPPts = "";
-				int IPDigits;
-				int IPdigitcolor = 0;
-				int IPdigittimer = level.time % 30;
-				if (MiscItem && MiscItem.ItemPoints >= MiscItem.MaxItemPoints)
-				{
-					//Console.Printf("IPdigittimer: %d", IPdigittimer);
-					if (IPdigittimer >= 0 && IPdigittimer <= 4) IPdigitcolor = font.cr_red;
-					if (IPdigittimer >= 5 && IPdigittimer <= 9) IPdigitcolor = font.cr_brick;
-					if (IPdigittimer >= 10 && IPdigittimer <= 14) IPdigitcolor = font.cr_orange;
-					if (IPdigittimer >= 15 && IPdigittimer <= 19) IPdigitcolor = font.cr_fire;
-					if (IPdigittimer >= 20 && IPdigittimer <= 24) IPdigitcolor = font.cr_orange;
-					if (IPdigittimer >= 25 && IPdigittimer <= 29) IPdigitcolor = font.cr_brick;
-				}
-				else IPdigitcolor = font.cr_red;
-				
-				if (MiscItem) 
-				{
-					ItemPoints = MiscItem.ItemPoints;
-					IPPts.AppendFormat("%.2f%%", ItemPoints);
-
-					DigX = 34; // 68
-					DigY = -108; // -108
-					DrawString(mDDLFont2, IPPts, ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, IPdigitcolor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
-					DigY -= 8;
-					DrawString(mSmallFont, "IP", ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*IPIconPulseScale)); // 41, -43
-					DigX += 65;
-					DigY += 7;
-					if (MiscItem.MaxIPExtensions)
-					{
-						vector2 IPFScale = (FontScale * 0.75);
-						string IPExt = "[+";
-						IPExt.AppendFormat("%.2f%% Max IP]", ((MiscItem.BaseMaxItemPoints * 0.01) * MiscItem.MaxIPExtensions));
-						DrawString(mSmallFont, IPExt, ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_LEFT, font.cr_green, FontAlpha, FontWrapWidth, FontLineSpace, (IPFScale*IPIconPulseScale)); // 41, -43
-					}
-					DigX -= 65;
-					DigY -= 7;
-				}
-				
-				string IPInputIcon = "IPINPUT0";
-				if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT1";
-				if (MiscItem)
-				{
-					if (MiscItem.IPNoGainTimer)
-					{
-						IPInputIcon = "IPINPUT2";
-						if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT3";
-					}
-					else
-					if (MiscItem.IPMortalBlowReduceTimer)
-					{
-						IPInputIcon = "IPINPUT4";
-						if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT5";
-					}
-					else
-					{
-						IPInputIcon = "IPINPUT0";
-						if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT1";
-					}
-				}
-				else
-				{
-					IPInputIcon = "IPINPUT0";
-					if (MiscItem.IPUseMode) IPInputIcon = "IPINPUT1";
-				}
-
-				vector2 IPIconScale = (1.5, 1.5);
-				DigX += 50; // +50
-				DigY += 22; // +22
-				DrawTexture(TexMan.CheckForTexture(IPInputIcon, TexMan.TYPE_MiscPatch), ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_CENTER, 1.0, (-1, -1), (IPIconScale*IPIconPulseScale));
-				
-				// Disipation Meter
-				int DissipateTimer;
-				if (MiscItem) DissipateTimer = MiscItem.IPDissipateTimer;
-				string IPDisipateIcon = "";
-				double IPDisipatePulse = 0.25;
-				double IPDisipatePulseInc = frandompick(0.25,0.325,0.325,0.325,0.325,0.325,0.375);
-				if (DissipateTimer > 2065)
-				{
-					IPDisipatePulseInc /= 2;
-					if (level.time % 5) IPDisipatePulse += (IPDisipatePulseInc * 0);
-					if (level.time % 5 == 1 || level.time % 9 == 4) IPDisipatePulse += (IPDisipatePulseInc * 1);
-					if (level.time % 5 == 2 || level.time % 9 == 3) IPDisipatePulse += (IPDisipatePulseInc * 2);
-				}
-				else
-				if (DissipateTimer > 1875)
-				{
-					IPDisipatePulseInc /= 5;
-					if (level.time % 9) IPDisipatePulse += (IPDisipatePulseInc * 0);
-					if (level.time % 9 == 1 || level.time % 9 == 8) IPDisipatePulse += (IPDisipatePulseInc * 1);
-					if (level.time % 9 == 2 || level.time % 9 == 7) IPDisipatePulse += (IPDisipatePulseInc * 2);
-					if (level.time % 9 == 3 || level.time % 9 == 6) IPDisipatePulse += (IPDisipatePulseInc * 3);
-					if (level.time % 9 == 4 || level.time % 9 == 5) IPDisipatePulse += (IPDisipatePulseInc * 4);
-				}
-				else
-				if (DissipateTimer > 1750)
-				{
-					IPDisipatePulseInc /= 9;
-					if (level.time % 18) IPDisipatePulse += (IPDisipatePulseInc * 0);
-					if (level.time % 18 == 1 || level.time % 18 == 17) IPDisipatePulse += (IPDisipatePulseInc * 1);
-					if (level.time % 18 == 2 || level.time % 18 == 16) IPDisipatePulse += (IPDisipatePulseInc * 2);
-					if (level.time % 18 == 3 || level.time % 18 == 15) IPDisipatePulse += (IPDisipatePulseInc * 3);
-					if (level.time % 18 == 4 || level.time % 18 == 14) IPDisipatePulse += (IPDisipatePulseInc * 4);
-					if (level.time % 18 == 5 || level.time % 18 == 13) IPDisipatePulse += (IPDisipatePulseInc * 5);
-					if (level.time % 18 == 6 || level.time % 18 == 12) IPDisipatePulse += (IPDisipatePulseInc * 6);
-					if (level.time % 18 == 7 || level.time % 18 == 11) IPDisipatePulse += (IPDisipatePulseInc * 7);
-					if (level.time % 18 == 8 || level.time % 18 == 10) IPDisipatePulse += (IPDisipatePulseInc * 8);
-					if (level.time % 18 == 9) IPDisipatePulse += (IPDisipatePulseInc * 9);
-				}
-				else
-				if (DissipateTimer > 980)
-				{
-					IPDisipatePulseInc /= 17;
-					if (level.time % 35) IPDisipatePulse += (IPDisipatePulseInc * 0);
-					if (level.time % 35 == 1 || level.time % 35 == 34) IPDisipatePulse += (IPDisipatePulseInc * 1);
-					if (level.time % 35 == 2 || level.time % 35 == 33) IPDisipatePulse += (IPDisipatePulseInc * 2);
-					if (level.time % 35 == 3 || level.time % 35 == 32) IPDisipatePulse += (IPDisipatePulseInc * 3);
-					if (level.time % 35 == 4 || level.time % 35 == 31) IPDisipatePulse += (IPDisipatePulseInc * 4);
-					if (level.time % 35 == 5 || level.time % 35 == 30) IPDisipatePulse += (IPDisipatePulseInc * 5);
-					if (level.time % 35 == 6 || level.time % 35 == 29) IPDisipatePulse += (IPDisipatePulseInc * 6);
-					if (level.time % 35 == 7 || level.time % 35 == 28) IPDisipatePulse += (IPDisipatePulseInc * 7);
-					if (level.time % 35 == 8 || level.time % 35 == 27) IPDisipatePulse += (IPDisipatePulseInc * 8);
-					if (level.time % 35 == 9 || level.time % 35 == 26) IPDisipatePulse += (IPDisipatePulseInc * 9);
-					if (level.time % 35 == 10 || level.time % 35 == 25) IPDisipatePulse += (IPDisipatePulseInc * 10);
-					if (level.time % 35 == 11 || level.time % 35 == 24) IPDisipatePulse += (IPDisipatePulseInc * 11);
-					if (level.time % 35 == 12 || level.time % 35 == 23) IPDisipatePulse += (IPDisipatePulseInc * 12);
-					if (level.time % 35 == 13 || level.time % 35 == 22) IPDisipatePulse += (IPDisipatePulseInc * 13);
-					if (level.time % 35 == 14 || level.time % 35 == 21) IPDisipatePulse += (IPDisipatePulseInc * 14);
-					if (level.time % 35 == 15 || level.time % 35 == 20) IPDisipatePulse += (IPDisipatePulseInc * 15);
-					if (level.time % 35 == 16 || level.time % 35 == 19) IPDisipatePulse += (IPDisipatePulseInc * 16);
-					if (level.time % 35 == 17 || level.time % 35 == 18) IPDisipatePulse += (IPDisipatePulseInc * 17);
-				}
-				else
-				if (DissipateTimer > 0)
-				{
-					IPDisipatePulseInc /= 27;
-					if (level.time % 55) IPDisipatePulse += (IPDisipatePulseInc * 0);
-					if (level.time % 55 == 1 || level.time % 55 == 54) IPDisipatePulse += (IPDisipatePulseInc * 1);
-					if (level.time % 55 == 2 || level.time % 55 == 53) IPDisipatePulse += (IPDisipatePulseInc * 2);
-					if (level.time % 55 == 3 || level.time % 55 == 52) IPDisipatePulse += (IPDisipatePulseInc * 3);
-					if (level.time % 55 == 4 || level.time % 55 == 51) IPDisipatePulse += (IPDisipatePulseInc * 4);
-					if (level.time % 55 == 5 || level.time % 55 == 50) IPDisipatePulse += (IPDisipatePulseInc * 5);
-					if (level.time % 55 == 6 || level.time % 55 == 49) IPDisipatePulse += (IPDisipatePulseInc * 6);
-					if (level.time % 55 == 7 || level.time % 55 == 48) IPDisipatePulse += (IPDisipatePulseInc * 7);
-					if (level.time % 55 == 8 || level.time % 55 == 47) IPDisipatePulse += (IPDisipatePulseInc * 8);
-					if (level.time % 55 == 9 || level.time % 55 == 46) IPDisipatePulse += (IPDisipatePulseInc * 9);
-					if (level.time % 55 == 10 || level.time % 55 == 45) IPDisipatePulse += (IPDisipatePulseInc * 10);
-					if (level.time % 55 == 11 || level.time % 55 == 44) IPDisipatePulse += (IPDisipatePulseInc * 11);
-					if (level.time % 55 == 12 || level.time % 55 == 43) IPDisipatePulse += (IPDisipatePulseInc * 12);
-					if (level.time % 55 == 13 || level.time % 55 == 42) IPDisipatePulse += (IPDisipatePulseInc * 13);
-					if (level.time % 55 == 14 || level.time % 55 == 41) IPDisipatePulse += (IPDisipatePulseInc * 14);
-					if (level.time % 55 == 15 || level.time % 55 == 40) IPDisipatePulse += (IPDisipatePulseInc * 15);
-					if (level.time % 55 == 16 || level.time % 55 == 39) IPDisipatePulse += (IPDisipatePulseInc * 16);
-					if (level.time % 55 == 17 || level.time % 55 == 38) IPDisipatePulse += (IPDisipatePulseInc * 17);
-					if (level.time % 55 == 18 || level.time % 55 == 37) IPDisipatePulse += (IPDisipatePulseInc * 18);
-					if (level.time % 55 == 19 || level.time % 55 == 36) IPDisipatePulse += (IPDisipatePulseInc * 19);
-					if (level.time % 55 == 20 || level.time % 55 == 35) IPDisipatePulse += (IPDisipatePulseInc * 20);
-					if (level.time % 55 == 21 || level.time % 55 == 34) IPDisipatePulse += (IPDisipatePulseInc * 21);
-					if (level.time % 55 == 22 || level.time % 55 == 33) IPDisipatePulse += (IPDisipatePulseInc * 22);
-					if (level.time % 55 == 23 || level.time % 55 == 32) IPDisipatePulse += (IPDisipatePulseInc * 23);
-					if (level.time % 55 == 24 || level.time % 55 == 31) IPDisipatePulse += (IPDisipatePulseInc * 24);
-					if (level.time % 55 == 25 || level.time % 55 == 30) IPDisipatePulse += (IPDisipatePulseInc * 25);
-					if (level.time % 55 == 26 || level.time % 55 == 29) IPDisipatePulse += (IPDisipatePulseInc * 26);
-					if (level.time % 55 == 27 || level.time % 55 == 28) IPDisipatePulse += (IPDisipatePulseInc * 27);
-				}
-				else
-				if (DissipateTimer < 0)
-				{
-					double IPDisipatePulseInc = frandompick(0.5,0.65,0.65,0.65,0.65,0.65,0.75);
-					IPDisipatePulseInc /= 27;
-					if (level.time % 55) IPDisipatePulse += (IPDisipatePulseInc * 0);
-					if (level.time % 55 == 1 || level.time % 55 == 54) IPDisipatePulse += (IPDisipatePulseInc * 1);
-					if (level.time % 55 == 2 || level.time % 55 == 53) IPDisipatePulse += (IPDisipatePulseInc * 2);
-					if (level.time % 55 == 3 || level.time % 55 == 52) IPDisipatePulse += (IPDisipatePulseInc * 3);
-					if (level.time % 55 == 4 || level.time % 55 == 51) IPDisipatePulse += (IPDisipatePulseInc * 4);
-					if (level.time % 55 == 5 || level.time % 55 == 50) IPDisipatePulse += (IPDisipatePulseInc * 5);
-					if (level.time % 55 == 6 || level.time % 55 == 49) IPDisipatePulse += (IPDisipatePulseInc * 6);
-					if (level.time % 55 == 7 || level.time % 55 == 48) IPDisipatePulse += (IPDisipatePulseInc * 7);
-					if (level.time % 55 == 8 || level.time % 55 == 47) IPDisipatePulse += (IPDisipatePulseInc * 8);
-					if (level.time % 55 == 9 || level.time % 55 == 46) IPDisipatePulse += (IPDisipatePulseInc * 9);
-					if (level.time % 55 == 10 || level.time % 55 == 45) IPDisipatePulse += (IPDisipatePulseInc * 10);
-					if (level.time % 55 == 11 || level.time % 55 == 44) IPDisipatePulse += (IPDisipatePulseInc * 11);
-					if (level.time % 55 == 12 || level.time % 55 == 43) IPDisipatePulse += (IPDisipatePulseInc * 12);
-					if (level.time % 55 == 13 || level.time % 55 == 42) IPDisipatePulse += (IPDisipatePulseInc * 13);
-					if (level.time % 55 == 14 || level.time % 55 == 41) IPDisipatePulse += (IPDisipatePulseInc * 14);
-					if (level.time % 55 == 15 || level.time % 55 == 40) IPDisipatePulse += (IPDisipatePulseInc * 15);
-					if (level.time % 55 == 16 || level.time % 55 == 39) IPDisipatePulse += (IPDisipatePulseInc * 16);
-					if (level.time % 55 == 17 || level.time % 55 == 38) IPDisipatePulse += (IPDisipatePulseInc * 17);
-					if (level.time % 55 == 18 || level.time % 55 == 37) IPDisipatePulse += (IPDisipatePulseInc * 18);
-					if (level.time % 55 == 19 || level.time % 55 == 36) IPDisipatePulse += (IPDisipatePulseInc * 19);
-					if (level.time % 55 == 20 || level.time % 55 == 35) IPDisipatePulse += (IPDisipatePulseInc * 20);
-					if (level.time % 55 == 21 || level.time % 55 == 34) IPDisipatePulse += (IPDisipatePulseInc * 21);
-					if (level.time % 55 == 22 || level.time % 55 == 33) IPDisipatePulse += (IPDisipatePulseInc * 22);
-					if (level.time % 55 == 23 || level.time % 55 == 32) IPDisipatePulse += (IPDisipatePulseInc * 23);
-					if (level.time % 55 == 24 || level.time % 55 == 31) IPDisipatePulse += (IPDisipatePulseInc * 24);
-					if (level.time % 55 == 25 || level.time % 55 == 30) IPDisipatePulse += (IPDisipatePulseInc * 25);
-					if (level.time % 55 == 26 || level.time % 55 == 29) IPDisipatePulse += (IPDisipatePulseInc * 26);
-					if (level.time % 55 == 27 || level.time % 55 == 28) IPDisipatePulse += (IPDisipatePulseInc * 27);
-				}
-				
-				if (DissipateTimer >= 1961) IPDisipateIcon = "IPDSTM15";
-				if (DissipateTimer >= 1821 && DissipateTimer <= 1960) IPDisipateIcon = "IPDSTM14";
-				if (DissipateTimer >= 1681 && DissipateTimer <= 1820) IPDisipateIcon = "IPDSTM13";
-				if (DissipateTimer >= 1541 && DissipateTimer <= 1680) IPDisipateIcon = "IPDSTM12";
-				if (DissipateTimer >= 1401 && DissipateTimer <= 1540) IPDisipateIcon = "IPDSTM11";
-				if (DissipateTimer >= 1261 && DissipateTimer <= 1400) IPDisipateIcon = "IPDSTM10";
-				if (DissipateTimer >= 1121 && DissipateTimer <= 1260) IPDisipateIcon = "IPDSTM09";
-				if (DissipateTimer >= 981 && DissipateTimer <= 1120) IPDisipateIcon = "IPDSTM08";
-				if (DissipateTimer >= 841 && DissipateTimer <= 980) IPDisipateIcon = "IPDSTM07";
-				if (DissipateTimer >= 701 && DissipateTimer <= 840) IPDisipateIcon = "IPDSTM06";
-				if (DissipateTimer >= 561 && DissipateTimer <= 700) IPDisipateIcon = "IPDSTM05";
-				if (DissipateTimer >= 421 && DissipateTimer <= 560) IPDisipateIcon = "IPDSTM04";
-				if (DissipateTimer >= 281 && DissipateTimer <= 420) IPDisipateIcon = "IPDSTM03";
-				if (DissipateTimer >= 141 && DissipateTimer <= 280) IPDisipateIcon = "IPDSTM02";
-				if (DissipateTimer >= 1 && DissipateTimer <= 140) IPDisipateIcon = "IPDSTM01";
-				if (DissipateTimer >= -139 && DissipateTimer <= -1) IPDisipateIcon = "IPDRTM01";
-				if (DissipateTimer >= -279 && DissipateTimer <= -140) IPDisipateIcon = "IPDRTM02";
-				if (DissipateTimer >= -419 && DissipateTimer <= -280) IPDisipateIcon = "IPDRTM03";
-				if (DissipateTimer >= -559 && DissipateTimer <= -420) IPDisipateIcon = "IPDRTM04";
-				if (DissipateTimer >= -699 && DissipateTimer <= -560) IPDisipateIcon = "IPDRTM05";
-				if (DissipateTimer >= -839 && DissipateTimer <= -700) IPDisipateIcon = "IPDRTM06";
-				if (DissipateTimer >= -979 && DissipateTimer <= -840) IPDisipateIcon = "IPDRTM07";
-				if (DissipateTimer >= -1119 && DissipateTimer <= -980) IPDisipateIcon = "IPDRTM08";
-				if (DissipateTimer >= -1259 && DissipateTimer <= -1120) IPDisipateIcon = "IPDRTM09";
-				if (DissipateTimer >= -1399 && DissipateTimer <= -1260) IPDisipateIcon = "IPDRTM10";
-				if (DissipateTimer >= -1539 && DissipateTimer <= -1400) IPDisipateIcon = "IPDRTM11";
-				if (DissipateTimer >= -1679 && DissipateTimer <= -1540) IPDisipateIcon = "IPDRTM12";
-				if (DissipateTimer >= -1819 && DissipateTimer <= -1680) IPDisipateIcon = "IPDRTM13";
-				if (DissipateTimer >= -1959 && DissipateTimer <= -1820) IPDisipateIcon = "IPDRTM14";
-				if (DissipateTimer >= -2100 && DissipateTimer <= -1960) IPDisipateIcon = "IPDRTM15";
-				if (MiscItem && MiscItem.IPDissipateTimer != 0) DrawTexture(TexMan.CheckForTexture(IPDisipateIcon, TexMan.TYPE_MiscPatch), ((DigX+IPDmgShakeX), (DigY+IPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, IPDisipatePulse, (-1, -1), (IPIconScale*IPIconPulseScale));
-				if (dydudebug_ipdisplays2) Console.Printf(IPDisipateIcon);
-			}
+			// Keys
+			DrawFSHUDKeys();
 			
-			// IP Gains
-			if (exex_ikaripointsenabled)
-			{
-				FontScale = (0.9375, 0.9375);
-				double HUDNumHitValueD = 0;
-				HUDHitAlpha = 1.00;
-				If (MiscItem)
-				{
-					if (MiscItem.IPGainHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.IPGainHUDTimer))));
-					else HUDHitAlpha = 1.00;
-					//if (MiscItem.IPGainHUDTimer) Console.Printf("IPGainHUDTimer: %d, IPGainHUDAmt: %.8f", MiscItem.IPGainHUDTimer, MiscItem.IPGainHUDAmt);
-				}
-				HUDNumHitValueD = 0;
-				If (MiscItem) HUDNumHitValueD = MiscItem.IPGainHUDAmt;
-				HUDStringHit = "+";
-				HUDStringHit.AppendFormat("%.2f%%", HUDNumHitValueD);
-				DigX = 35; // 35;
-				DigY = -95; // -95;
-				if (HUDNumHitValueD > 0.00) DrawString(mConFont, HUDStringHit, (DigX, DigY), DI_TEXT_ALIGN_CENTER, font.CR_DarkGreen, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				
-				// IP Loss
-				FontScale = (0.9375, 0.9375);
-				HUDNumHitValueD = 0;
-				HUDHitAlpha = 1.00;
-				If (MiscItem)
-				{
-					if (MiscItem.IPLossHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.IPGainHUDTimer))));
-					else HUDHitAlpha = 1.00;
-					//if (MiscItem.IPLossHUDTimer) Console.Printf("IPLossHUDTimer: %d, IPLossHUDAmt: %.8f", MiscItem.IPLossHUDTimer, MiscItem.IPGainHUDAmt);
-				}
-				HUDNumHitValueD = 0;
-				If (MiscItem) HUDNumHitValueD = MiscItem.IPLossHUDAmt;
-				HUDStringHit = "-";
-				HUDStringHit.AppendFormat("%.2f%%", HUDNumHitValueD);
-				DigX = 35; // 35;
-				DigY = -115; // -95;
-				if (HUDNumHitValueD > 0.00) DrawString(mConFont, HUDStringHit, (DigX, DigY), DI_TEXT_ALIGN_CENTER, font.CR_Red, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				FontScale = (1.25, 1.25);
-			}
 			
-			//
-			if (MiscItem && dyduhud_showextraatkdefspd && exex_expenabled)
-			{
-				FontScale = (1.0, 1.0);
-				int sepery = 6;
-				DigX = 68 + (Digits * Spacing); // 176
-				DigY = -90; // -90
-				string hudstat;
-				hudstat = "ATK+: ";
-				hudstat.AppendFormat("%d", VisiblePlayerATK);
-				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
-				DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_red, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				hudstat = "DEF+: ";
-				hudstat.AppendFormat("%d", VisiblePlayerDEF);
-				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
-				DigY += sepery; // -82 / -132
-				DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_olive, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				hudstat = "SPD+: ";
-				hudstat.AppendFormat("%d", VisiblePlayerSPD);
-				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
-				DigY += sepery; // -82 / -132
-				DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_blue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				if (dyduhud_showluck)
-				{
-					hudstat = "LUCK: ";
-					hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
-					DigY += sepery; // -82 / -132
-					DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				}
-				FontScale = (1.25, 1.25);
-			}
-			else
-			{
-				FontScale = (1.0, 1.0);
-				if (dyduhud_showluck && exex_expenabled)
-				{
-					int sepery = 6;
-					DigX = 68 + (Digits * Spacing); // 176
-					DigY = -90; // -90
-					string hudstat;
-					if (MiscItem)
-					{
-						hudstat = "LUCK: ";
-						hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
-						DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-					}
-				}
-				FontScale = (1.25, 1.25);
-			}
-			
+			// Lower Right
 			//**************
 			//* Key Legend *
 			//**************
@@ -2547,6 +2638,15 @@ class DDStatusBarMain : BaseStatusBar
 			string LegendStr = "";
 			LX = -296;
 			LY = -35;
+			/*
+			if (exex_hudkeylegendspot == 1) 
+			{
+				LX = 2;
+				LY = 30;
+				LYInc = 6;
+				LegendScale = (0.875, 0.875);
+			}
+			*/
 			bool cankick = true;
 			if (MiscItem) cankick = MiscItem.cankick;
 			if (PlayerWeapon is 'DinahWeapon' && cankick)
