@@ -1085,12 +1085,540 @@ class DDStatusBarMain : BaseStatusBar
 		}
 	}
 	
-	void DrawFSArmorDisplays()
+	double, vector2, int, int, int, int DrawFSStatDisplays(double FontAlpha, vector2 FontScale, int FontWrapWidth, int FontLineSpace, int CurrHealth, int PlayerMaxHP)
 	{
 		DDPlayerPawn CPlayerPawn;
 		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
 		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
 		
+		//****************
+		//* misc [speed] *
+		//****************
+		double BaseMass = 1.0;
+		double BaseSpeed = 1.0;
+		double BaseHPRegen = 1.0;
+		int JumpHeight = 64;
+		string SpeedVal = "";
+		string JumpVal = "";
+		string RegenVal = "";
+		string MassVal = "";
+		int ExtY = 0;
+		int BaseY = -27; // -21
+		if (MiscItem && CurrHealth > 0) 
+		{
+			if (CurrHealth != PlayerMaxHP) ExtY = -3;
+			FontScale = (1.0, 1.0);
+			BaseSpeed = MiscItem.HUDSpeed * 100;
+			int SpeedCLR = font.cr_white;
+			if (BaseSpeed > 100.0000) SpeedCLR = font.cr_blue;
+			if (BaseSpeed < 100.0000) SpeedCLR = font.cr_red;
+			SpeedVal.AppendFormat("%.2f%% MoveSpeed", BaseSpeed);
+			DrawString(mArmSaveFont, SpeedVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, SpeedCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+
+			BaseY += 6;
+			JumpHeight = MiscItem.TrueJumpHeight;
+			JumpVal.AppendFormat("%d Jump Height", JumpHeight);
+			DrawString(mArmSaveFont, JumpVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, SpeedCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+
+			BaseY += 6;
+			BaseMass = MiscItem.TotalMass;
+			int MassCLR = font.cr_white;
+			if (BaseMass > MiscItem.BaseMass) MassCLR = font.cr_blue;
+			if (BaseMass < MiscItem.BaseMass) MassCLR = font.cr_red;
+			MassVal.AppendFormat("%d Balance", BaseMass);
+			DrawString(mArmSaveFont, MassVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, MassCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+
+			if (CurrHealth != PlayerMaxHP)
+			{
+				BaseY += 6;
+				BaseHPRegen = MiscItem.BaseRegenMulti * 100;
+				int RegenCLR = font.cr_white;
+				if (CurrHealth < PlayerMaxHP) 
+				{
+					if (BaseHPRegen > 100.0000) RegenCLR = font.cr_blue;
+					if (BaseHPRegen < 100.0000) RegenCLR = font.cr_red;
+					RegenVal.AppendFormat("%.2f%% Regen Speed", BaseHPRegen);
+				}
+				if (CurrHealth > PlayerMaxHP) 
+				{
+					if (BaseHPRegen > 100.0000) RegenCLR = font.cr_red;
+					if (BaseHPRegen < 100.0000) RegenCLR = font.cr_blue;
+					RegenVal.AppendFormat("%.2f%% Degen Speed", BaseHPRegen);
+				}
+				DrawString(mArmSaveFont, RegenVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, RegenCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
+			FontScale = (1.25, 1.25);
+		}
+		
+		return FontAlpha, FontScale, FontWrapWidth, FontLineSpace, CurrHealth, PlayerMaxHP;
+	}
+
+	int, int, int, double, Vector2, int, int, double, int, string, double, string, int, int DrawFSHealthDisplays(int CurrHealth, int MaxHealthTrue, int PlayerMaxHP, double FontAlpha, Vector2 FontScale, int FontWrapWidth, int FontLineSpace, double HPPulseScale, int ValueAmt, string ValueAmtS, double HUDHitAlpha, string HUDStringHit, int HUDNumHitValue, int SlashUnit)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		
+		//**********
+		//* Health *
+		//**********
+		ValueAmt = CurrHealth;
+		ValueAmtS = FormatNumber(ValueAmt);
+		int PlayerMaxHP = MaxHealthTrue;
+		if (CPlayerPawn.GetClassName() == "RatPlayer") PlayerMaxHP *= 0.30;
+		string PlayerMaxHPS = FormatNumber(PlayerMaxHP);
+
+		int HealthDigits = 2;
+		HealthDigits = PlayerMaxHPS.Length();
+		if (ValueAmt > PlayerMaxHP) HealthDigits = ValueAmtS.Length();
+
+		SlashUnit = (-6 * (HealthDigits-2));
+		int HealthColor = font.CR_brick;
+		bool IsInvuln = false;
+		if (CPlayerPawn.bINVULNERABLE || 
+				 CPlayerPawn.CountInv("PowerInvulnerable") || CPlayerPawn.CountInv("PowerInvulnDD") || 
+				 CPlayer.cheats & CF_GODMODE2 || CPlayer.cheats & CF_GODMODE) IsInvuln = true;
+		if (IsInvuln) HealthColor = font.CR_Gold;
+		//health
+		textureid HealthIcon = TexMan.CheckForTexture("ARTIWINE", TexMan.TYPE_MiscPatch);
+		if (CPlayerPawn.player.poisoncount) HealthIcon = TexMan.CheckForTexture("ARTIWINP", TexMan.TYPE_MiscPatch);
+		if (CPlayer.cheats & CF_BUDDHA2) HealthIcon = TexMan.CheckForTexture("ARTIWINB", TexMan.TYPE_MiscPatch);
+		if (CPlayer.cheats & CF_GODMODE2) HealthIcon = TexMan.CheckForTexture("ARTIWING", TexMan.TYPE_MiscPatch);
+		DrawTexture(HealthIcon, ((64+HPDmgShakeX), (-4+HPDmgShakeY))); // 51, -3
+		DrawString(mDDMFont, FormatNumber(PlayerMaxHP), ((49+HPDmgShakeX), (-12+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, HealthColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*HPPulseScale)); // 41, -43
+		DrawString(mDDMFont, "/", (((24+SlashUnit)+HPDmgShakeX), (-18+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, HealthColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*HPPulseScale)); // 41, -43
+		double HealthAlpha = 0.90;
+		double ScaleSal;
+		double XScal = 1.00;
+		double YScal = 1.00;
+		int Direction = 1;
+		int ScalerBase, Scaler, Scaler2, ScalerDiv;
+		double ScaleIncAmt;
+		double ScaleAmtBase = 1.334;
+		if (ValueAmt <= 0)
+		{
+			HealthAlpha *= 0.1;
+			HealthColor = font.CR_black;
+		}
+		else
+		{
+			if (MiscItem.oldhealthratio == 3 && level.time % 6 >= 3) 
+			{
+				HealthAlpha = 0.125;
+			}
+			else if (MiscItem.oldhealthratio == 2 && level.time % 18 >= 9) 
+			{
+				HealthAlpha *= 0.25;
+			}
+			else if (MiscItem.oldhealthratio == 1 && level.time % 36 >= 18) 
+			{
+				HealthAlpha *= 0.5;
+			}
+			else 
+			{
+				if (ValueAmt > PlayerMaxHP)
+				{
+					ScalerBase = 192;
+					ScaleAmtBase = 1.0;
+					ScaleSal = 0.25;
+					HealthColor = font.CR_Teal;
+					if (ValueAmt >= (PlayerMaxHP * 1.334))
+					{
+						ScalerBase = 128;
+						ScaleAmtBase = 1.0625;
+						ScaleSal = 0.234375;
+						HealthColor = font.CR_Cyan;
+						if (ValueAmt >= (PlayerMaxHP * 1.667))
+						{
+							ScalerBase = 96;
+							ScaleAmtBase = 1.125;
+							ScaleSal = 0.21875;
+							HealthColor = font.CR_Sapphire;
+							if (ValueAmt >= (PlayerMaxHP * 2))
+							{
+								ScalerBase = 64;
+								ScaleAmtBase = 1.1875;
+								ScaleSal = 0.203125;
+								HealthColor = font.CR_LightBlue;
+								if (ValueAmt >= (PlayerMaxHP * 2.5))
+								{
+									ScalerBase = 32;
+									ScaleAmtBase = 1.25;
+									ScaleSal = 0.1875;
+									HealthColor = font.CR_Purple;
+									if (ValueAmt >= (PlayerMaxHP * 3.0))
+									{
+										ScalerBase = 16;
+										ScaleAmtBase = 1.3125;
+										ScaleSal = 0.171875;
+										HealthColor = font.CR_Gold;
+									}
+								}
+							}
+						}
+					}
+					if (!ScaleSal) ScaleSal = 0.25;
+					if (!ScalerBase) ScalerBase = 192;
+					ScaleIncAmt = (ScaleSal / (ScalerBase * 1.0)); //0.00166667;
+					
+					Scaler = (level.time % ScalerBase);
+					if (Scaler >= (ScalerBase*0.5) && Scaler <= (ScalerBase-1)) Scaler2 = (ScalerBase - Scaler);
+																																else Scaler2 = Scaler;
+					XScal = YScal = 1.0 + (Scaler2 * (ScaleIncAmt * ScaleAmtBase)); // 4
+					//Console.Printf("Scaler2: %d (%d), ScaleIncAmt: %.8f (%d)", Scaler2, Scaler, ScaleIncAmt, ScalerBase);
+				}
+			}
+		}
+		//Console.Printf("scal: %.8f / %.8f", XScal, YScal);
+		if (IsInvuln)
+		{
+			HealthColor = font.CR_Gold;
+		}
+		else
+		{
+			if (CPlayerPawn.player.poisoncount) 
+			{
+				if (level.time % 16 >= 8) HealthColor = font.CR_DarkRed;
+				else HealthColor = font.CR_DarkGreen;
+			}
+		}
+		DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), ((49+HPDmgShakeX), (-28+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, HealthColor, HealthAlpha, FontWrapWidth, FontLineSpace, ((XScal*1.25, YScal*1.25)*HPPulseScale));
+		
+		//*************************
+		//* HP Gain [Upper Right] (2, -32)
+		//*************************
+		HUDHitAlpha = 1.00;
+		If (MiscItem)
+		{
+			if (MiscItem.HPRecHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.HPRecHUDTimer))));
+			else HUDHitAlpha = 1.00;
+		}
+		HUDNumHitValue = 0;
+		If (MiscItem) HUDNumHitValue = MiscItem.HPRecHUDAmt;
+		HUDStringHit = "+";
+		HUDStringHit.AppendFormat("%d", HUDNumHitValue);
+		if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -32), DI_TEXT_ALIGN_LEFT, font.CR_Green, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+
+		//*************************
+		//* HP Loss [Lower Left] (2, -24)
+		//*************************
+		HUDNumHitValue = 0;
+		If (MiscItem)
+		{
+			if (MiscItem.HPDmgHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.HPDmgHUDTimer))));
+			else HUDHitAlpha = 1.00;
+		}
+		If (MiscItem) HUDNumHitValue = MiscItem.HPDmgHUDAmt;
+		HUDStringHit = "-";
+		HUDStringHit.AppendFormat("%d", HUDNumHitValue);
+		if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -24), DI_TEXT_ALIGN_LEFT, font.CR_Brick, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		
+		//*************************
+		//* Max HP Gain [Lower Right] (5, -9)
+		//*************************
+		HUDNumHitValue = 0;
+		If (MiscItem)
+		{
+			if (MiscItem.MaxHPIncTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.MaxHPIncTimer))));
+			else HUDHitAlpha = 1.00;
+		}
+		If (MiscItem) HUDNumHitValue = MiscItem.MaxHPIncAmt;
+		HUDStringHit = "+";
+		HUDStringHit.AppendFormat("%d", HUDNumHitValue);
+		if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (5, -9), DI_TEXT_ALIGN_LEFT, font.CR_Gold, HUDHitAlpha, FontWrapWidth, FontLineSpace, (FontScale*0.8)); // 41, -43
+		
+		return CurrHealth, MaxHealthTrue, PlayerMaxHP, FontAlpha, FontScale, FontWrapWidth, FontLineSpace, HPPulseScale, ValueAmt, ValueAmtS, HUDHitAlpha, HUDStringHit, HUDNumHitValue, SlashUnit;
+	}
+
+	double, Vector2, int, int, double, int, string, double, string, int, int DrawFSArmorDisplays(double FontAlpha, Vector2 FontScale, int FontWrapWidth, int FontLineSpace, double APPulseScale, int ValueAmt, string ValueAmtS, double HUDHitAlpha, string HUDStringHit, int HUDNumHitValue, int SlashUnit)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		
+		//*********
+		//* Armor *
+		//*********
+		int ArmorColor = font.CR_White; 
+		int ArmorMax;
+		double ArmorProtect;
+		string ArmorMaxS;
+		string ArmorSaveAmt;
+		name armorclasstype = "KGArmor";
+		let armor = KGArmor(CPlayerPawn.FindInventory(armorclasstype));
+		int ArmorScavengingLevel = CPlayerPawn.CountInv("ArmorScavengerKit");
+		if (armor != null && armor.Amount > 0)
+		{
+			ArmorProtect = Armor.SavePercent * 100;
+			ArmorSaveAmt = "";
+			ArmorSaveAmt.AppendFormat("%.2f%%", ArmorProtect);
+			ArmorSaveAmt.AppendFormat(" damage resist");
+			ValueAmt = armor.Amount;
+			ValueAmtS = FormatNumber(ValueAmt);
+
+			DrawInventoryIcon(armor, ((64+APDmgShakeX), (-32+APDmgShakeY))); // 58, -24
+			if (MiscItem.KnightGownTier == 1)
+			{
+				ArmorColor = font.CR_Purple;
+				ArmorMax = MiscItem.ArmorItemMax1;
+			}
+			if (MiscItem.KnightGownTier == 2)
+			{
+				ArmorColor = font.CR_Cyan;
+				ArmorMax = MiscItem.ArmorItemMax2;
+			}
+			if (MiscItem.KnightGownTier == 3)
+			{
+				ArmorColor = font.CR_Gold;
+				ArmorMax = MiscItem.ArmorItemMax3;
+			}
+			if (MiscItem.KnightGownTier == 4)
+			{
+				ArmorColor = font.CR_Green;
+				ArmorMax = MiscItem.ArmorItemMax4;
+			}
+			ValueAmtS = FormatNumber(ValueAmt);
+			ArmorMaxS = FormatNumber(ArmorMax);
+			
+			if (exex_ikaripointsenabled && MiscItem)
+			{
+				bool HasIPIcon = false;
+				string image = "";
+				double IPCost = 0.0;
+				textureid IPIcon = TexMan.CheckForTexture("IPIconUN", TexMan.TYPE_MiscPatch);
+				int CanUseIPATK = 0;
+				int IPIconTimer = level.time % 8;
+				int IPIconSpeed = 1;
+				Vector2 IPIconPos = (0, 0);
+				Vector2 IPIconScale = (2.0, 2.0);
+				if (CPlayerPawn && MiscItem.IPUseMode) IPIconSpeed = 2;
+
+				if (MiscItem.KnightGownTier == 1)
+				{
+					HasIPIcon = true;
+					IPCost = A_GetIPCost(1001);
+				}
+				if (MiscItem.KnightGownTier == 2)
+				{
+					HasIPIcon = true;
+					IPCost = A_GetIPCost(1002);
+				}
+				if (MiscItem.KnightGownTier == 3)
+				{
+					HasIPIcon = true;
+					IPCost = A_GetIPCost(1003);
+				}
+				if (MiscItem.KnightGownTier == 4)
+				{
+					HasIPIcon = true;
+					IPCost = A_GetIPCost(1004);
+				}
+				if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+				else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+				if (dydudebug_infiniteip) CanUseIPATK = 3;
+				if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Armor (%s)] Cost: %.4f, IPIconSpeed: %d", armor.GetClassName(), IPCost, IPIconSpeed);
+
+				// Shows the Proper Icon if the above meets criteria
+				if (HasIPIcon) 
+				{
+					if (CanUseIPATK) 
+					{
+						if (IPIconSpeed <= 1) IPIcon = TexMan.CheckForTexture("IPIcon1U", TexMan.TYPE_MiscPatch);
+						if (IPIconSpeed >= 2) IPIcon = TexMan.CheckForTexture("IPIcon2U", TexMan.TYPE_MiscPatch);
+						if (CanUseIPATK == 1)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 32;
+								if (IPIconTimer >= 0 && IPIconTimer <= 7) IPIconPos += (0, 0);
+								if (IPIconTimer >= 8 && IPIconTimer <= 15) IPIconPos += (1, 0);
+								if (IPIconTimer >= 16 && IPIconTimer <= 23) IPIconPos += (1, 1);
+								if (IPIconTimer >= 24 && IPIconTimer <= 31) IPIconPos += (0, 1);
+							}
+							else
+							{
+								IPIconTimer = level.time % 24;
+								if (IPIconTimer >= 0 && IPIconTimer <= 5) IPIconPos += (0, 0);
+								if (IPIconTimer >= 6 && IPIconTimer <= 11) IPIconPos += (1, 0);
+								if (IPIconTimer >= 12 && IPIconTimer <= 17) IPIconPos += (1, 1);
+								if (IPIconTimer >= 18 && IPIconTimer <= 23) IPIconPos += (0, 1);
+							}
+						}
+						if (CanUseIPATK == 2)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 16;
+								if (IPIconTimer >= 0 && IPIconTimer <= 3) IPIconPos += (0, 0);
+								if (IPIconTimer >= 4 && IPIconTimer <= 7) IPIconPos += (1, 0);
+								if (IPIconTimer >= 8 && IPIconTimer <= 11) IPIconPos += (1, 1);
+								if (IPIconTimer >= 12 && IPIconTimer <= 15) IPIconPos += (0, 1);
+							}
+							else
+							{
+								IPIconTimer = level.time % 12;
+								if (IPIconTimer >= 0 && IPIconTimer <= 2) IPIconPos += (0, 0);
+								if (IPIconTimer >= 3 && IPIconTimer <= 5) IPIconPos += (1, 0);
+								if (IPIconTimer >= 6 && IPIconTimer <= 8) IPIconPos += (1, 1);
+								if (IPIconTimer >= 9 && IPIconTimer <= 11) IPIconPos += (0, 1);
+							}
+						}
+						if (CanUseIPATK >= 3)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 8;
+								if (IPIconTimer >= 0 && IPIconTimer <= 1) IPIconPos += (0, 0);
+								if (IPIconTimer >= 2 && IPIconTimer <= 3) IPIconPos += (1, 0);
+								if (IPIconTimer >= 4 && IPIconTimer <= 5) IPIconPos += (1, 1);
+								if (IPIconTimer >= 6 && IPIconTimer <= 7) IPIconPos += (0, 1);
+							}
+							else
+							{
+								IPIconTimer = level.time % 4;
+								if (IPIconTimer == 0) IPIconPos += (0, 0);
+								if (IPIconTimer == 1) IPIconPos += (1, 0);
+								if (IPIconTimer == 2) IPIconPos += (1, 1);
+								if (IPIconTimer == 3) IPIconPos += (0, 1);
+							}
+						}
+					}
+					else
+					{
+						IPIcon = TexMan.CheckForTexture("IPIconUN", TexMan.TYPE_MiscPatch);
+					}
+					DrawTexture(IPIcon, IPIconPos + ((68+APDmgShakeX), (-58+APDmgShakeY)), DI_ITEM_CENTER, 1.0, (-1, -1), IPIconScale);
+				}
+				string LegendStr = "";
+				string UserKeyString;
+				Array<String> UserKeys;
+				int LegendFlags = DI_TEXT_ALIGN_CENTER;
+				int LegendFontCLR = font.cr_gray;
+				double LegendAlpha = 0.9;
+				Vector2 LegendScale = (1.0, 1.0);
+				int LX, LY;
+				LX = 64; // 64;
+				LY = -46; // -46;
+				UserKeyString = UIKeybinds.getKeyboard("UseArmorIP");
+				if (UserKeyString != "")
+				{
+					UserKeyString.Split(UserKeys,", ");
+					LegendStr.AppendFormat("\c[fire]%s\c-", UserKeys[0]);
+				}
+				else 
+				{
+					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				if (LegendStr != "" && CanUseIPATK && IPIconSpeed >= 2) DrawString(mConFont, LegendStr, ((LX+APDmgShakeX), (LY+APDmgShakeY)), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, (LegendScale*APPulseScale));
+			}
+
+			int ArmorDigits = 2;
+			
+			ArmorDigits = ArmorMaxS.Length();
+			if (ValueAmt > ArmorMax) ArmorDigits = ValueAmtS.Length();
+			
+			SlashUnit = (-6 * (ArmorDigits-2));
+			
+			// Amounts
+			DrawString(mDDMFont, FormatNumber(ArmorMax), ((49+APDmgShakeX), (-42+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*APPulseScale)); // 41, -43
+			DrawString(mDDMFont, "/", (((20+SlashUnit)+APDmgShakeX), (-50+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*APPulseScale)); // 41, -43
+			DrawString(mDDLFont, FormatNumber(mArmorInterpolator.GetValue()), ((49+APDmgShakeX), (-59+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*APPulseScale)); // 41, -43
+			
+			FontScale = (1.0, 1.0);
+			int ArmModY = 0;
+			// + Defense
+			int BaseFlatDefValue;
+			if (MiscItem) BaseFlatDefValue = MiscItem.BaseFlatDefValue;
+			int ArmorFlatDefValue = 0 + BaseFlatDefValue;
+			int BaseArmorFlat;
+			string ArmorFlatDef = "";
+			if (MiscItem) BaseArmorFlat = MiscItem.ArmorDefValueHUD;
+			
+			double ArmFactor;
+			if (ArmorMax > 0) ArmFactor = double(ValueAmt * 1.0 / ArmorMax);
+			//Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, ArmFactor: %.8f", BaseArmorFlat, ValueAmt, ArmorMax, ArmFactor);
+			ArmorFlatDefValue += (BaseArmorFlat * ArmFactor);
+			ArmorFlatDef.AppendFormat("-");
+			ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
+			ArmorFlatDef.AppendFormat("flat damage");
+			
+			//
+			string ArmorScavengeLevel = "";
+			if (ArmorScavengingLevel > 0) 
+			{
+				ArmorScavengeLevel.AppendFormat("+");
+				ArmorScavengeLevel.AppendFormat("%d%% ", ArmorScavengingLevel);
+				ArmorScavengeLevel.AppendFormat("armor scavenge power");
+			}
+			
+			if (ArmorScavengingLevel > 0) ArmModY -= 3;
+			if (armor.Amount > 0 && ArmorFlatDefValue) ArmModY -= 3;
+			
+			int firstliney = -50;
+			if (ArmorProtect) DrawString(mArmSaveFont, ArmorSaveAmt, (79, firstliney+ArmModY), DI_TEXT_ALIGN_LEFT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			if (armor.Amount > 0 && ArmorFlatDefValue) 
+			{
+				firstliney += 6;
+				DrawString(mArmSaveFont, ArmorFlatDef, (79, firstliney+ArmModY), DI_TEXT_ALIGN_LEFT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
+			if (ArmorScavengingLevel > 0)
+			{
+				firstliney += 6;
+				DrawString(mArmSaveFont, ArmorScavengeLevel, (79, firstliney+ArmModY), DI_TEXT_ALIGN_LEFT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
+			FontScale = (1.25, 1.25);
+		}
+		else
+		{
+			FontScale = (1.0, 1.0);
+
+			FontScale = (1.25, 1.25);
+			DrawString(mDDLFont, "N/A", (40, -55), DI_TEXT_ALIGN_RIGHT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			FontScale = (1.00, 1.00);
+			// + Defense
+			int BaseFlatDefValue;
+			if (MiscItem) BaseFlatDefValue = MiscItem.BaseFlatDefValue;
+			int ArmorFlatDefValue = 0 + BaseFlatDefValue;
+			string ArmorFlatDef = "";
+			ArmorFlatDef.AppendFormat("-");
+			ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
+			ArmorFlatDef.AppendFormat("flat damage");
+			DrawTexture(TexMan.CheckForTexture("KGWNY0", TexMan.TYPE_MiscPatch), (64, -32)); // 58, -24
+
+			int firstliney = -50;
+			if (ArmorFlatDefValue) DrawString(mArmSaveFont, ArmorFlatDef, (79, firstliney), DI_TEXT_ALIGN_LEFT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+
+			FontScale = (1.25, 1.25);
+		}
+		
+		//*************************
+		//* AP Gain [Upper Right] *
+		//*************************
+		HUDHitAlpha = 1.00;
+		If (MiscItem)
+		{
+			if (MiscItem.APRecHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.APRecHUDTimer))));
+			else HUDHitAlpha = 1.00;
+		}
+		HUDNumHitValue = 0;
+		If (MiscItem) HUDNumHitValue = MiscItem.APRecHUDAmt;
+		HUDStringHit = "+";
+		HUDStringHit.AppendFormat("%d", HUDNumHitValue);
+		if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -64), DI_TEXT_ALIGN_LEFT, font.CR_DarkGreen, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		
+		// AP Loss [Lower Left] (2, -64)
+		If (MiscItem)
+		{
+			if (MiscItem.APDmgHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.APDmgHUDTimer))));
+			else HUDHitAlpha = 1.00;
+		}
+		HUDNumHitValue = 0;
+		If (MiscItem) HUDNumHitValue = MiscItem.APDmgHUDAmt;
+		HUDStringHit = "-";
+		HUDStringHit.AppendFormat("%d", HUDNumHitValue);
+		if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -56), DI_TEXT_ALIGN_LEFT, font.CR_Red, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+		
+		return FontAlpha, FontScale, FontWrapWidth, FontLineSpace, APPulseScale, ValueAmt, ValueAmtS, HUDHitAlpha, HUDStringHit, HUDNumHitValue, SlashUnit;
 	}
 
 	double, Vector2, int, int, int, int, int, double, string, int, int, int DrawFSEXPDisplays(double FontAlpha, Vector2 FontScale, int FontWrapWidth, int FontLineSpace, int DigX, int DigY, int VisiblePlayerLevel, double HUDHitAlpha, string HUDStringHit, int HUDNumHitValue, int Digits, int spacing)
@@ -2088,517 +2616,23 @@ class DDStatusBarMain : BaseStatusBar
 			//*****************
 			[CurrHealth, MaxHealthTrue] = DrawDmgBorderFullScreen(CurrHealth,MaxHealthTrue);
 			
-			//**********
-			//* Health *
-			//**********
+			// Health
 			int ValueAmt = CurrHealth;
 			string ValueAmtS = FormatNumber(ValueAmt);
 			int PlayerMaxHP = MaxHealthTrue;
-			if (CPlayerPawn.GetClassName() == "RatPlayer") PlayerMaxHP *= 0.30;
-			string PlayerMaxHPS = FormatNumber(PlayerMaxHP);
-
-			int HealthDigits = 2;
-			HealthDigits = PlayerMaxHPS.Length();
-			if (ValueAmt > PlayerMaxHP) HealthDigits = ValueAmtS.Length();
-
-			int SlashUnit = (-6 * (HealthDigits-2));
-			int HealthColor = font.CR_brick;
-			bool IsInvuln = false;
-			if (CPlayerPawn.bINVULNERABLE || 
-					 CPlayerPawn.CountInv("PowerInvulnerable") || CPlayerPawn.CountInv("PowerInvulnDD") || 
-					 CPlayer.cheats & CF_GODMODE2 || CPlayer.cheats & CF_GODMODE) IsInvuln = true;
-			if (IsInvuln) HealthColor = font.CR_Gold;
-			//health
-			textureid HealthIcon = TexMan.CheckForTexture("ARTIWINE", TexMan.TYPE_MiscPatch);
-			if (CPlayerPawn.player.poisoncount) HealthIcon = TexMan.CheckForTexture("ARTIWINP", TexMan.TYPE_MiscPatch);
-			if (CPlayer.cheats & CF_BUDDHA2) HealthIcon = TexMan.CheckForTexture("ARTIWINB", TexMan.TYPE_MiscPatch);
-			if (CPlayer.cheats & CF_GODMODE2) HealthIcon = TexMan.CheckForTexture("ARTIWING", TexMan.TYPE_MiscPatch);
-			DrawTexture(HealthIcon, ((64+HPDmgShakeX), (-4+HPDmgShakeY))); // 51, -3
-			DrawString(mDDMFont, FormatNumber(PlayerMaxHP), ((49+HPDmgShakeX), (-12+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, HealthColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*HPPulseScale)); // 41, -43
-			DrawString(mDDMFont, "/", (((24+SlashUnit)+HPDmgShakeX), (-18+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, HealthColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*HPPulseScale)); // 41, -43
-			double HealthAlpha = 0.90;
-			double ScaleSal;
-			double XScal = 1.00;
-			double YScal = 1.00;
-			int Direction = 1;
-			int ScalerBase, Scaler, Scaler2, ScalerDiv;
-			double ScaleIncAmt;
-			double ScaleAmtBase = 1.334;
-			if (ValueAmt <= 0)
-			{
-				HealthAlpha *= 0.1;
-				HealthColor = font.CR_black;
-			}
-			else
-			{
-				if (MiscItem.oldhealthratio == 3 && level.time % 6 >= 3) 
-				{
-					HealthAlpha = 0.125;
-				}
-				else if (MiscItem.oldhealthratio == 2 && level.time % 18 >= 9) 
-				{
-					HealthAlpha *= 0.25;
-				}
-				else if (MiscItem.oldhealthratio == 1 && level.time % 36 >= 18) 
-				{
-					HealthAlpha *= 0.5;
-				}
-				else 
-				{
-					if (ValueAmt > PlayerMaxHP)
-					{
-						ScalerBase = 192;
-						ScaleAmtBase = 1.0;
-						ScaleSal = 0.25;
-						HealthColor = font.CR_Teal;
-						if (ValueAmt >= (PlayerMaxHP * 1.334))
-						{
-							ScalerBase = 128;
-							ScaleAmtBase = 1.0625;
-							ScaleSal = 0.234375;
-							HealthColor = font.CR_Cyan;
-							if (ValueAmt >= (PlayerMaxHP * 1.667))
-							{
-								ScalerBase = 96;
-								ScaleAmtBase = 1.125;
-								ScaleSal = 0.21875;
-								HealthColor = font.CR_Sapphire;
-								if (ValueAmt >= (PlayerMaxHP * 2))
-								{
-									ScalerBase = 64;
-									ScaleAmtBase = 1.1875;
-									ScaleSal = 0.203125;
-									HealthColor = font.CR_LightBlue;
-									if (ValueAmt >= (PlayerMaxHP * 2.5))
-									{
-										ScalerBase = 32;
-										ScaleAmtBase = 1.25;
-										ScaleSal = 0.1875;
-										HealthColor = font.CR_Purple;
-										if (ValueAmt >= (PlayerMaxHP * 3.0))
-										{
-											ScalerBase = 16;
-											ScaleAmtBase = 1.3125;
-											ScaleSal = 0.171875;
-											HealthColor = font.CR_Gold;
-										}
-									}
-								}
-							}
-						}
-						if (!ScaleSal) ScaleSal = 0.25;
-						if (!ScalerBase) ScalerBase = 192;
-						ScaleIncAmt = (ScaleSal / (ScalerBase * 1.0)); //0.00166667;
-						
-						Scaler = (level.time % ScalerBase);
-						if (Scaler >= (ScalerBase*0.5) && Scaler <= (ScalerBase-1)) Scaler2 = (ScalerBase - Scaler);
-																																	else Scaler2 = Scaler;
-						XScal = YScal = 1.0 + (Scaler2 * (ScaleIncAmt * ScaleAmtBase)); // 4
-						//Console.Printf("Scaler2: %d (%d), ScaleIncAmt: %.8f (%d)", Scaler2, Scaler, ScaleIncAmt, ScalerBase);
-					}
-				}
-			}
-			//Console.Printf("scal: %.8f / %.8f", XScal, YScal);
-			if (IsInvuln)
-			{
-				HealthColor = font.CR_Gold;
-			}
-			else
-			{
-				if (CPlayerPawn.player.poisoncount) 
-				{
-					if (level.time % 16 >= 8) HealthColor = font.CR_DarkRed;
-					else HealthColor = font.CR_DarkGreen;
-				}
-			}
-			DrawString(mDDLFont, FormatNumber(mHealthInterpolator.GetValue()), ((49+HPDmgShakeX), (-28+HPDmgShakeY)), DI_TEXT_ALIGN_RIGHT, HealthColor, HealthAlpha, FontWrapWidth, FontLineSpace, ((XScal*1.25, YScal*1.25)*HPPulseScale));
-			
-			//*************************
-			//* HP Gain [Upper Right] (2, -32)
-			//*************************
 			double HUDHitAlpha = 1.00;
-			If (MiscItem)
-			{
-				if (MiscItem.HPRecHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.HPRecHUDTimer))));
-				else HUDHitAlpha = 1.00;
-			}
-			int HUDNumHitValue = 0;
-			If (MiscItem) HUDNumHitValue = MiscItem.HPRecHUDAmt;
-			string HUDStringHit = "+";
-			HUDStringHit.AppendFormat("%d", HUDNumHitValue);
-			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -32), DI_TEXT_ALIGN_LEFT, font.CR_Green, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-
-			//*************************
-			//* HP Loss [Lower Left] (2, -24)
-			//*************************
-			HUDNumHitValue = 0;
-			If (MiscItem)
-			{
-				if (MiscItem.HPDmgHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.HPDmgHUDTimer))));
-				else HUDHitAlpha = 1.00;
-			}
-			If (MiscItem) HUDNumHitValue = MiscItem.HPDmgHUDAmt;
-			HUDStringHit = "-";
-			HUDStringHit.AppendFormat("%d", HUDNumHitValue);
-			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -24), DI_TEXT_ALIGN_LEFT, font.CR_Brick, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			string HUDStringHit;
+			int HUDNumHitValue;
+			int SlashUnit;
+			[CurrHealth, MaxHealthTrue, PlayerMaxHP, FontAlpha, FontScale, FontWrapWidth, FontLineSpace, HPPulseScale, ValueAmt, ValueAmtS, HUDHitAlpha, HUDStringHit, HUDNumHitValue, SlashUnit] = DrawFSHealthDisplays(CurrHealth, MaxHealthTrue, PlayerMaxHP, FontAlpha, FontScale, FontWrapWidth, FontLineSpace, HPPulseScale, ValueAmt, ValueAmtS, HUDHitAlpha, HUDStringHit, HUDNumHitValue, SlashUnit);
 			
-			//*************************
-			//* Max HP Gain [Lower Right] (5, -9)
-			//*************************
-			HUDNumHitValue = 0;
-			If (MiscItem)
-			{
-				if (MiscItem.MaxHPIncTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.MaxHPIncTimer))));
-				else HUDHitAlpha = 1.00;
-			}
-			If (MiscItem) HUDNumHitValue = MiscItem.MaxHPIncAmt;
-			HUDStringHit = "+";
-			HUDStringHit.AppendFormat("%d", HUDNumHitValue);
-			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (5, -9), DI_TEXT_ALIGN_LEFT, font.CR_Gold, HUDHitAlpha, FontWrapWidth, FontLineSpace, (FontScale*0.8)); // 41, -43
-			
-			//****************
-			//* misc [speed] *
-			//****************
-			double BaseMass = 1.0;
-			double BaseSpeed = 1.0;
-			double BaseHPRegen = 1.0;
-			int JumpHeight = 64;
-			string SpeedVal = "";
-			string JumpVal = "";
-			string RegenVal = "";
-			string MassVal = "";
-			int ExtY = 0;
-			int BaseY = -27; // -21
-			if (MiscItem && CurrHealth > 0) 
-			{
-				if (CurrHealth != PlayerMaxHP) ExtY = -3;
-				FontScale = (1.0, 1.0);
-				BaseSpeed = MiscItem.HUDSpeed * 100;
-				int SpeedCLR = font.cr_white;
-				if (BaseSpeed > 100.0000) SpeedCLR = font.cr_blue;
-				if (BaseSpeed < 100.0000) SpeedCLR = font.cr_red;
-				SpeedVal.AppendFormat("%.2f%% MoveSpeed", BaseSpeed);
-				DrawString(mArmSaveFont, SpeedVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, SpeedCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-
-				BaseY += 6;
-				JumpHeight = MiscItem.TrueJumpHeight;
-				JumpVal.AppendFormat("%d Jump Height", JumpHeight);
-				DrawString(mArmSaveFont, JumpVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, SpeedCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-
-				BaseY += 6;
-				BaseMass = MiscItem.TotalMass;
-				int MassCLR = font.cr_white;
-				if (BaseMass > MiscItem.BaseMass) MassCLR = font.cr_blue;
-				if (BaseMass < MiscItem.BaseMass) MassCLR = font.cr_red;
-				MassVal.AppendFormat("%d Balance", BaseMass);
-				DrawString(mArmSaveFont, MassVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, MassCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-
-				if (CurrHealth != PlayerMaxHP)
-				{
-					BaseY += 6;
-					BaseHPRegen = MiscItem.BaseRegenMulti * 100;
-					int RegenCLR = font.cr_white;
-					if (CurrHealth < PlayerMaxHP) 
-					{
-						if (BaseHPRegen > 100.0000) RegenCLR = font.cr_blue;
-						if (BaseHPRegen < 100.0000) RegenCLR = font.cr_red;
-						RegenVal.AppendFormat("%.2f%% Regen Speed", BaseHPRegen);
-					}
-					if (CurrHealth > PlayerMaxHP) 
-					{
-						if (BaseHPRegen > 100.0000) RegenCLR = font.cr_red;
-						if (BaseHPRegen < 100.0000) RegenCLR = font.cr_blue;
-						RegenVal.AppendFormat("%.2f%% Degen Speed", BaseHPRegen);
-					}
-					DrawString(mArmSaveFont, RegenVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, RegenCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				}
-				FontScale = (1.25, 1.25);
-			}
+			// Misc
+			[FontAlpha, FontScale, FontWrapWidth, FontLineSpace, CurrHealth, PlayerMaxHP] = DrawFSStatDisplays(FontAlpha, FontScale, FontWrapWidth, FontLineSpace, CurrHealth, PlayerMaxHP);
 			
 			// Armor
-			DrawFSArmorDisplays();
-			//*********
-			//* Armor *
-			//*********
-			int ArmorColor = font.CR_White; 
-			int ArmorMax;
-			double ArmorProtect;
-			string ArmorMaxS;
-			string ArmorSaveAmt;
 			name armorclasstype = "KGArmor";
 			let armor = KGArmor(CPlayerPawn.FindInventory(armorclasstype));
-			int ArmorScavengingLevel = CPlayerPawn.CountInv("ArmorScavengerKit");
-			if (armor != null && armor.Amount > 0)
-			{
-				ArmorProtect = Armor.SavePercent * 100;
-				ArmorSaveAmt = "";
-				ArmorSaveAmt.AppendFormat("%.2f%%", ArmorProtect);
-				ArmorSaveAmt.AppendFormat(" damage resist");
-				ValueAmt = armor.Amount;
-				ValueAmtS = FormatNumber(ValueAmt);
-
-				DrawInventoryIcon(armor, ((64+APDmgShakeX), (-32+APDmgShakeY))); // 58, -24
-				if (MiscItem.KnightGownTier == 1)
-				{
-					ArmorColor = font.CR_Purple;
-					ArmorMax = MiscItem.ArmorItemMax1;
-				}
-				if (MiscItem.KnightGownTier == 2)
-				{
-					ArmorColor = font.CR_Cyan;
-					ArmorMax = MiscItem.ArmorItemMax2;
-				}
-				if (MiscItem.KnightGownTier == 3)
-				{
-					ArmorColor = font.CR_Gold;
-					ArmorMax = MiscItem.ArmorItemMax3;
-				}
-				if (MiscItem.KnightGownTier == 4)
-				{
-					ArmorColor = font.CR_Green;
-					ArmorMax = MiscItem.ArmorItemMax4;
-				}
-				ValueAmtS = FormatNumber(ValueAmt);
-				ArmorMaxS = FormatNumber(ArmorMax);
-				
-				if (exex_ikaripointsenabled && MiscItem)
-				{
-					bool HasIPIcon = false;
-					string image = "";
-					double IPCost = 0.0;
-					textureid IPIcon = TexMan.CheckForTexture("IPIconUN", TexMan.TYPE_MiscPatch);
-					int CanUseIPATK = 0;
-					int IPIconTimer = level.time % 8;
-					int IPIconSpeed = 1;
-					Vector2 IPIconPos = (0, 0);
-					Vector2 IPIconScale = (2.0, 2.0);
-					if (CPlayerPawn && MiscItem.IPUseMode) IPIconSpeed = 2;
-
-					if (MiscItem.KnightGownTier == 1)
-					{
-						HasIPIcon = true;
-						IPCost = A_GetIPCost(1001);
-					}
-					if (MiscItem.KnightGownTier == 2)
-					{
-						HasIPIcon = true;
-						IPCost = A_GetIPCost(1002);
-					}
-					if (MiscItem.KnightGownTier == 3)
-					{
-						HasIPIcon = true;
-						IPCost = A_GetIPCost(1003);
-					}
-					if (MiscItem.KnightGownTier == 4)
-					{
-						HasIPIcon = true;
-						IPCost = A_GetIPCost(1004);
-					}
-					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-					if (dydudebug_infiniteip) CanUseIPATK = 3;
-					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Armor (%s)] Cost: %.4f, IPIconSpeed: %d", armor.GetClassName(), IPCost, IPIconSpeed);
-
-					// Shows the Proper Icon if the above meets criteria
-					if (HasIPIcon) 
-					{
-						if (CanUseIPATK) 
-						{
-							if (IPIconSpeed <= 1) IPIcon = TexMan.CheckForTexture("IPIcon1U", TexMan.TYPE_MiscPatch);
-							if (IPIconSpeed >= 2) IPIcon = TexMan.CheckForTexture("IPIcon2U", TexMan.TYPE_MiscPatch);
-							if (CanUseIPATK == 1)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 32;
-									if (IPIconTimer >= 0 && IPIconTimer <= 7) IPIconPos += (0, 0);
-									if (IPIconTimer >= 8 && IPIconTimer <= 15) IPIconPos += (1, 0);
-									if (IPIconTimer >= 16 && IPIconTimer <= 23) IPIconPos += (1, 1);
-									if (IPIconTimer >= 24 && IPIconTimer <= 31) IPIconPos += (0, 1);
-								}
-								else
-								{
-									IPIconTimer = level.time % 24;
-									if (IPIconTimer >= 0 && IPIconTimer <= 5) IPIconPos += (0, 0);
-									if (IPIconTimer >= 6 && IPIconTimer <= 11) IPIconPos += (1, 0);
-									if (IPIconTimer >= 12 && IPIconTimer <= 17) IPIconPos += (1, 1);
-									if (IPIconTimer >= 18 && IPIconTimer <= 23) IPIconPos += (0, 1);
-								}
-							}
-							if (CanUseIPATK == 2)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 16;
-									if (IPIconTimer >= 0 && IPIconTimer <= 3) IPIconPos += (0, 0);
-									if (IPIconTimer >= 4 && IPIconTimer <= 7) IPIconPos += (1, 0);
-									if (IPIconTimer >= 8 && IPIconTimer <= 11) IPIconPos += (1, 1);
-									if (IPIconTimer >= 12 && IPIconTimer <= 15) IPIconPos += (0, 1);
-								}
-								else
-								{
-									IPIconTimer = level.time % 12;
-									if (IPIconTimer >= 0 && IPIconTimer <= 2) IPIconPos += (0, 0);
-									if (IPIconTimer >= 3 && IPIconTimer <= 5) IPIconPos += (1, 0);
-									if (IPIconTimer >= 6 && IPIconTimer <= 8) IPIconPos += (1, 1);
-									if (IPIconTimer >= 9 && IPIconTimer <= 11) IPIconPos += (0, 1);
-								}
-							}
-							if (CanUseIPATK >= 3)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 8;
-									if (IPIconTimer >= 0 && IPIconTimer <= 1) IPIconPos += (0, 0);
-									if (IPIconTimer >= 2 && IPIconTimer <= 3) IPIconPos += (1, 0);
-									if (IPIconTimer >= 4 && IPIconTimer <= 5) IPIconPos += (1, 1);
-									if (IPIconTimer >= 6 && IPIconTimer <= 7) IPIconPos += (0, 1);
-								}
-								else
-								{
-									IPIconTimer = level.time % 4;
-									if (IPIconTimer == 0) IPIconPos += (0, 0);
-									if (IPIconTimer == 1) IPIconPos += (1, 0);
-									if (IPIconTimer == 2) IPIconPos += (1, 1);
-									if (IPIconTimer == 3) IPIconPos += (0, 1);
-								}
-							}
-						}
-						else
-						{
-							IPIcon = TexMan.CheckForTexture("IPIconUN", TexMan.TYPE_MiscPatch);
-						}
-						DrawTexture(IPIcon, IPIconPos + ((68+APDmgShakeX), (-58+APDmgShakeY)), DI_ITEM_CENTER, 1.0, (-1, -1), IPIconScale);
-					}
-					string LegendStr = "";
-					string UserKeyString;
-					Array<String> UserKeys;
-					int LegendFlags = DI_TEXT_ALIGN_CENTER;
-					int LegendFontCLR = font.cr_gray;
-					double LegendAlpha = 0.9;
-					Vector2 LegendScale = (1.0, 1.0);
-					int LX, LY;
-					LX = 64; // 64;
-					LY = -46; // -46;
-					UserKeyString = UIKeybinds.getKeyboard("UseArmorIP");
-					if (UserKeyString != "")
-					{
-						UserKeyString.Split(UserKeys,", ");
-						LegendStr.AppendFormat("\c[fire]%s\c-", UserKeys[0]);
-					}
-					else 
-					{
-						LegendStr.AppendFormat("\c[red][unb]\c-");
-					}
-					if (LegendStr != "" && CanUseIPATK && IPIconSpeed >= 2) DrawString(mConFont, LegendStr, ((LX+APDmgShakeX), (LY+APDmgShakeY)), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, (LegendScale*APPulseScale));
-				}
-
-				int ArmorDigits = 2;
-				
-				ArmorDigits = ArmorMaxS.Length();
-				if (ValueAmt > ArmorMax) ArmorDigits = ValueAmtS.Length();
-				
-				SlashUnit = (-6 * (ArmorDigits-2));
-				
-				// Amounts
-				DrawString(mDDMFont, FormatNumber(ArmorMax), ((49+APDmgShakeX), (-42+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*APPulseScale)); // 41, -43
-				DrawString(mDDMFont, "/", (((20+SlashUnit)+APDmgShakeX), (-50+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*APPulseScale)); // 41, -43
-				DrawString(mDDLFont, FormatNumber(mArmorInterpolator.GetValue()), ((49+APDmgShakeX), (-59+APDmgShakeY)), DI_TEXT_ALIGN_RIGHT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, (FontScale*APPulseScale)); // 41, -43
-				
-				FontScale = (1.0, 1.0);
-				int ArmModY = 0;
-				// + Defense
-				int BaseFlatDefValue;
-				if (MiscItem) BaseFlatDefValue = MiscItem.BaseFlatDefValue;
-				int ArmorFlatDefValue = 0 + BaseFlatDefValue;
-				int BaseArmorFlat;
-				string ArmorFlatDef = "";
-				if (MiscItem) BaseArmorFlat = MiscItem.ArmorDefValueHUD;
-				
-				double ArmFactor;
-				if (ArmorMax > 0) ArmFactor = double(ValueAmt * 1.0 / ArmorMax);
-				//Console.Printf("BaseArmorFlat: %d, Amt: %d / %d, ArmFactor: %.8f", BaseArmorFlat, ValueAmt, ArmorMax, ArmFactor);
-				ArmorFlatDefValue += (BaseArmorFlat * ArmFactor);
-				ArmorFlatDef.AppendFormat("-");
-				ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
-				ArmorFlatDef.AppendFormat("flat damage");
-				
-				//
-				string ArmorScavengeLevel = "";
-				if (ArmorScavengingLevel > 0) 
-				{
-					ArmorScavengeLevel.AppendFormat("+");
-					ArmorScavengeLevel.AppendFormat("%d%% ", ArmorScavengingLevel);
-					ArmorScavengeLevel.AppendFormat("armor scavenge power");
-				}
-				
-				if (ArmorScavengingLevel > 0) ArmModY -= 3;
-				if (armor.Amount > 0 && ArmorFlatDefValue) ArmModY -= 3;
-				
-				int firstliney = -50;
-				if (ArmorProtect) DrawString(mArmSaveFont, ArmorSaveAmt, (79, firstliney+ArmModY), DI_TEXT_ALIGN_LEFT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				if (armor.Amount > 0 && ArmorFlatDefValue) 
-				{
-					firstliney += 6;
-					DrawString(mArmSaveFont, ArmorFlatDef, (79, firstliney+ArmModY), DI_TEXT_ALIGN_LEFT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				}
-				if (ArmorScavengingLevel > 0)
-				{
-					firstliney += 6;
-					DrawString(mArmSaveFont, ArmorScavengeLevel, (79, firstliney+ArmModY), DI_TEXT_ALIGN_LEFT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				}
-				FontScale = (1.25, 1.25);
-			}
-			else
-			{
-				FontScale = (1.0, 1.0);
-
-				FontScale = (1.25, 1.25);
-				DrawString(mDDLFont, "N/A", (40, -55), DI_TEXT_ALIGN_RIGHT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				FontScale = (1.00, 1.00);
-				// + Defense
-				int BaseFlatDefValue;
-				if (MiscItem) BaseFlatDefValue = MiscItem.BaseFlatDefValue;
-				int ArmorFlatDefValue = 0 + BaseFlatDefValue;
-				string ArmorFlatDef = "";
-				ArmorFlatDef.AppendFormat("-");
-				ArmorFlatDef.AppendFormat("%d ", ArmorFlatDefValue);
-				ArmorFlatDef.AppendFormat("flat damage");
-				DrawTexture(TexMan.CheckForTexture("KGWNY0", TexMan.TYPE_MiscPatch), (64, -32)); // 58, -24
-
-				int firstliney = -50;
-				if (ArmorFlatDefValue) DrawString(mArmSaveFont, ArmorFlatDef, (79, firstliney), DI_TEXT_ALIGN_LEFT, ArmorColor, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-
-				FontScale = (1.25, 1.25);
-			}
-			
-			//*************************
-			//* AP Gain [Upper Right] *
-			//*************************
-			HUDHitAlpha = 1.00;
-			If (MiscItem)
-			{
-				if (MiscItem.APRecHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.APRecHUDTimer))));
-				else HUDHitAlpha = 1.00;
-			}
-			HUDNumHitValue = 0;
-			If (MiscItem) HUDNumHitValue = MiscItem.APRecHUDAmt;
-			HUDStringHit = "+";
-			HUDStringHit.AppendFormat("%d", HUDNumHitValue);
-			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -64), DI_TEXT_ALIGN_LEFT, font.CR_DarkGreen, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			
-			// AP Loss [Lower Left] (2, -64)
-			If (MiscItem)
-			{
-				if (MiscItem.APDmgHUDTimer <= 35) HUDHitAlpha = (FontAlpha * (1.00 - (0.0285714285714286 * (35 - MiscItem.APDmgHUDTimer))));
-				else HUDHitAlpha = 1.00;
-			}
-			HUDNumHitValue = 0;
-			If (MiscItem) HUDNumHitValue = MiscItem.APDmgHUDAmt;
-			HUDStringHit = "-";
-			HUDStringHit.AppendFormat("%d", HUDNumHitValue);
-			if (HUDNumHitValue > 0) DrawString(mConFont, HUDStringHit, (2, -56), DI_TEXT_ALIGN_LEFT, font.CR_Red, HUDHitAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			
+			[FontAlpha, FontScale, FontWrapWidth, FontLineSpace, APPulseScale, ValueAmt, ValueAmtS, HUDHitAlpha, HUDStringHit, HUDNumHitValue, SlashUnit] = DrawFSArmorDisplays(FontAlpha, FontScale, FontWrapWidth, FontLineSpace, APPulseScale, ValueAmt, ValueAmtS, HUDHitAlpha, HUDStringHit, HUDNumHitValue, SlashUnit);
 			
 			// Level / EXP
 			int Digits;
@@ -4529,7 +4563,9 @@ class DDStatusBarMain : BaseStatusBar
 
 				}
 			}
-
+			
+			//Lower Center 
+			//************
 			if (CPlayerPawn && !automapactive)
 			{
 				DigY = 0;
