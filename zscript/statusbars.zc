@@ -2331,15 +2331,898 @@ class DDStatusBarMain : BaseStatusBar
 		}
 	}
 	
-	void DrawFSHUDLowerLeft()
+	int, int, int, int, int, int, string, string DrawFSHUDWeaponSlots(int x, int y, int VisiblePlayerLevel, int CurrHealth, int PlayerMaxHP, int AmmoRatio, string wsname, string wsammoname)
 	{
-		int VisiblePlayerLevel = 0;
-		int VisiblePlayerATK = 0;
-		int VisiblePlayerDEF = 0;
-		int VisiblePlayerSPD = 0;
 		DDPlayerPawn CPlayerPawn;
 		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
 		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		let PlayerWeapon = MiscItem.weapon;
+		
+		//******************
+		//** weapon slots **
+		//******************
+		int wsspace = 14; // 14
+		double wsalpha = 0.667;
+		double wsalphadefault = 0.667;
+		double wsalphadefault2 = 1.00;
+		vector2 wsscale = (1.0, 1.0); // (1.0, 1.0)
+		vector2 wsscaledefault = (1.0, 1.0); // (1.0, 1.0)
+		vector2 wsscaledefault2 = (1.125, 1.125); // (1.0, 1.0)
+		int wsfontclr = font.cr_gray;
+		int startposx = -150; // -150
+		int startposy = ((wsspace * -2) - (wsspace * 0.1));
+		int wsflags = DI_TEXT_ALIGN_LEFT;
+		let wsweapon = PlayerWeapon;
+		int wsnum;
+		int baseinc = 1;
+		int weaponsincurslot;
+		int priority = 0;
+
+		x = startposx;
+		y = startposy;
+		// Slot 1
+		weaponsincurslot = 1;
+		wsname = "HandToHand";
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			int FlashTimer = level.time % 20;
+			double cost = A_GetIPCost(-1);
+			bool IPModeReady;
+			if (!ddafd_disableflowercrownip && exex_ikaripointsenabled && MiscItem.ItemPoints >= cost && VisiblePlayerLevel > 0 && MiscItem.TrueIPCooldownTimer <= 0 && MiscItem.TrueIPLevelGate <= 0) IPModeReady = true;
+
+			wsnum = 1;
+			wsfontclr = font.cr_gray;
+			if (IPModeReady && (FlashTimer >= 10 && FlashTimer <= 19)) wsfontclr = font.cr_fire;
+			
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		x += wsspace;
+		
+		// Slot 2
+		weaponsincurslot = 1;
+		if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
+		if (weaponsincurslot > 1)
+		{
+			baseinc = 2;
+			x -= baseinc;
+			y -= baseinc;
+		}
+		wsname = "CricketBat";
+		wsammoname = "MalletAmmo";
+		let ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 2;
+			if (wsweapon is wsname) 
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		if (weaponsincurslot > 1)
+		{
+			x += (baseinc * 2);
+			y += (baseinc * 2);
+			if (MiscItem.CompatPackMode & 8)
+			{
+				wsname = "GutFlingerNew";
+				wsammoname = "ClownSouls";
+			}
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
+			{
+				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 2;
+				if (wsweapon is wsname)
+				{
+					wsalpha = wsalphadefault2;
+					wsscale = wsscaledefault2;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+				wsalpha = wsalphadefault;
+				wsscale = wsscaledefault;
+			}
+			x -= baseinc;
+			y -= baseinc;
+		}
+		x += wsspace;
+		
+		// Slot 3
+		weaponsincurslot = 2;
+		baseinc = 2;
+		x -= baseinc;
+		y -= baseinc;
+		wsname = "BlunderAxe";
+		wsammoname = "BlunderAmmo";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 3;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		x += (baseinc * 2);
+		y += (baseinc * 2);
+		wsname = "Scrambler";
+		wsammoname = "EggAmmo";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 3;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		x -= baseinc;
+		y -= baseinc;
+
+		x += wsspace;
+		// Slot 4
+		weaponsincurslot = 1;
+		if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
+		if (weaponsincurslot > 1)
+		{
+			baseinc = 2;
+			x -= baseinc;
+			y -= baseinc;
+		}
+		wsname = "AppleJack";
+		wsammoname = "JackAmmo";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 4;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		if (weaponsincurslot > 1)
+		{
+			x += (baseinc * 2);
+			y += (baseinc * 2);
+			if (MiscItem.CompatPackMode & 8)
+			{
+				wsname = "GoreBalloonNew";
+				wsammoname = "GoreBalloons";
+			}
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
+			{
+				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 4;
+				if (wsweapon is wsname)
+				{
+					wsalpha = wsalphadefault2;
+					wsscale = wsscaledefault2;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+				wsalpha = wsalphadefault;
+				wsscale = wsscaledefault;
+			}
+			x -= baseinc;
+			y -= baseinc;
+		}
+
+		x += wsspace;
+		// Slot 5
+		weaponsincurslot = 1;
+		if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
+		if (weaponsincurslot > 1)
+		{
+			baseinc = 2;
+			x -= baseinc;
+			y -= baseinc;
+		}
+		wsname = "WizardPike";
+		wsammoname = "PikeAmmo";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 5;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		if (weaponsincurslot > 1)
+		{
+			x += (baseinc * 2);
+			y += (baseinc * 2);
+			if (MiscItem.CompatPackMode & 8)
+			{
+				wsname = "GasRocketLauncherNew";
+				wsammoname = "ClownSouls";
+			}
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
+			{
+				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 5;
+				if (wsweapon is wsname)
+				{
+					wsalpha = wsalphadefault2;
+					wsscale = wsscaledefault2;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+				wsalpha = wsalphadefault;
+				wsscale = wsscaledefault;
+			}
+			x -= baseinc;
+			y -= baseinc;
+		}
+		
+		// Starts a new row
+		x = startposx;
+		y += wsspace;
+		// Slot 6
+		weaponsincurslot = 1;
+		if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
+		if (weaponsincurslot > 1)
+		{
+			baseinc = 2;
+			x -= baseinc;
+			y -= baseinc;
+		}
+		wsname = "SuperVac";
+		wsammoname = "VacAmmo";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 6;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		if (weaponsincurslot > 1)
+		{
+			x += (baseinc * 2);
+			y += (baseinc * 2);
+			if (MiscItem.CompatPackMode & 8)
+			{
+				wsname = "ClownGrenadeNew";
+				wsammoname = "CGrenadeAmmo";
+			}
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
+			{
+				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 6;
+				if (wsweapon is wsname)
+				{
+					wsalpha = wsalphadefault2;
+					wsscale = wsscaledefault2;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+				wsalpha = wsalphadefault;
+				wsscale = wsscaledefault;
+			}
+			x -= baseinc;
+			y -= baseinc;
+		}
+
+		x += wsspace;
+		// Slot 7
+		weaponsincurslot = 1;
+		if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
+		if (weaponsincurslot > 1)
+		{
+			baseinc = 2;
+			x -= baseinc;
+			y -= baseinc;
+		}
+		wsname = "Grimophone";
+		wsammoname = "MusicAmmo";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 7;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		if (weaponsincurslot > 1)
+		{
+			x += (baseinc * 2);
+			y += (baseinc * 2);
+			if (MiscItem.CompatPackMode & 8)
+			{
+				wsname = "PopcornGunNew";
+				wsammoname = "PopcornPiece";
+			}
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
+			{
+				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+				else wsfontclr = font.cr_gray;
+
+				wsnum = 7;
+				if (wsweapon is wsname)
+				{
+					wsalpha = wsalphadefault2;
+					wsscale = wsscaledefault2;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+				wsalpha = wsalphadefault;
+				wsscale = wsscaledefault;
+			}
+			x -= baseinc;
+			y -= baseinc;
+		}
+
+		baseinc = 2;
+		x -= baseinc;
+		y -= baseinc;
+		x += wsspace;
+		// Slot 8
+		weaponsincurslot = 2;
+		wsname = "SigilDD";
+		wsammoname = "";
+		//ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = CurrHealth * 100 / PlayerMaxHP;
+			if (CurrHealth <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (AmmoRatio >= 100 && AmmoRatio <= 199) wsfontclr = font.cr_sapphire;
+			else if (AmmoRatio >= 200 && AmmoRatio <= 299) wsfontclr = font.cr_purple;
+			else if (AmmoRatio >= 300) wsfontclr = font.cr_gold;
+			else wsfontclr = font.cr_gray;
+			
+			wsnum = 8;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		x += (baseinc * 2);
+		y += (baseinc * 2);
+		wsname = "CandleWhip";
+		wsammoname = "CandleAmmo";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 8;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		x -= baseinc;
+		y -= baseinc;
+
+		baseinc = 2;
+		x -= baseinc;
+		y -= baseinc;
+		x += wsspace;
+		// Slot 9
+		weaponsincurslot = 2;
+		wsname = "CrazyBallDD";
+		wsammoname = "CzBall";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+			
+			wsnum = 9;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+
+		x += (baseinc * 2);
+		y += (baseinc * 2);
+		wsname = "EvilWarriorShield";
+		wsammoname = "PikeAmmo";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 9;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		x -= baseinc;
+		y -= baseinc;
+
+		x += wsspace;
+		wsname = "";
+		// Slot 0
+		weaponsincurslot = 1;
+		if (weaponsincurslot > 1)
+		{
+			baseinc = 2;
+			x -= baseinc;
+			y -= baseinc;
+		}
+		wsname = "FosnianCandle";
+		wsammoname = "FCandleAmmo";
+		ammotype = CPlayerPawn.FindInventory(wsammoname);
+		if (CPlayerPawn.CountInv(wsname))
+		{
+			AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
+			if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
+			else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
+			else wsfontclr = font.cr_gray;
+
+			wsnum = 0;
+			if (wsweapon is wsname)
+			{
+				wsalpha = wsalphadefault2;
+				wsscale = wsscaledefault2;
+			}
+			DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+			wsalpha = wsalphadefault;
+			wsscale = wsscaledefault;
+		}
+		
+		return x, y, VisiblePlayerLevel, CurrHealth, PlayerMaxHP, AmmoRatio, wsname, wsammoname;
+	}
+
+	int, int, int, int DrawFSHUDKeyLegend(int VisiblePlayerLevel, int candash, int dashcost, int dashmaxcharge)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		let PlayerWeapon = MiscItem.weapon;
+		
+		//**************
+		//* Key Legend *
+		//**************
+		if (dyduhud_keylegendspot >= 0)
+		{
+			int legendtimer;
+			int LX;
+			int LY;
+			int LYInc = 4; // 5
+			double LegendAlpha = 0.9;
+			vector2 LegendScale = (0.625, 0.625); // (0.75, 0.75);
+			int LegendFontCLR = font.cr_gray;
+			int LegendFlags = DI_TEXT_ALIGN_LEFT;
+			// Quick Kick Bind
+			string LegendStr = "";
+			LX = -296;
+			LY = -35;
+			if (dyduhud_keylegendspot >= 1)
+			{
+				LX = 2;
+				LY = 30;
+				LYInc = 6;
+				LegendScale = (0.875, 0.875);
+			}
+			bool cankick = true;
+			if (MiscItem) cankick = MiscItem.cankick;
+			if (PlayerWeapon is 'DinahWeapon' && cankick)
+			{
+				LY += LYInc;
+				string UserKeyString;
+				Array<String> UserKeys;
+				UserKeyString = UIKeybinds.getKeyboard("+user1");
+				if (UserKeyString != "")
+				{
+					UserKeyString.Split(UserKeys,", ");
+					if (UserKeys[0] == "Space") UserKeys[0] = "SBar";
+					if (UserKeys[0] == "CapsLock") UserKeys[0] = "CapsL";
+					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys[0]);
+				}
+				else 
+				{
+					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				LegendStr.AppendFormat(" = \c[blue]KICK\c-");
+				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
+			}
+			
+			// IP Mode Binds
+			if (exex_ikaripointsenabled)
+			{
+				LY += LYInc;
+				LegendStr = "";
+				string UserKeyString2;
+				Array<String> UserKeys2;
+				UserKeyString2 = UIKeybinds.getKeyboard("+use");
+				if (UserKeyString2 != "")
+				{
+					UserKeyString2.Split(UserKeys2,", ");
+					if (UserKeys2[0] == "Space") UserKeys2[0] = "SBar";
+					if (UserKeys2[0] == "CapsLock") UserKeys2[0] = "CapsL";
+					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys2[0]);
+				}
+				else
+				{
+					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				LegendStr.AppendFormat("+");
+				string UserKeyString3;
+				Array<String> UserKeys3;
+				UserKeyString3 = UIKeybinds.getKeyboard("+speed");
+				if (UserKeyString3 != "")
+				{
+					UserKeyString3.Split(UserKeys3,", ");
+					if (UserKeys3[0] == "Space") UserKeys3[0] = "SBar";
+					if (UserKeys3[0] == "CapsLock") UserKeys3[0] = "CapsL";
+					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys3[0]);
+				}
+				else
+				{
+					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				if (exex_ikaripointtechpresstype >= 1) 
+				{
+					if (MiscItem.IPUseMode) LegendStr.AppendFormat(" = \c[blue]IP OFF\c-");
+																					 else LegendStr.AppendFormat(" = \c[blue]IP ON\c-");
+					LegendStr.AppendFormat(" \c[blue][TAP]\c-");
+				}
+				else
+				{
+					LegendStr.AppendFormat(" = \c[blue]IP MODE\c-");
+					LegendStr.AppendFormat(" \c[blue][HOLD]\c-");
+				}
+				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
+			}
+			
+			// Dash
+			LegendStr = "";
+			string UserKeyString4;
+			Array<String> UserKeys4;
+			if (DashMaxCharge >= dashcost && candash)
+			{
+				LY += LYInc;
+				UserKeyString4 = UIKeybinds.getKeyboard("+user3");
+				if (UserKeyString4 != "")
+				{
+					UserKeyString4.Split(UserKeys4,", ");
+					if (UserKeys4[0] == "Space") UserKeys4[0] = "SBar";
+					if (UserKeys4[0] == "CapsLock") UserKeys4[0] = "CapsL";
+					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys4[0]);
+				}
+				else 
+				{
+					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				if (PlayerWeapon is "EvilWarriorShield" && CPlayerPawn.CountInv("EWShieldDefendMode")) LegendStr.AppendFormat(" = \c[gold]SHIELD DASH\c-");
+				else if (PlayerWeapon is "CricketBat" && CPlayerPawn.CountInv("IsInBatGuardFrame")) LegendStr.AppendFormat(" = \c[gold]CRICKET-BAT DASH\c-");
+																									 else LegendStr.AppendFormat(" = \c[blue]DASH\c-");
+				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
+			}
+			
+			// Weapon Specific Binds
+			let Sigl = SigilDD(PlayerWeapon);
+			LegendStr = "";
+			string UserKeyString5;
+			Array<String> UserKeys5;
+			if (PlayerWeapon is "HandToHand" || PlayerWeapon is "EvilWarriorShield" || PlayerWeapon is "FosnianCandle" || PlayerWeapon is "CricketBat" || (PlayerWeapon is "SigilDD" && Sigl && Sigl.health > 1))
+			{
+				LY += LYInc;
+				if (PlayerWeapon is "EvilWarriorShield") UserKeyString5 = UIKeybinds.getKeyboard("+altattack");
+				else UserKeyString5 = UIKeybinds.getKeyboard("+user4");
+				if (UserKeyString5 != "")
+				{
+					UserKeyString5.Split(UserKeys5,", ");
+					if (UserKeys5[0] == "Space") UserKeys5[0] = "SBar";
+					if (UserKeys5[0] == "CapsLock") UserKeys5[0] = "CapsL";
+					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys5[0]);
+				}
+				else 
+				{
+					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				if (PlayerWeapon is "EvilWarriorShield") 
+				{
+					if (exex_hwshieldaltfirekeytype)
+					{
+						if (MiscItem.owner.CountInv("EWShieldDefendMode")) LegendStr.AppendFormat(" = \c[blue]UN-SHIELD\c- \c[blue][TAP]\c-");
+																											else LegendStr.AppendFormat(" = \c[blue]SHIELD\c- \c[blue][TAP]\c-");
+					}
+					else
+					{
+						LegendStr.AppendFormat(" = \c[blue]SHIELD\c- \c[blue][HOLD]\c-");
+					}
+				}
+				else if (PlayerWeapon is "SigilDD" || PlayerWeapon is "FosnianCandle") LegendStr.AppendFormat(" = \c[blue]CHANGE MODE\c-");
+				else if (PlayerWeapon is "HandToHand") LegendStr.AppendFormat(" = \c[blue]GUARD MODE\c-");
+				else if (PlayerWeapon is "CricketBat") 
+				{
+					if (exex_cricketbatguardtype) 
+					{
+						if (CPlayerPawn.CountInv("IsInBatGuardFrame")) LegendStr.AppendFormat(" = \c[blue]UNPARRY\c-");
+																										 else LegendStr.AppendFormat(" = \c[blue]PARRY\c-");
+						LegendStr.AppendFormat(" \c[blue][TAP]\c-");
+					}
+					else
+					{
+						LegendStr.AppendFormat(" = \c[blue]PARRY\c-");
+						LegendStr.AppendFormat(" \c[blue][HOLD]\c-");
+					}
+				}
+				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
+			}
+			
+			LegendStr = "";
+			string UserKeyString6;
+			Array<String> UserKeys6;
+			string UserKeyString7;
+			Array<String> UserKeys7;
+			string UserKeyString8;
+			Array<String> UserKeys8;
+			if ((PlayerWeapon is "CricketBat" && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement)) ||
+					(PlayerWeapon is "Scrambler" && (MiscItem && VisiblePlayerLevel >= exex_scramblerelnomolvlreq)) ||
+					(PlayerWeapon is "WizardPike" && (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq)))
+			{
+				LY += LYInc;
+				UserKeyString6 = UIKeybinds.getKeyboard("+moveleft");
+				if (UserKeyString6 != "")
+				{
+					UserKeyString6.Split(UserKeys6,", ");
+					if (UserKeys6[0] == "Space") UserKeys6[0] = "SBar";
+					if (UserKeys6[0] == "CapsLock") UserKeys6[0] = "CapsL";
+					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys6[0]);
+				}
+				else 
+				{
+					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				LegendStr.AppendFormat("+");
+				UserKeyString7 = UIKeybinds.getKeyboard("+moveright");
+				if (UserKeyString7 != "")
+				{
+					UserKeyString7.Split(UserKeys7,", ");
+					if (UserKeys7[0] == "Space") UserKeys7[0] = "SBar";
+					if (UserKeys7[0] == "CapsLock") UserKeys7[0] = "CapsL";
+					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys7[0]);
+				}
+				else 
+				{
+					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				LegendStr.AppendFormat("+");
+				if (PlayerWeapon is "WizardPike" && (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq))
+				{
+					if (Level.time % 70 > 35) UserKeyString8 = UIKeybinds.getKeyboard("+altattack");
+					else UserKeyString8 = UIKeybinds.getKeyboard("+attack");
+				}
+				if (PlayerWeapon is "Scrambler" && (MiscItem && VisiblePlayerLevel >= exex_scramblerelnomolvlreq))
+				{
+					if (Level.time % 70 > 35) UserKeyString8 = UIKeybinds.getKeyboard("+altattack");
+					else UserKeyString8 = UIKeybinds.getKeyboard("+attack");
+				}
+				else UserKeyString8 = UIKeybinds.getKeyboard("+attack");
+				if (UserKeyString8 != "")
+				{
+					UserKeyString8.Split(UserKeys8,", ");
+					if (UserKeys8[0] == "Space") UserKeys8[0] = "SBar";
+					if (UserKeys8[0] == "CapsLock") UserKeys8[0] = "CapsL";
+					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys8[0]);
+				}
+				else 
+				{
+					LegendStr.AppendFormat("\c[red][unb]\c-");
+				}
+				if (PlayerWeapon is "WizardPike" && (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq)) LegendStr.AppendFormat(" = \c[blue]INVISO MODE\c-");
+				else if (PlayerWeapon is "Scrambler" && (MiscItem && VisiblePlayerLevel >= exex_scramblerelnomolvlreq)) LegendStr.AppendFormat(" = \c[green]COOK A EGG [HEALS]\c-");
+				else LegendStr.AppendFormat(" = \c[blue]SPIN ATTACK\c-");
+				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
+			}
+			
+			LegendStr = "";
+			string UserKeyString9;
+			Array<String> UserKeys9;
+			if (MiscItem && MiscItem.canuseflowercrown)
+			{
+				int FlashTimer = level.time % 10;
+				if (MiscItem.canuseflowercrown >= 2)
+				{
+					LY += LYInc;
+					if (MiscItem.TrueIPCooldownTimer > 0)
+					{
+						if (FlashTimer >= 0 && FlashTimer <= 4) LegendStr.AppendFormat("\c[red]ON COOLDOWN!\c- [%d SECS]", (MiscItem.TrueIPCooldownTimer / TICRATE));
+																							 else LegendStr.AppendFormat("\c[purple]ON COOLDOWN!\c- [%d SECS]", (MiscItem.TrueIPCooldownTimer / TICRATE));
+					}
+					else
+					{
+						if (MiscItem.TrueIPLevelGate <= 0)
+						{
+							UserKeyString9 = UIKeybinds.getKeyboard("+zoom");
+							if (UserKeyString9 != "")
+							{
+								UserKeyString9.Split(UserKeys9,", ");
+								if (UserKeys9[0] == "Space") UserKeys9[0] = "SBar";
+								if (UserKeys9[0] == "CapsLock") UserKeys9[0] = "CapsL";
+								if (FlashTimer >= 0 && FlashTimer <= 4) LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys9[0]);
+																									 else LegendStr.AppendFormat("\c[sapphire]%s\c-", UserKeys9[0]);
+							}
+							else 
+							{
+								LegendStr.AppendFormat("\c[red][unb]\c-");
+							}
+							if (FlashTimer >= 0 && FlashTimer <= 4) LegendStr.AppendFormat(" = \c[gold]FLOWER CROWN IP\c-");
+																								 else LegendStr.AppendFormat(" = \c[sapphire]FLOWER CROWN IP\c-");
+						}
+						else
+						{
+							if (FlashTimer >= 0 && FlashTimer <= 4) LegendStr.AppendFormat("\c[red]GAIN %d LEVELS TO USE AGAIN!\c-", MiscItem.TrueIPLevelGate);
+																								 else LegendStr.AppendFormat("\c[purple]GAIN %d LEVELS TO USE AGAIN!", MiscItem.TrueIPLevelGate);
+						}
+					}
+					if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
+				}
+			}
+		}
+		
+		return VisiblePlayerLevel, candash, dashcost, dashmaxcharge;
 	}
 
 	void DrawFSHUDLowerRight()
@@ -2607,6 +3490,7 @@ class DDStatusBarMain : BaseStatusBar
 					}
 				}
 			}
+
 			int DigX, DigY, Spacing;
 			int CurrHealth = CPlayerPawn.health;
 			int MaxHealthTrue = MiscItem.MaxHealthTrue;
@@ -2657,883 +3541,17 @@ class DDStatusBarMain : BaseStatusBar
 			
 			
 			// Lower Right
-			//**************
-			//* Key Legend *
-			//**************
-			int legendtimer;
-			int LX;
-			int LY;
-			int LYInc = 4; // 5
-			double LegendAlpha = 0.9;
-			vector2 LegendScale = (0.625, 0.625); // (0.75, 0.75);
-			int LegendFontCLR = font.cr_gray;
-			int LegendFlags = DI_TEXT_ALIGN_LEFT;
-			// Quick Kick Bind
-			string LegendStr = "";
-			LX = -296;
-			LY = -35;
-			/*
-			if (exex_hudkeylegendspot == 1) 
-			{
-				LX = 2;
-				LY = 30;
-				LYInc = 6;
-				LegendScale = (0.875, 0.875);
-			}
-			*/
-			bool cankick = true;
-			if (MiscItem) cankick = MiscItem.cankick;
-			if (PlayerWeapon is 'DinahWeapon' && cankick)
-			{
-				LY += LYInc;
-				string UserKeyString;
-				Array<String> UserKeys;
-				UserKeyString = UIKeybinds.getKeyboard("+user1");
-				if (UserKeyString != "")
-				{
-					UserKeyString.Split(UserKeys,", ");
-					if (UserKeys[0] == "Space") UserKeys[0] = "SBar";
-					if (UserKeys[0] == "CapsLock") UserKeys[0] = "CapsL";
-					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys[0]);
-				}
-				else 
-				{
-					LegendStr.AppendFormat("\c[red][unb]\c-");
-				}
-				LegendStr.AppendFormat(" = \c[blue]KICK\c-");
-				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
-			}
-			
-			// IP Mode Binds
-			if (exex_ikaripointsenabled)
-			{
-				LY += LYInc;
-				LegendStr = "";
-				string UserKeyString2;
-				Array<String> UserKeys2;
-				UserKeyString2 = UIKeybinds.getKeyboard("+use");
-				if (UserKeyString2 != "")
-				{
-					UserKeyString2.Split(UserKeys2,", ");
-					if (UserKeys2[0] == "Space") UserKeys2[0] = "SBar";
-					if (UserKeys2[0] == "CapsLock") UserKeys2[0] = "CapsL";
-					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys2[0]);
-				}
-				else
-				{
-					LegendStr.AppendFormat("\c[red][unb]\c-");
-				}
-				LegendStr.AppendFormat("+");
-				string UserKeyString3;
-				Array<String> UserKeys3;
-				UserKeyString3 = UIKeybinds.getKeyboard("+speed");
-				if (UserKeyString3 != "")
-				{
-					UserKeyString3.Split(UserKeys3,", ");
-					if (UserKeys3[0] == "Space") UserKeys3[0] = "SBar";
-					if (UserKeys3[0] == "CapsLock") UserKeys3[0] = "CapsL";
-					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys3[0]);
-				}
-				else
-				{
-					LegendStr.AppendFormat("\c[red][unb]\c-");
-				}
-				if (exex_ikaripointtechpresstype >= 1) 
-				{
-					if (MiscItem.IPUseMode) LegendStr.AppendFormat(" = \c[blue]IP OFF\c-");
-																					 else LegendStr.AppendFormat(" = \c[blue]IP ON\c-");
-					LegendStr.AppendFormat(" \c[blue][TAP]\c-");
-				}
-				else
-				{
-					LegendStr.AppendFormat(" = \c[blue]IP MODE\c-");
-					LegendStr.AppendFormat(" \c[blue][HOLD]\c-");
-				}
-				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
-			}
-			
-			// Dash
-			LegendStr = "";
-			string UserKeyString4;
-			Array<String> UserKeys4;
-			if (DashMaxCharge >= dashcost && candash)
-			{
-				LY += LYInc;
-				UserKeyString4 = UIKeybinds.getKeyboard("+user3");
-				if (UserKeyString4 != "")
-				{
-					UserKeyString4.Split(UserKeys4,", ");
-					if (UserKeys4[0] == "Space") UserKeys4[0] = "SBar";
-					if (UserKeys4[0] == "CapsLock") UserKeys4[0] = "CapsL";
-					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys4[0]);
-				}
-				else 
-				{
-					LegendStr.AppendFormat("\c[red][unb]\c-");
-				}
-				if (PlayerWeapon is "EvilWarriorShield" && CPlayerPawn.CountInv("EWShieldDefendMode")) LegendStr.AppendFormat(" = \c[gold]SHIELD DASH\c-");
-				else if (PlayerWeapon is "CricketBat" && CPlayerPawn.CountInv("IsInBatGuardFrame")) LegendStr.AppendFormat(" = \c[gold]CRICKET-BAT DASH\c-");
-																									 else LegendStr.AppendFormat(" = \c[blue]DASH\c-");
-				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
-			}
-			
-			// Weapon Specific Binds
-			let Sigl = SigilDD(PlayerWeapon);
-			LegendStr = "";
-			string UserKeyString5;
-			Array<String> UserKeys5;
-			if (PlayerWeapon is "HandToHand" || PlayerWeapon is "EvilWarriorShield" || PlayerWeapon is "FosnianCandle" || PlayerWeapon is "CricketBat" || (PlayerWeapon is "SigilDD" && Sigl && Sigl.health > 1))
-			{
-				LY += LYInc;
-				if (PlayerWeapon is "EvilWarriorShield") UserKeyString5 = UIKeybinds.getKeyboard("+altattack");
-				else UserKeyString5 = UIKeybinds.getKeyboard("+user4");
-				if (UserKeyString5 != "")
-				{
-					UserKeyString5.Split(UserKeys5,", ");
-					if (UserKeys5[0] == "Space") UserKeys5[0] = "SBar";
-					if (UserKeys5[0] == "CapsLock") UserKeys5[0] = "CapsL";
-					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys5[0]);
-				}
-				else 
-				{
-					LegendStr.AppendFormat("\c[red][unb]\c-");
-				}
-				if (PlayerWeapon is "EvilWarriorShield") 
-				{
-					if (exex_hwshieldaltfirekeytype)
-					{
-						if (MiscItem.owner.CountInv("EWShieldDefendMode")) LegendStr.AppendFormat(" = \c[blue]UN-SHIELD\c- \c[blue][TAP]\c-");
-																											else LegendStr.AppendFormat(" = \c[blue]SHIELD\c- \c[blue][TAP]\c-");
-					}
-					else
-					{
-						LegendStr.AppendFormat(" = \c[blue]SHIELD\c- \c[blue][HOLD]\c-");
-					}
-				}
-				else if (PlayerWeapon is "SigilDD" || PlayerWeapon is "FosnianCandle") LegendStr.AppendFormat(" = \c[blue]CHANGE MODE\c-");
-				else if (PlayerWeapon is "HandToHand") LegendStr.AppendFormat(" = \c[blue]GUARD MODE\c-");
-				else if (PlayerWeapon is "CricketBat") 
-				{
-					if (exex_cricketbatguardtype) 
-					{
-						if (CPlayerPawn.CountInv("IsInBatGuardFrame")) LegendStr.AppendFormat(" = \c[blue]UNPARRY\c-");
-																										 else LegendStr.AppendFormat(" = \c[blue]PARRY\c-");
-						LegendStr.AppendFormat(" \c[blue][TAP]\c-");
-					}
-					else
-					{
-						LegendStr.AppendFormat(" = \c[blue]PARRY\c-");
-						LegendStr.AppendFormat(" \c[blue][HOLD]\c-");
-					}
-				}
-				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
-			}
-			
-			LegendStr = "";
-			string UserKeyString6;
-			Array<String> UserKeys6;
-			string UserKeyString7;
-			Array<String> UserKeys7;
-			string UserKeyString8;
-			Array<String> UserKeys8;
-			if ((PlayerWeapon is "CricketBat" && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement)) ||
-					(PlayerWeapon is "Scrambler" && (MiscItem && VisiblePlayerLevel >= exex_scramblerelnomolvlreq)) ||
-					(PlayerWeapon is "WizardPike" && (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq)))
-			{
-				LY += LYInc;
-				UserKeyString6 = UIKeybinds.getKeyboard("+moveleft");
-				if (UserKeyString6 != "")
-				{
-					UserKeyString6.Split(UserKeys6,", ");
-					if (UserKeys6[0] == "Space") UserKeys6[0] = "SBar";
-					if (UserKeys6[0] == "CapsLock") UserKeys6[0] = "CapsL";
-					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys6[0]);
-				}
-				else 
-				{
-					LegendStr.AppendFormat("\c[red][unb]\c-");
-				}
-				LegendStr.AppendFormat("+");
-				UserKeyString7 = UIKeybinds.getKeyboard("+moveright");
-				if (UserKeyString7 != "")
-				{
-					UserKeyString7.Split(UserKeys7,", ");
-					if (UserKeys7[0] == "Space") UserKeys7[0] = "SBar";
-					if (UserKeys7[0] == "CapsLock") UserKeys7[0] = "CapsL";
-					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys7[0]);
-				}
-				else 
-				{
-					LegendStr.AppendFormat("\c[red][unb]\c-");
-				}
-				LegendStr.AppendFormat("+");
-				if (PlayerWeapon is "WizardPike" && (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq))
-				{
-					if (Level.time % 70 > 35) UserKeyString8 = UIKeybinds.getKeyboard("+altattack");
-					else UserKeyString8 = UIKeybinds.getKeyboard("+attack");
-				}
-				if (PlayerWeapon is "Scrambler" && (MiscItem && VisiblePlayerLevel >= exex_scramblerelnomolvlreq))
-				{
-					if (Level.time % 70 > 35) UserKeyString8 = UIKeybinds.getKeyboard("+altattack");
-					else UserKeyString8 = UIKeybinds.getKeyboard("+attack");
-				}
-				else UserKeyString8 = UIKeybinds.getKeyboard("+attack");
-				if (UserKeyString8 != "")
-				{
-					UserKeyString8.Split(UserKeys8,", ");
-					if (UserKeys8[0] == "Space") UserKeys8[0] = "SBar";
-					if (UserKeys8[0] == "CapsLock") UserKeys8[0] = "CapsL";
-					LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys8[0]);
-				}
-				else 
-				{
-					LegendStr.AppendFormat("\c[red][unb]\c-");
-				}
-				if (PlayerWeapon is "WizardPike" && (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq)) LegendStr.AppendFormat(" = \c[blue]INVISO MODE\c-");
-				else if (PlayerWeapon is "Scrambler" && (MiscItem && VisiblePlayerLevel >= exex_scramblerelnomolvlreq)) LegendStr.AppendFormat(" = \c[green]COOK A EGG [HEALS]\c-");
-				else LegendStr.AppendFormat(" = \c[blue]SPIN ATTACK\c-");
-				if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
-			}
-			
-			LegendStr = "";
-			string UserKeyString9;
-			Array<String> UserKeys9;
-			if (MiscItem && MiscItem.canuseflowercrown)
-			{
-				int FlashTimer = level.time % 10;
-				if (MiscItem.canuseflowercrown >= 2)
-				{
-					LY += LYInc;
-					if (MiscItem.TrueIPCooldownTimer > 0)
-					{
-						if (FlashTimer >= 0 && FlashTimer <= 4) LegendStr.AppendFormat("\c[red]ON COOLDOWN!\c- [%d SECS]", (MiscItem.TrueIPCooldownTimer / TICRATE));
-																							 else LegendStr.AppendFormat("\c[purple]ON COOLDOWN!\c- [%d SECS]", (MiscItem.TrueIPCooldownTimer / TICRATE));
-					}
-					else
-					{
-						if (MiscItem.TrueIPLevelGate <= 0)
-						{
-							UserKeyString9 = UIKeybinds.getKeyboard("+zoom");
-							if (UserKeyString9 != "")
-							{
-								UserKeyString9.Split(UserKeys9,", ");
-								if (UserKeys9[0] == "Space") UserKeys9[0] = "SBar";
-								if (UserKeys9[0] == "CapsLock") UserKeys9[0] = "CapsL";
-								if (FlashTimer >= 0 && FlashTimer <= 4) LegendStr.AppendFormat("\c[gold]%s\c-", UserKeys9[0]);
-																									 else LegendStr.AppendFormat("\c[sapphire]%s\c-", UserKeys9[0]);
-							}
-							else 
-							{
-								LegendStr.AppendFormat("\c[red][unb]\c-");
-							}
-							if (FlashTimer >= 0 && FlashTimer <= 4) LegendStr.AppendFormat(" = \c[gold]FLOWER CROWN IP\c-");
-																								 else LegendStr.AppendFormat(" = \c[sapphire]FLOWER CROWN IP\c-");
-						}
-						else
-						{
-							if (FlashTimer >= 0 && FlashTimer <= 4) LegendStr.AppendFormat("\c[red]GAIN %d LEVELS TO USE AGAIN!\c-", MiscItem.TrueIPLevelGate);
-																								 else LegendStr.AppendFormat("\c[purple]GAIN %d LEVELS TO USE AGAIN!", MiscItem.TrueIPLevelGate);
-						}
-					}
-					if (LegendStr != "") DrawString(mConFont, LegendStr, (LX, LY), LegendFlags, LegendFontCLR, LegendAlpha, -1, 4, LegendScale);
-				}
-			}
+			//Key Legend
+			[VisiblePlayerLevel, candash, dashcost, dashmaxcharge] = DrawFSHUDKeyLegend(VisiblePlayerLevel, candash, dashcost, dashmaxcharge);
 
-			//******************
-			//** weapon slots **
-			//******************
+			// Weapon Slots
 			int x;
 			int y;
-			int wsspace = 14; // 14
-			double wsalpha = 0.667;
-			double wsalphadefault = 0.667;
-			double wsalphadefault2 = 1.00;
-			vector2 wsscale = (1.0, 1.0); // (1.0, 1.0)
-			vector2 wsscaledefault = (1.0, 1.0); // (1.0, 1.0)
-			vector2 wsscaledefault2 = (1.125, 1.125); // (1.0, 1.0)
-			int wsfontclr = font.cr_gray;
-			int startposx = -150; // -150
-			int startposy = ((wsspace * -2) - (wsspace * 0.1));
-			int wsflags = DI_TEXT_ALIGN_LEFT;
-			let wsweapon = PlayerWeapon;
 			string wsname;
 			string wsammoname;
-			int wsnum;
 			int AmmoRatio;
-			int baseinc = 1;
-			int weaponsincurslot;
-			int priority = 0;
-
-			x = startposx;
-			y = startposy;
-			// Slot 1
-			weaponsincurslot = 1;
-			wsname = "HandToHand";
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				int FlashTimer = level.time % 20;
-				double cost = A_GetIPCost(-1);
-				bool IPModeReady;
-				if (!ddafd_disableflowercrownip && exex_ikaripointsenabled && MiscItem.ItemPoints >= cost && VisiblePlayerLevel > 0 && MiscItem.TrueIPCooldownTimer <= 0 && MiscItem.TrueIPLevelGate <= 0) IPModeReady = true;
-
-				wsnum = 1;
-				wsfontclr = font.cr_gray;
-				if (IPModeReady && (FlashTimer >= 10 && FlashTimer <= 19)) wsfontclr = font.cr_fire;
-				
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			x += wsspace;
-			
-			// Slot 2
-			weaponsincurslot = 1;
-			if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
-			if (weaponsincurslot > 1)
-			{
-				baseinc = 2;
-				x -= baseinc;
-				y -= baseinc;
-			}
-			wsname = "CricketBat";
-			wsammoname = "MalletAmmo";
+			[x, y, VisiblePlayerLevel, CurrHealth, PlayerMaxHP, AmmoRatio, wsname, wsammoname] = DrawFSHUDWeaponSlots(x, y, VisiblePlayerLevel, CurrHealth, PlayerMaxHP, AmmoRatio, wsname, wsammoname);
 			let ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 2;
-				if (wsweapon is wsname) 
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			if (weaponsincurslot > 1)
-			{
-				x += (baseinc * 2);
-				y += (baseinc * 2);
-				if (MiscItem.CompatPackMode & 8)
-				{
-					wsname = "GutFlingerNew";
-					wsammoname = "ClownSouls";
-				}
-				ammotype = CPlayerPawn.FindInventory(wsammoname);
-				if (CPlayerPawn.CountInv(wsname))
-				{
-					AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-					if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-					else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-					else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-					else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-					else wsfontclr = font.cr_gray;
-	
-					wsnum = 2;
-					if (wsweapon is wsname)
-					{
-						wsalpha = wsalphadefault2;
-						wsscale = wsscaledefault2;
-					}
-					DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-					wsalpha = wsalphadefault;
-					wsscale = wsscaledefault;
-				}
-				x -= baseinc;
-				y -= baseinc;
-			}
-			x += wsspace;
-			
-			// Slot 3
-			weaponsincurslot = 2;
-			baseinc = 2;
-			x -= baseinc;
-			y -= baseinc;
-			wsname = "BlunderAxe";
-			wsammoname = "BlunderAmmo";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 3;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			x += (baseinc * 2);
-			y += (baseinc * 2);
-			wsname = "Scrambler";
-			wsammoname = "EggAmmo";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 3;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			x -= baseinc;
-			y -= baseinc;
-
-			x += wsspace;
-			// Slot 4
-			weaponsincurslot = 1;
-			if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
-			if (weaponsincurslot > 1)
-			{
-				baseinc = 2;
-				x -= baseinc;
-				y -= baseinc;
-			}
-			wsname = "AppleJack";
-			wsammoname = "JackAmmo";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 4;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			if (weaponsincurslot > 1)
-			{
-				x += (baseinc * 2);
-				y += (baseinc * 2);
-				if (MiscItem.CompatPackMode & 8)
-				{
-					wsname = "GoreBalloonNew";
-					wsammoname = "GoreBalloons";
-				}
-				ammotype = CPlayerPawn.FindInventory(wsammoname);
-				if (CPlayerPawn.CountInv(wsname))
-				{
-					AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-					if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-					else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-					else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-					else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-					else wsfontclr = font.cr_gray;
-	
-					wsnum = 4;
-					if (wsweapon is wsname)
-					{
-						wsalpha = wsalphadefault2;
-						wsscale = wsscaledefault2;
-					}
-					DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-					wsalpha = wsalphadefault;
-					wsscale = wsscaledefault;
-				}
-				x -= baseinc;
-				y -= baseinc;
-			}
-
-			x += wsspace;
-			// Slot 5
-			weaponsincurslot = 1;
-			if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
-			if (weaponsincurslot > 1)
-			{
-				baseinc = 2;
-				x -= baseinc;
-				y -= baseinc;
-			}
-			wsname = "WizardPike";
-			wsammoname = "PikeAmmo";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 5;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			if (weaponsincurslot > 1)
-			{
-				x += (baseinc * 2);
-				y += (baseinc * 2);
-				if (MiscItem.CompatPackMode & 8)
-				{
-					wsname = "GasRocketLauncherNew";
-					wsammoname = "ClownSouls";
-				}
-				ammotype = CPlayerPawn.FindInventory(wsammoname);
-				if (CPlayerPawn.CountInv(wsname))
-				{
-					AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-					if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-					else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-					else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-					else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-					else wsfontclr = font.cr_gray;
-	
-					wsnum = 5;
-					if (wsweapon is wsname)
-					{
-						wsalpha = wsalphadefault2;
-						wsscale = wsscaledefault2;
-					}
-					DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-					wsalpha = wsalphadefault;
-					wsscale = wsscaledefault;
-				}
-				x -= baseinc;
-				y -= baseinc;
-			}
-			
-			// Starts a new row
-			x = startposx;
-			y += wsspace;
-			// Slot 6
-			weaponsincurslot = 1;
-			if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
-			if (weaponsincurslot > 1)
-			{
-				baseinc = 2;
-				x -= baseinc;
-				y -= baseinc;
-			}
-			wsname = "SuperVac";
-			wsammoname = "VacAmmo";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 6;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			if (weaponsincurslot > 1)
-			{
-				x += (baseinc * 2);
-				y += (baseinc * 2);
-				if (MiscItem.CompatPackMode & 8)
-				{
-					wsname = "ClownGrenadeNew";
-					wsammoname = "CGrenadeAmmo";
-				}
-				ammotype = CPlayerPawn.FindInventory(wsammoname);
-				if (CPlayerPawn.CountInv(wsname))
-				{
-					AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-					if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-					else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-					else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-					else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-					else wsfontclr = font.cr_gray;
-	
-					wsnum = 6;
-					if (wsweapon is wsname)
-					{
-						wsalpha = wsalphadefault2;
-						wsscale = wsscaledefault2;
-					}
-					DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-					wsalpha = wsalphadefault;
-					wsscale = wsscaledefault;
-				}
-				x -= baseinc;
-				y -= baseinc;
-			}
-
-			x += wsspace;
-			// Slot 7
-			weaponsincurslot = 1;
-			if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
-			if (weaponsincurslot > 1)
-			{
-				baseinc = 2;
-				x -= baseinc;
-				y -= baseinc;
-			}
-			wsname = "Grimophone";
-			wsammoname = "MusicAmmo";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 7;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			if (weaponsincurslot > 1)
-			{
-				x += (baseinc * 2);
-				y += (baseinc * 2);
-				if (MiscItem.CompatPackMode & 8)
-				{
-					wsname = "PopcornGunNew";
-					wsammoname = "PopcornPiece";
-				}
-				ammotype = CPlayerPawn.FindInventory(wsammoname);
-				if (CPlayerPawn.CountInv(wsname))
-				{
-					AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-					if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-					else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-					else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-					else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-					else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-					else wsfontclr = font.cr_gray;
-	
-					wsnum = 7;
-					if (wsweapon is wsname)
-					{
-						wsalpha = wsalphadefault2;
-						wsscale = wsscaledefault2;
-					}
-					DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-					wsalpha = wsalphadefault;
-					wsscale = wsscaledefault;
-				}
-				x -= baseinc;
-				y -= baseinc;
-			}
-
-			baseinc = 2;
-			x -= baseinc;
-			y -= baseinc;
-			x += wsspace;
-			// Slot 8
-			weaponsincurslot = 2;
-			wsname = "SigilDD";
-			wsammoname = "";
-			//ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = CurrHealth * 100 / PlayerMaxHP;
-				if (CurrHealth <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (AmmoRatio >= 100 && AmmoRatio <= 199) wsfontclr = font.cr_sapphire;
-				else if (AmmoRatio >= 200 && AmmoRatio <= 299) wsfontclr = font.cr_purple;
-				else if (AmmoRatio >= 300) wsfontclr = font.cr_gold;
-				else wsfontclr = font.cr_gray;
-				
-				wsnum = 8;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			x += (baseinc * 2);
-			y += (baseinc * 2);
-			wsname = "CandleWhip";
-			wsammoname = "CandleAmmo";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 8;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			x -= baseinc;
-			y -= baseinc;
-
-			baseinc = 2;
-			x -= baseinc;
-			y -= baseinc;
-			x += wsspace;
-			// Slot 9
-			weaponsincurslot = 2;
-			wsname = "CrazyBallDD";
-			wsammoname = "CzBall";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-				
-				wsnum = 9;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-
-			x += (baseinc * 2);
-			y += (baseinc * 2);
-			wsname = "EvilWarriorShield";
-			wsammoname = "PikeAmmo";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 9;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
-			x -= baseinc;
-			y -= baseinc;
-
-			x += wsspace;
-			wsname = "";
-			// Slot 0
-			weaponsincurslot = 1;
-			if (weaponsincurslot > 1)
-			{
-				baseinc = 2;
-				x -= baseinc;
-				y -= baseinc;
-			}
-			wsname = "FosnianCandle";
-			wsammoname = "FCandleAmmo";
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				AmmoRatio = ammotype.Amount * 100 / ammotype.MaxAmount;
-				if (ammotype.Amount <= 0) wsfontclr = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) wsfontclr = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) wsfontclr = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) wsfontclr = font.cr_darkgreen;
-				else if (ammotype.Amount >= ammotype.MaxAmount) wsfontclr = font.cr_sapphire;
-				else wsfontclr = font.cr_gray;
-
-				wsnum = 0;
-				if (wsweapon is wsname)
-				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
-				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
-			}
 			
 			//ammo
 			Ammo ammo1, ammo2;
