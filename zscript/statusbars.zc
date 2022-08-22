@@ -2932,6 +2932,1321 @@ class DDStatusBarMain : BaseStatusBar
 		return x, y, VisiblePlayerLevel, CurrHealth, PlayerMaxHP, AmmoRatio, wsname, wsammoname;
 	}
 
+	textureid, int, int, int, double, int, int, Vector2, int, string, int, int DrawFSHUDAmmoStuff(textureid dun, int x, int y, int VisiblePlayerLevel, double FontAlpha, int FontWrapWidth, int FontLineSpace, Vector2 FontScale, int AmmoRatio, string wsammoname, int CurrHealth, int PlayerMaxHP)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		let PlayerWeapon = MiscItem.weapon;
+		let ammotype = CPlayerPawn.FindInventory(wsammoname);
+		name armorclasstype = "KGArmor";
+		let armor = KGArmor(CPlayerPawn.FindInventory(armorclasstype));
+		
+		Ammo ammo1, ammo2;
+		[ammo1, ammo2] = GetCurrentAmmo();
+		x = -4;
+		y = -22;
+		int barx = -42;
+		int bary = -48;
+		if (ammo1 != null)
+		{
+			if (PlayerWeapon is "EvilWarriorShield")
+			{
+				int shieldenergy;
+				int shieldenergymax = 1000;
+				int shieldenergypercent;
+				double shieldmeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
+				if (shieldmeterlength > 1.5) shieldmeterlength = 1.5;
+				dun = TexMan.CheckForTexture("SHLDUNIT", TexMan.TYPE_MiscPatch);
+				let EWS = EvilWarriorShield(CPlayerPawn.FindInventory("EvilWarriorShield"));
+				if (EWS && MiscItem)
+				{
+					shieldenergy = EWS.shieldenergy;
+					shieldenergymax = MiscItem.HellWarriorMaxCharge;
+				}
+				if (shieldenergymax)
+				{
+					shieldenergypercent = shieldenergy * 100 / shieldenergymax;
+					int shieldbarunits = shieldenergypercent * shieldmeterlength;
+					for (int i; i < (100 * shieldmeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (barx+i, bary), 0, HX_SHADOW);
+					for (int i; i < shieldbarunits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+				}
+				
+				int upgrades = MiscItem.HellWarriorShieldLevel;
+				if (upgrades)
+				{
+					int jx, jy;
+					jx = -50;
+					jy = bary + -40;
+					textureid blimg = TexMan.CheckForTexture("WIEVWASH", TexMan.TYPE_MiscPatch);
+					DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.25, 0.25)); // 51, -3
+					jx += 48;
+					jy += 8;
+					DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				}
+			}
+			if (PlayerWeapon is "Grimophone")
+			{
+				int recordenergy;
+				int recordenergymax = 42;
+				if (CPlayerPawn.CountInv("GrimophoneUpgrade") <= 0) recordenergymax = 42;
+				if (CPlayerPawn.CountInv("GrimophoneUpgrade") == 1) recordenergymax = 44;
+				if (CPlayerPawn.CountInv("GrimophoneUpgrade") == 2) recordenergymax = 46;
+				if (CPlayerPawn.CountInv("GrimophoneUpgrade") >= 3) recordenergymax = 48;
+				int recordpercent;
+				double recordmeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
+				if (recordmeterlength > 1.5) recordmeterlength = 1.5;
+				dun = TexMan.CheckForTexture("GRIMUNIT", TexMan.TYPE_MiscPatch);
+				let Grim = Grimophone(CPlayerPawn.FindInventory("Grimophone"));
+				if (Grim) recordenergy = Grim.recordenergy;
+				if (recordenergymax && (MiscItem && MiscItem.grimophonealt)) 
+				{
+					recordpercent = recordenergy * 100 / recordenergymax;
+					int recordbarunits = recordpercent * recordmeterlength;
+					for (int i; i < (100 * recordmeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (barx+i, bary), 0, HX_SHADOW);
+					for (int i; i < recordbarunits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+				}
+
+				int upgrades = CPlayerPawn.CountInv("GrimophoneUpgrade");
+				if (upgrades)
+				{
+					int jx, jy;
+					jx = -22;
+					jy = bary + 6;
+					textureid blimg = TexMan.CheckForTexture("GMCPA0", TexMan.TYPE_MiscPatch);
+					if (upgrades == 2) blimg = TexMan.CheckForTexture("GMCPG0", TexMan.TYPE_MiscPatch);
+					if (upgrades >= 3) blimg = TexMan.CheckForTexture("GMCPH0", TexMan.TYPE_MiscPatch);
+					DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
+					jx += 19;
+					jy -= 32;
+					DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				}
+			}
+			if (PlayerWeapon is "SuperVac")
+			{
+				int VacBagUnits = CPlayerPawn.CountInv("VacAmmoCounter");
+				int VacBagPercent;
+				double VacBagMeterLength = 0.4; // 0.2 vertical, 0.4 horizontal
+				if (VacBagMeterLength > 1.5) VacBagMeterLength = 1.5;
+				dun = TexMan.CheckForTexture("VBAGUNIT", TexMan.TYPE_MiscPatch);
+				int revbagunits = 100;
+
+				wsammoname = "VacAmmo";
+				ammotype = CPlayerPawn.FindInventory(wsammoname);
+				if (ammotype.Amount >= ammotype.MaxAmount) 
+				{
+					DrawString(mConFont, "FULL!", (barx+21, bary-8), DI_TEXT_ALIGN_CENTER, font.cr_sapphire); // -46, -1
+				}
+				else
+				{
+					if (MiscItem && MiscItem.SuperVacBagSize)
+					{
+						VacBagPercent = VacBagUnits * 100 / MiscItem.SuperVacBagSize;
+						int VacBagBarUnits = VacBagPercent * VacBagMeterLength;
+						revbagunits -= VacBagBarUnits;
+						if (revbagunits < 0) revbagunits = 0;
+						if (revbagunits >= 100) revbagunits = 100;
+						for (int i; i < (100 * VacBagMeterLength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (barx+i, bary), 0, HX_SHADOW);
+						for (int i; i < VacBagBarUnits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+					}
+				}
+			}
+			if (PlayerWeapon is "BlunderAxe")
+			{
+				int jx, jy;
+				jx = -30;
+				jy = -76;
+				if (MiscItem && VisiblePlayerLevel >= exex_axecombolvlrequirement)
+				{
+					textureid blimg = TexMan.CheckForTexture("BLUNQKST", TexMan.TYPE_MiscPatch);
+					if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 1.0)) blimg = TexMan.CheckForTexture("BLUNQKS1", TexMan.TYPE_MiscPatch);
+					if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 1.4)) blimg = TexMan.CheckForTexture("BLUNQKS2", TexMan.TYPE_MiscPatch);
+					if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 2.0)) blimg = TexMan.CheckForTexture("BLUNQKS3", TexMan.TYPE_MiscPatch);
+					if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 3.0)) blimg = TexMan.CheckForTexture("BLUNQKS4", TexMan.TYPE_MiscPatch);
+					if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 4.5)) blimg = TexMan.CheckForTexture("BLUNQKS5", TexMan.TYPE_MiscPatch);
+					if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 6.5)) blimg = TexMan.CheckForTexture("BLUNQKS6", TexMan.TYPE_MiscPatch);
+					if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 9.0)) blimg = TexMan.CheckForTexture("BLUNQKS7", TexMan.TYPE_MiscPatch);
+					if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 12.0)) blimg = TexMan.CheckForTexture("BLUNQKS8", TexMan.TYPE_MiscPatch);
+					DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
+				}
+				int upgrades = CPlayerPawn.CountInv("BlunderShotUpgrade");
+				if (upgrades)
+				{
+					jx = -22;
+					jy = -40;
+					if (MiscItem && VisiblePlayerLevel >= exex_axecombolvlrequirement) 
+					{
+						jy -= 31;
+					}
+					DrawTexture(TexMan.CheckForTexture("BSHMA0", TexMan.TYPE_MiscPatch), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
+					jx += 19;
+					jy -= 24;
+					DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				}
+			}
+			if (PlayerWeapon is "AppleJack")
+			{
+				int jx, jy;
+				jx = -30;
+				jy = -76;
+				if (MiscItem && VisiblePlayerLevel >= exex_jackcrisislvlrequirement)
+				{
+					if (MiscItem.oldhealthratio >= 1 && MiscItem.oldhealthratio <= 3)
+					{
+						textureid blimg = TexMan.CheckForTexture("APJKCRS1", TexMan.TYPE_MiscPatch);
+						if (MiscItem.oldhealthratio == 1) blimg = TexMan.CheckForTexture("APJKCRS1", TexMan.TYPE_MiscPatch);
+						if (MiscItem.oldhealthratio == 2) blimg = TexMan.CheckForTexture("APJKCRS2", TexMan.TYPE_MiscPatch);
+						if (MiscItem.oldhealthratio == 3) blimg = TexMan.CheckForTexture("APJKCRS3", TexMan.TYPE_MiscPatch);
+						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
+					}
+				}
+			}
+			if (PlayerWeapon is "Scrambler")
+			{
+				int jx, jy;
+				jx = -30;
+				jy = -76;
+				if (MiscItem && VisiblePlayerLevel >= exex_scramblernoArmorBonuslvlreq && (armor && armor.Amount <= 0))
+				{
+					textureid blimg = TexMan.CheckForTexture("SCRMBOST", TexMan.TYPE_MiscPatch);
+					DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
+				}
+			}
+			if (PlayerWeapon is "WizardPike")
+			{
+				int jx, jy;
+				jx = -30;
+				jy = -76;
+				if (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq)
+				{
+					textureid blimg = TexMan.CheckForTexture("WZPKINVS", TexMan.TYPE_MiscPatch);
+					DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
+				}
+			}
+			if (PlayerWeapon is "CricketBat")
+			{
+				int spinIconScaletimer = level.time % 32;
+				double spinIconScale2 = 0.375;
+				vector2 spinIconScale = (spinIconScale2, spinIconScale2);
+				double spiniconalpha = (FontAlpha * 0.75);
+				if (CPlayerPawn && (CPlayerPawn.buttons & BT_MOVELEFT && CPlayerPawn.buttons & BT_MOVERIGHT))
+				{
+					if (spinIconScaletimer == 0) spinIconScale2 = 0.375;
+					if (spinIconScaletimer == 1 || spinIconScaletimer == 31) spinIconScale2 = 0.37890625;
+					if (spinIconScaletimer == 2 || spinIconScaletimer == 30) spinIconScale2 = 0.3828125;
+					if (spinIconScaletimer == 3 || spinIconScaletimer == 29) spinIconScale2 = 0.38671875;
+					if (spinIconScaletimer == 4 || spinIconScaletimer == 28) spinIconScale2 = 0.390625;
+					if (spinIconScaletimer == 5 || spinIconScaletimer == 27) spinIconScale2 = 0.39453125;
+					if (spinIconScaletimer == 6 || spinIconScaletimer == 26) spinIconScale2 = 0.3984375;
+					if (spinIconScaletimer == 7 || spinIconScaletimer == 25) spinIconScale2 = 0.40234375;
+					if (spinIconScaletimer == 8 || spinIconScaletimer == 24) spinIconScale2 = 0.40625;
+					if (spinIconScaletimer == 9 || spinIconScaletimer == 23) spinIconScale2 = 0.41015625;
+					if (spinIconScaletimer == 10 || spinIconScaletimer == 22) spinIconScale2 = 0.4140625;
+					if (spinIconScaletimer == 11 || spinIconScaletimer == 21) spinIconScale2 = 0.41796875;
+					if (spinIconScaletimer == 12 || spinIconScaletimer == 20) spinIconScale2 = 0.421875;
+					if (spinIconScaletimer == 13 || spinIconScaletimer == 19) spinIconScale2 = 0.42578125;
+					if (spinIconScaletimer == 14 || spinIconScaletimer == 18) spinIconScale2 = 0.4296875;
+					if (spinIconScaletimer == 15 || spinIconScaletimer == 17) spinIconScale2 = 0.43359375;
+					if (spinIconScaletimer == 16) spinIconScale2 = 0.4375;
+					spinIconScale = (spinIconScale2, spinIconScale2);
+					spiniconalpha *= 1.5;
+					if (spiniconalpha > 1.0) spiniconalpha = 1.0;
+				}
+				bool canspinattack;
+				if (exex_cricketbatcanspinattack && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement)) canspinattack = true;
+				vector2 poss = (-16, -64);
+				if (canspinattack) DrawTexture(TexMan.CheckForTexture("DINSPINA", TexMan.TYPE_MiscPatch), poss, DI_ITEM_CENTER, spiniconalpha, (-1,-1), spinIconScale); // 51, -3
+			}
+			if (PlayerWeapon is "FosnianCandle")
+			{
+				textureid candmode = TexMan.CheckForTexture("FCANFIRE");
+				if (MiscItem.FCandleShotType == 0) candmode = TexMan.CheckForTexture("FCANFIRE");
+				if (MiscItem.FCandleShotType == 1) candmode = TexMan.CheckForTexture("FCANICE");
+				if (MiscItem.FCandleShotType >= 2)
+				{
+					if (MiscItem.FCandleAntipodeShot % 2) candmode = TexMan.CheckForTexture("FCANCOM1");
+					else candmode = TexMan.CheckForTexture("FCANCOM2");
+				}
+				vector2 poss = (-32, -40); // -16, -64
+				DrawTexture(candmode, poss, DI_ITEM_CENTER, FontAlpha, (-1,-1), (0.667, 0.667)); // 51, -3
+			}
+			
+			int AmmoFontCLR = font.cr_gray;
+			AmmoRatio = ammo1.Amount * 100 / ammo1.MaxAmount;
+			if (ammo1.Amount <= 0) AmmoFontCLR = font.cr_red;
+			else if (AmmoRatio >= 0 && AmmoRatio <= 33) AmmoFontCLR = font.cr_fire;
+			else if (AmmoRatio >= 34 && AmmoRatio <= 66) AmmoFontCLR = font.cr_yellow;
+			else if (AmmoRatio >= 67 && AmmoRatio <= 99) AmmoFontCLR = font.cr_darkgreen;
+			else if (ammo1.Amount >= ammo1.MaxAmount) AmmoFontCLR = font.cr_sapphire;
+			else AmmoFontCLR = font.cr_gray;
+			int DigitPush = 0;
+			if (ammo1.MaxAmount > 99) DigitPush = 5;
+			if (ammo1.MaxAmount > 999) DigitPush = 10;
+
+			if (CPlayerPawn.CountInv("BackpackTier2")) DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+4, y+15), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			if (CPlayerPawn.CountInv("BackpackTier1")) DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+3, y+14), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+2, y+13), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+
+			if (CPlayerPawn.CountInv("BackpackTier2")) DrawString(mDDMFont, "/", ((x+2-27-DigitPush), y+9), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			if (CPlayerPawn.CountInv("BackpackTier1")) DrawString(mDDMFont, "/", ((x+1-27-DigitPush), y+8), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			DrawString(mDDMFont, "/", ((x-27-DigitPush), y+7), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+
+			if (CPlayerPawn.CountInv("BackpackTier2")) DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+4, y-1), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			if (CPlayerPawn.CountInv("BackpackTier1")) DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+3, y-2), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+			DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+2, y-3), DI_TEXT_ALIGN_RIGHT, AmmoFontCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+
+			DrawTexture(ammo1.Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (0.75,0.75)); // -17, y
+			y -= 40;
+		}
+		else
+		{
+			if (PlayerWeapon is "HandToHand")
+			{
+				double FLCRAlpha = FontAlpha * 0.5;
+				vector2 FLCRScale = (0.75, 0.75);
+				int jx, jy;
+				jx = -56; // -30;
+				jy = -56; // -76;
+				if (VisiblePlayerLevel > 0 && !ddafd_disableflowercrownip)
+				{
+					textureid blimg = TexMan.CheckForTexture("FLCRNIP0", TexMan.TYPE_MiscPatch);
+					if (MiscItem.TrueIPLevelGate <= 0 && MiscItem.TrueIPCooldownTimer <= 0)
+					{
+						blimg = TexMan.CheckForTexture("FLCRNIP2", TexMan.TYPE_MiscPatch);
+						double cost = A_GetIPCost(-1);
+						if (MiscItem.ItemPoints >= cost)
+						{
+							if (MiscItem.IPUseMode)
+							{
+								int FlashTimer = level.time % 20;
+								if (FlashTimer >= 10 && FlashTimer <= 19) 
+								{
+									blimg = TexMan.CheckForTexture("FLCRNIP1", TexMan.TYPE_MiscPatch);
+									FLCRAlpha *= 1.25;
+								}
+							}
+							else
+							{
+								int FlashTimer = level.time % 80;
+								if (FlashTimer >= 40 && FlashTimer <= 79) 
+								{
+									blimg = TexMan.CheckForTexture("FLCRNIP1", TexMan.TYPE_MiscPatch);
+									FLCRAlpha *= 1.0625;
+								}
+							}
+						}
+					}
+					else
+					{
+						blimg = TexMan.CheckForTexture("FLCRNIP0", TexMan.TYPE_MiscPatch);
+						FLCRAlpha *= 0.25;
+						FLCRScale *= 0.5;
+						jx = -30; // -30;
+						jy = -30; // -76;
+					}
+					DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FLCRAlpha, (-1, -1), FLCRScale); // 51, -3
+				}
+			}
+			
+			if (PlayerWeapon is "SigilDD")
+			{
+				int AmmoFontCLR = font.cr_gray;
+				
+				AmmoRatio = CurrHealth * 100 / PlayerMaxHP;
+				if (CurrHealth <= 0) AmmoFontCLR = font.cr_red;
+				else if (AmmoRatio >= 0 && AmmoRatio <= 33) AmmoFontCLR = font.cr_fire;
+				else if (AmmoRatio >= 34 && AmmoRatio <= 66) AmmoFontCLR = font.cr_yellow;
+				else if (AmmoRatio >= 67 && AmmoRatio <= 99) AmmoFontCLR = font.cr_darkgreen;
+				else if (AmmoRatio >= 100 && AmmoRatio <= 199) AmmoFontCLR = font.cr_sapphire;
+				else if (AmmoRatio >= 200 && AmmoRatio <= 299) AmmoFontCLR = font.cr_purple;
+				else if (AmmoRatio >= 300) AmmoFontCLR = font.cr_gold;
+				else AmmoFontCLR = font.cr_gray;
+				
+				DrawString(mDDMFont, FormatNumber(PlayerMaxHP, 3), (x+2, y+13), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				DrawString(mDDMFont, "/", (x-27, y+7), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				DrawString(mDDLFont, FormatNumber(CurrHealth, 3), (x+2, y-3), DI_TEXT_ALIGN_RIGHT, AmmoFontCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				
+				vector2 IconScale = (0.334, 0.334);
+				let Sigl = SigilDD(PlayerWeapon);
+				if (Sigl)
+				{
+					textureid Sigl1Icon;
+					if ((Sigl.health) <= 1) Sigl1Icon = TexMan.CheckForTexture("WISIGILA", TexMan.TYPE_MiscPatch);
+					if ((Sigl.health) == 2) Sigl1Icon = TexMan.CheckForTexture("WISIGILB", TexMan.TYPE_MiscPatch);
+					if ((Sigl.health) == 3) Sigl1Icon = TexMan.CheckForTexture("WISIGILC", TexMan.TYPE_MiscPatch);
+					if ((Sigl.health) == 4) Sigl1Icon = TexMan.CheckForTexture("WISIGILD", TexMan.TYPE_MiscPatch);
+					if ((Sigl.health) >= 5) Sigl1Icon = TexMan.CheckForTexture("WISIGILE", TexMan.TYPE_MiscPatch);
+					DrawTexture(Sigl1Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IconScale); // -17, y
+					string Sigl2Icon;
+					if ((CPlayerPawn.CountInv("SigilModeType")) <= 1) Sigl1Icon = TexMan.CheckForTexture("WISIGIL1", TexMan.TYPE_MiscPatch);
+					if ((CPlayerPawn.CountInv("SigilModeType")) == 2) Sigl1Icon = TexMan.CheckForTexture("WISIGIL2", TexMan.TYPE_MiscPatch);
+					if ((CPlayerPawn.CountInv("SigilModeType")) == 3) Sigl1Icon = TexMan.CheckForTexture("WISIGIL3", TexMan.TYPE_MiscPatch);
+					if ((CPlayerPawn.CountInv("SigilModeType")) == 4) Sigl1Icon = TexMan.CheckForTexture("WISIGIL4", TexMan.TYPE_MiscPatch);
+					if ((CPlayerPawn.CountInv("SigilModeType")) >= 5) Sigl1Icon = TexMan.CheckForTexture("WISIGIL5", TexMan.TYPE_MiscPatch);
+					DrawTexture(Sigl1Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IconScale); // -17, y
+					string SiglLvl = "";
+					SiglLvl.AppendFormat("\c[gold]%d\c-/\c[yellow]%d\c-", CPlayerPawn.CountInv("SigilModeType"), (Sigl.health));
+					DrawString(mDDMFont, SiglLvl, (x+3, y-41), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+					DrawString(mDDLFont, FormatNumber(Sigl.truedrainamt, 3), (x-25, y-25), DI_TEXT_ALIGN_RIGHT, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				}
+				y -= 40;
+			}
+		}
+
+		// IP Icons [Weapons]
+		if (exex_ikaripointsenabled)
+		{
+			string IPIcon = "IPIconUN";
+			vector2 IPIconPos = (0, 0); // (324, -25) + (0, yadd)
+			vector2 IPIconPosV = (0, 0); // (324, -25) + (0, yadd)
+			//Console.Printf("ipos: %d / %d, x: %d [%d], y: %d [%d]", i, NumFields, IPIconPos.x, position.x, IPIconPos.y, position.y);
+			bool HasIPIcon = false;
+			int CanUseIPATK = 0;
+			int IPIconTimer = level.time % 8;
+			int IPIconSpeed = 1;
+			int icontype; // 0 = Fire, 1 = Alt-Fire, 2 = Special1, 3 = Special2[?], etc.
+			vector2 IPIconScale = (1.5, 1.5);
+			double IPIconScale2 = 1.5;
+			if (CPlayerPawn && MiscItem.IPUseMode) IPIconSpeed = 2;
+			if (MiscItem)
+			{
+				double IPCost;
+				
+				//***********************
+				//* Main Attack Icon[s] *
+				//***********************
+				if (PlayerWeapon is "CricketBat")
+				{
+					// Cricket Bat [Normal Melee]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(101);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "BlunderAxe")
+				{
+					// Blunderaxe [Normal Melee]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(111);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "Scrambler")
+				{
+					// Blunderaxe [Normal Melee]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(121);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "AppleJack")
+				{
+					// Blunderaxe [Normal Melee]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(131);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "WizardPike")
+				{
+					// Blunderaxe [Normal Melee]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.334;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(141);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "SuperVac")
+				{
+					// Blunderaxe [Normal Melee]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(151);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "Grimophone")
+				{
+					// Grimophone [Normal Ranged Attack]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(161);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "CandleWhip")
+				{
+					// CandleWhip [Normal Melee]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(171);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "SigilDD")
+				{
+					// Sigil
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.75;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					double sigilcost = (3.0 * CPlayerPawn.CountInv("SigilModeType"));
+					IPCost = A_GetIPCost(181,true,sigilcost);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "EvilWarriorShield")
+				{
+					// Hell Warrior Shield [Fireball]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.75;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(191);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "FosnianCandle")
+				{
+					// Fosnian CandleVulcan [Normal Melee]
+					IPIconPos = (-50, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(201);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				IPIconPosV = IPIconPos;
+				if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Main] (%s)] Cost: %.4f", PlayerWeapon.GetClassName(), IPCost);
+				
+				// Shows the Proper Icon if the above meets criteria
+				if (HasIPIcon) 
+				{
+					if (CanUseIPATK) 
+					{
+						if (IPIconSpeed <= 1) IPIcon = "IPIcon1U";
+						if (IPIconSpeed >= 2) IPIcon = "IPIcon2U";
+						if (CanUseIPATK == 1)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 32;
+								if (IPIconTimer >= 0 && IPIconTimer <= 7) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 8 && IPIconTimer <= 15) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 16 && IPIconTimer <= 23) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 24 && IPIconTimer <= 31) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+							else
+							{
+								IPIconTimer = level.time % 24;
+								if (IPIconTimer >= 0 && IPIconTimer <= 5) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 6 && IPIconTimer <= 11) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 12 && IPIconTimer <= 17) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 18 && IPIconTimer <= 23) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+						}
+						if (CanUseIPATK == 2)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 16;
+								if (IPIconTimer >= 0 && IPIconTimer <= 3) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 4 && IPIconTimer <= 7) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 8 && IPIconTimer <= 11) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 12 && IPIconTimer <= 15) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+							else
+							{
+								IPIconTimer = level.time % 12;
+								if (IPIconTimer >= 0 && IPIconTimer <= 2) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 3 && IPIconTimer <= 5) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 6 && IPIconTimer <= 8) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 9 && IPIconTimer <= 11) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+						}
+						if (CanUseIPATK >= 3)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 8;
+								if (IPIconTimer >= 0 && IPIconTimer <= 1) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 2 && IPIconTimer <= 3) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 4 && IPIconTimer <= 5) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 6 && IPIconTimer <= 7) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+							else
+							{
+								IPIconTimer = level.time % 4;
+								if (IPIconTimer == 0) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer == 1) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer == 2) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer == 3) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+						}
+					}
+					else
+					{
+						IPIcon = "IPIconUN";
+					}
+					DrawTexture(TexMan.CheckForTexture(IPIcon, TexMan.TYPE_MiscPatch), IPIconPos, DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IPIconScale);
+
+					int IPCharges;
+					if (IPCost > 0.001) 
+					{
+						int TextSize = 1;
+						IPCharges = (MiscItem.ItemPoints / IPCost);
+						string ChargeDigits = FormatNumber(IPCharges);
+						int ChargeDigitsI = ChargeDigits.Length();
+						double valscale = 0.667;
+						double valAlpha = 0.875;
+						vector2 ValPos = ((2 + ((ChargeDigitsI - 1) * 2)), 2);
+						int ValColor = font.CR_GREY;
+						if (IPIconSpeed <= 1) ValColor = font.CR_FIRE;
+						if (IPIconSpeed >= 2) ValColor = font.CR_SAPPHIRE;
+						if (IPCost)
+						{
+							if (IPCharges) DrawString(mDDLFont, FormatNumber(IPCharges, 0, 6), IPIconPosV + ValPos, DI_TEXT_ALIGN_CENTER, ValColor, ValAlpha, -1, 4, (valscale, valscale));
+						}
+					}
+				}
+				
+				//**********************
+				//* Alt Attack Icon[s] *
+				//**********************
+				HasIPIcon = false;
+				if (PlayerWeapon is "CricketBat")
+				{ 
+					// Cricket Bat [Alt Attack]
+					IPIconPos = (-62, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(102);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "BlunderAxe")
+				{
+					// Blunderaxe [Alt Attack]
+					IPIconPos = (-62, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(112);
+					int ammocost = 3;
+					if (dydudebug_infiniteip) ammocost = 1;
+					if (CPlayerPawn.CountInv("BlunderAmmo") >= ammocost)
+					{
+						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+						if (dydudebug_infiniteip) CanUseIPATK = 3;
+					}
+				}
+				if (PlayerWeapon is "Scrambler")
+				{
+					// Scrambler [Alt Attack]
+					IPIconPos = (-62, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(122);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "AppleJack")
+				{
+					// AppleJack [Alt Attack]
+					IPIconPos = (-62, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(132);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "WizardPike")
+				{
+					// Pike [Alt Attack]
+					IPIconPos = (-62, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 2.25;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(142);
+					int ammocost = 3;
+					if (dydudebug_infiniteip) ammocost = 1;
+					if (CPlayerPawn.CountInv("PikeAmmo") >= ammocost)
+					{
+						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+						if (dydudebug_infiniteip) CanUseIPATK = 3;
+					}
+				}
+				if (PlayerWeapon is "SuperVac")
+				{
+					// Pike [Alt Attack]
+					IPIconPos = (-62, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.875;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(152);
+					if (CPlayerPawn.CountInv("VacAmmo") >= MiscItem.VacCost)
+					{
+						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+						if (dydudebug_infiniteip) CanUseIPATK = 3;
+					}
+				}
+				if (PlayerWeapon is "Grimophone")
+				{
+					// Grimophone [Alt Attack]
+					IPIconPos = (-62, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(162);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "CandleWhip")
+				{
+					// CandleWhip [Alt Attack]
+					IPIconPos = (-62, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(172);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				if (PlayerWeapon is "FosnianCandle")
+				{ 
+					// Fosnian CandleVulcan [Alt Attack]
+					IPIconPos = (-62, -10);
+					IPIcon = "IPIconUN";
+					HasIPIcon = true;
+					CanUseIPATK = 0;
+					IPIconScale2 = 1.5;
+					IPIconScale = (IPIconScale2, IPIconScale2);
+					IPIconTimer = level.time % 8;
+					IPCost = A_GetIPCost(201);
+					if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+					else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+					if (dydudebug_infiniteip) CanUseIPATK = 3;
+				}
+				IPIconPosV = IPIconPos;
+				if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Alt] (%s)] Cost: %.4f", PlayerWeapon.GetClassName(), IPCost);
+				
+				// Shows the Proper Icon if the above meets criteria
+				if (HasIPIcon) 
+				{
+					if (CanUseIPATK) 
+					{
+						if (IPIconSpeed <= 1) IPIcon = "IPIcon1U";
+						if (IPIconSpeed >= 2) IPIcon = "IPIcon2U";
+						if (CanUseIPATK == 1)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 32;
+								if (IPIconTimer >= 0 && IPIconTimer <= 7) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 8 && IPIconTimer <= 15) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 16 && IPIconTimer <= 23) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 24 && IPIconTimer <= 31) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+							else
+							{
+								IPIconTimer = level.time % 24;
+								if (IPIconTimer >= 0 && IPIconTimer <= 5) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 6 && IPIconTimer <= 11) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 12 && IPIconTimer <= 17) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 18 && IPIconTimer <= 23) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+						}
+						if (CanUseIPATK == 2)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 16;
+								if (IPIconTimer >= 0 && IPIconTimer <= 3) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 4 && IPIconTimer <= 7) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 8 && IPIconTimer <= 11) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 12 && IPIconTimer <= 15) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+							else
+							{
+								IPIconTimer = level.time % 12;
+								if (IPIconTimer >= 0 && IPIconTimer <= 2) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 3 && IPIconTimer <= 5) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 6 && IPIconTimer <= 8) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 9 && IPIconTimer <= 11) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+						}
+						if (CanUseIPATK >= 3)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 8;
+								if (IPIconTimer >= 0 && IPIconTimer <= 1) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 2 && IPIconTimer <= 3) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer >= 4 && IPIconTimer <= 5) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer >= 6 && IPIconTimer <= 7) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+							else
+							{
+								IPIconTimer = level.time % 4;
+								if (IPIconTimer == 0) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer == 1) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
+								if (IPIconTimer == 2) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
+								if (IPIconTimer == 3) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
+							}
+						}
+					}
+					else
+					{
+						IPIcon = "IPIconUN";
+					}
+					DrawTexture(TexMan.CheckForTexture(IPIcon, TexMan.TYPE_MiscPatch), IPIconPos, DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IPIconScale);
+
+					int IPCharges;
+					if (IPCost > 0.001) 
+					{
+						int TextSize = 1;
+						IPCharges = (MiscItem.ItemPoints / IPCost);
+						string ChargeDigits = FormatNumber(IPCharges);
+						int ChargeDigitsI = ChargeDigits.Length();
+						double valscale = 0.667;
+						double valAlpha = 0.875;
+						vector2 ValPos = ((-2 - ((ChargeDigitsI - 1) * 2)), 2);
+						int ValColor = font.CR_GREY;
+						if (IPIconSpeed <= 1) ValColor = font.CR_FIRE;
+						if (IPIconSpeed >= 2) ValColor = font.CR_SAPPHIRE;
+						if (IPCost)
+						{
+							if (IPCharges) DrawString(mDDLFont, FormatNumber(IPCharges, 0, 6), IPIconPosV + ValPos, DI_TEXT_ALIGN_CENTER, ValColor, ValAlpha, -1, 4, (valscale, valscale));
+						}
+					}
+				}
+					
+				
+				//**********************
+				//* Special[1] Icon[s] *
+				//**********************
+				HasIPIcon = false;
+				if (PlayerWeapon is "CricketBat")
+				{
+					// Cricket Bat [Spin Attack]
+					bool canspinattack;
+					if (exex_cricketbatcanspinattack && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement)) canspinattack = true;
+					if (canspinattack)
+					{
+						IPIconPos = (-50, -54);
+						IPIcon = "IPIconUN";
+						HasIPIcon = true;
+						CanUseIPATK = 0;
+						IPIconScale2 = 2.0;
+						IPIconScale = (IPIconScale2, IPIconScale2);
+						IPIconTimer = level.time % 8;
+						IPCost = A_GetIPCost(103);
+						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+						if (dydudebug_infiniteip) CanUseIPATK = 3;
+					}
+				}
+				if (PlayerWeapon is "WizardPike")
+				{
+					// Pike [Inviso Mode]
+					bool caninviso;
+					if (exex_cricketbatcanspinattack && (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq)) caninviso = true;
+					if (caninviso)
+					{
+						IPIconPos = (-50, -54);
+						IPIcon = "IPIconUN";
+						HasIPIcon = true;
+						CanUseIPATK = 0;
+						IPIconScale2 = 2.0;
+						IPIconScale = (IPIconScale2, IPIconScale2);
+						IPIconTimer = level.time % 8;
+						IPCost = A_GetIPCost(143);
+						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
+						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
+						if (dydudebug_infiniteip) CanUseIPATK = 3;
+					}
+				}
+				IPIconPosV = IPIconPos;
+				if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Special1] (%s)] Cost: %.4f", PlayerWeapon.GetClassName(), IPCost);
+				
+				// Shows the Proper Icon if the above meets criteria
+				if (HasIPIcon) 
+				{
+					if (CanUseIPATK) 
+					{
+						if (IPIconSpeed <= 1) IPIcon = "IPIcon1U";
+						if (IPIconSpeed >= 2) IPIcon = "IPIcon2U";
+						if (CanUseIPATK == 1)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 32;
+								if (IPIconTimer >= 0 && IPIconTimer <= 7) IPIconPos += (0, 0);
+								if (IPIconTimer >= 8 && IPIconTimer <= 15) IPIconPos += (1, 0);
+								if (IPIconTimer >= 16 && IPIconTimer <= 23) IPIconPos += (1, 1);
+								if (IPIconTimer >= 24 && IPIconTimer <= 31) IPIconPos += (0, 1);
+							}
+							else
+							{
+								IPIconTimer = level.time % 24;
+								if (IPIconTimer >= 0 && IPIconTimer <= 5) IPIconPos += (0, 0);
+								if (IPIconTimer >= 6 && IPIconTimer <= 11) IPIconPos += (1, 0);
+								if (IPIconTimer >= 12 && IPIconTimer <= 17) IPIconPos += (1, 1);
+								if (IPIconTimer >= 18 && IPIconTimer <= 23) IPIconPos += (0, 1);
+							}
+						}
+						if (CanUseIPATK == 2)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 16;
+								if (IPIconTimer >= 0 && IPIconTimer <= 3) IPIconPos += (0, 0);
+								if (IPIconTimer >= 4 && IPIconTimer <= 7) IPIconPos += (1, 0);
+								if (IPIconTimer >= 8 && IPIconTimer <= 11) IPIconPos += (1, 1);
+								if (IPIconTimer >= 12 && IPIconTimer <= 15) IPIconPos += (0, 1);
+							}
+							else
+							{
+								IPIconTimer = level.time % 12;
+								if (IPIconTimer >= 0 && IPIconTimer <= 2) IPIconPos += (0, 0);
+								if (IPIconTimer >= 3 && IPIconTimer <= 5) IPIconPos += (1, 0);
+								if (IPIconTimer >= 6 && IPIconTimer <= 8) IPIconPos += (1, 1);
+								if (IPIconTimer >= 9 && IPIconTimer <= 11) IPIconPos += (0, 1);
+							}
+						}
+						if (CanUseIPATK >= 3)
+						{
+							if (IPIconSpeed == 1)
+							{
+								IPIconTimer = level.time % 8;
+								if (IPIconTimer >= 0 && IPIconTimer <= 1) IPIconPos += (0, 0);
+								if (IPIconTimer >= 2 && IPIconTimer <= 3) IPIconPos += (1, 0);
+								if (IPIconTimer >= 4 && IPIconTimer <= 5) IPIconPos += (1, 1);
+								if (IPIconTimer >= 6 && IPIconTimer <= 7) IPIconPos += (0, 1);
+							}
+							else
+							{
+								IPIconTimer = level.time % 4;
+								if (IPIconTimer == 0) IPIconPos += (0, 0);
+								if (IPIconTimer == 1) IPIconPos += (1, 0);
+								if (IPIconTimer == 2) IPIconPos += (1, 1);
+								if (IPIconTimer == 3) IPIconPos += (0, 1);
+							}
+						}
+					}
+					else
+					{
+						IPIcon = "IPIconUN";
+					}
+					DrawTexture(TexMan.CheckForTexture(IPIcon, TexMan.TYPE_MiscPatch), IPIconPos, DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IPIconScale);
+					
+
+					int IPCharges;
+					if (IPCost > 0.001) 
+					{
+						int TextSize = 1;
+						IPCharges = (MiscItem.ItemPoints / IPCost);
+						string ChargeDigits = FormatNumber(IPCharges);
+						int ChargeDigitsI = ChargeDigits.Length();
+						double valscale = 0.8334;
+						double valAlpha = 0.875;
+						vector2 ValPos = (0, 2);
+						int ValColor = font.CR_GREY;
+						if (IPIconSpeed <= 1) ValColor = font.CR_FIRE;
+						if (IPIconSpeed >= 2) ValColor = font.CR_SAPPHIRE;
+						if (IPCost)
+						{
+							if (IPCharges) DrawString(mDDLFont, FormatNumber(IPCharges, 0, 6), IPIconPosV + ValPos, DI_TEXT_ALIGN_CENTER, ValColor, ValAlpha, -1, 4, (valscale, valscale));
+						}
+					}
+				}
+
+				HasIPIcon = false;
+				//**********************
+				//* Special[2] Icon[s] *
+				//**********************
+				// None Yet Available :V
+
+			}
+		}
+		
+		return dun, x, y, VisiblePlayerLevel, FontAlpha, FontWrapWidth, FontLineSpace, FontScale, AmmoRatio, wsammoname, CurrHealth, PlayerMaxHP;
+	}
+	
+	int DrawFSHUDLevelStats(int DigY)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		
+		if (CPlayerPawn && !automapactive)
+		{
+			DigY = 0;
+			string mapnam = "";
+			int mapnametimerbase = 38;
+			int mapnametimer = level.time % mapnametimerbase;
+			if (mapnametimer == 0)
+			{
+				mapnametimerbase = randompick(23,28,28,32,32,32,35,35,35,35,35,38,38,38,42,42,47);
+				mapnametimer = level.time % mapnametimerbase;
+			}
+			bool mapnameflickermode = 0;
+			int stattalLYtimerbase = 140;
+			int stattalLYtimer = level.time % stattalLYtimerbase;
+			int stattalLYshowall = (stattalLYtimerbase * 0.75);
+			double talLYpercent = 100.0;
+			bool showtotaltallies = false;
+			if (dyduhud_leveltallies >= 2)
+			{
+				if (dyduhud_leveltallies == 4) showtotaltallies = true;
+				if (dyduhud_leveltallies == 3)
+				{
+					if (stattalLYtimer > stattalLYshowall && MiscItem) showtotaltallies = false;
+																												else showtotaltallies = true;
+				}
+				if (dyduhud_leveltallies == 2)
+				{
+					if (stattalLYtimer > stattalLYshowall && MiscItem) showtotaltallies = true;
+																												else showtotaltallies = false;
+				}
+			}
+			
+			if (level.AllMap)
+			{
+				if (mapnametimer > (mapnametimerbase * 0.5)) mapnameflickermode = 1;
+			}
+
+			if (mapnameflickermode)
+			{
+				if (gameinfo.gametype != GAME_Hexen && !MiscItem.isDDTrilogy)
+				{
+					if (gameinfo.gametype == GAME_Doom) mapnam.AppendFormat("\c[sapphire]%s: ", level.mapname);
+					if (gameinfo.gametype == GAME_Heretic || gameinfo.gametype == GAME_Strife) mapnam.AppendFormat("\c[sapphire]%s: ", level.mapname);
+				}
+				mapnam.AppendFormat("\c[fire]%s", level.levelname);
+			}
+			else
+			{
+				if (gameinfo.gametype != GAME_Hexen && !MiscItem.isDDTrilogy) 
+				{
+					if (gameinfo.gametype == GAME_Doom) mapnam.AppendFormat("\c[red]%s: ", level.mapname);
+					if (gameinfo.gametype == GAME_Heretic || gameinfo.gametype == GAME_Strife) mapnam.AppendFormat("\c[gold]%s: ", level.mapname);
+				}
+				mapnam.AppendFormat("\c[white]%s", level.levelname);
+			}
+			if (dyduhud_showlevelnames)
+			{
+				DigY -= 40;
+				DrawString(mConFont, mapnam, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_darkgray);
+			}
+			
+			string talLYtemp = "";
+			if (dyduhud_showleveltimes)
+			{
+				int timeTicks =
+						hud_showtime < 4
+							? Level.maptime
+							: (hud_showtime < 6
+								? Level.time
+								: Level.totaltime);
+								// Time Stats
+				int leveltime = level.totaltime;
+				int leveltimepar = level.partime * ticrate;
+				int rawseconds = Thinker.Tics2Seconds(leveltime);
+				int leveltimedays = ((rawseconds / 86400));
+				int dayaddx = 0;
+				if (leveltimedays > 0 && leveltimedays <= 9) dayaddx = 12;
+				if (leveltimedays >= 10 && leveltimedays <= 99) dayaddx = 24;
+
+				talLYtemp = "TIME: ";
+				leveltime = level.time;
+				rawseconds = Thinker.Tics2Seconds(leveltime);
+				int leveltimesec = (rawseconds % 60);
+				int leveltimemin = ((rawseconds % 3600) / 60);
+				int leveltimehrs = ((rawseconds % 86400) / 3600);
+				leveltimedays = ((rawseconds / 86400));
+
+				if (leveltimedays) talLYtemp.AppendFormat("%dd ", leveltimedays);
+				if (leveltimehrs >= 0 && leveltimehrs <= 9) talLYtemp.AppendFormat("0%d:", leveltimehrs);
+																							 else talLYtemp.AppendFormat("%d:", leveltimehrs);
+				if (leveltimemin >= 0 && leveltimemin <= 9) talLYtemp.AppendFormat("0%d:", leveltimemin);
+																							 else talLYtemp.AppendFormat("%d:", leveltimemin);
+				if (leveltimesec >= 0 && leveltimesec <= 9) talLYtemp.AppendFormat("0%d", leveltimesec);
+																							 else talLYtemp.AppendFormat("%d", leveltimesec);
+				DigY -= 8;
+				int fontclr = font.cr_darkgray;
+				if (leveltime <= (leveltimepar * 0.5))
+				{
+					if (leveltime % 34 > 17) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+				}
+				else
+				{
+					if (leveltime <= (leveltimepar * 0.875))
+					{
+						if (leveltime % 36 >= 0 && leveltime % 36 <= 5) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+						if (leveltime % 36 >= 12 && leveltime % 36 <= 17) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+						if (leveltime % 36 >= 24 && leveltime % 36 <= 29) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+					}
+					else
+					{
+						if (leveltime <= (leveltimepar * 1))
+						{
+							if (leveltime % 36 >= 0 && leveltime % 36 <= 2) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+							if (leveltime % 36 >= 6 && leveltime % 36 <= 8) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+							if (leveltime % 36 >= 12 && leveltime % 36 <= 14) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+							if (leveltime % 36 >= 18 && leveltime % 36 <= 20) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+							if (leveltime % 36 >= 24 && leveltime % 36 <= 26) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+							if (leveltime % 36 >= 30 && leveltime % 36 <= 32) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
+						}
+					}
+				}
+				DrawString(mConFont, talLYtemp, (-120-dayaddx, DigY), DI_TEXT_ALIGN_LEFT|DI_SCREEN_CENTER_BOTTOM, fontclr);
+				// Total Time
+				talLYtemp = "TOTAL: ";
+				leveltime = level.totaltime;
+				rawseconds = Thinker.Tics2Seconds(leveltime);
+				leveltimesec = (rawseconds % 60);
+				leveltimemin = ((rawseconds % 3600) / 60);
+				leveltimehrs = ((rawseconds % 86400) / 3600);
+				leveltimedays = ((rawseconds / 86400));
+
+				if (leveltimedays) talLYtemp.AppendFormat("%dd ", leveltimedays);
+				if (leveltimehrs >= 0 && leveltimehrs <= 9) talLYtemp.AppendFormat("0%d:", leveltimehrs);
+																							 else talLYtemp.AppendFormat("%d:", leveltimehrs);
+				if (leveltimemin >= 0 && leveltimemin <= 9) talLYtemp.AppendFormat("0%d:", leveltimemin);
+																							 else talLYtemp.AppendFormat("%d:", leveltimemin);
+				if (leveltimesec >= 0 && leveltimesec <= 9) talLYtemp.AppendFormat("0%d", leveltimesec);
+																							 else talLYtemp.AppendFormat("%d", leveltimesec);
+				DrawString(mConFont, talLYtemp, (120+dayaddx, DigY), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM, font.cr_gray);
+			}
+			
+			if (dyduhud_leveltallies)
+			{
+				// Level Stats
+				DigY += 8;
+				if (dyduhud_showleveltimes) DigY -= 8;
+				int talLYfontclr;
+				int flashinterval = 24;
+				if (showtotaltallies) flashinterval = 12;
+				int scrtcnt = level.found_secrets;
+				int maxscrtcnt = level.total_secrets;
+				if (showtotaltallies)
+				{
+					scrtcnt = MiscItem.totalsecretsgame;
+					maxscrtcnt = MiscItem.totalmaxsecrets;
+				}
+				if (maxscrtcnt == 0) talLYpercent = 100.0;
+				else talLYpercent = scrtcnt * 100.0 / maxscrtcnt;
+				if (maxscrtcnt)
+				{
+					talLYfontclr = font.cr_gold;
+					if (scrtcnt >= maxscrtcnt && level.time % flashinterval >= (flashinterval*0.5)) talLYfontclr = font.cr_darkgreen;
+					DigY -= 8;
+					talLYtemp = "Secrets: ";
+					if (showtotaltallies) talLYtemp = "Secrets [ALL]: ";
+					if (dyduhud_leveltalLYpercents != 2)
+					{
+						talLYtemp.AppendFormat("%d", scrtcnt);
+						talLYtemp.AppendFormat("/");
+						talLYtemp.AppendFormat("%d", maxscrtcnt);
+					}
+					if (dyduhud_leveltalLYpercents == 1)
+					{
+						talLYtemp.AppendFormat(" ");
+						talLYtemp.AppendFormat("[");
+					}
+					if (dyduhud_leveltalLYpercents)
+					{
+						talLYtemp.AppendFormat("%.2f", talLYpercent);
+						talLYtemp.AppendFormat("%%");
+					}
+					if (dyduhud_leveltalLYpercents == 1)
+					{
+						talLYtemp.AppendFormat("]");
+					}
+					DrawString(mConFont, talLYtemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, talLYfontclr);
+				}
+				int itemcnt = level.found_items;
+				int maxitemcnt = level.total_items;
+				if (showtotaltallies)
+				{
+					itemcnt = MiscItem.totalitemsgame;
+					maxitemcnt = MiscItem.totalmaxitems;
+				}
+				if (maxitemcnt == 0) talLYpercent = 100.0;
+				else talLYpercent = itemcnt * 100.0 / maxitemcnt;
+				if (maxitemcnt)
+				{
+					talLYfontclr = font.cr_lightblue;
+					if (itemcnt >= maxitemcnt && level.time % flashinterval >= (flashinterval*0.5)) talLYfontclr = font.cr_brick;
+					DigY -= 8;
+					talLYtemp = "Items: ";
+					if (showtotaltallies) talLYtemp = "Items [ALL]: ";
+					if (dyduhud_leveltalLYpercents != 2)
+					{
+						talLYtemp.AppendFormat("%d", itemcnt);
+						talLYtemp.AppendFormat("/");
+						talLYtemp.AppendFormat("%d", maxitemcnt);
+					}
+					if (dyduhud_leveltalLYpercents == 1)
+					{
+						talLYtemp.AppendFormat(" ");
+						talLYtemp.AppendFormat("[");
+					}
+					if (dyduhud_leveltalLYpercents)
+					{
+						talLYtemp.AppendFormat("%.2f", talLYpercent);
+						talLYtemp.AppendFormat("%%");
+					}
+					if (dyduhud_leveltalLYpercents == 1)
+					{
+						talLYtemp.AppendFormat("]");
+					}
+					DrawString(mConFont, talLYtemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, talLYfontclr);
+				}
+				int killcnt = level.killed_monsters;
+				int maxkillcnt = level.total_monsters;
+				if (showtotaltallies)
+				{
+					killcnt = MiscItem.totalkillsgame;
+					maxkillcnt = MiscItem.totalmaxkills;
+				}
+				if (maxkillcnt == 0) talLYpercent = 100.0;
+				else talLYpercent = killcnt * 100.0 / maxkillcnt;
+				if (maxkillcnt)
+				{
+					talLYfontclr = font.cr_brick;
+					if (killcnt >= maxkillcnt && level.time % flashinterval >= (flashinterval*0.5)) talLYfontclr = font.cr_lightblue;
+					DigY -= 8;
+					talLYtemp = "Kills: ";
+					if (showtotaltallies) talLYtemp = "Kills [ALL]: ";
+					if (dyduhud_leveltalLYpercents != 2)
+					{
+						talLYtemp.AppendFormat("%d", killcnt);
+						talLYtemp.AppendFormat("/");
+						talLYtemp.AppendFormat("%d", maxkillcnt);
+					}
+					if (dyduhud_leveltalLYpercents == 1)
+					{
+						talLYtemp.AppendFormat(" ");
+						talLYtemp.AppendFormat("[");
+					}
+					if (dyduhud_leveltalLYpercents)
+					{
+						talLYtemp.AppendFormat("%.2f", talLYpercent);
+						talLYtemp.AppendFormat("%%");
+					}
+					if (dyduhud_leveltalLYpercents == 1)
+					{
+						talLYtemp.AppendFormat("]");
+					}
+					DrawString(mConFont, talLYtemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, talLYfontclr);
+				}
+			}
+		}
+		return DigY;
+	}
+
 	int, int, int, int DrawFSHUDKeyLegend(int VisiblePlayerLevel, int candash, int dashcost, int dashmaxcharge)
 	{
 		DDPlayerPawn CPlayerPawn;
@@ -3224,14 +4539,6 @@ class DDStatusBarMain : BaseStatusBar
 		
 		return VisiblePlayerLevel, candash, dashcost, dashmaxcharge;
 	}
-
-	void DrawFSHUDLowerRight()
-	{
-	}
-
-	void DrawFSHUDLowerCenter()
-	{
-	}
 	
 	protected void DrawFullScreenStuff()
 	{
@@ -3500,6 +4807,8 @@ class DDStatusBarMain : BaseStatusBar
 			//*****************
 			[CurrHealth, MaxHealthTrue] = DrawDmgBorderFullScreen(CurrHealth,MaxHealthTrue);
 			
+			// Lower Left
+			//************
 			// Health
 			int ValueAmt = CurrHealth;
 			string ValueAmtS = FormatNumber(ValueAmt);
@@ -3541,6 +4850,7 @@ class DDStatusBarMain : BaseStatusBar
 			
 			
 			// Lower Right
+			//*************
 			//Key Legend
 			[VisiblePlayerLevel, candash, dashcost, dashmaxcharge] = DrawFSHUDKeyLegend(VisiblePlayerLevel, candash, dashcost, dashmaxcharge);
 
@@ -3554,1302 +4864,12 @@ class DDStatusBarMain : BaseStatusBar
 			let ammotype = CPlayerPawn.FindInventory(wsammoname);
 			
 			//ammo
-			Ammo ammo1, ammo2;
-			[ammo1, ammo2] = GetCurrentAmmo();
-			x = -4;
-			y = -22;
-			int barx = -42;
-			int bary = -48;
-			if (ammo1 != null)
-			{
-				if (PlayerWeapon is "EvilWarriorShield")
-				{
-					int shieldenergy;
-					int shieldenergymax = 1000;
-					int shieldenergypercent;
-					double shieldmeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
-					if (shieldmeterlength > 1.5) shieldmeterlength = 1.5;
-					dun = TexMan.CheckForTexture("SHLDUNIT", TexMan.TYPE_MiscPatch);
-					let EWS = EvilWarriorShield(CPlayerPawn.FindInventory("EvilWarriorShield"));
-					if (EWS && MiscItem)
-					{
-						shieldenergy = EWS.shieldenergy;
-						shieldenergymax = MiscItem.HellWarriorMaxCharge;
-					}
-					if (shieldenergymax)
-					{
-						shieldenergypercent = shieldenergy * 100 / shieldenergymax;
-						int shieldbarunits = shieldenergypercent * shieldmeterlength;
-						for (int i; i < (100 * shieldmeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (barx+i, bary), 0, HX_SHADOW);
-						for (int i; i < shieldbarunits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
-					}
-					
-					int upgrades = MiscItem.HellWarriorShieldLevel;
-					if (upgrades)
-					{
-						int jx, jy;
-						jx = -50;
-						jy = bary + -40;
-						textureid blimg = TexMan.CheckForTexture("WIEVWASH", TexMan.TYPE_MiscPatch);
-						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.25, 0.25)); // 51, -3
-						jx += 48;
-						jy += 8;
-						DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-					}
-				}
-				if (PlayerWeapon is "Grimophone")
-				{
-					int recordenergy;
-					int recordenergymax = 42;
-					if (CPlayerPawn.CountInv("GrimophoneUpgrade") <= 0) recordenergymax = 42;
-					if (CPlayerPawn.CountInv("GrimophoneUpgrade") == 1) recordenergymax = 44;
-					if (CPlayerPawn.CountInv("GrimophoneUpgrade") == 2) recordenergymax = 46;
-					if (CPlayerPawn.CountInv("GrimophoneUpgrade") >= 3) recordenergymax = 48;
-					int recordpercent;
-					double recordmeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
-					if (recordmeterlength > 1.5) recordmeterlength = 1.5;
-					dun = TexMan.CheckForTexture("GRIMUNIT", TexMan.TYPE_MiscPatch);
-					let Grim = Grimophone(CPlayerPawn.FindInventory("Grimophone"));
-					if (Grim) recordenergy = Grim.recordenergy;
-					if (recordenergymax && (MiscItem && MiscItem.grimophonealt)) 
-					{
-						recordpercent = recordenergy * 100 / recordenergymax;
-						int recordbarunits = recordpercent * recordmeterlength;
-						for (int i; i < (100 * recordmeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (barx+i, bary), 0, HX_SHADOW);
-						for (int i; i < recordbarunits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
-					}
-
-					int upgrades = CPlayerPawn.CountInv("GrimophoneUpgrade");
-					if (upgrades)
-					{
-						int jx, jy;
-						jx = -22;
-						jy = bary + 6;
-						textureid blimg = TexMan.CheckForTexture("GMCPA0", TexMan.TYPE_MiscPatch);
-						if (upgrades == 2) blimg = TexMan.CheckForTexture("GMCPG0", TexMan.TYPE_MiscPatch);
-						if (upgrades >= 3) blimg = TexMan.CheckForTexture("GMCPH0", TexMan.TYPE_MiscPatch);
-						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
-						jx += 19;
-						jy -= 32;
-						DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-					}
-				}
-				if (PlayerWeapon is "SuperVac")
-				{
-					int VacBagUnits = CPlayerPawn.CountInv("VacAmmoCounter");
-					int VacBagPercent;
-					double VacBagMeterLength = 0.4; // 0.2 vertical, 0.4 horizontal
-					if (VacBagMeterLength > 1.5) VacBagMeterLength = 1.5;
-					dun = TexMan.CheckForTexture("VBAGUNIT", TexMan.TYPE_MiscPatch);
-					int revbagunits = 100;
-
-					wsammoname = "VacAmmo";
-					ammotype = CPlayerPawn.FindInventory(wsammoname);
-					if (ammotype.Amount >= ammotype.MaxAmount) 
-					{
-						DrawString(mConFont, "FULL!", (barx+21, bary-8), DI_TEXT_ALIGN_CENTER, font.cr_sapphire); // -46, -1
-					}
-					else
-					{
-						if (MiscItem && MiscItem.SuperVacBagSize)
-						{
-							VacBagPercent = VacBagUnits * 100 / MiscItem.SuperVacBagSize;
-							int VacBagBarUnits = VacBagPercent * VacBagMeterLength;
-							revbagunits -= VacBagBarUnits;
-							if (revbagunits < 0) revbagunits = 0;
-							if (revbagunits >= 100) revbagunits = 100;
-							for (int i; i < (100 * VacBagMeterLength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (barx+i, bary), 0, HX_SHADOW);
-							for (int i; i < VacBagBarUnits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
-						}
-					}
-				}
-				if (PlayerWeapon is "BlunderAxe")
-				{
-					int jx, jy;
-					jx = -30;
-					jy = -76;
-					if (MiscItem && VisiblePlayerLevel >= exex_axecombolvlrequirement)
-					{
-						textureid blimg = TexMan.CheckForTexture("BLUNQKST", TexMan.TYPE_MiscPatch);
-						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 1.0)) blimg = TexMan.CheckForTexture("BLUNQKS1", TexMan.TYPE_MiscPatch);
-						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 1.4)) blimg = TexMan.CheckForTexture("BLUNQKS2", TexMan.TYPE_MiscPatch);
-						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 2.0)) blimg = TexMan.CheckForTexture("BLUNQKS3", TexMan.TYPE_MiscPatch);
-						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 3.0)) blimg = TexMan.CheckForTexture("BLUNQKS4", TexMan.TYPE_MiscPatch);
-						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 4.5)) blimg = TexMan.CheckForTexture("BLUNQKS5", TexMan.TYPE_MiscPatch);
-						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 6.5)) blimg = TexMan.CheckForTexture("BLUNQKS6", TexMan.TYPE_MiscPatch);
-						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 9.0)) blimg = TexMan.CheckForTexture("BLUNQKS7", TexMan.TYPE_MiscPatch);
-						if (MiscItem && VisiblePlayerLevel >= (exex_axequickshotlvlrequirement * 12.0)) blimg = TexMan.CheckForTexture("BLUNQKS8", TexMan.TYPE_MiscPatch);
-						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
-					}
-					int upgrades = CPlayerPawn.CountInv("BlunderShotUpgrade");
-					if (upgrades)
-					{
-						jx = -22;
-						jy = -40;
-						if (MiscItem && VisiblePlayerLevel >= exex_axecombolvlrequirement) 
-						{
-							jy -= 31;
-						}
-						DrawTexture(TexMan.CheckForTexture("BSHMA0", TexMan.TYPE_MiscPatch), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
-						jx += 19;
-						jy -= 24;
-						DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-					}
-				}
-				if (PlayerWeapon is "AppleJack")
-				{
-					int jx, jy;
-					jx = -30;
-					jy = -76;
-					if (MiscItem && VisiblePlayerLevel >= exex_jackcrisislvlrequirement)
-					{
-						if (MiscItem.oldhealthratio >= 1 && MiscItem.oldhealthratio <= 3)
-						{
-							textureid blimg = TexMan.CheckForTexture("APJKCRS1", TexMan.TYPE_MiscPatch);
-							if (MiscItem.oldhealthratio == 1) blimg = TexMan.CheckForTexture("APJKCRS1", TexMan.TYPE_MiscPatch);
-							if (MiscItem.oldhealthratio == 2) blimg = TexMan.CheckForTexture("APJKCRS2", TexMan.TYPE_MiscPatch);
-							if (MiscItem.oldhealthratio == 3) blimg = TexMan.CheckForTexture("APJKCRS3", TexMan.TYPE_MiscPatch);
-							DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
-						}
-					}
-				}
-				if (PlayerWeapon is "Scrambler")
-				{
-					int jx, jy;
-					jx = -30;
-					jy = -76;
-					if (MiscItem && VisiblePlayerLevel >= exex_scramblernoArmorBonuslvlreq && (armor && armor.Amount <= 0))
-					{
-						textureid blimg = TexMan.CheckForTexture("SCRMBOST", TexMan.TYPE_MiscPatch);
-						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
-					}
-				}
-				if (PlayerWeapon is "WizardPike")
-				{
-					int jx, jy;
-					jx = -30;
-					jy = -76;
-					if (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq)
-					{
-						textureid blimg = TexMan.CheckForTexture("WZPKINVS", TexMan.TYPE_MiscPatch);
-						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.375, 0.375)); // 51, -3
-					}
-				}
-				if (PlayerWeapon is "CricketBat")
-				{
-					int spinIconScaletimer = level.time % 32;
-					double spinIconScale2 = 0.375;
-					vector2 spinIconScale = (spinIconScale2, spinIconScale2);
-					double spiniconalpha = (FontAlpha * 0.75);
-					if (CPlayerPawn && (CPlayerPawn.buttons & BT_MOVELEFT && CPlayerPawn.buttons & BT_MOVERIGHT))
-					{
-						if (spinIconScaletimer == 0) spinIconScale2 = 0.375;
-						if (spinIconScaletimer == 1 || spinIconScaletimer == 31) spinIconScale2 = 0.37890625;
-						if (spinIconScaletimer == 2 || spinIconScaletimer == 30) spinIconScale2 = 0.3828125;
-						if (spinIconScaletimer == 3 || spinIconScaletimer == 29) spinIconScale2 = 0.38671875;
-						if (spinIconScaletimer == 4 || spinIconScaletimer == 28) spinIconScale2 = 0.390625;
-						if (spinIconScaletimer == 5 || spinIconScaletimer == 27) spinIconScale2 = 0.39453125;
-						if (spinIconScaletimer == 6 || spinIconScaletimer == 26) spinIconScale2 = 0.3984375;
-						if (spinIconScaletimer == 7 || spinIconScaletimer == 25) spinIconScale2 = 0.40234375;
-						if (spinIconScaletimer == 8 || spinIconScaletimer == 24) spinIconScale2 = 0.40625;
-						if (spinIconScaletimer == 9 || spinIconScaletimer == 23) spinIconScale2 = 0.41015625;
-						if (spinIconScaletimer == 10 || spinIconScaletimer == 22) spinIconScale2 = 0.4140625;
-						if (spinIconScaletimer == 11 || spinIconScaletimer == 21) spinIconScale2 = 0.41796875;
-						if (spinIconScaletimer == 12 || spinIconScaletimer == 20) spinIconScale2 = 0.421875;
-						if (spinIconScaletimer == 13 || spinIconScaletimer == 19) spinIconScale2 = 0.42578125;
-						if (spinIconScaletimer == 14 || spinIconScaletimer == 18) spinIconScale2 = 0.4296875;
-						if (spinIconScaletimer == 15 || spinIconScaletimer == 17) spinIconScale2 = 0.43359375;
-						if (spinIconScaletimer == 16) spinIconScale2 = 0.4375;
-						spinIconScale = (spinIconScale2, spinIconScale2);
-						spiniconalpha *= 1.5;
-						if (spiniconalpha > 1.0) spiniconalpha = 1.0;
-					}
-					bool canspinattack;
-					if (exex_cricketbatcanspinattack && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement)) canspinattack = true;
-					vector2 poss = (-16, -64);
-					if (canspinattack) DrawTexture(TexMan.CheckForTexture("DINSPINA", TexMan.TYPE_MiscPatch), poss, DI_ITEM_CENTER, spiniconalpha, (-1,-1), spinIconScale); // 51, -3
-				}
-				if (PlayerWeapon is "FosnianCandle")
-				{
-					textureid candmode = TexMan.CheckForTexture("FCANFIRE");
-					if (MiscItem.FCandleShotType == 0) candmode = TexMan.CheckForTexture("FCANFIRE");
-					if (MiscItem.FCandleShotType == 1) candmode = TexMan.CheckForTexture("FCANICE");
-					if (MiscItem.FCandleShotType >= 2)
-					{
-						if (MiscItem.FCandleAntipodeShot % 2) candmode = TexMan.CheckForTexture("FCANCOM1");
-						else candmode = TexMan.CheckForTexture("FCANCOM2");
-					}
-					vector2 poss = (-32, -40); // -16, -64
-					DrawTexture(candmode, poss, DI_ITEM_CENTER, FontAlpha, (-1,-1), (0.667, 0.667)); // 51, -3
-				}
-				
-				int AmmoFontCLR = font.cr_gray;
-				AmmoRatio = ammo1.Amount * 100 / ammo1.MaxAmount;
-				if (ammo1.Amount <= 0) AmmoFontCLR = font.cr_red;
-				else if (AmmoRatio >= 0 && AmmoRatio <= 33) AmmoFontCLR = font.cr_fire;
-				else if (AmmoRatio >= 34 && AmmoRatio <= 66) AmmoFontCLR = font.cr_yellow;
-				else if (AmmoRatio >= 67 && AmmoRatio <= 99) AmmoFontCLR = font.cr_darkgreen;
-				else if (ammo1.Amount >= ammo1.MaxAmount) AmmoFontCLR = font.cr_sapphire;
-				else AmmoFontCLR = font.cr_gray;
-				int DigitPush = 0;
-				if (ammo1.MaxAmount > 99) DigitPush = 5;
-				if (ammo1.MaxAmount > 999) DigitPush = 10;
-
-				if (CPlayerPawn.CountInv("BackpackTier2")) DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+4, y+15), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				if (CPlayerPawn.CountInv("BackpackTier1")) DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+3, y+14), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				DrawString(mDDMFont, FormatNumber(ammo1.MaxAmount, 3), (x+2, y+13), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-
-				if (CPlayerPawn.CountInv("BackpackTier2")) DrawString(mDDMFont, "/", ((x+2-27-DigitPush), y+9), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				if (CPlayerPawn.CountInv("BackpackTier1")) DrawString(mDDMFont, "/", ((x+1-27-DigitPush), y+8), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				DrawString(mDDMFont, "/", ((x-27-DigitPush), y+7), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-
-				if (CPlayerPawn.CountInv("BackpackTier2")) DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+4, y-1), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				if (CPlayerPawn.CountInv("BackpackTier1")) DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+3, y-2), DI_TEXT_ALIGN_RIGHT, font.cr_black, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-				DrawString(mDDLFont, FormatNumber(ammo1.Amount, 3), (x+2, y-3), DI_TEXT_ALIGN_RIGHT, AmmoFontCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-
-				DrawTexture(ammo1.Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), (0.75,0.75)); // -17, y
-				y -= 40;
-			}
-			else
-			{
-				if (PlayerWeapon is "HandToHand")
-				{
-					double FLCRAlpha = FontAlpha * 0.5;
-					vector2 FLCRScale = (0.75, 0.75);
-					int jx, jy;
-					jx = -56; // -30;
-					jy = -56; // -76;
-					if (VisiblePlayerLevel > 0 && !ddafd_disableflowercrownip)
-					{
-						textureid blimg = TexMan.CheckForTexture("FLCRNIP0", TexMan.TYPE_MiscPatch);
-						if (MiscItem.TrueIPLevelGate <= 0 && MiscItem.TrueIPCooldownTimer <= 0)
-						{
-							blimg = TexMan.CheckForTexture("FLCRNIP2", TexMan.TYPE_MiscPatch);
-							double cost = A_GetIPCost(-1);
-							if (MiscItem.ItemPoints >= cost)
-							{
-								if (MiscItem.IPUseMode)
-								{
-									int FlashTimer = level.time % 20;
-									if (FlashTimer >= 10 && FlashTimer <= 19) 
-									{
-										blimg = TexMan.CheckForTexture("FLCRNIP1", TexMan.TYPE_MiscPatch);
-										FLCRAlpha *= 1.25;
-									}
-								}
-								else
-								{
-									int FlashTimer = level.time % 80;
-									if (FlashTimer >= 40 && FlashTimer <= 79) 
-									{
-										blimg = TexMan.CheckForTexture("FLCRNIP1", TexMan.TYPE_MiscPatch);
-										FLCRAlpha *= 1.0625;
-									}
-								}
-							}
-						}
-						else
-						{
-							blimg = TexMan.CheckForTexture("FLCRNIP0", TexMan.TYPE_MiscPatch);
-							FLCRAlpha *= 0.25;
-							FLCRScale *= 0.5;
-							jx = -30; // -30;
-							jy = -30; // -76;
-						}
-						DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FLCRAlpha, (-1, -1), FLCRScale); // 51, -3
-					}
-				}
-				
-				if (PlayerWeapon is "SigilDD")
-				{
-					int AmmoFontCLR = font.cr_gray;
-					
-					AmmoRatio = CurrHealth * 100 / PlayerMaxHP;
-					if (CurrHealth <= 0) AmmoFontCLR = font.cr_red;
-					else if (AmmoRatio >= 0 && AmmoRatio <= 33) AmmoFontCLR = font.cr_fire;
-					else if (AmmoRatio >= 34 && AmmoRatio <= 66) AmmoFontCLR = font.cr_yellow;
-					else if (AmmoRatio >= 67 && AmmoRatio <= 99) AmmoFontCLR = font.cr_darkgreen;
-					else if (AmmoRatio >= 100 && AmmoRatio <= 199) AmmoFontCLR = font.cr_sapphire;
-					else if (AmmoRatio >= 200 && AmmoRatio <= 299) AmmoFontCLR = font.cr_purple;
-					else if (AmmoRatio >= 300) AmmoFontCLR = font.cr_gold;
-					else AmmoFontCLR = font.cr_gray;
-					
-					DrawString(mDDMFont, FormatNumber(PlayerMaxHP, 3), (x+2, y+13), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-					DrawString(mDDMFont, "/", (x-27, y+7), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-					DrawString(mDDLFont, FormatNumber(CurrHealth, 3), (x+2, y-3), DI_TEXT_ALIGN_RIGHT, AmmoFontCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-					
-					vector2 IconScale = (0.334, 0.334);
-					let Sigl = SigilDD(PlayerWeapon);
-					if (Sigl)
-					{
-						textureid Sigl1Icon;
-						if ((Sigl.health) <= 1) Sigl1Icon = TexMan.CheckForTexture("WISIGILA", TexMan.TYPE_MiscPatch);
-						if ((Sigl.health) == 2) Sigl1Icon = TexMan.CheckForTexture("WISIGILB", TexMan.TYPE_MiscPatch);
-						if ((Sigl.health) == 3) Sigl1Icon = TexMan.CheckForTexture("WISIGILC", TexMan.TYPE_MiscPatch);
-						if ((Sigl.health) == 4) Sigl1Icon = TexMan.CheckForTexture("WISIGILD", TexMan.TYPE_MiscPatch);
-						if ((Sigl.health) >= 5) Sigl1Icon = TexMan.CheckForTexture("WISIGILE", TexMan.TYPE_MiscPatch);
-						DrawTexture(Sigl1Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IconScale); // -17, y
-						string Sigl2Icon;
-						if ((CPlayerPawn.CountInv("SigilModeType")) <= 1) Sigl1Icon = TexMan.CheckForTexture("WISIGIL1", TexMan.TYPE_MiscPatch);
-						if ((CPlayerPawn.CountInv("SigilModeType")) == 2) Sigl1Icon = TexMan.CheckForTexture("WISIGIL2", TexMan.TYPE_MiscPatch);
-						if ((CPlayerPawn.CountInv("SigilModeType")) == 3) Sigl1Icon = TexMan.CheckForTexture("WISIGIL3", TexMan.TYPE_MiscPatch);
-						if ((CPlayerPawn.CountInv("SigilModeType")) == 4) Sigl1Icon = TexMan.CheckForTexture("WISIGIL4", TexMan.TYPE_MiscPatch);
-						if ((CPlayerPawn.CountInv("SigilModeType")) >= 5) Sigl1Icon = TexMan.CheckForTexture("WISIGIL5", TexMan.TYPE_MiscPatch);
-						DrawTexture(Sigl1Icon, (x-10, y), DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IconScale); // -17, y
-						string SiglLvl = "";
-						SiglLvl.AppendFormat("\c[gold]%d\c-/\c[yellow]%d\c-", CPlayerPawn.CountInv("SigilModeType"), (Sigl.health));
-						DrawString(mDDMFont, SiglLvl, (x+3, y-41), DI_TEXT_ALIGN_RIGHT, font.cr_DarkGray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-						DrawString(mDDLFont, FormatNumber(Sigl.truedrainamt, 3), (x-25, y-25), DI_TEXT_ALIGN_RIGHT, font.cr_brick, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
-					}
-					y -= 40;
-				}
-			}
-
-			// IP Icons [Weapons]
-			if (exex_ikaripointsenabled)
-			{
-				string IPIcon = "IPIconUN";
-				vector2 IPIconPos = (0, 0); // (324, -25) + (0, yadd)
-				vector2 IPIconPosV = (0, 0); // (324, -25) + (0, yadd)
-				//Console.Printf("ipos: %d / %d, x: %d [%d], y: %d [%d]", i, NumFields, IPIconPos.x, position.x, IPIconPos.y, position.y);
-				bool HasIPIcon = false;
-				int CanUseIPATK = 0;
-				int IPIconTimer = level.time % 8;
-				int IPIconSpeed = 1;
-				int icontype; // 0 = Fire, 1 = Alt-Fire, 2 = Special1, 3 = Special2[?], etc.
-				vector2 IPIconScale = (1.5, 1.5);
-				double IPIconScale2 = 1.5;
-				if (CPlayerPawn && MiscItem.IPUseMode) IPIconSpeed = 2;
-				if (MiscItem)
-				{
-					double IPCost;
-					
-					//***********************
-					//* Main Attack Icon[s] *
-					//***********************
-					if (PlayerWeapon is "CricketBat")
-					{
-						// Cricket Bat [Normal Melee]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(101);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "BlunderAxe")
-					{
-						// Blunderaxe [Normal Melee]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(111);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "Scrambler")
-					{
-						// Blunderaxe [Normal Melee]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(121);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "AppleJack")
-					{
-						// Blunderaxe [Normal Melee]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(131);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "WizardPike")
-					{
-						// Blunderaxe [Normal Melee]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.334;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(141);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "SuperVac")
-					{
-						// Blunderaxe [Normal Melee]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(151);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "Grimophone")
-					{
-						// Grimophone [Normal Ranged Attack]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(161);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "CandleWhip")
-					{
-						// CandleWhip [Normal Melee]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(171);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "SigilDD")
-					{
-						// Sigil
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.75;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						double sigilcost = (3.0 * CPlayerPawn.CountInv("SigilModeType"));
-						IPCost = A_GetIPCost(181,true,sigilcost);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "EvilWarriorShield")
-					{
-						// Hell Warrior Shield [Fireball]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.75;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(191);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "FosnianCandle")
-					{
-						// Fosnian CandleVulcan [Normal Melee]
-						IPIconPos = (-50, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(201);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					IPIconPosV = IPIconPos;
-					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Main] (%s)] Cost: %.4f", PlayerWeapon.GetClassName(), IPCost);
-					
-					// Shows the Proper Icon if the above meets criteria
-					if (HasIPIcon) 
-					{
-						if (CanUseIPATK) 
-						{
-							if (IPIconSpeed <= 1) IPIcon = "IPIcon1U";
-							if (IPIconSpeed >= 2) IPIcon = "IPIcon2U";
-							if (CanUseIPATK == 1)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 32;
-									if (IPIconTimer >= 0 && IPIconTimer <= 7) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 8 && IPIconTimer <= 15) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 16 && IPIconTimer <= 23) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 24 && IPIconTimer <= 31) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-								else
-								{
-									IPIconTimer = level.time % 24;
-									if (IPIconTimer >= 0 && IPIconTimer <= 5) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 6 && IPIconTimer <= 11) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 12 && IPIconTimer <= 17) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 18 && IPIconTimer <= 23) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-							}
-							if (CanUseIPATK == 2)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 16;
-									if (IPIconTimer >= 0 && IPIconTimer <= 3) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 4 && IPIconTimer <= 7) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 8 && IPIconTimer <= 11) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 12 && IPIconTimer <= 15) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-								else
-								{
-									IPIconTimer = level.time % 12;
-									if (IPIconTimer >= 0 && IPIconTimer <= 2) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 3 && IPIconTimer <= 5) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 6 && IPIconTimer <= 8) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 9 && IPIconTimer <= 11) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-							}
-							if (CanUseIPATK >= 3)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 8;
-									if (IPIconTimer >= 0 && IPIconTimer <= 1) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 2 && IPIconTimer <= 3) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 4 && IPIconTimer <= 5) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 6 && IPIconTimer <= 7) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-								else
-								{
-									IPIconTimer = level.time % 4;
-									if (IPIconTimer == 0) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer == 1) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer == 2) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer == 3) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-							}
-						}
-						else
-						{
-							IPIcon = "IPIconUN";
-						}
-						DrawTexture(TexMan.CheckForTexture(IPIcon, TexMan.TYPE_MiscPatch), IPIconPos, DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IPIconScale);
-
-						int IPCharges;
-						if (IPCost > 0.001) 
-						{
-							int TextSize = 1;
-							IPCharges = (MiscItem.ItemPoints / IPCost);
-							string ChargeDigits = FormatNumber(IPCharges);
-							int ChargeDigitsI = ChargeDigits.Length();
-							double valscale = 0.667;
-							double valAlpha = 0.875;
-							vector2 ValPos = ((2 + ((ChargeDigitsI - 1) * 2)), 2);
-							int ValColor = font.CR_GREY;
-							if (IPIconSpeed <= 1) ValColor = font.CR_FIRE;
-							if (IPIconSpeed >= 2) ValColor = font.CR_SAPPHIRE;
-							if (IPCost)
-							{
-								if (IPCharges) DrawString(mDDLFont, FormatNumber(IPCharges, 0, 6), IPIconPosV + ValPos, DI_TEXT_ALIGN_CENTER, ValColor, ValAlpha, -1, 4, (valscale, valscale));
-							}
-						}
-					}
-					
-					//**********************
-					//* Alt Attack Icon[s] *
-					//**********************
-					HasIPIcon = false;
-					if (PlayerWeapon is "CricketBat")
-					{ 
-						// Cricket Bat [Alt Attack]
-						IPIconPos = (-62, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(102);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "BlunderAxe")
-					{
-						// Blunderaxe [Alt Attack]
-						IPIconPos = (-62, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(112);
-						int ammocost = 3;
-						if (dydudebug_infiniteip) ammocost = 1;
-						if (CPlayerPawn.CountInv("BlunderAmmo") >= ammocost)
-						{
-							if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-							else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-							if (dydudebug_infiniteip) CanUseIPATK = 3;
-						}
-					}
-					if (PlayerWeapon is "Scrambler")
-					{
-						// Scrambler [Alt Attack]
-						IPIconPos = (-62, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(122);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "AppleJack")
-					{
-						// AppleJack [Alt Attack]
-						IPIconPos = (-62, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(132);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "WizardPike")
-					{
-						// Pike [Alt Attack]
-						IPIconPos = (-62, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 2.25;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(142);
-						int ammocost = 3;
-						if (dydudebug_infiniteip) ammocost = 1;
-						if (CPlayerPawn.CountInv("PikeAmmo") >= ammocost)
-						{
-							if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-							else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-							if (dydudebug_infiniteip) CanUseIPATK = 3;
-						}
-					}
-					if (PlayerWeapon is "SuperVac")
-					{
-						// Pike [Alt Attack]
-						IPIconPos = (-62, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.875;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(152);
-						if (CPlayerPawn.CountInv("VacAmmo") >= MiscItem.VacCost)
-						{
-							if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-							else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-							if (dydudebug_infiniteip) CanUseIPATK = 3;
-						}
-					}
-					if (PlayerWeapon is "Grimophone")
-					{
-						// Grimophone [Alt Attack]
-						IPIconPos = (-62, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(162);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "CandleWhip")
-					{
-						// CandleWhip [Alt Attack]
-						IPIconPos = (-62, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(172);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					if (PlayerWeapon is "FosnianCandle")
-					{ 
-						// Fosnian CandleVulcan [Alt Attack]
-						IPIconPos = (-62, -10);
-						IPIcon = "IPIconUN";
-						HasIPIcon = true;
-						CanUseIPATK = 0;
-						IPIconScale2 = 1.5;
-						IPIconScale = (IPIconScale2, IPIconScale2);
-						IPIconTimer = level.time % 8;
-						IPCost = A_GetIPCost(201);
-						if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-						else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-						if (dydudebug_infiniteip) CanUseIPATK = 3;
-					}
-					IPIconPosV = IPIconPos;
-					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Alt] (%s)] Cost: %.4f", PlayerWeapon.GetClassName(), IPCost);
-					
-					// Shows the Proper Icon if the above meets criteria
-					if (HasIPIcon) 
-					{
-						if (CanUseIPATK) 
-						{
-							if (IPIconSpeed <= 1) IPIcon = "IPIcon1U";
-							if (IPIconSpeed >= 2) IPIcon = "IPIcon2U";
-							if (CanUseIPATK == 1)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 32;
-									if (IPIconTimer >= 0 && IPIconTimer <= 7) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 8 && IPIconTimer <= 15) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 16 && IPIconTimer <= 23) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 24 && IPIconTimer <= 31) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-								else
-								{
-									IPIconTimer = level.time % 24;
-									if (IPIconTimer >= 0 && IPIconTimer <= 5) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 6 && IPIconTimer <= 11) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 12 && IPIconTimer <= 17) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 18 && IPIconTimer <= 23) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-							}
-							if (CanUseIPATK == 2)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 16;
-									if (IPIconTimer >= 0 && IPIconTimer <= 3) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 4 && IPIconTimer <= 7) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 8 && IPIconTimer <= 11) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 12 && IPIconTimer <= 15) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-								else
-								{
-									IPIconTimer = level.time % 12;
-									if (IPIconTimer >= 0 && IPIconTimer <= 2) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 3 && IPIconTimer <= 5) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 6 && IPIconTimer <= 8) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 9 && IPIconTimer <= 11) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-							}
-							if (CanUseIPATK >= 3)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 8;
-									if (IPIconTimer >= 0 && IPIconTimer <= 1) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 2 && IPIconTimer <= 3) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer >= 4 && IPIconTimer <= 5) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer >= 6 && IPIconTimer <= 7) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-								else
-								{
-									IPIconTimer = level.time % 4;
-									if (IPIconTimer == 0) IPIconPos += ((0 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer == 1) IPIconPos += ((1 * IPIconScale2), (0 * IPIconScale2));
-									if (IPIconTimer == 2) IPIconPos += ((1 * IPIconScale2), (1 * IPIconScale2));
-									if (IPIconTimer == 3) IPIconPos += ((0 * IPIconScale2), (1 * IPIconScale2));
-								}
-							}
-						}
-						else
-						{
-							IPIcon = "IPIconUN";
-						}
-						DrawTexture(TexMan.CheckForTexture(IPIcon, TexMan.TYPE_MiscPatch), IPIconPos, DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IPIconScale);
-
-						int IPCharges;
-						if (IPCost > 0.001) 
-						{
-							int TextSize = 1;
-							IPCharges = (MiscItem.ItemPoints / IPCost);
-							string ChargeDigits = FormatNumber(IPCharges);
-							int ChargeDigitsI = ChargeDigits.Length();
-							double valscale = 0.667;
-							double valAlpha = 0.875;
-							vector2 ValPos = ((-2 - ((ChargeDigitsI - 1) * 2)), 2);
-							int ValColor = font.CR_GREY;
-							if (IPIconSpeed <= 1) ValColor = font.CR_FIRE;
-							if (IPIconSpeed >= 2) ValColor = font.CR_SAPPHIRE;
-							if (IPCost)
-							{
-								if (IPCharges) DrawString(mDDLFont, FormatNumber(IPCharges, 0, 6), IPIconPosV + ValPos, DI_TEXT_ALIGN_CENTER, ValColor, ValAlpha, -1, 4, (valscale, valscale));
-							}
-						}
-					}
-						
-					
-					//**********************
-					//* Special[1] Icon[s] *
-					//**********************
-					HasIPIcon = false;
-					if (PlayerWeapon is "CricketBat")
-					{
-						// Cricket Bat [Spin Attack]
-						bool canspinattack;
-						if (exex_cricketbatcanspinattack && (MiscItem && VisiblePlayerLevel >= exex_cricketspinlvlrequirement)) canspinattack = true;
-						if (canspinattack)
-						{
-							IPIconPos = (-50, -54);
-							IPIcon = "IPIconUN";
-							HasIPIcon = true;
-							CanUseIPATK = 0;
-							IPIconScale2 = 2.0;
-							IPIconScale = (IPIconScale2, IPIconScale2);
-							IPIconTimer = level.time % 8;
-							IPCost = A_GetIPCost(103);
-							if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-							else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-							if (dydudebug_infiniteip) CanUseIPATK = 3;
-						}
-					}
-					if (PlayerWeapon is "WizardPike")
-					{
-						// Pike [Inviso Mode]
-						bool caninviso;
-						if (exex_cricketbatcanspinattack && (MiscItem && VisiblePlayerLevel >= exex_pikeinvisolvlreq)) caninviso = true;
-						if (caninviso)
-						{
-							IPIconPos = (-50, -54);
-							IPIcon = "IPIconUN";
-							HasIPIcon = true;
-							CanUseIPATK = 0;
-							IPIconScale2 = 2.0;
-							IPIconScale = (IPIconScale2, IPIconScale2);
-							IPIconTimer = level.time % 8;
-							IPCost = A_GetIPCost(143);
-							if (MiscItem.ItemPoints >= (IPCost*2)) CanUseIPATK = 2;
-							else if (MiscItem.ItemPoints >= (IPCost*1)) CanUseIPATK = 1;
-							if (dydudebug_infiniteip) CanUseIPATK = 3;
-						}
-					}
-					IPIconPosV = IPIconPos;
-					if (dydudebug_ipdisplays && HasIPIcon) Console.Printf("\c[blue][SBAR Weapon [Special1] (%s)] Cost: %.4f", PlayerWeapon.GetClassName(), IPCost);
-					
-					// Shows the Proper Icon if the above meets criteria
-					if (HasIPIcon) 
-					{
-						if (CanUseIPATK) 
-						{
-							if (IPIconSpeed <= 1) IPIcon = "IPIcon1U";
-							if (IPIconSpeed >= 2) IPIcon = "IPIcon2U";
-							if (CanUseIPATK == 1)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 32;
-									if (IPIconTimer >= 0 && IPIconTimer <= 7) IPIconPos += (0, 0);
-									if (IPIconTimer >= 8 && IPIconTimer <= 15) IPIconPos += (1, 0);
-									if (IPIconTimer >= 16 && IPIconTimer <= 23) IPIconPos += (1, 1);
-									if (IPIconTimer >= 24 && IPIconTimer <= 31) IPIconPos += (0, 1);
-								}
-								else
-								{
-									IPIconTimer = level.time % 24;
-									if (IPIconTimer >= 0 && IPIconTimer <= 5) IPIconPos += (0, 0);
-									if (IPIconTimer >= 6 && IPIconTimer <= 11) IPIconPos += (1, 0);
-									if (IPIconTimer >= 12 && IPIconTimer <= 17) IPIconPos += (1, 1);
-									if (IPIconTimer >= 18 && IPIconTimer <= 23) IPIconPos += (0, 1);
-								}
-							}
-							if (CanUseIPATK == 2)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 16;
-									if (IPIconTimer >= 0 && IPIconTimer <= 3) IPIconPos += (0, 0);
-									if (IPIconTimer >= 4 && IPIconTimer <= 7) IPIconPos += (1, 0);
-									if (IPIconTimer >= 8 && IPIconTimer <= 11) IPIconPos += (1, 1);
-									if (IPIconTimer >= 12 && IPIconTimer <= 15) IPIconPos += (0, 1);
-								}
-								else
-								{
-									IPIconTimer = level.time % 12;
-									if (IPIconTimer >= 0 && IPIconTimer <= 2) IPIconPos += (0, 0);
-									if (IPIconTimer >= 3 && IPIconTimer <= 5) IPIconPos += (1, 0);
-									if (IPIconTimer >= 6 && IPIconTimer <= 8) IPIconPos += (1, 1);
-									if (IPIconTimer >= 9 && IPIconTimer <= 11) IPIconPos += (0, 1);
-								}
-							}
-							if (CanUseIPATK >= 3)
-							{
-								if (IPIconSpeed == 1)
-								{
-									IPIconTimer = level.time % 8;
-									if (IPIconTimer >= 0 && IPIconTimer <= 1) IPIconPos += (0, 0);
-									if (IPIconTimer >= 2 && IPIconTimer <= 3) IPIconPos += (1, 0);
-									if (IPIconTimer >= 4 && IPIconTimer <= 5) IPIconPos += (1, 1);
-									if (IPIconTimer >= 6 && IPIconTimer <= 7) IPIconPos += (0, 1);
-								}
-								else
-								{
-									IPIconTimer = level.time % 4;
-									if (IPIconTimer == 0) IPIconPos += (0, 0);
-									if (IPIconTimer == 1) IPIconPos += (1, 0);
-									if (IPIconTimer == 2) IPIconPos += (1, 1);
-									if (IPIconTimer == 3) IPIconPos += (0, 1);
-								}
-							}
-						}
-						else
-						{
-							IPIcon = "IPIconUN";
-						}
-						DrawTexture(TexMan.CheckForTexture(IPIcon, TexMan.TYPE_MiscPatch), IPIconPos, DI_TEXT_ALIGN_RIGHT, 1.0, (-1, -1), IPIconScale);
-						
-
-						int IPCharges;
-						if (IPCost > 0.001) 
-						{
-							int TextSize = 1;
-							IPCharges = (MiscItem.ItemPoints / IPCost);
-							string ChargeDigits = FormatNumber(IPCharges);
-							int ChargeDigitsI = ChargeDigits.Length();
-							double valscale = 0.8334;
-							double valAlpha = 0.875;
-							vector2 ValPos = (0, 2);
-							int ValColor = font.CR_GREY;
-							if (IPIconSpeed <= 1) ValColor = font.CR_FIRE;
-							if (IPIconSpeed >= 2) ValColor = font.CR_SAPPHIRE;
-							if (IPCost)
-							{
-								if (IPCharges) DrawString(mDDLFont, FormatNumber(IPCharges, 0, 6), IPIconPosV + ValPos, DI_TEXT_ALIGN_CENTER, ValColor, ValAlpha, -1, 4, (valscale, valscale));
-							}
-						}
-					}
-
-					HasIPIcon = false;
-					//**********************
-					//* Special[2] Icon[s] *
-					//**********************
-					// None Yet Available :V
-
-				}
-			}
+			[dun, x, y, VisiblePlayerLevel, FontAlpha, FontWrapWidth, FontLineSpace, FontScale, AmmoRatio, wsammoname, CurrHealth, PlayerMaxHP] = DrawFSHUDAmmoStuff(dun, x, y, VisiblePlayerLevel, FontAlpha, FontWrapWidth, FontLineSpace, FontScale, AmmoRatio, wsammoname, CurrHealth, PlayerMaxHP);
 			
 			//Lower Center 
 			//************
-			if (CPlayerPawn && !automapactive)
-			{
-				DigY = 0;
-				string mapnam = "";
-				int mapnametimerbase = 38;
-				int mapnametimer = level.time % mapnametimerbase;
-				if (mapnametimer == 0)
-				{
-					mapnametimerbase = randompick(23,28,28,32,32,32,35,35,35,35,35,38,38,38,42,42,47);
-					mapnametimer = level.time % mapnametimerbase;
-				}
-				bool mapnameflickermode = 0;
-				int stattalLYtimerbase = 140;
-				int stattalLYtimer = level.time % stattalLYtimerbase;
-				int stattalLYshowall = (stattalLYtimerbase * 0.75);
-				double talLYpercent = 100.0;
-				bool showtotaltallies = false;
-				if (dyduhud_leveltallies >= 2)
-				{
-					if (dyduhud_leveltallies == 4) showtotaltallies = true;
-					if (dyduhud_leveltallies == 3)
-					{
-						if (stattalLYtimer > stattalLYshowall && MiscItem) showtotaltallies = false;
-																													else showtotaltallies = true;
-					}
-					if (dyduhud_leveltallies == 2)
-					{
-						if (stattalLYtimer > stattalLYshowall && MiscItem) showtotaltallies = true;
-																													else showtotaltallies = false;
-					}
-				}
-				
-				if (level.AllMap)
-				{
-					if (mapnametimer > (mapnametimerbase * 0.5)) mapnameflickermode = 1;
-				}
-
-				if (mapnameflickermode)
-				{
-					if (gameinfo.gametype != GAME_Hexen && !MiscItem.isDDTrilogy)
-					{
-						if (gameinfo.gametype == GAME_Doom) mapnam.AppendFormat("\c[sapphire]%s: ", level.mapname);
-						if (gameinfo.gametype == GAME_Heretic || gameinfo.gametype == GAME_Strife) mapnam.AppendFormat("\c[sapphire]%s: ", level.mapname);
-					}
-					mapnam.AppendFormat("\c[fire]%s", level.levelname);
-				}
-				else
-				{
-					if (gameinfo.gametype != GAME_Hexen && !MiscItem.isDDTrilogy) 
-					{
-						if (gameinfo.gametype == GAME_Doom) mapnam.AppendFormat("\c[red]%s: ", level.mapname);
-						if (gameinfo.gametype == GAME_Heretic || gameinfo.gametype == GAME_Strife) mapnam.AppendFormat("\c[gold]%s: ", level.mapname);
-					}
-					mapnam.AppendFormat("\c[white]%s", level.levelname);
-				}
-				if (dyduhud_showlevelnames)
-				{
-					DigY -= 40;
-					DrawString(mConFont, mapnam, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_darkgray);
-				}
-				
-				string talLYtemp = "";
-				if (dyduhud_showleveltimes)
-				{
-					int timeTicks =
-							hud_showtime < 4
-								? Level.maptime
-								: (hud_showtime < 6
-									? Level.time
-									: Level.totaltime);
-									// Time Stats
-					int leveltime = level.totaltime;
-					int leveltimepar = level.partime * ticrate;
-					int rawseconds = Thinker.Tics2Seconds(leveltime);
-					int leveltimedays = ((rawseconds / 86400));
-					int dayaddx = 0;
-					if (leveltimedays > 0 && leveltimedays <= 9) dayaddx = 12;
-					if (leveltimedays >= 10 && leveltimedays <= 99) dayaddx = 24;
-
-					talLYtemp = "TIME: ";
-					leveltime = level.time;
-					rawseconds = Thinker.Tics2Seconds(leveltime);
-					int leveltimesec = (rawseconds % 60);
-					int leveltimemin = ((rawseconds % 3600) / 60);
-					int leveltimehrs = ((rawseconds % 86400) / 3600);
-					leveltimedays = ((rawseconds / 86400));
-
-					if (leveltimedays) talLYtemp.AppendFormat("%dd ", leveltimedays);
-					if (leveltimehrs >= 0 && leveltimehrs <= 9) talLYtemp.AppendFormat("0%d:", leveltimehrs);
-																								 else talLYtemp.AppendFormat("%d:", leveltimehrs);
-					if (leveltimemin >= 0 && leveltimemin <= 9) talLYtemp.AppendFormat("0%d:", leveltimemin);
-																								 else talLYtemp.AppendFormat("%d:", leveltimemin);
-					if (leveltimesec >= 0 && leveltimesec <= 9) talLYtemp.AppendFormat("0%d", leveltimesec);
-																								 else talLYtemp.AppendFormat("%d", leveltimesec);
-					DigY -= 8;
-					int fontclr = font.cr_darkgray;
-					if (leveltime <= (leveltimepar * 0.5))
-					{
-						if (leveltime % 34 > 17) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-					}
-					else
-					{
-						if (leveltime <= (leveltimepar * 0.875))
-						{
-							if (leveltime % 36 >= 0 && leveltime % 36 <= 5) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-							if (leveltime % 36 >= 12 && leveltime % 36 <= 17) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-							if (leveltime % 36 >= 24 && leveltime % 36 <= 29) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-						}
-						else
-						{
-							if (leveltime <= (leveltimepar * 1))
-							{
-								if (leveltime % 36 >= 0 && leveltime % 36 <= 2) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-								if (leveltime % 36 >= 6 && leveltime % 36 <= 8) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-								if (leveltime % 36 >= 12 && leveltime % 36 <= 14) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-								if (leveltime % 36 >= 18 && leveltime % 36 <= 20) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-								if (leveltime % 36 >= 24 && leveltime % 36 <= 26) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-								if (leveltime % 36 >= 30 && leveltime % 36 <= 32) fontclr = font.cr_green; // Flickers green if you're still within the level's par time V:
-							}
-						}
-					}
-					DrawString(mConFont, talLYtemp, (-120-dayaddx, DigY), DI_TEXT_ALIGN_LEFT|DI_SCREEN_CENTER_BOTTOM, fontclr);
-					// Total Time
-					talLYtemp = "TOTAL: ";
-					leveltime = level.totaltime;
-					rawseconds = Thinker.Tics2Seconds(leveltime);
-					leveltimesec = (rawseconds % 60);
-					leveltimemin = ((rawseconds % 3600) / 60);
-					leveltimehrs = ((rawseconds % 86400) / 3600);
-					leveltimedays = ((rawseconds / 86400));
-
-					if (leveltimedays) talLYtemp.AppendFormat("%dd ", leveltimedays);
-					if (leveltimehrs >= 0 && leveltimehrs <= 9) talLYtemp.AppendFormat("0%d:", leveltimehrs);
-																								 else talLYtemp.AppendFormat("%d:", leveltimehrs);
-					if (leveltimemin >= 0 && leveltimemin <= 9) talLYtemp.AppendFormat("0%d:", leveltimemin);
-																								 else talLYtemp.AppendFormat("%d:", leveltimemin);
-					if (leveltimesec >= 0 && leveltimesec <= 9) talLYtemp.AppendFormat("0%d", leveltimesec);
-																								 else talLYtemp.AppendFormat("%d", leveltimesec);
-					DrawString(mConFont, talLYtemp, (120+dayaddx, DigY), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM, font.cr_gray);
-				}
-				
-				if (dyduhud_leveltallies)
-				{
-					// Level Stats
-					DigY += 8;
-					if (dyduhud_showleveltimes) DigY -= 8;
-					int talLYfontclr;
-					int flashinterval = 24;
-					if (showtotaltallies) flashinterval = 12;
-					int scrtcnt = level.found_secrets;
-					int maxscrtcnt = level.total_secrets;
-					if (showtotaltallies)
-					{
-						scrtcnt = MiscItem.totalsecretsgame;
-						maxscrtcnt = MiscItem.totalmaxsecrets;
-					}
-					if (maxscrtcnt == 0) talLYpercent = 100.0;
-					else talLYpercent = scrtcnt * 100.0 / maxscrtcnt;
-					if (maxscrtcnt)
-					{
-						talLYfontclr = font.cr_gold;
-						if (scrtcnt >= maxscrtcnt && level.time % flashinterval >= (flashinterval*0.5)) talLYfontclr = font.cr_darkgreen;
-						DigY -= 8;
-						talLYtemp = "Secrets: ";
-						if (showtotaltallies) talLYtemp = "Secrets [ALL]: ";
-						if (dyduhud_leveltalLYpercents != 2)
-						{
-							talLYtemp.AppendFormat("%d", scrtcnt);
-							talLYtemp.AppendFormat("/");
-							talLYtemp.AppendFormat("%d", maxscrtcnt);
-						}
-						if (dyduhud_leveltalLYpercents == 1)
-						{
-							talLYtemp.AppendFormat(" ");
-							talLYtemp.AppendFormat("[");
-						}
-						if (dyduhud_leveltalLYpercents)
-						{
-							talLYtemp.AppendFormat("%.2f", talLYpercent);
-							talLYtemp.AppendFormat("%%");
-						}
-						if (dyduhud_leveltalLYpercents == 1)
-						{
-							talLYtemp.AppendFormat("]");
-						}
-						DrawString(mConFont, talLYtemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, talLYfontclr);
-					}
-					int itemcnt = level.found_items;
-					int maxitemcnt = level.total_items;
-					if (showtotaltallies)
-					{
-						itemcnt = MiscItem.totalitemsgame;
-						maxitemcnt = MiscItem.totalmaxitems;
-					}
-					if (maxitemcnt == 0) talLYpercent = 100.0;
-					else talLYpercent = itemcnt * 100.0 / maxitemcnt;
-					if (maxitemcnt)
-					{
-						talLYfontclr = font.cr_lightblue;
-						if (itemcnt >= maxitemcnt && level.time % flashinterval >= (flashinterval*0.5)) talLYfontclr = font.cr_brick;
-						DigY -= 8;
-						talLYtemp = "Items: ";
-						if (showtotaltallies) talLYtemp = "Items [ALL]: ";
-						if (dyduhud_leveltalLYpercents != 2)
-						{
-							talLYtemp.AppendFormat("%d", itemcnt);
-							talLYtemp.AppendFormat("/");
-							talLYtemp.AppendFormat("%d", maxitemcnt);
-						}
-						if (dyduhud_leveltalLYpercents == 1)
-						{
-							talLYtemp.AppendFormat(" ");
-							talLYtemp.AppendFormat("[");
-						}
-						if (dyduhud_leveltalLYpercents)
-						{
-							talLYtemp.AppendFormat("%.2f", talLYpercent);
-							talLYtemp.AppendFormat("%%");
-						}
-						if (dyduhud_leveltalLYpercents == 1)
-						{
-							talLYtemp.AppendFormat("]");
-						}
-						DrawString(mConFont, talLYtemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, talLYfontclr);
-					}
-					int killcnt = level.killed_monsters;
-					int maxkillcnt = level.total_monsters;
-					if (showtotaltallies)
-					{
-						killcnt = MiscItem.totalkillsgame;
-						maxkillcnt = MiscItem.totalmaxkills;
-					}
-					if (maxkillcnt == 0) talLYpercent = 100.0;
-					else talLYpercent = killcnt * 100.0 / maxkillcnt;
-					if (maxkillcnt)
-					{
-						talLYfontclr = font.cr_brick;
-						if (killcnt >= maxkillcnt && level.time % flashinterval >= (flashinterval*0.5)) talLYfontclr = font.cr_lightblue;
-						DigY -= 8;
-						talLYtemp = "Kills: ";
-						if (showtotaltallies) talLYtemp = "Kills [ALL]: ";
-						if (dyduhud_leveltalLYpercents != 2)
-						{
-							talLYtemp.AppendFormat("%d", killcnt);
-							talLYtemp.AppendFormat("/");
-							talLYtemp.AppendFormat("%d", maxkillcnt);
-						}
-						if (dyduhud_leveltalLYpercents == 1)
-						{
-							talLYtemp.AppendFormat(" ");
-							talLYtemp.AppendFormat("[");
-						}
-						if (dyduhud_leveltalLYpercents)
-						{
-							talLYtemp.AppendFormat("%.2f", talLYpercent);
-							talLYtemp.AppendFormat("%%");
-						}
-						if (dyduhud_leveltalLYpercents == 1)
-						{
-							talLYtemp.AppendFormat("]");
-						}
-						DrawString(mConFont, talLYtemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, talLYfontclr);
-					}
-				}
-			}
-			
+			// Level Stats
+			DigY = DrawFSHUDLevelStats(DigY);
 			
 			// Inventory Bar
 			int yadd = 0;
