@@ -442,6 +442,7 @@ class Planter : DDOrigCreature
 			GARD I 5 Bright A_Scream();
 			GARD JKLMN 4 Bright;
 			GARD O 5 Bright A_NoBlocking();
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 		Raise:
 			GARD ONMLKJI 5;
@@ -1057,6 +1058,7 @@ class ManchineelEE : DDOrigCreature
 				A_NoBlocking();
 				A_Drop();
 			}
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 		Raise:
 			GARD ONML 5;
@@ -1219,6 +1221,7 @@ class Centaurion : DDOrigCreature
 				A_Drop();
 			}
 			C2NT QRST 7;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 		Raise:
 			C2NT TSRQPONML 5;
@@ -1786,6 +1789,7 @@ class PuddingDog : DDOrigCreature
 			CDOG H 1 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0);
 			CDOG H 1 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0);
 			CDOG H 1 A_ThrowGrenade("PupGrenade",2,random(2,6),random(6,10),0);
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -1957,6 +1961,7 @@ class PuddingPup : DDOrigCreature
 			CDOG F 5 A_Scream();
 			CDOG G 5 A_NoBlocking();
 			CDOG H 5;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -2292,6 +2297,7 @@ class Vitriola : DDOrigCreature
 				A_NoBlocking();
 				A_Drop();
 			}
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -2996,6 +3002,7 @@ class Killetante : DDOrigCreature
 			DANS MNOP 3 bright;
 			DANS Q 2 bright A_NoBlocking();
 			DANS RSTUVWXYZ 2 bright;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -4265,6 +4272,7 @@ class ReelHeel : DDOrigCreature
 					A_Dropitem("Money_Ducat",1,1);
 				}
 			}
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -4371,6 +4379,7 @@ class ReelHeelNew : ReelHeel
 			SLOT N 8 A_Explode(damagetype:"HeelExplosion");
 			SLOT O 8 A_NoBlocking();
 			SLOT PQ 8;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -4520,6 +4529,7 @@ class NightmareReelHeel : ReelHeelNew
 			SLOT N 8 A_Explode(damagetype:"HeelExplosion");
 			SLOT O 8 A_NoBlocking();
 			SLOT PQ 8;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -4700,6 +4710,7 @@ class SpiderCenser : DDOrigCreature
 			}
 			SPCN OPQR 3 bright;
 			SPCN S 3 bright A_NoBlocking();
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -4932,6 +4943,7 @@ class Galgoyle : DDOrigCreature
 				A_Drop();
 			}
 			GGRX HIJKLMNOP 2 bright;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -5469,6 +5481,7 @@ class Shillfish : DDOrigCreature
 			SHEL F 7 Bright A_Scream();
 			SHEL GH 7 Bright;
 			SHEL I 7 Bright A_NoBlocking();
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -5589,6 +5602,7 @@ class Shillfish_Fly : Shillfish
 			SHEL F 7 Bright A_Scream();
 			SHEL GH 7 Bright;
 			SHEL I 7 Bright A_NoBlocking();
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -5735,6 +5749,7 @@ class Bellefish : DDOrigCreature
 			SHLF J 7 Bright A_Scream();
 			SHLF KLM 7 Bright;
 			SHLF N 7 Bright A_NoBlocking();
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -6223,7 +6238,7 @@ class KilletanteSoloist : Killetante
 			}
 		}
 		
-		if (!isFrozen())
+		if (!isFrozen() && health > 0)
 		{
 			double dmgmult = frandom(1.125,1.25);
 			double incmult = frandom(1.2825,1.565);
@@ -6311,14 +6326,21 @@ class KilletanteSoloist : Killetante
 					regentimermax *= frandompick(0.5,0.667,0.667,0.833,0.833);
 					inc *= randompick(7,7,8,8,9);
 				}
-				regentimer += inc;
-				if (regentimer > regentimermax)
+				int regentype = 0;
+				string nm = "CCards_Actor_Ghost";
+				if (CountInv(nm)) regentype = 1;
+				if (health > 0 || (regentype == 1 && health > 0 && health < ((SpawnHealth() + Stamina) * 0.5))) 
 				{
-					regentimer -= regentimermax;
-					health += randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2);
-					A_SpawnItemEx("Micronote2", frandom(6,7), frandom(6,7), (frandom(24,28)*2), 0, frandom(-1.5, 1.5), frandom(-1.5, 1.5));
-					if (health > maxhealth) health = maxhealth;
-					// The Soloist will emit a micro-sized music note whenever she incurs a regen interval
+					regentimer += inc;
+					if (regentimer > regentimermax)
+					{
+						regentimer -= regentimermax;
+						health += randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2);
+						A_SpawnItemEx("Micronote2", frandom(6,7), frandom(6,7), (frandom(24,28)*2), 0, frandom(-1.5, 1.5), frandom(-1.5, 1.5));
+						if (regentype == 0 && health > maxhealth) health = maxhealth;
+						else if (regentype == 1 && health > ((SpawnHealth() + Stamina) * 0.5)) health = ((SpawnHealth() + Stamina) * 0.5);
+						// The Soloist will emit a micro-sized music note whenever she incurs a regen interval
+					}
 				}
 			}
 			else
@@ -7035,6 +7057,7 @@ class KilletanteSoloist : Killetante
 			DAKS MNOP 3 bright;
 			DAKS Q 2 bright A_NoBlocking();
 			DAKS RSTUVWXYZ 2 bright;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 		Death.Unsummon:
 			DAKS L 0
@@ -7786,6 +7809,7 @@ class GameMother : DDOrigBoss
 			}
 			CMOT X 0 Bright A_NoBlocking();
 			CMOT X 0 A_DDAFDOrigBossDie();
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -7888,6 +7912,7 @@ class GameMotherClone : GameMother
 			}
 			CMOT X 0 Bright A_NoBlocking();
 			CMOT X 0 A_DDAFDOrigBossDie();
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -8421,6 +8446,7 @@ class MossMother : DDOrigBoss
 			}
 			MMDM Y 10 A_NoBlocking();
 			MMDM Z 10;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 		Raise:
 			MMRS DC 4;
@@ -8698,6 +8724,7 @@ class MossMotherClone : MossMother
 			}
 			MMDM Y 10 A_NoBlocking();
 			MMDM Z 10;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -8944,6 +8971,7 @@ class SphinxMother : DDOrigBoss
 				actor player = players[0].mo;
 				if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls")) ACS_Execute(198,0,0,0,0);
 			}
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -9243,6 +9271,7 @@ class SphinxMotherClone : SphinxMother
 				actor player = players[0].mo;
 				if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls")) ACS_Execute(198,0,0,0,0);
 			}
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -9503,6 +9532,7 @@ class HandMotherVac : DDOrigBoss
 			}
 			BMOX F 0 A_StartSound("misc/teledd");
 			BMTX EFGH 3 Bright;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -10626,6 +10656,7 @@ class HandMotherPhaseC : DDOrigBoss
 				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
 			}
 			BM3X Z 0;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -10906,6 +10937,7 @@ class HandMotherPhaseCClone : HandMotherPhaseC
 				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
 			}
 			BM3X Z 0;
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
@@ -11080,6 +11112,7 @@ class SugarSnake : DDOrigCreature
 					if (IPCompat) IPCompat.IPattack = true;
 				}
 			}
+			TNT1 A 0 CCCardDeathCheck();
 			Stop;
 	}
 }
