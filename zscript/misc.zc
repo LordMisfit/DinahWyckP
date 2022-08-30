@@ -3878,7 +3878,7 @@ class PlayerStatItem : Inventory
 				
 				// Food
 				double FoodEvaAlt = 0.0;
-				if (owner.CountInv("PowerEggBuff") || owner.CountInv("PowerEggBuff2")) FoodEvaAlt += (BaseEVA * 0.04);
+				if (owner.CountInv("PowerEggBuff") || owner.CountInv("PowerEggBuff2")) FoodEvaAlt += (BaseEVA * (0.04 + (UsedEggHeal * 0.0004)));
 				if (owner.CountInv("PowerFruitBuff") || owner.CountInv("PowerFruitBuff2")) FoodEvaAlt += (BaseEVA * 0.02);
 				if (owner.CountInv("PowerRoastBuff")) FoodEvaAlt += (BaseEVA * 0.04);
 				if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) FoodEvaAlt += (BaseEVA * 0.08);
@@ -4337,13 +4337,13 @@ class PlayerStatItem : Inventory
 			if (WineDefTier == 4 || WineDefTier == -4) TotalMass *= 2;
 			if (WineDefTier == 5 || WineDefTier == -5) TotalMass *= 2.625;
 			// Food
-			int MealBuffs = 0;
-			if (Owner.CountInv("PowerEggBuff") || Owner.CountInv("PowerEggBuff2")) MealBuffs++;
-			if (Owner.CountInv("PowerFruitBuff") || Owner.CountInv("PowerFruitBuff2")) MealBuffs++;
-			if (Owner.CountInv("PowerRoastBuff")) MealBuffs++;
-			if (Owner.CountInv("PowerMealBuff") || Owner.CountInv("PowerMealBuff2")) MealBuffs++;
-			if (Owner.CountInv("PowerMeal2Buff") || Owner.CountInv("PowerMeal2Buff2")) MealBuffs++;
-			if (MealBuffs) TotalMass *= (1 + (MealBuffs * 0.125));
+			double mealbuff = 1.0;
+			if (Owner.CountInv("PowerEggBuff") || Owner.CountInv("PowerEggBuff2")) mealbuff += (0.125 + (UsedEggHeal * 0.00125));
+			if (Owner.CountInv("PowerFruitBuff") || Owner.CountInv("PowerFruitBuff2")) mealbuff += 0.125;
+			if (Owner.CountInv("PowerRoastBuff")) mealbuff += 0.125;
+			if (Owner.CountInv("PowerMealBuff") || Owner.CountInv("PowerMealBuff2")) mealbuff += 0.125;
+			if (Owner.CountInv("PowerMeal2Buff") || Owner.CountInv("PowerMeal2Buff2")) mealbuff += 0.125;
+			TotalMass *= mealbuff;
 			if (dydudebug_masscalcs) Console.Printf("Mass [Buffs]: %d", TotalMass);
 
 			If (owner.player.ReadyWeapon is "EvilWarriorShield")
@@ -6448,7 +6448,11 @@ class PlayerDashJump : Inventory
 			if (temp >= 0.50) temp = 0.50;
 			DashSpdMul *= temp;
 		}
-		if (owner.CountInv("PowerEggBuff") || owner.CountInv("PowerEggBuff2")) DashSpdMul += 0.04;
+		if (owner.CountInv("PowerEggBuff") || owner.CountInv("PowerEggBuff2")) 
+		{
+			if (MiscItem) DashSpdMul += (0.04 + (MiscItem.UsedEggHeal * 0.0004));
+							 else DashSpdMul += 0.04;
+		}
 		if (owner.CountInv("PowerFruitBuff") || owner.CountInv("PowerFruitBuff2")) DashSpdMul += 0.02;
 		if (owner.CountInv("PowerRoastBuff")) DashSpdMul += 0.04;
 		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashSpdMul += 0.08;
