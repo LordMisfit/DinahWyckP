@@ -996,17 +996,21 @@ class PlayerStatItem : Inventory
 				}
 				if (LMUsed)
 				{
+					double ssb = 1.0;
+					if (owner.CountInv("ClassyRibbon")) ssb += 0.125;
+					if (owner.CountInv("ExpeditionHat")) ssb -= 0.25;
+
 					owner.A_StartSound("Dinah/PainLMS",CHAN_VOICE);
 					//Console.Printf("MedStrength: %d", MedStrength);
-					owner.A_SetBlend("8a e1 01",(0.334 + (MedStrength * 0.0667)),(random(32,33) + (MedStrength * 8)));
-					if (MedStrength >= 1) owner.health *= 0.5;
-					if (MedStrength >= 2) owner.health *= 0.5;
-					if (MedStrength >= 3) owner.health *= 0.5;
-					if (MedStrength >= 4) owner.health *= 0.5;
-					owner.player.poisoncount += (random(12,20) * random(4,5) * (randompick(0,0,0,0,0,0,0,0,0,0,1,1,2) + MedStrength));
+					owner.A_SetBlend("8a e1 01",((0.334 * ssb) + ((MedStrength * 0.0667)) * ssb),((random(32,33) * ssb) + ((MedStrength * 8) * ssb)));
+					if (MedStrength >= 1) owner.health *= (0.5 * ssb);
+					if (MedStrength >= 2) owner.health *= (0.5 * ssb);
+					if (MedStrength >= 3) owner.health *= (0.5 * ssb);
+					if (MedStrength >= 4) owner.health *= (0.5 * ssb);
+					owner.player.poisoncount += ((random(12,20) * random(4,5) * (randompick(0,0,0,0,0,0,0,0,0,0,1,1,2) + MedStrength)) * ssb);
 					//Console.Printf("poisoncount: %d", owner.player.poisoncount);
 					if (owner.health < 0) owner.health = 1;
-
+					
 					double base;
 					if (exex_ikaripointscalctype == 1)
 					{
@@ -1033,9 +1037,18 @@ class PlayerStatItem : Inventory
 						if (oldhealth > 1 && owner.health == 1) base *= 3.25;
 					}
 					double basef = base;
+					double ssa = 1.0;
+					if (owner.CountInv("ClassyRibbon")) ssa += 0.25;
+					if (owner.CountInv("ExpeditionHat")) ssa -= 0.125;
+					base *= ssa;
+					basef *= ssa;
+
 					base *= (1.0 + (TruePlayerLevel * 0.0025));
 					if (base <= 0.01) base = 0.01;
 					if (basef <= 0.01) basef = 0.01;
+					
+					if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) base *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+					
 					if (base)
 					{
 						if (IPDissipateTimer > 0) IPDissipateTimer = (-350 * basef);
@@ -1097,114 +1110,10 @@ class PlayerStatItem : Inventory
 					LMUsed = 0;
 				}
 				
-				// Armor Tier Give/Max Settings
-				name armorclasstype = "KGArmor";
-				name armorclasstype2 = "ArmorScrapSilent";
-				int currentarmoramt = Owner.CountInv(armorclasstype);
-				if (exex_armoritemdifficulty >= 3)
-				{
-					ArmorItemGive0 = random(12,13);
-					ArmorItemMax0 = ArmorItemGive0;
-					ArmorItemGive1 = 25;
-					ArmorItemMax1 = 50;
-					ArmorItemGive2 = 50;
-					ArmorItemMax2 = 100;
-					ArmorItemGive3 = 100;
-					ArmorItemMax3 = 200;
-					ArmorItemGive4 = 200;
-					ArmorItemMax4 = 400;
-					if (prevarmordifficulty == 0) // Take 80% of Current Armor amount
-					{
-						for (int i; i < (currentarmoramt * 0.8); i++) owner.A_TakeInventory(armorclasstype,1);
-					}
-					if (prevarmordifficulty == 1) // Take 60% of Current Armor amount
-					{
-						for (int i; i < (currentarmoramt * 0.6); i++) owner.A_TakeInventory(armorclasstype,1);
-					}
-					if (prevarmordifficulty == 2) // Take 50% of Current Armor amount
-					{
-						for (int i; i < (currentarmoramt * 0.5); i++) owner.A_TakeInventory(armorclasstype,1);
-					}
-				}
-				else
-				if (exex_armoritemdifficulty == 2)
-				{
-					ArmorItemGive0 = 25;
-					ArmorItemMax0 = ArmorItemGive0;
-					ArmorItemGive1 = 50;
-					ArmorItemMax1 = 100;
-					ArmorItemGive2 = 100;
-					ArmorItemMax2 = 200;
-					ArmorItemGive3 = 200;
-					ArmorItemMax3 = 400;
-					ArmorItemGive4 = 400;
-					ArmorItemMax4 = 800;
-					if (prevarmordifficulty == 0) // Take 60% of Current Armor amount
-					{
-						for (int i; i < (currentarmoramt * 0.6); i++) owner.A_TakeInventory(armorclasstype,1);
-					}
-					if (prevarmordifficulty == 1) // Take 25% of Current Armor amount
-					{
-						for (int i; i < (currentarmoramt * 0.25); i++) owner.A_TakeInventory(armorclasstype,1);
-					}
-					if (prevarmordifficulty >= 3) // Give 100% of Current Armor amount
-					{
-						for (int i; i < (currentarmoramt); i++) owner.A_GiveInventory(armorclasstype2,1);
-					}
-				}
-				else
-				if (exex_armoritemdifficulty == 1)
-				{
-					ArmorItemGive0 = 50;
-					ArmorItemMax0 = ArmorItemGive0;
-					ArmorItemGive1 = random(62,63);
-					ArmorItemMax1 = 125;
-					ArmorItemGive2 = 125;
-					ArmorItemMax2 = 250;
-					ArmorItemGive3 = 250;
-					ArmorItemMax3 = 500;
-					ArmorItemGive4 = 500;
-					ArmorItemMax4 = 1000;
-					if (prevarmordifficulty == 0) // Take half of Current Armor amount
-					{
-						for (int i; i < (currentarmoramt * 0.5); i++) owner.A_TakeInventory(armorclasstype,1);
-					}
-					if (prevarmordifficulty == 2) // Give 25% more of current armor amount
-					{
-						for (int i; i < (currentarmoramt * 0.25); i++) owner.A_GiveInventory(armorclasstype2,1);
-					}
-					if (prevarmordifficulty >= 3) // Give 150% more of current armor amount
-					{
-						for (int i; i < (currentarmoramt * 1.5); i++) owner.A_GiveInventory(armorclasstype2,1);
-					}
-				}
-				else
-				if (exex_armoritemdifficulty <= 0)
-				{
-					ArmorItemGive0 = 50;
-					ArmorItemMax0 = 100;
-					ArmorItemGive1 = 125;
-					ArmorItemMax1 = 250;
-					ArmorItemGive2 = 250;
-					ArmorItemMax2 = 500;
-					ArmorItemGive3 = 500;
-					ArmorItemMax3 = 1000;
-					ArmorItemGive4 = 1000;
-					ArmorItemMax4 = 2000;
-					if (prevarmordifficulty == 1) // Give 2x Current Armor amount
-					{
-						for (int i; i < currentarmoramt; i++) owner.A_GiveInventory(armorclasstype2,1);
-					}
-					if (prevarmordifficulty == 2) // Give 2.5x current armor amount
-					{
-						for (int i; i < (currentarmoramt * 1.5); i++) owner.A_GiveInventory(armorclasstype2,1);
-					}
-					if (prevarmordifficulty >= 3) // Give 5x current armor amount
-					{
-						for (int i; i < (currentarmoramt * 4); i++) owner.A_GiveInventory(armorclasstype2,1);
-					}
-				}
-				prevarmordifficulty = exex_armoritemdifficulty;
+				//********************************
+				//* Armor Tier Give/Max Settings *
+				//********************************
+				ArmorTierStuff();
 				
 				// Wine Tier Defs
 				WineDefTier = 0;
@@ -1230,53 +1139,11 @@ class PlayerStatItem : Inventory
 					if (TrueGameSkill == SKILL_HARD) SuperVacBagSize = 480;
 					if (TrueGameSkill == SKILL_VERY_HARD) SuperVacBagSize = 560;
 				}
-
-				HPRegenTimerMax = 7000 - ((StaminaLevel * 5) * 35);
-				HPDegenTimerMax = 1750 + ((StaminaLevel * 5) * 17.5);
-				CurrentHealth = owner.player.mo.health;
-				int HealthBonusAdd2 = HealthBonusAdd;
-				int HealthLevelAdd2 = HealthLevelAdd;
-				HealthNoRPGAdd2 = 0;
-				if (!exex_expenabled)
-				{
-					if (skill <= 0) HealthBonusAdd2 *= 4.0;
-					if (skill == 1) HealthBonusAdd2 *= 3.5;
-					if (skill == 2) HealthBonusAdd2 *= 3.0;
-					if (skill == 3) HealthBonusAdd2 *= 2.5;
-					if (skill >= 4) HealthBonusAdd2 *= 2.0;
-					HealthLevelAdd2 = 0;
-					if (skill <= 0) HealthLevelAdd2 = (HealthNoRPGADD * 4.0);
-					if (skill == 1) HealthLevelAdd2 = (HealthNoRPGADD * 3.5);
-					if (skill == 2) HealthLevelAdd2 = (HealthNoRPGADD * 3.0);
-					if (skill == 3) HealthLevelAdd2 = (HealthNoRPGADD * 2.5);
-					if (skill >= 4) HealthLevelAdd2 = (HealthNoRPGADD * 2.0);
-					
-					if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
-					{
-						if (DD_RoseMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
-						if (DD_GameMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
-						if (DD_MossMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
-						if (DD_GlobeMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
-						if (DD_SphinxMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
-						if (DD_HandMother1) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
-						if (DD_HandMother2) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
-						if (DD_TrueHandMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
-						if (AFD_Krag) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
-						if (AFD_Quisling) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
-						if (AFD_Lauritz) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
-						if (AFD_Jorgensen1) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
-						if (AFD_Jorgensen2) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
-						if (AFD_JorgCannon) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
-						if (CoS_Fafnir) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
-						if (CoS_FractalHens) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
-						if (CoS_ForsakenJorg) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
-						if (CoS_EvilDinah) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
-						if (CoS_Tempest) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
-						HealthNoRPGAdd2 *= 0.5;
-					}
-				}
-				MaxHealthTrue = (BaseStartMaxHealth + int(HealthNoRPGAdd2) + HealthLevelAdd2 + HealthBonusAdd2);
 				
+				//****************************
+				//* Health/Max Health Checks *
+				//****************************
+				MaxHealthStuff();
 				
 				//***************
 				//* Misc Checks *
@@ -1294,107 +1161,7 @@ class PlayerStatItem : Inventory
 				//*******************
 				//* Misc HUD Timers *
 				//*******************
-				if (!owner.CountInv("INTERMAPChecker"))
-				{
-					if (IPPikePokeTimer > 0) IPPikePokeTimer--;
-					else
-					{
-						IPPikePokeTimes = 0;
-					}
-					
-					if (IPCallOutCooldown > 0) IPCallOutCooldown--;
-					if (OneLinerCooldown > 0) OneLinerCooldown--;
-
-					if (afasdroptimer > 0) afasdroptimer--;
-					
-					if (HPDmgHUDTimer > 0) HPDmgHUDTimer--;
-					else
-					{
-						HPHUDShakeType = 0;
-						HPDmgHUDAmt = 0;
-					}
-					if (APDmgHUDTimer > 0) APDmgHUDTimer--;
-					else
-					{
-						APHUDShakeType = 0;
-						APDmgHUDAmt = 0;
-					}
-					if (HPRecHUDTimer > 0) HPRecHUDTimer--; 
-					else 
-					{
-						HPRecHUDAmt = 0;
-						HPHUDPulseType = 0;
-						HPHUDPulseTimeP = 0;
-					}
-					if (APRecHUDTimer > 0) APRecHUDTimer--; 
-					else
-					{
-						APRecHUDAmt = 0;
-						APHUDPulseType = 0;
-						APHUDPulseTimeP = 0;
-					}
-					if (IPGainHUDTimer > 0) IPGainHUDTimer--;
-					else
-					{
-						IPGainHUDAmt = 0;
-					}
-					if (IPLossHUDTimer > 0) IPLossHUDTimer--;
-					else
-					{
-						IPLossHUDAmt = 0;
-					}
-					if (EXPGainHUDTimer > 0) EXPGainHUDTimer--;
-					else
-					{
-						EXPGainHUDAmt = 0;
-						if (KillComboCount) KillComboCount = 0;
-					}
-					if (MaxHPIncTimer > 0) MaxHPIncTimer--; else MaxHPIncAmt = 0;
-					if (MaxDashIncTimer > 0) MaxDashIncTimer--; else MaxDashIncAmt = 0;
-					if (IPHUDPulseTimer > 0) IPHUDPulseTimer--; else ItemPointsSession = 0;
-					if (HPHUDShakeTime > 0) HPHUDShakeTime--;
-					if (APHUDShakeTime > 0) APHUDShakeTime--;
-					if (IPHUDShakeTimer > 0) IPHUDShakeTimer--;
-					
-					if (drowndebufflevel > 0)
-					{
-						owner.A_SetInventory("DrownDebuffBase",1);
-						if (dydudebug_airmeter) Console.Printf("drowndebufflevel: %d, drowndebufftimer: %d", drowndebufflevel ,drowndebufftimer);
-						if (owner.CountInv("AirMeter") > 0)
-						{
-							if (drowndebuginit)
-							{
-								drowndebuffmaxtimer = drowndebufftimer;
-								drownmaxtimermod = (drowndebuffmaxtimer / drowndebufflevel);
-								drowndebuginit = false;
-							}
-							if (drowndebufftimer) 
-							{
-								drowndebufftimer--;
-								if (drowndebufftimer % drownmaxtimermod == 1)
-								{
-									drowndebufflevel--;
-									if (drowndebufflevel <= 0) 
-									{
-										drowndebufflevel = 0;
-										drowndebufftimer = 0;
-										owner.A_SetInventory("DrownDebuffBase",0);
-									}
-								}
-							}
-							else 
-							{
-								drowndebufflevel = 0;
-								owner.A_SetInventory("DrownDebuffBase",0);
-							}
-						}
-					}
-					else
-					{
-						drowndebufftimer = 0;
-						owner.A_SetInventory("DrownDebuffBase",0);
-					}
-				}
+				HUDStuff();
 				
 				//******************
 				//* HP Regen/Degen *
@@ -2688,6 +2455,280 @@ class PlayerStatItem : Inventory
 		if (CritRoll <= 1) owner.A_SetInventory("DealCriticalHit",1);
 	}
 	
+	void ArmorTierStuff()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		
+		name armorclasstype = "KGArmor";
+		name armorclasstype2 = "ArmorScrapSilent";
+		int currentarmoramt = Owner.CountInv(armorclasstype);
+		if (exex_armoritemdifficulty >= 3)
+		{
+			ArmorItemGive0 = random(12,13);
+			ArmorItemMax0 = ArmorItemGive0;
+			ArmorItemGive1 = 25;
+			ArmorItemMax1 = 50;
+			ArmorItemGive2 = 50;
+			ArmorItemMax2 = 100;
+			ArmorItemGive3 = 100;
+			ArmorItemMax3 = 200;
+			ArmorItemGive4 = 200;
+			ArmorItemMax4 = 400;
+			if (prevarmordifficulty == 0) // Take 80% of Current Armor amount
+			{
+				for (int i; i < (currentarmoramt * 0.8); i++) owner.A_TakeInventory(armorclasstype,1);
+			}
+			if (prevarmordifficulty == 1) // Take 60% of Current Armor amount
+			{
+				for (int i; i < (currentarmoramt * 0.6); i++) owner.A_TakeInventory(armorclasstype,1);
+			}
+			if (prevarmordifficulty == 2) // Take 50% of Current Armor amount
+			{
+				for (int i; i < (currentarmoramt * 0.5); i++) owner.A_TakeInventory(armorclasstype,1);
+			}
+		}
+		else
+		if (exex_armoritemdifficulty == 2)
+		{
+			ArmorItemGive0 = 25;
+			ArmorItemMax0 = ArmorItemGive0;
+			ArmorItemGive1 = 50;
+			ArmorItemMax1 = 100;
+			ArmorItemGive2 = 100;
+			ArmorItemMax2 = 200;
+			ArmorItemGive3 = 200;
+			ArmorItemMax3 = 400;
+			ArmorItemGive4 = 400;
+			ArmorItemMax4 = 800;
+			if (prevarmordifficulty == 0) // Take 60% of Current Armor amount
+			{
+				for (int i; i < (currentarmoramt * 0.6); i++) owner.A_TakeInventory(armorclasstype,1);
+			}
+			if (prevarmordifficulty == 1) // Take 25% of Current Armor amount
+			{
+				for (int i; i < (currentarmoramt * 0.25); i++) owner.A_TakeInventory(armorclasstype,1);
+			}
+			if (prevarmordifficulty >= 3) // Give 100% of Current Armor amount
+			{
+				for (int i; i < (currentarmoramt); i++) owner.A_GiveInventory(armorclasstype2,1);
+			}
+		}
+		else
+		if (exex_armoritemdifficulty == 1)
+		{
+			ArmorItemGive0 = 50;
+			ArmorItemMax0 = ArmorItemGive0;
+			ArmorItemGive1 = random(62,63);
+			ArmorItemMax1 = 125;
+			ArmorItemGive2 = 125;
+			ArmorItemMax2 = 250;
+			ArmorItemGive3 = 250;
+			ArmorItemMax3 = 500;
+			ArmorItemGive4 = 500;
+			ArmorItemMax4 = 1000;
+			if (prevarmordifficulty == 0) // Take half of Current Armor amount
+			{
+				for (int i; i < (currentarmoramt * 0.5); i++) owner.A_TakeInventory(armorclasstype,1);
+			}
+			if (prevarmordifficulty == 2) // Give 25% more of current armor amount
+			{
+				for (int i; i < (currentarmoramt * 0.25); i++) owner.A_GiveInventory(armorclasstype2,1);
+			}
+			if (prevarmordifficulty >= 3) // Give 150% more of current armor amount
+			{
+				for (int i; i < (currentarmoramt * 1.5); i++) owner.A_GiveInventory(armorclasstype2,1);
+			}
+		}
+		else
+		if (exex_armoritemdifficulty <= 0)
+		{
+			ArmorItemGive0 = 50;
+			ArmorItemMax0 = 100;
+			ArmorItemGive1 = 125;
+			ArmorItemMax1 = 250;
+			ArmorItemGive2 = 250;
+			ArmorItemMax2 = 500;
+			ArmorItemGive3 = 500;
+			ArmorItemMax3 = 1000;
+			ArmorItemGive4 = 1000;
+			ArmorItemMax4 = 2000;
+			if (prevarmordifficulty == 1) // Give 2x Current Armor amount
+			{
+				for (int i; i < currentarmoramt; i++) owner.A_GiveInventory(armorclasstype2,1);
+			}
+			if (prevarmordifficulty == 2) // Give 2.5x current armor amount
+			{
+				for (int i; i < (currentarmoramt * 1.5); i++) owner.A_GiveInventory(armorclasstype2,1);
+			}
+			if (prevarmordifficulty >= 3) // Give 5x current armor amount
+			{
+				for (int i; i < (currentarmoramt * 4); i++) owner.A_GiveInventory(armorclasstype2,1);
+			}
+		}
+		prevarmordifficulty = exex_armoritemdifficulty;
+	}
+	
+	void MaxHealthStuff()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		
+		HPRegenTimerMax = 7000 - ((StaminaLevel * 5) * 35);
+		HPDegenTimerMax = 1750 + ((StaminaLevel * 5) * 17.5);
+		CurrentHealth = owner.player.mo.health;
+		int HealthBonusAdd2 = HealthBonusAdd;
+		int HealthLevelAdd2 = HealthLevelAdd;
+		HealthNoRPGAdd2 = 0;
+		if (!exex_expenabled)
+		{
+			if (skill <= 0) HealthBonusAdd2 *= 4.0;
+			if (skill == 1) HealthBonusAdd2 *= 3.5;
+			if (skill == 2) HealthBonusAdd2 *= 3.0;
+			if (skill == 3) HealthBonusAdd2 *= 2.5;
+			if (skill >= 4) HealthBonusAdd2 *= 2.0;
+			HealthLevelAdd2 = 0;
+			if (skill <= 0) HealthLevelAdd2 = (HealthNoRPGADD * 4.0);
+			if (skill == 1) HealthLevelAdd2 = (HealthNoRPGADD * 3.5);
+			if (skill == 2) HealthLevelAdd2 = (HealthNoRPGADD * 3.0);
+			if (skill == 3) HealthLevelAdd2 = (HealthNoRPGADD * 2.5);
+			if (skill >= 4) HealthLevelAdd2 = (HealthNoRPGADD * 2.0);
+			
+			if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+			{
+				if (DD_RoseMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
+				if (DD_GameMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
+				if (DD_MossMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
+				if (DD_GlobeMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
+				if (DD_SphinxMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
+				if (DD_HandMother1) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
+				if (DD_HandMother2) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
+				if (DD_TrueHandMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
+				if (AFD_Krag) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
+				if (AFD_Quisling) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
+				if (AFD_Lauritz) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
+				if (AFD_Jorgensen1) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
+				if (AFD_Jorgensen2) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
+				if (AFD_JorgCannon) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.2);
+				if (CoS_Fafnir) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
+				if (CoS_FractalHens) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
+				if (CoS_ForsakenJorg) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
+				if (CoS_EvilDinah) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
+				if (CoS_Tempest) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
+				HealthNoRPGAdd2 *= 0.5;
+			}
+		}
+		MaxHealthTrue = (BaseStartMaxHealth + int(HealthNoRPGAdd2) + HealthLevelAdd2 + HealthBonusAdd2);
+	}
+	
+	void HUDStuff()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		
+		if (!owner.CountInv("INTERMAPChecker"))
+		{
+			if (IPPikePokeTimer > 0) IPPikePokeTimer--;
+			else
+			{
+				IPPikePokeTimes = 0;
+			}
+			
+			if (IPCallOutCooldown > 0) IPCallOutCooldown--;
+			if (OneLinerCooldown > 0) OneLinerCooldown--;
+		
+			if (afasdroptimer > 0) afasdroptimer--;
+			
+			if (HPDmgHUDTimer > 0) HPDmgHUDTimer--;
+			else
+			{
+				HPHUDShakeType = 0;
+				HPDmgHUDAmt = 0;
+			}
+			if (APDmgHUDTimer > 0) APDmgHUDTimer--;
+			else
+			{
+				APHUDShakeType = 0;
+				APDmgHUDAmt = 0;
+			}
+			if (HPRecHUDTimer > 0) HPRecHUDTimer--; 
+			else 
+			{
+				HPRecHUDAmt = 0;
+				HPHUDPulseType = 0;
+				HPHUDPulseTimeP = 0;
+			}
+			if (APRecHUDTimer > 0) APRecHUDTimer--; 
+			else
+			{
+				APRecHUDAmt = 0;
+				APHUDPulseType = 0;
+				APHUDPulseTimeP = 0;
+			}
+			if (IPGainHUDTimer > 0) IPGainHUDTimer--;
+			else
+			{
+				IPGainHUDAmt = 0;
+			}
+			if (IPLossHUDTimer > 0) IPLossHUDTimer--;
+			else
+			{
+				IPLossHUDAmt = 0;
+			}
+			if (EXPGainHUDTimer > 0) EXPGainHUDTimer--;
+			else
+			{
+				EXPGainHUDAmt = 0;
+				if (KillComboCount) KillComboCount = 0;
+			}
+			if (MaxHPIncTimer > 0) MaxHPIncTimer--; else MaxHPIncAmt = 0;
+			if (MaxDashIncTimer > 0) MaxDashIncTimer--; else MaxDashIncAmt = 0;
+			if (IPHUDPulseTimer > 0) IPHUDPulseTimer--; else ItemPointsSession = 0;
+			if (HPHUDShakeTime > 0) HPHUDShakeTime--;
+			if (APHUDShakeTime > 0) APHUDShakeTime--;
+			if (IPHUDShakeTimer > 0) IPHUDShakeTimer--;
+			
+			if (drowndebufflevel > 0)
+			{
+				owner.A_SetInventory("DrownDebuffBase",1);
+				if (dydudebug_airmeter) Console.Printf("drowndebufflevel: %d, drowndebufftimer: %d", drowndebufflevel ,drowndebufftimer);
+				if (owner.CountInv("AirMeter") > 0)
+				{
+					if (drowndebuginit)
+					{
+						drowndebuffmaxtimer = drowndebufftimer;
+						drownmaxtimermod = (drowndebuffmaxtimer / drowndebufflevel);
+						drowndebuginit = false;
+					}
+					if (drowndebufftimer) 
+					{
+						drowndebufftimer--;
+						if (drowndebufftimer % drownmaxtimermod == 1)
+						{
+							drowndebufflevel--;
+							if (drowndebufflevel <= 0) 
+							{
+								drowndebufflevel = 0;
+								drowndebufftimer = 0;
+								owner.A_SetInventory("DrownDebuffBase",0);
+							}
+						}
+					}
+					else 
+					{
+						drowndebufflevel = 0;
+						owner.A_SetInventory("DrownDebuffBase",0);
+					}
+				}
+			}
+			else
+			{
+				drowndebufftimer = 0;
+				owner.A_SetInventory("DrownDebuffBase",0);
+			}
+		}
+	}
+	
 	//
 	void HPRegenStuff()
 	{
@@ -3478,6 +3519,11 @@ class PlayerStatItem : Inventory
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Regen]: %d", HPRegenBoostTimer);
 							if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) inc *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.005) + (owner.CountInv("AngerLevelEventN") * 0.0005));
 							
+							double ssa = 1.00;
+							if (owner.CountInv("ClassyRibbon")) ssa += 0.025;
+							if (owner.CountInv("ExpeditionHat")) ssa += 0.10;
+							inc *= ssa;
+							
 							if (owner.CountInv("DinahTrueIPState")) inc = floor(inc * 5);
 							if (owner.CountInv("CricketBatGuard")) inc = floor(inc * frandom(1.334,1.667)); 
 							if (owner.CountInv("CricketBatGuard2")) inc = floor(inc * frandom(1.334,1.667)); 
@@ -3565,6 +3611,7 @@ class PlayerStatItem : Inventory
 								{
 									int rec = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2) * (MaxHealthTrue * 0.4) / 100;
 									if (berserked) rec = randompick(1,1,1,1,1,1,1,1,1,2) * (MaxHealthTrue * 0.8) / 100;
+									if (owner.CountInv("ExpeditionHat") && random(1,16) <= 13) rec *= 2;
 									rec *= 1.0 + (GoldApples * 0.005) + (PlatinumApples * 0.0125) + (PrismaticApples * 0.05);
 									if (rec < 1) rec = 1;
 									
@@ -3624,6 +3671,11 @@ class PlayerStatItem : Inventory
 							if (HPRegenBoostTimer) inc *= 0.4;
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Degen]: %d", HPRegenBoostTimer);
 							if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) inc *= (1.0 - (owner.CountInv("AngerLevelEvent") * 0.003334) - (owner.CountInv("AngerLevelEventN") * 0.0003334));
+							
+							double ssa = 1.00;
+							if (owner.CountInv("ClassyRibbon")) ssa -= 0.125;
+							if (owner.CountInv("ExpeditionHat")) ssa -= 0.50;
+							inc *= ssa;
 							
 							if (Owner.CountInv("DinahTrueIPState")) inc = ceil(inc * 0.2); 
 							if (Owner.CountInv("CricketBatGuard")) inc = ceil(inc * frandom(0.599880023995201,0.7496251874062969));
@@ -3720,6 +3772,7 @@ class PlayerStatItem : Inventory
 								{
 									int loss = randompick(1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2) * (MaxHealthTrue * 0.4) / 100;
 									if (berserked) loss = randompick(1,1,1,1,1,1,1,1,1,2) * (MaxHealthTrue * 0.2) / 100;
+									if (owner.CountInv("ExpeditionHat") && random(1,16) <= 13) loss *= 0.5;
 									loss *= 1.0 - (GoldApples * 0.00125) - (PlatinumApples * 0.00625) - (PrismaticApples * 0.025);
 									if (loss < 1) loss = 1;
 									
@@ -6419,7 +6472,11 @@ class PlayerDashJump : Inventory
 		if (dydudebug_dashing) Console.Printf("DashSpeed: %.8f", DashSpeed);
 
 		DashCost = 35;
-		if (owner.CountInv("PowerEggBuff") || owner.CountInv("PowerEggBuff2")) DashCost -= 2;
+		if (owner.CountInv("PowerEggBuff") || owner.CountInv("PowerEggBuff2")) 
+		{
+			if (MiscItem) DashCost -= (2 + (MiscItem.UsedEggHeal * 0.0334));
+							 else DashCost -= 2;
+		}
 		if (owner.CountInv("PowerFruitBuff") || owner.CountInv("PowerFruitBuff2")) DashCost -= 1;
 		if (owner.CountInv("PowerRoastBuff")) DashCost -= 2;
 		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashCost -= 2;
@@ -6557,6 +6614,12 @@ class PlayerDashJump : Inventory
 			if (berserked) DashCost += 1;
 								else DashCost += 2;
 		}
+		double ssa = 1.0;
+		if (owner.CountInv("ExpeditionHat")) ssa -= 0.125;
+		if (owner.CountInv("ClassyRibbon")) ssa += 0.25;
+		DashCost *= ssa;
+		if (DashCost <= 1) DashCost = 1;
+		
 		if (dydudebug_dashing) Console.Printf("DashCost [start]: %d", DashCost);
 
 		if (dydudebug_dashmeter) Console.Printf("DashMaxCharge: %d (%d, %d, %d), DashCost: %d", DashMaxCharge, BaseDashChargeMax, AddDashLevel, ExtraDashCharge, DashCost);
