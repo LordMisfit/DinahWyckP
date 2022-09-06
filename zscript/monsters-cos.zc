@@ -337,9 +337,44 @@ class EvilDinahEE : EvilDinah
 		DropItem "EvilDinahWeaponDrop", 240;
 	}
 	
+	int A_JumpCalcHealth(int basejumpchance)
+	{
+		double temp1 = ((health * 1.0) / ((SpawnHealth() + Stamina) * 1.0));
+		double temp2 = 1.0 - temp1;
+		double temp3 = 1.0 + (temp2 * 0.5);
+		if (skill <= 0) temp3 = 1.0 + (temp2 * 0.0);
+		if (skill == 1) temp3 = 1.0 + (temp2 * 0.625);
+		if (skill == 2) temp3 = 1.0 + (temp2 * 1.25);
+		if (skill == 3) temp3 = 1.0 + (temp2 * 1.875);
+		if (skill >= 4) temp3 = 1.0 + (temp2 * 2.5);
+		if (temp3 <= 1.0) temp3 = 1.0;
+		basejumpchance *= temp3;
+		if (dydudebug_monsterspecialai) Console.Printf("basejumpchance: %d, temp1: %.8f, temp2: %.8f, temp3: %.8f", basejumpchance, temp1, temp2, temp3);
+		
+		return basejumpchance;
+	}
+
+	double A_JumpBackCalcHealth(double backthrust)
+	{
+		double temp1 = ((health * 1.0) / ((SpawnHealth() + Stamina) * 1.0));
+		double temp2 = 1.0 - temp1;
+		double temp3 = 1.0 + (temp2 * 0.5);
+		if (skill <= 0) temp3 = 1.0 + (temp2 * 0.0);
+		if (skill == 1) temp3 = 1.0 + (temp2 * frandom(0.25,0.3125));
+		if (skill == 2) temp3 = 1.0 + (temp2 * frandom(0.5,0.625));
+		if (skill == 3) temp3 = 1.0 + (temp2 * frandom(0.75,0.9375));
+		if (skill >= 4) temp3 = 1.0 + (temp2 * frandom(1.0,1.25));
+		if (temp3 <= 1.0) temp3 = 1.0;
+		backthrust *= temp3;
+		if (dydudebug_monsterspecialai) Console.Printf("backthrust: %.8f, temp1: %.8f, temp2: %.8f, temp3: %.8f", backthrust, temp1, temp2, temp3);
+		
+		return backthrust;
+	}
+	
 	void A_JumpPreAttack()
 	{
-		if (random(1,12) <= random(1,3))
+		int basejumpchance = A_JumpCalcHealth(random(1,3));
+		if (random(1,12) <= basejumpchance)
 		{
 			ThrustThingZ(0, (random(16,24)*randompick(1,1,1,1,1,1,2,2,3)), 0, 0);
 			if (random(1,3) <= 1) ThrustThing (angle*256/360+random(0,359), (random(1,3)*randompick(1,1,1,1,1,1,2,2,3)), 0, 0);
@@ -393,12 +428,14 @@ class EvilDinahEE : EvilDinah
 		if (target && (target.pos.z >= pos.z + (random(1,4) * 8.0)))
 		{
 			if (dydudebug_monsterspecialai) Console.Printf("\c[sapphire]Target +8 Units Higher than it\c- [tic: %d]", gametic);
-			if (random(1,12) <= random(1,3)) JumpState = FindState("JumpUp");
+			int basejumpchance = A_JumpCalcHealth(random(1,3));
+			if (random(1,12) <= basejumpchance) JumpState = FindState("JumpUp");
 		}
 		else
 		{
 			if (dydudebug_monsterspecialai) Console.Printf("\c[fire]Target less than 8 Units Higher than it\c- [tic: %d]", gametic);
-			if (random(1,random(18,24)) <= random(1,random(2,4))) JumpState = FindState("JumpUp");
+			int basejumpchance = A_JumpCalcHealth(random(1,random(2,4)));
+			if (random(1,random(18,24)) <= basejumpchance) JumpState = FindState("JumpUp");
 		}
 		if (JumpState != null) 
 		{
@@ -1483,8 +1520,10 @@ class EvilDinahEE : EvilDinah
 				A_CandleShotMode(0);
 				A_DynamicMusic();
 			}
+		CandleLoop:
 			DWBL BBB 3 
 			{
+				bFORCERADIUSDMG = true;
 				user_shotsfired++;
 				A_StartSound("weapons/fcandlepopping",random(511,520),CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
 				A_StartSound("weapons/fcandlefire",CHAN_WEAPON);
@@ -1526,7 +1565,7 @@ class EvilDinahEE : EvilDinah
 				}
 				else
 				{
-					if (Distance3D(target) > 1024) A_SetTics(randompick(0,1,1,1,1,2));
+					if (Distance3D(target) > 1024) A_SetTics(randompick(0,0,0,1,1,2));
 					A_CandleShotMode(1);
 					A_DynamicMusic();
 					A_CPosRefire();
@@ -1542,7 +1581,7 @@ class EvilDinahEE : EvilDinah
 					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
 				}
 			}
-			Goto CandleAttk+1;
+			Goto CandleLoop;
 		Melee:
 			DINA F 0 
 			{
@@ -1729,14 +1768,14 @@ class EvilDinahEE : EvilDinah
 			DINA AAAAA 1;
 			DINA B 2 
 			{
-				double backthrust = frandom(16,20);
-				ThrustThingZ(0, (backthrust*1.5), 0, 0);
+				double backthrust = A_JumpBackCalcHealth(frandom(16,20));
+				ThrustThingZ(0, (backthrust*frandom(1.0,1.5)), 0, 0);
 				int dodgetype = random(1,3);
 				double dodgeang;
 				if (dodgetype <= 1) dodgeang = angle*256/360+128;
 				if (dodgetype == 2) dodgeang = angle*256/360+64;
 				if (dodgetype >= 3) dodgeang = angle*256/360+192;
-				ThrustThing(dodgeang, (backthrust*frandom(0.334,0.5)), 0, 0);
+				ThrustThing(dodgeang, (backthrust*A_JumpBackCalcHealth(frandom(0.334,0.5))), 0, 0);
 			}
 			DINA C 2;
 			DINA DE 2;
@@ -1744,6 +1783,7 @@ class EvilDinahEE : EvilDinah
 		Pain:
 			DINA H 2 
 			{
+				bFORCERADIUSDMG = false;
 				A_DynamicMusic();
 				A_FaceTarget();
 			}
@@ -1761,6 +1801,7 @@ class EvilDinahEE : EvilDinah
 		Death:
 			DINA H 0 Bright
 			{
+				bFORCERADIUSDMG = false;
 				A_StopSound(CHAN_VOICE);
 				A_StartSound("EDinal/DScream",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
 			}
@@ -9088,15 +9129,15 @@ class HealBall : EEEffectProjectile
 		if (tracer)
 		{
 			if (!Tempest_Boss(tracer)) A_CheckForTempest();
-			//Console.Printf("\c[green]tracer: %s", tracer.GetClassName());
+			//Console.Printf("A_TracerCheck() \c[green]tracer: %s", tracer.GetClassName());
 		}
 		else 
 		{
-			//Console.Printf("\c[orange]no tracer");
+			//Console.Printf("A_TracerCheck() \c[orange]no tracer");
 			A_CheckForTempest();
 		}
-		//if (target) Console.Printf("target: %s", target.GetClassName());
-		//			 else Console.Printf("no target");
+		//if (target) Console.Printf("A_TracerCheck() target: %s", target.GetClassName());
+		//			 else Console.Printf("A_TracerCheck() no target");
 		A_SeekerMissile(10,10,SMF_LOOK);
 	}
 	
@@ -9325,6 +9366,7 @@ class Delila_Boss : DDOrigBoss
 		Death.Defeated:
 			DLIL E 0 
 			{
+				A_KillChildren();
 				bFLOATBOB = false; 
 				bNOGRAVITY = false;
 				if (bFRIENDLY) 
@@ -9348,6 +9390,7 @@ class Delila_Boss : DDOrigBoss
 			}
 			DLIL EEEEEEEE 7 Bright
 			{
+				A_KillChildren();
 				A_StartSound("weapons/cherryboom");
 				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
 			}
@@ -9913,9 +9956,9 @@ class HealBallEE : EEEffectProjectile
 		return true;
 	}
 
+	actor permtracer;
 	void A_CheckDelilaStatus(bool firsttic)
 	{
-		actor permtracer;
 		if (firsttic)
 		{
 			if (target)
@@ -9924,14 +9967,14 @@ class HealBallEE : EEEffectProjectile
 				{
 					tracer = target.master;
 					permtracer = target.master;
-					//if (tracer == target.master) Console.Printf("B434D");
+					if (tracer == target.master && dydudebug_healcardstuff) Console.Printf("A_CheckDelilaStatus() tracer = target.master");
 				}
 			}
 		}
 		else
 		{
 			if (permtracer) tracer = permtracer;
-			//if (tracer == permtracer) Console.Printf("ng34");
+			if (tracer == permtracer && dydudebug_healcardstuff) Console.Printf("A_CheckDelilaStatus() tracer == permtracer");
 		}
 	}
 	
@@ -9940,16 +9983,20 @@ class HealBallEE : EEEffectProjectile
 		if (tracer)
 		{
 			if (!Delila_BossClone(tracer)) A_CheckDelilaStatus(false);
-			//Console.Printf("\c[green]tracer: %s", tracer.GetClassName());
+			if (dydudebug_healcardstuff) Console.Printf("A_TracerCheck() \c[green]tracer: %s", tracer.GetClassName());
 		}
 		else 
 		{
-			//Console.Printf("\c[orange]no tracer");
+			if (dydudebug_healcardstuff) Console.Printf("A_TracerCheck() \c[orange]no tracer");
 			A_CheckDelilaStatus(false);
 		}
-		//if (target) Console.Printf("target: %s", target.GetClassName());
-		//			 else Console.Printf("no target");
-		A_SeekerMissile(10,10,SMF_LOOK);
+		if (dydudebug_healcardstuff) 
+		{
+			if (target) Console.Printf("A_TracerCheck() target: %s", target.GetClassName());
+						 else Console.Printf("A_TracerCheck() no target");
+		}
+		
+		if (tracer == permtracer) A_SeekerMissile(10,10,SMF_LOOK);
 	}
 	
 	override void PostBeginPlay()
@@ -10528,13 +10575,13 @@ class Delila_BossClone : DDOrigBoss
 					int atktype = random(1,2);
 					if (atktype == 1)
 					{
-						A_SpawnItemEx("HealCardEE",0,0,zoff,velgenx,0,velgenz,(90+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
-						A_SpawnItemEx("HealCardEE",0,0,zoff,velgenx,0,velgenz,(270+randang),SXF_NOCHECKPOSITION|SXF_SETMASTER);
+						A_SpawnItemEx("HealCardEE",0,0,zoff,velgenx,0,velgenz,(90+randang), SXF_SETMASTER|SXF_NOCHECKPOSITION);
+						A_SpawnItemEx("HealCardEE",0,0,zoff,velgenx,0,velgenz,(270+randang), SXF_SETMASTER|SXF_NOCHECKPOSITION);
 					}
 					if (atktype == 2)
 					{
-						A_SpawnItemEx("HealCardEE",0,0,zoff,velgenx,0,velgenz,(0+randang),SXF_SETMASTER);
-						A_SpawnItemEx("HealCardEE",0,0,zoff,velgenx,0,velgenz,(180+randang),SXF_SETMASTER);
+						A_SpawnItemEx("HealCardEE",0,0,zoff, velgenx,0,velgenz, (0+randang), SXF_SETMASTER|SXF_NOCHECKPOSITION);
+						A_SpawnItemEx("HealCardEE",0,0,zoff, velgenx,0,velgenz, (180+randang), SXF_SETMASTER|SXF_NOCHECKPOSITION);
 					}
 				}
 			}
@@ -10604,7 +10651,7 @@ class Delila_BossClone : DDOrigBoss
 		Death:
 			DLIL E 0 
 			{
-				A_KillChildren("SilentMassacre");
+				A_KillChildren();
 				bFLOATBOB = false; 
 				bFLOAT = false; 
 				let globalvars = DDGlobalVariables.Get();
@@ -10614,6 +10661,7 @@ class Delila_BossClone : DDOrigBoss
 			DLIL E 0;
 			DLIL EEEEEEEE 7 Bright
 			{
+				A_KillChildren();
 				A_StartSound("weapons/cherryboom");
 				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
 			}
