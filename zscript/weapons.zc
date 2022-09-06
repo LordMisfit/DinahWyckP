@@ -11265,6 +11265,29 @@ class JackShotShieldPart : ShieldPartNoReflect
 		Alpha 0.625; // 0.003125
 	}
 
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		if (dydudebug_shieldcollision) Console.Printf("\cyJackShotShieldPart [%s] (gametic %d):\c- other: %s", GetClassName(), gametic, other.GetClassName());
+		if (passive)
+		{
+			If (JackShot(other)) return false;
+			if (EECreature(other)) return false;
+			if (PlayerPawn(other)) return false;
+			if (dydudebug_shieldcollision) Console.Printf("\cyJackShotShieldPart (gametic %d):\c- passive: %s", gametic, GetClassName());
+		}
+		else // Non-passive means the one moving into the other is performing the checks.
+		{
+			If (JackShot(other)) return false;
+			if (EECreature(other)) return false;
+			if (PlayerPawn(other)) return false;
+			if (dydudebug_shieldcollision) Console.Printf("\cyJackShotShieldPart (gametic %d):\c- non-passive: %s", gametic, GetClassName());
+			return true;
+		}
+
+		// We don't really care about others making the check.
+		return true;
+	}
+
 	States
 	{
 		Spawn:
@@ -11304,6 +11327,10 @@ class JackShotShieldPartFoe : ShieldPartNoReflect
 		}
 		else // Non-passive means the one moving into the other is performing the checks.
 		{
+			If (BadJackShot(other)) return false;
+			If (RealBadJackShot(other)) return false;
+			if (EECreature(other)) return false;
+			if (PlayerPawn(other)) return false;
 			if (dydudebug_shieldcollision) Console.Printf("\cyJackShotShieldPartFoe (gametic %d):\c- non-passive: %s", gametic, GetClassName());
 			return true;
 		}

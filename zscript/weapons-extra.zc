@@ -1556,19 +1556,36 @@ class CrazyBallDD : DinahWeapon
 			loop;
 		Fire: 
 			DCRZ A 1 A_JumpIfNoAmmo(5);
-			DCRZ B 0;
+			DCRZ B 0
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(211,0,9,13);
+			}
 			DCRZ B 6;
 			DCRZ B 6;
 			DCRZ C 10 
 			{
+				EEProjectile IPCompat;
+				actor BombShots;
+				bool success;
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
-					A_FireProjectile("CrazyBallBerserk", 0, 2, 5, 5);
+					[success, BombShots] = A_FireProjectile("CrazyBallBerserk", 0, 2, 5, 5);
 				}
 				else
 				{
-					A_FireProjectile("CrazyBall", 0, 2, 5, 5);
+					[success, BombShots] = A_FireProjectile("CrazyBall", 0, 2, 5, 5);
 				}
+				if (BombShots && invoker.IPAttackCheck)
+				{
+					IPCompat = EEProjectile(BombShots);
+					if (IPCompat)
+					{
+						IPCompat.IPattack = true;
+						IPCompat.Speed *= frandompick(1.125,1.25,1.375);
+					}
+				}
+				invoker.A_CheckIPModeOnUse();
 			}
 			Goto Select;
 			DCRZ C 0;
@@ -1605,7 +1622,9 @@ class CrazyBall : EEProjectile
 {
 	int hurtflag;
 	int hurtflag2;
-
+	int expbase;
+	string shottype;
+	int basechance;
 	default
 	{
 		Radius 8;
@@ -1626,20 +1645,66 @@ class CrazyBall : EEProjectile
 		BounceCount 2;
 	}
 	
+	override void PostBeginPlay()
+	{
+		shottype = "CrazyBalls";
+		if (IPAttack) shottype = "CrazyBallsIP";
+		super.PostBeginPlay();
+	}
+	
 	override void Tick()
 	{
 		hurtflag = CMF_AIMDIRECTION|CMF_BADPITCH|CMF_TRACKOWNER;
 		hurtflag2 = 0;
-		if (random(1,128) == 1) 
+		if (random(1,128) <= 1 && !IPAttack) 
 		{
 			hurtflag = CMF_AIMDIRECTION|CMF_BADPITCH;
 			hurtflag2 = XF_HURTSOURCE;
 		}
 		//if (target) Console.Printf("Target: %s", target.GetClassName());
 		//Console.Printf("HurtFlag: %d, HurtFlag2: %d", hurtflag, hurtflag2);
+		expbase = 64;
+		if (IPAttack) expbase = 128;
+		
 		super.Tick();
 	}
 	
+	void A_SpawnCZProjectile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET)
+	{
+		int baseangle = angle;
+		A_SpawnProjectile(missiletype, spawnheight, spawnofs_xy, angle, flags, pitch, ptr);
+		if (IPAttack)
+		{
+			A_SetAngle(baseangle+frandom(-180,180));
+			A_SpawnProjectile(missiletype, spawnheight, spawnofs_xy, angle, flags, pitch, ptr);
+			A_SetAngle(baseangle);
+			if (random(1,(basechance*0.67)) <= 1) 
+			{
+				A_SetAngle(baseangle+frandom(-180,180));
+				A_SpawnProjectile(missiletype, spawnheight, spawnofs_xy, angle, flags, pitch, ptr);
+				A_SetAngle(baseangle);
+			}
+			if (random(1,basechance) <= 1) 
+			{
+				A_SetAngle(baseangle+frandom(-180,180));
+				A_SpawnProjectile(missiletype, spawnheight, spawnofs_xy, angle, flags, pitch, ptr);
+				A_SetAngle(baseangle);
+			}
+			if (random(1,(basechance*(basechance*0.67))) <= 1) 
+			{
+				A_SetAngle(baseangle+frandom(-180,180));
+				A_SpawnProjectile(missiletype, spawnheight, spawnofs_xy, angle, flags, pitch, ptr);
+				A_SetAngle(baseangle);
+			}
+			if (random(1,(basechance*basechance)) <= 1) 
+			{
+				A_SetAngle(baseangle+frandom(-180,180));
+				A_SpawnProjectile(missiletype, spawnheight, spawnofs_xy, angle, flags, pitch, ptr);
+				A_SetAngle(baseangle);
+			}
+		}
+	}
+
 	States
 	{
 		Spawn:
@@ -1648,166 +1713,209 @@ class CrazyBall : EEProjectile
 		Death:
 			CRZY AAAA 20 A_StartSound("CRZCLIK3");
 			CRZY BCD 8;
-			CRZY D 0 A_Explode(64,128,hurtflag2,0,32);
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 70));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 70));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
+		Loop1:
+			CRZY D 0 
+			{
+				A_Explode(expbase,128,hurtflag2,0,32);
+				basechance = random(3,5);
+			}
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 70));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 70));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
 			CRZY D 0 A_StartSound("CRZ");
-			CRZY D 0 A_Jump(1, 2);
-			GoTo Death+7;
-			CRZY D 0 A_Explode(64,128,hurtflag2,0,32);
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 70));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 70));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_Explode(64,128,hurtflag2,0,32);
-			CRZY O 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 70));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 70));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 
+			{
+				int base = 256;
+				if (IPAttack) base *= 1.5;
+				if (random(1,base) <= 1) return resolvestate("Loop2");
+				return resolvestate(null);
+			}
+			GoTo Loop1;
+		Loop2:
+			CRZY D 0 
+			{
+				A_Explode(expbase,128,hurtflag2,0,32);
+				basechance = random(4,7);
+			}
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 70));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 70));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 
+			{
+				A_Explode(expbase,128,hurtflag2,0,32);
+				basechance = random(4,7);
+			}
+			CRZY O 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 70));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 70));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
 			CRZY D 0 A_StartSound("CRZ");
-			CRZY D 0 A_Explode(64,128,hurtflag2,0,32);
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 70));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 70));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 
+			{
+				A_Explode(expbase,128,hurtflag2,0,32);
+				basechance = random(4,7);
+			}
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 70));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 70));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
 			CRZY D 2 A_StartSound("CRZ");
-			CRZY D 0 A_Explode(64,128,hurtflag2,0,32);
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 70));
-			CRZY D 0 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 1 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 2 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 70));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_Explode(64,128,hurtflag2,0,32);
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 2 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 2 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 1 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 0 A_Jump(32,2);
-			GoTo Death+80;
+			CRZY D 0 
+			{
+				A_Explode(expbase,128,hurtflag2,0,32);
+				basechance = random(4,7);
+			}
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 70));
+			CRZY D 0 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 1 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 2 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 70));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 
+			{
+				A_Explode(expbase,128,hurtflag2,0,32);
+				basechance = random(4,7);
+			}
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 2 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 2 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 1 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 
+			{
+				int base = 256;
+				if (IPAttack) base *= 2;
+				if (random(1,base) <= 32) return resolvestate("Loop3");
+				return resolvestate(null);
+			}
+			GoTo Loop2;
+		Loop3:
 			CRZY D 0 A_StartSound("CRZ");
-			CRZY D 0 A_Explode(64,128,hurtflag2,0,32);
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 3 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 1 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 4 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 2 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 5 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 12, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 3 A_SpawnProjectile("CrazyBalls", 14, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 3 A_SpawnProjectile("CrazyBalls", 6, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 4 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 10, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 0 
+			{
+				A_Explode(expbase,128,hurtflag2,0,32);
+				basechance = random(5,9);
+			}
+			CRZY D 2 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 3 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 1 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 4 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 2 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 5 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 12, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 3 A_SpawnCZProjectile(shottype, 14, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 3 A_SpawnCZProjectile(shottype, 6, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 4 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 10, 0, random(-180, 180), hurtflag, random(0, 180));
 			CRZY O 0 A_StartSound("CRZ");
-			CRZY D 4 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY O 1 A_SpawnProjectile("CrazyBalls", 10, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 4 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 1 A_SpawnProjectile("CrazyBalls", 10, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 4 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 10, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 4 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 2 A_SpawnProjectile("CrazyBalls", 10, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 4 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 3 A_SpawnProjectile("CrazyBalls", 10, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 4 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY O 5 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 4 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 5 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 6 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 7 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 8 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 9 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 10 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 11 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 12 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 14 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 17 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 20 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 25 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY D 30 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY D 35 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY DD 15 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(-10, 180));
-			CRZY DD 15 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY DDD 15 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY DDDD 15 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
-			CRZY DDDDD 15 A_SpawnProjectile("CrazyBalls", 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 4 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY O 1 A_SpawnCZProjectile(shottype, 10, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 4 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 1 A_SpawnCZProjectile(shottype, 10, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 4 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 10, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 4 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 2 A_SpawnCZProjectile(shottype, 10, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 4 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 3 A_SpawnCZProjectile(shottype, 10, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 4 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY O 5 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 4 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 5 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 6 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 7 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 8 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 9 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 10 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 11 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 12 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 14 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 17 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 20 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 25 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY D 30 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY D 35 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY DD 15 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(-10, 180));
+			CRZY DD 15 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY DDD 15 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY DDDD 15 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
+			CRZY DDDDD 15 A_SpawnCZProjectile(shottype, 8, 0, random(-180, 180), hurtflag, random(0, 180));
 			CRZY D 20 A_StartSound("CRZ6");
-			CRZY D 20 A_Explode(64,128,hurtflag2,0,32);
+			CRZY D 20 A_Explode(expbase,128,hurtflag2,0,32);
 			CRZY C 0 A_StartSound("CRZCLIK3");
 			CRZY CBBBB 20;
 			CRZY B 20 A_StartSound("CRZCLIK3");
@@ -2030,6 +2138,64 @@ class CrazyBalls : EEProjectile
 			GLOB B 3 Bright;
 			GLOB A 3 Bright A_Scream();
 			GLOB H 3 Bright A_Fall;
+			Stop;
+	}
+}
+
+class CrazyBallsIP : EEProjectile
+{
+	default
+	{
+		Radius 8;
+		Height 6;
+		Speed 5;
+		DamageFunction (random(13,14) * random(1,8));
+		Scale 0.75;
+		Projectile;
+		Alpha 0.85;
+		SeeSound "";
+		DeathSound "";
+		-CASTSPRITESHADOW
+		+NOSPRITESHADOW
+	}
+	States
+	{
+		Spawn:
+			CRZY P 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY P 1 Bright ThrustThing( (angle*random(128,256))/360, 4, 0, 0);
+			CRZY Q 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY Q 1 Bright ThrustThing( (angle*random(128,256))/360, 4, 0, 0);
+			CRZY R 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY R 1 Bright ThrustThing( (angle*random(128,256))/360, 4, 0, 0);
+			CRZY S 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY S 1 Bright ThrustThing( (angle*random(128,256))/360, 4, 0, 0);
+			CRZY P 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY P 1 Bright ThrustThing( (angle*random(128,256))/360, 4, 0, 0);
+			CRZY Q 1 Bright ThrustThing( (angle*random(-256,-128))/360, 4, 0, 0);
+			CRZY Q 1 Bright ThrustThing( (angle*random(256,-128))/360, 4, 0, 0);
+			CRZY R 1 Bright ThrustThing( (angle*random(-256,-128))/360, 4, 0, 0);
+			CRZY R 1 Bright ThrustThing( (angle*random(256,-128))/360, 4, 0, 0);
+			CRZY S 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY S 1 Bright ThrustThing( (angle*random(-128,256))/360, 4, 0, 0);
+			CRZY Q 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY Q 1 Bright ThrustThing( (angle*random(-128,256))/360, 4, 0, 0);
+			CRZY P 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY P 1 Bright ThrustThing( (angle*random(-128,256))/360, 4, 0, 0);
+			CRZY S 1 Bright ThrustThing( (angle*random(128,256))/360, 4, 0, 0);
+			CRZY S 1 Bright ThrustThing( (angle*random(0,256))/360, 4, 0, 0);
+			CRZY R 1 Bright ThrustThing( (angle*random(128,256))/360, 4, 0, 0);
+			CRZY R 1 Bright ThrustThing( (angle*random(0,256))/360, 4, 0, 0);
+			CRZY Q 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY Q 1 Bright ThrustThing( (angle*random(0,256))/360, 4, 0, 0);
+			CRZY S 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY S 1 Bright ThrustThing( (angle*random(0,256))/360, 4, 0, 0);
+			CRZY R 1 Bright ThrustThing( (angle*random(-256,256))/360, 4, 0, 0);
+			CRZY R 1 Bright ThrustThing( (angle*random(0,256))/360, 4, 0, 0);
+			Goto Spawn;
+		Death:
+			GLOB B 2 Bright;
+			GLOB A 2 Bright A_Scream();
+			GLOB H 2 Bright A_Fall;
 			Stop;
 	}
 }
