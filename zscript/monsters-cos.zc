@@ -302,7 +302,7 @@ class EvilDinahWeaponDrop : CustomInventoryExt
 	}
 }
 
-// EE Version - 500 HP, Much More AI Powered
+// EE Version - less HP, Much More AI Powered
 class EvilDinahEE : EvilDinah
 {
 	int musictype;
@@ -310,17 +310,21 @@ class EvilDinahEE : EvilDinah
 	default
 	{
 		//$Category RPMonsters
-		Health 500; //2000;
+		Health 250; //2000;
 		Radius 12; // 20;
 		Height 48; // 64;
-		Speed 5; // 10
+		Speed 10;
 		XScale 1.0; //0.8572;
 		YScale 0.95; //0.8572;
 		PainChance 128;
 		Painchance "Beats", 16;
 		Painchance "Fire", 64;
-		DamageFactor "Suck", 0;
-		DamageFactor "Cricket", 2;
+		Painchance "Ice", 64;
+		DamageFactor "Beats", 0.5;
+		DamageFactor "Fire", 0.875;
+		DamageFactor "Ice", 0.875;
+		DamageFactor "Suck", 0.334;
+		DamageFactor "Cricket", 2.5;
 		MeleeRange 104;
 		MeleeThreshold 160;
 		MONSTER;
@@ -335,7 +339,9 @@ class EvilDinahEE : EvilDinah
 		Obituary "%o couldn't stop hitting herself.";
 		Tag "Dinah Wyck...?";
 		DropItem "EvilDinahWeaponDrop", 240;
+		DropItem "EvilDinahWeaponDrop", 16;
 	}
+	bool ignorepainst;
 	
 	int A_JumpCalcHealth(int basejumpchance)
 	{
@@ -443,7 +449,8 @@ class EvilDinahEE : EvilDinah
 			SetState(JumpState);
 		}
 	}
-
+	int numattks;
+	int furylevel;
 	void A_CheckPlayerWeapon()
 	{
 		actor player = players[0].mo;
@@ -996,8 +1003,22 @@ class EvilDinahEE : EvilDinah
 					A_JumpUp();
 				}
 			}
+			DINA B 0 
+			{
+				if (target && 
+						Distance3D(target) <= (random(1,4) * 1024) &&
+						((bFRIENDLY && !target.bFRIENDLY) || 
+						 (!bFRIENDLY && target.bFRIENDLY)))
+				{
+					if (random(1,8) <= 1) return resolvestate("Missile");
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
 			DINA BBCCDDEE 2 
 			{
+				A_StopSound(65);
+				jumptimer++;
 				chasetimer++;
 				if (chasetimer >= random(2,3))
 				{
@@ -1008,6 +1029,11 @@ class EvilDinahEE : EvilDinah
 				{
 					A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
 				}
+				if (jumptimer >= random(16,24))
+				{
+					jumptimer = 0;
+					A_JumpUp();
+				}
 			}
 			DINA B 0 
 			{
@@ -1016,7 +1042,7 @@ class EvilDinahEE : EvilDinah
 						((bFRIENDLY && !target.bFRIENDLY) || 
 						 (!bFRIENDLY && target.bFRIENDLY)))
 				{
-					if (random(1,8) <= 1) return resolvestate("Missile");
+					if (random(1,12) <= 1) return resolvestate("Missile");
 					return resolvestate(null);
 				}
 				return resolvestate(null);
@@ -1047,6 +1073,26 @@ class EvilDinahEE : EvilDinah
 				A_StopSound(65);
 				A_FaceTarget();
 				spreadtype = random(1,4);
+				
+				furylevel = 0;
+				numattks = randompick(1,1,1,1,1,1,1,2);
+				if (health < ((SpawnHealth() + Stamina) * frandom(0.5,0.625)))
+				{
+					furylevel = 1;
+					numattks = randompick(2,2,2,2,2,3);
+					if (health < ((SpawnHealth() + Stamina) * frandom(0.20,0.25))) 
+					{
+						furylevel = 2;
+						numattks = randompick(3,3,3,3,4,4);
+						if (health < ((SpawnHealth() + Stamina) * frandom(0.05,0.0625))) 
+						{
+							furylevel = 3;
+							numattks = randompick(4,4,4,5,5,5);
+						}
+					}
+				}
+				if (random(1,16) <= randompick(0,1,1,1,1,1,2,2,2,3,3,4)) numattks *= randompick(1,2,2,2,2,2,2,2,2,3,3,4);
+				if (dydudebug_monsterspecialai) Console.Printf("numattks: %d, furylevel: %d", numattks, furylevel);
 			}
 			DINA F 0 
 			{
@@ -1056,13 +1102,20 @@ class EvilDinahEE : EvilDinah
 				if (random(1,256) <= 32) A_UseRandomWeapon();
 				else A_CheckPlayerWeapon();
 			}
+		RandomInv:
 			DINA F 8 
 			{
+				if (furylevel == 1) A_SetTics(7);
+				if (furylevel == 2) A_SetTics(5);
+				if (furylevel >= 3) A_SetTics(4);
 				if (random(1,8) >= 2) A_EDTauntAtk();
 				else A_StartSound("dinah/giggle",CHAN_VOICE);
 			}
 			DINA G 8 
 			{
+				if (furylevel == 1) A_SetTics(7);
+				if (furylevel == 2) A_SetTics(5);
+				if (furylevel >= 3) A_SetTics(4);
 				if (Distance3D(target) <= 384)
 				{
 					if (random(1,16) <= random(1,3)) A_SpawnProjectile("BadBrocketShot",40);
@@ -1090,13 +1143,37 @@ class EvilDinahEE : EvilDinah
 				}
 				A_DynamicMusic();
 			}
+			DINA A 0
+			{
+				numattks--;
+				if (numattks > 0)
+				{
+					if (random(1,256) <= 224)
+					{
+						return resolvestate("RandomInv");
+					}
+					else
+					{
+						if (random(1,256) <= 32) A_UseRandomWeapon();
+						else A_CheckPlayerWeapon();
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
 			DINA A 4
 			{
 				if (random(1,4) <= 1)
 				{
-					A_SetTics(4);
+					if (furylevel == 1) A_SetTics(3);
+					if (furylevel == 2) A_SetTics(2);
+					if (furylevel >= 3) A_SetTics(1);
 					if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
 					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
+				}
+				else
+				{
+					A_SetTics(0);
 				}
 			}
 			Goto See;
@@ -1108,15 +1185,24 @@ class EvilDinahEE : EvilDinah
 			}
 			DINA F 4 
 			{
+				if (furylevel == 1) A_SetTics(3);
+				if (furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
 				A_StartSound("malletswing",CHAN_WEAPON);
 				A_DynamicMusic();
 			}
 			DINA F 4 
 			{
+				if (furylevel == 1) A_SetTics(3);
+				if (furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
 				A_DynamicMusic();
 			}
 			DINA G 8 
 			{
+				if (furylevel == 1) A_SetTics(7);
+				if (furylevel == 2) A_SetTics(5);
+				if (furylevel >= 3) A_SetTics(4);
 				A_DynamicMusic();
 				A_StartSound("croquet/ballfire",CHAN_WEAPON);
 				
@@ -1151,10 +1237,38 @@ class EvilDinahEE : EvilDinah
 					A_SetAngle(angle-5.625);
 				}
 			}
+			DINA A 0
+			{
+				numattks--;
+				if (numattks > 0)
+				{
+					if (random(1,256) <= 224)
+					{
+						return resolvestate("CricketAttk");
+					}
+					else
+					{
+						if (random(1,256) <= 32) A_UseRandomWeapon();
+						else A_CheckPlayerWeapon();
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
 			DINA A 4 
 			{
-				if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
-				else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
+				if (random(1,4) <= 1)
+				{
+					if (furylevel == 1) A_SetTics(3);
+					if (furylevel == 2) A_SetTics(2);
+					if (furylevel >= 3) A_SetTics(1);
+					if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
+					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
+				}
+				else
+				{
+					A_SetTics(0);
+				}
 			}
 			Goto See;
 		BlunderAttk:
@@ -1165,20 +1279,50 @@ class EvilDinahEE : EvilDinah
 			}
 			DWBL A 6
 			{
+				if (furylevel == 1) A_SetTics(5);
+				if (furylevel == 2) A_SetTics(4);
+				if (furylevel >= 3) A_SetTics(3);
 				A_DynamicMusic();
 			}
 			DWBL B 9 
 			{
+				if (furylevel == 1) A_SetTics(8);
+				if (furylevel == 2) A_SetTics(6);
+				if (furylevel >= 3) A_SetTics(5);
 				A_DynamicMusic();
 				A_EDinahBlunderShotAtk();
+			}
+			DINA A 0
+			{
+				numattks--;
+				if (numattks > 0)
+				{
+					if (random(1,256) <= 224)
+					{
+						return resolvestate("BlunderAttk");
+					}
+					else
+					{
+						if (random(1,256) <= 32) A_UseRandomWeapon();
+						else A_CheckPlayerWeapon();
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
 			}
 			DWBL A 4
 			{
 				if (random(1,4) <= 1)
 				{
-					A_SetTics(4);
+					if (furylevel == 1) A_SetTics(3);
+					if (furylevel == 2) A_SetTics(2);
+					if (furylevel >= 3) A_SetTics(1);
 					if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
 					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
+				}
+				else
+				{
+					A_SetTics(0);
 				}
 			}
 			Goto See;
@@ -1190,26 +1334,59 @@ class EvilDinahEE : EvilDinah
 			}
 			DWAJ A 4 
 			{
+				if (furylevel == 1) A_SetTics(3);
+				if (furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
 				A_DynamicMusic();
 				A_StartSound("malletswing",CHAN_WEAPON);
 			}
 			DWAJ A 4
 			{
+				if (furylevel == 1) A_SetTics(3);
+				if (furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
 				A_DynamicMusic();
 			}
 			DWAJ B 8 
 			{
+				if (furylevel == 1) A_SetTics(7);
+				if (furylevel == 2) A_SetTics(5);
+				if (furylevel >= 3) A_SetTics(4);
 				A_DynamicMusic();
 				if (random(1,2) <= 1) A_FatAttack1("RealBadJackShot");
 				else A_FatAttack2("RealBadJackShot");
+			}
+			DINA A 0
+			{
+				numattks--;
+				if (numattks > 0)
+				{
+					if (random(1,256) <= 224)
+					{
+						return resolvestate("JackAttk");
+					}
+					else
+					{
+						if (random(1,256) <= 32) A_UseRandomWeapon();
+						else A_CheckPlayerWeapon();
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
 			}
 			DWAJ A 4
 			{
 				if (random(1,4) <= 1)
 				{
-					A_SetTics(4);
+					if (furylevel == 1) A_SetTics(3);
+					if (furylevel == 2) A_SetTics(2);
+					if (furylevel >= 3) A_SetTics(1);
 					if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
 					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
+				}
+				else
+				{
+					A_SetTics(0);
 				}
 			}
 			Goto See;
@@ -1221,27 +1398,60 @@ class EvilDinahEE : EvilDinah
 			}
 			DWEG A 8 
 			{
+				if (furylevel == 1) A_SetTics(7);
+				if (furylevel == 2) A_SetTics(5);
+				if (furylevel >= 3) A_SetTics(4);
 				//A_StartSound("misc/p_pkup",CHAN_VOICE);
 				A_DynamicMusic();
 			}
 			DWEG A 4 
 			{
+				if (furylevel == 1) A_SetTics(3);
+				if (furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
 				A_Facetarget();
 				A_DynamicMusic();
 			}
 			DWEG B 8 
 			{
+				if (furylevel == 1) A_SetTics(7);
+				if (furylevel == 2) A_SetTics(5);
+				if (furylevel >= 3) A_SetTics(4);
 				A_DynamicMusic();
 				A_StartSound("PanClang",CHAN_WEAPON);
 				A_ThrowGrenade("EvilEggShot",2,24,random(6,12),0);
+			}
+			DWEG A 0
+			{
+				numattks--;
+				if (numattks > 0)
+				{
+					if (random(1,256) <= 224)
+					{
+						return resolvestate("EggAttk");
+					}
+					else
+					{
+						if (random(1,256) <= 32) A_UseRandomWeapon();
+						else A_CheckPlayerWeapon();
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
 			}
 			DWEG A 4
 			{
 				if (random(1,4) <= 1)
 				{
-					A_SetTics(4);
+					if (furylevel == 1) A_SetTics(3);
+					if (furylevel == 2) A_SetTics(2);
+					if (furylevel >= 3) A_SetTics(1);
 					if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
 					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
+				}
+				else
+				{
+					A_SetTics(0);
 				}
 			}
 			Goto See;
@@ -1256,33 +1466,87 @@ class EvilDinahEE : EvilDinah
 				A_StartSound("Handmother/Zap",CHAN_WEAPON);
 				A_DynamicMusic();
 			}
-			DWPK BB 3 bright;
+			DWPK BB 3 bright
+			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
+			}
 			DWPK B 3 bright 
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
 				A_SpawnProjectile("EvilMiniZapshot",40);
 				A_DynamicMusic();
 			}
-			DWPK B 3 bright;
 			DWPK B 3 bright
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
+			}
+			DWPK B 3 bright
+			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
 				A_SpawnProjectile("EvilMiniZapshot",40,-48);
 				A_SpawnProjectile("EvilMiniZapshot",40,48);
 				A_DynamicMusic();
 			}
-			DWPK B 3 bright;
+			DWPK B 3 bright
+			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
+			}
 			DWPK B 3 bright 
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
 				A_SpawnProjectile("EvilZapshot",40);
 				A_DynamicMusic();
 			}
-			DWPK A 4 bright;
+			DWPK A 0
+			{
+				numattks--;
+				if (numattks > 0)
+				{
+					if (random(1,256) <= 224)
+					{
+						return resolvestate("PikeAttk");
+					}
+					else
+					{
+						if (random(1,256) <= 32) A_UseRandomWeapon();
+						else A_CheckPlayerWeapon();
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+			DWPK A 4 bright
+			{
+				if (random(1,4) <= 1)
+				{
+					if (furylevel == 1) A_SetTics(3);
+					if (furylevel == 2) A_SetTics(2);
+					if (furylevel >= 3) A_SetTics(1);
+					if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
+					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
+				}
+				else
+				{
+					A_SetTics(0);
+				}
+			}
 			DWPK A 2 bright
 			{
 				if (random(1,4) <= 1)
 				{
-					A_SetTics(4);
+					if (furylevel >= 2) A_SetTics(1);
 					if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
 					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
+				}
+				else
+				{
+					A_SetTics(0);
 				}
 			}
 			Goto See;
@@ -1355,12 +1619,16 @@ class EvilDinahEE : EvilDinah
 		MusicAttkNorm:
 			DWGP A 8
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(7);
+				if (furylevel >= 3) A_SetTics(6);
 				shotangerror = (random(1,4) * 11.25);
 				A_StartSound(musicplay,65,CHANF_LOOPING,1.0,ATTN_NORM,frandom(0.92,1.08));
 				A_DynamicMusic();
 			}
 			DWGP A 5 
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(4);
+				if (furylevel >= 3) A_SetTics(3);
 				actor BombShots;
 				BombShots = A_SpawnProjectile("badrecordshot",40,0,shotangerror);
 				if (BombShots)
@@ -1375,10 +1643,14 @@ class EvilDinahEE : EvilDinah
 			}
 			DWGP A 5
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(4);
+				if (furylevel >= 3) A_SetTics(3);
 				A_DynamicMusic();
 			}
 			DWGP A 5 
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(4);
+				if (furylevel >= 3) A_SetTics(3);
 				actor BombShots;
 				BombShots = A_SpawnProjectile("badrecordshot",40,0,shotangerror);
 				if (BombShots)
@@ -1393,10 +1665,14 @@ class EvilDinahEE : EvilDinah
 			}
 			DWGP A 5
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(4);
+				if (furylevel >= 3) A_SetTics(3);
 				A_DynamicMusic();
 			}
 			DWGP A 5 
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(4);
+				if (furylevel >= 3) A_SetTics(3);
 				actor BombShots;
 				BombShots = A_SpawnProjectile("badrecordshot",40,0,shotangerror);
 				if (BombShots)
@@ -1411,6 +1687,8 @@ class EvilDinahEE : EvilDinah
 			}
 			DWGP A 5 
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(4);
+				if (furylevel >= 3) A_SetTics(3);
 				if (user_shotsfired >= (12 + (skill * 3)))
 				{
 					A_StopSound(65);
@@ -1439,6 +1717,7 @@ class EvilDinahEE : EvilDinah
 			}
 			DWGP AAAA 2 
 			{
+				if (furylevel >= 3) A_SetTics(1);
 				bFORCERADIUSDMG = true;
 				actor player = players[0].mo;
 				int dmg = randompick(2,3,4);
@@ -1498,21 +1777,60 @@ class EvilDinahEE : EvilDinah
 				else A_StartSound("dinah/giggle",CHAN_VOICE);
 				A_DynamicMusic();
 			}
-			DWSV A 8 A_StartSound("misc/p_pkup",CHAN_VOICE);
-			DWSV B 12 A_SpawnProjectile("badvacshot",40,0);
+			DWSV A 8 
+			{
+				if (furylevel == 1) A_SetTics(7);
+				if (furylevel == 2) A_SetTics(5);
+				if (furylevel >= 3) A_SetTics(4);
+				A_StartSound("misc/p_pkup",CHAN_VOICE);
+			}
+			DWSV B 12 
+			{
+				if (furylevel == 1) A_SetTics(11);
+				if (furylevel == 2) A_SetTics(9);
+				if (furylevel >= 3) A_SetTics(7);
+				A_SpawnProjectile("badvacshot",40,0);
+			}
+			DWSV A 0
+			{
+				numattks--;
+				if (numattks > 0)
+				{
+					if (random(1,256) <= 224)
+					{
+						return resolvestate("SuckAttk");
+					}
+					else
+					{
+						if (random(1,256) <= 32) A_UseRandomWeapon();
+						else A_CheckPlayerWeapon();
+					}
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
 			DWSV A 7
 			{
 				if (random(1,4) <= 1)
 				{
-					A_SetTics(4);
+					if (furylevel == 1) A_SetTics(6);
+					if (furylevel == 2) A_SetTics(5);
+					if (furylevel >= 3) A_SetTics(3);
 					if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
 					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
+				}
+				else
+				{
+					A_SetTics(0);
 				}
 			}
 			Goto See;
 		CandleAttk:
 			DWFC A 10 
 			{
+				if (furylevel == 1) A_SetTics(9);
+				if (furylevel == 2) A_SetTics(7);
+				if (furylevel >= 3) A_SetTics(6);
 				int prevcandleshottype = candleshottype;
 				if (random(1,8) >= 2) A_EDTauntAtk();
 				else A_StartSound("dinah/giggle",CHAN_VOICE);
@@ -1523,6 +1841,8 @@ class EvilDinahEE : EvilDinah
 		CandleLoop:
 			DWBL BBB 3 
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(2);
+				if (furylevel >= 3) A_SetTics(1);
 				bFORCERADIUSDMG = true;
 				user_shotsfired++;
 				A_StartSound("weapons/fcandlepopping",random(511,520),CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
@@ -1556,6 +1876,7 @@ class EvilDinahEE : EvilDinah
 			}
 			DINA A 2
 			{
+				if (furylevel >= 3) A_SetTics(1);
 				if (user_shotsfired >= (24 + (skill * 6)))
 				{
 					A_StopSound(65);
@@ -1565,23 +1886,30 @@ class EvilDinahEE : EvilDinah
 				}
 				else
 				{
-					if (Distance3D(target) > 1024) A_SetTics(randompick(0,0,0,1,1,2));
+					if (Distance3D(target) > 1024) A_SetTics(randompick(0,0,1,1,2,2));
+																		else A_SetTics(randompick(0,0,0,1,1,2));
 					A_CandleShotMode(1);
 					A_DynamicMusic();
-					A_CPosRefire();
+					A_MonsterRefire(32,"EndCandle");
 				}
 				return resolvestate(null);
 			}
+			loop;
+		EndCandle:
 			DINA A 2
 			{
 				if (random(1,4) <= 1)
 				{
-					A_SetTics(4);
+					if (furylevel >= 3) A_SetTics(1);
 					if (random(1,4) <= 1) A_EEChase("Missile","Melee",CHF_FASTCHASE,1,3,1,1);
 					else A_EEChase(null,null,CHF_FASTCHASE,1,3,1,1);
 				}
+				else
+				{
+					A_SetTics(0);
+				}
 			}
-			Goto CandleLoop;
+			Goto See;
 		Melee:
 			DINA F 0 
 			{
@@ -1625,16 +1953,19 @@ class EvilDinahEE : EvilDinah
 			}
 			DINA F 2
 			{
+				if (furylevel >= 2) A_SetTics(1);
 				A_Facetarget();
 				A_DynamicMusic();
 			}
 			DINA FF 2 
 			{
+				if (furylevel >= 2) A_SetTics(1);
 				A_Recoil(-2);
 				A_DynamicMusic();
 			}
 			DINA F 2 
 			{
+				if (furylevel >= 2) A_SetTics(1);
 				ThrustThingz (0, 27, 0, 0);
 				ThrustThing (angle*256/360, 18, 0, 0);
 				A_DynamicMusic();
@@ -1642,24 +1973,52 @@ class EvilDinahEE : EvilDinah
 			}
 			DINA G 2
 			{
+				if (furylevel >= 2) A_SetTics(1);
 				A_DynamicMusic();
 			}
 			DINA G 4 
 			{
+				if (furylevel == 1 || furylevel == 2) A_SetTics(3);
+				if (furylevel >= 3) A_SetTics(2);
 				int dmg = A_CalcDamageFormula2(random(25,40),0.005,random(10,20),0.3334,random(5,15),0.1667,0.005);
 				A_CustomMeleeAttack (dmg, "mallethit", "malletswing", "", 1);
 				A_DynamicMusic();
 			}
 			Goto See;
 		Kick:
-			DINA AAAAA 1 A_Facetarget();
+			DINA A 1 
+			{
+				if (furylevel >= 3) A_SetTics(0);
+				A_Facetarget();
+			}
+			DINA A 1 
+			{
+				A_Facetarget();
+			}
+			DINA A 1 
+			{
+				if (furylevel >= 2) A_SetTics(0);
+				A_Facetarget();
+			}
+			DINA A 1 
+			{
+				if (furylevel >= 1) A_SetTics(0);
+				A_Facetarget();
+			}
+			DINA A 1 
+			{
+				if (furylevel >= 3) A_SetTics(0);
+				A_Facetarget();
+			}
 			DINK A 0 A_DynamicMusic();
 			DINK A 1 // [6]
 			{
+				if (furylevel >= 2) A_SetTics(0);
 				A_DynamicMusic();
 			}
 			DINK A 1 // [7]
 			{
+				if (furylevel >= 1) A_SetTics(0);
 				A_DynamicMusic();
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 				{
@@ -1700,16 +2059,28 @@ class EvilDinahEE : EvilDinah
 					}
 				}
 			}
-			DINK AA 1
+			DINK A 1
 			{
+				if (furylevel >= 2) A_SetTics(0);
 				A_DynamicMusic();
 			}
-			DINK BB 1
+			DINK A 1
+			{
+				if (furylevel >= 1) A_SetTics(0);
+				A_DynamicMusic();
+			}
+			DINK B 1
 			{
 				A_DynamicMusic();
 			}
 			DINK B 1
 			{
+				if (furylevel >= 2) A_SetTics(0);
+				A_DynamicMusic();
+			}
+			DINK B 1
+			{
+				if (furylevel >= 1) A_SetTics(0);
 				A_DynamicMusic();
 				int TruePlayerLevel = CountInv("MonsterLevel");
 				int BerserkAdd;
@@ -1740,12 +2111,37 @@ class EvilDinahEE : EvilDinah
 					A_MeleeShieldPiece(mk,mkheight,mkdist3);
 				}
 			}
-			DINK BB 1
+			DINK B 1
 			{
 				A_DynamicMusic();
 			}
-			DINK AAAAA 1
+			DINK B 1
 			{
+				if (furylevel >= 2) A_SetTics(0);
+				A_DynamicMusic();
+			}
+			DINK A 1
+			{
+				if (furylevel >= 1) A_SetTics(0);
+				A_DynamicMusic();
+			}
+			DINK A 1
+			{
+				A_DynamicMusic();
+			}
+			DINK A 1
+			{
+				if (furylevel >= 2) A_SetTics(0);
+				A_DynamicMusic();
+			}
+			DINK A 1
+			{
+				if (furylevel >= 1) A_SetTics(0);
+				A_DynamicMusic();
+			}
+			DINK A 1
+			{
+				if (furylevel >= 3) A_SetTics(0);
 				A_DynamicMusic();
 			}
 			DINK A 0
@@ -1786,17 +2182,35 @@ class EvilDinahEE : EvilDinah
 				bFORCERADIUSDMG = false;
 				A_DynamicMusic();
 				A_FaceTarget();
+				ignorepainst = false;
+				if (random(1,8) <= ((3 + (CountInv("MonsterLevel") * 0.01875)) * (1.0 + (furylevel * 0.5)))) 
+				{
+					ignorepainst = true;
+					A_SetTics(randompick(0,1,1,1,2));
+				}
 			}
 			DINA H 6 
 			{
-				if (random(1,16) <= 13)
+				if (ignorepainst) A_SetTics(0);
+				else
 				{
-					ThrustThingZ(0, 24, 0, 0);
-					ThrustThing (angle*256/360+random(96,160), random(6,9), 0, 0);
-					A_EEPain();
+					if (random(1,16) <= 13)
+					{
+						ThrustThingZ(0, 24, 0, 0);
+						ThrustThing (angle*256/360+random(96,160), random(6,9), 0, 0);
+						A_EEPain();
+					}
 				}
 			}
-			DINA A 6 A_Jump(128,"Missile");
+			DINA A 6 
+			{
+				if (ignorepainst) A_SetTics(0);
+				else
+				{
+					if (random(1,256) <= 128) return resolvestate("Missile");
+				}
+				return resolvestate(null);
+			}
 			Goto See;
 		Death:
 			DINA H 0 Bright
