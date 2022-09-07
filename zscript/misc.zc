@@ -7140,32 +7140,76 @@ class ForsakenCloakResist : TempDefenseBuff
 	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
 	{
 		actor player = players[0].mo;
+		//if (source) Console.Printf("source: %p [%s]", source, source.GetClassName());
+		//if (player) Console.Printf("player: %p [%s]", player, player.GetClassName());
 		if (passive && damage > 0)
 		{
 			double TOTALFactor = 1.0;
-			if (!(damageType == 'Suck' || 
-						damageType == 'Sigil' || 
-						damageType == 'SpectralLow' || 
-						damageType == 'Massacre' || 
-						damageType == 'SilentMassacre' ||
-						damageType == 'Telefrag' ||
-						damageType == 'TrueIP'))
+			string nm;
+			nm = "CCards_Actor_BorrowedTimeBuff";
+			if (owner && owner.CountInv(nm))
 			{
-				if (source == player && (player.CountInv("PowerLightAmp") && gl_enhanced_nightvision))
+				if (!(damageType == 'Suck' || 
+							damageType == 'Sigil' || 
+							damageType == 'SpectralLow' || 
+							damageType == 'Massacre' || 
+							damageType == 'SilentMassacre' ||
+							damageType == 'Telefrag' ||
+							damageType == 'TrueIP'))
 				{
-					if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(65,73) + random(-7,7)) * 0.01;
-					else if (damageType == 'Beats') TOTALFactor = (random(60,65) + random(-5,5)) * 0.01;
-					else TOTALFactor = (random(55,67) + random(-2,3)) * 0.01;
-				}
-				else
-				{
-					if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(30,45) + random(-15,15)) * 0.01;
-					else if (damageType == 'Beats') TOTALFactor = (random(20,30) + random(-10,10)) * 0.01;
-					else TOTALFactor = (random(10,15) + random(-5,5)) * 0.01;
+					if (source == player && 
+							(player.CountInv("PowerLightAmp") || 
+							 player.CountInv("PowerLightAmp2") ||
+							 player.CountInv("PowerTorch")) && 
+							 gl_enhanced_nightvision)
+					{
+						if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(92,94) + random(-3,3));
+						else if (damageType == 'Beats') TOTALFactor = (random(90,92) + random(-2,2));
+						else TOTALFactor = (random(89,92) + random(-1,1));
+						TOTALFactor *= 0.01;
+					}
+					else
+					{
+						if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(65,73) + random(-7,7));
+						else if (damageType == 'Beats') TOTALFactor = (random(60,65) + random(-5,5));
+						else TOTALFactor = (random(55,67) + random(-2,3));
+						TOTALFactor *= 0.01;
+					}
 				}
 			}
+			else
+			{
+				if (!(damageType == 'Suck' || 
+							damageType == 'Sigil' || 
+							damageType == 'SpectralLow' || 
+							damageType == 'Massacre' || 
+							damageType == 'SilentMassacre' ||
+							damageType == 'Telefrag' ||
+							damageType == 'TrueIP'))
+				{
+					if (source == player && 
+							(player.CountInv("PowerLightAmp") || 
+							 player.CountInv("PowerLightAmp2") ||
+							 player.CountInv("PowerTorch")) && 
+							 gl_enhanced_nightvision)
+					{
+						if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(65,73) + random(-7,7));
+						else if (damageType == 'Beats') TOTALFactor = (random(60,65) + random(-5,5));
+						else TOTALFactor = (random(55,67) + random(-2,3));
+						TOTALFactor *= 0.01;
+					}
+					else
+					{
+						if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(30,45) + random(-15,15));
+						else if (damageType == 'Beats') TOTALFactor = (random(20,30) + random(-10,10));
+						else TOTALFactor = (random(10,15) + random(-5,5));
+						TOTALFactor *= 0.01;
+					}
+				}
+			}
+			if (TOTALFactor >= 1.0) TOTALFactor = 1.0;
 			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
-			//Console.Printf("[passive] newdamage: %d, olddmg: %d", newdamage, damage);
+			//Console.Printf("[passive] newdamage: %d, olddmg: %d, TOTALFactor: %.8f", newdamage, damage, TOTALFactor);
 		}
 		else
 		{
