@@ -2343,6 +2343,67 @@ class EvilWarriorShield : DinahWeapon
 		bREFLECTIVE = 1;
 		//bSHIELDREFLECT = 1;
 	}
+	
+	action void A_PHellWarShot()
+	{
+		int PlayerLevel;
+		actor player = players[0].mo;
+		int buttons = GetPlayerInput(INPUT_BUTTONS);
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+		
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) A_SetTics(1);
+		A_PHellWarShieldOn();
+		invoker.shieldenergy -= invoker.shieldenergycost;
+
+		if (invoker.shieldenergy <= invoker.shieldenergycost)
+		{
+			if (CountInv("PikeAmmo") > 0)
+			{
+				A_TakeInventory("PikeAmmo",1);
+				if (MiscItem) invoker.shieldenergy += MiscItem.HellWarriorMaxCharge;
+				else invoker.shieldenergy += 1000;
+			}
+		}
+
+		double shotangle = 0;
+		double shotangleend = 0;
+		double shotangleinc = 0;
+		double origangle = angle;
+		int maxshots = 1;
+		int bounces = (randompick(2,2,2,2,2,2,2,3) + randompick(0,1,1,2) + randompick(0,0,0,0,1));
+		string shottype = "EvilWarriorShieldBall";
+		if (invoker.IPAttackCheck) 
+		{
+			shotangle = -45.0;
+			shotangleend = 45.0;
+			shotangleinc = 3.0;
+			maxshots = 29;
+			shottype = "EvilWarriorShieldBallIP";
+		}
+		if (invoker.IPAttackCheck) A_SetAngle(angle+shotangle);
+		actor BombShots;
+		EEProjectile IPCompat;
+		for (int i = 0; i < maxshots; i++)
+		{
+			if (i && invoker.IPAttackCheck) A_SetAngle(angle+shotangleinc);
+			BombShots = A_FireProjectile(shottype, 0, 0, 0, 3); 
+			if (BombShots && invoker.IPAttackCheck)
+			{
+				IPCompat = EEProjectile(BombShots);
+				if (IPCompat)
+				{
+					IPCompat.IPattack = true;
+					IPCompat.Speed *= frandompick(0.75,0.875);
+					IPCompat.BounceCount = bounces;
+				}
+			}
+		}
+		if (invoker.IPAttackCheck) A_SetAngle(origangle);
+		invoker.A_CheckIPModeOnUse();
+		if (random(1,8) <= 1) { A_AlertMonsters(); }
+		A_Recoil(0.875);
+	}
 
 	States
 	{
@@ -2448,6 +2509,7 @@ class EvilWarriorShield : DinahWeapon
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) A_SetTics(1);
 				A_PHellWarShieldOn();
 			}
+		FireShot:
 			EWS4 A 6 Bright
 			{
 				int PlayerLevel;
@@ -2462,63 +2524,7 @@ class EvilWarriorShield : DinahWeapon
 			}
 			EWS4 A 2 Bright
 			{
-				int PlayerLevel;
-				actor player = players[0].mo;
-				int buttons = GetPlayerInput(INPUT_BUTTONS);
-				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				let globalvars = DDGlobalVariables.Get();
-				
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) A_SetTics(1);
-				A_PHellWarShieldOn();
-				invoker.shieldenergy -= invoker.shieldenergycost;
-
-				if (invoker.shieldenergy <= invoker.shieldenergycost)
-				{
-					if (CountInv("PikeAmmo") > 0)
-					{
-						A_TakeInventory("PikeAmmo",1);
-						if (MiscItem) invoker.shieldenergy += MiscItem.HellWarriorMaxCharge;
-						else invoker.shieldenergy += 1000;
-					}
-				}
-
-				double shotangle = 0;
-				double shotangleend = 0;
-				double shotangleinc = 0;
-				double origangle = angle;
-				int maxshots = 1;
-				int bounces = (randompick(2,2,2,2,2,2,2,3) + randompick(0,1,1,2) + randompick(0,0,0,0,1));
-				string shottype = "EvilWarriorShieldBall";
-				if (invoker.IPAttackCheck) 
-				{
-					shotangle = -45.0;
-					shotangleend = 45.0;
-					shotangleinc = 3.0;
-					maxshots = 29;
-					shottype = "EvilWarriorShieldBallIP";
-				}
-				if (invoker.IPAttackCheck) A_SetAngle(angle+shotangle);
-				actor BombShots;
-				EEProjectile IPCompat;
-				for (int i = 0; i < maxshots; i++)
-				{
-					if (i && invoker.IPAttackCheck) A_SetAngle(angle+shotangleinc);
-					BombShots = A_FireProjectile(shottype, 0, 0, 0, 3); 
-					if (BombShots && invoker.IPAttackCheck)
-					{
-						IPCompat = EEProjectile(BombShots);
-						if (IPCompat)
-						{
-							IPCompat.IPattack = true;
-							IPCompat.Speed *= frandompick(0.75,0.875);
-							IPCompat.BounceCount = bounces;
-						}
-					}
-				}
-				if (invoker.IPAttackCheck) A_SetAngle(origangle);
-				invoker.A_CheckIPModeOnUse();
-				if (random(1,8) <= 1) { A_AlertMonsters(); }
-				A_Recoil(0.875);
+				A_PHellWarShot();
 			}
 			EWS4 A 6 Bright
 			{
@@ -2532,6 +2538,16 @@ class EvilWarriorShield : DinahWeapon
 				A_SetPitch(pitch - 0.875);
 				A_PHellWarShieldOn();
 			}
+			EWS4 A 0 Bright
+			{
+				int PlayerLevel;
+				actor player = players[0].mo;
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				A_PHellWarShieldOn();
+				if (buttons & BT_ATTACK) return resolvestate("FireShot");
+				return resolvestate(null);
+			}
+		FireEnd:
 			EWS4 B 2 Bright
 			{
 				int PlayerLevel;
