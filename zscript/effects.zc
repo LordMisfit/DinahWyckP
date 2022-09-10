@@ -669,7 +669,7 @@ class CricketBatGuard : TempDefenseBuff
 					damageType == 'DashingBG' ||
 					damageType == 'DashingSD' ||
 					damageType == 'Chop') TOTALFactor = 0.125;
-			if (damageType == 'Dust') TOTALFactor = 1.00;
+			if (damageType == 'Dust') TOTALFactor = 0.8125;
 			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
 		}
 	}
@@ -719,7 +719,57 @@ class CricketBatGuard2 : TempDefenseBuff
 					damageType == 'DashingBG' ||
 					damageType == 'DashingSD' ||
 					damageType == 'Chop') TOTALFactor = 0.025;
-			if (damageType == 'Dust') TOTALFactor = 1.00;
+			if (damageType == 'Dust') TOTALFactor = 0.5625;
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+		}
+	}
+}
+
+class CricketBatGuard3 : TempDefenseBuff
+{
+	default
+	{
+		Inventory.Icon "SPBTA0";
+	}
+	string texname;
+	
+	override void Tick()
+	{
+		Super.Tick();
+		if (dydudebug_showbufficons) 
+		{
+			texname = "SPBTA0";
+			icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		}
+		else 
+		{
+			texname = "";
+			icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		}
+	}
+	
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (passive && damage > 0)
+		{
+			double TOTALFactor = 0.025;
+			if (damageType == 'Melee' ||
+					damageType == 'Bonk' ||
+					damageType == 'Bap' ||
+					damageType == 'BFGSplash' ||
+					damageType == 'Suck' ||
+					damageType == 'Fist' ||
+					damageType == 'Kick' ||
+					damageType == 'Stomp' ||
+					damageType == 'Trample' ||
+					damageType == 'Chainsaw' ||
+					damageType == 'Dashing' ||
+					damageType == 'DashingBG' ||
+					damageType == 'DashingSD' ||
+					damageType == 'Chop') TOTALFactor = 0.005;
+			if (damageType == 'Dust') TOTALFactor = 0.5125;
 			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
 		}
 	}
@@ -770,6 +820,57 @@ class CricketBatSwingDEF : TempDefenseBuff
 					damageType == 'DashingSD' ||
 					damageType == 'Chop') TOTALFactor = 0.5625;
 			if (damageType == 'Dust') TOTALFactor = 1.00;
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+		}
+	}
+}
+
+
+class CricketBatSwingDEF2 : TempDefenseBuff
+{
+	default
+	{
+		Inventory.Icon "SPBTA0";
+	}
+	string texname;
+	
+	override void Tick()
+	{
+		Super.Tick();
+		if (dydudebug_showbufficons) 
+		{
+			texname = "SPBTA0";
+			icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		}
+		else 
+		{
+			texname = "";
+			icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		}
+	}
+	
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (passive && damage > 0)
+		{
+			double TOTALFactor = 0.5625;
+			if (damageType == 'Melee' ||
+					damageType == 'Bonk' ||
+					damageType == 'Bap' ||
+					damageType == 'BFGSplash' ||
+					damageType == 'Suck' ||
+					damageType == 'Fist' ||
+					damageType == 'Kick' ||
+					damageType == 'Stomp' ||
+					damageType == 'Trample' ||
+					damageType == 'Chainsaw' ||
+					damageType == 'Dashing' ||
+					damageType == 'DashingBG' ||
+					damageType == 'DashingSD' ||
+					damageType == 'Chop') TOTALFactor = 0.1875;
+			if (damageType == 'Dust') TOTALFactor = 0.78125;
 			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
 		}
 	}
@@ -4754,6 +4855,28 @@ class CentaurionShieldMode : PowerProtection
 		inventory.icon "";
 		Powerup.Duration 2147483646;
 	}
+	
+	override void OnDestroy()
+	{
+		if (owner) owner.bALLOWPAIN = true;
+		super.OnDestroy();
+	}
+	
+	override void Tick()
+	{
+		super.Tick();
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		if (EffectTics <= 0) 
+		{
+			if (owner) owner.bALLOWPAIN = true;
+			Destroy();
+		}
+		else
+		{
+			if (owner) owner.bALLOWPAIN = false;
+		}
+	}
 }
 
 class VokterCloneShield : PowerProtection
@@ -4770,11 +4893,19 @@ class VokterCloneShield : PowerProtection
 	{
 		timerint = (random(2,4) * 3);
 	}
-
+	
+	override void OnDestroy()
+	{
+		if (owner) owner.bALLOWPAIN = true;
+		super.OnDestroy();
+	}
+	
 	override void Tick()
 	{
 		if (owner)
 		{
+			owner.bALLOWPAIN = false;
+			
 			timer++;
 			if (timer % timerint >= (timerint-1))
 			{
@@ -6216,6 +6347,13 @@ class D_NoUCard : PowerProtection
 	
 	int timer;
 	string texname;
+	
+	override void OnDestroy()
+	{
+		if (owner) owner.bALLOWPAIN = true;
+		super.OnDestroy();
+	}
+
 	override void Tick()
 	{
 		super.Tick();
@@ -6233,12 +6371,14 @@ class D_NoUCard : PowerProtection
 		// Powerups cannot exist outside an inventory
 		if (Owner == NULL) 
 		{
+			owner.bALLOWPAIN = true;
 			Destroy();
 		}
 		if (EffectTics <= 0) 
 		{
 			if (owner)
 			{
+				owner.bALLOWPAIN = false;
 				owner.A_StopSound(102);
 				owner.A_StopSound(103);
 				owner.A_StartSound("NoUEnd1",102,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
