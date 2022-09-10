@@ -4858,7 +4858,7 @@ class CentaurionShieldMode : PowerProtection
 	
 	override void OnDestroy()
 	{
-		if (owner) owner.bALLOWPAIN = true;
+		if (owner) owner.bNOPAIN = false;
 		super.OnDestroy();
 	}
 	
@@ -4869,12 +4869,12 @@ class CentaurionShieldMode : PowerProtection
 		if (Owner == NULL) Destroy();
 		if (EffectTics <= 0) 
 		{
-			if (owner) owner.bALLOWPAIN = true;
+			if (owner) owner.bNOPAIN = false;
 			Destroy();
 		}
 		else
 		{
-			if (owner) owner.bALLOWPAIN = false;
+			if (owner) owner.bNOPAIN = true;
 		}
 	}
 }
@@ -4896,7 +4896,7 @@ class VokterCloneShield : PowerProtection
 	
 	override void OnDestroy()
 	{
-		if (owner) owner.bALLOWPAIN = true;
+		if (owner) owner.bNOPAIN = false;
 		super.OnDestroy();
 	}
 	
@@ -4904,7 +4904,7 @@ class VokterCloneShield : PowerProtection
 	{
 		if (owner)
 		{
-			owner.bALLOWPAIN = false;
+			owner.bNOPAIN = true;
 			
 			timer++;
 			if (timer % timerint >= (timerint-1))
@@ -6134,7 +6134,22 @@ class TookCriticalHit : PlaceHolderItem
 }
 
 class ShieldingBuff : PlaceHolderItem { default { Inventory.MaxAmount 1; } }
-class NightmarePhaseOutDefense : ShieldingBuff { } // 0.0625
+class NightmarePhaseOutDefense : ShieldingBuff
+{ 
+	override void OnDestroy()
+	{
+		if (owner) owner.bNOPAIN = false;
+		super.OnDestroy();
+	}
+	
+	override void Tick()
+	{
+		super.Tick();
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		else owner.bNOPAIN = true;
+	}
+}
 
 class NoHUD : PlaceHolderItem { }
 class NoRegeneration : PlaceHolderItem { }
@@ -6206,8 +6221,38 @@ class EWShieldDefendModeExtra : PlaceholderItem { }
 class HWShieldBlockHold : PlaceholderItem { }
 
 // Hell Warrior Shield [moved from KDIZD CompatPack]
-class HWShieldDefense : ShieldingBuff { }
-class HWShieldDefenseExtra : ShieldingBuff { }
+class HWShieldDefense : ShieldingBuff 
+{
+	override void OnDestroy()
+	{
+		if (owner) owner.bNOPAIN = false;
+		super.OnDestroy();
+	}
+	
+	override void Tick()
+	{
+		super.Tick();
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		else owner.bNOPAIN = true;
+	}
+}
+class HWShieldDefenseExtra : ShieldingBuff
+{
+	override void OnDestroy()
+	{
+		if (owner) owner.bNOPAIN = false;
+		super.OnDestroy();
+	}
+	
+	override void Tick()
+	{
+		super.Tick();
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy();
+		else owner.bNOPAIN = true;
+	}
+}
 
 class IsFinalDoom : PlaceholderItemDepletable { } // This works as an inventory flag to indicate the game mode
 class IsDynDuchess : PlaceholderItemDepletable { } // This works as an inventory flag to indicate the game mode
@@ -6350,7 +6395,7 @@ class D_NoUCard : PowerProtection
 	
 	override void OnDestroy()
 	{
-		if (owner) owner.bALLOWPAIN = true;
+		if (owner) owner.bNOPAIN = false;
 		super.OnDestroy();
 	}
 
@@ -6371,14 +6416,14 @@ class D_NoUCard : PowerProtection
 		// Powerups cannot exist outside an inventory
 		if (Owner == NULL) 
 		{
-			owner.bALLOWPAIN = true;
+			owner.bNOPAIN = false;
 			Destroy();
 		}
 		if (EffectTics <= 0) 
 		{
 			if (owner)
 			{
-				owner.bALLOWPAIN = false;
+				owner.bNOPAIN = false;
 				owner.A_StopSound(102);
 				owner.A_StopSound(103);
 				owner.A_StartSound("NoUEnd1",102,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
@@ -6388,6 +6433,7 @@ class D_NoUCard : PowerProtection
 		}
 		else
 		{
+			owner.bNOPAIN = true;
 			if (GetAge() % 5 == 0)
 			{
 				double maxrad = (owner.radius * 1.5);

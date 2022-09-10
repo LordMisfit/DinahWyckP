@@ -751,10 +751,11 @@ mixin class CollisionChecker
 	// Sets up what projectiles can be eaten by the active SuperVac, and how many units they give V:
 	int, int A_CheckCollisionProjShieldExemptionSV(Actor actr)
 	{
-		if (actr)
+		string nm, nn, no, np;
+		if (actr && actr.bMISSILE)
 		{
 			infl = actr.GetClassName();
-	
+			
 			int type = 1;
 			int vacgive = ((actr.height * (actr.radius * 2)) * frandom(0.1667,0.3334));
 			
@@ -768,11 +769,19 @@ mixin class CollisionChecker
 				//**********************************************************************************
 				//* Things that have a random chance of being devoured instead of being guaranteed *
 				//**********************************************************************************
-				int defaultroll = randompick(1,1,1,1,1,2,2,3);
+				int defaultroll = 100;
 				if (DoomImpBall(actr) ||
 						DoomImpBallNew(actr))
 				{
 					defaultroll = randompick(86,86,86,87);
+				}
+				if (NetherLightning(actr))
+				{
+					defaultroll = randompick(9,10);
+				}
+				if (InfernoBall(actr))
+				{
+					defaultroll = randompick(28,28,28,28,28,28,28,29);
 				}
 				if (DemonFire(actr) ||
 						BloodDemonFire(actr))
@@ -909,18 +918,34 @@ mixin class CollisionChecker
 				{
 					defaultroll = random(4,5);
 				}
-				if (defaultroll > 0)
-				{
-					if (random(1,100) <= defaultroll) return type, vacgive;
-					return 0, 0;
-				}
+				nm = "DarkNormal"; if (infl == nm) defaultroll = randompick(86,86,86,87);
+				nm = "DarkStrong"; if (infl == nm) defaultroll = randompick(55,56);
+				nm = "DarkFast"; if (infl == nm) defaultroll = randompick(28,28,28,29);
+				nm = "ShadowBall"; if (infl == nm) defaultroll = randompick(55,56);
 				
 				//*****************************************************
 				//* Things that will NOT get devoured below this line *
 				//*****************************************************
 				If (VacShot(actr) || 
 						VacShotMini(actr) ||
-						BadVacShot(actr)) return 0, 0;
+						BadVacShot(actr) ||
+						MiniNote(actr) ||
+						MiniNote2(actr)) defaultroll = 0;
+
+				//*********
+				//* Rolls *
+				//*********
+				int roll = random(1,100);
+				if (roll <= defaultroll) 
+				{
+					if (dydudebug_supervacproj) Console.Printf("(\c[gold]%s\c-): type: %d, vacgive: %d, roll [%d] vs defaultroll [%d] [\c[green]succeed\c-]", actr.GetClassName(), type, vacgive, roll, defaultroll);
+					return type, vacgive;
+				}
+				else
+				{
+					if (dydudebug_supervacproj) Console.Printf("(\c[gold]%s\c-): roll [%d] vs defaultroll [%d] [\c[red]fail\c-]", actr.GetClassName(), roll, defaultroll);
+					return 0, 0;
+				}
 			}
 			
 			// Else, Default to "yes"
