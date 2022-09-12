@@ -13581,8 +13581,10 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 
 			bool suckup;
 			int vacgive;
+			if (dydudebug_supervacproj && other) Console.Printf("([attempt - passive] %s)", other.GetClassName());
 			if (UniqueProjectile || UniqueProjectileFast)
 			{
+				if (dydudebug_supervacproj && other) Console.Printf("(uniqueprojectile [attempt - passive] %s)", other.GetClassName());
 				if (UniqueProjectile.willbevacced == 0)
 				{
 					[suckup, vacgive] = A_CheckCollisionProjShieldExemptionSV(other);
@@ -13604,6 +13606,40 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 					{
 						UniqueProjectile.willbevacced = -1;
 						return false;
+					}
+					return false;
+				}
+				return false;
+			}
+			else
+			if (other && other.bMISSILE)
+			{
+				if (dydudebug_supervacproj && other) Console.Printf("(other [attempt - passive] %s)", other.GetClassName());
+				if (dydudebug_supervacproj && other) Console.Printf("(other.accuracy: %d", other.accuracy);
+				if (other.accuracy == 1)
+				{
+					[suckup, vacgive] = A_CheckCollisionProjShieldExemptionSV(other);
+					if (suckup)
+					{
+						other.accuracy++;
+						actor player = players[0].mo;
+						let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+						if (vacgive > 0)
+						{
+							vacgive *= exex_supervacbagunitmulti;
+							player.A_StartSound("VacDed",210,CHANF_DEFAULT,frandom(0.75,0.90),ATTN_NORM,frandom(1.8,2.7));
+							player.A_GiveInventory("VacAmmoCounter",vacgive);
+							Console.Printf("+%d Vacuum Bag Units", vacgive);
+						}
+						else
+						{
+							Console.Printf("No Bag Units. Not an actual projectile...");
+						}
+						other.Destroy();
+					}
+					else
+					{
+						other.accuracy--;
 					}
 					return false;
 				}
