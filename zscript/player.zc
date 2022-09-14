@@ -513,6 +513,63 @@ class DDPlayerPawn : PlayerPawn
 		}
 	}
 	
+	override void CheckFOV()
+	{
+		let player = self.player;
+
+		if (!player) return;
+
+		// [RH] Zoom the player's FOV
+		float desired = player.DesiredFOV;
+		// Adjust FOV using on the currently held weapon.
+		if (player.playerstate != PST_DEAD &&		// No adjustment while dead.
+			player.ReadyWeapon != NULL &&			// No adjustment if no weapon.
+			player.ReadyWeapon.FOVScale != 0)		// No adjustment if the adjustment is zero.
+		{
+			// A negative scale is used to prevent G_AddViewAngle/G_AddViewPitch
+			// from scaling with the FOV scale.
+			desired *= abs(player.ReadyWeapon.FOVScale);
+		}
+		if (player.FOV != desired)
+		{
+			if (abs(player.FOV - desired) < 7.)
+			{
+				player.FOV = desired;
+			}
+			else
+			{
+				float zoom = MAX(7., abs(player.FOV - desired) * 0.025);
+				if (player.FOV > desired)
+				{
+					player.FOV = player.FOV - zoom;
+				}
+				else
+				{
+					player.FOV = player.FOV + zoom;
+				}
+			}
+		}
+	}
+	
+	override void CheckCheats()
+	{
+		let player = self.player;
+		// No-clip cheat
+		if ((player.cheats & (CF_NOCLIP | CF_NOCLIP2)) == CF_NOCLIP2)
+		{ // No noclip2 without noclip
+			player.cheats &= ~CF_NOCLIP2;
+		}
+		bNoClip = (player.cheats & (CF_NOCLIP | CF_NOCLIP2) || Default.bNoClip);
+		if (player.cheats & CF_NOCLIP2)
+		{
+			bNoGravity = true;
+		}
+		else if (!bFly && !Default.bNoGravity)
+		{
+			bNoGravity = false;
+		}
+	}
+	
 	override void PlayerThink()
 	{
 		wasongroundprevtic = player.onground;

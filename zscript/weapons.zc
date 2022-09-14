@@ -1286,7 +1286,6 @@ class DDWeapon : Weapon
 				double recoilmulti;
 				int previousdamage;
 				int PerkFactor;
-				bool debugrecoil = false;
 				int BerserkAdd;
 
 				// Base "Recoil"
@@ -1295,20 +1294,20 @@ class DDWeapon : Weapon
 				if (A_CheckBerserk()) BerserkAdd = randompick(1,1,1,1,1,1,1,2,2); else BerserkAdd = 0;
 
 				recoil = baserecoil * (random(3,9) + BerserkAdd);
-				if (debugrecoil) Console.Printf("\cxRecoil [Base]: %.8f", recoil);
+				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Base]: %.8f", recoil);
 
 				// Berserk
 				if (A_CheckBerserk())
 				{
 					recoil *= BerserkRecoilMulti;
-					if (debugrecoil) Console.Printf("\cxRecoil [Berserk]: %.8f", recoil);
+					if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Berserk]: %.8f", recoil);
 				}
 
 				// Stat/Level Mitigation
 				recoilmulti = (1.0 - (TruePlayerLevel * 0.01171875));
 				if (recoilmulti < 0.0) recoilmulti = 0.0;
 				recoil *= recoilmulti;
-				if (debugrecoil) Console.Printf("\cxRecoil [Stats]: %.8f, Multiplier: %.8f", recoil, recoilmulti);
+				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Stats]: %.8f, Multiplier: %.8f", recoil, recoilmulti);
 
 				// Random Chance for 0 recoil
 				if (attacktype == 1)
@@ -1319,7 +1318,7 @@ class DDWeapon : Weapon
 				{
 					if (random(1,48) <= 1) recoil = 0.0;
 				}
-				if (debugrecoil) Console.Printf("\cxRecoil [Final]: %.8f", recoil);
+				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Final]: %.8f", recoil);
 
 				A_Recoil(recoil);
 			}
@@ -1727,12 +1726,11 @@ class DinahWeapon : DDWeapon
 				A_ForcePlayState("Kick2");
 
 				// Base "Recoil"
-				bool debugrecoil = false;
 				int BerserkAdd;
 				double recl = frandompick(-0.125,-0.075,-0.025,0.025,0.075,0.125);
 				if (A_CheckBerserk()) BerserkAdd = randompick(1,1,1,1,2,2,2,2,3); else BerserkAdd = 0;
 				recl = recl * (random(7,17) + BerserkAdd);
-				if (debugrecoil) Console.Printf("\cxRecoil [Base]: %.8f", recl);
+				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Base]: %.8f", recl);
 
 				double recoilmulti = (1.0 - (TruePlayerLevel * 0.0234375));
 				if (recoilmulti < 0.0) recoilmulti = 0.0;
@@ -13578,6 +13576,8 @@ class PikeAmmoBig : PikeAmmo
 //************
 class SuperVacAbsorbsionPart : ShieldPartNoReflect
 {
+	mixin IPCostCheck;
+	mixin HUDRecovery;
 	default
 	{
 		Radius 8; // out of 32
@@ -13585,8 +13585,31 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 		Scale 0.5;
 	}
 	
+	void A_UseIP()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+		if (GetClassName() == "SuperVacAbsorbsionPartIP")
+		{
+			double IPCostTemp = A_GetIPCost(151);
+			If (MiscItem.ItemPoints >= IPCostTemp && globalvars.ItemPoints >= IPCostTemp)
+			{
+				MiscItem.ItemPoints -= IPCostTemp;
+				globalvars.ItemPoints -= IPCostTemp;
+				A_IPUseHUD(IPCostTemp);
+				if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer *= 0.5;
+			}
+			IPCostTemp = 0;
+			if (exex_ikaripointtechpresstype >= 2 && player && player.CountInv("IPUseMode")) player.A_SetInventory("IPUseMode",0);
+		}
+	}
+	
 	override bool CanCollideWith(Actor other, bool passive)
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
 		PlayerPawn playpawn;
 		PlayerPawn playpawn2;
 		EEProjectile UniqueProjectile;
@@ -13596,6 +13619,8 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 		UniqueProjectileFast = EEFastProjectile(other);
 		EECreature DDActor;
 		EECreature DDActor2;
+		bool IPAttack = false;
+		if (GetClassName() == "SuperVacAbsorbsionPartIP") IPAttack = true;
 		
 		if (dydudebug_shieldcollision) Console.Printf("\cyShieldPart [%s] (gametic %d):\c- other: %s", GetClassName(), gametic, other.GetClassName());
 		if (passive)
@@ -13618,6 +13643,7 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 					if (suckup)
 					{
 						UniqueProjectile.willbevacced = 1;
+						if (IPAttack) UniqueProjectile.willbevacced = 2;
 						if (UniqueProjectile.isillusionaryproj) vacgive = 0;
 						//Console.Printf("%s", other.GetClassName());
 						if (vacgive > 0)
@@ -13649,8 +13675,6 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 					if (suckup)
 					{
 						other.accuracy++;
-						actor player = players[0].mo;
-						let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 						if (vacgive > 0)
 						{
 							vacgive *= exex_supervacbagunitmulti;
@@ -13662,6 +13686,7 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 						{
 							Console.Printf("No Bag Units. Not an actual projectile...");
 						}
+						A_UseIP();
 						other.Destroy();
 					}
 					else
@@ -13705,6 +13730,16 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 			{
 			}
 			stop;
+	}
+}
+
+class SuperVacAbsorbsionPartIP : SuperVacAbsorbsionPart
+{
+	default
+	{
+		Radius 8; // out of 32
+		Height 16; // out of 32
+		Scale 0.5;
 	}
 }
 
@@ -13769,6 +13804,7 @@ class SuperVac : DinahWeapon
 	{
 		A_SetAngle(angle+turnang);
 		string vispart = "SuperVacAbsorbsionPart";
+		if (invoker.IPAttackCheck) vispart = "SuperVacAbsorbsionPartIP";
 
 		double yoffset = frandompick(-0.325,0,0.325);
 
@@ -16701,7 +16737,6 @@ class FosnianCandle : DinahWeapon
 	
 	action void A_FCandleShot(double angleerr = 0.0, double pitcherr = 0.0, double recoilerr = 0.0, int element = 0)
 	{
-		bool debugrecoil = false;
 		let player = self.player;
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = 0;
@@ -16719,6 +16754,14 @@ class FosnianCandle : DinahWeapon
 		quakeint *= 1.0 - crouchrefa;
 		quakedurtime *= 1.0 - crouchrefa;
 		quaketremrad *= 1.0 - crouchrefa;
+		
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
+		{
+			baserecoil *= 0.2;
+			quakeint *= 0.2;
+			quakedurtime *= 0.2;
+			quaketremrad *= 0.2;
+		}
 		
 		double sndpitch = 1.0;
 		double sndvol = 1.0;
@@ -16771,7 +16814,7 @@ class FosnianCandle : DinahWeapon
 		
 		double truerecoil = baserecoil + (recoilerr * baserecoil);
 		A_Recoil(truerecoil);
-		if (debugrecoil) 
+		if (dydudebug_weaponrecoil) 
 		{
 			Console.Printf("\c[fire]quakeint: %.8f, quakedurtime: %.8f, quaketremrad: %.8f\c-, crouchrefa, %.8f, \c[sapphire]player.crouchfactor: %.8f", quakeint, quakedurtime, quaketremrad, crouchrefa, player.crouchfactor);
 			Console.Printf("\c[fire]Recoil: %.8f,\c- Base: %.8f, Error: %.8f, crouchrefa, %.8f, \c[sapphire]player.crouchfactor: %.8f", truerecoil, baserecoil, recoilerr, crouchrefa, player.crouchfactor);

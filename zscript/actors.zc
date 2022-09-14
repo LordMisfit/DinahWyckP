@@ -570,6 +570,8 @@ class EEProjectile : EEBaseZSC abstract
 	int user_canafflict;
 	int user_ailmentmaxchance;
 	mixin InvWeaponShare;
+	mixin HUDRecovery;
+	mixin IPCostCheck;
 	int user_hitsparkrand;
 	int user_sparksizelevel;
 	double user_sparkscalemulti;
@@ -1963,10 +1965,11 @@ class EEProjectile : EEBaseZSC abstract
 	
 	void A_VacUpProjectile()
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
 		if (!gavevac)
 		{
-			actor player = players[0].mo;
-			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 			if (vacgiveamt > 0)
 			{
 				vacgiveamt *= exex_supervacbagunitmulti;
@@ -1979,6 +1982,20 @@ class EEProjectile : EEBaseZSC abstract
 				Console.Printf("No Bag Units. Not an actual projectile...");
 			}
 			gavevac = true;
+			
+			if (willbevacced == 2 && MiscItem && globalvars)
+			{
+				double IPCostTemp = A_GetIPCost(151);
+				If (MiscItem.ItemPoints >= IPCostTemp && globalvars.ItemPoints >= IPCostTemp)
+				{
+					MiscItem.ItemPoints -= IPCostTemp;
+					globalvars.ItemPoints -= IPCostTemp;
+					A_IPUseHUD(IPCostTemp);
+					if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer *= 0.5;
+				}
+				IPCostTemp = 0;
+				if (exex_ikaripointtechpresstype >= 2 && player && player.CountInv("IPUseMode")) player.A_SetInventory("IPUseMode",0);
+			}
 			A_Remove(AAPTR_DEFAULT);
 		}
 	}
