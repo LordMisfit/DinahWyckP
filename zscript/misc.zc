@@ -3617,7 +3617,7 @@ class PlayerStatItem : Inventory
 								else if (CurrentHealth <= (MaxHealthTrue * 0.50)) inc = floor(inc * 1.0625);
 							}
 							
-							if (afasdroptimer) inc = floor(inc * 0.5);
+							if (afasdroptimer) inc = floor(inc * 0.125);
 							if (healpoolaccel == 1) inc *= 1.75;
 							if (healpoolaccel == 2) inc *= 2.5;
 							
@@ -3780,7 +3780,7 @@ class PlayerStatItem : Inventory
 								else if (CurrentHealth >= (MaxHealthTrue * 1.00)) inc = ceil(inc * 1.0);
 							}
 							
-							if (afasdroptimer) inc = ceil(inc * 2.0);
+							if (afasdroptimer) inc = ceil(inc * 8.0);
 							if (healpoolaccel == 1) inc *= 0.5714285714285714;
 							if (healpoolaccel == 2) inc *= 0.4;
 							
@@ -6074,6 +6074,44 @@ class PlayerStatItem : Inventory
 			Speed *= KickingFactor;
 			HUDSpeed *= KickingFactor;
 			if (dydudebug_speedcalcs) Console.Printf("SpeedX [kicking]: %.8f", KickingFactor);
+		}
+
+		if (Owner.CountInv("IsUppercutting") && owner.player.onground)
+		{
+			double UppercutFactor = 1.0;
+			UppercutFactor = frandompick(0.1667,0.2,0.2,0.25,0.25,0.25,0.25,0.25,0.25,0.334,0.334,0.5);
+			double crouch = (1.0 - ((1.0 - owner.player.crouchfactor) * 1.96875));
+			if (dydudebug_speedcalcs) Console.Printf("crouch: %.8f [%.8f]", crouch, owner.player.crouchfactor);
+			UppercutFactor *= crouch;
+			double remainder = (1.00 - UppercutFactor);
+			double extra = (PlayerLevel * double(remainder / ((exex_upcutspdlvlint * 8) * 1.0)));
+			if (extra >= remainder) extra = remainder;
+			UppercutFactor += extra;
+			if (UppercutFactor >= 1.000) UppercutFactor = 1.000;
+			if (dydudebug_speedcalcs) Console.Printf("UppercutFactor: %.8f, extra: %.8f, remainder: %.8f", UppercutFactor, extra, remainder);
+			
+			Speed *= UppercutFactor;
+			HUDSpeed *= UppercutFactor;
+			if (dydudebug_speedcalcs) Console.Printf("SpeedX [uppercut]: %.8f", UppercutFactor);
+		}
+
+		if (Owner.CountInv("IsPunching") && owner.player.onground)
+		{
+			double PunchFactor = 1.0;
+			PunchFactor = frandompick(0.6667,0.75,0.75,0.8,0.8,0.8,0.8,0.8,0.8,0.8334,0.8334,0.8572);
+			//double crouch = (1.0 + ((1.0 - owner.player.crouchfactor) * 0.1));
+			//if (dydudebug_speedcalcs) Console.Printf("crouch: %.8f [%.8f]", crouch, owner.player.crouchfactor);
+			//PunchFactor *= crouch;
+			double remainder = (1.00 - PunchFactor);
+			double extra = (PlayerLevel * double(remainder / ((exex_upcutspdlvlint * 8) * 1.0)));
+			if (extra >= remainder) extra = remainder;
+			PunchFactor += extra;
+			if (PunchFactor >= 1.000) PunchFactor = 1.000;
+			if (dydudebug_speedcalcs) Console.Printf("PunchFactor: %.8f, extra: %.8f, remainder: %.8f", PunchFactor, extra, remainder);
+			
+			Speed *= PunchFactor;
+			HUDSpeed *= PunchFactor;
+			if (dydudebug_speedcalcs) Console.Printf("SpeedX [uppercut]: %.8f", PunchFactor);
 		}
 		
 		double PlayerFistBlockFactor = 1.0;
