@@ -2863,9 +2863,16 @@ mixin class MonsterCollider
 		if (CountInv("ExpeditionHat")) ssa += frandompick(0.03,0.04,0.05);
 		if (CountInv("ClassyRibbon")) ssa += frandompick(0.015,0.02,0.025);
 		damage *= ssa;
+		if (CountInv("MiracleBoss") > 0) bBUDDHA = true;
 		//************************************************************************
 		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
 		//************************************************************************
+		if (CountInv("MiracleBoss") > 0)
+		{
+			if (ret > (SpawnHealth() + Stamina)) ret = (SpawnHealth() + Stamina);
+			ret *= 0.25;
+			if (bBUDDHA) bBUDDHA = false;
+		}
 
 		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Post-Function Call: ret: %d (pre-function damage: %d) (initdmg: %d), isaghost: %d", GetClassName(), ret, damage, initdmg, isaghost);
 		
@@ -2876,13 +2883,20 @@ mixin class MonsterCollider
 		if (dydudebug_actordmgdisplays) Console.Printf("givemeleeitem: %d [%p (%s)], isCCardsIllusion: %d, isCCardsGhost: %d, isaghost: %d", givemeleeitem, self, GetClassName(), isCCardsIllusion, isCCardsGhost, isaghost);
 		if (givemeleeitem)
 		{
-			if ((KickPuff(inflictor) || KickPuffNoThrust(inflictor) || BadKickPuff(inflictor) || mod == 'Kick') && ret > 0) A_SetInventory("JustKicked",1);
-			if ((UppercutPuff(inflictor) && mod == 'Fist') && ret > 0) A_SetInventory("JustUppercutted",1);
-			if ((FistPuff(inflictor) && mod == 'Fist') && ret > 0) A_SetInventory("JustPunched",1);
-			if (mod == 'DashingBG' && ret > 0) A_SetInventory("JustBatDashed",1);
-			if (mod == 'DashingSD' && ret > 0) A_SetInventory("JustShieldDashed",1);
+			if (CountInv("MiracleBoss") < 1)
+			{
+				if ((KickPuff(inflictor) || KickPuffNoThrust(inflictor) || BadKickPuff(inflictor) || mod == 'Kick') && ret > 0) A_SetInventory("JustKicked",1);
+				if ((UppercutPuff(inflictor) && mod == 'Fist') && ret > 0) A_SetInventory("JustUppercutted",1);
+				if ((FistPuff(inflictor) && mod == 'Fist') && ret > 0) A_SetInventory("JustPunched",1);
+				if (mod == 'DashingBG' && ret > 0) A_SetInventory("JustBatDashed",1);
+				if (mod == 'DashingSD' && ret > 0) A_SetInventory("JustShieldDashed",1);
+			}
 		}
 
+		if (CountInv("MiracleBoss") > 0) 
+		{
+			if (random(1,100) <= 95) A_TakeInventory("MiracleBoss",1);
+		}
 		if (ret > 0)
 		{
 			if (FoundPlayer) 
