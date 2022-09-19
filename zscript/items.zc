@@ -1,3 +1,14 @@
+class ExExInvBarItem : CustomInventoryExt
+{
+	default
+	{
+		+INVENTORY.INVBAR
+		+INVENTORY.HUBPOWER
+		+INVENTORY.PERSISTENTPOWER
+		+INVENTORY.KEEPDEPLETED
+	}
+}
+
 class RandomAppleSpawnerAlways : RandomSpawner2
 {
 	default
@@ -547,7 +558,7 @@ class GalaApple : CustomInventoryExt
 				if (temp1 < temp2)
 				{
 					int temp3 = player.mo.CountInv("PlayerMaxHP");
-					if (ddafd_applesskilllevel && (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls"))) 
+					if (ddafd_applesskilllevel && (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls") || player.mo.CountInv("IsWeddingCake"))) 
 					{
 						if (skill >= 3) temp3 *= 0.05;
 						else if (ddafd_applesskilllevel > 1 && skill <= 1) temp3 *= 0.20;
@@ -1570,17 +1581,6 @@ class IceTrail : EEProjectile
 	}
 }
 
-class ExExInvBarItem : CustomInventoryExt
-{
-	default
-	{
-		+INVENTORY.INVBAR
-		+INVENTORY.HUBPOWER
-		+INVENTORY.PERSISTENTPOWER
-		+INVENTORY.KEEPDEPLETED
-	}
-}
-
 class CherryBombPickup : ExExInvBarItem
 {
 	default
@@ -1637,16 +1637,9 @@ class CherryBombPickup : ExExInvBarItem
 			{
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
 				int TruePlayerATK = 0;
-				if (MiscItem)
-				{
-					if (exex_expenabled) 
-					{
-						TruePlayerLevel = MiscItem.PlayerLevel;
-						TruePlayerATK = MiscItem.PlayerATK;
-					}
-				}
+				int TruePlayerLevel = A_GetPlayerLvl();
+				if (exex_expenabled && MiscItem) TruePlayerATK = MiscItem.TruePlayerATK;
 				let globalvars = DDGlobalVariables.Get();
 				double throwpowerxy = frandom(14.0,18.0);
 				double throwpowerz = frandom(2.75,3.25);
@@ -1693,7 +1686,7 @@ class CherryBombPickup : ExExInvBarItem
 					}
 					else
 					{
-						if ((player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls")))
+						if ((player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls") || player.mo.CountInv("IsWeddingCake")))
 						{
 							double PerkFactor2 = 0.0;
 							if (MiscItem.DD_RoseMother) PerkFactor2 += 0.0142857;
@@ -1933,7 +1926,7 @@ class CherryBombShot : EEFireworksProj
 				
 				if (exex_cherrybombexpbehavior > 0)
 				{
-					A_GetPlayerLevel();
+					TruePlayerLevel = A_GetPlayerLevel();
 					
 					int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 					if (IPAttack) 
@@ -1956,7 +1949,7 @@ class CherryBombShot : EEFireworksProj
 			BMKF B 2 Bright 
 			{
 				A_AlertMonsters();
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				
 				int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 				if (IPAttack) 
@@ -1987,7 +1980,7 @@ class CherryBombShot : EEFireworksProj
 			{
 				if (exex_cherrybombexpbehavior > 0)
 				{
-					A_GetPlayerLevel();
+					TruePlayerLevel = A_GetPlayerLevel();
 					
 					int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 					if (IPAttack) expflags = 0;
@@ -2004,7 +1997,7 @@ class CherryBombShot : EEFireworksProj
 			{
 				if (exex_cherrybombexpbehavior > 0)
 				{
-					A_GetPlayerLevel();
+					TruePlayerLevel = A_GetPlayerLevel();
 					
 					int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 					if (IPAttack) 
@@ -2025,7 +2018,7 @@ class CherryBombShot : EEFireworksProj
 			{
 				if (exex_cherrybombexpbehavior > 0)
 				{
-					A_GetPlayerLevel();
+					TruePlayerLevel = A_GetPlayerLevel();
 					
 					int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 					if (IPAttack) expflags = 0;
@@ -2042,7 +2035,7 @@ class CherryBombShot : EEFireworksProj
 			{
 				if (exex_cherrybombexpbehavior > 0)
 				{
-					A_GetPlayerLevel();
+					TruePlayerLevel = A_GetPlayerLevel();
 					
 					int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 					if (IPAttack) 
@@ -2063,7 +2056,7 @@ class CherryBombShot : EEFireworksProj
 			{
 				if (exex_cherrybombexpbehavior > 0)
 				{
-					A_GetPlayerLevel();
+					TruePlayerLevel = A_GetPlayerLevel();
 					
 					int expflags = XF_HURTSOURCE|XF_THRUSTZ;
 					if (IPAttack) expflags = 0;
@@ -2333,7 +2326,7 @@ class BRocketShot : EEFireworksProj
 			}
 			FSPE A 5 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				int expflags = XF_HURTSOURCE;
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 32;
@@ -2793,7 +2786,7 @@ class BRocketBoom1 : EEFireworksProj
 		Death:
 			CBAL C 6 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				expflags = XF_HURTSOURCE;
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 128;
@@ -2896,7 +2889,7 @@ class BRocketBoom1IP : BRocketBoom1
 		Death:
 			CBAL C 6 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 128;
 				if (IPAttack) 
@@ -2950,7 +2943,7 @@ class BRocketBoom2 : EEFireworksProj
 		Death:
 			BROX A 6 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				int expflags = XF_HURTSOURCE;
 				int fulldmgmaxrad = 128;
 				int fulldmgminrad = 128;
@@ -3112,8 +3105,7 @@ class PopperPickup : ExExInvBarItem
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetPlayerLvl();
 				
 				if (player.mo.waterlevel <= 2)
 				{
@@ -3506,13 +3498,13 @@ class PopperPuff2 : EEFireworksPuff
 			SPNR C 0 A_AlertMonsters;
 			SPNR C 4 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				A_Explode(A_CalcTrueExpDmg(128,0.02),128,false,0,32,0,0,"","Popper");
 			}
 			SPNR DEFG 4 Bright;
 			Stop;
 	}
-} 
+}
 
 class PopperPuff2Tracer : EEFireworksFastProj
 {
@@ -3554,7 +3546,7 @@ class PopperPuff2Tracer : EEFireworksFastProj
 			SPNR C 0 A_AlertMonsters;
 			SPNR C 4 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				A_Explode(A_CalcTrueExpDmg(128,0.02),128,false,0,32,0,0,"","Popper");
 			}
 			SPNR DEFG 4 Bright;
@@ -3863,7 +3855,7 @@ class SpinnerShot : EEFireworksProj
 			}
 			FSPE A 2 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				expflags = XF_HURTSOURCE;
 				if (IPAttack) expflags = 0;
 				A_Explode(A_CalcTrueExpDmg(128,0.02),128,expflags,true,32);
@@ -3897,7 +3889,7 @@ class SpinnerShotIP : SpinnerShot
 			}
 			FSPE A 2 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				if (IPAttack) expflags = 0;
 				A_Explode(A_CalcTrueExpDmg(128,0.02),128,expflags,true,32);
 				A_StartSound("weapons/cherryboom",CHAN_7);
@@ -3987,7 +3979,7 @@ class SpinnerShotIcy : SpinnerShot
 			}
 			ISPE A 2 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				expflags = XF_HURTSOURCE;
 				if (IPAttack) 
 				{
@@ -4044,7 +4036,7 @@ class SpinnerShotIcyIP : SpinnerShotIcy
 			}
 			FSPE A 2 Bright 
 			{
-				A_GetPlayerLevel();
+				TruePlayerLevel = A_GetPlayerLevel();
 				if (IPAttack) 
 				{
 					expflags = 0;

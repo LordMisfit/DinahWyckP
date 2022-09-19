@@ -459,7 +459,32 @@ class DDWeapon : Weapon
 	{
 		self.Destroy();
 	}
-
+	
+	action bool A_CheckDDGame()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	action int A_GetMeleeSPDLvl()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+	
 	action void A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", double range = 0, double lifesteal = 0, int lifestealmax = 0, class<KGArmorBonus> armorbonustype = "KGArmorBonus", sound MeleeSound = 0, sound MissSound = "", string giveammotype = "", int giveammoamt = 0, bool IPCostOnHit = false)
 	{
 		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
@@ -467,8 +492,8 @@ class DDWeapon : Weapon
 
 		let player = self.player;
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		let globalvars = DDGlobalVariables.Get();
 		if (!player) return;
 
@@ -849,7 +874,7 @@ class DDWeapon : Weapon
 				{
 					player.mo.A_SetBlend("44 22 ff",0.25,random(29,40));
 				}
-				if (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls"))
+				if (A_CheckDDGame())
 				{
 					if (giveammoamt >= 2) giveammoamt /= 2;
 				}
@@ -893,7 +918,7 @@ class DDWeapon : Weapon
 			if (!(flags & CPF_NOTURN))
 			{
 				// turn to face target
-				self.Angle = t.angleFromSource;
+				if (!t.linetarget.bFRIENDLY) self.Angle = t.angleFromSource;
 			}
 
 			if (flags & CPF_PULLIN) self.bJustAttacked = true;
@@ -905,8 +930,7 @@ class DDWeapon : Weapon
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 
 		int debugmelee = dydudebug_meleeinformation;
 		int MeleeDestroyProjectiles = 0;
@@ -1102,8 +1126,8 @@ class DDWeapon : Weapon
 		if (player.mo)
 		{
 			let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-			int TruePlayerLevel = 0;
-			if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+			int TruePlayerLevel = A_GetMeleeSPDLvl();
+			
 			if (MiscItem) movespeed *= (1.0 + (TruePlayerLevel * 0.025));
 			if (player.mo.CountInv("PowerRoastBuff")) bufffactor += 0.125;
 			if (player.mo.CountInv("PowerEggBuff") || player.mo.CountInv("PowerEggBuff2")) 
@@ -1210,8 +1234,8 @@ class DDWeapon : Weapon
 	{
 		let player = self.player;
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		A_SetInventory("FistPlayerBlock",0);
 		A_SetInventory("FistPlayerBlock2",0);
 		A_SetInventory("FistPlayerBlock3",0);
@@ -1286,8 +1310,7 @@ class DDWeapon : Weapon
 	action void A_GetPunchSwingRecoil(int attacktype = 0)
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 
 		if (exex_meleerecoil)
 		{
@@ -1393,7 +1416,7 @@ class DDWeapon : Weapon
 		}
 		return result;
 	}
-
+	
 	States
 	{
 		GrandControlLayer: // layer -1000
@@ -1564,8 +1587,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [1]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 1)) tic = 0;
@@ -1575,8 +1597,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [2]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 3)) tic = 0;
@@ -1586,8 +1607,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [3]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 5)) tic = 0;
@@ -1597,8 +1617,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [4]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 7)) tic = 0;
@@ -1608,8 +1627,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [5]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 9)) tic = 0;
@@ -1622,8 +1640,7 @@ class DinahWeapon : DDWeapon
 			DKIC A 1 // [6]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				A_ForcePlayState("PreKick");
 
@@ -1637,8 +1654,7 @@ class DinahWeapon : DDWeapon
 			DKIC B 1 // [7]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				A_ForcePlayState("Kick");
 
@@ -1662,8 +1678,8 @@ class DinahWeapon : DDWeapon
 			DKIC C 1 // [8]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick");
 
 				int tic = 1;
@@ -1702,8 +1718,8 @@ class DinahWeapon : DDWeapon
 			DKIC D 1 // [9]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick");
 
 				int tic = 1;
@@ -1716,8 +1732,8 @@ class DinahWeapon : DDWeapon
 			DKIC E 1 // [10]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick");
 
 				int tic = 1;
@@ -1730,8 +1746,8 @@ class DinahWeapon : DDWeapon
 			DKIC F 1 // [11]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick2");
 
 				int tic = 1;
@@ -1744,8 +1760,8 @@ class DinahWeapon : DDWeapon
 			DKIC G 1 // [12]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick2");
 
 				int tic = 1;
@@ -1758,8 +1774,8 @@ class DinahWeapon : DDWeapon
 			DKIC H 1 // 1 [13] (Attack)
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick2");
 
 				// Base "Recoil"
@@ -1794,8 +1810,8 @@ class DinahWeapon : DDWeapon
 			DKIC G 1 // 1 [14]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick2");
 
 				int tic = 1;
@@ -1808,8 +1824,8 @@ class DinahWeapon : DDWeapon
 			DKIC F 1 // 1 [15]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick2");
 				
 				int tic = 1;
@@ -1822,8 +1838,8 @@ class DinahWeapon : DDWeapon
 			DKIC E 1 // [16]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick");
 
 				int tic = 1;
@@ -1836,8 +1852,8 @@ class DinahWeapon : DDWeapon
 			DKIC D 1 // [17]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick");
 
 				int tic = 1;
@@ -1850,8 +1866,8 @@ class DinahWeapon : DDWeapon
 			DKIC C 1 // [18]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick");
 
 				int tic = 1;
@@ -1864,8 +1880,8 @@ class DinahWeapon : DDWeapon
 			DKIC B 1 // [19]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick");
 				
 				int tic = 1;
@@ -1878,8 +1894,8 @@ class DinahWeapon : DDWeapon
 			DKIC A 1 // [20]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_ForcePlayState("Kick");
 				
 				int tic = 1;
@@ -1935,8 +1951,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [21]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 10)) tic = 0;
@@ -1948,8 +1963,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [22]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 8)) tic = 0;
@@ -1959,8 +1973,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [23]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 6)) tic = 0;
@@ -1970,8 +1983,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [24]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 4)) tic = 0;
@@ -1981,8 +1993,7 @@ class DinahWeapon : DDWeapon
 			TNT1 A 1 // [25]
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 2)) tic = 0;
@@ -2298,8 +2309,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DHND B 3 // 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 3;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 3)) tic -= 1;
@@ -2315,8 +2325,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DPUN A 3 // 2
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int PlayerLevel = CountInv("PlayerLevel");
 				int tic = 3;
@@ -2362,8 +2371,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DPUN B 4 // 3
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 4;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 2)) tic -= 1;
@@ -2379,8 +2387,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DPUN A 3 // 4
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 3;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 1)) tic -= 1;
@@ -2396,8 +2403,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DHND B 4 // 5
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 4;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 5)) tic -= 1;
@@ -2417,8 +2423,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DHND C 3 // 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 3;
 
@@ -2435,8 +2440,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DPUN C 3 // 2
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 3;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 4)) tic -= 1;
@@ -2477,8 +2481,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DPUN D 4 // 3
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 4;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 2)) tic -= 1;
@@ -2494,8 +2497,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DPUN C 3 // 4
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 3;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 1)) tic -= 1;
@@ -2511,8 +2513,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DHND B 4 // 5
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 4;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 5)) tic -= 1;
@@ -2536,8 +2537,7 @@ class HandToHand : DinahWeapon replaces Fist
 			{ 
 				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2548,8 +2548,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNUP B 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 5)) tic -= 1; // 25 [5]
@@ -2559,8 +2558,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNUP C 1
 			{ 
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2571,8 +2569,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNUP D 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 7)) tic -= 1; // 35 [7]
@@ -2582,8 +2579,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNUP E 1
 			{ 
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2597,8 +2593,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 A 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 4)) tic -= 1; // 20 [4]
@@ -2650,8 +2645,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 B 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2664,8 +2658,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 C 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 8)) tic -= 1; // 40 [8]
@@ -2677,8 +2670,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 D 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2691,8 +2683,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 E 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 2)) tic -= 1; // 10 [2]
@@ -2704,8 +2695,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 F 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2735,8 +2725,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 G 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				A_SetTics(1);
 				
@@ -2745,8 +2734,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 F 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 3)) tic -= 1; // 15 [3]
@@ -2758,8 +2746,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 E 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2772,8 +2759,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 D 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 6)) tic -= 1; // 30 [6]
@@ -2785,8 +2771,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 C 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2799,8 +2784,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 B 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 7)) tic -= 1; // 35 [7]
@@ -2812,8 +2796,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNU2 A 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2828,8 +2811,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNUP E 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 9)) tic -= 1; // 45 [9]
@@ -2841,8 +2823,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNUP D 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2853,8 +2834,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNUP C 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 1)) tic -= 1; // 5 [1]
@@ -2864,8 +2844,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNUP B 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
@@ -2876,8 +2855,7 @@ class HandToHand : DinahWeapon replaces Fist
 			DNUP A 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 3)) tic -= 1; // 15 [3]
@@ -3703,19 +3681,20 @@ class CricketBat : DinahWeapon
 	action void A_GiveGuardBuff(int type = 0)
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		if (MiscItem) 
 		{
 			int val = randompick(2,2,2,2,2,2,2,2,2,3);
-			if (MiscItem.PlayerLevel >= 20) val = randompick(2,2,2,2,2,2,2,2,3,3);
-			if (MiscItem.PlayerLevel >= 40) val = randompick(2,2,2,2,2,2,2,3,3,3);
-			if (MiscItem.PlayerLevel >= 60) val = randompick(2,2,2,2,2,2,3,3,3,3);
-			if (MiscItem.PlayerLevel >= 80) val = randompick(2,2,2,2,2,3,3,3,3,3);
-			if (MiscItem.PlayerLevel >= 100) val = randompick(2,2,2,2,3,3,3,3,3,3);
-			if (MiscItem.PlayerLevel >= 120) val = randompick(2,2,2,3,3,3,3,3,3,3);
-			if (MiscItem.PlayerLevel >= 140) val = randompick(2,2,2,3,3,3,3,3,3,3);
-			if (MiscItem.PlayerLevel >= 160) val = randompick(2,2,3,3,3,3,3,3,3,3);
-			if (MiscItem.PlayerLevel >= 180) val = randompick(2,3,3,3,3,3,3,3,3,3);
-			if (MiscItem.PlayerLevel >= 200) val = randompick(3,3,3,3,3,3,3,3,3,4);
+			if (TruePlayerLevel >= 20) val = randompick(2,2,2,2,2,2,2,2,3,3);
+			if (TruePlayerLevel >= 40) val = randompick(2,2,2,2,2,2,2,3,3,3);
+			if (TruePlayerLevel >= 60) val = randompick(2,2,2,2,2,2,3,3,3,3);
+			if (TruePlayerLevel >= 80) val = randompick(2,2,2,2,2,3,3,3,3,3);
+			if (TruePlayerLevel >= 100) val = randompick(2,2,2,2,3,3,3,3,3,3);
+			if (TruePlayerLevel >= 120) val = randompick(2,2,2,3,3,3,3,3,3,3);
+			if (TruePlayerLevel >= 140) val = randompick(2,2,2,3,3,3,3,3,3,3);
+			if (TruePlayerLevel >= 160) val = randompick(2,2,3,3,3,3,3,3,3,3);
+			if (TruePlayerLevel >= 180) val = randompick(2,3,3,3,3,3,3,3,3,3);
+			if (TruePlayerLevel >= 200) val = randompick(3,3,3,3,3,3,3,3,3,4);
 			MiscItem.CricketBatBuffTimer = val;
 			if (type >= 1) MiscItem.CricketBatBuffTimer2 = val;
 		}
@@ -3954,8 +3933,7 @@ class CricketBat : DinahWeapon
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel;
-		if (MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		int modu = 3;
 		if (TruePlayerLevel >= 48) modu = 2;
 		actor BombShots;
@@ -4009,8 +3987,7 @@ class CricketBat : DinahWeapon
 			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
 			PlayerLevel = MiscItem.TruePlayerLevel;
 		}
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 
 		double LevelInc;
 		if (Skill <= 0) LevelInc = 9;
@@ -4735,12 +4712,13 @@ class CricketBat : DinahWeapon
 				string pufftypenosnd = "BatSpinPuffNoSound";
 				A_SetInventory("DoingSpinAttack",1);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				int dmg = A_BatDamageSet(1);
 				int range = 112 + (random(0,2) * 8);
 				actor BombShots;
 				EEProjectile IPCompat;
 				double rangemul = 1.0;
-				if (MiscItem && MiscItem.TruePlayerLevel >= exex_cricketspinlvlrequirement) { rangemul = (1.0 + ((MiscItem.PlayerLevel - exex_cricketspinlvlrequirement) * 0.0078125)); }
+				if (MiscItem && TruePlayerLevel >= exex_cricketspinlvlrequirement) { rangemul = (1.0 + ((TruePlayerLevel - exex_cricketspinlvlrequirement) * 0.0078125)); }
 				if (rangemul >= 1.5) rangemul = 1.5;
 				range *= rangemul;
 				if (invoker.IPAttackCheck)
@@ -4839,7 +4817,7 @@ class CricketBat : DinahWeapon
 			{
 				if (ddafd_disablebatguard)
 				{
-					if (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls"))
+					if (A_CheckDDGame())
 					{
 						return resolvestate("Ready");
 					}
@@ -4872,8 +4850,8 @@ class CricketBat : DinahWeapon
 				invoker.guardtimerlimit = 7;
 				invoker.sguardtimeextra = 0;
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				if (MiscItem)
 				{
 					if (TruePlayerLevel >= 160) invoker.guardtimerlimit += random(17,18);
@@ -4900,7 +4878,7 @@ class CricketBat : DinahWeapon
 				bool allowguard = true;
 				if (ddafd_disablebatguard)
 				{
-					if (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls")) allowguard = false;
+					if (A_CheckDDGame()) allowguard = false;
 				}
 				
 				if (allowguard)
@@ -4929,7 +4907,7 @@ class CricketBat : DinahWeapon
 				bool allowguard = true;
 				if (ddafd_disablebatguard)
 				{
-					if (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls")) allowguard = false;
+					if (A_CheckDDGame()) allowguard = false;
 				}
 				
 				if (allowguard)
@@ -5347,7 +5325,7 @@ class MalletShot : EEProjectile
 	int minbouncelvl;
 	double bouncelvlfactor;
 	int nogravtimer;
-
+	
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
@@ -5361,8 +5339,8 @@ class MalletShot : EEProjectile
 			if (IPAttack) bouncelvlfactor = (1.0 / (minbouncelvl * frandompick(1.25,1.25,1.25,1.375,1.375,1.5)));
 
 			let MiscItem = PlayerStatItem(target.FindInventory("PlayerStatItem"));
-			int TruePlayerLevel = 0;
-			if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+			int TruePlayerLevel = A_GetPlayerLvlProj();
+			
 			if (MiscItem)
 			{
 				if (TruePlayerLevel >= minbouncelvl)
@@ -5449,7 +5427,7 @@ class MalletShot : EEProjectile
 			chance1 += (MiscItem.PlayerLuck * chanceb1);
 			chance2 += (MiscItem.PlayerLuck * chanceb2);
 		}
-		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls"))
+		if (A_CheckDDGame())
 		{
 			if (random(1,250) <= chance1 || (player.CountInv("MalletAmmo") <= 6 && random(1,250) <= chance2))
 			{
@@ -5561,7 +5539,7 @@ class MalletShotBerserk : EEFastProjectile
 	int minbouncelvl;
 	double bouncelvlfactor;
 	int nogravtimer;
-
+	
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
@@ -5573,8 +5551,8 @@ class MalletShotBerserk : EEFastProjectile
 			if (IPAttack) bouncelvlfactor = (1.0 / (minbouncelvl * frandompick(1.25,1.375,1.5)));
 
 			let MiscItem = PlayerStatItem(target.FindInventory("PlayerStatItem"));
-			int TruePlayerLevel = 0;
-			if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+			int TruePlayerLevel = A_GetPlayerLvlProj();
+			
 			if (MiscItem)
 			{
 				if (TruePlayerLevel >= minbouncelvl)
@@ -5642,8 +5620,8 @@ class MalletShotBerserk : EEFastProjectile
 		if (target && target.GetClassName() == "DinahPlayer")
 		{
 			let MiscItem = PlayerStatItem(target.FindInventory("PlayerStatItem"));
-			int TruePlayerLevel = 0;
-			if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+			int TruePlayerLevel = A_GetPlayerLvlProj();
+			
 			if (MiscItem)
 			{
 				if (type == 0) result += (TruePlayerLevel * 0.09375);
@@ -5839,8 +5817,8 @@ class Blunderaxe : DinahWeapon
 	action void A_BlunderRecoil(double baserecoil)
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) baserecoil *= 0.2;
 		if (invoker.chopcombo)
 		{
@@ -6073,8 +6051,7 @@ class Blunderaxe : DinahWeapon
 	action void A_AxeChopSet2Tics1()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -6172,8 +6149,7 @@ class Blunderaxe : DinahWeapon
 	action void A_AxeChopSet2Tics2()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -6270,8 +6246,7 @@ class Blunderaxe : DinahWeapon
 	action void A_AxeChopSet4Tics1()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -6377,8 +6352,7 @@ class Blunderaxe : DinahWeapon
 	action void A_AxeChopSet3Tics1()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -6703,8 +6677,7 @@ class Blunderaxe : DinahWeapon
 	action void A_AxeChopSet3Tics2()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -7029,8 +7002,7 @@ class Blunderaxe : DinahWeapon
 	action void A_AxeChopSet2Tics3()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -7127,8 +7099,7 @@ class Blunderaxe : DinahWeapon
 	action void A_AxeChopSet1Tic1()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
@@ -7205,7 +7176,8 @@ class Blunderaxe : DinahWeapon
 	action void A_AxeChopSet1Tic2()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{ 
 			if (invoker.IPAttackCheck)
@@ -7253,8 +7225,7 @@ class Blunderaxe : DinahWeapon
 	action void A_AxeChopSet1Tic3()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -7386,13 +7357,14 @@ class Blunderaxe : DinahWeapon
 		int PlayerSTR;
 		int PlayerLevel;
 		int strengthcounter;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (MiscItem) 
 		{
-			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
-			PlayerLevel = MiscItem.TruePlayerLevel;
+			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
+			PlayerLevel = TruePlayerLevel;
 		}
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		
 		string pufftype = "BlunderPuff";
 		int dmg = (random(16,20) * random(1,8));
 		int range = 96;
@@ -7532,8 +7504,8 @@ class Blunderaxe : DinahWeapon
 			{
 				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				invoker.chopcombo = 0;
 				A_CheckIPState1();
 				A_ConfirmIPAttack(111,0,8,11,false);
@@ -7543,8 +7515,7 @@ class Blunderaxe : DinahWeapon
 			BLAX F 1
 			{
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				A_AxeChopSet1Tic2();
 			}
@@ -7552,8 +7523,8 @@ class Blunderaxe : DinahWeapon
 			TNT1 A 1
 			{
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_CheckIPState1();
 				A_ConfirmIPAttack(111,0,8,11,false);
 				
@@ -7562,8 +7533,8 @@ class Blunderaxe : DinahWeapon
 			BLAX G 2 
 			{
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				double sndpitch = 1.0;
 				double sndvol = 1.0;
 				if (invoker.IPAttackCheck) 
@@ -7586,8 +7557,7 @@ class Blunderaxe : DinahWeapon
 			BLAX HI 2 
 			{
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				A_AxeChopSet2Tics2();
 			}
@@ -7603,8 +7573,7 @@ class Blunderaxe : DinahWeapon
 			BLAX KLM 3 
 			{
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				A_AxeChopSet3Tics1();
 			}
@@ -7612,9 +7581,8 @@ class Blunderaxe : DinahWeapon
 			BLAX N 3 
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_AxeChopSet3Tics2();
 				
 				if (MiscItem && TruePlayerLevel >= exex_axecombolvlrequirement)
@@ -7652,8 +7620,7 @@ class Blunderaxe : DinahWeapon
 			BLAX O 4
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				A_AxeChopSet4Tics1();
 			}
@@ -7730,8 +7697,8 @@ class Blunderaxe : DinahWeapon
 			BLAX B 3 Bright
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				actor BombShots;
 				EEProjectile IPCompat;
 				
@@ -7899,8 +7866,8 @@ class Blunderaxe : DinahWeapon
 			BLAX C 3 Bright
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				int dur = 3;
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -8008,8 +7975,8 @@ class Blunderaxe : DinahWeapon
 			BLAX DE 2 
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				int dur = 2;
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -8119,8 +8086,8 @@ class Blunderaxe : DinahWeapon
 			BLAX FF 7
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				int dur = 7;
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -8229,8 +8196,8 @@ class Blunderaxe : DinahWeapon
 			BLAX D 8
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				int dur = 8;
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -8339,8 +8306,8 @@ class Blunderaxe : DinahWeapon
 			BLAX A 9 
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				int dur = 9;
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -8682,8 +8649,8 @@ class BlunderSmokeSmall : SingleDamageRipper
 		finaldamagedealt = randompick(1,1,1,1,1,1,1,1,1,2) * random(1,4);
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		if (MiscItem) 
 		{
 			finaldamagedealt += (TruePlayerLevel * (random(1,4) * 0.05));
@@ -8705,8 +8672,8 @@ class BlunderSmokeSmall : SingleDamageRipper
 		finaldamagedealt = randompick(1,1,1,1,1,1,1,1,1,2) * random(1,4);
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		if (MiscItem) 
 		{
 			finaldamagedealt += (TruePlayerLevel * (random(1,4) * 0.05));
@@ -8963,11 +8930,11 @@ class Scrambler : DinahWeapon
 	
 	action bool A_ScramblerEggHCheck()
 	{
-		if (ddafd_disablescramblerheals && (player.mo.CountInv("IsDynDuchess") || player.mo.CountInv("IsAppetite") || player.mo.CountInv("IsCarnOfSouls"))) return false;
+		if (ddafd_disablescramblerheals && (A_CheckDDGame())) return false;
 		
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (MiscItem && player.mo.waterlevel < 3 || (player.mo.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2)) return true;
 		return false;
 	}
@@ -8975,8 +8942,8 @@ class Scrambler : DinahWeapon
 	action void A_ScramblerEggH()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (MiscItem)
 		{
 			int CurrHealth = player.mo.health;
@@ -9178,8 +9145,8 @@ class Scrambler : DinahWeapon
 	action void A_PanSwingSet5Tics()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
 			if (TruePlayerLevel >= 30)
@@ -9244,8 +9211,8 @@ class Scrambler : DinahWeapon
 	action void A_PanSwingSet1Tic()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
 			A_SetTics(randompick(0,0,0,0,0,1)); 
@@ -9262,8 +9229,8 @@ class Scrambler : DinahWeapon
 	action void A_PanSwingSet2Tics()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
 			if (TruePlayerLevel >= 30)
@@ -9304,13 +9271,13 @@ class Scrambler : DinahWeapon
 		int PlayerSTR;
 		int PlayerLevel;
 		int strengthcounter;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (MiscItem) 
 		{
-			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
-			PlayerLevel = MiscItem.TruePlayerLevel;
+			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
+			PlayerLevel = TruePlayerLevel;
 		}
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 
 		string pufftype = "PanPuff";
 		int dmg = (random(10,12) * random(1,8));
@@ -9405,8 +9372,8 @@ class Scrambler : DinahWeapon
 			{
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				//Console.Printf("Fire input: %d", buttons);
 				if (TruePlayerLevel >= exex_scramblerelnomolvlreq && (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT) && CountInv("EggAmmo") > 1 && A_ScramblerEggHCheck())
@@ -9460,8 +9427,7 @@ class Scrambler : DinahWeapon
 			SCRM D 2 
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				A_ScramblerBonk();
 				A_PanSwingSet2Tics();
@@ -9493,8 +9459,8 @@ class Scrambler : DinahWeapon
 			{
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				//Console.Printf("AltFire input: %d", buttons);
 				if (TruePlayerLevel >= exex_scramblerelnomolvlreq && (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT) && CountInv("EggAmmo") > 1 && A_ScramblerEggHCheck())
@@ -9547,9 +9513,8 @@ class Scrambler : DinahWeapon
 			SCRM D 2 
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				string pufftype = "PanPuff";
 				double sndpitch = 1.0;
 				double sndvol = 1.0;
@@ -9813,8 +9778,8 @@ class EggShot : EEProjectile
 		super.PostBeginPlay();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		finaldamagedealt = (12 * random(1,8));
 		if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
 		{
@@ -9851,7 +9816,7 @@ class EggShot : EEProjectile
 				A_AlertMonsters();
 				target = PlayerPawn(players[0].mo);
 				if (target && dydudebug_eggfractals) Console.Printf("\c[fire]target [%s]:\c- %s", GetClassName(), target.GetClassName());
-				if (players[0].mo.CountInv("IsDynDuchess") || players[0].mo.CountInv("IsAppetite") || players[0].mo.CountInv("IsCarnOfSouls"))
+				if (players[0].mo.CountInv("IsDynDuchess") || players[0].mo.CountInv("IsAppetite") || players[0].mo.CountInv("IsCarnOfSouls") || players[0].mo.CountInv("IsWeddingCake"))
 				{
 					if (ddafd_fractaleggimpact <= 0) return resolvestate("NoBreak");
 					return resolvestate("FBreak");
@@ -9971,8 +9936,7 @@ class EggShotBerserk : EggShot
 		super.PostBeginPlay();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 
 		finaldamagedealt = (60 * random(1,8));
 		if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
@@ -10093,8 +10057,7 @@ class EggGrenade : EEProjectile
 		super.PostBeginPlay();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 		
 		finaldamagedealt = (9 * random(1,8));
 		if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
@@ -10198,8 +10161,7 @@ class EggGrenadeBerserk : EggGrenade
 		super.PostBeginPlay();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 		
 		finaldamagedealt = (23 * random(1,8));
 		if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
@@ -10302,9 +10264,8 @@ class EggMini : EEProjectile
 		super.PostBeginPlay();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		finaldamagedealt = (6 * random(1,8));
 		if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
 		{
@@ -10374,9 +10335,8 @@ class EggMiniBerserk : EggMini
 		super.PostBeginPlay();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		finaldamagedealt = (9 * random(1,8));
 		if (TruePlayerLevel >= exex_scramblernoarmorbonuslvlreq)
 		{
@@ -10567,16 +10527,16 @@ class AppleJack : DinahWeapon
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
 		int PlayerSTR;
 		int PlayerLevel;
 		int strengthcounter;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (MiscItem) 
 		{
-			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
-			PlayerLevel = MiscItem.TruePlayerLevel;
+			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
+			PlayerLevel = TruePlayerLevel;
 		}
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		
 		double decenthealthfactor = 0.125;
 		double lowhealthfactor = 0.375;
@@ -10711,8 +10671,7 @@ class AppleJack : DinahWeapon
 	action void A_AppleJackAltAtk3Tics()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
@@ -10771,8 +10730,7 @@ class AppleJack : DinahWeapon
 	action void A_AppleJackMainAtk2Tics()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
@@ -10810,8 +10768,7 @@ class AppleJack : DinahWeapon
 	action void A_AppleJackMainAtk3Tics()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
@@ -10870,8 +10827,7 @@ class AppleJack : DinahWeapon
 	action void A_AppleJackAltAtk2Tics()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
@@ -11574,8 +11530,7 @@ class JackShot : EEProjectile
 		Super.PostBeginPlay();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 		
 		double decenthealthfactor = 0.03125;
 		double lowhealthfactor = 0.09375;
@@ -11603,8 +11558,7 @@ class JackShot : EEProjectile
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 		
 		if (BombShots)
 		{
@@ -11681,7 +11635,7 @@ class JackShot : EEProjectile
 				
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (!(ddafd_disableaggroappleblock && (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls"))))
+				if (!(ddafd_disableaggroappleblock && A_CheckDDGame()))
 				{
 					actor BombShots;
 					bool success;
@@ -11745,8 +11699,7 @@ class JackShotBerserk : JackShot
 		Super.PostBeginPlay();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 		
 		double decenthealthfactor = 0.03125;
 		double lowhealthfactor = 0.09375;
@@ -11779,7 +11732,7 @@ class JackShotBerserk : JackShot
 				
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (!(ddafd_disableaggroappleblock && (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls"))))
+				if (!(ddafd_disableaggroappleblock && A_CheckDDGame()))
 				{
 					actor BombShots;
 					bool success;
@@ -11942,8 +11895,7 @@ class WizardPike : DinahWeapon
 	action void A_PikeRecoil(double baserecoil)
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) baserecoil *= 0.2;
 		if (invoker.IPAttackCheck) baserecoil *= frandom(1.75,2.5);
@@ -11963,13 +11915,13 @@ class WizardPike : DinahWeapon
 		int PlayerSTR;
 		int PlayerLevel;
 		int strengthcounter;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (MiscItem) 
 		{
-			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
-			PlayerLevel = MiscItem.TruePlayerLevel;
+			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
+			PlayerLevel = TruePlayerLevel;
 		}
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		
 		string pufftype = "PikePuff";
 		if (random(1,32) <= 1 && !CountInv("PlayingStrife",AAPTR_PLAYER1)) { A_AlertMonsters(); }
@@ -12042,8 +11994,8 @@ class WizardPike : DinahWeapon
 				invoker.InvisoCost = 3;
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				if (TruePlayerLevel >= (exex_pikeinvisolvlreq * 6.25)) invoker.InvisoCost = 2;
 				A_WeaponReady();
 			}
@@ -12065,8 +12017,8 @@ class WizardPike : DinahWeapon
 			{
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				//Console.Printf("Fire input: %d", buttons);
 				if (TruePlayerLevel >= exex_pikeinvisolvlreq && (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT) && CountInv("PikeAmmo") > invoker.InvisoCost)
@@ -12118,8 +12070,7 @@ class WizardPike : DinahWeapon
 			SCEP F 1 
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -12140,8 +12091,7 @@ class WizardPike : DinahWeapon
 			SCEP G 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -12152,9 +12102,9 @@ class WizardPike : DinahWeapon
 					if (invoker.IPAttackCheck && random(1,8) <= 1) A_SetTics(0);
 					else
 					{
-						if (MiscItem && MiscItem.PlayerLevel >= 45) 
+						if (MiscItem && TruePlayerLevel >= 45) 
 						{
-							if (MiscItem && MiscItem.PlayerLevel >= 67 && random(1,4) <= 1) A_SetTics(0);
+							if (MiscItem && TruePlayerLevel >= 67 && random(1,4) <= 1) A_SetTics(0);
 							else if (random(1,8) <= 1) A_SetTics(0);
 						}
 					}
@@ -12163,8 +12113,7 @@ class WizardPike : DinahWeapon
 			SCEP H 1 
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -12178,15 +12127,14 @@ class WizardPike : DinahWeapon
 					}
 					else
 					{
-						if (MiscItem && MiscItem.PlayerLevel >= 45) A_SetTics(0);
+						if (MiscItem && TruePlayerLevel >= 45) A_SetTics(0);
 					}
 				}
 			}
 			SCEP I 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -12197,14 +12145,15 @@ class WizardPike : DinahWeapon
 					if (invoker.IPAttackCheck && random(1,4) <= 1) A_SetTics(0);
 					else
 					{
-						if (MiscItem && MiscItem.PlayerLevel >= 45 && random(1,4) <= 1) A_SetTics(0);
+						if (MiscItem && TruePlayerLevel >= 45 && random(1,4) <= 1) A_SetTics(0);
 					}
 				}
 			}
 			SCEP J 5
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				A_PikePoke();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
@@ -12270,8 +12219,7 @@ class WizardPike : DinahWeapon
 			SCEP I 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -12305,8 +12253,7 @@ class WizardPike : DinahWeapon
 			SCEP H 1 
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -12329,8 +12276,7 @@ class WizardPike : DinahWeapon
 			SCEP G 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -12353,8 +12299,7 @@ class WizardPike : DinahWeapon
 			SCEP F 1 
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -12384,8 +12329,8 @@ class WizardPike : DinahWeapon
 				invoker.ang4 = 22.5;
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				//Console.Printf("AltFire input: %d", buttons);
 				if (TruePlayerLevel >= exex_pikeinvisolvlreq && (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT) && CountInv("PikeAmmo") > invoker.InvisoCost)
@@ -12855,8 +12800,8 @@ class WizardPike : DinahWeapon
 				A_SetTics(random(8,12));
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				double invistime = frandom(6.75,8.25);
 				if (TruePlayerLevel >= exex_pikeinvisolvlreq)
 				{
@@ -13094,8 +13039,8 @@ class ZapShot : EEFastProjectile
 		finaldamagedealt = (12 * baserand);
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		int bfgrand = random(3,4);
 		if (TruePlayerLevel >= 33) bfgrand = random(3,5);
 		if (TruePlayerLevel >= 67) bfgrand = random(3,6);
@@ -13132,8 +13077,8 @@ class ZapShot : EEFastProjectile
 				int baseaoeradius = 128;
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetPlayerLvlProj();
+				
 				if (MiscItem)
 				{
 					noselfaoecnc = 8 + (TruePlayerLevel * 0.6667);
@@ -13200,8 +13145,8 @@ class ZapShotIP : ZapShot
 				int baseaoeradius = 128;
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetPlayerLvlProj();
+				
 				if (MiscItem)
 				{
 					noselfaoecnc = 8 + (TruePlayerLevel * 0.6667);
@@ -13256,8 +13201,8 @@ class MiniZapShot : ZapShot
 		finaldamagedealt = (8 * baserand);
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		int bfgrand = random(3,4);
 		if (TruePlayerLevel >= 33) bfgrand = random(3,5);
 		if (TruePlayerLevel >= 67) bfgrand = random(3,6);
@@ -13295,8 +13240,8 @@ class MiniZapShot : ZapShot
 				int baseaoeradius = 32;
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetPlayerLvlProj();
+				
 				if (MiscItem)
 				{
 					baseaoedmg += (TruePlayerLevel * 0.128);
@@ -13372,8 +13317,8 @@ class MiniZapShotIP : MiniZapShot
 				int baseaoeradius = 32;
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetPlayerLvlProj();
+				
 				if (MiscItem)
 				{
 					baseaoedmg += (TruePlayerLevel * 0.128);
@@ -13429,8 +13374,8 @@ class PikeExtra : EEPuff
 			{
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetPlayerLvlProj();
+				
 				int expdmg = 32;
 				int exprad = 64;
 				int exprad2 = 64;
@@ -13469,8 +13414,8 @@ class MiniPikeExtra : PikeExtra
 			{
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetPlayerLvlProj();
+				
 				int expdmg = 16;
 				int exprad = 32;
 				int exprad2 = 32;
@@ -14082,9 +14027,8 @@ class SuperVac : DinahWeapon
 			{
 				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				string pufftype = "VacPuff";
 				int MaxHealthTrue = SpawnHealth();
 				if (MiscItem) MaxHealthTrue = MiscItem.MaxHealthTrue;
@@ -14484,8 +14428,8 @@ class VacShot : EEProjectile
 		finaldamagedealt = (20 * baserand);
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		if (MiscItem)
 		{
 			finaldamagedealt += (TruePlayerLevel * (0.10 * baserand));
@@ -14613,8 +14557,8 @@ class VacShotMini : VacShot
 		finaldamagedealt = (2 * baserand);
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		if (MiscItem)
 		{
 			finaldamagedealt += (TruePlayerLevel * (0.01 * baserand));
@@ -15136,8 +15080,8 @@ class Grimophone : DinahWeapon
 				invoker.altflags = XF_NOTMISSILE|XF_NOSPLASH;
 				invoker.altflags2 = RTF_NOTMISSILE|RTF_NOIMPACTDAMAGE;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				
 				if (MiscItem)
 				{
 					invoker.dmg *= (1.0 + (TruePlayerLevel * 0.01));
@@ -15418,8 +15362,8 @@ class RecordShot : EEProjectile
 		super.PostBeginPlay();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		
 		double sndpitch = 1.0;
 		double sndvol = 1.0;
 		if (IPAttack) 
@@ -15516,8 +15460,7 @@ class RecordShot : EEProjectile
 				if (target && target.GetClassName() == "DinahPlayer")
 				{
 					let MiscItem = PlayerStatItem(target.player.mo.FindInventory("PlayerStatItem"));
-					int TruePlayerLevel = 0;
-					if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+					int TruePlayerLevel = A_GetPlayerLvlProj();
 					
 					if (MiscItem) 
 					{
@@ -15939,13 +15882,13 @@ class CandleWhip : DinahWeapon
 		int PlayerSTR;
 		int PlayerLevel;
 		int strengthcounter;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		if (MiscItem) 
 		{
-			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
-			PlayerLevel = MiscItem.TruePlayerLevel;
+			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
+			PlayerLevel = TruePlayerLevel;
 		}
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		
 		invoker.rangebase = randompick(112,120,120,128,128,128,128,128,136,136,144);
 		invoker.dmg = (random(8,12) * randompick(1,2,2,2,3,3,3,3,3,4,4,4,5));
@@ -16030,8 +15973,7 @@ class CandleWhip : DinahWeapon
 	action void A_WhipCrack2Tics(int baseshieldpartchance, int shieldpartchance, int shieldpartchance2, double turnang)
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (invoker.IPAttackCheck) shieldpartchance = shieldpartchance2;
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
@@ -16113,8 +16055,7 @@ class CandleWhip : DinahWeapon
 	action void A_CandleShot3Tics()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
@@ -16164,8 +16105,7 @@ class CandleWhip : DinahWeapon
 	action void A_CandleShot4Tics()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD"))
 		{
@@ -16215,8 +16155,7 @@ class CandleWhip : DinahWeapon
 	action void A_WhipCrack3Tics(int baseshieldpartchance, int shieldpartchance, int shieldpartchance2, double turnang)
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		
 		if (invoker.IPAttackCheck) shieldpartchance = shieldpartchance2;
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
@@ -16322,8 +16261,7 @@ class CandleWhip : DinahWeapon
 			{
 				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				A_CheckIPState1();
 				A_ConfirmIPAttack(171,0,5,8,false);
@@ -16408,8 +16346,7 @@ class CandleWhip : DinahWeapon
 			RCAN A 1
 			{
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 				{
@@ -16489,8 +16426,7 @@ class CandleWhip : DinahWeapon
 			RCAN B 3 Bright
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = 0;
-				if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
 				string shottype = "CandlePuff";
 				int dmg = 5 * random(1,3);
@@ -16876,9 +16812,8 @@ class FosnianCandle : DinahWeapon
 	{
 		let player = self.player;
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		
 		double quakeint = 9;
 		double quakedurtime = 5;
 		double quaketremrad = 64;

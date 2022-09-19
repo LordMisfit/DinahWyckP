@@ -83,6 +83,14 @@ class EEBaseZSC : Actor abstract
 		return damage;
 	}
 	
+	bool A_CheckDDGame()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
 	void A_EECustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true, bool facetarg = true)
 	{
 		if (damagetype == 'None') damagetype == 'Melee';
@@ -109,7 +117,7 @@ class EEBaseZSC : Actor abstract
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls"))
+		if (A_CheckDDGame())
 		{
 			if (!exex_expenabled)
 			{
@@ -2011,6 +2019,23 @@ class EEProjectile : EEBaseZSC abstract
 		}
 	}
 	
+	int A_GetPlayerLvlProj()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+
 	states
 	{
 		VaccedUp:
@@ -2029,18 +2054,29 @@ class EEFireworksProj : EEProjectile
 	int expflags;
 	int TruePlayerLevel;
 	
-	void A_GetPlayerLevel()
+	int A_GetPlayerLevel()
 	{
-		TruePlayerLevel = 0;
 		actor player = players[0].mo;
-		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
 	}
 	
 	double A_CalcTrueExpDmg(double basedmg, double basemul = 0.02, double tier1 = 0.5, double tier2 = 0.5, double tier3 = 0.5, double tier4 = 0.5)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		TruePlayerLevel = A_GetPlayerLevel();
+		
 		if (CherryBombShot(self))
 		{
 			if (player.CountInv("CBombUpgrade"))
@@ -2391,18 +2427,29 @@ class EEFireworksFastProj : EEFastProjectile
 	int expflags;
 	int TruePlayerLevel;
 	
-	void A_GetPlayerLevel()
+	int A_GetPlayerLevel()
 	{
-		TruePlayerLevel = 0;
 		actor player = players[0].mo;
-		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
 	}
 	
 	double A_CalcTrueExpDmg(double basedmg, double basemul = 0.02, double tier1 = 0.5, double tier2 = 0.5, double tier3 = 0.5, double tier4 = 0.5)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		TruePlayerLevel = A_GetPlayerLevel();
+		
 		if (CherryBombShot(self))
 		{
 			if (player.CountInv("CBombUpgrade"))
@@ -2898,16 +2945,29 @@ class EEFireworksPuff : EEPuff
 	int expflags;
 	int TruePlayerLevel;
 	
-	void A_GetPlayerLevel()
+	int A_GetPlayerLevel()
 	{
-		TruePlayerLevel = 0;
 		actor player = players[0].mo;
-		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
 	}
 	
 	double A_CalcTrueExpDmg(double basedmg, double basemul = 0.02, double tier1 = 0.5, double tier2 = 0.5, double tier3 = 0.5, double tier4 = 0.5)
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		TruePlayerLevel = A_GetPlayerLevel();
+		
 		if (TruePlayerLevel) basedmg *= (1.0 + (TruePlayerLevel * basemul));
 		if (TruePlayerLevel > 25) basedmg *= (1.0 + ((TruePlayerLevel - 25) * (basemul * tier1)));
 		if (TruePlayerLevel > 50) basedmg *= (1.0 + ((TruePlayerLevel - 50) * (basemul * tier2)));
@@ -3183,7 +3243,7 @@ class EECreature : EEBaseZSC abstract
 	void A_DDAFDOrigBossDie()
 	{
 		actor player = players[0].mo;
-		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls"))
+		if (A_CheckDDGame())
 		{
 			ACS_Execute(911,0,0,0,0);
 		}
@@ -4775,7 +4835,7 @@ class DDOrigCreature : EECreature abstract
 			if (!(DDOrigBoss(self) || SugarSnake(self) || MiniSugarSnake(self)))
 			{
 				actor player = players[0].mo;
-				if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls")) bLOOKALLAROUND = false;
+				if (A_CheckDDGame()) bLOOKALLAROUND = false;
 			}
 		}
 		super.Tick();

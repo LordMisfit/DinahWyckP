@@ -109,9 +109,36 @@ class CustomInventoryExt : CustomInventory
 			toucher.A_StartSound(PickupSnd2, chan, flags, 1.0, atten, maskpitch);
 		}
 	}
-
+	
+	action bool A_CheckDDGame()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	action int A_GetPlayerLvl()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (invoker.A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+	
 	action void A_UseTurkeyDinner()
 	{
+		int TruePlayerLevel = invoker.A_GetPlayerLvl();
+		
 		if (player.mo.CountInv("TurkeyDinner"))
 		{
 			let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
@@ -204,6 +231,7 @@ class CustomInventoryExt : CustomInventory
 		int currenthealth = player.mo.health;
 		int oldhealth = player.mo.health;
 		int MaxHealthTrue = player.mo.CountInv("PlayerMaxHP");
+		int TruePlayerLevel = A_GetPlayerLvl();
 		bool willheal;
 		bool useitem;
 		
@@ -459,7 +487,7 @@ class CustomInventoryExt : CustomInventory
 				// Poison
 				if (player.poisoncount > 0)
 				{
-					int lowcount = (5 + abs((MiscItem.WineDefTier * 0.5)) + (MiscItem.PlayerLevel * 0.0625));
+					int lowcount = (5 + abs((MiscItem.WineDefTier * 0.5)) + (TruePlayerLevel * 0.0625));
 					if (wutthis) lowcount *= 2.5;
 					int prevpoiscount = player.poisoncount;
 					if (player.poisoncount <= lowcount) player.poisoncount -= (lowcount * frandom(0.875,1.125));
@@ -639,6 +667,31 @@ class TempDefenseBuff : PowerProtection
 		Inventory.Icon "";
 		Powerup.Duration 2147483646; // 8
 		Powerup.Color "00 00 00", 0.00;
+	}
+	
+	bool A_CheckDDGame()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	int A_GetPlayerLvl()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
 	}
 }
 
@@ -1828,6 +1881,7 @@ class PKicking : PlaceHolderItem
 class MiracleBoss : PlaceHolderItem { default { Inventory.MaxAmount 99; } }
 class MiracleMonster : PlaceHolderItem { default { Inventory.MaxAmount 99; } }
 class MiraclePlayer : PlaceHolderItem { default { Inventory.MaxAmount 99; } }
+class MiraclesUsed : PlaceHolderItem { default { Inventory.MaxAmount 99; } }
 
 class OverFullHealth3 : PlaceHolderItem { }
 class OverFullHealth2 : PlaceHolderItem { }
@@ -3382,7 +3436,7 @@ class PowerNoDrown : PowerProtection
 						if (skill == 2) ticpiecemax = 20;
 						if (skill == 3) ticpiecemax = 15;
 						if (skill >= 4) ticpiecemax = 10;
-						if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls")) ticpiecemax *= 7.5;
+						if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) ticpiecemax *= 7.5;
 						if (owner.CountInv("TimePotionTimeFreezer")) ticpiecemax *= 10;
 						if (owner.CountInv("MysteryItem")) ticpiecemax *= 4;
 						if (ticpiecemax > 0) 
@@ -4147,6 +4201,31 @@ class DefDown3Icon : DisplayObjectBase
 class ArmorIPItem : PlaceHolderItem
 {
 	mixin IPCostCheck;
+	
+	bool A_CheckDDGame()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	int A_GetPlayerLvl()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
 }
 
 class KnightGown1IPItem : ArmorIPItem
@@ -4155,8 +4234,7 @@ class KnightGown1IPItem : ArmorIPItem
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl();
 		
 		int timegive = 60 * TICRATE;
 		int fulltimegive = timegive;
@@ -4213,8 +4291,7 @@ class KnightGown2IPItem : ArmorIPItem
 		string armorcheck = "KnightGownIP2Buff";
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl();
 		
 		int timegive = 60 * TICRATE;
 		int fulltimegive = timegive;
@@ -4271,8 +4348,7 @@ class KnightGown3IPItem : ArmorIPItem
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl();
 		
 		int timegive = 60 * TICRATE;
 		int fulltimegive = timegive;
@@ -4328,8 +4404,7 @@ class KnightGown4IPItem : ArmorIPItem
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl();
 		
 		int timegive = 60 * TICRATE;
 		int fulltimegive = timegive;
@@ -4644,8 +4719,7 @@ class DinahTrueIPState : TempDefenseBuff
 		bool debugtick = false;
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl();
 		
 		timer++;
 		if (timer % 40 >=  0 && timer % 40 <=  4) iconframe = 1;
@@ -6327,9 +6401,12 @@ class HWShieldDefenseExtra : ShieldingBuff
 }
 
 class IsFinalDoom : PlaceholderItemDepletable { } // This works as an inventory flag to indicate the game mode
+
 class IsDynDuchess : PlaceholderItemDepletable { } // This works as an inventory flag to indicate the game mode
 class IsAppetite : PlaceholderItemDepletable { } // This works as an inventory flag to indicate the game mode
 class IsCarnOfSouls : PlaceholderItemDepletable { } // This works as an inventory flag to indicate the game mode
+class IsWeddingCake : PlaceholderItemDepletable { } // This works as an inventory flag to indicate the game mode
+class IsDDContinuous : PlaceholderItemDepletable { } // This works as an inventory flag to indicate the game mode
 
 class CoSMemory1Seq : PlaceholderItemDepletable { } // This works as an inventory flag for ACS
 class CoSMemory2Seq : PlaceholderItemDepletable { } // This works as an inventory flag for ACS

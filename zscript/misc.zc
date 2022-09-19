@@ -215,6 +215,7 @@ class PlayerStatItem : Inventory
 	int DD_HandMother1, DD_HandMother2, DD_MossMother, DD_GameMother, DD_RoseMother, DD_SphinxMother, DD_GlobeMother, DD_TrueHandMother;
 	int AFD_Krag, AFD_Lauritz, AFD_Quisling, AFD_Jorgensen1, AFD_Jorgensen2, AFD_JorgCannon;
 	int CoS_Fafnir, CoS_FractalHens, CoS_ForsakenJorg, CoS_EvilDinah, CoS_Tempest;
+	double TotalNRPGLvlPts;
 
 	default 
 	{
@@ -235,100 +236,27 @@ class PlayerStatItem : Inventory
 		if (playeractor) // Otherwise, Keep
 		{
 			IsMorphed = 0;
-			if (playeractor.GetClassName() == "DinahPlayer") 
-			{
-				IsMorphed = 0;
-			}
-			if (playeractor.GetClassName() == "RatPlayer") 
-			{
-				IsMorphed = 1;
-			}
+			if (playeractor.GetClassName() == "RatPlayer") IsMorphed = 1;
 			if (dydudebug_morphdisplays) Console.Printf("%s, IsMorphed: %d, WasMorphed: %d, MorphTimer: %d", playeractor.GetClassName(), IsMorphed, WasMorphed, MorphTimer);
+			
 			CompatPackMode = 0;
 			if (playeractor.CountInv("PlayingGoingDown")) CompatPackMode += 1;
 			if (playeractor.CountInv("PlayingAugerZenith")) CompatPackMode += 2;
 			if (playeractor.CountInv("PlayingTCOTDA")) CompatPackMode += 4;
 			if (playeractor.CountInv("PlayingCircus2")) CompatPackMode += 8;
+			if (playeractor.CountInv("PlayingKDIZD")) CompatPackMode += 16;
+			if (playeractor.CountInv("PlayingPSXDoom")) CompatPackMode += 32;
+			if (playeractor.CountInv("PlayingDoom64")) CompatPackMode += 64;
+			if (playeractor.CountInv("PlayingRAMP")) CompatPackMode += 128;
 			// Load in Globalvars [Start]
 			let globalvars = DDGlobalVariables.Get();
 			if (globalvars)
 			{
-				if (itemtimer <= 2 && exex_deathexitaffectsstats)
-				{
-					if (itemtimer == 0) ClassCheck = globalvars.ClassCheck = 0;
-					PlayerLevel = globalvars.PlayerLevel = 0;
-					TruePlayerLevel = globalvars.TruePlayerLevel = 0;
-					Experience = globalvars.Experience = 0;
-					globalvars.atkfct = atkfct = 1.0;
-					globalvars.deffct = deffct = 1.0;
-					globalvars.spdfct = spdfct = 1.0;
-					globalvars.jmpfct = jmpfct = 1.0;
-					globalvars.suvfct = suvfct = 1.0;
-					globalvars.PlayerATK = PlayerATK = 0;
-					globalvars.PlayerDEF = PlayerDEF = 0;
-					globalvars.PlayerSPD = PlayerSPD = 0;
-					globalvars.PlayerLuck = PlayerLuck = 0;
-					globalvars.HealthLevelAdd = HealthLevelAdd = 0;
-					globalvars.HealthNoRPGAdd = HealthNoRPGAdd = 0;
-					globalvars.HealthNoRPGAdd2 = HealthNoRPGAdd2 = 0;
-					globalvars.HealthBonusAdd = HealthBonusAdd = 0;
-					globalvars.MassLevelAdd = MassLevelAdd = 0;
-					globalvars.MassNoRPGAdd = MassNoRPGAdd = 0;
-					globalvars.MassNoRPGAdd2 = MassNoRPGAdd2 = 0;
-					globalvars.MassBonusAdd = MassBonusAdd = 0;
-					globalvars.ItemPoints = ItemPoints = 0;
-					globalvars.MaxIPExtensions = MaxIPExtensions = 0;
-					if (itemtimer == 0 && dydudebug_deathexitdebug) Console.Printf("exex_deathexitaffectsstats: YES", exex_deathexitaffectsstats);
-				}
-				else
-				{
-					ClassCheck = globalvars.ClassCheck;
-					PlayerLevel = globalvars.PlayerLevel;
-					TruePlayerLevel = globalvars.TruePlayerLevel;
-					Experience = globalvars.Experience;
-					atkfct = globalvars.atkfct;
-					deffct = globalvars.deffct;
-					spdfct = globalvars.spdfct;
-					jmpfct = globalvars.jmpfct;
-					suvfct = globalvars.suvfct;
-					PlayerATK = globalvars.PlayerATK;
-					PlayerDEF = globalvars.PlayerDEF;
-					PlayerSPD = globalvars.PlayerSPD;
-					PlayerLuck = globalvars.PlayerLuck;
-					MaxHealthTrue = globalvars.MaxHealthTrue;
-					HealthLevelAdd = globalvars.HealthLevelAdd;
-					HealthNoRPGAdd = globalvars.HealthNoRPGAdd;
-					HealthNoRPGAdd2 = globalvars.HealthNoRPGAdd2;
-					HealthBonusAdd = globalvars.HealthBonusAdd;
-					MassLevelAdd = globalvars.MassLevelAdd;
-					MassNoRPGAdd = globalvars.MassNoRPGAdd;
-					MassNoRPGAdd2 = globalvars.MassNoRPGAdd2;
-					MassBonusAdd = globalvars.MassBonusAdd;
-					ItemPoints = globalvars.ItemPoints;
-					MaxIPExtensions = globalvars.MaxIPExtensions;
-					BaseStartMaxHealth = globalvars.BaseStartMaxHealth;
-					if (itemtimer == 0) 
-					{
-						if (MaxHealthTrue) owner.player.mo.health = MaxHealthTrue;
-						if (dydudebug_deathexitdebug)
-						{
-							Console.Printf("MaxHealthTrue: %d, HealthLevelAdd: %d, HealthNoRPGAdd: %d, HealthBonusAdd: %d, HealthBonusAdd2: %d, BaseStartMaxHealth: %d", MaxHealthTrue, HealthLevelAdd, HealthBonusAdd, HealthNoRPGAdd, HealthNoRPGAdd2, BaseStartMaxHealth);
-							Console.Printf("exex_deathexitaffectsstats: NO", exex_deathexitaffectsstats);
-						}
-					}
-				}
-				owner.A_SetInventory("PlayerMaxHP",MaxHealthTrue);
-				if (itemtimer <= 2) owner.A_SetInventory("ExpPts",globalvars.Experience);
-				if (itemtimer <= 2) DynMusChangeChance = 1;
-				
-				weapon = owner.player.ReadyWeapon;
-				HellWarriorShieldLevel = owner.CountInv("HellWarriorShieldLevel");
-				HellWarriorMaxCharge = 1000;
-				if (playeractor.GetClassName() == "DinahPlayer" || playeractor.GetClassName() == "RatPlayer") CharacterClass = 10;
-				
-				cankick = true;
+				// Initalization Stuff
+				InitStuff();
 
-				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				//
+				if (A_CheckDDGame())
 				{
 					if (ddafd_disablehandtohand == 1)
 					{
@@ -352,6 +280,7 @@ class PlayerStatItem : Inventory
 				
 				if (whistlecooldown) whistlecooldown--;
 				
+				// Mode Check
 				ClassicDoomType = gameinfo.gametype; // 0 = Unknown, 1 = Doom [any], 2 = Heretic, 4 = Hexen, 8 = Strife
 				if (ClassicDoomType & 1) { owner.A_SetInventory("PlayingDoom",1); } // Doom
 				if (ClassicDoomType & 2) { owner.A_SetInventory("PlayingHeretic",1); } // Heretic
@@ -361,18 +290,37 @@ class PlayerStatItem : Inventory
 				buttons = owner.GetPlayerInput(INPUT_BUTTONS);
 				TrueGameSkill = skill;
 				
+				// Non-RPG Mode [DD Trilogy Only] Level "Points" based on defeating bosses.
+				TotalNRPGLvlPts = 0;
+				if (A_CheckDDGame())
+				{
+					if (DD_HandMother1) TotalNRPGLvlPts += 3.75;
+					if (DD_RoseMother) TotalNRPGLvlPts += 3.75;
+					if (DD_GameMother) TotalNRPGLvlPts += 3.75;
+					if (DD_MossMother) TotalNRPGLvlPts += 3.75;
+					if (DD_GlobeMother) TotalNRPGLvlPts += 3.75;
+					if (DD_SphinxMother) TotalNRPGLvlPts += 3.75;
+					if (DD_HandMother2) TotalNRPGLvlPts += 3.75;
+					if (DD_TrueHandMother) TotalNRPGLvlPts += 3.75;
+					if (AFD_Krag) TotalNRPGLvlPts += 5;
+					if (AFD_Quisling) TotalNRPGLvlPts += 5;
+					if (AFD_Lauritz) TotalNRPGLvlPts += 5;
+					if (AFD_Jorgensen1) TotalNRPGLvlPts += 5;
+					if (AFD_Jorgensen2) TotalNRPGLvlPts += 5;
+					if (AFD_JorgCannon) TotalNRPGLvlPts += 5;
+					if (CoS_Fafnir) TotalNRPGLvlPts += 6;
+					if (CoS_FractalHens) TotalNRPGLvlPts += 6;
+					if (CoS_ForsakenJorg) TotalNRPGLvlPts += 6;
+					if (CoS_EvilDinah) TotalNRPGLvlPts += 6;
+					if (CoS_Tempest) TotalNRPGLvlPts += 6;
+				}
+				
 				if (itemtimer <= 2)
 				{
-					if (dydudebug_miscitemdebug) Console.Printf("itemtimer: %d, IsDynDuchess?: %d, IsAppetite?: %d, IsCanOfSouls?: %d", itemtimer, owner.CountInv("IsDynDuchess"), owner.CountInv("IsAppetite"), owner.CountInv("IsCarnOfSouls"));
+					if (dydudebug_miscitemdebug) Console.Printf("itemtimer: %d, IsDynDuchess?: %d, IsAppetite?: %d, IsCanOfSouls?: %d, IsWeddingCake?: %d", itemtimer, owner.CountInv("IsDynDuchess"), owner.CountInv("IsAppetite"), owner.CountInv("IsCarnOfSouls"), owner.CountInv("IsWeddingCake"));
 					if (itemtimer >= 1)
 					{
-						if (!(owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
-						{
-							owner.A_SetInventory("DoorBell",1);
-							owner.A_SetInventory("DoorBell",0);
-							DoorBellNormalUses = 0;
-						}
-						else
+						if (A_CheckDDGame())
 						{
 							if (owner.CountInv("IsDynDuchess"))
 							{
@@ -391,8 +339,18 @@ class PlayerStatItem : Inventory
 								owner.A_SetInventory("Money_Ducat",1);
 								owner.A_SetInventory("Money_Ducat",0);
 							}
+							else
+							if (owner.CountInv("IsWeddingCake"))
+							{
+							}
 							owner.A_SetInventory("PalaceKey",1);
 							owner.A_SetInventory("PalaceKey",0);
+						}
+						else
+						{
+							owner.A_SetInventory("DoorBell",1);
+							owner.A_SetInventory("DoorBell",0);
+							DoorBellNormalUses = 0;
 						}
 						owner.A_SetInventory("KilletanteEffigy",1);
 						owner.A_SetInventory("KilletanteEffigy",0);
@@ -581,7 +539,7 @@ class PlayerStatItem : Inventory
 				}
 				
 				grimophonealt = true;
-				if (ddafd_disablegrimophonealt && (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				if (ddafd_disablegrimophonealt && A_CheckDDGame())
 				{
 					grimophonealt = false;
 				}
@@ -592,7 +550,7 @@ class PlayerStatItem : Inventory
 				SuperVacBaseMaxFactor = double(1.00 / SuperVacBaseMax);
 				if (ddafd_originalinvlimits)
 				{
-					if (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls"))
+					if (A_CheckDDGame())
 					{
 						SuperVacBaseMax = 12;
 						SuperVacBaseMaxFactor = double(1.00 / SuperVacBaseMax);
@@ -629,7 +587,7 @@ class PlayerStatItem : Inventory
 				}
 				if (dydudebug_airmeter) Console.Printf("CanTalkUnderwater %d", CanTalkUnderwater);
 				
-				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				if ((A_CheckDDGame()))
 				{
 					PlayerPawn DDPlayPawn;
 					DDPlayPawn = PlayerPawn(owner);
@@ -752,7 +710,7 @@ class PlayerStatItem : Inventory
 				if (TrueGameSkill == SKILL_VERY_HARD) MaxItemPoints += (TruePlayerLevel * 0.5);
 				if (!exex_expenabled)
 				{
-					if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+					if ((A_CheckDDGame()))
 					{
 						double DDTFactor = 0.00;
 						if (DD_RoseMother) DDTFactor += 0.057144;
@@ -1200,7 +1158,7 @@ class PlayerStatItem : Inventory
 				//**************************
 				vacammotype = owner.FindInventory("VacAmmo");
 				VacCost = 8;
-				if (ddafd_originalsupervaccost && (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls"))) VacCost = 12;
+				if (ddafd_originalsupervaccost && (A_CheckDDGame())) VacCost = 12;
 				if (VacCost <= 0) VacCost = 1;
 				int vacammoprev;
 				int prevvacbagstocharge;
@@ -1601,7 +1559,7 @@ class PlayerStatItem : Inventory
 				}
 				
 				// Track Doorbell Uses [Normal use, not IP]
-				if (!(owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				if (!(A_CheckDDGame()))
 				{
 					if (owner.CountInv("DoorBell"))
 					{
@@ -1703,53 +1661,151 @@ class PlayerStatItem : Inventory
 				//*************************************
 				//*************************************
 				//*************************************
-				HandleDynamicMusic();
-				
-				ClassCheck++;
-				itemtimer++;
-				if (IsMorphed > 0) 
-				{
-					if (IsMorphed == 1 && MorphTimer == 0) owner.health = MaxHealthTrue * 0.3;
-					MorphTimer++;
-				}
-				else
-				{
-					if (WasMorphed == 1 && MorphTimer > 0) owner.health = MaxHealthTrue;
-					MorphTimer = 0;
-				}
-				WasMorphed = IsMorphed;
-				
-				owner.player.mo.maxhealth = MaxHealthTrue;
-				// Set Global Vars [End]
-				globalvars.MaxIPExtensions = MaxIPExtensions;
-				globalvars.ItemPoints = ItemPoints;
-				globalvars.BaseStartMaxHealth = BaseStartMaxHealth;
-				globalvars.HealthLevelAdd = HealthLevelAdd;
-				globalvars.HealthNoRPGADD = HealthNoRPGADD;
-				globalvars.HealthNoRPGADD2 = HealthNoRPGADD2;
-				globalvars.HealthBonusAdd = HealthBonusAdd;
-				globalvars.MassLevelAdd = MassLevelAdd;
-				globalvars.MassNoRPGAdd = MassNoRPGAdd;
-				globalvars.MassNoRPGAdd2 = MassNoRPGAdd2;
-				globalvars.MassBonusAdd = MassBonusAdd;
-				globalvars.MaxHealthTrue = MaxHealthTrue;
-				globalvars.Experience = Experience;
-				globalvars.PlayerLevel = PlayerLevel;
-				globalvars.TruePlayerLevel = TruePlayerLevel;
-				globalvars.ClassCheck = ClassCheck;
-				globalvars.atkfct = atkfct;
-				globalvars.deffct = deffct;
-				globalvars.spdfct = spdfct;
-				globalvars.jmpfct = jmpfct;
-				globalvars.suvfct = suvfct;
-				globalvars.PlayerATK = PlayerATK;
-				globalvars.PlayerDEF = PlayerDEF;
-				globalvars.PlayerSPD = PlayerSPD;
-				globalvars.PlayerLuck = PlayerLuck;
+				// End Stuff
+				EndStuff();
 			}
 			if (dydudebug_miscitemdebug) Console.Printf("ClassCheck: %d", ClassCheck);
 			super.DoEffect();
 		}
+	}
+	
+	bool A_CheckDDGame()
+	{
+		if (owner.CountInv("IsDynDuchess") ||
+				owner.CountInv("IsAppetite") || 
+				owner.CountInv("IsCarnOfSouls") || 
+				owner.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	void EndStuff()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		
+		HandleDynamicMusic();
+		
+		ClassCheck++;
+		itemtimer++;
+		if (IsMorphed > 0) 
+		{
+			if (IsMorphed == 1 && MorphTimer == 0) owner.health = MaxHealthTrue * 0.3;
+			MorphTimer++;
+		}
+		else
+		{
+			if (WasMorphed == 1 && MorphTimer > 0) owner.health = MaxHealthTrue;
+			MorphTimer = 0;
+		}
+		WasMorphed = IsMorphed;
+		
+		owner.player.mo.maxhealth = MaxHealthTrue;
+		// Set Global Vars [End]
+		globalvars.MaxIPExtensions = MaxIPExtensions;
+		globalvars.ItemPoints = ItemPoints;
+		globalvars.BaseStartMaxHealth = BaseStartMaxHealth;
+		globalvars.HealthLevelAdd = HealthLevelAdd;
+		globalvars.HealthNoRPGADD = HealthNoRPGADD;
+		globalvars.HealthNoRPGADD2 = HealthNoRPGADD2;
+		globalvars.HealthBonusAdd = HealthBonusAdd;
+		globalvars.MassLevelAdd = MassLevelAdd;
+		globalvars.MassNoRPGAdd = MassNoRPGAdd;
+		globalvars.MassNoRPGAdd2 = MassNoRPGAdd2;
+		globalvars.MassBonusAdd = MassBonusAdd;
+		globalvars.MaxHealthTrue = MaxHealthTrue;
+		globalvars.Experience = Experience;
+		globalvars.PlayerLevel = PlayerLevel;
+		globalvars.TruePlayerLevel = TruePlayerLevel;
+		globalvars.ClassCheck = ClassCheck;
+		globalvars.atkfct = atkfct;
+		globalvars.deffct = deffct;
+		globalvars.spdfct = spdfct;
+		globalvars.jmpfct = jmpfct;
+		globalvars.suvfct = suvfct;
+		globalvars.PlayerATK = PlayerATK;
+		globalvars.PlayerDEF = PlayerDEF;
+		globalvars.PlayerSPD = PlayerSPD;
+		globalvars.PlayerLuck = PlayerLuck;
+	}
+	
+	void InitStuff()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		if (itemtimer <= 2 && exex_deathexitaffectsstats)
+		{
+			if (itemtimer == 0) ClassCheck = globalvars.ClassCheck = 0;
+			PlayerLevel = globalvars.PlayerLevel = 0;
+			TruePlayerLevel = globalvars.TruePlayerLevel = 0;
+			Experience = globalvars.Experience = 0;
+			globalvars.atkfct = atkfct = 1.0;
+			globalvars.deffct = deffct = 1.0;
+			globalvars.spdfct = spdfct = 1.0;
+			globalvars.jmpfct = jmpfct = 1.0;
+			globalvars.suvfct = suvfct = 1.0;
+			globalvars.PlayerATK = PlayerATK = 0;
+			globalvars.PlayerDEF = PlayerDEF = 0;
+			globalvars.PlayerSPD = PlayerSPD = 0;
+			globalvars.PlayerLuck = PlayerLuck = 0;
+			globalvars.HealthLevelAdd = HealthLevelAdd = 0;
+			globalvars.HealthNoRPGAdd = HealthNoRPGAdd = 0;
+			globalvars.HealthNoRPGAdd2 = HealthNoRPGAdd2 = 0;
+			globalvars.HealthBonusAdd = HealthBonusAdd = 0;
+			globalvars.MassLevelAdd = MassLevelAdd = 0;
+			globalvars.MassNoRPGAdd = MassNoRPGAdd = 0;
+			globalvars.MassNoRPGAdd2 = MassNoRPGAdd2 = 0;
+			globalvars.MassBonusAdd = MassBonusAdd = 0;
+			globalvars.ItemPoints = ItemPoints = 0;
+			globalvars.MaxIPExtensions = MaxIPExtensions = 0;
+			if (itemtimer == 0 && dydudebug_deathexitdebug) Console.Printf("exex_deathexitaffectsstats: YES", exex_deathexitaffectsstats);
+		}
+		else
+		{
+			ClassCheck = globalvars.ClassCheck;
+			PlayerLevel = globalvars.PlayerLevel;
+			TruePlayerLevel = globalvars.TruePlayerLevel;
+			Experience = globalvars.Experience;
+			atkfct = globalvars.atkfct;
+			deffct = globalvars.deffct;
+			spdfct = globalvars.spdfct;
+			jmpfct = globalvars.jmpfct;
+			suvfct = globalvars.suvfct;
+			PlayerATK = globalvars.PlayerATK;
+			PlayerDEF = globalvars.PlayerDEF;
+			PlayerSPD = globalvars.PlayerSPD;
+			PlayerLuck = globalvars.PlayerLuck;
+			MaxHealthTrue = globalvars.MaxHealthTrue;
+			HealthLevelAdd = globalvars.HealthLevelAdd;
+			HealthNoRPGAdd = globalvars.HealthNoRPGAdd;
+			HealthNoRPGAdd2 = globalvars.HealthNoRPGAdd2;
+			HealthBonusAdd = globalvars.HealthBonusAdd;
+			MassLevelAdd = globalvars.MassLevelAdd;
+			MassNoRPGAdd = globalvars.MassNoRPGAdd;
+			MassNoRPGAdd2 = globalvars.MassNoRPGAdd2;
+			MassBonusAdd = globalvars.MassBonusAdd;
+			ItemPoints = globalvars.ItemPoints;
+			MaxIPExtensions = globalvars.MaxIPExtensions;
+			BaseStartMaxHealth = globalvars.BaseStartMaxHealth;
+			if (itemtimer == 0) 
+			{
+				if (MaxHealthTrue) owner.player.mo.health = MaxHealthTrue;
+				if (dydudebug_deathexitdebug)
+				{
+					Console.Printf("MaxHealthTrue: %d, HealthLevelAdd: %d, HealthNoRPGAdd: %d, HealthBonusAdd: %d, HealthBonusAdd2: %d, BaseStartMaxHealth: %d", MaxHealthTrue, HealthLevelAdd, HealthBonusAdd, HealthNoRPGAdd, HealthNoRPGAdd2, BaseStartMaxHealth);
+					Console.Printf("exex_deathexitaffectsstats: NO", exex_deathexitaffectsstats);
+				}
+			}
+		}
+		owner.A_SetInventory("PlayerMaxHP",MaxHealthTrue);
+		if (itemtimer <= 2) owner.A_SetInventory("ExpPts",globalvars.Experience);
+		if (itemtimer <= 2) DynMusChangeChance = 1;
+		
+		weapon = owner.player.ReadyWeapon;
+		HellWarriorShieldLevel = owner.CountInv("HellWarriorShieldLevel");
+		HellWarriorMaxCharge = 1000;
+		if (playeractor.GetClassName() == "DinahPlayer" || playeractor.GetClassName() == "RatPlayer") CharacterClass = 10;
+		
+		cankick = true;
 	}
 	
 	void CricketBatGuardStuff()
@@ -2616,7 +2672,7 @@ class PlayerStatItem : Inventory
 			if (skill == 3) HealthLevelAdd2 = (HealthNoRPGADD * 2.5);
 			if (skill >= 4) HealthLevelAdd2 = (HealthNoRPGADD * 2.0);
 			
-			if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+			if ((A_CheckDDGame()))
 			{
 				if (DD_RoseMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
 				if (DD_GameMother) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.125);
@@ -3509,7 +3565,7 @@ class PlayerStatItem : Inventory
 							if (!exex_expenabled)
 							{
 								double DDTFactor = 0.0;
-								if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+								if ((A_CheckDDGame()))
 								{
 									if (DD_RoseMother) DDTFactor += 0.14286;
 									if (DD_GameMother) DDTFactor += 0.14286;
@@ -3663,7 +3719,7 @@ class PlayerStatItem : Inventory
 							if (!exex_expenabled)
 							{
 								double DDTFactor = 0.0;
-								if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+								if ((A_CheckDDGame()))
 								{
 									if (DD_RoseMother) DDTFactor -= 0.14286;
 									if (DD_GameMother) DDTFactor -= 0.14286;
@@ -3849,7 +3905,7 @@ class PlayerStatItem : Inventory
 				if (!exex_expenabled)
 				{
 					double PerkFactor2 = 0.0;
-					if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+					if ((A_CheckDDGame()))
 					{
 						if (DD_RoseMother) PerkFactor2 += 14.2857;
 						if (DD_GameMother) PerkFactor2 += 14.2857;
@@ -4072,7 +4128,7 @@ class PlayerStatItem : Inventory
 			if (!exex_expenabled)
 			{
 				int PerkFactor2 = 0;
-				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				if ((A_CheckDDGame()))
 				{
 					if (DD_RoseMother) PerkFactor2 += randompick(14,14,14,15);
 					if (DD_GameMother) PerkFactor2 += randompick(14,14,14,15);
@@ -4264,7 +4320,7 @@ class PlayerStatItem : Inventory
 				if (skill == 3) MassLevelAdd2 = (MassNoRPGADD * 1.25);
 				if (skill >= 4) MassLevelAdd2 = (MassNoRPGADD * 1.0);
 				
-				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				if ((A_CheckDDGame()))
 				{
 					if (DD_RoseMother) MassNoRPGAdd2 += (BaseMass * 0.0625);
 					if (DD_GameMother) MassNoRPGAdd2 += (BaseMass * 0.0625);
@@ -4514,7 +4570,7 @@ class PlayerStatItem : Inventory
 				MapNoRPGJumpZ *= (1.00 + (NumOfAfasDrops * 0.03125));
 				
 				// DD Trilogy NO-Rpg Bonuses
-				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				if ((A_CheckDDGame()))
 				{
 					DDTNoRPGJumpZ = 0.0;
 					if (DD_RoseMother) DDTNoRPGJumpZ += 0.014286;
@@ -4754,7 +4810,7 @@ class PlayerStatItem : Inventory
 		{
 			if (ddafd_originalinvlimits)
 			{
-				if (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")) ddtrilogyoriglimits = true;
+				if (A_CheckDDGame()) ddtrilogyoriglimits = true;
 			}
 			int dropamt;
 			string itemname;
@@ -4863,7 +4919,7 @@ class PlayerStatItem : Inventory
 				if (!exex_expenabled)
 				{
 					double PerkFactor2 = 0.0;
-					if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+					if ((A_CheckDDGame()))
 					{
 						if (DD_RoseMother) PerkFactor2 += 0.142857;
 						if (DD_GameMother) PerkFactor2 += 0.142857;
@@ -5373,7 +5429,7 @@ class PlayerStatItem : Inventory
 			double DDTFactor = 1.00;
 			if (!exex_expenabled)
 			{
-				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				if ((A_CheckDDGame()))
 				{
 					DDTFactor = 0.00;
 					if (DD_RoseMother) DDTFactor += 0.057144;
@@ -5605,7 +5661,7 @@ class PlayerStatItem : Inventory
 			double DDTFactor = 1.00;
 			if (!exex_expenabled)
 			{
-				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				if ((A_CheckDDGame()))
 				{
 					DDTFactor = 0.00;
 					if (DD_RoseMother) DDTFactor -= 0.014286;
@@ -5807,7 +5863,7 @@ class PlayerStatItem : Inventory
 			if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) EventFactor *= (1.0 - (owner.CountInv("AngerLevelEvent") * 0.005) - (owner.CountInv("AngerLevelEvent") * 0.0005));
 
 			double tempfactor = 1.0;
-			if (ddafd_damageskilllevel && (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+			if (ddafd_damageskilllevel && (A_CheckDDGame()))
 			{
 				if (skill <= 0) tempfactor = 0.5;
 				if (skill == 1) tempfactor = 0.667;
@@ -5913,7 +5969,7 @@ class PlayerStatItem : Inventory
 		else
 		{
 			// DD Trilogy NO-Rpg Bonuses
-			if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+			if ((A_CheckDDGame()))
 			{
 				double DDTFactor = 0.0;
 				if (DD_RoseMother) DDTFactor += 0.014286;
@@ -6509,7 +6565,7 @@ class PlayerDashJump : Inventory
 			// DD Trilogy NO-Rpg Bonuses
 			if (MiscItem)
 			{
-				if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+				if ((A_CheckDDGame()))
 				{
 					if (MiscItem.DD_RoseMother) PerkFactor2 += 14.2857;
 					if (MiscItem.DD_GameMother) PerkFactor2 += 14.2857;
@@ -7063,7 +7119,7 @@ class PlayerDashJump : Inventory
 				if (!exex_expenabled && MiscItem)
 				{
 					double DDTFactor = 0.0;
-					if ((owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
+					if (A_CheckDDGame())
 					{
 						if (MiscItem.DD_RoseMother) DDTFactor += 0.14286;
 						if (MiscItem.DD_GameMother) DDTFactor += 0.14286;
@@ -7132,6 +7188,15 @@ class PlayerDashJump : Inventory
 		{
 			globalvars.BaseDashChargeMax = BaseDashChargeMax;
 		}
+	}
+	
+	bool A_CheckDDGame()
+	{
+		if (owner.CountInv("IsDynDuchess") ||
+				owner.CountInv("IsAppetite") || 
+				owner.CountInv("IsCarnOfSouls") || 
+				owner.CountInv("IsWeddingCake")) return true;
+		return false;
 	}
 }
 
