@@ -1591,7 +1591,7 @@ class CherryBombPickup : ExExInvBarItem
 		Inventory.InterHubAmount 24; // 12
 		Inventory.PickupSound "Dinah/giggle";
 		Inventory.PickupMessage "\c[gold]Nice! A Cherry Bomb!\c-";
-		Inventory.Icon "CBOMI0";
+		Inventory.Icon "CBOMZ0";
 		CustomInventoryExt.PickUpVoice true;
 		Tag "Cherry Bomb: Thrown at Enemies and explodes. Berserk effects its' arc/distance and impact damage. Can deal self-damage via AOE.";
 		Scale 0.8;
@@ -1616,14 +1616,33 @@ class CherryBombPickup : ExExInvBarItem
 		msg.AppendFormat("\c[gold] A Cherry Bomb!\c-");
 		return msg;
 	}
+	
+	override void Tick()
+	{
+		string ico = "CBOMZ0";
+		actor player = players[0].mo;
+		if (player.CountInv("CBombUpgrade") == 1) ico = "CBOMY0";
+		if (player.CountInv("CBombUpgrade") == 2) ico = "CBOMX0";
+		if (player.CountInv("CBombUpgrade") >= 3) ico = "CBOMW0";
 
+		icon = TexMan.CheckForTexture(ico, TexMan.TYPE_MiscPatch);
+		
+		string tagg = "Cherry Bomb";
+		if (player.CountInv("CBombUpgrade") == 1) tagg.AppendFormat(" [L1]");
+		if (player.CountInv("CBombUpgrade") == 2) tagg.AppendFormat(" [L2]");
+		if (player.CountInv("CBombUpgrade") >= 3) tagg.AppendFormat(" [L3]");
+		tagg.AppendFormat(": Thrown at Enemies and explodes. Berserk effects its' arc/distance and impact damage. Can deal self-damage via AOE.");
+		SetTag(tagg);
+		super.Tick();
+	}
+	
 	States
 	{
 		Spawn:
 			CBOP A 0 NoDelay
 			{
 				actor player = players[0].mo;
-				if (random(1,1024) <= 1 && player.CountInv("CBombUpgrade") < 3)
+				if (random(1,2048) <= 1 && player.CountInv("CBombUpgrade") < 3)
 				{
 					A_SpawnItemEx("CherryBombSchematic",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
 					Thing_Remove(0); 
