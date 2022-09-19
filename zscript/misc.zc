@@ -313,6 +313,7 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) TotalNRPGLvlPts += 6;
 					if (CoS_EvilDinah) TotalNRPGLvlPts += 6;
 					if (CoS_Tempest) TotalNRPGLvlPts += 6;
+					if (TotalNRPGLvlPts > 0) Console.Printf("TotalNRPGLvlPts: %.8f", TotalNRPGLvlPts);
 				}
 				
 				if (itemtimer <= 2)
@@ -732,6 +733,7 @@ class PlayerStatItem : Inventory
 						if (CoS_ForsakenJorg) DDTFactor += 0.1;
 						if (CoS_EvilDinah) DDTFactor += 0.1;
 						if (CoS_Tempest) DDTFactor += 0.1;
+						DDTFactor *= 0.50;
 						DDTFactor += 1.00;
 						MaxItemPoints *= DDTFactor;
 					}
@@ -1046,7 +1048,7 @@ class PlayerStatItem : Inventory
 								}
 							}
 							
-							if (exex_playerdmglog && exex_ikaripointsenabled && base) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
+							if (exex_playerdmglog && CheckIPEnabled() && base) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
 						}
 					}
 					
@@ -1108,7 +1110,7 @@ class PlayerStatItem : Inventory
 				//***************
 				IPUseMode = owner.CountInv("IPUseMode");
 				canuseflowercrown = -1;
-				if (!ddafd_disableflowercrownip && weapon is "HandToHand" && exex_ikaripointsenabled && owner.CountInv("FistPlayerBlockItem")) 
+				if (!ddafd_disableflowercrownip && weapon is "HandToHand" && CheckIPEnabled() && owner.CountInv("FistPlayerBlockItem")) 
 				{
 					canuseflowercrown = 1;
 					double cost = A_GetIPCost(-1);
@@ -3499,7 +3501,7 @@ class PlayerStatItem : Inventory
 				}
 				if (owner.CountInv("ItemPointsAdd")) 
 				{
-					if (exex_ikaripointsenabled)
+					if (CheckIPEnabled())
 					{
 						double base = owner.CountInv("ItemPointsAdd");
 						double oldItemPoints = ItemPoints;
@@ -3516,7 +3518,7 @@ class PlayerStatItem : Inventory
 				}
 				if (owner.CountInv("ItemPointsTake")) 
 				{
-					if (exex_ikaripointsenabled)
+					if (CheckIPEnabled())
 					{
 						double base = owner.CountInv("ItemPointsTake");
 						double oldItemPoints = ItemPoints;
@@ -3559,8 +3561,8 @@ class PlayerStatItem : Inventory
 						if (exex_hpwillregen)
 						{
 							int inc = 20;
-							inc += ((TruePlayerLevel * 0.1) + (TruePlayerDEF * 0.1));
-							inc += ((GoldApples * 0.2) + (PlatinumApples * 0.5) + (PrismaticApples + 2.00));
+							inc += ((TruePlayerLevel * 0.05) + (TruePlayerDEF * 0.05));
+							inc += ((GoldApples * 0.1) + (PlatinumApples * 0.25) + (PrismaticApples + 1.0));
 							// DD Trilogy NO-Rpg Bonuses
 							if (!exex_expenabled)
 							{
@@ -3713,8 +3715,8 @@ class PlayerStatItem : Inventory
 						if (exex_hpwilldegen)
 						{
 							int inc = 20;
-							inc -= ((TruePlayerLevel * 0.05) + (TruePlayerDEF * 0.05));
-							inc -= ((GoldApples * 0.05) + (PlatinumApples * 0.0125) + (PrismaticApples + 0.5));
+							inc -= ((TruePlayerLevel * 0.025) + (TruePlayerDEF * 0.025));
+							inc -= ((GoldApples * 0.025) + (PlatinumApples * 0.0625) + (PrismaticApples + 0.25));
 							// DD Trilogy NO-Rpg Bonuses
 							if (!exex_expenabled)
 							{
@@ -3740,7 +3742,7 @@ class PlayerStatItem : Inventory
 									if (CoS_ForsakenJorg) DDTFactor -= 0.25;
 									if (CoS_EvilDinah) DDTFactor -= 0.25;
 									if (CoS_Tempest) DDTFactor -= 0.25;
-									DDTFactor *= 0.25;
+									DDTFactor *= 0.125;
 									DDTFactor += 1.0;
 									inc *= DDTFactor;
 									if (dydudebug_hpregen) Console.Printf("inc: %d, DDTFactor: %.8f", inc, DDTFactor);
@@ -3926,7 +3928,7 @@ class PlayerStatItem : Inventory
 						if (CoS_ForsakenJorg) PerkFactor2 += 25;
 						if (CoS_EvilDinah) PerkFactor2 += 25;
 						if (CoS_Tempest) PerkFactor2 += 25;
-						PerkFactor2 *= 2.5;
+						PerkFactor2 *= 1.25;
 						SPDEvadeCheck += PerkFactor2;
 						if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0x - SPD Evade Check (DDT NoRPG)]: %.4f\c-, Add: %.4f", SPDEvadeCheck, PerkFactor2);
 					}
@@ -4149,7 +4151,7 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) PerkFactor2 += 25;
 					if (CoS_EvilDinah) PerkFactor2 += 25;
 					if (CoS_Tempest) PerkFactor2 += 25;
-					PerkFactor2 *= 2.5;
+					PerkFactor2 *= 1.25;
 					SurvivalRate += PerkFactor2;
 					if (dydudebug_survivalrate) Console.Printf("SurvivalRate [DDT NoRPG]: %d, Add: %d", SurvivalRate, PerkFactor2);
 				}
@@ -4341,7 +4343,7 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) MassNoRPGAdd2 += (BaseMass * 0.125);
 					if (CoS_EvilDinah) MassNoRPGAdd2 += (BaseMass * 0.125);
 					if (CoS_Tempest) MassNoRPGAdd2 += (BaseMass * 0.125);
-					MassNoRPGAdd2 *= 0.5;
+					MassNoRPGAdd2 *= 0.25;
 				}
 			}
 			
@@ -4592,7 +4594,7 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) DDTNoRPGJumpZ += 0.025;
 					if (CoS_EvilDinah) DDTNoRPGJumpZ += 0.025;
 					if (CoS_Tempest) DDTNoRPGJumpZ += 0.025;
-					DDTNoRPGJumpZ *= 0.5;
+					DDTNoRPGJumpZ *= 0.25;
 					DDTNoRPGJumpZ += 1.0;
 					
 					if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [DDT NoRPG]: %.8f", DDTNoRPGJumpZ);
@@ -5451,6 +5453,7 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) DDTFactor += 0.1;
 					if (CoS_EvilDinah) DDTFactor += 0.1;
 					if (CoS_Tempest) DDTFactor += 0.1;
+					DDTFactor *= 0.5;
 					DDTFactor += 1.00;
 					if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - DDT NoRPG): %.8f", DDTFactor);
 				}
@@ -5683,6 +5686,7 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) DDTFactor -= 0.025;
 					if (CoS_EvilDinah) DDTFactor -= 0.025;
 					if (CoS_Tempest) DDTFactor -= 0.025;
+					DDTFactor *= 0.5;
 					DDTFactor += 1.00;
 					if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - DDT NoRPG): %.8f", DDTFactor);
 				}
@@ -5991,6 +5995,7 @@ class PlayerStatItem : Inventory
 				if (CoS_ForsakenJorg) DDTFactor += 0.025;
 				if (CoS_EvilDinah) DDTFactor += 0.025;
 				if (CoS_Tempest) DDTFactor += 0.025;
+				DDTFactor *= 0.5;
 				DDTFactor += 1.0;
 				Speed *= DDTFactor;
 				if (dydudebug_speedcalcs) Console.Printf("SpeedX [base (DDT No RPGMode)]: %.8f", DDTFactor);
@@ -7140,6 +7145,7 @@ class PlayerDashJump : Inventory
 						if (MiscItem.CoS_ForsakenJorg) DDTFactor += 0.25;
 						if (MiscItem.CoS_EvilDinah) DDTFactor += 0.25;
 						if (MiscItem.CoS_Tempest) DDTFactor += 0.25;
+						DDTFactor *= 0.5;
 						DDTFactor += 1.0;
 						if (dydudebug_dashing) Console.Printf("DDTFactor: %.8f", DDTFactor);
 						DDTFactor = int(floor(DDTFactor));
