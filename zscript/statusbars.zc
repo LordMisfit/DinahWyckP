@@ -1151,6 +1151,40 @@ class DDStatusBarMain : BaseStatusBar
 		}
 	}
 	
+	bool A_CheckDDGame()
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		if (CPlayerPawn.CountInv("IsDynDuchess") || 
+				CPlayerPawn.CountInv("IsAppetite") || 
+				CPlayerPawn.CountInv("IsCarnOfSouls") || 
+				CPlayerPawn.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	int A_CheckActualLevel(int type = 0)
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) 
+			{
+				if (type == 0) Level = MiscItem.PlayerLevel;
+				if (type >= 1) Level = MiscItem.TruePlayerLevel;
+			}
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+	
 	int, int, int, int, int, int DrawFSHUDHPAPShaking(int HPShakeFormX, int HPShakeFormY, int APShakeFormX, int APShakeFormY, int IPShakeFormX, int IPShakeFormY)
 	{
 		DDPlayerPawn CPlayerPawn;
@@ -2049,6 +2083,7 @@ class DDStatusBarMain : BaseStatusBar
 		int dashcharge = CPlayerPawn.CountInv("DashCharge");
 		int dashtics = CPlayerPawn.CountInv("DashTics");
 		dashmaxcharge = CPlayerPawn.CountInv("DashMaxCharge");
+		
 		double dashmeterlength = (dyduhud_basedashmeterlength + (VisiblePlayerLevel * dyduhud_dashmetergrowperlvl));
 		if (dashmeterlength > dyduhud_dashmetermaxlength) dashmeterlength = dyduhud_dashmetermaxlength;
 		int dashbarunits = dash * dashmeterlength;
@@ -4932,12 +4967,25 @@ class DDStatusBarMain : BaseStatusBar
 		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
 		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
 		let PlayerWeapon = MiscItem.weapon;
-		if (MiscItem && exex_expenabled) 
+		if (exex_expenabled) 
 		{
-			VisiblePlayerLevel = MiscItem.PlayerLevel;
-			VisiblePlayerATK = MiscItem.PlayerATK;
-			VisiblePlayerDEF = MiscItem.PlayerDEF;
-			VisiblePlayerSPD = MiscItem.PlayerSPD;
+			if (MiscItem)
+			{
+				VisiblePlayerLevel = MiscItem.PlayerLevel;
+				VisiblePlayerATK = MiscItem.PlayerATK;
+				VisiblePlayerDEF = MiscItem.PlayerDEF;
+				VisiblePlayerSPD = MiscItem.PlayerSPD;
+			}
+		}
+		else
+		{
+			if (MiscItem)
+			{
+				VisiblePlayerLevel = A_CheckActualLevel(0);
+				VisiblePlayerATK = MiscItem.PlayerATK;
+				VisiblePlayerDEF = MiscItem.PlayerDEF;
+				VisiblePlayerSPD = MiscItem.PlayerSPD;
+			}
 		}
 
 		if (screenblocks < 12)
