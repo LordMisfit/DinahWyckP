@@ -471,6 +471,32 @@ mixin class HUDRecovery
 
 mixin class DmgCalc
 {
+	
+	action bool A_CheckDDGameA()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	action int A_GetPlayerLvl()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGameA()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+
 	action int A_GetPunchDamage(int altfire = 0, int shockwave = 0, bool istarget = false)
 	{
 		Weapon weapon;
@@ -481,11 +507,13 @@ mixin class DmgCalc
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
 		int PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl();
 		if (MiscItem) 
 		{
-			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
-			PlayerLevel = MiscItem.TruePlayerLevel;
+			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
+			PlayerLevel = TruePlayerLevel;
 		}
+		
 		string weaponname;
 		weaponname = weapon.GetClassName();
 		string actorname = GetClassName();
@@ -521,6 +549,7 @@ mixin class DmgCalc
 				rngroll = 1;
 			}
 			adddmg *= exex_strmeleescale;
+			if (!exex_expenabled && A_CheckDDGameA()) adddmg *= exex_nrpgmeleescale;
 			if (adddmg < 1) adddmg = 1;
 			damage += adddmg;
 			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Punch/Uppercut (type: %d)]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, altfire, adddmg, rngroll);
@@ -576,10 +605,11 @@ mixin class DmgCalc
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
 		int PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl();
 		if (MiscItem) 
 		{
-			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
-			PlayerLevel = MiscItem.TruePlayerLevel;
+			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
+			PlayerLevel = TruePlayerLevel;
 		}
 
 		string weaponname = weapon.GetClassName();
@@ -614,6 +644,7 @@ mixin class DmgCalc
 				rngroll = 1;
 			}
 			adddmg *= exex_strmeleescale;
+			if (!exex_expenabled && A_CheckDDGameA()) adddmg *= exex_nrpgmeleescale;
 			if (adddmg < 1) adddmg = 1;
 			damage += adddmg;
 			if (debugmelee) Console.Printf("\c[fire]strengthcounter %d / %d [Kick]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
