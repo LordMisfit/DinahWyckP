@@ -5436,11 +5436,13 @@ class PlayerStatItem : Inventory
 			double MapFactor = 1.00;
 			if (!exex_expenabled) 
 			{
-				tempmax = 5.00;
-
-				MapFactor = (1.00 + (totalcompleted * (baseatkfct * 3)) + (totalallkills * (baseatkfct)) + (totalallitems * (baseatkfct)) + (totalallsecrets * (baseatkfct)));
-				if (MapFactor >= tempmax) MapFactor = tempmax;
-				if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
+				if (!A_CheckDDGame())
+				{
+					tempmax = 5.00;
+					MapFactor = (1.00 + (totalcompleted * (baseatkfct * 3)) + (totalallkills * (baseatkfct)) + (totalallitems * (baseatkfct)) + (totalallsecrets * (baseatkfct)));
+					if (MapFactor >= tempmax) MapFactor = tempmax;
+					if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
+				}
 			}
 			
 			// Level
@@ -5667,10 +5669,13 @@ class PlayerStatItem : Inventory
 			double MapFactor = 1.00;
 			if (!exex_expenabled) 
 			{
-				tempmax = 0.20;
-				MapFactor = (1.00 - (totalcompleted * (basedeffct * 3)) - (totalallkills * (basedeffct)) - (totalallitems * (basedeffct)) - (totalallsecrets * (basedeffct)));
-				if (MapFactor <= tempmax) MapFactor = tempmax;
-				if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
+				if (!A_CheckDDGame())
+				{
+					tempmax = 0.20;
+					MapFactor = (1.00 - (totalcompleted * (basedeffct * 3)) - (totalallkills * (basedeffct)) - (totalallitems * (basedeffct)) - (totalallsecrets * (basedeffct)));
+					if (MapFactor <= tempmax) MapFactor = tempmax;
+					if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - Map Completion [NO RPG MODE ONLY]): %.8f", MapFactor);
+				}
 				//Console.Printf("totalallkills: %d, totalallitems: %d, totalallitems: %d, totalcompleted: %d", totalallkills, totalallsecrets, totalallitems, totalcompleted);
 			}
 
@@ -6555,10 +6560,10 @@ class PlayerDashJump : Inventory
 		if (skill >= SKILL_VERY_HARD) baseAddDashLevel = 1.125;
 
 		AddDashLevel = (TruePlayerLevel * (baseAddDashLevel * ADashFactor));
-		if (TruePlayerLevel >= DashLvlTier1Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier1Thresh) * ((baseAddDashLevel * 0.5) * ADashFactor));
-		if (TruePlayerLevel >= DashLvlTier2Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier2Thresh) * ((baseAddDashLevel * 0.25) * ADashFactor));
-		if (TruePlayerLevel >= DashLvlTier3Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier3Thresh) * ((baseAddDashLevel * 0.125) * ADashFactor));
-		if (TruePlayerLevel >= DashLvlTier4Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier4Thresh) * ((baseAddDashLevel * 0.0625) * ADashFactor));
+		if (TruePlayerLevel >= DashLvlTier1Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier1Thresh) * ((baseAddDashLevel * 0.25) * ADashFactor));
+		if (TruePlayerLevel >= DashLvlTier2Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier2Thresh) * ((baseAddDashLevel * 0.0625) * ADashFactor));
+		if (TruePlayerLevel >= DashLvlTier3Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier3Thresh) * ((baseAddDashLevel * 0.015625) * ADashFactor));
+		if (TruePlayerLevel >= DashLvlTier4Thresh) AddDashLevel += ((TruePlayerLevel - DashLvlTier4Thresh) * ((baseAddDashLevel * 0.00390625) * ADashFactor));
 		
 		if (itemtimer <= 2)
 		{
@@ -6601,11 +6606,22 @@ class PlayerDashJump : Inventory
 		int PerkFactor2 = 0;
 		if (!exex_expenabled) 
 		{
-			if (skill <= 0) ExDashCharge2 *= 4.0;
-			if (skill == 1) ExDashCharge2 *= 3.5;
-			if (skill == 2) ExDashCharge2 *= 3.0;
-			if (skill == 3) ExDashCharge2 *= 2.5;
-			if (skill >= 4) ExDashCharge2 *= 2.0;
+			if (A_CheckDDGame())
+			{
+				if (skill <= 0) ExDashCharge2 *= 2.0;
+				if (skill == 1) ExDashCharge2 *= 1.75;
+				if (skill == 2) ExDashCharge2 *= 1.5;
+				if (skill == 3) ExDashCharge2 *= 1.25;
+				if (skill >= 4) ExDashCharge2 *= 1.0;
+			}
+			else
+			{
+				if (skill <= 0) ExDashCharge2 *= 3.0;
+				if (skill == 1) ExDashCharge2 *= 2.625;
+				if (skill == 2) ExDashCharge2 *= 2.25;
+				if (skill == 3) ExDashCharge2 *= 1.875;
+				if (skill >= 4) ExDashCharge2 *= 1.5;
+			}
 			AddDashLevel2 = 0;
 			if (MiscItem)
 			{
@@ -6614,6 +6630,14 @@ class PlayerDashJump : Inventory
 				AddDashLevel2 += (MiscItem.totalallitems * 0.3334);
 				AddDashLevel2 += (MiscItem.totalallsecrets * 0.3334);
 				if (berserked) AddDashLevel2 *= 1.125;
+				if (A_CheckDDGame())
+				{
+					if (skill <= 0) AddDashLevel2 *= 1.5;
+					if (skill == 1) AddDashLevel2 *= 1.25;
+					if (skill == 2) AddDashLevel2 *= 1.0;
+					if (skill == 3) AddDashLevel2 *= 0.75;
+					if (skill >= 4) AddDashLevel2 *= 0.5;
+				}
 			}
 
 			// DD Trilogy NO-Rpg Bonuses
@@ -6640,7 +6664,11 @@ class PlayerDashJump : Inventory
 					if (MiscItem.CoS_ForsakenJorg) PerkFactor2 += 25;
 					if (MiscItem.CoS_EvilDinah) PerkFactor2 += 25;
 					if (MiscItem.CoS_Tempest) PerkFactor2 += 25;
-					PerkFactor2 *= 0.5;
+					if (skill <= 0) PerkFactor2 *= 1.0;
+					if (skill == 1) PerkFactor2 *= 0.834;
+					if (skill == 2) PerkFactor2 *= 0.667;
+					if (skill == 3) PerkFactor2 *= 0.5;
+					if (skill >= 4) PerkFactor2 *= 0.334;
 				}
 			}
 		}
