@@ -2327,7 +2327,6 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				
-				int PlayerLevel = CountInv("PlayerLevel");
 				int tic = 3;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 4)) tic -= 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 10)) tic -= 1;
@@ -2356,7 +2355,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				if (A_CheckMeleeDestroyProj(0) > 0)
 				{
-					if (random(1,8) <= (1 + (PlayerLevel * 0.04))) 
+					if (random(1,8) <= (1 + (TruePlayerLevel * 0.04))) 
 					{
 						A_MeleeShieldPiece("ShieldPartMeleeReflect",33,16);
 						A_MeleeShieldPiece("ShieldPartMeleeReflect",33,48);
@@ -3005,11 +3004,12 @@ class FistPuff : EEPuff
 	
 	void A_SetPainForcedPain(int basechance = 44, double playerlvlfactor = 0.44)
 	{
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 		user_randompain = basechance;
 		if (target)
 		{
 			let MiscItem = PlayerStatItem(target.FindInventory("PlayerStatItem"));
-			if (MiscItem) user_randompain += (MiscItem.TruePlayerLevel * playerlvlfactor);
+			if (MiscItem) user_randompain += (TruePlayerLevel * playerlvlfactor);
 		}
 		if (dydudebug_attackstuff) Console.Printf("ForcePain chance: %d / 100", user_randompain);
 		if (random(1,100) <= user_randompain) { bFORCEPAIN = true; }
@@ -3206,11 +3206,12 @@ class KickPuff : EEPuff
 	
 	void A_SetPainForcedPain(int basechance = 16, double playerlvlfactor = 0.16)
 	{
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 		user_randompain = basechance;
 		if (target)
 		{
 			let MiscItem = PlayerStatItem(target.FindInventory("PlayerStatItem"));
-			if (MiscItem) user_randompain += (MiscItem.TruePlayerLevel * playerlvlfactor);
+			if (MiscItem) user_randompain += (TruePlayerLevel * playerlvlfactor);
 		}
 		if (dydudebug_attackstuff) Console.Printf("ForcePain chance: %d / 100", user_randompain);
 		if (random(1,100) <= user_randompain) { bFORCEPAIN = true; }
@@ -3711,6 +3712,7 @@ class CricketBat : DinahWeapon
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		bool berserked = false;
 		if (A_CheckBerserk()) berserked = true;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		A_SetInventory("IsInBatGuardFrame",1);
 
 		double lvlfactor = 0.125;
@@ -3720,7 +3722,7 @@ class CricketBat : DinahWeapon
 		if (type == 1) vispart = "CricketShieldPart";
 		else
 		{
-			if (MiscItem && random(1,64) <= (20 + ((MiscItem.TruePlayerLevel * 0.125)))) vispart = "CricketShieldPart";
+			if (MiscItem && random(1,64) <= (20 + ((TruePlayerLevel * 0.125)))) vispart = "CricketShieldPart";
 			else if (random(1,16) <= 5) vispart = "CricketShieldPart";
 		}
 
@@ -3789,6 +3791,7 @@ class CricketBat : DinahWeapon
 	{
 		//Console.Printf("type: %d, dist: %.8f, spinning: %d [gametic: %d]", type, dist, spinning, gametic);
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		bool berserked = false;
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) berserked = true;
 
@@ -3799,7 +3802,7 @@ class CricketBat : DinahWeapon
 		{
 			vispart = "CricketSwingShortNoReflect";
 			if (berserked) vispart = "CricketSwingShortNoReflectBerserk";
-			if (MiscItem && random(1,64) <= (20 + ((MiscItem.TruePlayerLevel * 0.125)))) 
+			if (MiscItem && random(1,64) <= (20 + ((TruePlayerLevel * 0.125)))) 
 			{
 				vispart = "CricketSwingShieldShort";
 				if (berserked) vispart = "CricketSwingShieldShortBerserk";
@@ -3814,7 +3817,7 @@ class CricketBat : DinahWeapon
 		{
 			vispart = "CricketSwingPartNoReflect";
 			if (berserked) vispart = "CricketSwingPartNoReflectBerserk";
-			if (MiscItem && random(1,64) <= (20 + ((MiscItem.TruePlayerLevel * 0.125)))) 
+			if (MiscItem && random(1,64) <= (20 + ((TruePlayerLevel * 0.125)))) 
 			{
 				vispart = "CricketSwingShieldPart";
 				if (berserked) vispart = "CricketSwingShieldPartBerserk";
@@ -3982,12 +3985,12 @@ class CricketBat : DinahWeapon
 		int PlayerSTR;
 		int PlayerLevel;
 		int strengthcounter;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
 		if (MiscItem) 
 		{
-			PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
-			PlayerLevel = MiscItem.TruePlayerLevel;
+			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
+			PlayerLevel = TruePlayerLevel;
 		}
-		int TruePlayerLevel = A_GetMeleeSPDLvl();
 
 		double LevelInc;
 		if (Skill <= 0) LevelInc = 9;
@@ -4050,7 +4053,7 @@ class CricketBat : DinahWeapon
 		{
 			int adddmg;
 			int rngroll;
-			if (random(1,128) <= (127 - (PlayerLevel * 0.025)))
+			if (random(1,128) <= (127 - (TruePlayerLevel * 0.025)))
 			{
 				if (invoker.IPAttackCheck) adddmg = randompick(2,3,4,5,5);
 														else adddmg = randompick(1,2,2,2,3,3);
@@ -4073,11 +4076,11 @@ class CricketBat : DinahWeapon
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 		{
 			dmg *= 10;
-			if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0225) + (MiscItem.TruePlayerATK * 0.0225));
+			if (MiscItem) dmg *= (1.0 + (TruePlayerLevel * 0.0225) + (MiscItem.TruePlayerATK * 0.0225));
 		}
 		else
 		{
-			if (MiscItem) dmg *= (1.0 + (MiscItem.TruePlayerLevel * 0.0075) + (MiscItem.TruePlayerATK * 0.0075));
+			if (MiscItem) dmg *= (1.0 + (TruePlayerLevel * 0.0075) + (MiscItem.TruePlayerATK * 0.0075));
 		}
 		if (type == 1) // type 1 = Spin attack
 		{
@@ -4195,8 +4198,8 @@ class CricketBat : DinahWeapon
 				A_BatGuardDashOff();
 				if (exex_cricketbatcanspinattack)
 				{
-					if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-					if (PlayerLevel >= exex_cricketspinlvlrequirement)
+					int TruePlayerLevel = A_GetMeleeSPDLvl();
+					if (TruePlayerLevel >= exex_cricketspinlvlrequirement)
 					{
 						if (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT)
 						{
@@ -4219,8 +4222,8 @@ class CricketBat : DinahWeapon
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-				if (PlayerLevel >= (exex_cricketspinlvlrequirement * 2))
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				if (TruePlayerLevel >= (exex_cricketspinlvlrequirement * 2))
 				{
 					A_SetTics(0);
 				}
@@ -4254,8 +4257,8 @@ class CricketBat : DinahWeapon
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-				if (PlayerLevel >= (exex_cricketspinlvlrequirement * 3))
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				if (TruePlayerLevel >= (exex_cricketspinlvlrequirement * 3))
 				{
 					A_SetTics(0);
 				}
@@ -4274,7 +4277,7 @@ class CricketBat : DinahWeapon
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
 
 				string pufftype = "BatPuff";
 				int dmg = A_BatDamageSet(0);
@@ -4286,20 +4289,20 @@ class CricketBat : DinahWeapon
 				double origangle = angle;
 				int maxshots = 1;
 				double levlfactor = 0.25;
-				if (PlayerLevel >= 4) levlfactor = 0.3125;
-				if (PlayerLevel >= 16) levlfactor = 0.375;
-				if (PlayerLevel >= 40) levlfactor = 0.5;
-				if (PlayerLevel >= 72) levlfactor = 0.75;
-				if (PlayerLevel >= 112) levlfactor = 1.25;
+				if (TruePlayerLevel >= 4) levlfactor = 0.3125;
+				if (TruePlayerLevel >= 16) levlfactor = 0.375;
+				if (TruePlayerLevel >= 40) levlfactor = 0.5;
+				if (TruePlayerLevel >= 72) levlfactor = 0.75;
+				if (TruePlayerLevel >= 112) levlfactor = 1.25;
 				levlfactor *= frandom(0.95,1.05);
 				if (invoker.IPAttackCheck) // >.> <.<
 				{
 					pufftype = "BatPuffIP";
-					if (random(1,128) <= (1 + (PlayerLevel * levlfactor)))
+					if (random(1,128) <= (1 + (TruePlayerLevel * levlfactor)))
 					{
-						if (random(1,128) <= (1 + (PlayerLevel * (levlfactor * 0.25))))
+						if (random(1,128) <= (1 + (TruePlayerLevel * (levlfactor * 0.25))))
 						{
-							if (random(1,128) <= (1 + (PlayerLevel * (levlfactor * 0.0625))))
+							if (random(1,128) <= (1 + (TruePlayerLevel * (levlfactor * 0.0625))))
 							{
 								shotangle = -67.5;
 								shotangleend = 67.5;
@@ -4355,12 +4358,11 @@ class CricketBat : DinahWeapon
 			}
 			DBID H 1 
 			{
-				int PlayerLevel;
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-				if (PlayerLevel >= (exex_cricketspinlvlrequirement * 3))
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				if (TruePlayerLevel >= (exex_cricketspinlvlrequirement * 3))
 				{
 					A_SetTics(0); 
 				}
@@ -4387,12 +4389,11 @@ class CricketBat : DinahWeapon
 			}
 			DBID C 2
 			{
-				int PlayerLevel;
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-				if (PlayerLevel >= (exex_cricketspinlvlrequirement * 2))
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				if (TruePlayerLevel >= (exex_cricketspinlvlrequirement * 2))
 				{
 					if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) 
 					{
@@ -4439,12 +4440,11 @@ class CricketBat : DinahWeapon
 			}
 			DBID C 1
 			{
-				int PlayerLevel;
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-				if (PlayerLevel >= (exex_cricketspinlvlrequirement * 2))
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				if (TruePlayerLevel >= (exex_cricketspinlvlrequirement * 2))
 				{
 					A_SetTics(0);
 				}
@@ -4474,12 +4474,11 @@ class CricketBat : DinahWeapon
 			}
 			DBID F 1 
 			{
-				int PlayerLevel;
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-				if (PlayerLevel >= (exex_cricketspinlvlrequirement * 3))
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				if (TruePlayerLevel >= (exex_cricketspinlvlrequirement * 3))
 				{
 					A_SetTics(0);
 				}
@@ -4572,12 +4571,11 @@ class CricketBat : DinahWeapon
 			}
 			DBID H 1 
 			{
-				int PlayerLevel;
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-				if (PlayerLevel >= (exex_cricketspinlvlrequirement * 3))
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				if (TruePlayerLevel >= (exex_cricketspinlvlrequirement * 3))
 				{
 					A_SetTics(0);
 				}
@@ -4601,12 +4599,11 @@ class CricketBat : DinahWeapon
 			}
 			DBID C 2 
 			{
-				int PlayerLevel;
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 				let globalvars = DDGlobalVariables.Get();
-				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-				if (PlayerLevel >= (exex_cricketspinlvlrequirement * 2))
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				if (TruePlayerLevel >= (exex_cricketspinlvlrequirement * 2))
 				{
 					A_SetTics(0);
 				}
@@ -4713,13 +4710,16 @@ class CricketBat : DinahWeapon
 				string pufftypenosnd = "BatSpinPuffNoSound";
 				A_SetInventory("DoingSpinAttack",1);
 				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-				int TruePlayerLevel = A_GetMeleeSPDLvl();
 				int dmg = A_BatDamageSet(1);
 				int range = 112 + (random(0,2) * 8);
 				actor BombShots;
 				EEProjectile IPCompat;
 				double rangemul = 1.0;
-				if (MiscItem && TruePlayerLevel >= exex_cricketspinlvlrequirement) { rangemul = (1.0 + ((TruePlayerLevel - exex_cricketspinlvlrequirement) * 0.0078125)); }
+				int TruePlayerLevel = A_GetMeleeSPDLvl();
+				if (TruePlayerLevel >= exex_cricketspinlvlrequirement) 
+				{
+					rangemul = (1.0 + ((TruePlayerLevel - exex_cricketspinlvlrequirement) * 0.0078125));
+				}
 				if (rangemul >= 1.5) rangemul = 1.5;
 				range *= rangemul;
 				if (invoker.IPAttackCheck)
@@ -4762,11 +4762,10 @@ class CricketBat : DinahWeapon
 				if (invoker.spintimes >= maxspintimes)
 				{
 					invoker.spintimes = 0;
-					int PlayerLevel;
 					int buttons = GetPlayerInput(INPUT_BUTTONS);
 					let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
-					if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
-					if (PlayerLevel >= exex_cricketspinlvlrequirement)
+					int TruePlayerLevel = A_GetMeleeSPDLvl();
+					if (TruePlayerLevel >= exex_cricketspinlvlrequirement) 
 					{
 						if (buttons & BT_MOVELEFT && buttons & BT_MOVERIGHT && buttons & BT_ATTACK)
 						{
@@ -5330,6 +5329,7 @@ class MalletShot : EEProjectile
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 		if (target && target.GetClassName() == "DinahPlayer")
 		{
 			minbouncelvl = 8;
@@ -5340,7 +5340,6 @@ class MalletShot : EEProjectile
 			if (IPAttack) bouncelvlfactor = (1.0 / (minbouncelvl * frandompick(1.25,1.25,1.25,1.375,1.375,1.5)));
 
 			let MiscItem = PlayerStatItem(target.FindInventory("PlayerStatItem"));
-			int TruePlayerLevel = A_GetPlayerLvlProj();
 			
 			if (MiscItem)
 			{
@@ -5413,7 +5412,7 @@ class MalletShot : EEProjectile
 				basefact *= randompick(3,4);
 			}
 			let MiscItem = PlayerStatItem(target.player.mo.FindInventory("PlayerStatItem"));
-			if (MiscItem) user_randompain += (MiscItem.TruePlayerLevel * basefact);
+			if (MiscItem) user_randompain += (TruePlayerLevel * basefact);
 		}
 		if (random(1,100) <= user_randompain) { bFORCEPAIN = true; }
 	}
@@ -5544,6 +5543,7 @@ class MalletShotBerserk : EEFastProjectile
 	override void PostBeginPlay()
 	{
 		super.PostBeginPlay();
+		int TruePlayerLevel = A_GetPlayerLvlProj();
 		if (target && target.GetClassName() == "DinahPlayer")
 		{
 			minbouncelvl = 8;
@@ -5608,7 +5608,7 @@ class MalletShotBerserk : EEFastProjectile
 		{
 			if (IPAttack) user_randompain *= randompick(6,8);
 			let MiscItem = PlayerStatItem(target.player.mo.FindInventory("PlayerStatItem"));
-			if (MiscItem) user_randompain += (MiscItem.TruePlayerLevel * 0.16);
+			if (MiscItem) user_randompain += (TruePlayerLevel * 0.16);
 		}
 		if (random(1,100) <= user_randompain) { bFORCEPAIN = true; }
 	}
@@ -5811,7 +5811,8 @@ class Blunderaxe : DinahWeapon
 	action bool A_BlunderCheckComboLevel()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
-		if (invoker.chopcombo && MiscItem && MiscItem.TruePlayerLevel >= exex_axequickshotlvlrequirement) return true;
+		int TruePlayerLevel = A_GetMeleeSPDLvl();
+		if (invoker.chopcombo && TruePlayerLevel >= exex_axequickshotlvlrequirement) return true;
 		return false;
 	}
 	
