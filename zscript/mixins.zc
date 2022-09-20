@@ -1,10 +1,41 @@
 mixin class StunItems
 {
 	bool dideffect;
+	
+	action bool A_CheckDDGameA()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	action int A_GetPlayerLvl(int type = 0)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) 
+			{
+				if (type == 0) Level = MiscItem.PlayerLevel;
+				if (type >= 1) Level = MiscItem.TruePlayerLevel;
+			}
+			else
+			{
+				if (A_CheckDDGameA()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+	
 	void A_StunInduce(int basestun = 5, double lvlfactor = 0.0667, bool checkberserk = true, double bersmult = 1.5, bool destroyitem = false)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = A_GetPlayerLvl(1);
 		if (!dideffect)
 		{
 			if (owner)
@@ -21,21 +52,21 @@ mixin class StunItems
 					if (owner.bBOSS)
 					{
 						bool reducestun = false;
-						if (MiscItem.TruePlayerLevel <= 60 && random(1,16) <= 1) reducestun = true;
-						else if (MiscItem.TruePlayerLevel <= random(37,38) && random(1,16) <= 5) reducestun = true;
-						else if (MiscItem.TruePlayerLevel <= 15 && random(1,16) <= 9) reducestun = true;
+						if (TruePlayerLevel <= 60 && random(1,16) <= 1) reducestun = true;
+						else if (TruePlayerLevel <= random(37,38) && random(1,16) <= 5) reducestun = true;
+						else if (TruePlayerLevel <= 15 && random(1,16) <= 9) reducestun = true;
 						
 						if (reducestun) 
 						{
 							if (DDOrigBoss(owner))
 							{
-								if (MiscItem.TruePlayerLevel <= 60) basestun *= frandompick(0.2,0.25,0.25,0.25,0.2857);
-								else if (MiscItem.TruePlayerLevel <= 30) basestun *= frandompick(0.1,0.125,0.125,0.125,0.1428);
+								if (TruePlayerLevel <= 60) basestun *= frandompick(0.2,0.25,0.25,0.25,0.2857);
+								else if (TruePlayerLevel <= 30) basestun *= frandompick(0.1,0.125,0.125,0.125,0.1428);
 							}
 							else
 							{
-								if (MiscItem.TruePlayerLevel <= 60) basestun *= frandompick(0.334,0.5,0.5,0.5,0.667);
-								else if (MiscItem.TruePlayerLevel <= 30) basestun *= frandompick(0.167,0.25,0.25,0.25,0.334);
+								if (TruePlayerLevel <= 60) basestun *= frandompick(0.334,0.5,0.5,0.5,0.667);
+								else if (TruePlayerLevel <= 30) basestun *= frandompick(0.167,0.25,0.25,0.25,0.334);
 							}
 							if (dydudebug_punchkickstundisplays) Console.Printf("[Boss Reduce Stun] basestun: %d ", basestun);
 						}
@@ -43,27 +74,27 @@ mixin class StunItems
 					else
 					{
 						bool reducestun = false;
-						if (MiscItem.TruePlayerLevel <= 60 && random(1,32) <= 1) reducestun = true;
-						else if (MiscItem.TruePlayerLevel <= random(37,38) && random(1,32) <= 5) reducestun = true;
-						else if (MiscItem.TruePlayerLevel <= 15 && random(1,32) <= 9) reducestun = true;
+						if (TruePlayerLevel <= 60 && random(1,32) <= 1) reducestun = true;
+						else if (TruePlayerLevel <= random(37,38) && random(1,32) <= 5) reducestun = true;
+						else if (TruePlayerLevel <= 15 && random(1,32) <= 9) reducestun = true;
 						
 						if (reducestun) 
 						{
 							if (EvilDinah(owner) || EvilDinahEE(owner))
 							{
-								if (MiscItem.TruePlayerLevel <= 60) basestun *= frandompick(0.2,0.25,0.25,0.25,0.2857);
-								else if (MiscItem.TruePlayerLevel <= 30) basestun *= frandompick(0.1,0.125,0.125,0.125,0.1428);
+								if (TruePlayerLevel <= 60) basestun *= frandompick(0.2,0.25,0.25,0.25,0.2857);
+								else if (TruePlayerLevel <= 30) basestun *= frandompick(0.1,0.125,0.125,0.125,0.1428);
 							}
 							else
 							{
-								if (MiscItem.TruePlayerLevel <= 60) basestun *= frandompick(0.5,0.75,0.75,0.75,1.0);
-								else if (MiscItem.TruePlayerLevel <= 30) basestun *= frandompick(0.25,0.375,0.375,0.375,0.5);
+								if (TruePlayerLevel <= 60) basestun *= frandompick(0.5,0.75,0.75,0.75,1.0);
+								else if (TruePlayerLevel <= 30) basestun *= frandompick(0.25,0.375,0.375,0.375,0.5);
 							}
 							if (dydudebug_punchkickstundisplays) Console.Printf("[Monster Reduce Stun] basestun: %d ", basestun);
 						}
 					}
-		
-					if (MiscItem) basestun += (MiscItem.TruePlayerLevel * lvlfactor);
+					
+					if (MiscItem) basestun += (TruePlayerLevel * lvlfactor);
 					if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD"))
 					{
 						basestun *= bersmult;
@@ -73,8 +104,9 @@ mixin class StunItems
 					if (skill == 2) basestun *= frandom(0.975,1.025);
 					if (skill == 3) basestun *= frandom(0.75,0.875);
 					if (skill >= 4) basestun *= frandom(0.625,0.75);
-					if (basestun < 1) basestun = 1;
+					if (A_CheckDDGameA()) basestun *= 0.5;
 					if (Knucklehead(owner)) basestun *= frandompick(2,2.5,3.25,4.125,5); // Knuckleheads will be stunned much longer
+					if (basestun < 1) basestun = 1;
 					int tic = owner.tics + basestun;
 					if (dydudebug_punchkickstundisplays) Console.Printf("tics: %d (%d)", owner.tics, tic);
 					owner.A_SetTics(tic);
@@ -480,7 +512,7 @@ mixin class DmgCalc
 		return false;
 	}
 	
-	action int A_GetPlayerLvl()
+	action int A_GetPlayerLvl(int type = 0)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
@@ -488,7 +520,11 @@ mixin class DmgCalc
 		int Level = 0;
 		if (MiscItem)
 		{
-			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			if (exex_expenabled) 
+			{
+				if (type == 0) Level = MiscItem.PlayerLevel;
+				if (type >= 1) Level = MiscItem.TruePlayerLevel;
+			}
 			else
 			{
 				if (A_CheckDDGameA()) Level = MiscItem.TotalNRPGLvlPts;
@@ -507,7 +543,7 @@ mixin class DmgCalc
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
 		int PlayerLevel;
-		int TruePlayerLevel = A_GetPlayerLvl();
+		int TruePlayerLevel = A_GetPlayerLvl(1);
 		if (MiscItem) 
 		{
 			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
@@ -605,7 +641,7 @@ mixin class DmgCalc
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
 		int PlayerLevel;
-		int TruePlayerLevel = A_GetPlayerLvl();
+		int TruePlayerLevel = A_GetPlayerLvl(1);
 		if (MiscItem) 
 		{
 			PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
@@ -1260,6 +1296,27 @@ mixin class MonsterCollider
 		return false;
 	}
 	
+	int A_GetPlayerLvl2(int type = 0)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) 
+			{
+				if (type == 0) Level = MiscItem.PlayerLevel;
+				if (type >= 1) Level = MiscItem.TruePlayerLevel;
+			}
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+	
 	void CCCardDeathCheck()
 	{
 		state CCState = FindState("DeathCC");
@@ -1599,8 +1656,7 @@ mixin class MonsterCollider
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl2(1);
 		int predmginr = damage;
 		// (Partial) Defense Ignoring Attacks
 		double prevDamageFactor;
@@ -2465,8 +2521,7 @@ mixin class MonsterCollider
 		}
 
 		int CritRoll;
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl2(1);
 		if (FoundPlayer) 
 		{
 			if (FoundPlayer.CountInv("DealCriticalHit")) 
@@ -2860,8 +2915,8 @@ mixin class MonsterCollider
 			int basepoke = 64;
 			if (MiscItem) 
 			{
-				if (MiscItem.TruePlayerLevel >= 100) basepoke *= 0.375;
-				else if (MiscItem.TruePlayerLevel >= 40) basepoke *= 0.75;
+				if (TruePlayerLevel >= 100) basepoke *= 0.375;
+				else if (TruePlayerLevel >= 40) basepoke *= 0.75;
 			}
 			if (PikePuffIP(inflictor) || PikePuffIP(source)) basepoke *= 0.125;
 			if (bBOSS || EEUniqueBoss(self)) basepoke *= 4;
@@ -2909,7 +2964,7 @@ mixin class MonsterCollider
 						if (MiscItem) 
 						{
 							phealmax = MiscItem.MaxHealthTrue;
-							phealmax *= (1.0 + (MiscItem.TruePlayerLevel * 0.005));
+							phealmax *= (1.0 + (TruePlayerLevel * 0.005));
 							if (phealmax > MiscItem.MaxHealthTrue * 3.0) phealmax = (MiscItem.MaxHealthTrue * 3.0);
 						}
 						if ((prehealth < phealmax) && random(1,16) <= random(7,9))
@@ -3132,8 +3187,7 @@ mixin class MonsterCollider
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl2(1);
 
 		BossEyeNew actcheck;
 		actcheck = BossEyeNew(self);
@@ -3266,12 +3320,40 @@ mixin class EvolveMonsters
 
 mixin class IPCostCheck
 {
+	bool A_CheckDDGameB()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	int A_GetPlayerLvl2(int type = 0)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) 
+			{
+				if (type == 0) Level = MiscItem.PlayerLevel;
+				if (type >= 1) Level = MiscItem.TruePlayerLevel;
+			}
+			else
+			{
+				if (A_CheckDDGameB()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+
 	double A_GetIPCost(int ipid = 0, bool sigiluse = false, double sigilcostbase = 3.00)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-		int TruePlayerLevel = 0;
-		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvl2(1);
 		double cost;
 		int IPUseType;
 		

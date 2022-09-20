@@ -1350,7 +1350,8 @@ class EEProjectile : EEBaseZSC abstract
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
-		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
 		double radius;
 		double radiuserror;
 		int debugmelee = dydudebug_meleeinformation;
@@ -1444,7 +1445,8 @@ class EEProjectile : EEBaseZSC abstract
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
-		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
 		int intensity;
 		int debugmelee = dydudebug_meleeinformation;
 
@@ -1523,7 +1525,8 @@ class EEProjectile : EEBaseZSC abstract
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
-		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
 		int duration;
 		int debugmelee = dydudebug_meleeinformation;
 
@@ -1601,7 +1604,8 @@ class EEProjectile : EEBaseZSC abstract
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerSTR;
-		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + MiscItem.TruePlayerLevel;
+		int TruePlayerLevel = A_GetPlayerLvlProj();
+		if (MiscItem) PlayerSTR = MiscItem.TruePlayerATK + TruePlayerLevel;
 		int tremrad;
 		int debugmelee = dydudebug_meleeinformation;
 
@@ -3144,6 +3148,24 @@ class EECreature : EEBaseZSC abstract
 		super.Tick();
 	}
 	*/
+	
+	int A_GetPlayerLevel()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+	
 	void A_CheckTag()
 	{
 		let globalvars = DDGlobalVariables.Get();
@@ -3198,7 +3220,8 @@ class EECreature : EEBaseZSC abstract
 			{
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-				if (MiscItem) CurrLevel = MiscItem.TruePlayerLevel;
+				int TruePlayerLevel = A_GetPlayerLevel();
+				CurrLevel = TruePlayerLevel;
 			}
 			damage += (CurrLevel * ((basedmg * factor1) * baserand));
 			if (CurrLevel >= lvlthreshold1) damage += ((basedmg * factor2) * baserand) + (CountInv("MonsterLevel") * ((basedmg * (factor1 * factor2)) * baserand));
@@ -5514,6 +5537,24 @@ class PlayerWhistle : EEBaseZSC
 		Radius 1;
 		Tag "Whistling";
 	}
+	
+	int A_GetPlayerLvlProj()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+	
 	States
 	{
 		Spawn:
@@ -5527,29 +5568,53 @@ class PlayerWhistle : EEBaseZSC
 					let MiscItem = PlayerStatItem(target.player.mo.FindInventory("PlayerStatItem"));
 					if (MiscItem)
 					{
-						int TruePlayerLevel = MiscItem.TruePlayerLevel;
-						if (TruePlayerLevel >= 25) dmg = random(2,4);
-						if (TruePlayerLevel >= 25) dmg += random(0,1);
-						if (TruePlayerLevel >= 50) dmg = random(3,4);
-						if (TruePlayerLevel >= 50) dmg += random(0,2);
-						if (TruePlayerLevel >= 75) dmg = random(4,5);
-						if (TruePlayerLevel >= 75) dmg += random(0,1);
-						if (TruePlayerLevel >= 100) dmg = random(5,5);
-						if (TruePlayerLevel >= 100) dmg += random(0,2);
-						if (TruePlayerLevel >= 125) dmg = random(6,7);
-						if (TruePlayerLevel >= 125) dmg += random(0,1);
-						if (TruePlayerLevel >= 150) dmg = random(7,7);
-						if (TruePlayerLevel >= 150) dmg += random(0,2);
-						if (TruePlayerLevel >= 175) dmg = random(8,9);
-						if (TruePlayerLevel >= 175) dmg += random(0,1);
-						if (TruePlayerLevel >= 200) dmg = random(9,9);
-						if (TruePlayerLevel >= 200) dmg += random(0,2);
+						int TruePlayerLevel = A_GetPlayerLvlProj();
+						if (TruePlayerLevel >= 25) 
+						{
+							dmg = random(2,4);
+							dmg += random(0,1);
+						}
+						if (TruePlayerLevel >= 50) 
+						{
+							dmg = random(3,4);
+							dmg += random(0,2);
+						}
+						if (TruePlayerLevel >= 75) 
+						{
+							dmg = random(4,5);
+							dmg += random(0,1);
+						}
+						if (TruePlayerLevel >= 100) 
+						{
+							dmg = random(5,6);
+							dmg += random(0,2);
+						}
+						if (TruePlayerLevel >= 125) 
+						{
+							dmg = random(6,7);
+							dmg += random(0,1);
+						}
+						if (TruePlayerLevel >= 150) 
+						{
+							dmg = random(7,7);
+							dmg += random(0,2);
+						}
+						if (TruePlayerLevel >= 175) 
+						{
+							dmg = random(8,9);
+							dmg += random(0,1);
+						}
+						if (TruePlayerLevel >= 200) 
+						{
+							dmg = random(9,10);
+							dmg += random(0,2);
+						}
 						
-						dmg += (TruePlayerLevel * frandompick(0.1875,0.25,0.3125));
-						if (TruePlayerLevel >= 50) dmg += (TruePlayerLevel * frandompick(0.09375,0.125,0.15625));
-						if (TruePlayerLevel >= 100) dmg += (TruePlayerLevel * frandompick(0.09375,0.125,0.15625));
-						if (TruePlayerLevel >= 150) dmg += (TruePlayerLevel * frandompick(0.09375,0.125,0.15625));
-						if (TruePlayerLevel >= 200) dmg += (TruePlayerLevel * frandompick(0.09375,0.125,0.15625));
+						dmg += (TruePlayerLevel * frandompick(0.09375,0.125,0.15625));
+						if (TruePlayerLevel >= 50) dmg += (TruePlayerLevel * frandompick(0.046875,0.0625,0.078125));
+						if (TruePlayerLevel >= 100) dmg += (TruePlayerLevel * frandompick(0.046875,0.0625,0.078125));
+						if (TruePlayerLevel >= 150) dmg += (TruePlayerLevel * frandompick(0.0234375,0.03125,0.0390625));
+						if (TruePlayerLevel >= 200) dmg += (TruePlayerLevel * frandompick(0.0234375,0.03125,0.0390625));
 						
 						range = 64;
 						range += (TruePlayerLevel * frandompick(0.75,1,1.25));

@@ -4222,28 +4222,33 @@ class PlayerStatItem : Inventory
 			}
 			
 			PerkFactor = 0;
-			if (KnightGownTier == 1) 
+			if (KnightGownTier > 0)
 			{
-				if (owner.CountInv("KnightGownIP2Buff")) PerkFactor += randompick(468,469,469,469);
-																						else PerkFactor += random(312,313);
+				if (KnightGownTier == 1) 
+				{
+					if (owner.CountInv("KnightGownIP2Buff")) PerkFactor += randompick(468,469,469,469);
+																							else PerkFactor += random(312,313);
+				}
+				if (KnightGownTier == 2)
+				{
+					if (owner.CountInv("KnightGownIP2Buff")) PerkFactor += random(937,938);
+																							else PerkFactor += 625;
+				}
+				if (KnightGownTier == 3) 
+				{
+					if (owner.CountInv("KnightGownIP3Buff")) PerkFactor += 1875;
+																							else PerkFactor += 1250;
+				}
+				if (KnightGownTier == 4) 
+				{
+					if (owner.CountInv("KnightGownIP4Buff")) PerkFactor += 3750;
+																							else PerkFactor += 2500;
+				}
+				PerkFactor *= exex_armorencumbrance;
+				if (A_CheckDDGame()) PerkFactor *= 1.5;
+				SurvivalRate += (PerkFactor * (1.0 - playeractor.PlayerArmorIgnoreFactor));
+				if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Armor]: %d", SurvivalRate);
 			}
-			if (KnightGownTier == 2)
-			{
-				if (owner.CountInv("KnightGownIP2Buff")) PerkFactor += random(937,938);
-																						else PerkFactor += 625;
-			}
-			if (KnightGownTier == 3) 
-			{
-				if (owner.CountInv("KnightGownIP3Buff")) PerkFactor += 1875;
-																						else PerkFactor += 1250;
-			}
-			if (KnightGownTier == 4) 
-			{
-				if (owner.CountInv("KnightGownIP4Buff")) PerkFactor += 3750;
-																						else PerkFactor += 2500;
-			}
-			SurvivalRate += (PerkFactor * (1.0 - playeractor.PlayerArmorIgnoreFactor));
-			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Armor]: %d", SurvivalRate);
 
 			if (berserked) SurvivalRate += 500;
 			if (Owner.CountInv("PowerGuard")) 
@@ -4533,6 +4538,7 @@ class PlayerStatItem : Inventory
 			double IPBaseMulti = 0.0004;
 			double NonIPBase = 0.016;
 			double NonIPBaseMulti = 0.00004;
+			bool IPMode = false;
 			if (exex_armoritemdifficulty == 1)
 			{
 				IPBase *= 2;
@@ -4554,64 +4560,54 @@ class PlayerStatItem : Inventory
 				NonIPBase *= 2.5;
 				NonIPBaseMulti *= 2.5;
 			}
-			if (KnightGownTier == 1)
+			if (KnightGownTier > 0)
 			{
-				if (owner.CountInv("KnightGownIP1Buff"))
+				if (KnightGownTier == 1)
 				{
-					MassInc = floor(ArmorAmt * IPBase); // 40
-					MassMulti = (1.0 + (ArmorAmt * IPBaseMulti)); // 1.1
+					if (owner.CountInv("KnightGownIP1Buff")) IPMode = true;
+																							else IPMode = false;
 				}
-				else
+				if (KnightGownTier == 2)
 				{
-					MassInc = floor(ArmorAmt * NonIPBase); // 4
-					MassMulti = (1.0 + (ArmorAmt * NonIPBaseMulti)); // 1.01
+					if (owner.CountInv("KnightGownIP2Buff")) IPMode = true;
+																							else IPMode = false;
 				}
-			}
-			if (KnightGownTier == 2)
-			{
-				if (owner.CountInv("KnightGownIP2Buff"))
+				if (KnightGownTier == 3)
+				{
+					if (owner.CountInv("KnightGownIP3Buff")) IPMode = true;
+																							else IPMode = false;
+				}
+				if (KnightGownTier == 4)
+				{
+					if (owner.CountInv("KnightGownIP4Buff")) IPMode = true;
+																							else IPMode = false;
+				}
+				
+				if (IPMode)
 				{
 					MassInc = floor(ArmorAmt * IPBase); // 80
-					MassMulti = (1.0 + (ArmorAmt * IPBaseMulti)); // 1.2
+					MassMulti = (ArmorAmt * IPBaseMulti); // 1.2
 				}
 				else
 				{
 					MassInc = floor(ArmorAmt * NonIPBase); // 8
-					MassMulti = (1.0 + (ArmorAmt * NonIPBaseMulti)); // 1.02
+					MassMulti = (ArmorAmt * NonIPBaseMulti); // 1.02
 				}
+				MassMulti *= exex_armorencumbrance;
+				MassInc *= exex_armorencumbrance;
+				if (A_CheckDDGame())
+				{
+					MassMulti *= 1.5;
+					MassInc *= 1.5;
+				}
+				MassMulti += 1.0;
+				if (Owner.CountInv("ExpeditionHat")) MassMulti *= 1.375;
+				if (Owner.CountInv("ClassyRibbon")) MassMulti *= 1.0875;
 			}
-			if (KnightGownTier == 3)
-			{
-				if (owner.CountInv("KnightGownIP3Buff"))
-				{
-					MassInc = floor(ArmorAmt * IPBase); // 160
-					MassMulti = (1.0 + (ArmorAmt * IPBaseMulti)); // 1.4
-				}
-				else
-				{
-					MassInc = floor(ArmorAmt * NonIPBase); // 16
-					MassMulti = (1.0 + (ArmorAmt * NonIPBaseMulti)); // 1.04
-				}
-			}
-			if (KnightGownTier == 4)
-			{
-				if (owner.CountInv("KnightGownIP4Buff"))
-				{
-					MassInc = floor(ArmorAmt * IPBase); // 320
-					MassMulti = (1.0 + (ArmorAmt * IPBaseMulti)); // 1.8
-				}
-				else
-				{
-					MassInc = floor(ArmorAmt * NonIPBase); // 32
-					MassMulti = (1.0 + (ArmorAmt * NonIPBaseMulti)); // 1.08
-				}
-			}
-			if (Owner.CountInv("ExpeditionHat")) MassMulti *= 1.375;
-			if (Owner.CountInv("ClassyRibbon")) MassMulti *= 1.0875;
-
+			
 			if (MassInc) TotalMass += MassInc;
 			if (MassMulti != 1.0) TotalMass *= MassMulti;
-			if (dydudebug_masscalcs) Console.Printf("Mass [Armor]: %d, Inc: %.8f, Multi: %.8f", TotalMass, MassInc, MassMulti);
+			if (dydudebug_masscalcs) Console.Printf("Mass [Armor]: %d, Inc: %.8f, Multi: %.8f, exex_armorencumbrance: %.8f", TotalMass, MassInc, MassMulti, exex_armorencumbrance);
 			
 			if (TotalMass < 1) TotalMass = 1;
 			
@@ -4751,23 +4747,27 @@ class PlayerStatItem : Inventory
 			if (exex_armoritemdifficulty == 2) armordiffmod = 2.5;
 			if (exex_armoritemdifficulty >= 3) armordiffmod = 5.0;
 			int ArmorAmt = owner.CountInv(armorclasstype);
+			double ArmorEnc = 0.00;
 			if (KnightGownTier == 1 && !owner.CountInv("KnightGownIP1Buff")) 
 			{
-				ArmorJumpZ -= (ArmorAmt * (0.0001 * armordiffmod)); // 0.025;
+				ArmorEnc = (ArmorAmt * (0.0001 * armordiffmod)); // 0.025;
 			}
 			if (KnightGownTier == 2 && !owner.CountInv("KnightGownIP2Buff")) 
 			{
-				ArmorJumpZ -= (ArmorAmt * (0.0000975 * armordiffmod)); // 0.04875;
+				ArmorEnc = (ArmorAmt * (0.0000975 * armordiffmod)); // 0.04875;
 			}
 			if (KnightGownTier == 3 && !owner.CountInv("KnightGownIP3Buff")) 
 			{
-				ArmorJumpZ -= (ArmorAmt * (0.000095 * armordiffmod)); // 0.095;
+				ArmorEnc = (ArmorAmt * (0.000095 * armordiffmod)); // 0.095;
 			}
 			if (KnightGownTier == 4 && !owner.CountInv("KnightGownIP4Buff")) 
 			{
-				ArmorJumpZ -= (ArmorAmt * (0.00009 * armordiffmod)); // 0.180;
+				ArmorEnc = (ArmorAmt * (0.00009 * armordiffmod)); // 0.180;
 			}
-			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Armor]: %.8f", ArmorJumpZ);
+			ArmorEnc *= exex_armorencumbrance;
+			if (A_CheckDDGame()) ArmorEnc *= 1.5;
+			ArmorJumpZ -= ArmorEnc;
+			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Armor]: %.8f, ArmorEnc: %.8f, exex_armorencumbrance: %.8f", ArmorJumpZ, ArmorEnc, exex_armorencumbrance);
 
 			// Special
 			double SpecialJumpZ = 1.00;
@@ -6378,10 +6378,12 @@ class PlayerStatItem : Inventory
 									else ArmorM = (ArmorAmt * (0.000125 * armordiffmod)); // -0.25
 			}
 		}
-		double ArmorML = ArmorM;
 		let MiscItem = PlayerStatItem(Owner.FindInventory("PlayerStatItem"));
-		if (MiscItem && ArmorM > 0.0) ArmorM *= (1.0 - (ActualLevel * 0.02));
-		if (dydudebug_armordisplays) Console.Printf("%.8f (%.8f)", ArmorM, ArmorML);
+		double ArmorML = ArmorM;
+		ArmorM *= exex_armorencumbrance;
+		if (A_CheckDDGame()) ArmorM *= 1.5;
+		if (ArmorM > 0.0) ArmorM *= (1.0 - (ActualLevel * 0.02));
+		if (dydudebug_armordisplays) Console.Printf("%.8f (%.8f), exex_armorencumbrance: %.8f", ArmorM, ArmorML, exex_armorencumbrance);
 		if (ArmorM < 0.0) ArmorM = 0.0;
 		ArmorFactor = (1.0 - ArmorM);
 		if (ArmorFactor > 1.00) ArmorFactor = 1.00;

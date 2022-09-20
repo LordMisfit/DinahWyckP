@@ -18,6 +18,27 @@ class DD_EventHandler : EventHandler
 		return false;
 	}
 	
+	int A_GetPlayerLevel(int type = 0)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled)
+			{
+				if (type == 0) Level = MiscItem.PlayerLevel;
+				if (type >= 1) Level = MiscItem.TruePlayerLevel;
+			}
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		return Level;
+	}
+	
 	override void WorldTick()
 	{
 		if ((level.time >= 3 && level.time <= 35) ||
@@ -247,8 +268,9 @@ class DD_EventHandler : EventHandler
 					//***********************
 					if (exex_enemyscalingplevel && globalvars && MiscItem)
 					{
-						LevelCheck += MiscItem.TruePlayerLevel;
-						if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [PlayerLevel Check]: %d (PlayLvl: +%d)", LevelCheck, MiscItem.TruePlayerLevel);
+						int TruePlayerLevel = A_GetPlayerLevel(1);
+						LevelCheck += TruePlayerLevel;
+						if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [PlayerLevel Check]: %d (PlayLvl: +%d)", LevelCheck, TruePlayerLevel);
 
 						if (EEC)
 						{
