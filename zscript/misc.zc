@@ -11,6 +11,8 @@ class PlayerStatItem : Inventory
 	
 	actor weapon;
 	
+	int armsav;
+	int armtier;
 	int cutsceneskipusehold;
 	bool isDDTrilogy;
 	int DDChapter;
@@ -58,7 +60,7 @@ class PlayerStatItem : Inventory
 	int CanTalkUnderwater;
 	int numpikeglows;
 	int MedStrength;
-	int IsMorphed, WasMorphed;
+	int IsMorphed, WasMorphed, WasMorphProj;
 	int MorphTimer;
 	int EvasionRate;
 	double SPDEvadeCheck;
@@ -1717,16 +1719,103 @@ class PlayerStatItem : Inventory
 		
 		ClassCheck++;
 		itemtimer++;
-		if (IsMorphed > 0) 
+		
+		if (dydudebug_morphdisplays) Console.Printf("KnightGownTier: %d [%d]", KnightGownTier, gametic);
+		if (IsMorphed > 0)
 		{
-			if (IsMorphed == 1 && MorphTimer == 0) owner.health = MaxHealthTrue * 0.3;
+			if (IsMorphed == 1 && MorphTimer == 0) 
+			{
+				owner.health = MaxHealthTrue * 0.3;
+				if (owner.CountInv("HitByMorphProj"))
+				{
+					WasMorphProj = 1;
+					owner.A_SetInventory("HitByMorphProj",0);
+					KnightGownTier = 0;
+					int IPGain = ((MaxItemPoints - ItemPoints) * frandompick(0.25,0.334,0.334,0.5,0.5,0.5,0.5,0.5,0.5,0.667,0.667,0.75));
+					ItemPoints += IPGain;
+					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+					IPGainHUDAmt += IPGain;
+					if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+					else
+					{
+						IPGainHUDTimer += 5;
+						if (IPGainHUDTimer < 105 && IPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+						if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+					}
+					
+					if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+					else
+					{
+						IPHUDPulseTimer += 35;
+						if (IPHUDPulseTimer < 105 && IPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+						if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+					}
+
+					if (IPDissipateTimer > -1050) IPDissipateTimer = -1050;
+																	 else IPDissipateTimer += -1050;
+				}
+			}
 			MorphTimer++;
 		}
 		else
 		{
-			if (WasMorphed == 1 && MorphTimer > 0) owner.health = MaxHealthTrue;
+			if (WasMorphed == 1 && MorphTimer > 0) 
+			{
+				owner.health = MaxHealthTrue;
+				if (A_CheckDDGame())
+				{
+					if (skill <= 1) armsav *= 1.00;
+					if (skill == 1) armsav *= 0.875;
+					if (skill == 2) armsav *= 0.75;
+					if (skill == 3) armsav *= 0.625;
+					if (skill >= 4) armsav *= 0.5;
+				}
+				else
+				{
+					if (skill <= 1) armsav *= 0.75;
+					if (skill == 1) armsav *= 0.625;
+					if (skill == 2) armsav *= 0.5;
+					if (skill == 3) armsav *= 0.375;
+					if (skill >= 4) armsav *= 0.25;
+				}
+				if (WasMorphProj) 
+				{
+					armsav *= 0.5;
+					WasMorphProj = 0;
+				}
+				if (armsav > 0)
+				{
+					KnightGownTier = armtier;
+					if (KnightGownTier == 1) owner.A_GiveInventory("KnightGownItem",1);
+					if (KnightGownTier == 2) owner.A_GiveInventory("KnightGownItem2",1);
+					if (KnightGownTier == 3) owner.A_GiveInventory("KnightGownItem3",1);
+					if (KnightGownTier == 4) owner.A_GiveInventory("KnightGownItem4",1);
+					if (dydudebug_morphdisplays) Console.Printf("armsav: %d, KnightGownTier: %d, armtier: %d [%d]", armsav, KnightGownTier, armtier, gametic);
+					for (int i; i < armsav; i++) 
+					{
+						owner.A_GiveInventory("ArmorScrapSilent",1); 
+						if (dydudebug_morphdisplays) Console.Printf("i: %d, armamt: %d, armsav: %d [%d]", i, owner.CountInv("KGArmor"), armsav, gametic);
+					}
+				}
+				if (weapon is "CricketBat")
+				{
+					let DDWeap = CricketBat(weapon);
+					if (DDWeap)
+					{
+						if (DDWeap.guardstate) DDWeap.guardstate = 0;
+						if (DDWeap.guardcooldown) DDWeap.guardcooldown = 0;
+						if (dydudebug_morphdisplays) Console.Printf("BatGuard Check [Morph] - GuardState: %d, Cooldown: %d", DDWeap.guardstate, DDWeap.guardcooldown);
+					}
+				}
+			}
+			else
+			{
+				armsav = owner.CountInv("KGArmor");
+				armtier = KnightGownTier;
+			}
 			MorphTimer = 0;
 		}
+		if (dydudebug_morphdisplays) Console.Printf("armsav: %d, armtier: %d [%d]", armsav, armtier, gametic);
 		WasMorphed = IsMorphed;
 		
 		owner.player.mo.maxhealth = MaxHealthTrue;
