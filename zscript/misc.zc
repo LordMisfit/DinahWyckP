@@ -4853,29 +4853,34 @@ class PlayerStatItem : Inventory
 			if (armoritemdifficulty >= 3) armordiffmod = 5.0;
 			int ArmorAmt = owner.CountInv(armorclasstype);
 			double ArmorEnc = 0.00;
-			if (KnightGownTier == 1 && !owner.CountInv("KnightGownIP1Buff")) 
-			{
-				ArmorEnc = (ArmorAmt * (0.0001 * armordiffmod)); // 0.025;
-			}
-			if (KnightGownTier == 2 && !owner.CountInv("KnightGownIP2Buff")) 
-			{
-				ArmorEnc = (ArmorAmt * (0.0000975 * armordiffmod)); // 0.04875;
-			}
-			if (KnightGownTier == 3 && !owner.CountInv("KnightGownIP3Buff")) 
-			{
-				ArmorEnc = (ArmorAmt * (0.000095 * armordiffmod)); // 0.095;
-			}
-			if (KnightGownTier == 4 && !owner.CountInv("KnightGownIP4Buff")) 
-			{
-				ArmorEnc = (ArmorAmt * (0.00009 * armordiffmod)); // 0.180;
-			}
+			if (KnightGownTier == 1 && !owner.CountInv("KnightGownIP1Buff")) ArmorEnc = (ArmorAmt * (0.0001 * armordiffmod)); // 0.025;
+			if (KnightGownTier == 2 && !owner.CountInv("KnightGownIP2Buff")) ArmorEnc = (ArmorAmt * (0.0000975 * armordiffmod)); // 0.04875;
+			if (KnightGownTier == 3 && !owner.CountInv("KnightGownIP3Buff")) ArmorEnc = (ArmorAmt * (0.000095 * armordiffmod)); // 0.095;
+			if (KnightGownTier == 4 && !owner.CountInv("KnightGownIP4Buff")) ArmorEnc = (ArmorAmt * (0.00009 * armordiffmod)); // 0.180;
 			ArmorEnc *= exex_armorencumbrance;
 			if (A_CheckDDGame()) 
 			{
 				ArmorEnc *= 1.5;
 				ArmorEnc *= exex_nrpggeneraleffect;
 			}
-			if (ArmorEnc > 0.0) ArmorEnc *= (1.0 - (ActualLevel * 0.01));
+			double lvlfact = 0.02;
+			if (A_CheckDDGame()) 
+			{
+				if (skill <= 0) lvlfact = 0.020;
+				if (skill == 1) lvlfact = 0.0175;
+				if (skill == 2) lvlfact = 0.015;
+				if (skill == 3) lvlfact = 0.0125;
+				if (skill >= 4) lvlfact = 0.01;
+			}
+			else
+			{
+				if (skill <= 0) lvlfact = 0.04;
+				if (skill == 1) lvlfact = 0.035;
+				if (skill == 2) lvlfact = 0.03;
+				if (skill == 3) lvlfact = 0.025;
+				if (skill >= 4) lvlfact = 0.02;
+			}
+			if (ArmorEnc > 0.0) ArmorEnc *= (1.0 - (ActualLevel * lvlfact));
 			ArmorJumpZ -= ArmorEnc;
 			if (dydudebug_jumpingcalcs) Console.Printf("JumpZ [Armor]: %.8f, ArmorEnc: %.8f, exex_armorencumbrance: %.8f", ArmorJumpZ, ArmorEnc, exex_armorencumbrance);
 
@@ -6502,7 +6507,24 @@ class PlayerStatItem : Inventory
 			ArmorM *= 1.5;
 			ArmorM *= exex_nrpggeneraleffect;
 		}
-		if (ArmorM > 0.0) ArmorM *= (1.0 - (ActualLevel * 0.01));
+		double lvlfact = 0.02;
+		if (A_CheckDDGame()) 
+		{
+			if (skill <= 0) lvlfact = 0.020;
+			if (skill == 1) lvlfact = 0.0175;
+			if (skill == 2) lvlfact = 0.015;
+			if (skill == 3) lvlfact = 0.0125;
+			if (skill >= 4) lvlfact = 0.01;
+		}
+		else
+		{
+			if (skill <= 0) lvlfact = 0.04;
+			if (skill == 1) lvlfact = 0.035;
+			if (skill == 2) lvlfact = 0.03;
+			if (skill == 3) lvlfact = 0.025;
+			if (skill >= 4) lvlfact = 0.02;
+		}
+		if (ArmorM > 0.0) ArmorM *= (1.0 - (ActualLevel * lvlfact));
 		if (dydudebug_armordisplays) Console.Printf("%.8f (%.8f), exex_armorencumbrance: %.8f, armordiffmod: %.8f", ArmorM, ArmorML, exex_armorencumbrance, armordiffmod);
 		if (ArmorM < 0.0) ArmorM = 0.0;
 		ArmorFactor = (1.0 - ArmorM);
@@ -6903,6 +6925,9 @@ class PlayerDashJump : Inventory
 
 		double DashSpdMul = 1.00;
 		DashSpeed = (25 + (ActualLevel * 0.125));
+		if (Owner.waterlevel == 1) DashSpdMul = 0.875;
+		if (Owner.waterlevel == 2) DashSpdMul = 0.75;
+		if (Owner.waterlevel >= 3) DashSpdMul = 0.5;
 		if (Owner.CountInv("DinahTrueIPState")) 
 		{
 			double temp = 0.125;
@@ -7568,140 +7593,6 @@ Class DashCollisionChecker : Actor
 			*/
 			je.DashSpeed = 0;
 			Destroy();
-		}
-	}
-}
-
-class DevilMeleeWeakness : TempDefenseBuff
-{
-	default
-	{
-		Inventory.Amount 1;
-		Inventory.MaxAmount 1;
-		Inventory.Icon "";
-		Powerup.Duration 2147483646;
-		+INVENTORY.PERSISTENTPOWER;
-		+INVENTORY.HUBPOWER;
-		+INVENTORY.ADDITIVETIME;
-	}
-
-	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
-	{
-		if (passive && damage > 0)
-		{
-			double TOTALFactor = 1.0;
-			if (damageType == "Melee" ||
-					damageType == "Fist" ||
-					damageType == "Kick" ||
-					damageType == "Stomp" ||
-					damageType == "Dashing" ||
-					damageType == "DashingBG" ||
-					damageType == "DashingSD")
-			{
-				TOTALFactor = 2.5;
-			}
-			else
-			if (damageType == "Zap" ||
-					damageType == "Eldritch")
-			{
-				if (!(PushyAngel(source))) TOTALFactor = 0.4;
-			}
-			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
-			//Console.Printf("[passive] newdamage: %d, olddmg: %d", newdamage, damage);
-		}
-	}
-}
-
-class ForsakenCloakResist : TempDefenseBuff
-{
-	default
-	{
-		Inventory.Amount 1;
-		Inventory.MaxAmount 1;
-		Inventory.Icon "";
-		Powerup.Duration 2147483646;
-		+INVENTORY.PERSISTENTPOWER;
-		+INVENTORY.HUBPOWER;
-		+INVENTORY.ADDITIVETIME;
-	}
-
-	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
-	{
-		actor player = players[0].mo;
-		//if (source) Console.Printf("source: %p [%s]", source, source.GetClassName());
-		//if (player) Console.Printf("player: %p [%s]", player, player.GetClassName());
-		if (passive && damage > 0)
-		{
-			double TOTALFactor = 1.0;
-			string nm;
-			nm = "CCards_Actor_BorrowedTimeBuff";
-			if (owner && owner.CountInv(nm))
-			{
-				if (!(damageType == 'Suck' || 
-							damageType == 'Sigil' || 
-							damageType == 'SpectralLow' || 
-							damageType == 'Massacre' || 
-							damageType == 'SilentMassacre' ||
-							damageType == 'Telefrag' ||
-							damageType == 'TrueIP'))
-				{
-					if (source == player && 
-							(player.CountInv("PowerLightAmp") || 
-							 player.CountInv("PowerLightAmp2") ||
-							 player.CountInv("PowerTorch")) && 
-							 gl_enhanced_nightvision)
-					{
-						if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(92,94) + random(-3,3));
-						else if (damageType == 'Beats') TOTALFactor = (random(90,92) + random(-2,2));
-						else TOTALFactor = (random(89,92) + random(-1,1));
-						TOTALFactor *= 0.01;
-					}
-					else
-					{
-						if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(65,73) + random(-7,7));
-						else if (damageType == 'Beats') TOTALFactor = (random(60,65) + random(-5,5));
-						else TOTALFactor = (random(55,67) + random(-2,3));
-						TOTALFactor *= 0.01;
-					}
-				}
-			}
-			else
-			{
-				if (!(damageType == 'Suck' || 
-							damageType == 'Sigil' || 
-							damageType == 'SpectralLow' || 
-							damageType == 'Massacre' || 
-							damageType == 'SilentMassacre' ||
-							damageType == 'Telefrag' ||
-							damageType == 'TrueIP'))
-				{
-					if (source == player && 
-							(player.CountInv("PowerLightAmp") || 
-							 player.CountInv("PowerLightAmp2") ||
-							 player.CountInv("PowerTorch")) && 
-							 gl_enhanced_nightvision)
-					{
-						if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(65,73) + random(-7,7));
-						else if (damageType == 'Beats') TOTALFactor = (random(60,65) + random(-5,5));
-						else TOTALFactor = (random(55,67) + random(-2,3));
-						TOTALFactor *= 0.01;
-					}
-					else
-					{
-						if (damageType == 'Zap' || damageType == 'Eldritch') TOTALFactor = (random(30,45) + random(-15,15));
-						else if (damageType == 'Beats') TOTALFactor = (random(20,30) + random(-10,10));
-						else TOTALFactor = (random(10,15) + random(-5,5));
-						TOTALFactor *= 0.01;
-					}
-				}
-			}
-			if (TOTALFactor >= 1.0) TOTALFactor = 1.0;
-			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
-			//Console.Printf("[passive] newdamage: %d, olddmg: %d, TOTALFactor: %.8f", newdamage, damage, TOTALFactor);
-		}
-		else
-		{
-			//Console.Printf("[!passive] newdamage: %d, olddmg: %d", newdamage, damage);
 		}
 	}
 }

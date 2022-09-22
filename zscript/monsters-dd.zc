@@ -5717,6 +5717,8 @@ class Chase_Water : CustomInventoryExt
 
 class Bellefish : DDOrigCreature
 {
+	int dmgbase;
+	int rangebase;
 	default
 	{
 		//$Angled
@@ -5752,9 +5754,9 @@ class Bellefish : DDOrigCreature
 		Species "Bellefish";
 	}
 	
-	void A_BelleFishZap()
+	void A_BellefishRangeCheck()
 	{
-		int dmgbase = A_CalcDamageFormula2(random(1,5),frandompick(0.004167,0.005,0.00625,0.008334),random(0,2),frandompick(0.3334,0.40,0.5,0.6667),random(0,5),frandompick(0.16667,0.20,0.25,0.3334),0.005);
+		dmgbase = A_CalcDamageFormula2(random(1,5),frandompick(0.004167,0.005,0.00625,0.008334),random(0,2),frandompick(0.3334,0.40,0.5,0.6667),random(0,5),frandompick(0.16667,0.20,0.25,0.3334),0.005);
 
 		if (random(1,256) <= (1 + (CountInv("MonsterLevel") * 2.5)))
 		{
@@ -5769,10 +5771,19 @@ class Bellefish : DDOrigCreature
 				}
 			}
 		}
-		int rangebase = frandom(48,58.696);
-		if (exex_monsterlevelenabledflags) rangebase += (CountInv("MonsterLevel") * frandom(0.96,1.17392));
-		if (waterlevel >= 2) rangebase *= 2;
-		
+
+		rangebase = 58.696;
+		if (exex_monsterlevelenabledflags) rangebase += (CountInv("MonsterLevel") * 1.17392);
+		if (waterlevel >= 2) 
+		{
+			rangebase *= 2;
+			dmgbase *= frandom(1.5,2.5);
+		}
+		MeleeRange = rangebase;
+	}
+	
+	void A_BelleFishZap()
+	{
 		A_StartSound("bellefish/charge",CHAN_WEAPON);
 		A_StartSound("bellefish/zap",CHAN_ITEM);
 		A_Explode(dmgbase,128,XF_NOTMISSILE|XF_NOSPLASH,0,rangebase,0,0,"","Melee");
@@ -5781,10 +5792,7 @@ class Bellefish : DDOrigCreature
 	override void Tick()
 	{
 		super.Tick();
-		double rangebase = 58.696;
-		if (exex_monsterlevelenabledflags) rangebase += (CountInv("MonsterLevel") * 1.17392);
-		if (waterlevel >= 2) rangebase *= 2;
-		MeleeRange = rangebase;
+		A_BellefishRangeCheck();
 	}
 	
 	States
