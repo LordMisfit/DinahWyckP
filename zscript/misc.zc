@@ -13,6 +13,7 @@ class PlayerStatItem : Inventory
 	
 	int armsav;
 	int armtier;
+	int armoritemdifficulty;
 	int cutsceneskipusehold;
 	bool isDDTrilogy;
 	int DDChapter;
@@ -745,11 +746,11 @@ class PlayerStatItem : Inventory
 						if (CoS_ForsakenJorg) DDTFactor += 0.1;
 						if (CoS_EvilDinah) DDTFactor += 0.1;
 						if (CoS_Tempest) DDTFactor += 0.1;
-						if (skill <= 0) DDTFactor *= 1.5;
-						if (skill == 1) DDTFactor *= 1.25;
-						if (skill == 2) DDTFactor *= 1.0;
-						if (skill == 3) DDTFactor *= 0.75;
-						if (skill >= 4) DDTFactor *= 0.5;
+						if (skill <= 0) DDTFactor *= 0.75;
+						if (skill == 1) DDTFactor *= 0.625;
+						if (skill == 2) DDTFactor *= 0.5;
+						if (skill == 3) DDTFactor *= 0.375;
+						if (skill >= 4) DDTFactor *= 0.25;
 						DDTFactor *= exex_nrpggeneraleffect;
 						DDTFactor += 1.00;
 						MaxItemPoints *= DDTFactor;
@@ -2664,7 +2665,10 @@ class PlayerStatItem : Inventory
 		name armorclasstype = "KGArmor";
 		name armorclasstype2 = "ArmorScrapSilent";
 		int currentarmoramt = Owner.CountInv(armorclasstype);
-		if (exex_armoritemdifficulty >= 3)
+		armoritemdifficulty = exex_armoritemdifficulty;
+		if (A_CheckDDGame()) armoritemdifficulty = 2;
+		
+		if (armoritemdifficulty >= 3)
 		{
 			ArmorItemGive0 = random(12,13);
 			ArmorItemMax0 = ArmorItemGive0;
@@ -2690,7 +2694,7 @@ class PlayerStatItem : Inventory
 			}
 		}
 		else
-		if (exex_armoritemdifficulty == 2)
+		if (armoritemdifficulty == 2)
 		{
 			ArmorItemGive0 = 25;
 			ArmorItemMax0 = ArmorItemGive0;
@@ -2716,7 +2720,7 @@ class PlayerStatItem : Inventory
 			}
 		}
 		else
-		if (exex_armoritemdifficulty == 1)
+		if (armoritemdifficulty == 1)
 		{
 			ArmorItemGive0 = 50;
 			ArmorItemMax0 = ArmorItemGive0;
@@ -2742,7 +2746,7 @@ class PlayerStatItem : Inventory
 			}
 		}
 		else
-		if (exex_armoritemdifficulty <= 0)
+		if (armoritemdifficulty <= 0)
 		{
 			ArmorItemGive0 = 50;
 			ArmorItemMax0 = 100;
@@ -2767,7 +2771,7 @@ class PlayerStatItem : Inventory
 				for (int i; i < (currentarmoramt * 4); i++) owner.A_GiveInventory(armorclasstype2,1);
 			}
 		}
-		prevarmordifficulty = exex_armoritemdifficulty;
+		prevarmordifficulty = armoritemdifficulty;
 	}
 	
 	void MaxHealthStuff()
@@ -2828,11 +2832,11 @@ class PlayerStatItem : Inventory
 				if (CoS_ForsakenJorg) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
 				if (CoS_EvilDinah) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
 				if (CoS_Tempest) HealthNoRPGAdd2 += (BaseStartMaxHealth * 0.25);
-				if (skill <= 0) HealthNoRPGAdd2 *= 1.5;
-				if (skill == 1) HealthNoRPGAdd2 *= 1.25;
-				if (skill == 2) HealthNoRPGAdd2 *= 1.0;
-				if (skill == 3) HealthNoRPGAdd2 *= 0.75;
-				if (skill >= 4) HealthNoRPGAdd2 *= 0.5;
+				if (skill <= 0) HealthNoRPGAdd2 *= 0.75;
+				if (skill == 1) HealthNoRPGAdd2 *= 0.625;
+				if (skill == 2) HealthNoRPGAdd2 *= 0.5;
+				if (skill == 3) HealthNoRPGAdd2 *= 0.375;
+				if (skill >= 4) HealthNoRPGAdd2 *= 0.25;
 				HealthNoRPGAdd2 *= exex_nrpggeneraleffect;
 			}
 		}
@@ -3700,7 +3704,8 @@ class PlayerStatItem : Inventory
 						{
 							int inc = 20;
 							inc += ((TruePlayerLevel * 0.05) + (TruePlayerDEF * 0.05));
-							inc += ((GoldApples * 0.1) + (PlatinumApples * 0.25) + (PrismaticApples + 1.0));
+							if ((A_CheckDDGame())) inc += ((GoldApples * 0.05) + (PlatinumApples * 0.125) + (PrismaticApples + 0.5));
+																else inc += ((GoldApples * 0.1) + (PlatinumApples * 0.25) + (PrismaticApples + 1.0));
 							// DD Trilogy NO-Rpg Bonuses
 							if (!exex_expenabled)
 							{
@@ -3859,7 +3864,8 @@ class PlayerStatItem : Inventory
 						{
 							int inc = 20;
 							inc -= ((TruePlayerLevel * 0.025) + (TruePlayerDEF * 0.025));
-							inc -= ((GoldApples * 0.025) + (PlatinumApples * 0.0625) + (PrismaticApples + 0.25));
+							if ((A_CheckDDGame())) inc -= ((GoldApples * 0.0125) + (PlatinumApples * 0.03125) + (PrismaticApples + 0.125));
+																else inc -= ((GoldApples * 0.025) + (PlatinumApples * 0.0625) + (PrismaticApples + 0.25));
 							// DD Trilogy NO-Rpg Bonuses
 							if (!exex_expenabled)
 							{
@@ -4304,10 +4310,10 @@ class PlayerStatItem : Inventory
 					if (CoS_ForsakenJorg) PerkFactor2 += 25;
 					if (CoS_EvilDinah) PerkFactor2 += 25;
 					if (CoS_Tempest) PerkFactor2 += 25;
-					if (skill <= 0) PerkFactor2 *= 6.5;
-					if (skill == 1) PerkFactor2 *= 5.25;
-					if (skill == 2) PerkFactor2 *= 4;
-					if (skill == 3) PerkFactor2 *= 2.75;
+					if (skill <= 0) PerkFactor2 *= 4.5;
+					if (skill == 1) PerkFactor2 *= 3.75;
+					if (skill == 2) PerkFactor2 *= 3.0;
+					if (skill == 3) PerkFactor2 *= 2.25;
 					if (skill >= 4) PerkFactor2 *= 1.5;
 					PerkFactor2 *= exex_nrpggeneraleffect;
 					SurvivalRate += PerkFactor2;
@@ -4636,21 +4642,21 @@ class PlayerStatItem : Inventory
 			double NonIPBase = 0.016;
 			double NonIPBaseMulti = 0.00004;
 			bool IPMode = false;
-			if (exex_armoritemdifficulty == 1)
+			if (armoritemdifficulty == 1)
 			{
 				IPBase *= 2;
 				IPBaseMulti *= 2;
 				NonIPBase *= 2;
 				NonIPBaseMulti *= 2;
 			}
-			if (exex_armoritemdifficulty == 2)
+			if (armoritemdifficulty == 2)
 			{
 				IPBase *= 2.5;
 				IPBaseMulti *= 2.5;
 				NonIPBase *= 2.5;
 				NonIPBaseMulti *= 2.5;
 			}
-			if (exex_armoritemdifficulty >= 3)
+			if (armoritemdifficulty >= 3)
 			{
 				IPBase *= 2.5;
 				IPBaseMulti *= 2.5;
@@ -4842,9 +4848,9 @@ class PlayerStatItem : Inventory
 			// Armor
 			double ArmorJumpZ = 1.00;
 			double armordiffmod = 1.00;
-			if (exex_armoritemdifficulty == 1) armordiffmod = 2.0;
-			if (exex_armoritemdifficulty == 2) armordiffmod = 2.5;
-			if (exex_armoritemdifficulty >= 3) armordiffmod = 5.0;
+			if (armoritemdifficulty == 1) armordiffmod = 2.0;
+			if (armoritemdifficulty == 2) armordiffmod = 2.5;
+			if (armoritemdifficulty >= 3) armordiffmod = 5.0;
 			int ArmorAmt = owner.CountInv(armorclasstype);
 			double ArmorEnc = 0.00;
 			if (KnightGownTier == 1 && !owner.CountInv("KnightGownIP1Buff")) 
@@ -6450,9 +6456,9 @@ class PlayerStatItem : Inventory
 
 		int ArmorAmt = owner.CountInv(armorclasstype);
 		double armordiffmod = 1.00;
-		if (exex_armoritemdifficulty == 1) armordiffmod = 2.0;
-		if (exex_armoritemdifficulty == 2) armordiffmod = 2.5;
-		if (exex_armoritemdifficulty >= 3) armordiffmod = 5.0;
+		if (armoritemdifficulty == 1) armordiffmod = 2.0;
+		if (armoritemdifficulty == 2) armordiffmod = 2.5;
+		if (armoritemdifficulty >= 3) armordiffmod = 5.0;
 		double ArmorM;
 		double ArmorFactor = 1.0;
 		if (KnightGownTier == 1) 
@@ -6912,6 +6918,21 @@ class PlayerDashJump : Inventory
 		if (owner.CountInv("PowerRoastBuff")) DashSpdMul += 0.04;
 		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashSpdMul += 0.08;
 		if (owner.CountInv("PowerMeal2Buff") || owner.CountInv("PowerMeal2Buff2")) DashSpdMul += 0.08;
+		if (MiscItem)
+		{
+			double WineDashSpdMul = 1.00;
+			if (MiscItem.WineDefTier == 1) WineDashSpdMul = 0.9375;
+			if (MiscItem.WineDefTier == 2) WineDashSpdMul = 0.875;
+			if (MiscItem.WineDefTier == 3) WineDashSpdMul = 0.75;
+			if (MiscItem.WineDefTier == 4) WineDashSpdMul = 0.625;
+			if (MiscItem.WineDefTier == 5) WineDashSpdMul = 0.5;
+			if (MiscItem.WineDefTier == -1) WineDashSpdMul = 0.96875;
+			if (MiscItem.WineDefTier == -2) WineDashSpdMul = 0.9375;
+			if (MiscItem.WineDefTier == -3) WineDashSpdMul = 0.875;
+			if (MiscItem.WineDefTier == -4) WineDashSpdMul = 0.8125;
+			if (MiscItem.WineDefTier == -5) WineDashSpdMul = 0.75;
+			DashSpdMul *= WineDashSpdMul;
+		}
 		if (weapon is "HandToHand") DashSpdMul += 0.09375;
 		if (weapon is "SuperVac") DashSpdMul -= (0.09375 + SuperVacAmmoFactor);
 		if (weapon is "Grimophone") DashSpdMul -= 0.1875;
