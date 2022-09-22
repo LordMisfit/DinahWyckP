@@ -28,6 +28,7 @@ mixin class StunItems
 				if (A_CheckDDGameA()) Level = MiscItem.TotalNRPGLvlPts;
 			}
 		}
+		if (dydudebug_playerlevelchecks) Console.Printf("\c[green](%s) \c[gold](A_GetPlayerLvl - StunItems mixin)\c- PlayerLevel: %d [%d]", GetClassName(), level, gametic);
 		return Level;
 	}
 	
@@ -503,7 +504,6 @@ mixin class HUDRecovery
 
 mixin class DmgCalc
 {
-	
 	action bool A_CheckDDGameA()
 	{
 		actor player = players[0].mo;
@@ -530,6 +530,7 @@ mixin class DmgCalc
 				if (A_CheckDDGameA()) Level = MiscItem.TotalNRPGLvlPts;
 			}
 		}
+		if (dydudebug_playerlevelchecks) Console.Printf("\c[green](%s) \c[gold](A_GetPlayerLvl - DmgCalc mixin)\c- PlayerLevel: %d [%d]", GetClassName(), level, gametic);
 		return Level;
 	}
 
@@ -553,27 +554,28 @@ mixin class DmgCalc
 		string weaponname;
 		weaponname = weapon.GetClassName();
 		string actorname = GetClassName();
-		int damage;
-		int previousdamage;
+		double damage;
+		double previousdamage;
 		int strengthcounter;
 		String nm, nn, no, np;
 
 		// Character Check [base damage]
 		damage = random(6,12);
 		if (altfire == 1) damage *= 6.64;
-		if (dydudebug_meleedmg) Console.Printf("BaseDmg: %d [%s, %s]", damage, weaponname, actorname);
+		if (dydudebug_meleedmg) Console.Printf("BaseDmg: %.8f [%s, %s]", damage, weaponname, actorname);
 
 		// [STRIFE] Stamina Upgrades
 		int stamdamagefactor = player.Stamina;
 		previousdamage = damage;
 		damage = floor(damage * (1.00 + (stamdamagefactor * 0.375)));
-		if (dydudebug_meleedmg) Console.Printf("StaminaDmg: %d, StamUpgrades: %d - (Previous Dmg: %d)", damage, stamdamagefactor, previousdamage);
+		if (dydudebug_meleedmg) Console.Printf("StaminaDmg: %.8f, StamUpgrades: %d - (Previous Dmg: %.8f)", damage, stamdamagefactor, previousdamage);
 
+		previousdamage = damage;
 		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
 		{
-			int adddmg;
+			double adddmg;
 			int rngroll;
-			if (random(1,192) <= (191 - (PlayerLevel * 0.01875)))
+			if (random(1,192) <= (191 - (TruePlayerLevel * 0.01875)))
 			{
 				if (altfire == 0) adddmg = randompick(1,1,1,2,2);
 				if (altfire == 1) adddmg = randompick(4,5,6,7,8);
@@ -585,19 +587,25 @@ mixin class DmgCalc
 				rngroll = 1;
 			}
 			adddmg *= exex_strmeleescale;
-			if (!exex_expenabled && A_CheckDDGameA()) adddmg *= exex_nrpgmeleescale;
-			if (adddmg < 1) adddmg = 1;
+			if (dydudebug_meleedmg) Console.Printf("exex_strmeleescale: %.8f", exex_strmeleescale);
+			if (!exex_expenabled && A_CheckDDGameA()) 
+			{
+				adddmg *= exex_nrpgmeleescale;
+				if (dydudebug_meleedmg) Console.Printf("exex_nrpgmeleescale: %.8f", exex_nrpgmeleescale);
+			}
+			double mindmg = (1.0 * exex_strmeleescale * exex_nrpgmeleescale);
+			if (adddmg < mindmg) adddmg = mindmg;
 			damage += adddmg;
-			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Punch/Uppercut (type: %d)]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, altfire, adddmg, rngroll);
+			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Punch/Uppercut (type: %d)]: %.8f (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, altfire, adddmg, rngroll);
 		}
-		if (dydudebug_meleedmg) Console.Printf("StrDmg: %d - (Strength: %d) - (Previous Dmg: %d)", damage, PlayerSTR, previousdamage);
+		if (dydudebug_meleedmg) Console.Printf("\c[fire]StrDmg: %.8f\c- - (Strength: %d) - (Previous Dmg: %.8f)", damage, PlayerSTR, previousdamage);
 		
 		if (MiscItem && exex_expenabled) damage *= (1.0 + (MiscItem.NumOfAfasDrops * 0.03125));
 
 		// Berserk Check
 		previousdamage = damage;
 		if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) damage = floor(damage * 10);
-		if (dydudebug_meleedmg) Console.Printf("BerserkDmg: %d - (Previous Dmg: %d) [%s, %s]", damage, previousdamage, weaponname, actorname);
+		if (dydudebug_meleedmg) Console.Printf("BerserkDmg: %.8f - (Previous Dmg: %.8f) [%s, %s]", damage, previousdamage, weaponname, actorname);
 
 		double PerkFactor;
 		double temp1, temp2;
@@ -606,7 +614,7 @@ mixin class DmgCalc
 		{
 			if (altfire == 0) damage = floor(damage * (0.04166667 * randompick(1,1,2,2,2,2,2,3)));
 			if (altfire == 1) damage = floor(damage * (0.05 * randompick(1,1,2,2,2,2,2,3)));
-			if (dydudebug_meleedmg) Console.Printf("MeleeDmg [Shockwave]: (\c[green]%s\c-) %d - (Previous Dmg: %d)", weaponname, damage, previousdamage);
+			if (dydudebug_meleedmg) Console.Printf("MeleeDmg [Shockwave]: (\c[green]%s\c-) %.8f - (Previous Dmg: %.8f)", weaponname, damage, previousdamage);
 		}
 		
 		previousdamage = damage;
@@ -614,21 +622,21 @@ mixin class DmgCalc
 		{
 			if (CountInv("DinahTrueIPState")) damage *= 5;
 		}
-		if (dydudebug_meleedmg && altfire == 0) Console.Printf("MeleeDmgAltCheck: (\c[green]%s\c-) %d - (Previous Dmg: %d) [Punch]", weaponname, damage, previousdamage);
-		if (dydudebug_meleedmg && altfire == 1) Console.Printf("MeleeDmgAltCheck: (\c[green]%s\c-) %d - (Previous Dmg: %d) [Uppercut]", weaponname, damage, previousdamage);
+		if (dydudebug_meleedmg && altfire == 0) Console.Printf("MeleeDmgAltCheck: (\c[green]%s\c-) %.8f - (Previous Dmg: %.8f) [Punch]", weaponname, damage, previousdamage);
+		if (dydudebug_meleedmg && altfire == 1) Console.Printf("MeleeDmgAltCheck: (\c[green]%s\c-) %.8f - (Previous Dmg: %.8f) [Uppercut]", weaponname, damage, previousdamage);
 		
 		if (istarget)
 		{
-			if (dydudebug_meleedmg && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Puff: \c[darkgreen]%s\c-) %d\c- - \cx(Previous Dmg: %d) [Punch]\c-", weaponname, actorname, damage, previousdamage);
-			if (dydudebug_meleedmg && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Puff: \c[darkgreen]%s\c-) %d\c- - \cx(Previous Dmg: %d) [Uppercut]\c-", weaponname, actorname, damage, previousdamage);
+			if (dydudebug_meleedmg && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Puff: \c[darkgreen]%s\c-) %.8f\c- - \cx(Previous Dmg: %.8f) [Punch]\c-", weaponname, actorname, damage, previousdamage);
+			if (dydudebug_meleedmg && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Puff: \c[darkgreen]%s\c-) %.8f\c- - \cx(Previous Dmg: %.8f) [Uppercut]\c-", weaponname, actorname, damage, previousdamage);
 		}
 		else
 		{
-			if (dydudebug_meleedmg && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Source: \c[darkgreen]%s\c-) %d\c- - \cx(Previous Dmg: %d) [Punch]\c-", weaponname, actorname, damage, previousdamage);
-			if (dydudebug_meleedmg && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Source: \c[darkgreen]%s\c-) %d\c- - \cx(Previous Dmg: %d) [Uppercut]\c-", weaponname, actorname, damage, previousdamage);
+			if (dydudebug_meleedmg && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Source: \c[darkgreen]%s\c-) %.8f\c- - \cx(Previous Dmg: %.8f) [Punch]\c-", weaponname, actorname, damage, previousdamage);
+			if (dydudebug_meleedmg && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: \c[green]%s\c- - Source: \c[darkgreen]%s\c-) %.8f\c- - \cx(Previous Dmg: %.8f) [Uppercut]\c-", weaponname, actorname, damage, previousdamage);
 		}
 		
-		return damage;
+		return int(damage);
 	}
 	
 	action int A_GetKickDamage(int altfire = 0, int shockwave = 0, bool istarget = false)
@@ -650,27 +658,26 @@ mixin class DmgCalc
 
 		string weaponname = weapon.GetClassName();
 		string actorname = GetClassName();
-		int damage;
-		int previousdamage;
+		double damage;
+		double previousdamage;
 		int strengthcounter;
-		int debugmelee = dydudebug_meleeinformation;
 
 		damage = random(19,42);
-		if (debugmelee) Console.Printf("BaseDmg: %d", damage);
+		if (dydudebug_meleedmg) Console.Printf("BaseDmg: %.8f", damage);
 
 		// [STRIFE] Stamina Upgrades
 		int stamdamagefactor = player.Stamina;
 		previousdamage = damage;
 		damage = floor(damage * (1.00 + (stamdamagefactor * 0.375)));
-		if (debugmelee) Console.Printf("StaminaDmg: %d, StamUpgrades: %d - (Previous Dmg: %d)", damage, stamdamagefactor, previousdamage);
+		if (dydudebug_meleedmg) Console.Printf("StaminaDmg: %.8f, StamUpgrades: %d - (Previous Dmg: %.8f)", damage, stamdamagefactor, previousdamage);
 
 		// Strength Stat Check [7 pts = roughly double the character's base punch damage]
 		previousdamage = damage;
 		for (strengthcounter = 0; strengthcounter < PlayerSTR; strengthcounter++)
 		{
-			int adddmg;
+			double adddmg;
 			int rngroll;
-			if (random(1,128) <= (127 - (PlayerLevel * 0.025)))
+			if (random(1,128) <= (127 - (TruePlayerLevel * 0.025)))
 			{
 				adddmg = randompick(2,2,2,3,3,4);
 			}
@@ -680,12 +687,18 @@ mixin class DmgCalc
 				rngroll = 1;
 			}
 			adddmg *= exex_strmeleescale;
-			if (!exex_expenabled && A_CheckDDGameA()) adddmg *= exex_nrpgmeleescale;
-			if (adddmg < 1) adddmg = 1;
+			if (dydudebug_meleedmg) Console.Printf("exex_strmeleescale: %.8f", exex_strmeleescale);
+			if (!exex_expenabled && A_CheckDDGameA()) 
+			{
+				adddmg *= exex_nrpgmeleescale;
+				if (dydudebug_meleedmg) Console.Printf("exex_nrpgmeleescale: %.8f", exex_nrpgmeleescale);
+			}
+			double mindmg = (1.0 * exex_strmeleescale * exex_nrpgmeleescale);
+			if (adddmg < mindmg) adddmg = mindmg;
 			damage += adddmg;
-			if (debugmelee) Console.Printf("\c[fire]strengthcounter %d / %d [Kick]: %d (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
+			if (dydudebug_meleedmg) Console.Printf("\c[fire]strengthcounter %d / %d [Kick]: %.8f (rngroll: %d)\c-", strengthcounter+1, PlayerSTR, adddmg, rngroll);
 		}
-		if (debugmelee) Console.Printf("StrDmg: %d - (Strength: %d) - (Previous Dmg: %d)", damage, PlayerSTR, previousdamage);
+		if (dydudebug_meleedmg) Console.Printf("\c[fire]StrDmg: %.8f\c- - (Strength: %d) - (Previous Dmg: %.8f)", damage, PlayerSTR, previousdamage);
 		
 		if (MiscItem && exex_expenabled) damage *= (1.0 + (MiscItem.NumOfAfasDrops * 0.03125));
 
@@ -693,14 +706,14 @@ mixin class DmgCalc
 		previousdamage = damage;
 		if (altfire == 0) damage = floor(damage * (1.00 + (0.05 * random(-4,4))));
 		if (altfire == 1) damage = floor(damage * (1.00 + (0.075 * random(-4,4))));
-		if (debugmelee) Console.Printf("ReduceDmg: %d - (Previous Dmg: %d)", damage, previousdamage);
+		if (dydudebug_meleedmg) Console.Printf("ReduceDmg: %.8f - (Previous Dmg: %.8f)", damage, previousdamage);
 
 		if (player.CountInv("DinahTrueIPState")) damage *= 5;
 
 		// Berserk Check
 		previousdamage = damage;
 		if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) damage = floor(damage * 10);
-		if (debugmelee) Console.Printf("BerserkDmg: %d - (Previous Dmg: %d)", damage, previousdamage);
+		if (dydudebug_meleedmg) Console.Printf("BerserkDmg: %.8f - (Previous Dmg: %.8f)", damage, previousdamage);
 
 		double PerkFactor;
 		double temp1, temp2;
@@ -710,27 +723,27 @@ mixin class DmgCalc
 		{
 			if (altfire == 0) damage = floor(damage * (0.04166667 * randompick(1,2,2,2,2,2,3)));
 			if (altfire == 1) damage = floor(damage * (0.05 * randompick(1,2,2,2,2,2,3)));
-			if (debugmelee) Console.Printf("MeleeDmg [Shockwave]: (%s) %d - (Previous Dmg: %d [Martial Arts Mastery Perk (Shockwave)]", weaponname, damage, previousdamage);
+			if (dydudebug_meleedmg) Console.Printf("MeleeDmg [Shockwave]: (%s) %.8f - (Previous Dmg: %.8f (Shockwave)", weaponname, damage, previousdamage);
 		}
 
 		previousdamage = damage;
 		if (altfire == 0) damage = floor(damage * 1.0);
 		if (altfire == 1) damage = floor(damage * 0.25);
-		if (debugmelee && altfire == 0) Console.Printf("MeleeDmgAltCheck: (%s) %d - (Previous Dmg: %d) [Kick]", weaponname, damage, previousdamage);
-		if (debugmelee && altfire == 1) Console.Printf("MeleeDmgAltCheck: (%s) %d - (Previous Dmg: %d) [Roundhouse Kick]", weaponname, damage, previousdamage);
+		if (dydudebug_meleedmg && altfire == 0) Console.Printf("MeleeDmgAltCheck: (%s) %.8f - (Previous Dmg: %.8f) [Kick]", weaponname, damage, previousdamage);
+		if (dydudebug_meleedmg && altfire == 1) Console.Printf("MeleeDmgAltCheck: (%s) %.8f - (Previous Dmg: %.8f) [Roundhouse Kick]", weaponname, damage, previousdamage);
 
 		if (istarget)
 		{
-			if (debugmelee && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Puff: %s) %d\c- - \cx(Previous Dmg: %d) [Kick]\c-", weaponname, actorname, damage, previousdamage);
-			if (debugmelee && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Puff: %s) %d\c- - \cx(Previous Dmg: %d) [Roundhouse Kick]\c-", weaponname, actorname, damage, previousdamage);
+			if (dydudebug_meleedmg && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Puff: %s) %.8f\c- - \cx(Previous Dmg: %.8f) [Kick]\c-", weaponname, actorname, damage, previousdamage);
+			if (dydudebug_meleedmg && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Puff: %s) %.8f\c- - \cx(Previous Dmg: %.8f) [Roundhouse Kick]\c-", weaponname, actorname, damage, previousdamage);
 		}
 		else
 		{
-			if (debugmelee && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Source: %s) %d\c- - \cx(Previous Dmg: %d) [Kick]\c-", weaponname, actorname, damage, previousdamage);
-			if (debugmelee && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Source: %s) %d\c- - \cx(Previous Dmg: %d) [Roundhouse Kick]\c-", weaponname, actorname, damage, previousdamage);
+			if (dydudebug_meleedmg && altfire == 0) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Source: %s) %.8f\c- - \cx(Previous Dmg: %.8f) [Kick]\c-", weaponname, actorname, damage, previousdamage);
+			if (dydudebug_meleedmg && altfire == 1) Console.Printf("\cyFinalMeleeDmg: (Weapon: %s - Source: %s) %.8f\c- - \cx(Previous Dmg: %.8f) [Roundhouse Kick]\c-", weaponname, actorname, damage, previousdamage);
 		}
 		
-		return damage;
+		return int(damage);
 	}
 }
 
@@ -1314,6 +1327,7 @@ mixin class MonsterCollider
 				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
 			}
 		}
+		if (dydudebug_playerlevelchecks) Console.Printf("\c[green](%s) \c[gold](A_GetPlayerLvl2 - MonsterCollider mixin)\c- PlayerLevel: %d [%d]", GetClassName(), level, gametic);
 		return Level;
 	}
 	
@@ -3346,6 +3360,7 @@ mixin class IPCostCheck
 				if (A_CheckDDGameB()) Level = MiscItem.TotalNRPGLvlPts;
 			}
 		}
+		//if (dydudebug_playerlevelchecks) Console.Printf("\c[green](%s) \c[gold](A_GetPlayerLvl2 - IPCostCheck mixin)\c- PlayerLevel: %d [%d]", GetClassName(), level, gametic);
 		return Level;
 	}
 
