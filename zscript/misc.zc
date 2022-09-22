@@ -2771,6 +2771,13 @@ class PlayerStatItem : Inventory
 				for (int i; i < (currentarmoramt * 4); i++) owner.A_GiveInventory(armorclasstype2,1);
 			}
 		}
+		if (A_CheckDDGame()) 
+		{
+			ArmorItemGive1 = ArmorItemMax1;
+			ArmorItemGive2 = ArmorItemMax2;
+			ArmorItemGive3 = ArmorItemMax3;
+			ArmorItemGive4 = ArmorItemMax4;
+		}
 		prevarmordifficulty = armoritemdifficulty;
 	}
 	
@@ -3743,7 +3750,8 @@ class PlayerStatItem : Inventory
 								}
 							}
 							BaseRegenMulti = inc;
-							if (HPRegenBoostTimer) inc *= 2.5;
+							if (HPRegenBoostTimer > 0) inc *= 2.5;
+							if (HPRegenBoostTimer < 0) inc *= 0.4;
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Regen]: %d", HPRegenBoostTimer);
 							if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) inc *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.005) + (owner.CountInv("AngerLevelEventN") * 0.0005));
 							
@@ -3903,7 +3911,8 @@ class PlayerStatItem : Inventory
 								}
 							}
 							BaseRegenMulti = inc;
-							if (HPRegenBoostTimer) inc *= 0.4;
+							if (HPRegenBoostTimer > 0) inc *= 0.4;
+							if (HPRegenBoostTimer < 0) inc *= 2.5;
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Degen]: %d", HPRegenBoostTimer);
 							if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) inc *= (1.0 - (owner.CountInv("AngerLevelEvent") * 0.003334) - (owner.CountInv("AngerLevelEventN") * 0.0003334));
 							
@@ -4032,8 +4041,8 @@ class PlayerStatItem : Inventory
 						if (dydudebug_hpregen) Console.Printf("Regen/Degen Neutral");
 					}
 					
-					if (HPRegenBoostTimer) HPRegenBoostTimer--;
-					if (HPRegenBoostTimer < 0) HPRegenBoostTimer = 0;
+					if (HPRegenBoostTimer > 0) HPRegenBoostTimer--;
+					if (HPRegenBoostTimer < 0) HPRegenBoostTimer++;
 					if (dydudebug_hpregen && HPRegenBoostTimer) Console.Printf("HPRegenBoostTimer: %d", HPRegenBoostTimer);
 				}
 			}
@@ -5610,7 +5619,7 @@ class PlayerStatItem : Inventory
 		double tempmax;
 		if (!passive && damage > 0) // If the owner [usually the player] of the item is the ATTACKER
 		{
-			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive): %d (baseatkfct: %.8f)", damage, baseatkfct);
+			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive): %d (baseatkfct: %.8f), damagetype: %s", damage, baseatkfct, damageType);
 			
 			// Map Completion [No-RPG Mode]
 			double MapFactor = 1.00;
@@ -5842,6 +5851,9 @@ class PlayerStatItem : Inventory
 		basedeffct *= exex_pdeffactor;
 		if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 		{
+			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive): %d (basedeffct: %.8f), damagetype: %s", damage, basedeffct, damageType);
+			if ((dydudebug_defensecalcs || dydudebug_playerdamagemobj) && playeractor) Console.Printf("Damage (passive): tookflrdmg: %d", playeractor.tookflrdmg);
+
 			int predmg = damage;
 			if (playeractor) predmg = playeractor.mobjdmg;
 			double factorchange = 1.00;
@@ -5972,7 +5984,7 @@ class PlayerStatItem : Inventory
 				temp1 = ((0.1667 + (HellWarriorShieldLevel * 0.01667)) + (HellWarriorShieldLevel * 0.00625));
 				if (Owner.CountInv("EWShieldDefendMode")) temp2 = ((0.433 + (HellWarriorShieldLevel * 0.0433)) + (HellWarriorShieldLevel * 0.005));
 				if (Owner.CountInv("EWShieldDefendModeExtra")) temp3 = ((0.4866 + (HellWarriorShieldLevel * 0.04866)) + (HellWarriorShieldLevel * 0.001));
-				if ((damageType == 'Slime' || damageType == 'Lava' || damageType == 'Magma' || damageType == 'Drowning' || damageType == 'Falling'))
+				if ((damageType == 'Slime' || damageType == 'Lava' || damageType == 'Magma' || (playeractor && playeractor.tookflrdmg) || damageType == 'Drowning' || damageType == 'Falling'))
 				{
 					double rand = (random(0,5) * 0.05);
 					temp1 *= rand;
