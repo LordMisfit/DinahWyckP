@@ -718,7 +718,44 @@ class DDPlayerPawn : PlayerPawn
 			double AirControlBase = frandom(0.2432,0.2436);
 
 			// Level Based AirControl
-			double LVLAirControl = 1.00 + (ActualLevel * 0.00125);
+			double LVLAirControl = 1.00;
+			if (exex_expenabled) LVLAirControl = 1.00 + (ActualLevel * 0.01);
+			
+			// DD NO-RPG Mode Air Control
+			double NRPGAirControl = 1.0;
+			if (!exex_expenabled)
+			{
+				if (A_CheckDDGame())
+				{
+					NRPGAirControl = 0.0;
+					if (MiscItem.DD_RoseMother) NRPGAirControl += 0.014286;
+					if (MiscItem.DD_GameMother) NRPGAirControl += 0.014286;
+					if (MiscItem.DD_MossMother) NRPGAirControl += 0.014286;
+					if (MiscItem.DD_GlobeMother) NRPGAirControl += 0.014286;
+					if (MiscItem.DD_SphinxMother) NRPGAirControl += 0.014286;
+					if (MiscItem.DD_HandMother1) NRPGAirControl += 0.014286;
+					if (MiscItem.DD_HandMother2) NRPGAirControl += 0.014286;
+					if (MiscItem.DD_TrueHandMother) NRPGAirControl += 0.014286;
+					if (MiscItem.AFD_Krag) NRPGAirControl += 0.02;
+					if (MiscItem.AFD_Quisling) NRPGAirControl += 0.02;
+					if (MiscItem.AFD_Lauritz) NRPGAirControl += 0.02;
+					if (MiscItem.AFD_Jorgensen1) NRPGAirControl += 0.02;
+					if (MiscItem.AFD_Jorgensen2) NRPGAirControl += 0.02;
+					if (MiscItem.AFD_JorgCannon) NRPGAirControl += 0.02;
+					if (MiscItem.CoS_Fafnir) NRPGAirControl += 0.025;
+					if (MiscItem.CoS_FractalHens) NRPGAirControl += 0.025;
+					if (MiscItem.CoS_ForsakenJorg) NRPGAirControl += 0.025;
+					if (MiscItem.CoS_EvilDinah) NRPGAirControl += 0.025;
+					if (MiscItem.CoS_Tempest) NRPGAirControl += 0.025;
+					if (skill <= 0) NRPGAirControl *= 8;
+					if (skill == 1) NRPGAirControl *= 7;
+					if (skill == 2) NRPGAirControl *= 6;
+					if (skill == 3) NRPGAirControl *= 5;
+					if (skill >= 4) NRPGAirControl *= 4;
+					NRPGAirControl *= exex_nrpggeneraleffect;
+					NRPGAirControl += 1.0;
+				}
+			}
 
 			// Armor items
 			double ArmorAirControl = 1.00;
@@ -745,14 +782,16 @@ class DDPlayerPawn : PlayerPawn
 			if (CountInv("PowerMeal2Buff")) BuffAirControl *= 2;
 
 			level.aircontrol = AirControlBase
+											* NRPGAirControl
 											* LVLAirControl
 											* ArmorAirControl
 											* BuffAirControl;
+			if (level.aircontrol > 1.00) level.aircontrol = 1.00;
 			level.airfriction = level.aircontrol * -0.0941 + 1.0004;
 
 			if (dydudebug_playermove)
 			{
-				Console.Printf("    \czSV_AirControl:\c- \cz%.8f\c-  \cwTotalAirControl:\c- \cw%.8f\c-, \cyAirControlBase:\c- \cy%.8f\c-, LVLAirControl: %.8f, ArmorAirControl: %.8f, BuffAirControl: %.8f", sv_aircontrol, level.aircontrol, AirControlBase, LVLAirControl, ArmorAirControl, BuffAirControl);
+				Console.Printf("    \czSV_AirControl:\c- \cz%.8f\c-  \cwTotalAirControl:\c- \cw%.8f\c-, \cyAirControlBase:\c- \cy%.8f\c-, LVLAirControl: %.8f, NRPGAirControl: %.8f, ArmorAirControl: %.8f, BuffAirControl: %.8f", sv_aircontrol, level.aircontrol, AirControlBase, LVLAirControl, NRPGAirControl, ArmorAirControl, BuffAirControl);
 				Console.Printf("    \cwTotalFriction:\c- \cw%.8f\c-, \cyLevelAirFriction:\c- \cy%.8f\c-", friction, level.airfriction);
 				Console.Printf("    \c[blue]Player.ForwardMove: (%.2f, %.2f), Player.SideMove: (%.2f, %.2f), Player.ViewBob: %.2f", ForwardMove1, ForwardMove2, SideMove1, SideMove2, ViewBob);
 			}
