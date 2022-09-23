@@ -6545,12 +6545,21 @@ class ForsakenCloakResist : TempDefenseBuff
 		actor player = players[0].mo;
 		//if (source) Console.Printf("source: %p [%s]", source, source.GetClassName());
 		//if (player) Console.Printf("player: %p [%s]", player, player.GetClassName());
-		if (passive && damage > 0)
+		double prevalpha;
+		CoSForsaken ForsakenF;
+		ForsakenF = CoSForsaken(owner);
+		if (ForsakenF && passive && damage > 0 && !A_CheckDDGame())
 		{
+			int randvar = random(1,16);
+			if (randvar >= 1 && randvar <= 3) prevalpha = ForsakenF.prevalpha;
+			if (randvar >= 4 && randvar <= 8) prevalpha = frandompick(ForsakenF.prevalpha,ForsakenF.prevalpha2);
+			if (randvar >= 11 && randvar <= 13) prevalpha = frandompick(ForsakenF.prevalpha,ForsakenF.prevalpha2,ForsakenF.prevalpha3);
+			if (randvar >= 14 && randvar <= 16) prevalpha = frandompick(ForsakenF.prevalpha,ForsakenF.prevalpha2,ForsakenF.prevalpha3,ForsakenF.prevalpha4);
+			
 			double TOTALFactor = 1.0;
 			string nm;
 			nm = "CCards_Actor_BorrowedTimeBuff";
-			if (owner && owner.CountInv(nm))
+			if (ForsakenF && ForsakenF.CountInv(nm))
 			{
 				if (!(damageType == 'Suck' || 
 							damageType == 'Sigil' || 
@@ -6610,13 +6619,12 @@ class ForsakenCloakResist : TempDefenseBuff
 					}
 				}
 			}
-			if (TOTALFactor >= 1.0) TOTALFactor = 1.0;
+			
+			double temp = ((1.0 - TOTALFactor) * (1.0 - prevalpha));
+			TOTALFactor = 1.0 - temp;
+			
 			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
-			Console.Printf("[passive] newdamage: %d, olddmg: %d, TOTALFactor: %.8f", newdamage, damage, TOTALFactor);
-		}
-		else
-		{
-			//Console.Printf("[!passive] newdamage: %d, olddmg: %d", newdamage, damage);
+			if (dydudebug_forsakencloaks) Console.Printf("(%s) [passive] newdamage: %d, olddmg: %d, TOTALFactor: %.8f, alpha: %.8f (%.8f), temp: %.8f", owner.GetClassName(), newdamage, damage, TOTALFactor, owner.alpha, prevalpha, temp);
 		}
 	}
 }
