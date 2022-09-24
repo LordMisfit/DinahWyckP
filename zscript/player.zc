@@ -1921,6 +1921,7 @@ class DDPlayerPawn : PlayerPawn
 	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		if (inflictor && MorphProjectile(inflictor) || source && MorphProjectile(source)) A_GiveInventory("HitByMorphProj",1);
 		
 		let NoU = D_NoUCard(FindInventory("D_NoUCard"));
@@ -1969,6 +1970,39 @@ class DDPlayerPawn : PlayerPawn
 				landdmgfactor = (1.0 - landdmgfactor);
 				int olddmg = damage;
 				damage = floor(damage * landdmgfactor);
+				if ((A_CheckDDGame()))
+				{
+					double PerkFactor2 = 0.00;
+					if (MiscItem.DD_RoseMother) PerkFactor2 -= 0.0142857;
+					if (MiscItem.DD_GameMother) PerkFactor2 -= 0.0142857;
+					if (MiscItem.DD_MossMother) PerkFactor2 -= 0.0142857;
+					if (MiscItem.DD_GlobeMother) PerkFactor2 -= 0.0142857;
+					if (MiscItem.DD_SphinxMother) PerkFactor2 -= 0.0142857;
+					if (MiscItem.DD_HandMother1) PerkFactor2 -= 0.0142857;
+					if (MiscItem.DD_HandMother2) PerkFactor2 -= 0.0142857;
+					if (MiscItem.DD_TrueHandMother) PerkFactor2 -= 10.0142857;
+					if (MiscItem.AFD_Krag) PerkFactor2 -= 0.02;
+					if (MiscItem.AFD_Quisling) PerkFactor2 -= 0.02;
+					if (MiscItem.AFD_Lauritz) PerkFactor2 -= 0.02;
+					if (MiscItem.AFD_Jorgensen1) PerkFactor2 -= 0.02;
+					if (MiscItem.AFD_Jorgensen2) PerkFactor2 -= 0.02;
+					if (MiscItem.AFD_JorgCannon) PerkFactor2 -= 0.02;
+					if (MiscItem.CoS_Fafnir) PerkFactor2 -= 0.025;
+					if (MiscItem.CoS_FractalHens) PerkFactor2 -= 0.025;
+					if (MiscItem.CoS_ForsakenJorg) PerkFactor2 -= 0.025;
+					if (MiscItem.CoS_EvilDinah) PerkFactor2 -= 0.025;
+					if (MiscItem.CoS_Tempest) PerkFactor2 -= 0.025;
+					PerkFactor2 *= 2.5;
+					if (skill <= 0) PerkFactor2 *= 1.5;
+					if (skill == 1) PerkFactor2 *= 1.25;
+					if (skill == 2) PerkFactor2 *= 1.0;
+					if (skill == 3) PerkFactor2 *= 0.75;
+					if (skill >= 4) PerkFactor2 *= 0.5;
+					PerkFactor2 *= exex_nrpggeneraleffect;
+					if (PerkFactor2 < 0.00) PerkFactor2 = 0.00;
+					PerkFactor2 += 1.0;
+					damage = floor(damage * PerkFactor2);
+				}
 				flags |= DMG_NO_FACTOR;
 				flags |= DMG_NO_PROTECT;
 				flags |= DMG_NO_ENHANCE;
@@ -2036,7 +2070,6 @@ class DDPlayerPawn : PlayerPawn
 		string nm, nn, no, np;
 		
 		int firstdmg = damage;
-		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
 		
 		Actor AttackingActor;
