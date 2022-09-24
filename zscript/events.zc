@@ -137,6 +137,55 @@ class DD_EventHandler : EventHandler
 			// Monster "Scaling"
 			if (spawnee.bISMONSTER && !practicetarget)
 			{
+				double baselinelevel = 0;
+				if (player) Console.Printf("A_CheckDDGame(): %d, exex_nrpgmonsterlevels: %d, ContinousMode: %d", A_CheckDDGame(), exex_nrpgmonsterlevels, player.CountInv("IsDDContinuous"));
+				if (A_CheckDDGame() && exex_nrpgmonsterlevels && (DDOrigCreature(spawnee) || DDOrigBoss(spawnee)))
+				{
+					int randroll = random(1,24);
+					double lbase = 1;
+					if (randroll == 1) lbase = 0;
+					if (randroll == 24) lbase = 2;
+					if (skill <= 0) baselinelevel += random(lbase*2,lbase*5);
+					if (skill == 1) baselinelevel += random(lbase*3,lbase*random(7,8));
+					if (skill == 2) baselinelevel += random(lbase*4,lbase*10);
+					if (skill == 3) baselinelevel += random(lbase*5,lbase*random(12,13));
+					if (skill >= 4) baselinelevel += random(lbase*6,lbase*15);
+					
+					if (player.CountInv("IsDDContinuous"))
+					{
+						if (level.levelnum == 99 || (level.levelnum >= 21 && level.levelnum <= 30))
+						{
+							randroll = random(1,24);
+							lbase = 3;
+							if (randroll == 1) lbase = 2;
+							if (randroll == 24) lbase = 4;
+							if (skill <= 0) baselinelevel += (lbase * 2);
+							if (skill == 1) baselinelevel += (lbase * 3);
+							if (skill == 2) baselinelevel += (lbase * 4);
+							if (skill == 3) baselinelevel += (lbase * 5);
+							if (skill >= 4) baselinelevel += (lbase * 6);
+						}
+						
+						if (level.levelnum >= 41 && level.levelnum <= 50)
+						{
+							randroll = random(1,24);
+							lbase = 5;
+							if (randroll == 1) lbase = 4;
+							if (randroll == 24) lbase = 6;
+							if (skill <= 0) baselinelevel += (lbase * 2);
+							if (skill == 1) baselinelevel += (lbase * 3);
+							if (skill == 2) baselinelevel += (lbase * 4);
+							if (skill == 3) baselinelevel += (lbase * 5);
+							if (skill >= 4) baselinelevel += (lbase * 6);
+						}
+					}
+					baselinelevel *= frandompick(0.5,0.375,0.75,0.75,0.75,0.75,1.0);
+					if (PuddingPup(spawnee)) baselinelevel *= frandompick(0.25,0.375,0.375,0.375,0.375,0.375,0.5);
+					if (FractalChick(spawnee)) baselinelevel *= frandompick(0.5,0.375,0.75,0.75,0.75,0.75,1.0);
+					baselinelevel *= exex_nrpgmonlevelscale;
+					if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet] baselinelevel: %d, tic: %d, actor: %p [%s]\c-", baselinelevel, gametic, spawnee, spawnee.GetClassName());
+				}
+				
 				if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet], tic: %d, actor: %p [%s]\c-", gametic, spawnee, spawnee.GetClassName());
 				int LevelErrorRange;
 				int LevelCheck;
@@ -264,57 +313,76 @@ class DD_EventHandler : EventHandler
 						}
 					}
 					
-					//***********************
-					//* PlayerLevel Scaling *
-					//***********************
-					if (exex_enemyscalingplevel && globalvars && MiscItem)
+					bool levelee = false;
+					if (A_CheckDDGame() && exex_nrpgmonsterlevels)
 					{
-						int TruePlayerLevel = A_GetPlayerLevel(1);
+						//****************************************
+						//* DD Trilogy No-RPG Mode Level Scaling *
+						//****************************************
+						int TruePlayerLevel = baselinelevel;
 						LevelCheck += TruePlayerLevel;
-						if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [PlayerLevel Check]: %d (PlayLvl: +%d)", LevelCheck, TruePlayerLevel);
-
-						if (EEC)
+						if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [baselinelevel Check]: %d (BaseLvl: +%d)", LevelCheck, TruePlayerLevel);
+						
+						levelee = true;
+					}
+					else
+					{
+						//***********************
+						//* PlayerLevel Scaling *
+						//***********************
+						if (exex_enemyscalingplevel && globalvars && MiscItem)
 						{
-							LevelCheck += EEC.user_ressurrectstr; // Checks the "Resurrect" strength of a monster [Clay Devils in TCOTD:A get stronger each time they resurrect]
-							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [ResurrectStr Check]: %d (ResStr: +%d)", LevelCheck, EEC.user_ressurrectstr);
+							int TruePlayerLevel = A_GetPlayerLevel(1);
+							LevelCheck += TruePlayerLevel;
+							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [PlayerLevel Check]: %d (PlayLvl: +%d)", LevelCheck, TruePlayerLevel);
+
+							if (EEC)
+							{
+								LevelCheck += EEC.user_ressurrectstr; // Checks the "Resurrect" strength of a monster [Clay Devils in TCOTD:A get stronger each time they resurrect]
+								if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [ResurrectStr Check]: %d (ResStr: +%d)", LevelCheck, EEC.user_ressurrectstr);
+							}
+							
+							LevelCheck += LevelDifficultyInflation;
+							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [inflation-exact]: %d (Difficulty Inflation: +%d)", LevelCheck, LevelDifficultyInflation);
+				
+							LevelCheck = LevelCheck * (100 + LevelDifficultyInflationPercent) / 100;
+							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [inflation-percent]: %d (Percent: %d%)", LevelCheck, (100 + LevelDifficultyInflationPercent));
+							
+							LevelErrorRange = LevelCheck * 0.1667;
+							if (LevelErrorRange < 1) LevelErrorRange = random(0,3);
+							LevelCheck += random(-LevelErrorRange,LevelErrorRange);
+							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [error-range]: %d (Error Range: +-%d)", LevelCheck, LevelErrorRange);
+
+							int PreviousLevelCheck = LevelCheck;
+
+							// Specific Monsters
+							if (SpiderMastermind(spawnee) || SpiderMastermindNew(spawnee)) LevelCheck += random(3,6);
+							if (Cyberdemon(spawnee) || CyberdemonNew(spawnee)) LevelCheck += random(3,6);
+							if (Annihilator(spawnee) || Demolisher(spawnee)) LevelCheck += random(3,6);
+							if (Minotaur(spawnee) || MinotaurFriend(spawnee)) LevelCheck += random(3,6);
+
+							// Specific Bosses
+							// Tier 1 Boss
+							if (Sorcerer1(spawnee) || Sorcerer1New(spawnee)) LevelCheck += random(9,18);
+							if (FighterBoss(spawnee)) LevelCheck += random(9,18);
+							if (ClericBoss(spawnee)) LevelCheck += random(9,18);
+							if (MageBoss(spawnee)) LevelCheck += random(9,18);
+							// Tier 2 Boss
+							if (Sorcerer2(spawnee) || Sorcerer2New(spawnee)) LevelCheck += random(15,30);
+							if (Korax(spawnee) || KoraxNew(spawnee)) LevelCheck += random(15,30);
+							if (spawnname == "ThamuzNew" || spawnname == "TchernobogNew") LevelCheck += random(15,30);
+							// Tier 3 Boss
+							if (spawnname == "PennywiseBoss" || spawnname == "TchernobogNew") LevelCheck += random(23,45);
+							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [actor-check: %s]: %d (Previous: %d)", spawnname, LevelCheck, PreviousLevelCheck);
+							
+							PreviousLevelCheck = LevelCheck;
+							LevelCheck = clamp(LevelCheck, 0, 2000);
+							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [final calc]: %d (Previous: %d)", LevelCheck, PreviousLevelCheck);
+							levelee = true;
 						}
-						
-						LevelCheck += LevelDifficultyInflation;
-						if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [inflation-exact]: %d (Difficulty Inflation: +%d)", LevelCheck, LevelDifficultyInflation);
-			
-						LevelCheck = LevelCheck * (100 + LevelDifficultyInflationPercent) / 100;
-						if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [inflation-percent]: %d (Percent: %d%)", LevelCheck, (100 + LevelDifficultyInflationPercent));
-						
-						LevelErrorRange = LevelCheck * 0.1667;
-						if (LevelErrorRange < 1) LevelErrorRange = random(0,3);
-						LevelCheck += random(-LevelErrorRange,LevelErrorRange);
-						if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [error-range]: %d (Error Range: +-%d)", LevelCheck, LevelErrorRange);
-
-						int PreviousLevelCheck = LevelCheck;
-
-						// Specific Monsters
-						if (SpiderMastermind(spawnee) || SpiderMastermindNew(spawnee)) LevelCheck += random(3,6);
-						if (Cyberdemon(spawnee) || CyberdemonNew(spawnee)) LevelCheck += random(3,6);
-						if (Annihilator(spawnee) || Demolisher(spawnee)) LevelCheck += random(3,6);
-						if (Minotaur(spawnee) || MinotaurFriend(spawnee)) LevelCheck += random(3,6);
-
-						// Specific Bosses
-						// Tier 1 Boss
-						if (Sorcerer1(spawnee) || Sorcerer1New(spawnee)) LevelCheck += random(9,18);
-						if (FighterBoss(spawnee)) LevelCheck += random(9,18);
-						if (ClericBoss(spawnee)) LevelCheck += random(9,18);
-						if (MageBoss(spawnee)) LevelCheck += random(9,18);
-						// Tier 2 Boss
-						if (Sorcerer2(spawnee) || Sorcerer2New(spawnee)) LevelCheck += random(15,30);
-						if (Korax(spawnee) || KoraxNew(spawnee)) LevelCheck += random(15,30);
-						if (spawnname == "ThamuzNew" || spawnname == "TchernobogNew") LevelCheck += random(15,30);
-						// Tier 3 Boss
-						if (spawnname == "PennywiseBoss" || spawnname == "TchernobogNew") LevelCheck += random(23,45);
-						if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [actor-check: %s]: %d (Previous: %d)", spawnname, LevelCheck, PreviousLevelCheck);
-						
-						PreviousLevelCheck = LevelCheck;
-						LevelCheck = clamp(LevelCheck, 0, 2000);
-						if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [final calc]: %d (Previous: %d)", LevelCheck, PreviousLevelCheck);
+					}
+					if (levelee)
+					{
 						spawnee.A_SetInventory("MonsterLevel",LevelCheck);
 						EECreature spawnee2;
 						spawnee2 = EECreature(spawnee);
@@ -411,7 +479,7 @@ class DD_EventHandler : EventHandler
 					//*********************
 					//* Map-Based Scaling *
 					//*********************
-					if (exex_enemyscalingmaps && globalvars && MiscItem)
+					if (exex_enemyscalingmaps && globalvars && MiscItem && !(A_CheckDDGame() && exex_nrpgmonsterlevels))
 					{
 						double truemultbase = multbase *= exex_enemyscalemapmultiplier;
 						if (spawnee.bFRIENDLY)
@@ -1138,6 +1206,26 @@ class DD_EventHandler : EventHandler
 			
 			// Tags
 			double spdfactor;
+			if (level.GetChecksum() == '02b205f03e29de6d7d7fe8d49d3b8fd1' && level.levelnum == 1 && spawnname == "DinahPlayer") spawnee.A_SetInventory("IsDynDuchess",1);
+			if (level.GetChecksum() == '1c18583c4831cabbe65faef4b73c9b1f' && level.levelnum == 99 && spawnname == "DinahPlayer") 
+			{
+				spawnee.A_SetInventory("IsAppetite",1);
+				if (spawnee.CountInv("IsDynDuchess")) 
+				{
+					spawnee.A_SetInventory("IsDDContinuous",1);
+					spawnee.A_SetInventory("IsDynDuchess",0);
+				}
+			}
+			if (level.GetChecksum() == '4ce28291d594a56d4b3e3fd87b641cbd' && level.levelnum == 41 && spawnname == "DinahPlayer") 
+			{
+				spawnee.A_SetInventory("IsCarnOfSouls",1);
+				if (spawnee.CountInv("IsAppetite"))
+				{
+					spawnee.A_SetInventory("IsDDContinuous",1);
+					spawnee.A_SetInventory("IsAppetite",0);
+				}
+			}
+			
 			if (level.GetChecksum() == 'dc9933f75206c48826563ee6ba6c069a' && spawnname == "TechPillar") spawnee.SetTag("Netherhell Imp");
 			if (spawnname == "DoomImpBall") 
 			{
@@ -2824,7 +2912,11 @@ class DD_EventHandler : EventHandler
 				// Weapons/Satchels [Type 6]
 				basechance = exex_inventorydroprate6;
 				basechance *= skillmult;
-				if (A_CheckDDGame()) basechance *= 16;
+				if (A_CheckDDGame()) 
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 8;
+																 else basechance *= 16;
+				}
 				luckbase = 0.25 + (monsterrating * 0.0625);
 				if (IPAttack) 
 				{
@@ -3085,6 +3177,11 @@ class DD_EventHandler : EventHandler
 					// Wrath Chests [Type 9]
 					basechance = exex_inventorydroprate9;
 					basechance *= skillmult;
+					if (A_CheckDDGame()) 
+					{
+						if (exex_nrpgmonsterlevels) basechance *= 4;
+																	 else basechance *= 8;
+					}
 					luckbase = 0.5 + (monsterrating * 0.125);
 					if (IPAttack) 
 					{
@@ -3144,6 +3241,10 @@ class DD_EventHandler : EventHandler
 				// Health Items [Type 7]
 				basechance = exex_inventorydroprate7;
 				basechance *= skillmult;
+				if (A_CheckDDGame()) 
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 0.5;
+				}
 				luckbase = 0.5 + (monsterrating * 0.125);
 				if (IPAttack) 
 				{
@@ -3205,7 +3306,11 @@ class DD_EventHandler : EventHandler
 				// Armor Items [Type 8]
 				basechance = exex_inventorydroprate8;
 				basechance *= skillmult;
-				if (A_CheckDDGame()) basechance *= 2;
+				if (A_CheckDDGame()) 
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 1;
+																 else basechance *= 2;
+				}
 				luckbase = 1.0 + (monsterrating * 0.25);
 				if (IPAttack) 
 				{
@@ -3411,7 +3516,11 @@ class DD_EventHandler : EventHandler
 				// Primary [Type 1]
 				basechance = exex_inventorydroprate1;
 				basechance *= skillmult;
-				if (A_CheckDDGame()) basechance *= 8;
+				if (A_CheckDDGame()) 
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 4;
+																 else basechance *= 8;
+				}
 				luckbase = 0.0625 + (monsterrating * 0.015625); // (512)
 				if (IPAttack) 
 				{
@@ -3449,7 +3558,11 @@ class DD_EventHandler : EventHandler
 				// Secondary [Type 2]
 				basechance = exex_inventorydroprate2;
 				basechance *= skillmult;
-				if (A_CheckDDGame()) basechance *= 8;
+				if (A_CheckDDGame()) 
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 4;
+																 else basechance *= 8;
+				}
 				luckbase = 0.5 + (monsterrating * 0.125); // (512)
 				if (IPAttack) 
 				{
@@ -3541,7 +3654,11 @@ class DD_EventHandler : EventHandler
 				// Rare Powerup Drop [Type 3]
 				basechance = exex_inventorydroprate3;
 				basechance *= skillmult;
-				if (A_CheckDDGame()) basechance *= 8;
+				if (A_CheckDDGame()) 
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 4;
+																 else basechance *= 8;
+				}
 				luckbase = 2.0 + (monsterrating * 0.5); // (512) 
 				if (IPAttack) 
 				{
@@ -3600,7 +3717,11 @@ class DD_EventHandler : EventHandler
 				// Diving Helm [Type 4]
 				basechance = exex_inventorydroprate4;
 				basechance *= skillmult;
-				if (A_CheckDDGame()) basechance *= 8;
+				if (A_CheckDDGame()) 
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 4;
+																 else basechance *= 8;
+				}
 				luckbase = 0.25 + (monsterrating * 0.0625); // (512)
 				if (IPAttack) 
 				{
@@ -3633,7 +3754,11 @@ class DD_EventHandler : EventHandler
 				// Extremely Rare Drops [Type 5]
 				basechance = exex_inventorydroprate5;
 				basechance *= skillmult;
-				if (A_CheckDDGame()) basechance *= 8;
+				if (A_CheckDDGame()) 
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 4;
+																 else basechance *= 8;
+				}
 				luckbase = 3.0 + (monsterrating * 0.75); // (682.66667)
 				if (IPAttack) 
 				{
@@ -3685,7 +3810,11 @@ class DD_EventHandler : EventHandler
 				// ?? [Type 10]
 				basechance = exex_inventorydroprate10;
 				basechance *= skillmult;
-				if (A_CheckDDGame()) basechance *= 8;
+				if (A_CheckDDGame()) 
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 4;
+																 else basechance *= 8;
+				}
 				luckbase = 2.5 + (monsterrating * 1.25);
 				// Weapons and IP Attacks do not effect drop rates here V:
 				if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
@@ -3922,6 +4051,49 @@ class DD_EventHandler : EventHandler
 						victim.bFULLVOLACTIVE == false && 
 						victim.bFULLVOLDEATH == false &&
 						victim.bBOSS == false) isCCardsIllusion = true;
+			}
+			
+			if (FractalChicken(victim) || FractalChick(victim) || FractalHen(victim))
+			{
+				if (A_CheckDDGame() && level.levelnum == 45)
+				{
+					int numfound = 0;
+					EEBaseZSC check;
+					check = EEBaseZSC(victim);
+		
+					ThinkerIterator ChickFinder = ThinkerIterator.Create("FractalChick");
+					Actor mo;
+					FractalChick mo2;
+					while (mo = Actor(ChickFinder.Next()))
+					{
+						mo2 = FractalChick(mo);
+						if (mo2 && mo2.health > 0) numfound++;
+					}
+					ThinkerIterator ChickenFinder = ThinkerIterator.Create("FractalChicken");
+					FractalChicken mo3;
+					while (mo = Actor(ChickenFinder.Next()))
+					{
+						mo3 = FractalChicken(mo);
+						if (mo3 && mo3.health > 0) numfound++;
+					}
+					
+					ThinkerIterator HenFinder = ThinkerIterator.Create("FractalHen");
+					FractalHen mo4;
+					while (mo = Actor(HenFinder.Next()))
+					{
+						mo4 = FractalHen(mo);
+						if (mo4 && mo4.health > 0) numfound++;
+					}
+					
+					if (numfound <= 0)
+					{
+						if (MiscItem && !MiscItem.CoS_FractalHens)
+						{
+							MiscItem.CoS_FractalHens += 1;
+							check.A_PrintPowerupDDTNoRPG(0);
+						}
+					}
+				}
 			}
 			
 			if (MiscItem)
