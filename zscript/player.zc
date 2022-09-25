@@ -1200,6 +1200,150 @@ class DDPlayerPawn : PlayerPawn
 		}
 	}
 	
+	override void FallAndSink(double grav, double oldfloorz)
+	{
+		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+		
+		if (dydudebug_playermove) Console.Printf("\c[orange](FallAndSink() Start)\c- Vel.Z: %.4f [oldfloorz: %.8f, grav: %.8f] [tic: %d]", Vel.Z, oldfloorz, grav, gametic);
+		if (Pos.Z > floorz && !bNOGRAVITY)
+		{
+			if (dydudebug_playermove) Console.Printf("Waterlevel: %d, Pos.Z: %.8f, floorz: %.8f [tic: %d]", waterlevel, pos.z, floorz, gametic);
+			double startvelz = Vel.Z;
+			
+			if (waterlevel == 0 || (player && !(cmd.forwardmove | cmd.sidemove)))
+			{
+				// [RH] Double gravity only if running off a ledge. Coming down from
+				// an upward thrust (e.g. a jump) should not double it.
+				if (Vel.Z == 0 && oldfloorz > floorz && Pos.Z == oldfloorz)
+				{
+					Vel.Z -= grav + grav;
+				}
+				else
+				{
+					Vel.Z -= grav;
+				}
+			}
+			
+			if (player == NULL)
+			{
+				if (waterlevel >= 1)
+				{
+					double sinkspeed;
+	
+					if (bSPECIAL && !bISMONSTER)
+					{ // Pickup items don't sink if placed and drop slowly if dropped
+						sinkspeed = bDROPPED ? -0.5 / 8 : 0;
+					}
+					else
+					{
+						sinkspeed = -0.5;
+	
+						// If it's not a player, scale sinkspeed by its mass, with
+						// 100 being equivalent to a player.
+						if (player == NULL)
+						{
+							sinkspeed = sinkspeed * clamp(Mass, 1, 4000) / 100;
+						}
+					}
+					if (Vel.Z < sinkspeed)
+					{ // Dropping too fast, so slow down toward sinkspeed.
+						Vel.Z -= max(sinkspeed * 2, -8.);
+						if (Vel.Z > sinkspeed)
+						{
+							Vel.Z = sinkspeed;
+						}
+					}
+					else if (Vel.Z > sinkspeed)
+					{ // Dropping too slow/going up, so trend toward sinkspeed.
+						Vel.Z = startvelz + max(sinkspeed / 3, -8.);
+						if (Vel.Z < sinkspeed)
+						{
+							Vel.Z = sinkspeed;
+						}
+					}
+				}
+			}
+			else
+			{
+				if (waterlevel > 1)
+				{
+					double massfactor = (MiscItem.PreBuffMass * 0.01);
+					if (massfactor > 40.00) massfactor = 40.00;
+					double massfactor2 = 1.0 - (ActualLevel * 0.015);
+					if (massfactor2 < 0.25) massfactor2 = 0.25;
+					double sinkspeed = -0.5;
+					sinkspeed *= massfactor;
+					sinkspeed *= massfactor2;
+					if (dydudebug_playermove) Console.Printf("\c[sapphire]massfactor: %.8f, massfactor2: %.8f, sinkspeed: %.8f, [tic: %d]", massfactor, massfactor2, sinkspeed, gametic);
+					
+					double armordiffmod = 1.00;
+					if (MiscItem)
+					{
+						if (MiscItem.armoritemdifficulty == 1) armordiffmod = 2.0;
+						if (MiscItem.armoritemdifficulty == 2) armordiffmod = 2.5;
+						if (MiscItem.armoritemdifficulty >= 3) armordiffmod = 5.0;
+						int ArmorAmt = CountInv("KGArmor");
+						double ArmorEnc = 0.00;
+						if (armortier == 1 && !CountInv("KnightGownIP1Buff")) ArmorEnc = (ArmorAmt * (0.0001 * armordiffmod)); // 0.025;
+						if (armortier == 2 && !CountInv("KnightGownIP2Buff")) ArmorEnc = (ArmorAmt * (0.0000975 * armordiffmod)); // 0.04875;
+						if (armortier == 3 && !CountInv("KnightGownIP3Buff")) ArmorEnc = (ArmorAmt * (0.000095 * armordiffmod)); // 0.095;
+						if (armortier == 4 && !CountInv("KnightGownIP4Buff")) ArmorEnc = (ArmorAmt * (0.00009 * armordiffmod)); // 0.180;
+						ArmorEnc *= exex_armorencumbrance;
+						if (A_CheckDDGame()) 
+						{
+							ArmorEnc *= 3;
+							ArmorEnc *= exex_nrpggeneraleffect;
+						}
+						if (waterlevel >= 2)
+						{
+							if (A_CheckDDGame()) ArmorEnc *= 2.0;
+															else ArmorEnc *= 1.5;
+						}
+						double lvlfact = 0.02;
+						if (A_CheckDDGame()) 
+						{
+							if (skill <= 0) lvlfact = 0.020;
+							if (skill == 1) lvlfact = 0.0175;
+							if (skill == 2) lvlfact = 0.015;
+							if (skill == 3) lvlfact = 0.0125;
+							if (skill >= 4) lvlfact = 0.01;
+						}
+						else
+						{
+							if (skill <= 0) lvlfact = 0.04;
+							if (skill == 1) lvlfact = 0.035;
+							if (skill == 2) lvlfact = 0.03;
+							if (skill == 3) lvlfact = 0.025;
+							if (skill >= 4) lvlfact = 0.02;
+						}
+						if (waterlevel >= 2) 
+						{
+							if (A_CheckDDGame()) lvlfact *= 0.5;
+															else lvlfact *= 0.75;
+						}
+						if (ArmorEnc > 0.0) ArmorEnc *= (1.0 - (ActualLevel * lvlfact));
+						sinkspeed -= ArmorEnc;
+						if (waterlevel == 2) sinkspeed *= 0.25;
+						if (dydudebug_playermove) Console.Printf("\c[sapphire]Vel.Z: %.8f, startvelz: %.8f, sinkspeed: %.8f, ArmorEnc: %.8f [tic: %d]", Vel.Z, startvelz, sinkspeed, ArmorEnc, gametic);
+					}
+				
+					if (Vel.Z < sinkspeed)
+					{
+						Vel.Z = (startvelz < sinkspeed) ? startvelz : sinkspeed;
+					}
+					else
+					{
+						double temp = ((Vel.Z - startvelz) * (waterlevel == 1 ? 0.25 : 0.125));
+						Vel.Z = startvelz + temp;
+					}
+				}
+			}
+		}
+		if (dydudebug_playermove) Console.Printf("\c[orange](FallAndSink() End)\c- Vel.Z: %.4f [tic: %d]", Vel.Z, gametic);
+	}
+	
 	Override void Tick()
 	{
 		// VOODOO Doll Protection
@@ -1991,10 +2135,10 @@ class DDPlayerPawn : PlayerPawn
 	bool CheckFallDamageDMobj()
 	{
 		bool takefalldamage = true;
-		if (bFLY || bNOGRAVITY) 
+		if (bFLY || bNOGRAVITY || waterlevel >= 1) 
 		{
 			takefalldamage = false;
-			if (dydudebug_playerdamagemobj) Console.Printf("bFLY: %d, bNOGRAVITY: %d", bFLY, bNOGRAVITY);
+			if (dydudebug_playerdamagemobj) Console.Printf("bFLY: %d, bNOGRAVITY: %d, waterlevel: %d", bFLY, bNOGRAVITY, waterlevel);
 		}
 		else
 		{

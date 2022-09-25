@@ -177,7 +177,7 @@ class PlayerStatItem : Inventory
 	int ArmorResistance;
 	int ClassicDoomType;
 	int ModType;
-	int TotalMass, BaseMass;
+	int TotalMass, BaseMass, PreBuffMass;
 	int MassLevelAdd;
 	int MassNoRPGAdd;
 	double MassNoRPGAdd2;
@@ -4667,20 +4667,17 @@ class PlayerStatItem : Inventory
 					if (dydudebug_masscalcs) Console.Printf("Mass [DEF]: %d", TotalMass);
 				}
 			}
+			PreBuffMass = BaseMass;
 			
 			// Buffs
 			if ((owner.bINVULNERABLE || owner.player.cheats & CF_GODMODE2 || owner.player.cheats & CF_GODMODE) || 
 					owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")) TotalMass *= 128; 
 			if (berserked) 
 			{
-				if (ActualLevel >= 200) TotalMass *= 2.003;
-				else if (ActualLevel >= 175) TotalMass *= 1.891;
-				else if (ActualLevel >= 150) TotalMass *= 1.779;
-				else if (ActualLevel >= 125) TotalMass *= 1.667;
-				else if (ActualLevel >= 100) TotalMass *= 1.556;
-				else if (ActualLevel >= 75) TotalMass *= 1.445;
-				else if (ActualLevel >= 50) TotalMass *= 1.334;
-				else if (ActualLevel >= 25) TotalMass *= 1.223;
+				if (ActualLevel >= 200) TotalMass *= 1.556;
+				else if (ActualLevel >= 150) TotalMass *= 1.445;
+				else if (ActualLevel >= 100) TotalMass *= 1.334;
+				else if (ActualLevel >= 50) TotalMass *= 1.223;
 				else TotalMass *= 1.112;
 			}
 
@@ -6947,7 +6944,7 @@ class PlayerDashJump : Inventory
 	
 	actor weapon;
 	int HellWarriorShieldLevel;
-	Double DashDir, DashSpeed, DashVSpeed;
+	Double DashDir, DashSpeed, DashVSpeed, DashPitch;
 	Int DashTics, DashCharge, AirTics, DashCost;
 	Bool DJump, Waiting;
 	string dashgruntsound;
@@ -7419,6 +7416,9 @@ class PlayerDashJump : Inventory
 			If ((BTInput & BT_BACK) && (BTInput & BT_MOVELEFT)) DashDir = (180 - 45);
 			If ((BTInput & BT_BACK) && (BTInput & BT_MOVERIGHT)) DashDir = (180 + 45);
 			DashDir += Owner.Angle;
+			DashPitch = Owner.Pitch;
+			if (BTInput & BT_FORWARD) DashPitch *= 0.5;
+			else if (BTInput & BT_BACK) DashPitch *= -0.5;
 
 			DashCharge -= DashCost;
 			if (DashCharge <= 0) 
@@ -7521,7 +7521,18 @@ class PlayerDashJump : Inventory
 			DashTics--;
 			
 			Owner.A_SetInventory("DashTimeFreezer",0);
-			Owner.VelFromAngle(DashSpeed, DashDir);
+			
+			
+			if (exex_flightswimpitchdash && (owner.waterlevel >= 3 || (owner.bNOGRAVITY || owner.bFLY))) 
+			{
+				Console.Printf("DashSpeed: %.8f, DashDir: %.8f, DashPitch: %.8f", DashSpeed, DashDir, DashPitch);
+				Owner.Vel3DFromAngle(DashSpeed, DashDir, DashPitch);
+			}
+			else 
+			{
+				Console.Printf("DashSpeed: %.8f, DashDir: %.8f", DashSpeed, DashDir);
+				Owner.VelFromAngle(DashSpeed, DashDir);
+			}
 			string dashtype;
 
 			double DashDmg;
