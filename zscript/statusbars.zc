@@ -231,7 +231,9 @@ class DDStatusBarMain : BaseStatusBar
 				{
 					InvIconScaleX = 1.0;
 					InvIconScaleY = 1.0;
-					if (item is "Coin")
+					if (item is "Coin" ||
+							item is "ArcadeChip" ||
+							item is "Money_Ducat")
 					{
 						InvIconAlpha = 0.875;
 					}
@@ -677,35 +679,60 @@ class DDStatusBarMain : BaseStatusBar
 			if (parms.amountfont != null && (item.Amount >= 0 || (flags & DI_ALWAYSSHOWCOUNTERS)))
 			{
 				if (item.MaxAmount > 0) ItemHeldRatio = (item.Amount * 1000) / item.MaxAmount;
-				else ItemHeldRatio = 0;
+													 else ItemHeldRatio = 0;
 				
-				if (item is "Coin")
+				if (item is "Coin" ||
+						item is "PuzzleItemEE" ||
+						item is "PuzzleItem")
 				{
-					fnt = "INDEXFONT_DD";
+					if (TextSize <= 0) fnt = "INDEXFONT_DD";
+					if (TextSize == 1) fnt = "INDEXFONT_DDM";
+					if (TextSize >= 2) fnt = "INDEXFONT_DDL";
+
 					parms.amountfont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
-					if (TextSize == 0) TextPosExtra = (0,0);
+					if (TextSize <= 0) TextPosExtra = (0,0);
 					if (TextSize == 1) TextPosExtra = (0,0);
-					if (TextSize == 2) TextPosExtra = (0,5);
-					DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 6), TextPos + (boxsize.X * i, 0) + (-14,0) + TextPosExtra, flags | DI_TEXT_ALIGN_CENTER, font.CR_GOLD, ItemAlpha2);
+					if (TextSize >= 2) TextPosExtra = (0,5);
+					
+					if (item is "Coin" ||
+							item is "ArcadeChip" ||
+							item is "Money_Ducat")
+					{
+						TextTranslation = font.CR_GOLD;
+					}
+					else
+					if (item is "PuzzleItemEE" ||
+							item is "PuzzleItem")
+					{
+						if (item.Amount <= 0) TextTranslation = font.cr_black;
+						else if (item.Amount >= item.MaxAmount) TextTranslation = Font.cr_sapphire;
+						else
+						{
+							if (ItemHeldRatio <= 250) TextTranslation = Font.CR_RED;
+							else if (ItemHeldRatio > 250 && ItemHeldRatio <= 500) TextTranslation = Font.CR_ORANGE;
+							else if (ItemHeldRatio > 500 && ItemHeldRatio <= 750) TextTranslation = Font.CR_YELLOW;
+							else if (ItemHeldRatio > 750 && ItemHeldRatio <= 1000) TextTranslation = Font.CR_GREEN;
+						}
+					}
+					DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 6), TextPos + (boxsize.X * i, 0) + (-14,0) + TextPosExtra, flags | DI_TEXT_ALIGN_CENTER, TextTranslation, ItemAlpha2);
 				}
 				else
 				{
-					if (TextSize == 0) fnt = "INDEXFONT_DD";
+					if (TextSize <= 0) fnt = "INDEXFONT_DD";
 					if (TextSize == 1) fnt = "INDEXFONT_DDM";
-					if (TextSize == 2) fnt = "INDEXFONT_DDL";
+					if (TextSize >= 2) fnt = "INDEXFONT_DDL";
 
 					parms.amountfont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
 
 					if (exex_imposeinventorylimits)
 					{
-						if (TextSize == 0) TextPosExtra = (0,0);
+						if (TextSize <= 0) TextPosExtra = (0,0);
 						if (TextSize == 1) TextPosExtra = (-1,0);
-						if (TextSize == 2) TextPosExtra = (-3,1);
+						if (TextSize >= 2) TextPosExtra = (-3,1);
 						if (item.Amount <= 0) TextTranslation = font.cr_black;
 						else if (item.Amount >= item.MaxAmount) TextTranslation = Font.cr_sapphire;
 						else
 						{
-							
 							if (ItemHeldRatio >= 0 && ItemHeldRatio <= 99) TextTranslation = font.cr_darkred;
 							if (ItemHeldRatio >= 100 && ItemHeldRatio <= 199) TextTranslation = font.cr_red;
 							if (ItemHeldRatio >= 200 && ItemHeldRatio <= 299) TextTranslation = font.cr_brick;
@@ -719,14 +746,14 @@ class DDStatusBarMain : BaseStatusBar
 						}
 						DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 6), TextPos + (boxsize.X * i, 0) + (-26,-19) + TextPosExtra, flags | DI_TEXT_ALIGN_LEFT, TextTranslation, ItemAlpha2);
 
-						if (TextSize == 0) TextPosExtra = (0,0);
+						if (TextSize <= 0) TextPosExtra = (0,0);
 						if (TextSize == 1) TextPosExtra = (0,0);
-						if (TextSize == 2) TextPosExtra = (-1,1);
+						if (TextSize >= 2) TextPosExtra = (-1,1);
 						DrawString(parms.amountfont, "/", TextPos + (boxsize.X * i, 0) + (-14,-10) + TextPosExtra, flags | DI_TEXT_ALIGN_CENTER, Font.CR_WHITE, ItemAlpha2);
 
-						if (TextSize == 0) TextPosExtra = (0,0);
+						if (TextSize <= 0) TextPosExtra = (0,0);
 						if (TextSize == 1) TextPosExtra = (1,0);
-						if (TextSize == 2) TextPosExtra = (1,2);
+						if (TextSize >= 2) TextPosExtra = (1,2);
 						DrawString(parms.amountfont, FormatNumber(item.MaxAmount, 0, 10), TextPos + (boxsize.X * i, 0) + (-2,-2) + TextPosExtra, flags | DI_TEXT_ALIGN_RIGHT, Font.CR_GOLD, ItemAlpha2);
 						
 						TextPosExtra = (0,0);
@@ -742,9 +769,9 @@ class DDStatusBarMain : BaseStatusBar
 							else if (ItemHeldRatio > 500 && ItemHeldRatio <= 750) TextTranslation = Font.CR_YELLOW;
 							else if (ItemHeldRatio > 750 && ItemHeldRatio <= 1000) TextTranslation = Font.CR_GREEN;
 						}
-						if (TextSize == 0) TextPosExtra = (0,0);
+						if (TextSize <= 0) TextPosExtra = (0,0);
 						if (TextSize == 1) TextPosExtra = (1,0);
-						if (TextSize == 2) TextPosExtra = (1,2);
+						if (TextSize >= 2) TextPosExtra = (1,2);
 						DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 6), TextPos + (boxsize.X * i, 0) + (-2,-2) + TextPosExtra, flags | DI_TEXT_ALIGN_RIGHT, TextTranslation, ItemAlpha2);
 
 						TextPosExtra = (0,0);
@@ -2595,54 +2622,39 @@ class DDStatusBarMain : BaseStatusBar
 		}
 		
 		//
-		if (MiscItem && dyduhud_showextraatkdefspd && exex_expenabled)
+		FontScale = (1.0, 1.0);
+		int sepery = 6;
+		DigX = 68 + (Digits * Spacing); // 176
+		DigY = -90; // -90
+		string hudstat;
+		if (MiscItem && exex_expenabled)
 		{
-			FontScale = (1.0, 1.0);
-			int sepery = 6;
-			DigX = 68 + (Digits * Spacing); // 176
-			DigY = -90; // -90
-			string hudstat;
-			hudstat = "ATK+: ";
-			hudstat.AppendFormat("%d", VisiblePlayerATK);
-			if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
-			DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_red, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			hudstat = "DEF+: ";
-			hudstat.AppendFormat("%d", VisiblePlayerDEF);
-			if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
-			DigY += sepery; // -82 / -132
-			DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_olive, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-			hudstat = "SPD+: ";
-			hudstat.AppendFormat("%d", VisiblePlayerSPD);
-			if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
-			DigY += sepery; // -82 / -132
-			DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_blue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			if (dyduhud_showextraatkdefspd)
+			{
+				hudstat = "ATK+: ";
+				hudstat.AppendFormat("%d", VisiblePlayerATK);
+				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
+				DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_red, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				hudstat = "DEF+: ";
+				hudstat.AppendFormat("%d", VisiblePlayerDEF);
+				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
+				DigY += sepery;
+				DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_olive, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+				hudstat = "SPD+: ";
+				hudstat.AppendFormat("%d", VisiblePlayerSPD);
+				if (dyduhud_showextraatkdefspd >= 2) hudstat.AppendFormat(" [%d]", VisiblePlayerLevel);
+				DigY += sepery;
+				DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_blue, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
 			if (dyduhud_showluck)
 			{
 				hudstat = "LUCK: ";
 				hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
-				DigY += sepery; // -82 / -132
+				if (dyduhud_showextraatkdefspd) DigY += sepery;
 				DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
 			}
-			FontScale = (1.25, 1.25);
 		}
-		else
-		{
-			FontScale = (1.0, 1.0);
-			if (dyduhud_showluck && exex_expenabled)
-			{
-				int sepery = 6;
-				DigX = 68 + (Digits * Spacing); // 176
-				DigY = -90; // -90
-				string hudstat;
-				if (MiscItem)
-				{
-					hudstat = "LUCK: ";
-					hudstat.AppendFormat("%d", MiscItem.PlayerLuck);
-					DrawString(mConFont, hudstat, (DigX, DigY), DI_TEXT_ALIGN_LEFT, font.cr_gold, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-				}
-			}
-			FontScale = (1.25, 1.25);
-		}
+		FontScale = (1.25, 1.25);
 		return FontAlpha, FontScale, FontWrapWidth, FontLineSpace, DigX, DigY, Spacing, VisiblePlayerLevel, VisiblePlayerATK, VisiblePlayerDEF, VisiblePlayerSPD, HUDHitAlpha, HUDStringHit, Digits;
 	}
 

@@ -187,7 +187,7 @@ class PlayerStatItem : Inventory
 	int PlayerATK, TruePlayerATK;
 	int PlayerDEF, TruePlayerDEF;
 	int PlayerSPD, TruePlayerSPD;
-	int PlayerLUCK, TruePlayerLUCK;
+	int PlayerLUCK, TruePlayerLUCK, TempLUCK;
 	int PrevATK, PrevDEF, PrevSPD, PrevLUCK;
 	int HPMaxGain, MassGain;
 	
@@ -513,6 +513,7 @@ class PlayerStatItem : Inventory
 							PlayerLuck = random(0,2);
 						}
 						PlayerLuck += random(2,3);
+						TempLUCK = PlayerLuck;
 						atkfct += frandom(-variance,variance);
 						deffct += frandom(-variance,variance);
 						spdfct += frandom(-variance,variance);
@@ -766,6 +767,40 @@ class PlayerStatItem : Inventory
 				}
 				if (MaxItemPoints > (BaseMaxItemPoints * 2.5)) MaxItemPoints = (BaseMaxItemPoints * 2.5);
 				if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+				
+				// Luck [DDTrilogy NO Rpg-Mode]
+				if (A_CheckDDGame())
+				{
+					double DDTFactor = 0.00;
+					if (DD_RoseMother) DDTFactor += 0.1875;
+					if (DD_GameMother) DDTFactor += 0.1875;
+					if (DD_MossMother) DDTFactor += 0.1875;
+					if (DD_GlobeMother) DDTFactor += 0.1875;
+					if (DD_SphinxMother) DDTFactor += 0.1875;
+					if (DD_HandMother1) DDTFactor += 0.1875;
+					if (DD_HandMother2) DDTFactor += 0.1875;
+					if (DD_TrueHandMother) DDTFactor += 0.1875;
+					if (AFD_Krag) DDTFactor += 0.25;
+					if (AFD_Quisling) DDTFactor += 0.25;
+					if (AFD_Lauritz) DDTFactor += 0.25;
+					if (AFD_Jorgensen1) DDTFactor += 0.25;
+					if (AFD_Jorgensen2) DDTFactor += 0.25;
+					if (AFD_JorgCannon) DDTFactor += 0.25;
+					if (CoS_Fafnir) DDTFactor += 0.3;
+					if (CoS_FractalHens) DDTFactor += 0.3;
+					if (CoS_ForsakenJorg) DDTFactor += 0.3;
+					if (CoS_EvilDinah) DDTFactor += 0.3;
+					if (CoS_Tempest) DDTFactor += 0.3;
+					if (skill <= 0) DDTFactor *= 1.5;
+					if (skill == 1) DDTFactor *= 1.25;
+					if (skill == 2) DDTFactor *= 1.0;
+					if (skill == 3) DDTFactor *= 0.75;
+					if (skill >= 4) DDTFactor *= 0.5;
+					DDTFactor *= exex_nrpggeneraleffect;
+					DDTFactor += 1.00;
+					TempLUCK *= DDTFactor;
+					PlayerLuck = TempLUCK;
+				}
 				
 				if (owner.CountInv("PoisonCount"))
 				{
@@ -4548,7 +4583,7 @@ class PlayerStatItem : Inventory
 				if (skill == 3) MassLevelAdd2 = (MassNoRPGADD * 1.25);
 				if (skill >= 4) MassLevelAdd2 = (MassNoRPGADD * 1.0);
 				
-				if ((A_CheckDDGame()))
+				if (A_CheckDDGame())
 				{
 					if (DD_RoseMother) MassNoRPGAdd2 += (BaseMass * 0.0625);
 					if (DD_GameMother) MassNoRPGAdd2 += (BaseMass * 0.0625);
@@ -5308,7 +5343,9 @@ class PlayerStatItem : Inventory
 					}
 				}
 				
-				if (owner.CountInv("Backpack") || owner.CountInv("BackpackTier1"))
+				if (owner.CountInv("Backpack") || 
+						owner.CountInv("BackpackTier1") || 
+						owner.CountInv("BackpackTier2"))
 				{
 					if (owner.CountInv("BackpackTier2")) baseholdamount *= baseholdmultibp2;
 																					else baseholdamount *= baseholdmultibp1;
