@@ -4974,6 +4974,41 @@ class DDStatusBarMain : BaseStatusBar
 		return VisiblePlayerLevel, candash, dashcost, dashmaxcharge;
 	}
 	
+	void BlindnessEffectHUD()
+	{
+		DDPlayerPawn CPlayerPawn;
+		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
+		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		if (CPlayerPawn.CountInv("DrownDebuffBase"))
+		{
+			textureid BlindImg = TexMan.CheckForTexture("BLNDHAZE", TexMan.TYPE_MiscPatch);
+			double blindalpha = 0.00;
+			double blindbase;
+			if (skill <= 0) blindbase = 0.05;
+			if (skill == 1) blindbase = 0.075;
+			if (skill == 2) blindbase = 0.0875;
+			if (skill == 3) blindbase = 0.09375;
+			if (skill >= 4) blindbase = 0.096875;
+			if (MiscItem)
+			{
+				if (MiscItem.drowndebufflevel >= 1) blindalpha = blindbase * MiscItem.drowndebufflevel;
+				if (blindalpha > 0.00) 
+				{
+					SetSize(0, 1920, 1080);
+					vector2 blindpos = (960, 540);
+					DrawTexture(BlindImg, blindpos, DI_ITEM_CENTER|DI_ITEM_VCENTER, BlindAlpha);
+					DrawTexture(BlindImg, blindpos, DI_ITEM_CENTER|DI_ITEM_VCENTER, (BlindAlpha*0.875));
+					if (A_CheckDDGame())
+					{
+						DrawTexture(BlindImg, blindpos, DI_ITEM_CENTER|DI_ITEM_VCENTER, (BlindAlpha*0.75));
+						DrawTexture(BlindImg, blindpos, DI_ITEM_CENTER|DI_ITEM_VCENTER, (BlindAlpha*0.625));
+					}
+					SetSize(0, 320, 200);
+				}
+			}
+		}
+	}
+	
 	protected void DrawFullScreenStuff()
 	{
 		int VisiblePlayerLevel = 0;
@@ -5004,7 +5039,10 @@ class DDStatusBarMain : BaseStatusBar
 				VisiblePlayerSPD = MiscItem.PlayerSPD;
 			}
 		}
-
+		
+		// Blindness/Drowning [HUD]
+		BlindnessEffectHUD();
+		
 		if (screenblocks < 12)
 		{
 			int HPShakeFormX = 0;
