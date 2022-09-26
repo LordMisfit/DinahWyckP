@@ -3237,17 +3237,77 @@ class PowerNoDrown : PowerProtection
 	default
 	{
 		DamageFactor "Drowning", 0;
-		Powerup.Color "Grey", 0.1;
+		Powerup.Color "Black", 0.5;
 		Powerup.Duration -180;
 		Inventory.Icon "DIVRA0";
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
 	}
+	double fadeintensity;
 	
+	override color GetBlend()
+	{
+		bool debugblend = false;
+		// slowly fade the color out
+		int cnt = 128 - (EffectTics>>2);
+		if (exex_divinghelmvisuals)
+		{
+			cnt = 128 - (EffectTics2>>4);
+			cnt *= fadeintensity;
+		}
+		int blendclr = BlendColor.a*cnt/256;
+		if (exex_divinghelmvisuals)
+		{
+			if (owner && owner.waterlevel >= 3) blendclr *= 1.0;
+																		else blendclr *= 0.05;
+		}
+		else blendclr *= 0.05;
+
+		if (debugblend) Console.Printf("cnt: %d, blendclr: %d, fade: %.2f", cnt, blendclr, fadeintensity);
+
+		if (cnt > 0)
+		{
+			return Color(blendclr,
+				BlendColor.r, BlendColor.g, BlendColor.b);
+		}
+		if (debugblend) Console.Printf("EffectTics2: %d, cnt: %d / 256, BlendColor.a: %d, fadeintensity: %.2f", EffectTics2, cnt, BlendColor.a*cnt/256, fadeintensity);
+		return 0;
+	}
 	
+	int EffectTics2;
+	int Dire;
+
 	override void Tick()
 	{
+		bool debugtick = false;
+		
+		int Point1 = 450;
+		int Point2 = 1800;
+		int increment = random(6,8) * random(6,8);
+		
+		
+		if (debugtick) Console.Printf("EffectTics: %d (%d), Dire: %d, Increment: %d", EffectTics2, EffectTics, Dire, Increment);
+
+		if (Dire == 0)
+		{
+			if (EffectTics2 <= Point1) { EffectTics2 = Point1; Dire = 1; }
+			else if (EffectTics2 >= Point2) { EffectTics2 = Point2; Dire = 2; }
+			else { Dire = random(1,2); }
+		}
+
+		if (Dire == 1)
+		{
+			if (owner && owner.CountInv("TimePotionTimeFreezer") <= 0) EffectTics2 += increment;
+			if (EffectTics2 >= Point2) Dire = 2;
+		}
+		else
+		if (Dire == 2)
+		{
+			if (owner && owner.CountInv("TimePotionTimeFreezer") <= 0) EffectTics2 -= increment;
+			if (EffectTics2 <= Point1) Dire = 1;
+		}
+
 		int ticpiecemax;
 		int ticwhiletimes = 3;
 		actor player = players[0].mo;
@@ -3353,6 +3413,10 @@ class PowerNoDrown : PowerProtection
 			if (ticpiece < -ticpiecemax) ticpiece = 0;
 			if (ticpiece >= (ticpiecemax*3)) ticpiece = 0;
 		}
+		
+		// Begin fading when 5 seconds remain
+		fadeintensity = 1.0 * ((EffectTics * 1.0) / 175.0);
+		if (fadeintensity >= 1.00) fadeintensity = 1.00;
 		
 		// Powerups cannot exist outside an inventory
 		if (Owner == NULL) Destroy();
