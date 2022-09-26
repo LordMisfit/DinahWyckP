@@ -2204,7 +2204,11 @@ class DDPlayerPawn : PlayerPawn
 					double PuddingFactor = 0.667;
 					if (PuddingDog(inflictor) || PuddingPup(inflictor) || PupGrenade(inflictor) || PuddingDog(source) || PuddingPup(source) || PupGrenade(source)) PlayerDefenseIgnoreFactor += (PuddingFactor * (1.00 - PlayerDefenseIgnoreFactor));
 					
-					if (bellefishzap) PlayerDefenseIgnoreFactor += (0.334 * (1.00 - PlayerDefenseIgnoreFactor));
+					if (bellefishzap) 
+					{
+						if (CountInv("PowerNoDrown")) PlayerDefenseIgnoreFactor += (0.0334 * (1.00 - PlayerDefenseIgnoreFactor));
+																		 else PlayerDefenseIgnoreFactor += (0.334 * (1.00 - PlayerDefenseIgnoreFactor));
+					}
 
 					double RailFactor = frandom(0.3,0.334);
 					if (mod == 'Railgun') PlayerDefenseIgnoreFactor += (RailFactor * (1.00 - PlayerDefenseIgnoreFactor));
@@ -2619,10 +2623,12 @@ class DDPlayerPawn : PlayerPawn
 		bool bellefishzap;
 		if (mod == 'Melee' && flags & DMG_EXPLOSION && (BelleFish(Source) || BelleFish(Inflictor)))
 		{
+			int prevdmg = damage;
 			flags |= DMG_THRUSTLESS;
 			flags &= ~DMG_EXPLOSION;
 			bellefishzap = true;
-			if (dydudebug_playerdamagemobj) Console.Printf("Bellefish Zap Melee");
+			if (CountInv("PowerNoDrown")) damage *= 0.2;
+			if (dydudebug_playerdamagemobj) Console.Printf("Bellefish Zap Melee: damage: %d [%d]", damage, prevdmg);
 		}
 		if (mod == 'Beats' && flags & DMG_EXPLOSION) flags &= ~DMG_EXPLOSION;
 		
