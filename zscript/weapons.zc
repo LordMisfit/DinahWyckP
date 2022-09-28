@@ -1135,27 +1135,74 @@ class DDWeapon : Weapon
 	action double A_LowerRaiseCheck(double movespeed)
 	{
 		double bufffactor = 1.0;
+		double weaponfactor = 1.0;
 		if (player.mo)
 		{
 			let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 			int TruePlayerLevel = invoker.ActualLevel;
 			
-			if (MiscItem) movespeed *= (1.0 + (TruePlayerLevel * 0.025));
-			if (player.mo.CountInv("PowerRoastBuff")) bufffactor += 0.125;
+			if (MiscItem) 
+			{
+				if (A_CheckDDGame()) movespeed *= (1.0 + (TruePlayerLevel * 0.01));
+												else movespeed *= (1.0 + (TruePlayerLevel * 0.02));
+			}
+			
+			if (player.mo.CountInv("PowerRoastBuff")) bufffactor += 0.25;
 			if (player.mo.CountInv("PowerEggBuff") || player.mo.CountInv("PowerEggBuff2")) 
 			{
-				if (MiscItem) bufffactor += (0.125 + (MiscItem.UsedEggHeal * 0.00125));
-								 else bufffactor += 0.125;
+				if (A_CheckDDGame())
+				{
+					if (MiscItem) bufffactor += (0.125 + (MiscItem.UsedEggHeal * 0.00125));
+									 else bufffactor += 0.125;
+				}
+				else
+				{
+					if (MiscItem) bufffactor += (0.25 + (MiscItem.UsedEggHeal * 0.0025));
+									 else bufffactor += 0.25;
+				}
 			}
-			if (player.mo.CountInv("PowerFruitBuff") || player.mo.CountInv("PowerFruitBuff2")) bufffactor += 0.0625;
-			if (player.mo.CountInv("PowerRoastBuff")) bufffactor += 0.125;
-			if (player.mo.CountInv("PowerMealBuff") || player.mo.CountInv("PowerMealBuff2")) bufffactor += 0.25;
-			if (player.mo.CountInv("PowerMeal2Buff") || player.mo.CountInv("PowerMeal2Buff2")) bufffactor += 0.25;
-			if (player.ReadyWeapon is "HandToHand") bufffactor += 0.25;
-			if (player.ReadyWeapon is "SuperVac") bufffactor -= (0.25 + (player.mo.CountInv("VacAmmo") * (0.25 / 24)));
-			if (player.ReadyWeapon is "Grimophone") bufffactor -= 0.50;
+			if (player.mo.CountInv("PowerFruitBuff") || player.mo.CountInv("PowerFruitBuff2")) 
+			{
+				if (A_CheckDDGame()) bufffactor += 0.0625;
+												else bufffactor += 0.125;
+			}
+			if (player.mo.CountInv("PowerRoastBuff")) 
+			{
+				if (A_CheckDDGame()) bufffactor += 0.125;
+												else bufffactor += 0.25;
+			}
+			if (player.mo.CountInv("PowerMealBuff") || player.mo.CountInv("PowerMealBuff2")) 
+			{
+				if (A_CheckDDGame()) bufffactor += 0.25;
+												else bufffactor += 0.5;
+			}
+			if (player.mo.CountInv("PowerMeal2Buff") || player.mo.CountInv("PowerMeal2Buff2")) 
+			{
+				if (A_CheckDDGame()) bufffactor += 0.25;
+												else bufffactor += 0.5;
+			}
 			movespeed *= bufffactor;
-			if (player.mo.CountInv("PowerStrength") || player.mo.CountInv("PowerStrengthDD")) movespeed *= 2.0;
+			
+			if (player.ReadyWeapon is "HandToHand") weaponfactor += 0.25;
+			if (player.ReadyWeapon is "CricketBat") weaponfactor += 0.00;
+			if (player.ReadyWeapon is "BlunderAxe") weaponfactor -= 0.125;
+			if (player.ReadyWeapon is "Scrambler") weaponfactor -= 0.125;
+			if (player.ReadyWeapon is "AppleJack") weaponfactor += 0.00;
+			if (player.ReadyWeapon is "WizardPike") weaponfactor += 0.125;
+			if (player.ReadyWeapon is "SuperVac") 
+			{
+				if (MiscItem && MiscItem.SuperVacAmmoMax != 0) weaponfactor -= (0.25 + (player.mo.CountInv("VacAmmo") * (0.25 / MiscItem.SuperVacAmmoMax)));
+																									else weaponfactor -= (0.25 + (player.mo.CountInv("VacAmmo") * (0.25 / 24)));
+			}
+			if (player.ReadyWeapon is "Grimophone") weaponfactor -= 0.50;
+			if (player.ReadyWeapon is "CandleWhip") weaponfactor += 0.125;
+			if (player.ReadyWeapon is "CrazyBallDD") weaponfactor -= 0.25;
+			if (player.ReadyWeapon is "SigilDD") weaponfactor -= 0.25;
+			if (player.ReadyWeapon is "FosnianCandle") weaponfactor += 0.25;
+			movespeed *= weaponfactor;
+
+			if (player.mo.CountInv("PowerStrength") || player.mo.CountInv("PowerStrengthDD")) movespeed *= 1.5;
+			if (dydudebug_weaponstatdisplays) Console.Printf("movespeed: %d, bufffactor: %.4f, weaponfactor: %.4f", movespeed, bufffactor, weaponfactor);
 		}
 		return movespeed;
 	}
@@ -1207,7 +1254,7 @@ class DDWeapon : Weapon
 	action void A_Raise(int movespeed = 6)
 	{
 		movespeed = A_LowerRaiseCheck(movespeed);
-		if (dydudebug_weaponstatdisplays) Console.Printf("A_Lower: (%d)", movespeed);
+		if (dydudebug_weaponstatdisplays) Console.Printf("A_Raise: (%d)", movespeed);
 		let player = player;
 
 		if (null == player)
@@ -1386,7 +1433,7 @@ class DDWeapon : Weapon
 	{
 		if (CountInv("IsUnconscious"))
 		{
-			if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (Pre [Base]) (%s): %d [%d]", GetClassName(), flags, gametic);
+			if (dydudebug_weaponstatdisplays2) Console.Printf("A_WeaponReady: Flags (Pre [Base]) (%s): %d [%d]", GetClassName(), flags, gametic);
 			// Enforces Various Locks on weapons if the player is "Unconscious"
 			if (!(flags & WRF_NOBOB)) flags |= WRF_NOBOB; // Turns on WRF_NOBOB
 			if (!(flags & WRF_NOFIRE)) flags |= WRF_NOFIRE; // Turns on WRF_NOFIRE
@@ -1401,7 +1448,7 @@ class DDWeapon : Weapon
 			if ((flags & WRF_ALLOWUSER2)) flags &= ~WRF_ALLOWUSER2; // Turns off WRF_ALLOWUSER2
 			if ((flags & WRF_ALLOWUSER3)) flags &= ~WRF_ALLOWUSER3; // Turns off WRF_ALLOWUSER3
 			if ((flags & WRF_ALLOWUSER4)) flags &= ~WRF_ALLOWUSER4; // Turns off WRF_ALLOWUSER4
-			if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (post [Base]) (%s): %d [%d]", GetClassName(), flags, gametic);
+			if (dydudebug_weaponstatdisplays2) Console.Printf("A_WeaponReady: Flags (post [Base]) (%s): %d [%d]", GetClassName(), flags, gametic);
 		}
 
 		if (!player) return;
@@ -1412,7 +1459,7 @@ class DDWeapon : Weapon
 		A_Overlay(-1000,"GrandControlLayer",true);
 		player.WeaponState |= GetButtonStateFlags(flags);
 		DoReadyWeaponDisableSwitch(player, flags & WRF_DisableSwitch);
-		if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (final [Base]) (%s): %d [%d]", GetClassName(), flags, gametic);
+		if (dydudebug_weaponstatdisplays2) Console.Printf("A_WeaponReady: Flags (final [Base]) (%s): %d [%d]", GetClassName(), flags, gametic);
 	}
 	
 	action int A_HoldInWeapon(int type = 0)
@@ -1461,7 +1508,7 @@ class DinahWeapon : DDWeapon
 	{
 		if (CountInv("IsUnconscious"))
 		{
-			if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (Pre [QuickMelee]) (%s): %d [%d]", GetClassName(), flags, gametic);
+			if (dydudebug_weaponstatdisplays2) Console.Printf("A_WeaponReady: Flags (Pre [QuickMelee]) (%s): %d [%d]", GetClassName(), flags, gametic);
 			// Enforces Various Locks on weapons if the player is "Unconscious"
 			if (!(flags & WRF_NOBOB)) flags |= WRF_NOBOB; // Turns on WRF_NOBOB
 			if (!(flags & WRF_NOFIRE)) flags |= WRF_NOFIRE; // Turns on WRF_NOFIRE
@@ -1476,7 +1523,7 @@ class DinahWeapon : DDWeapon
 			if ((flags & WRF_ALLOWUSER2)) flags &= ~WRF_ALLOWUSER2; // Turns off WRF_ALLOWUSER2
 			if ((flags & WRF_ALLOWUSER3)) flags &= ~WRF_ALLOWUSER3; // Turns off WRF_ALLOWUSER3
 			if ((flags & WRF_ALLOWUSER4)) flags &= ~WRF_ALLOWUSER4; // Turns off WRF_ALLOWUSER4
-			if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (post [QuickMelee]) (%s): %d [%d]", GetClassName(), flags, gametic);
+			if (dydudebug_weaponstatdisplays2) Console.Printf("A_WeaponReady: Flags (post [QuickMelee]) (%s): %d [%d]", GetClassName(), flags, gametic);
 		}
 
 		if (!player) return;
@@ -1488,7 +1535,7 @@ class DinahWeapon : DDWeapon
 		player.WeaponState |= GetButtonStateFlags(flags);
 		
 		DoReadyWeaponDisableSwitch(player, flags & WRF_DisableSwitch);
-		if (dydudebug_weaponstatdisplays2) Console.Printf("Flags (final [QuickMelee]) (%s): %d [%d]", GetClassName(), flags, gametic);
+		if (dydudebug_weaponstatdisplays2) Console.Printf("A_WeaponReady: Flags (final [QuickMelee]) (%s): %d [%d]", GetClassName(), flags, gametic);
 	}
 	
 	// Kick Force State for Player
@@ -1608,6 +1655,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 1)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindUp 1: %d", tic);
 				A_SetTics(tic);
 			}
 			TNT1 A 1 // [2]
@@ -1618,6 +1666,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 3)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindUp 2: %d", tic);
 				A_SetTics(tic);
 			}
 			TNT1 A 1 // [3]
@@ -1628,6 +1677,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 5)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindUp 3: %d", tic);
 				A_SetTics(tic);
 			}
 			TNT1 A 1 // [4]
@@ -1638,6 +1688,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 7)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindUp 4: %d", tic);
 				A_SetTics(tic);
 			}
 			TNT1 A 1 // [5]
@@ -1648,6 +1699,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 9)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindUp 5: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1663,6 +1715,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 3)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 7) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 1: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1677,6 +1730,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 13)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 2) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 2: %d", tic);
 				A_SetTics(tic);
 				
 				if (A_CheckBerserk())
@@ -1701,6 +1755,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 9)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 7) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 3: %d", tic);
 				A_SetTics(tic);
 				
 				int basechance = 128;
@@ -1741,6 +1796,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 7)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 2) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 4: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1755,6 +1811,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 12)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 7) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 5: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1769,6 +1826,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 16)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 2) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 6: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1783,12 +1841,16 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 5)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 7) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 7: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
 			}
 			DKIC H 1 // 1 [13] (Attack)
 			{
+				int tic = 1;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 8 [shields/hit]: %d", tic);
+				A_SetTics(tic);
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
@@ -1834,6 +1896,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 4)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 7) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 9: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1848,6 +1911,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 15)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 2) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 10: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1862,6 +1926,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 10)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 7) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 11: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1876,6 +1941,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 8)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 2) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 12: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1890,6 +1956,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 11)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 2) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 13: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1904,6 +1971,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 14)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 2) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 14: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1918,6 +1986,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 6)) tic = 0;
 				else if (A_CheckBerserk() && random(1,9) <= 7) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("Kicking 15: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1973,6 +2042,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 10)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindDown 1: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsKicking",1);
@@ -1985,6 +2055,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 8)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindDown 2: %d", tic);
 				A_SetTics(tic);
 			}
 			TNT1 A 1 // [23]
@@ -1995,6 +2066,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 6)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindDown 3: %d", tic);
 				A_SetTics(tic);
 			}
 			TNT1 A 1 // [24]
@@ -2005,6 +2077,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 4)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindDown 4: %d", tic);
 				A_SetTics(tic);
 			}
 			TNT1 A 1 // [25]
@@ -2015,6 +2088,7 @@ class DinahWeapon : DDWeapon
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 2)) tic = 0;
 				else if (A_CheckBerserk() && random(1,2) <= 1) tic = 0;
+				if (dydudebug_weaponstatdisplays) Console.Printf("KickWindDown 5: %d", tic);
 				A_SetTics(tic);
 			}
 			goto KickEnd;
@@ -2334,7 +2408,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 0) tic = 0;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 1: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2350,7 +2424,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 16)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 0) tic = 0;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 2 [shields/hit]: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2395,7 +2469,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 14)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 1) tic = 1;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 3: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2411,7 +2485,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 13)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 0) tic = 0;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 4: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2427,7 +2501,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 17)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 0) tic = 0;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 5: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2448,7 +2522,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 0) tic = 0;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 1: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2464,7 +2538,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 16)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 0) tic = 0;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 2 [shields/hit]: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2505,7 +2579,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 14)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 1) tic = 1;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 3: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2521,7 +2595,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 13)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 0) tic = 0;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 4: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2537,7 +2611,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 17)) tic -= 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				if (tic < 0) tic = 0;
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 5: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsPunching",1);
@@ -2549,7 +2623,7 @@ class HandToHand : DinahWeapon replaces Fist
 		AltFire:
 			goto UppercutStart;
 		UppercutStart:
-			DNUP A 1
+			DNUP A 1 // 1
 			{ 
 				A_ForcePlayStateMelee("Melee");
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
@@ -2558,20 +2632,20 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 10)) tic -= 1; // 50 [10]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutStart 1: %d", tic);
 				A_SetTics(tic);
 			}
-			DNUP B 1
+			DNUP B 1 // 2
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 5)) tic -= 1; // 25 [5]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutStart 2: %d", tic);
 				A_SetTics(tic);
 			}
-			DNUP C 1
+			DNUP C 1 // 3
 			{ 
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
@@ -2579,20 +2653,20 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 13)) tic -= 1; // 65 [13]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutStart 3: %d", tic);
 				A_SetTics(tic);
 			}
-			DNUP D 1
+			DNUP D 1 // 4
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 7)) tic -= 1; // 35 [7]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutStart 4: %d", tic);
 				A_SetTics(tic);
 			}
-			DNUP E 1
+			DNUP E 1 // 5
 			{ 
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
@@ -2600,12 +2674,12 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 11)) tic -= 1; // 55 [11]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutStart 5: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
 			}
-			//
+		Uppercut:
 			DNU2 A 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
@@ -2613,7 +2687,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 4)) tic -= 1; // 20 [4]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 1: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2666,7 +2740,7 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 12)) tic -= 1; // 55 [11]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 2: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2678,7 +2752,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 8)) tic -= 1; // 40 [8]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 3: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2691,7 +2765,7 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 14)) tic -= 1; // 70 [14]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 4: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2703,7 +2777,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 2)) tic -= 1; // 10 [2]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 5: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2715,7 +2789,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 6 [shields/hit]: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2754,7 +2828,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 3)) tic -= 1; // 15 [3]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 7: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2767,7 +2841,7 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 12)) tic -= 1; // 55 [11]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 8: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2779,7 +2853,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 6)) tic -= 1; // 30 [6]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 9: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2792,7 +2866,7 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 14)) tic -= 1; // 70 [14]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 10: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2804,7 +2878,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 7)) tic -= 1; // 35 [7]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 11: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2817,7 +2891,7 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 11)) tic -= 1; // 55 [10]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("Uppercut 12: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2831,7 +2905,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 9)) tic -= 1; // 45 [9]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutEnd 1: %d", tic);
 				A_SetTics(tic);
 				
 				player.mo.A_SetInventory("IsUppercutting",1);
@@ -2844,7 +2918,7 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 13)) tic -= 1; // 65 [13]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutEnd 2: %d", tic);
 				A_SetTics(tic);
 			}
 			DNUP C 1
@@ -2854,7 +2928,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 1)) tic -= 1; // 5 [1]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutEnd 3: %d", tic);
 				A_SetTics(tic);
 			}
 			DNUP B 1
@@ -2865,7 +2939,7 @@ class HandToHand : DinahWeapon replaces Fist
 				int tic = 1;
 				if (A_CheckBerserk()) tic *= frandom(0.34,0.67);
 				else if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 10)) tic -= 1; // 50 [10]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutEnd 4: %d", tic);
 				A_SetTics(tic);
 			}
 			DNUP A 1
@@ -2875,7 +2949,7 @@ class HandToHand : DinahWeapon replaces Fist
 				
 				int tic = 1;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(1) * 3)) tic -= 1; // 15 [3]
-				if (dydudebug_weaponstatdisplays) Console.Printf("%d", tic);
+				if (dydudebug_weaponstatdisplays) Console.Printf("UppercutEnd 5: %d", tic);
 				A_SetTics(tic);
 			}
 			TNT1 A 0
