@@ -1217,8 +1217,12 @@ class DDPlayerPawn : PlayerPawn
 		if (dydudebug_playermove && WaterDepth > 0) Console.Printf("Current water depth: %f", WaterDepth);
 
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+		let PlayerWeapon = MiscItem.weapon;
 		let player = self.player;
 		UserCmd cmd = player.cmd;
+		bool berserked;
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) berserked = true;
+		double SuperVacAmmoFactor;
 		
 		if (dydudebug_playermove) Console.Printf("\c[orange](FallAndSink() Start)\c- Vel.Z: %.4f [oldfloorz: %.8f, grav: %.8f] [tic: %d]", Vel.Z, oldfloorz, grav, gametic);
 		if (Pos.Z > floorz && !bNOGRAVITY)
@@ -1339,6 +1343,84 @@ class DDPlayerPawn : PlayerPawn
 						}
 						if (ArmorEnc > 0.0) ArmorEnc *= (1.0 - (ActualLevel * lvlfact));
 						sinkspeed -= ArmorEnc;
+						
+						double weaponsinkfactor = 0.00;
+						if (PlayerWeapon is "HandToHand") 
+						{
+							if (berserked) weaponsinkfactor -= frandom(0.75,0.875);
+												else weaponsinkfactor -= frandom(0.50,0.75);
+						}
+						if (PlayerWeapon is "CricketBat") 
+						{
+							if (berserked) weaponsinkfactor += 0.000;
+												else weaponsinkfactor += 0.125;
+						}
+						if (PlayerWeapon is "BlunderAxe") 
+						{
+							if (berserked) weaponsinkfactor += 0.008125;
+												else weaponsinkfactor += 0.03125;
+						}
+						if (PlayerWeapon is "AppleJack") 
+						{
+							if (berserked) weaponsinkfactor -= 0.05;
+												else weaponsinkfactor -= 0.03125;
+						}
+						if (PlayerWeapon is "Scrambler")
+						{
+							if (berserked) weaponsinkfactor -= 0.1625;
+												else weaponsinkfactor -= 0.125;
+						}
+						if (PlayerWeapon is "WizardPike")
+						{
+							if (berserked) weaponsinkfactor -= 0.08125;
+												else weaponsinkfactor -= 0.0625;
+						}
+						if (PlayerWeapon is "FosnianCandle") 
+						{
+							if (berserked) weaponsinkfactor += 0.008125;
+												else weaponsinkfactor += 0.03125;
+						}
+						if (PlayerWeapon is "SuperVac")
+						{
+							SuperVacAmmoFactor = MiscItem.SuperVacAmmoFactor;
+							if (berserked) weaponsinkfactor += (0.015625 + SuperVacAmmoFactor);
+												else weaponsinkfactor += (0.0625 + SuperVacAmmoFactor);
+						}
+						if (PlayerWeapon is "Grimophone") 
+						{
+							if (berserked) weaponsinkfactor += 0.03125;
+												else weaponsinkfactor += 0.125;
+						}
+						if (PlayerWeapon is "CandleWhip")
+						{
+							if (berserked) weaponsinkfactor -= 0.08125;
+												else weaponsinkfactor -= 0.0625;
+						}
+						If (PlayerWeapon is "EvilWarriorShield")
+						{
+							int HellWarriorShieldLevel = CountInv("HellWarriorShieldLevel");
+							if (berserked)
+							{
+								if (CountInv("HWShieldBlockHold")) weaponsinkfactor += (0.10 * (1.0 + (HellWarriorShieldLevel * 0.00625)));
+																							else weaponsinkfactor += (0.05 * (1.0 + (HellWarriorShieldLevel * 0.003125)));
+							}
+							else
+							{
+								if (CountInv("HWShieldBlockHold")) weaponsinkfactor = (0.20 * (1.0 + (HellWarriorShieldLevel * 0.0125)));
+																							else weaponsinkfactor = (0.10 * (1.0 + (HellWarriorShieldLevel * 0.00625)));
+							}
+						}
+						if (PlayerWeapon is "HandToHand") weaponsinkfactor *= 1.0;
+						else
+						{
+							if (A_CheckDDGame()) weaponsinkfactor *= 3.75;
+							else weaponsinkfactor *= 1.875;
+						}
+						weaponsinkfactor *= exex_weaponencumbrance;
+						weaponsinkfactor += 1.00;
+						if (dydudebug_playermove) Console.Printf("\c[sapphire]weaponsinkfactor: %.8f, sinkspeed: %.8f [tic: %d]", weaponsinkfactor, sinkspeed, gametic);
+						sinkspeed *= weaponsinkfactor;
+						
 						if (waterlevel == 2) sinkspeed *= 0.25;
 						if (dydudebug_playermove) Console.Printf("\c[sapphire]Vel.Z: %.8f, startvelz: %.8f, sinkspeed: %.8f, ArmorEnc: %.8f [tic: %d]", Vel.Z, startvelz, sinkspeed, ArmorEnc, gametic);
 					}
