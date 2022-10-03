@@ -3609,8 +3609,20 @@ class CompatVulnItem : PlaceholderItem
 	
 	
 	//*************************************
+	actor prevtarget;
+	state prevstate;
+	override void Tick()
+	{
+		super.Tick();
+		prevtarget = null;
+		if (owner) 
+		{
+			if (owner.target) prevtarget = owner.target;
+		}
+	}
 	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
 	{
+		bool surprisehit;
 		if (owner)
 		{
 			if (!owner.bISMONSTER) Destroy();
@@ -3626,10 +3638,37 @@ class CompatVulnItem : PlaceholderItem
 				if (!found) TOTALFactor *= GetBloodResistances(damage, damageType, newdamage, passive, inflictor, source, flags);
 				if (!found) TOTALFactor *= GetMiscResistances1(damage, damageType, newdamage, passive, inflictor, source, flags);
 				if (!found) TOTALFactor *= GetMiscResistances2(damage, damageType, newdamage, passive, inflictor, source, flags);
-				//
+						
 				newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
 				lastTOTALFactor = TOTALFactor;
 				if (dydudebug_actordmgdisplays) Console.Printf("\c[sapphire]CompatVulnItem\c- (%s): post-damage: %d, damagetype: %s, TOTALFactor: %.8f", ownername, newdamage, damageType, TOTALFactor);
+				//
+				if (dydudebug_actordmgdisplays && source) Console.Printf("(source: \c[green]%p\c-) %s", source, source.GetClassName());
+				if (dydudebug_actordmgdisplays && inflictor) Console.Printf("(inflictor: \c[green]%p\c-) %s", inflictor, inflictor.GetClassName());
+				if (dydudebug_actordmgdisplays && prevtarget) Console.Printf("(owner.target: \c[green]%p\c-) %s", prevtarget, prevtarget.GetClassName());
+				if (source && 
+						prevtarget != source && 
+						(PlayerPawn(source) || source.bFRIENDLY) && 
+						!owner.bFRIENDLY && 
+						damageType != 'TrueIP' &&
+						!owner.bDORMANT)
+				{
+					int initdmg = newdamage;
+					surprisehit = true;
+					A_StopSound(32);
+					if (owner.InStateSequence(owner.curstate,owner.ResolveState("Spawn")))
+					{
+						owner.A_SetInventory("JustSurprised",1);
+						if (exex_hitweaksounds) owner.A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+						newdamage *= frandompick(1.3334,1.50);
+					}
+					else
+					{
+						if (exex_hitweaksounds) owner.A_StartSound("Misc/WeaknessHit", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+						newdamage *= frandompick(1.0667,1.10);
+					}
+					if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) surprisehit: damage: %d (initdmg: %d)", GetClassName(), newdamage, initdmg);
+				}
 			}
 		}
 	}

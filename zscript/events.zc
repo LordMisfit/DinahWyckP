@@ -6331,3 +6331,39 @@ class DD_StaticEventHandler : StaticEventHandler
 		}
 	}
 }
+
+
+class EEWaterHandler : StaticEventHandler 
+{
+	override void RenderOverlay(RenderEvent e)
+	{
+		// set the player's timer up correctly (more-than-1-tick precision)
+		PlayerInfo p = players[consoleplayer];
+		Shader.SetUniform1f(p, "watershader", "timer", gametic + e.FracTic);
+
+		bool chasecam = false;
+		if (p.cheats & CF_CHASECAM) chasecam = true;
+		if (p.mo.waterlevel >= 3 && !chasecam)
+		{
+			if (dydudebug_shader)
+			{
+				Shader.SetEnabled(p, "watershader", false);
+				Shader.SetEnabled(p, "waterzoomshader", false);
+			}
+			else
+			{
+				Shader.SetEnabled(p, "watershader", true);
+				Shader.SetEnabled(p, "waterzoomshader", true);
+				double effectSize = CVar.GetCVar("exex_uweffectsize", p).GetFloat();
+				if (p.mo.CountInv("PowerNoDrown")) effectSize *= frandom(0.045,0.055);
+				Shader.SetUniform1f(p, "watershader", "waterFactor", effectSize);
+				Shader.SetUniform1f(p, "waterzoomshader", "zoomFactor", 1 - (effectSize * 2));
+			}
+		}
+		else 
+		{
+			Shader.SetEnabled(p, "watershader", false);
+			Shader.SetEnabled(p, "waterzoomshader", false);
+		}
+	}
+}
