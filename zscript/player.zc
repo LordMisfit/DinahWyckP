@@ -36,7 +36,7 @@ class DDPlayerPawn : PlayerPawn
 	actor DmgInflictor;
 	int DmgFlags;
 	bool tookflrdmg;
-
+	
 	mixin HUDRecovery;
 	mixin DynMusicControl;
 	bool IPAttack;
@@ -4159,6 +4159,7 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 		+PLAYERPAWN.NOTHRUSTWHENINVUL
 	}
 	
+	int stepCounter;
 	override void Tick()
 	{
 		super.Tick(); // KEEP THIS HERE ELSE OTHER FUNCTIONS RELATED TO THIS BREAK :V
@@ -4334,7 +4335,7 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 			goto Death;
 		Ice:
 			goto Death;
-  }
+	}
 }
 
 class RavenPlayer : DDPlayerPawn
@@ -4423,5 +4424,273 @@ class RatPlayer : DDPlayerPawn
 			RATS F 6;
 			TNT1 A 1 A_CheckPlayerDone();
 			Wait;
+	}
+}
+
+/*
+class Footsteps : Actor
+{
+	//the player footsteps are attached to.
+	PlayerPawn toFollow;
+	
+	array<string> fstep_sounds;
+	array<int> fstep_textures;
+	string fstep_default_sound;
+	
+	//VSO: only needed for debug.
+	array<string> fstep_textures_names_debug;
+	
+	int next_update_tics_countdown;
+	
+	//attach PlayerPawn, load the texture/sound associated tables.
+	void Init(PlayerPawn attached_player)
+	{
+		next_update_tics_countdown = -1;
+		self.toFollow = attached_player;
+		
+		//Read SOUNDINFO and LANGUAGE to map textures on sounds.
+		//only add to (fstep_sounds;fstep_textures) if the texture exist.
+		array<String> sSTEP_FLATS_List; 
+		
+		StringTable.Localize("$STEP_FLATS").Split(sSTEP_FLATS_List, ":");
+		//iterate over the list of flat names, and retreive  
+		for (int i = 0; i < sSTEP_FLATS_List.Size(); i++) 
+		{
+			String singleFLAT_Sound = StringTable.Localize(String.Format("$STEP_%s", sSTEP_FLATS_List[i]));
+			
+			if (singleFLAT_Sound.Length() != 0) 
+			{
+				//check if the texture exists.
+				textureid  tx_id = TexMan.CheckForTexture( sSTEP_FLATS_List[i],TexMan.TYPE_ANY);
+				
+				if (tx_id.Exists()) 
+				{
+						//texture exists, add both in the lists:
+						fstep_sounds.Push(singleFLAT_Sound);
+						fstep_textures.Push(int(tx_id));
+						
+						//also keep tx names, but it is only used for debugging.
+						fstep_textures_names_debug.Push(sSTEP_FLATS_List[i]);
+				}
+			}
+		}
+		// add fstep_default:
+		fstep_default_sound = StringTable.Localize("$STEP_DEFAULT");
+	}
+	
+	override void Tick()
+	{  
+		next_update_tics_countdown--;
+		
+		//0) do nothing until next_update_tics_countdown is below 0
+		if (next_update_tics_countdown > 0) 
+		{
+				Super.Tick();
+				return;
+		}
+		
+		//1) Update the Footstep actor to follow Player.
+		SetOrigin(self.toFollow.pos, true);
+		self.floorz = self.toFollow.floorz;
+			
+		double player_speed2d = sqrt(self.toFollow.vel.x * self.toFollow.vel.x + self.toFollow.vel.y * self.toFollow.vel.y);
+		
+		//2) Only play footsteps when on ground, and if the player is moving fast enough.
+		if ((CVar.GetCvar("fs_enabled").GetInt() > 0) && (player_speed2d > 0.1) && (self.toFollow.pos.z - self.toFollow.floorz <= 0))
+		{
+			
+			//trace
+			//Console.PrintF("Speed2d = %f",player_speed2d);
+			
+			//current floopic id for player:
+			int player_floor_tx_id = int(self.toFollow.floorpic);
+		
+			//sound volume is amplified by speed.
+			double soundLevel = CVar.GetCvar("fs_volume_mul").GetFloat() * player_speed2d;
+			//3) Find the matching index of player_floor_tx_id in fstep_textures and retreive the sound to play matching the texture we are in.
+			int foundIndex  = fstep_textures.Find(player_floor_tx_id);
+			
+			if (foundIndex != fstep_textures.Size())
+			{
+				//3-1) play the sound
+				A_StartSound(fstep_sounds[foundIndex], 801, CHANF_DEFAULT, soundLevel, ATTN_NORM, frandom(1.05,1.125));
+				//Console.PrintF("Found tx = %s, play snd = %s",fstep_textures_names_debug[foundIndex], fstep_sounds[foundIndex]); 
+			}
+			else
+			{
+				//3-2) Play default sound if no match was found
+				A_StartSound(fstep_default_sound,  801, CHANF_DEFAULT, soundLevel, ATTN_NORM, frandom(1.05,1.125));
+				//Console.PrintF("Not found Tx ! , play default snd = %s",fstep_default_sound); 
+			}
+										
+			//4) Compute the next date at which playing a sound step again.
+			//clamp the apparent maximum speed, to limit sound repetition interval.         
+			if (player_speed2d > 5.0) {
+					player_speed2d = 5.0;
+			}
+			//fastest sound playing speed is set to roughly 0.3s => 10 ticks ( * fs_delay_mul)
+			next_update_tics_countdown = (35.0 - ((25.0 / 5.0) * player_speed2d)) * CVar.GetCvar("fs_delay_mul").GetFloat();
+		}
+		else
+		{
+			// no need to poll for change too often
+			next_update_tics_countdown = 2;
+		}
+		
+		Super.Tick();
+	}  
+}
+*/
+
+class EVP_Footsteps : Actor
+{
+	PlayerPawn plr;
+
+	int tickCounter;
+
+	array<int> fs_textures;
+	array<string> fs_sndinfo;
+	string defaultSndinfo;
+
+	void Init(PlayerPawn toAttach)
+	{
+		plr = toAttach;
+
+		tickCounter = 2;
+
+		array< string > allSF; 
+		StringTable.Localize( "$STEP_FLATS" ).Split( allSF, ":" );
+
+		for ( int j = allSF.Size() - 1; j >= 0; j -= 1 )
+		{
+				string s = StringTable.Localize( String.Format( "$STEP_%s", allSF[ j ] ));
+
+				if ( s.Length() != 0 )
+				{
+						textureid t = TexMan.CheckForTexture( allSF[ j ], TexMan.TYPE_ANY );
+						if ( t.Exists() )
+						{
+								fs_textures.Push( int( t ));
+
+								fs_sndinfo.Push( s );
+						}
+				}
+		}
+		defaultSndinfo = StringTable.Localize( "$STEP_DEFAULT" );
+	}
+
+	override void Tick()
+	{
+		tickCounter -= 1;
+		if ( tickCounter > 0 )
+		{
+			Super.Tick();
+			return;
+		}
+
+		int speed2d = (plr.vel.x * plr.vel.x) + (plr.vel.y * plr.vel.y);
+		if (dydudebug_footsteps && speed2d) Console.Printf("speed2d: %d", speed2d);
+		let MiscItem = PlayerStatItem(plr.FindInventory("PlayerStatItem"));
+		let PlayerWeapon = plr.player.ReadyWeapon;
+
+		/* Only play footsteps when on the ground and moving fast enough.
+			 The original speed threshold was ridiculously low for vanilla
+			 movement. This new scheme has ample margin for AutoWalking,
+			 my slowest movement warranting footsteps, plus the granularity
+			 for several footstep intervals when moving faster.
+		 */
+		let DashItem = PlayerDashJump(plr.FindInventory("PlayerDashJump"));
+		if (speed2d > 25 && 
+				plr.waterlevel <= 0 &&
+				(plr.pos.z - plr.floorz) <= 0 &&
+				plr.player.crouchfactor >= 1.00 &&
+				!plr.CountInv("DashTics"))
+		{
+			double fstpitch = frandom(1.125,1.225);
+			if (PlayerWeapon is "HandToHand") fstpitch *= frandom(1.125,1.175);
+			if (PlayerWeapon is "CricketBat")
+			{
+				if (plr.CountInv("CricketBatGuard3")) fstpitch *= frandom(0.825,0.90);
+				else if (plr.CountInv("CricketBatGuard2")) fstpitch *= frandom(0.90,0.95);
+				else if (plr.CountInv("CricketBatGuard")) fstpitch *= frandom(0.95,1.0);
+				else fstpitch *= frandom(0.975,1.025);
+			}
+			if (PlayerWeapon is "BlunderAxe") fstpitch *= frandom(0.875,0.925);
+			if (PlayerWeapon is "AppleJack") fstpitch *= frandom(0.975,1.025);
+			if (PlayerWeapon is "Scrambler") fstpitch *= frandom(0.925,0.975);
+			if (PlayerWeapon is "WizardPike") fstpitch *= frandom(0.975,1.025);
+			if (PlayerWeapon is "SuperVac") fstpitch *= frandom(0.775,0.825);
+			if (PlayerWeapon is "Grimophone") fstpitch *= frandom(0.725,0.775);
+			if (PlayerWeapon is "CrazyBallDD") fstpitch *= frandom(0.925,0.975);
+			if (PlayerWeapon is "EvilWarriorShield") fstpitch *= frandom(0.825,0.875);
+			if (PlayerWeapon is "CandleWhip") fstpitch *= frandom(1.075,1.125);
+			if (PlayerWeapon is "SigilDD") fstpitch *= frandom(0.975,1.025);
+			if (PlayerWeapon is "FosnianCandle") fstpitch *= frandom(0.875,0.925);
+			if (dydudebug_footsteps) Console.Printf("fstpitch: %.8f", fstpitch);
+			
+			int idx = fs_textures.Find(int(plr.floorpic));
+			
+			plr.A_StartSound(idx != fs_textures.Size() ? fs_sndinfo[ idx ] : defaultSndinfo,
+											 801, CHANF_DEFAULT,
+											 1.0,
+											 ATTN_NORM,
+											 fstpitch);
+			if (random(1,5) <= 3)
+			{
+				plr.A_StartSound(idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo,
+												802, CHANF_DEFAULT,
+												0.8,
+												ATTN_NORM,
+												fstpitch);
+				if (random(1,5) <= 2)
+				{
+					plr.A_StartSound(idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo,
+													803, CHANF_DEFAULT,
+													0.6,
+													ATTN_NORM,
+													fstpitch);
+				}
+			}
+
+			if (speed2d < 48) tickCounter = 12;
+			else if (speed2d < 62) tickCounter = 11;
+			else if (speed2d < 75) tickCounter = 10;
+			else if (speed2d < 92) tickCounter = 9;
+			else if (speed2d < 110) tickCounter = 8;
+			else if (speed2d < 127) tickCounter = 7;
+			else if (speed2d < 145) tickCounter = 6;
+			else if (speed2d < 162) tickCounter = 5;
+			else tickCounter = 4;
+
+			if (dydudebug_footsteps) Console.Printf("FootStepSound: %s", idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo);
+		}
+		else 
+		{
+			// poll for movement
+			if (plr.CountInv("DashTics")) tickCounter = random(6,9);
+															 else tickCounter = 3; 
+		}
+		
+		Super.Tick();
+	}
+
+	Default
+	{
+		+NOINTERACTION
+	}
+}
+
+class EVP_FootstepsInit : EventHandler
+{
+	override void PlayerEntered( PlayerEvent e )
+	{
+		if ( e.playerNumber == 0 )
+		{
+			let fs = EVP_Footsteps( Actor.Spawn("EVP_Footsteps") );
+			if ( fs )
+			{
+					fs.Init( players[ 0 ].mo );
+			}
+		}
 	}
 }
