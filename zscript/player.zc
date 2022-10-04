@@ -4453,6 +4453,7 @@ class EVP_Footsteps : Actor
 	PlayerPawn plr;
 
 	int tickCounter;
+	double truecrouchfactor, fstpitch;
 
 	array<int> fs_textures;
 	array<string> fs_sndinfo;
@@ -4488,10 +4489,9 @@ class EVP_Footsteps : Actor
 	{
 		let MiscItem = PlayerStatItem(plr.FindInventory("PlayerStatItem"));
 		let PlayerWeapon = plr.player.ReadyWeapon;
-		double truecrouchfactor = 1.0 - ((1.0 - plr.player.crouchfactor) * 1.5);
-		if (dydudebug_footsteps) Console.Printf("truecrouchfactor: %.8f", truecrouchfactor);
+		truecrouchfactor = 1.0 - ((1.0 - plr.player.crouchfactor) * 1.5);
 		
-		double fstpitch = frandom(1.125,1.225);
+		fstpitch = frandom(1.125,1.225);
 		if (PlayerWeapon is "HandToHand") fstpitch *= frandom(1.125,1.175);
 		if (PlayerWeapon is "CricketBat")
 		{
@@ -4511,7 +4511,6 @@ class EVP_Footsteps : Actor
 		if (PlayerWeapon is "CandleWhip") fstpitch *= frandom(1.075,1.125);
 		if (PlayerWeapon is "SigilDD") fstpitch *= frandom(0.975,1.025);
 		if (PlayerWeapon is "FosnianCandle") fstpitch *= frandom(0.875,0.925);
-		if (dydudebug_footsteps) Console.Printf("fstpitch: %.8f", fstpitch);
 		
 		int idx = fs_textures.Find(int(plr.floorpic));
 		
@@ -4537,8 +4536,15 @@ class EVP_Footsteps : Actor
 			}
 		}
 		
+		bool defaultsound;
+		if (idx != fs_textures.Size()) defaultsound = false; 
+															else defaultsound = true;
 		string texname = texman.GetName(plr.floorpic);
-		if (dydudebug_footsteps) Console.Printf("FootStepSound: %s, \c[orange]texname: \c[fire]%s\c-, floorpic: %d", idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic);
+		if (dydudebug_footsteps) 
+		{
+			if (defaultsound) Console.Printf("FootStepSound: \c[red]%s\c-, \c[orange]texname: \c[fire]%s\c-, floorpic: \c[gold]%d\c- [%d]", idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic, gametic);
+									 else Console.Printf("FootStepSound: \c[green]%s\c-, \c[orange]texname: \c[fire]%s\c-, floorpic: \c[gold]%d\c- [%d]", idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic, gametic);
+		}
 	}
 	
 	override void Tick()
@@ -4551,7 +4557,6 @@ class EVP_Footsteps : Actor
 		}
 
 		int speed2d = (plr.vel.x * plr.vel.x) + (plr.vel.y * plr.vel.y);
-		if (dydudebug_footsteps && speed2d) Console.Printf("speed2d: %d", speed2d);
 
 		/* Only play footsteps when on the ground and moving fast enough.
 			 The original speed threshold was ridiculously low for vanilla
@@ -4585,7 +4590,7 @@ class EVP_Footsteps : Actor
 															 else tickCounter = 3; 
 		}
 		if (exex_footstepcounttype) tickCounter = plr.CountInv("IsStepping");
-		if (dydudebug_footsteps && tickCounter) Console.Printf("tickCounter: %d", tickCounter);
+		if (dydudebug_footsteps) Console.Printf("\c[orange]truecrouchfactor: %.8f\c-, \c[olive]fstpitch: %.8f\c-, \c[sapphire]speed2d: %d\c-, \c[gold]tickCounter: %d\c- [%d]", truecrouchfactor, fstpitch, speed2d, tickCounter, gametic);
 		
 		Super.Tick();
 	}
