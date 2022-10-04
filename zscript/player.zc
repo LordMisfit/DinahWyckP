@@ -141,9 +141,21 @@ class DDPlayerPawn : PlayerPawn
 					grunted = true;
 				}
 				bool isliquid = (pos.Z <= floorz) && HitFloor();
+				bool foundstpsnd;
 				if (onmobj != NULL || !isliquid)
 				{
-					A_StartSound("*land", CHAN_BODY);
+					ThinkerIterator FStepFinder = ThinkerIterator.Create("EVP_Footsteps");
+					EVP_Footsteps mo;
+					while (mo = EVP_Footsteps(FStepFinder.Next()))
+					{
+						mo.HandleFootsteps(1); // Landing
+						foundstpsnd = true;
+						break;
+					}
+					
+					double volmult = 1.00;
+					if (foundstpsnd) volmult *= frandom(0.4,0.6);
+					A_StartSound("*land", 811, CHANF_DEFAULT, volmult);
 				}
 			}
 			else
@@ -4446,7 +4458,7 @@ class EVP_Footsteps : Actor
 	PlayerPawn plr;
 
 	int tickCounter;
-	double truecrouchfactor, fstpitch;
+	double truecrouchfactor, fstpitch, fstvolume;
 
 	array<int> fs_textures;
 	array<string> fs_sndinfo;
@@ -4508,42 +4520,118 @@ class EVP_Footsteps : Actor
 		return Level;
 	}
 	
-	void HandleFootsteps(int speed2d)
+	void HandleFootsteps(int type = 0)
 	{
 		let DDPawn = DDPlayerPawn(plr);
 		let MiscItem = PlayerStatItem(plr.FindInventory("PlayerStatItem"));
 		let DashItem = PlayerDashJump(plr.FindInventory("PlayerDashJump"));
 		if (MiscItem)
 		{
+			bool berserked;
+			if (plr.CountInv("PowerStrength") || plr.CountInv("PowerStrengthDD")) berserked = true;
+
 			int ActualLevel = A_CheckActualLevel(1);
 			let PlayerWeapon = plr.player.ReadyWeapon;
 			truecrouchfactor = 1.0 - ((1.0 - plr.player.crouchfactor) * 1.5);
 			
 			fstpitch = frandom(1.125,1.225);
-			if (PlayerWeapon is "HandToHand") fstpitch *= frandom(1.125,1.175);
+			fstvolume = (CVar.GetCvar("exex_footstepvolume", players[0]).GetFloat() * truecrouchfactor);
+			if (type == 1) 
+			{
+				double landtemp = frandom(0.5,0.667);
+				fstpitch *= landtemp; // Landing
+				fstvolume *= (1.0 / landtemp);
+			}
+
+			double WeaponFactor = 1.0;
+			double WeaponFactorEx = 0.0;
+			if (PlayerWeapon is "HandToHand") 
+			{
+				if (berserked) WeaponFactorEx += 0.25;
+									else WeaponFactorEx += 0.125;
+				fstpitch *= (1.0 + (WeaponFactorEx * frandom(0.875,1.125)));
+			}
 			if (PlayerWeapon is "CricketBat")
 			{
-				if (plr.CountInv("CricketBatGuard3")) fstpitch *= frandom(0.825,0.90);
-				else if (plr.CountInv("CricketBatGuard2")) fstpitch *= frandom(0.90,0.95);
-				else if (plr.CountInv("CricketBatGuard")) fstpitch *= frandom(0.95,1.0);
-				else fstpitch *= frandom(0.975,1.025);
+				if (berserked) WeaponFactorEx += 0.1875;
+									else WeaponFactorEx += 0.00;
+				
+				if (plr.CountInv("CricketBatGuard3")) WeaponFactorEx *= frandom(0.825,0.90);
+				if (plr.CountInv("CricketBatGuard2")) WeaponFactorEx *= frandom(0.90,0.95);
+				if (plr.CountInv("CricketBatGuard")) WeaponFactorEx *= frandom(0.95,1.0);
 			}
-			if (PlayerWeapon is "BlunderAxe") fstpitch *= frandom(0.875,0.925);
-			if (PlayerWeapon is "AppleJack") fstpitch *= frandom(0.975,1.025);
-			if (PlayerWeapon is "Scrambler") fstpitch *= frandom(0.925,0.975);
-			if (PlayerWeapon is "WizardPike") fstpitch *= frandom(0.975,1.025);
-			if (PlayerWeapon is "SuperVac") fstpitch *= frandom(0.775,0.825);
-			if (PlayerWeapon is "Grimophone") fstpitch *= frandom(0.725,0.775);
-			if (PlayerWeapon is "CrazyBallDD") fstpitch *= frandom(0.925,0.975);
-			if (PlayerWeapon is "EvilWarriorShield") fstpitch *= frandom(0.825,0.875);
-			if (PlayerWeapon is "CandleWhip") fstpitch *= frandom(1.075,1.125);
-			if (PlayerWeapon is "SigilDD") fstpitch *= frandom(0.975,1.025);
-			if (PlayerWeapon is "FosnianCandle") fstpitch *= frandom(0.875,0.925);
+			if (PlayerWeapon is "BlunderAxe")
+			{
+				if (berserked) WeaponFactorEx -= 0.025;
+									else WeaponFactorEx -= 0.05;
+			}
+			if (PlayerWeapon is "AppleJack")
+			{
+				if (berserked) WeaponFactorEx += 0.075;
+									else WeaponFactorEx += 0.05;
+			}
+			if (PlayerWeapon is "Scrambler")
+			{
+				if (berserked) WeaponFactorEx += 0.1875;
+									else WeaponFactorEx += 0.125;
+			}
+			if (PlayerWeapon is "WizardPike")
+			{
+				if (berserked) WeaponFactorEx += 0.1875;
+									else WeaponFactorEx += 0.125;
+			}
+			if (PlayerWeapon is "SuperVac") 
+			{
+				double SuperVacAmmoFactor = MiscItem.SuperVacAmmoFactor;
+				if (berserked) WeaponFactorEx -= (0.0625 + SuperVacAmmoFactor);
+									else WeaponFactorEx -= (0.125 + SuperVacAmmoFactor);
+			}
+			if (PlayerWeapon is "Grimophone") 
+			{
+				if (berserked) WeaponFactorEx -= 0.09375;
+									else WeaponFactorEx -= 0.1875;
+			}
+			if (PlayerWeapon is "CandleWhip") 
+			{
+				if (berserked) WeaponFactorEx += 0.125;
+									else WeaponFactorEx += 0.0625;
+			}
+			if (PlayerWeapon is "FosnianCandle") 
+			{
+				if (berserked) WeaponFactorEx += 0.075;
+									else WeaponFactorEx += 0.05;
+			}
+			if (PlayerWeapon is "EvilWarriorShield")
+			{
+				int HellWarriorShieldLevel = plr.CountInv("HellWarriorShieldLevel");
+				if (berserked)
+				{
+					if (plr.CountInv("HWShieldBlockHold")) WeaponFactorEx -= (0.15 * (1.0 + (HellWarriorShieldLevel * 0.009375)));
+																						else WeaponFactorEx -= (0.075 * (1.0 + (HellWarriorShieldLevel * 0.0046875)));
+				}
+				else
+				{
+					if (plr.CountInv("HWShieldBlockHold")) WeaponFactorEx -= (0.30 * (1.0 + (HellWarriorShieldLevel * 0.01875)));
+																						else WeaponFactorEx -= (0.15 * (1.0 + (HellWarriorShieldLevel * 0.009375)));
+				}
+			}
+			if (PlayerWeapon is "CrazyBallDD")
+			{
+			}
+			if (PlayerWeapon is "SigilDD") 
+			{
+			}
+			WeaponFactorEx *= 0.25;
+			WeaponFactorEx += 1.0;
+			WeaponFactorEx *= frandom(0.875,1.125);
+			double oldfstpitch = fstpitch;
+			fstpitch *= WeaponFactorEx;
+			if (dydudebug_footsteps) Console.Printf("\c[gold](EVP_Footsteps)\c- fstpitch: %.8f (oldfstpitch: %.8f), [WeaponFactorEx: %.8f]", fstpitch, oldfstpitch, WeaponFactorEx);
 			if (DDPawn)
 			{
-				double oldfstpitch = fstpitch;
+				oldfstpitch = fstpitch;
 				double ArmorEnc = (MiscItem.ArmorML * (0.0625 * random(randompick(11,12,12,12,12),randompick(14,14,14,14,15))));
-				if (dydudebug_footsteps) Console.Printf("\c[gold](EVP_Footsteps)\c- ArmorEnc: %.8f (%.8f)", ArmorEnc, MiscItem.ArmorML);
+				if (dydudebug_footsteps) Console.Printf("\c[gold](EVP_Footsteps)\c- ArmorEnc: %.8f (%.8f)", ArmorEnc, MiscItem.ArmorML, WeaponFactorEx);
 				double lvlfact = 0.02;
 				if (A_CheckDDGame()) 
 				{
@@ -4582,25 +4670,53 @@ class EVP_Footsteps : Actor
 			
 			int idx = fs_textures.Find(int(plr.floorpic));
 			
+			int dupe1chance = 6;
+			int dupe2chance = 4;
+			int dupe3chance = 0;
+			int dupe4chance = 0;
+			if (type == 1)
+			{
+				dupe1chance *= 1.667;
+				dupe2chance *= 1.500;
+				dupe3chance = (5 * 1.334);
+				dupe4chance = (5 * 1.25);
+			}
 			plr.A_StartSound(idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo,
 											 801, CHANF_DEFAULT,
-											 (CVar.GetCvar("exex_footstepvolume", players[0]).GetFloat() * 1.0 * truecrouchfactor),
+											 (fstvolume * 1.0),
 											 ATTN_NORM,
 											 fstpitch);
-			if (random(1,5) <= 3)
+			if (random(1,10) <= dupe1chance)
 			{
 				plr.A_StartSound(idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo,
 												802, CHANF_DEFAULT,
-												(CVar.GetCvar("exex_footstepvolume", players[0]).GetFloat() * 0.8 * truecrouchfactor),
+												type != 1 ? (fstvolume * 0.8) : (fstvolume * 0.9),
 												ATTN_NORM,
 												fstpitch);
-				if (random(1,5) <= 2)
+				if (random(1,10) <= dupe2chance)
 				{
 					plr.A_StartSound(idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo,
 													803, CHANF_DEFAULT,
-													(CVar.GetCvar("exex_footstepvolume", players[0]).GetFloat() * 0.6 * truecrouchfactor),
+													type != 1 ? (fstvolume * 0.6) : (fstvolume * 0.8),
 													ATTN_NORM,
 													fstpitch);
+					if (random(1,10) <= dupe3chance)
+					{
+						plr.A_StartSound(idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo,
+														804, CHANF_DEFAULT,
+														type != 1 ? (fstvolume * 0.6) : (fstvolume * 0.8),
+														(fstvolume * 0.6),
+														ATTN_NORM,
+														fstpitch);
+						if (random(1,10) <= dupe4chance)
+						{
+							plr.A_StartSound(idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo,
+															805, CHANF_DEFAULT,
+															type != 1 ? (fstvolume * 0.6) : (fstvolume * 0.8),
+															ATTN_NORM,
+															fstpitch);
+						}
+					}
 				}
 			}
 			
@@ -4610,8 +4726,8 @@ class EVP_Footsteps : Actor
 			string texname = texman.GetName(plr.floorpic);
 			if (dydudebug_footsteps) 
 			{
-				if (defaultsound) Console.Printf("\c[red]FootStepSound: %s\c-, \c[orange]texname: \c[red]%s\c-, \c[red]floorpic: \c[gold]%d\c-, \c[red]truecrouchfactor: \c[orange]%.8f\c-, \c[red]fstpitch: \c[olive]%.8f\c- [%d]", idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic, truecrouchfactor, fstpitch, gametic);
-										 else Console.Printf("\c[green]FootStepSound: %s\c-, \c[orange]texname: \c[green]%s\c-, \c[green]floorpic: \c[gold]%d\c-, \c[green]truecrouchfactor: \c[orange]%.8f\c-, \c[green]fstpitch: \c[olive]%.8f\c- [%d]", idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic, truecrouchfactor, fstpitch, gametic);
+				if (defaultsound) Console.Printf("\c[red]FootStepSound (type: %d): %s\c-, \c[orange]texname: \c[red]%s\c-, \c[red]floorpic: \c[gold]%d\c-, \c[red]truecrouchfactor: \c[orange]%.8f\c-, \c[red]fstpitch: \c[olive]%.8f\c-, \c[red]fstvolume: \c[olive]%.8f\c- [%d]", type, idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic, truecrouchfactor, fstpitch, fstvolume, gametic);
+										 else Console.Printf("\c[green]FootStepSound (type: %d): %s\c-, \c[orange]texname: \c[green]%s\c-, \c[green]floorpic: \c[gold]%d\c-, \c[green]truecrouchfactor: \c[orange]%.8f\c-, \c[green]fstpitch: \c[olive]%.8f\c-, \c[green]fstvolume: \c[olive]%.8f\c- [%d]", type, idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic, truecrouchfactor, fstpitch, fstvolume, gametic);
 			}
 		}
 	}
@@ -4638,7 +4754,7 @@ class EVP_Footsteps : Actor
 				(plr.pos.z - plr.floorz) <= 0 &&
 				!plr.CountInv("DashTics"))
 		{
-			HandleFootsteps(speed2d);
+			HandleFootsteps(0); // Walking
 			
 			if (speed2d < 40) tickCounter = 12;
 			else if (speed2d < 96) tickCounter = 11;
