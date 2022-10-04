@@ -4181,7 +4181,42 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 			}
 		}
 	}
-
+	
+	int A_DinahChase()
+	{
+		tics = 4;
+		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+		if (MiscItem)
+		{
+			if (MiscItem.HUDSpeed >= 2.25) tics = ceil(tics *= 0.875);
+			if (MiscItem.HUDSpeed >= 1.5) tics = ceil(tics *= 0.9375);
+			if (MiscItem.HUDSpeed <= 0.667) tics = ceil(tics *= 1.25);
+			if (MiscItem.HUDSpeed <= 0.334) tics = ceil(tics *= 1.5);
+		}
+		if (CountInv("PowerWineBuffIPWeak")) tics = ceil(tics *= 1.032258064516129);
+		if (CountInv("PowerWineBuffIPStrong")) tics = ceil(tics *= 1.066666666666667);
+		if (CountInv("PowerWineBuffIPStrongest")) tics = ceil(tics *= 1.103448275862069);
+		if (CountInv("PowerWineBuffIPStrongestEven")) tics = ceil(tics *= 1.142857142857143);
+		if (CountInv("PowerWineBuffIPMaximum")) tics = ceil(tics *= 1.230769230769231);
+		if (CountInv("PowerWineBuffWeak")) tics = ceil(tics *= 1.142857142857143);
+		if (CountInv("PowerWineBuffStrong")) tics = ceil(tics *= 1.333333333333333);
+		if (CountInv("PowerWineBuffStrongest")) tics = ceil(tics *= 1.6);
+		if (CountInv("PowerWineBuffStrongestEven")) tics = ceil(tics *= 2.0);
+		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) tics = ceil(tics *= 0.875);
+		if (CountInv("OverFullHealth3")) tics = ceil(tics *= 0.85);
+		if (CountInv("OverFullHealth2")) tics = ceil(tics *= 0.9);
+		if (CountInv("OverFullHealth1")) tics = ceil(tics *= 0.95);
+		if (CountInv("NormalHealth")) tics = ceil(tics *= 1);
+		if (CountInv("DecentHealth")) tics = ceil(tics *= 1.125);
+		if (CountInv("LowHealth")) tics = ceil(tics *= 1.25);
+		if (CountInv("CriticalHealth")) tics = ceil(tics *= 1.375);
+		
+		if (dydudebug_playerwalkdisplays) Console.Printf("Tics (See): %d", tics);
+		if (tics < 1) tics = 1;
+		A_SetTics(tics);
+		return tics;
+	}
+	
 	States
 	{
 		Spawn:
@@ -4190,44 +4225,30 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 			}
 			Loop;
 		See:
-			DINA BCDE 4
+			DINA B 4
 			{
-				tics = 4;
-				let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
-				if (MiscItem)
-				{
-					if (MiscItem.HUDSpeed >= 2.25) tics = ceil(tics *= 0.875);
-					if (MiscItem.HUDSpeed >= 1.5) tics = ceil(tics *= 0.9375);
-					if (MiscItem.HUDSpeed <= 0.667) tics = ceil(tics *= 1.25);
-					if (MiscItem.HUDSpeed <= 0.334) tics = ceil(tics *= 1.5);
-				}
-				if (CountInv("PowerWineBuffIPWeak")) tics = ceil(tics *= 1.032258064516129);
-				if (CountInv("PowerWineBuffIPStrong")) tics = ceil(tics *= 1.066666666666667);
-				if (CountInv("PowerWineBuffIPStrongest")) tics = ceil(tics *= 1.103448275862069);
-				if (CountInv("PowerWineBuffIPStrongestEven")) tics = ceil(tics *= 1.142857142857143);
-				if (CountInv("PowerWineBuffIPMaximum")) tics = ceil(tics *= 1.230769230769231);
-				if (CountInv("PowerWineBuffWeak")) tics = ceil(tics *= 1.142857142857143);
-				if (CountInv("PowerWineBuffStrong")) tics = ceil(tics *= 1.333333333333333);
-				if (CountInv("PowerWineBuffStrongest")) tics = ceil(tics *= 1.6);
-				if (CountInv("PowerWineBuffStrongestEven")) tics = ceil(tics *= 2.0);
-				if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) tics = ceil(tics *= 0.875);
-				if (CountInv("OverFullHealth3")) tics = ceil(tics *= 0.85);
-				if (CountInv("OverFullHealth2")) tics = ceil(tics *= 0.9);
-				if (CountInv("OverFullHealth1")) tics = ceil(tics *= 0.95);
-				if (CountInv("NormalHealth")) tics = ceil(tics *= 1);
-				if (CountInv("DecentHealth")) tics = ceil(tics *= 1.125);
-				if (CountInv("LowHealth")) tics = ceil(tics *= 1.25);
-				if (CountInv("CriticalHealth")) tics = ceil(tics *= 1.375);
-				
-				if (dydudebug_playerwalkdisplays) Console.Printf("Tics (See): %d", tics);
-				if (tics < 1) tics = 1;
-				A_SetTics(tics);
+				A_DinahChase();
+				A_SetInventory("IsStepping",(A_DinahChase()*2));
+			}
+			DINA C 4
+			{
+				A_DinahChase();
+			}
+			DINA D 4
+			{
+				A_DinahChase();
+				A_SetInventory("IsStepping",(A_DinahChase()*2));
+			}
+			DINA E 4
+			{
+				A_DinahChase();
 			}
 			Loop;
 		Pain:
 			DINA H 6 
 			{
 				A_DDPain();
+				A_SetInventory("IsStepping",0);
 			}
 			Goto Spawn;
 		Missile:
@@ -4427,121 +4448,6 @@ class RatPlayer : DDPlayerPawn
 	}
 }
 
-/*
-class Footsteps : Actor
-{
-	//the player footsteps are attached to.
-	PlayerPawn toFollow;
-	
-	array<string> fstep_sounds;
-	array<int> fstep_textures;
-	string fstep_default_sound;
-	
-	//VSO: only needed for debug.
-	array<string> fstep_textures_names_debug;
-	
-	int next_update_tics_countdown;
-	
-	//attach PlayerPawn, load the texture/sound associated tables.
-	void Init(PlayerPawn attached_player)
-	{
-		next_update_tics_countdown = -1;
-		self.toFollow = attached_player;
-		
-		//Read SOUNDINFO and LANGUAGE to map textures on sounds.
-		//only add to (fstep_sounds;fstep_textures) if the texture exist.
-		array<String> sSTEP_FLATS_List; 
-		
-		StringTable.Localize("$STEP_FLATS").Split(sSTEP_FLATS_List, ":");
-		//iterate over the list of flat names, and retreive  
-		for (int i = 0; i < sSTEP_FLATS_List.Size(); i++) 
-		{
-			String singleFLAT_Sound = StringTable.Localize(String.Format("$STEP_%s", sSTEP_FLATS_List[i]));
-			
-			if (singleFLAT_Sound.Length() != 0) 
-			{
-				//check if the texture exists.
-				textureid  tx_id = TexMan.CheckForTexture( sSTEP_FLATS_List[i],TexMan.TYPE_ANY);
-				
-				if (tx_id.Exists()) 
-				{
-						//texture exists, add both in the lists:
-						fstep_sounds.Push(singleFLAT_Sound);
-						fstep_textures.Push(int(tx_id));
-						
-						//also keep tx names, but it is only used for debugging.
-						fstep_textures_names_debug.Push(sSTEP_FLATS_List[i]);
-				}
-			}
-		}
-		// add fstep_default:
-		fstep_default_sound = StringTable.Localize("$STEP_DEFAULT");
-	}
-	
-	override void Tick()
-	{  
-		next_update_tics_countdown--;
-		
-		//0) do nothing until next_update_tics_countdown is below 0
-		if (next_update_tics_countdown > 0) 
-		{
-				Super.Tick();
-				return;
-		}
-		
-		//1) Update the Footstep actor to follow Player.
-		SetOrigin(self.toFollow.pos, true);
-		self.floorz = self.toFollow.floorz;
-			
-		double player_speed2d = sqrt(self.toFollow.vel.x * self.toFollow.vel.x + self.toFollow.vel.y * self.toFollow.vel.y);
-		
-		//2) Only play footsteps when on ground, and if the player is moving fast enough.
-		if ((CVar.GetCvar("fs_enabled").GetInt() > 0) && (player_speed2d > 0.1) && (self.toFollow.pos.z - self.toFollow.floorz <= 0))
-		{
-			
-			//trace
-			//Console.PrintF("Speed2d = %f",player_speed2d);
-			
-			//current floopic id for player:
-			int player_floor_tx_id = int(self.toFollow.floorpic);
-		
-			//sound volume is amplified by speed.
-			double soundLevel = CVar.GetCvar("fs_volume_mul").GetFloat() * player_speed2d;
-			//3) Find the matching index of player_floor_tx_id in fstep_textures and retreive the sound to play matching the texture we are in.
-			int foundIndex  = fstep_textures.Find(player_floor_tx_id);
-			
-			if (foundIndex != fstep_textures.Size())
-			{
-				//3-1) play the sound
-				A_StartSound(fstep_sounds[foundIndex], 801, CHANF_DEFAULT, soundLevel, ATTN_NORM, frandom(1.05,1.125));
-				//Console.PrintF("Found tx = %s, play snd = %s",fstep_textures_names_debug[foundIndex], fstep_sounds[foundIndex]); 
-			}
-			else
-			{
-				//3-2) Play default sound if no match was found
-				A_StartSound(fstep_default_sound,  801, CHANF_DEFAULT, soundLevel, ATTN_NORM, frandom(1.05,1.125));
-				//Console.PrintF("Not found Tx ! , play default snd = %s",fstep_default_sound); 
-			}
-										
-			//4) Compute the next date at which playing a sound step again.
-			//clamp the apparent maximum speed, to limit sound repetition interval.         
-			if (player_speed2d > 5.0) {
-					player_speed2d = 5.0;
-			}
-			//fastest sound playing speed is set to roughly 0.3s => 10 ticks ( * fs_delay_mul)
-			next_update_tics_countdown = (35.0 - ((25.0 / 5.0) * player_speed2d)) * CVar.GetCvar("fs_delay_mul").GetFloat();
-		}
-		else
-		{
-			// no need to poll for change too often
-			next_update_tics_countdown = 2;
-		}
-		
-		Super.Tick();
-	}  
-}
-*/
-
 class EVP_Footsteps : Actor
 {
 	PlayerPawn plr;
@@ -4631,7 +4537,8 @@ class EVP_Footsteps : Actor
 			}
 		}
 		
-		if (dydudebug_footsteps) Console.Printf("FootStepSound: %s", idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo);
+		string texname = texman.GetName(plr.floorpic);
+		if (dydudebug_footsteps) Console.Printf("FootStepSound: %s, \c[orange]texname: \c[fire]%s\c-, floorpic: %d", idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic);
 	}
 	
 	override void Tick()
@@ -4654,7 +4561,7 @@ class EVP_Footsteps : Actor
 		 */
 		let DashItem = PlayerDashJump(plr.FindInventory("PlayerDashJump"));
 		if (speed2d > 25 && 
-				plr.waterlevel <= 0 &&
+				plr.waterlevel <= 1 &&
 				(plr.pos.z - plr.floorz) <= 0 &&
 				//plr.player.crouchfactor >= 1.00 &&
 				!plr.CountInv("DashTics"))
@@ -4677,6 +4584,8 @@ class EVP_Footsteps : Actor
 			if (plr.CountInv("DashTics")) tickCounter = random(6,9);
 															 else tickCounter = 3; 
 		}
+		if (exex_footstepcounttype) tickCounter = plr.CountInv("IsStepping");
+		if (dydudebug_footsteps && tickCounter) Console.Printf("tickCounter: %d", tickCounter);
 		
 		Super.Tick();
 	}
