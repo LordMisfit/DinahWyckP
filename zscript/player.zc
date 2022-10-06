@@ -142,24 +142,29 @@ class DDPlayerPawn : PlayerPawn
 				}
 				bool isliquid = (pos.Z <= floorz) && HitFloor();
 				bool foundstpsnd;
+				/*
+				if (onmobj) Console.Printf("%p [%s]", onmobj, onmobj.GetClassName());
+				Console.Printf("isliquid");
+				Console.Printf("player.onground: %d", player.onground);
+				*/
 				if (onmobj != NULL || !isliquid)
 				{
-					ThinkerIterator FStepFinder = ThinkerIterator.Create("EVP_Footsteps");
-					EVP_Footsteps mo;
-					while (mo = EVP_Footsteps(FStepFinder.Next()))
+					if (onmobj == NULL && !isliquid)
 					{
-						mo.HandleFootsteps(1); // Landing
-						foundstpsnd = true;
-						break;
+						ThinkerIterator FStepFinder = ThinkerIterator.Create("EVP_Footsteps");
+						EVP_Footsteps mo;
+						while (mo = EVP_Footsteps(FStepFinder.Next()))
+						{
+							mo.HandleFootsteps(1,false); // Landing
+							foundstpsnd = true;
+							break;
+						}
+						
+						double volmult = 1.00;
+						if (foundstpsnd) volmult *= frandom(0.4,0.6);
+						A_StartSound("*land", 811, CHANF_DEFAULT, volmult);
 					}
-					
-					double volmult = 1.00;
-					if (foundstpsnd) volmult *= frandom(0.4,0.6);
-					A_StartSound("*land", 811, CHANF_DEFAULT, volmult);
 				}
-			}
-			else
-			{
 			}
 		}
 	}
@@ -1357,8 +1362,8 @@ class DDPlayerPawn : PlayerPawn
 						}
 						if (PlayerWeapon is "CricketBat") 
 						{
-							if (berserked) weaponsinkfactor += 0.000;
-												else weaponsinkfactor += 0.125;
+							if (berserked) weaponsinkfactor -= 0.125;
+												else weaponsinkfactor += 0.000;
 						}
 						if (PlayerWeapon is "BlunderAxe") 
 						{
@@ -4520,7 +4525,7 @@ class EVP_Footsteps : Actor
 		return Level;
 	}
 	
-	void HandleFootsteps(int type = 0)
+	void HandleFootsteps(int type = 0, bool isrunning = false)
 	{
 		let DDPawn = DDPlayerPawn(plr);
 		let MiscItem = PlayerStatItem(plr.FindInventory("PlayerStatItem"));
@@ -4537,12 +4542,21 @@ class EVP_Footsteps : Actor
 			int sndchanshift = 0;
 			if (type == 1) sndchanshift = 10;
 			fstpitch = frandom(1.125,1.225);
-			fstvolume = (CVar.GetCvar("exex_footstepvolume", players[0]).GetFloat() * truecrouchfactor);
+			fstvolume = CVar.GetCvar("exex_footstepvolume", players[0]).GetFloat();
+			fstvolume *= truecrouchfactor;
 			if (type == 1) 
 			{
 				double landtemp = frandom(0.5,0.667);
 				fstpitch *= landtemp; // Landing
 				fstvolume *= (1.0 / landtemp);
+			}
+			else
+			{
+				if (!isrunning) 
+				{
+					fstvolume *= frandom(0.50,0.667);
+					fstpitch *= frandom(1.05,1.125);
+				}
 			}
 
 			double WeaponFactor = 1.0;
@@ -4674,7 +4688,7 @@ class EVP_Footsteps : Actor
 			
 			string sndname = idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo;
 			string sndnamed = "step/squeaky1";
-			if (dydudebug_footsteps) sndname = idx != fs_textures.Size() ? fs_sndinfo[idx] : sndnamed;
+			if (dydudebug_footsteps || dydudebug_footsteps2) sndname = idx != fs_textures.Size() ? fs_sndinfo[idx] : sndnamed;
 			int dupe1chance = 6;
 			int dupe2chance = 4;
 			int dupe3chance = 0;
@@ -4734,6 +4748,11 @@ class EVP_Footsteps : Actor
 				if (defaultsound) Console.Printf("\c[red]FootStepSound (type: %d): %s\c-, \c[orange]texname: \c[red]%s\c-, \c[red]floorpic: \c[gold]%d\c-, \c[red]truecrouchfactor: \c[orange]%.8f\c-, \c[red]fstpitch: \c[olive]%.8f\c-, \c[red]fstvolume: \c[olive]%.8f\c- [%d]", type, idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic, truecrouchfactor, fstpitch, fstvolume, gametic);
 										 else Console.Printf("\c[green]FootStepSound (type: %d): %s\c-, \c[orange]texname: \c[green]%s\c-, \c[green]floorpic: \c[gold]%d\c-, \c[green]truecrouchfactor: \c[orange]%.8f\c-, \c[green]fstpitch: \c[olive]%.8f\c-, \c[green]fstvolume: \c[olive]%.8f\c- [%d]", type, idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic, truecrouchfactor, fstpitch, fstvolume, gametic);
 			}
+			else
+			if (dydudebug_footsteps2)
+			{
+				if (defaultsound) Console.Printf("\c[red]FootStepSound (type: %d): %s\c-, \c[orange]texname: \c[red]%s\c-, \c[red]floorpic: \c[gold]%d\c-, \c[red]truecrouchfactor: \c[orange]%.8f\c-, \c[red]fstpitch: \c[olive]%.8f\c-, \c[red]fstvolume: \c[olive]%.8f\c- [%d]", type, idx != fs_textures.Size() ? fs_sndinfo[idx] : defaultSndinfo, texname, plr.floorpic, truecrouchfactor, fstpitch, fstvolume, gametic);
+			}
 		}
 	}
 	
@@ -4746,7 +4765,19 @@ class EVP_Footsteps : Actor
 			return;
 		}
 
-		int speed2d = (plr.vel.x * plr.vel.x) + (plr.vel.y * plr.vel.y);
+		double speed2d = (plr.vel.x * plr.vel.x) + (plr.vel.y * plr.vel.y);
+		bool isrunning = false;
+		if (cl_run) 
+		{
+			if (plr.player.cmd.buttons & BT_SPEED) isrunning = false; 
+																				else isrunning = true; 
+		}
+		else
+		{
+			if (plr.player.cmd.buttons & BT_SPEED) isrunning = true; 
+																				else isrunning = false; 
+		}
+		if (dydudebug_footsteps) Console.Printf("isrunning: %d, cl_run: %d, buttons: %d", isrunning, cl_run, plr.player.cmd.buttons);
 
 		/* Only play footsteps when on the ground and moving fast enough.
 			 The original speed threshold was ridiculously low for vanilla
@@ -4754,18 +4785,24 @@ class EVP_Footsteps : Actor
 			 my slowest movement warranting footsteps, plus the granularity
 			 for several footstep intervals when moving faster.
 		 */
-		if (speed2d > 25 && 
+		double basespd = 19.2;
+		if (isrunning) basespd = 24.0;
+		if (dydudebug_footsteps) Console.Printf("basespd: %.8f", basespd);
+		if (speed2d >= basespd && 
 				plr.waterlevel <= 1 &&
 				(plr.pos.z - plr.floorz) <= 0 &&
 				!plr.CountInv("DashTics"))
 		{
-			HandleFootsteps(0); // Walking
+			HandleFootsteps(0,isrunning); // Walking
 			
-			if (speed2d < 40) tickCounter = 12;
-			else if (speed2d < 96) tickCounter = 11;
-			else if (speed2d < 156) tickCounter = 10;
-			else if (speed2d < 220) tickCounter = 9;
-			else if (speed2d < 285) tickCounter = 8;
+			double baseinc = 32.0;
+			if (isrunning) baseinc = 40;
+			if (dydudebug_footsteps) Console.Printf("baseinc: %.8f", baseinc);
+			if (speed2d < (baseinc * 1)) tickCounter = 12;
+			else if (speed2d < (baseinc * 2.4)) tickCounter = 11;
+			else if (speed2d < (baseinc * 3.9)) tickCounter = 10;
+			else if (speed2d < (baseinc * 5.5)) tickCounter = 9;
+			else if (speed2d < (baseinc * 7.2)) tickCounter = 8;
 			else tickCounter = 7;
 		}
 		else 
@@ -4774,8 +4811,9 @@ class EVP_Footsteps : Actor
 			if (plr.CountInv("DashTics")) tickCounter = random(6,9);
 															 else tickCounter = 3; 
 		}
+		if (!isrunning) tickCounter *= 1.75;
 		if (exex_footstepcounttype) tickCounter = plr.CountInv("IsStepping");
-		if (dydudebug_footsteps) Console.Printf("\c[sapphire]speed2d: %d\c-, \c[gold]tickCounter: %d\c- [%d]", speed2d, tickCounter, gametic);
+		if (dydudebug_footsteps) Console.Printf("\c[sapphire]speed2d: %.8f\c-, \c[gold]tickCounter: %d\c- [%d]", speed2d, tickCounter, gametic);
 		
 		Super.Tick();
 	}
