@@ -7169,7 +7169,7 @@ class PlayerDashJump : Inventory
 	actor weapon;
 	int HellWarriorShieldLevel;
 	Double DashDir, DashSpeed, DashVSpeed, DashPitch;
-	Int DashTics, DashCharge, AirTics, DashCost;
+	Int DashTics, DashCharge, AirTics, DashCost, DashCooldown, MaxDashCooldown;
 	Bool DJump, Waiting;
 	string dashgruntsound;
 	int dashgruntchance;
@@ -7407,9 +7407,9 @@ class PlayerDashJump : Inventory
 
 		double DashSpdMul = 1.00;
 		DashSpeed = (25 + (ActualLevel * 0.125));
-		if (Owner.waterlevel == 1) DashSpdMul = 0.875;
-		if (Owner.waterlevel == 2) DashSpdMul = 0.75;
-		if (Owner.waterlevel >= 3) DashSpdMul = 0.5;
+		if (Owner.waterlevel == 1) DashSpdMul = 0.9375;
+		if (Owner.waterlevel == 2) DashSpdMul = 0.875;
+		if (Owner.waterlevel >= 3) DashSpdMul = 0.75;
 		if (Owner.CountInv("DinahTrueIPState")) 
 		{
 			double temp = 0.125;
@@ -7464,21 +7464,120 @@ class PlayerDashJump : Inventory
 		DashSpeed *= DashSpdMul;
 		if (berserked) DashSpeed *= 1.125;
 		if (dydudebug_dashing) Console.Printf("DashSpeed: %.8f", DashSpeed);
-
+		
 		DashCost = 35;
+		MaxDashCooldown = randompick(10,10,11);
+		if (skill <= 0) MaxDashCooldown -= randompick(2,2,3);
+		if (skill == 1) MaxDashCooldown -= randompick(1,1,2);
+		if (skill == 2) MaxDashCooldown += randompick(-1,0,1);
+		if (skill == 3) MaxDashCooldown += randompick(1,1,2);
+		if (skill >= 4) MaxDashCooldown += randompick(2,2,3);
+		// DD Trilogy NO-Rpg Bonuses
+		if (!exex_expenabled)
+		{
+			if (MiscItem)
+			{
+				double DDTFactor = 0.0;
+				if (A_CheckDDGame())
+				{
+					if (MiscItem.DD_RoseMother) DDTFactor += 0.0375;
+					if (MiscItem.DD_GameMother) DDTFactor += 0.0375;
+					if (MiscItem.DD_MossMother) DDTFactor += 0.0375;
+					if (MiscItem.DD_GlobeMother) DDTFactor += 0.0375;
+					if (MiscItem.DD_SphinxMother) DDTFactor += 0.0375;
+					if (MiscItem.DD_HandMother1) DDTFactor += 0.0375;
+					if (MiscItem.DD_HandMother2) DDTFactor += 0.0375;
+					if (MiscItem.DD_TrueHandMother) DDTFactor += 0.0375;
+					if (MiscItem.AFD_Krag) DDTFactor += 0.05;
+					if (MiscItem.AFD_Quisling) DDTFactor += 0.05;
+					if (MiscItem.AFD_Lauritz) DDTFactor += 0.05;
+					if (MiscItem.AFD_Jorgensen1) DDTFactor += 0.05;
+					if (MiscItem.AFD_Jorgensen2) DDTFactor += 0.05;
+					if (MiscItem.AFD_JorgCannon) DDTFactor += 0.05;
+					if (MiscItem.CoS_Fafnir) DDTFactor += 0.05;
+					if (MiscItem.CoS_FractalHens) DDTFactor += 0.05;
+					if (MiscItem.CoS_HandMothers) DDTFactor += 0.05;
+					if (MiscItem.CoS_ForsakenJorg) DDTFactor += 0.05;
+					if (MiscItem.CoS_EvilDinah) DDTFactor += 0.05;
+					if (MiscItem.CoS_Tempest) DDTFactor += 0.05;
+					if (skill <= 0) DDTFactor *= 1.5;
+					if (skill == 1) DDTFactor *= 1.25;
+					if (skill == 2) DDTFactor *= 1.0;
+					if (skill == 3) DDTFactor *= 0.75;
+					if (skill >= 4) DDTFactor *= 0.5;
+					DDTFactor *= exex_nrpggeneraleffect;
+					DDTFactor *= -1.0;
+					DDTFactor += 1.0;
+					if (dydudebug_dashing) Console.Printf("DDTFactor (DashCooldown): %.8f", DDTFactor);
+					MaxDashCooldown *= DDTFactor;
+				}
+			}
+		}
+		else
+		{
+			MaxDashCooldown *= (1.0 - (ActualLevel * 0.00625));
+		}
+		
+		if (owner.CountInv("PowerHaste"))
+		{
+			DashCost *= 0.75;
+			MaxDashCooldown *= 0.375;
+		}
+
 		if (owner.CountInv("PowerEggBuff") || owner.CountInv("PowerEggBuff2")) 
 		{
-			if (MiscItem) DashCost -= (2 + (MiscItem.UsedEggHeal * 0.0334));
-							 else DashCost -= 2;
+			if (MiscItem) 
+			{
+				DashCost -= (2 + (MiscItem.UsedEggHeal * 0.0334));
+				MaxDashCooldown -= (1 + (MiscItem.UsedEggHeal * 0.006667));
+			}
+			else
+			{
+				DashCost -= 2;
+				MaxDashCooldown -= 1;
+			}
 		}
-		if (owner.CountInv("PowerFruitBuff") || owner.CountInv("PowerFruitBuff2")) DashCost -= 1;
-		if (owner.CountInv("PowerRoastBuff")) DashCost -= 2;
-		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) DashCost -= 2;
-		if (owner.CountInv("PowerMeal2Buff") || owner.CountInv("PowerMeal2Buff2")) DashCost -= 2;
-		if (owner.CountInv("NormalHealth")) DashCost *= 1.0;
-		if (owner.CountInv("DecentHealth")) DashCost *= 1.125;
-		if (owner.CountInv("LowHealth")) DashCost *= 1.25;
-		if (owner.CountInv("CriticalHealth")) DashCost *= 1.5;
+		if (owner.CountInv("PowerFruitBuff") || owner.CountInv("PowerFruitBuff2")) 
+		{
+			DashCost -= 1;
+			MaxDashCooldown -= random(0,1);
+		}
+		
+		if (owner.CountInv("PowerRoastBuff"))
+		{
+			DashCost -= 2;
+			MaxDashCooldown -= 1;
+		}
+		if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2"))
+		{
+			DashCost -= 2;
+			MaxDashCooldown -= 1;
+		}
+		if (owner.CountInv("PowerMeal2Buff") || owner.CountInv("PowerMeal2Buff2"))
+		{
+			DashCost -= 2;
+			MaxDashCooldown -= 1;
+		}
+		if (owner.CountInv("NormalHealth")) 
+		{
+			DashCost *= 1.0;
+			MaxDashCooldown *= 1.0;
+		}
+		if (owner.CountInv("DecentHealth")) 
+		{
+			DashCost *= 1.125;
+			MaxDashCooldown *= 1.1875;
+		}
+		if (owner.CountInv("LowHealth")) 
+		{
+			DashCost *= 1.25;
+			MaxDashCooldown *= 1.375;
+		}
+		if (owner.CountInv("CriticalHealth"))
+		{
+			DashCost *= 1.5;
+			MaxDashCooldown *= 1.75;
+		}
 		if (MiscItem)
 		{
 			double WineDashCostMul = 0.00;
@@ -7512,20 +7611,45 @@ class PlayerDashJump : Inventory
 		{
 			if (exex_expenabled)
 			{
-				if (berserked) DashCost -= 4;
-									else DashCost -= 3;
+				if (berserked) 
+				{
+					DashCost -= 4;
+					MaxDashCooldown -= randompick(1,1,2);
+				}
+				else 
+				{
+					DashCost -= 3;
+					MaxDashCooldown -= 1;
+				}
 			}
 			else
 			{
 				if (A_CheckDDGame())
 				{
-					if (berserked) DashCost -= 9;
-										else DashCost -= 6;
+					if (berserked) 
+					{
+						DashCost -= 9;
+						MaxDashCooldown -= 3;
+					}
+					else 
+					{
+						DashCost -= 6;
+						MaxDashCooldown -= 2;
+					}
+										
 				}
 				else
 				{
-					if (berserked) DashCost -= 7;
-										else DashCost -= 5;
+					if (berserked) 
+					{
+						DashCost -= 7;
+						MaxDashCooldown -= randompick(2,2,3);
+					}
+					else 
+					{
+						DashCost -= 5;
+						MaxDashCooldown -= randompick(1,2,2);
+					}
 				}
 			}
 		}
@@ -7533,13 +7657,29 @@ class PlayerDashJump : Inventory
 		{
 			if (exex_expenabled)
 			{
-				if (berserked) DashCost -= 2;
-									else DashCost -= 1;
+				if (berserked) 
+				{
+					DashCost -= 2;
+					MaxDashCooldown -= randompick(0,1,1);
+				}
+				else
+				{
+					DashCost -= 1;
+					MaxDashCooldown -= randompick(0,0,1);
+				}
 			}
 			else
 			{
-				if (berserked) DashCost -= 3;
-									else DashCost -= 2;
+				if (berserked) 
+				{
+					DashCost -= 3;
+					MaxDashCooldown -= 1;
+				}
+				else 
+				{
+					DashCost -= 2;
+					MaxDashCooldown -= randompick(0,1,1);
+				}
 			}
 		}
 		if (weapon is "CricketBat" && owner.CountInv("IsInBatGuardFrame"))
@@ -7548,50 +7688,114 @@ class PlayerDashJump : Inventory
 			{
 				if (ActualLevel >= DashLvlTier4Thresh)
 				{
-					if (!berserked) DashCost *= 1.125;
-										else DashCost *= 1.03125;
+					if (!berserked) 
+					{
+						DashCost *= 1.125;
+						MaxDashCooldown *= 1.0416666666666667;
+					}
+					else 
+					{
+						DashCost *= 1.03125;
+						MaxDashCooldown *= 1.0104166666666667;
+					}
 				}
 				else
 				if (ActualLevel >= DashLvlTier3Thresh)
 				{
-					if (!berserked) DashCost *= 1.1875;
-										else DashCost *= 1.046875;
+					if (!berserked) 
+					{
+						DashCost *= 1.1875;
+						MaxDashCooldown *= 1.0625;
+					}
+					else 
+					{
+						DashCost *= 1.046875;
+						MaxDashCooldown *= 1.015625;
+					}
 				}
 				else
 				if (ActualLevel >= DashLvlTier2Thresh)
 				{
-					if (!berserked) DashCost *= 1.1875;
-										else DashCost *= 1.0625;
+					if (!berserked) 
+					{
+						DashCost *= 1.1875;
+						MaxDashCooldown *= 1.0625;
+					}
+					else 
+					{
+						DashCost *= 1.0625;
+						MaxDashCooldown *= 1.0208333333333333;
+					}
 				}
 				else
 				if (ActualLevel >= DashLvlTier1Thresh)
 				{
-					if (!berserked) DashCost *= 1.25;
-										else DashCost *= 1.0625;
+					if (!berserked) 
+					{
+						DashCost *= 1.25;
+						MaxDashCooldown *= 1.0833333333333334;
+					}
+					else 
+					{
+						DashCost *= 1.0625;
+						MaxDashCooldown *= 1.0208333333333333;
+					}
 				}
 				else
 				{
-					if (!berserked) DashCost *= 1.25;
-										else DashCost *= 1.125;
+					if (!berserked) 
+					{
+						DashCost *= 1.25;
+						MaxDashCooldown *= 1.0833333333333334;
+					}
+					else
+					{
+						DashCost *= 1.125;
+						MaxDashCooldown *= 1.0416666666666667;
+					}
 				}
 			}
 			else
 			{
-				if (!berserked) DashCost *= 1.125;
-									else DashCost *= 1.0625;
+				if (!berserked)
+				{
+					DashCost *= 1.125;
+					MaxDashCooldown *= 1.0416666666666667;
+				}
+				else 
+				{
+					DashCost *= 1.0625;
+					MaxDashCooldown *= 1.0208333333333333;
+				}
 			}
 		}
 		if (weapon is "EvilWarriorShield")
 		{
 			if (!berserked)
 			{
-				if (Owner.CountInv("HWShieldBlockHold")) DashCost *= (1.40 * (1.0 + (HellWarriorShieldLevel * 0.025)));
-																						else DashCost *= (1.20 * (1.0 + (HellWarriorShieldLevel * 0.0125)));
+				if (Owner.CountInv("HWShieldBlockHold")) 
+				{
+					DashCost *= (1.40 * (1.0 + (HellWarriorShieldLevel * 0.025)));
+					MaxDashCooldown *= (1.133334 * (1.0 + (HellWarriorShieldLevel * 0.0083334)));
+				}
+				else 
+				{
+					DashCost *= (1.20 * (1.0 + (HellWarriorShieldLevel * 0.0125)));
+					MaxDashCooldown *= (1.066667 * (1.0 + (HellWarriorShieldLevel * 0.00416667)));
+				}
 			}
 			else
 			{
-				if (Owner.CountInv("HWShieldBlockHold")) DashCost *= (1.20 * (1.0 + (HellWarriorShieldLevel * 0.0125)));
-																						else DashCost *= (1.10 * (1.0 + (HellWarriorShieldLevel * 0.00625)));
+				if (Owner.CountInv("HWShieldBlockHold")) 
+				{
+					DashCost *= (1.20 * (1.0 + (HellWarriorShieldLevel * 0.0125)));
+					MaxDashCooldown *= (1.066667 * (1.0 + (HellWarriorShieldLevel * 0.00416667)));
+				}
+				else 
+				{
+					DashCost *= (1.10 * (1.0 + (HellWarriorShieldLevel * 0.00625)));
+					MaxDashCooldown *= (1.033334 * (1.0 + (HellWarriorShieldLevel * 0.00208334)));
+				}
 			}
 		}
 		if (weapon is "CrazyBallDD")
@@ -7634,9 +7838,22 @@ class PlayerDashJump : Inventory
 		if (owner.CountInv("ClassyRibbon")) ssa -= 0.25;
 		if (owner.CountInv("ExpeditionHat")) ssa += 0.125;
 		DashCost *= ssa;
-		if (DashCost <= 1) DashCost = 1;
+		ssa = 1.0;
+		if (owner.CountInv("ClassyRibbon")) ssa -= 0.125;
+		if (owner.CountInv("ExpeditionHat")) ssa += 0.0625;
+		MaxDashCooldown *= ssa;
+		if (skill <= 0 && DashCost <= 1) DashCost = 1;
+		if (skill == 1 && DashCost <= 2) DashCost = 2;
+		if (skill == 2 && DashCost <= 3) DashCost = 3;
+		if (skill == 3 && DashCost <= 4) DashCost = 4;
+		if (skill >= 4 && DashCost <= 5) DashCost = 5;
+		if (skill <= 0 && MaxDashCooldown <= 1) MaxDashCooldown = 1;
+		if (skill == 1 && MaxDashCooldown <= 1) MaxDashCooldown = 1;
+		if (skill == 2 && MaxDashCooldown <= 2) MaxDashCooldown = 2;
+		if (skill == 3 && MaxDashCooldown <= 2) MaxDashCooldown = 2;
+		if (skill >= 4 && MaxDashCooldown <= 3) MaxDashCooldown = 3;
 		
-		if (dydudebug_dashing) Console.Printf("DashCost [start]: %d", DashCost);
+		if (dydudebug_dashing) Console.Printf("DashCost [start]: %d, DashCooldown: %d", DashCost, MaxDashCooldown);
 
 		if (dydudebug_dashmeter) Console.Printf("DashMaxCharge: %d (%d, %d, %d), DashCost: %d", DashMaxCharge, BaseDashChargeMax, AddDashLevel, ExtraDashCharge, DashCost);
 		
@@ -7655,7 +7872,8 @@ class PlayerDashJump : Inventory
 				(BTInput & BT_USER3) && 
 				DashCharge >= DashCost && 
 				pushingdirection &&
-				!DashTics)
+				!DashTics &&
+				DashCooldown == 0)
 		{
 			//Console.Printf("OnGround: %d", PlayDash.OnGround);
 			DashDir = 0;
@@ -7745,6 +7963,7 @@ class PlayerDashJump : Inventory
 		}
 		if (DashTics)
 		{
+			DashCooldown = -MaxDashCooldown;
 			if (MiscItem.GrimophoneDebuffTimer) { } else { owner.bFORCERADIUSDMG = false; }
 			
 			//if (PlayDash.OnGround) { PlayDash.OnGround = False; Owner.AddZ(1); }
@@ -7920,10 +8139,11 @@ class PlayerDashJump : Inventory
 					DashSpeed *= 0.95;
 				}
 			}
-			if (dydudebug_dashing) Console.Printf("DashTics: %d / %d, Thresh: [1] %d, [2] %d, [3] %d, DashSpeed: %.8f, DashSpdMul: %.8f", DashTics, MaxDashTics, slownthres1, slownthres2, slownthres3, DashSpeed, DashSpdMul);
 		}
 		else
 		{
+			if (DashCooldown < 0) DashCooldown = MaxDashCooldown;
+			else if (DashCooldown > 0) DashCooldown--;
 			Owner.A_SetInventory("DashTimeFreezer",0);
 			Owner.A_SetInventory("PlayerDashing",0);
 			Owner.A_SetInventory("PlayerBatDashing",0);
@@ -8054,6 +8274,7 @@ class PlayerDashJump : Inventory
 		owner.A_SetInventory("DashCharge",DashCharge);
 		owner.A_SetInventory("DashTics",DashTics);
 		owner.A_SetInventory("DashCost",DashCost);
+		owner.A_SetInventory("DashCooldown",DashCooldown);
 
 		if (Waiting) owner.A_SetInventory("DashReady",0);
 						else owner.A_SetInventory("DashReady",1);
