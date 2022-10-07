@@ -3388,7 +3388,7 @@ class PlayerStatItem : Inventory
 					}
 					berserkIPGain *= (1.0 + (ActualLevel * 0.0025));
 					if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) berserkIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
-					//Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPDissipateTimer, IPTimerInc, BerIPMulti);
+					if (dydudebug_ipdisplays2) Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPDissipateTimer, IPTimerInc, BerIPMulti);
 
 					double oldItemPoints = ItemPoints;
 					ItemPoints += berserkIPGain;
@@ -3503,7 +3503,7 @@ class PlayerStatItem : Inventory
 					ArmorIPGain *= (1.0 + (ActualLevel * 0.0025));
 					if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) ArmorIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
 
-					//Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
+					if (dydudebug_ipdisplays2) Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
 					double oldItemPoints = ItemPoints;
 					ItemPoints += ArmorIPGain;
 					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
@@ -3598,7 +3598,7 @@ class PlayerStatItem : Inventory
 					MorphIPGain *= (1.0 + (ActualLevel * 0.0075));
 					if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) MorphIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
 					
-					//Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", MorphIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
+					if (dydudebug_ipdisplays2) Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics", MorphIPGain, IPDissipateTimer, IPTimerIncMod);
 					double oldItemPoints = ItemPoints;
 					ItemPoints += MorphIPGain;
 					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
@@ -3730,6 +3730,43 @@ class PlayerStatItem : Inventory
 					}
 				}
 				
+				if (A_CheckDDGame()) 
+				{
+					double DDTFactor = 0.00;
+					if (DD_RoseMother) DDTFactor += 0.1875;
+					if (DD_GameMother) DDTFactor += 0.1875;
+					if (DD_MossMother) DDTFactor += 0.1875;
+					if (DD_GlobeMother) DDTFactor += 0.1875;
+					if (DD_SphinxMother) DDTFactor += 0.1875;
+					if (DD_HandMother1) DDTFactor += 0.1875;
+					if (DD_HandMother2) DDTFactor += 0.1875;
+					if (DD_TrueHandMother) DDTFactor += 0.1875;
+					if (AFD_Krag) DDTFactor += 0.25;
+					if (AFD_Quisling) DDTFactor += 0.25;
+					if (AFD_Lauritz) DDTFactor += 0.25;
+					if (AFD_Jorgensen1) DDTFactor += 0.25;
+					if (AFD_Jorgensen2) DDTFactor += 0.25;
+					if (AFD_JorgCannon) DDTFactor += 0.25;
+					if (CoS_Fafnir) DDTFactor += 0.25;
+					if (CoS_FractalHens) DDTFactor += 0.25;
+					if (CoS_HandMothers) DDTFactor += 0.25;
+					if (CoS_ForsakenJorg) DDTFactor += 0.25;
+					if (CoS_EvilDinah) DDTFactor += 0.25;
+					if (CoS_Tempest) DDTFactor += 0.25;
+					if (skill <= 0) DDTFactor *= 1.5;
+					if (skill == 1) DDTFactor *= 1.25;
+					if (skill == 2) DDTFactor *= 1.0;
+					if (skill == 3) DDTFactor *= 0.75;
+					if (skill >= 4) DDTFactor *= 0.5;
+					DDTFactor *= 0.2;
+					DDTFactor *= exex_nrpggeneraleffect;
+					DDTFactor += 1.00;
+					if (dydudebug_ipdisplays2) Console.Printf("DDTFactor (IPDisipation): %.8f", DDTFactor);
+					IPTimerIncMod *= DDTFactor;
+					IPTimerIncMod *= 1.5;
+				}
+				if (IPTimerIncMod < 1) IPTimerIncMod = 1;
+				if (dydudebug_ipdisplays2) Console.Printf("IPTimerIncMod: %d", IPTimerIncMod);
 				if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
 													 else IPTimerInc = level.time % 1;
 				if (exex_ikaripointdissipation)
@@ -3741,44 +3778,61 @@ class PlayerStatItem : Inventory
 							if (IPDissipateTimer < -2100) IPDissipateTimer = -2100;
 							if (IPDissipateTimer < 2100)
 							{
-								if (IPTimerInc == 0) IPDissipateTimer++;
+								if (IPTimerInc == 0) 
+								{
+									IPDissipateTimer++;
+								}
 							}
 							else
 							{
 								IPDissipateTimer = 0;
 								int IPLossType = random(1,17);
 								double IPLossPer;
-								IPHUDShakeTimer = random(52,53);
+								int IPHUDShakeinc = random(52,53);
+								int IPLossHUDTInc = random(52,53);
 								if (IPLossType >= 1 && IPLossType <= 6)
 								{
 									IPHUDShakeType = 1;
 									IPLossPer = 0.02;
+									IPHUDShakeinc = 7;
+									IPLossHUDTInc = 7;
 								}
 								if (IPLossType >= 7 && IPLossType <= 11)
 								{
 									IPHUDShakeType = 2;
 									IPLossPer = 0.05;
-									IPHUDShakeTimer += random(17,18);
+									IPHUDShakeinc = random(17,18);
+									IPLossHUDTInc = random(17,18);
 								}
 								if (IPLossType >= 12 && IPLossType <= 14)
 								{
 									IPHUDShakeType = 3;
 									IPLossPer = 0.10;
-									IPHUDShakeTimer += 35;
+									IPHUDShakeinc = 35;
+									IPLossHUDTInc = 35;
 								}
 								if (IPLossType >= 15 && IPLossType <= 16)
 								{
 									IPHUDShakeType = 3;
 									IPLossPer = 0.25;
-									IPHUDShakeTimer += random(52,53);
+									IPHUDShakeinc = random(52,53);
+									IPLossHUDTInc = random(52,53);
 								}
 								if (IPLossType == 17)
 								{
 									IPHUDShakeType = 4;
 									IPLossPer = 0.5;
-									IPHUDShakeTimer += 70;
-									IPLossHUDTimer += 70;
+									IPHUDShakeinc = 70;
+									IPLossHUDTInc = 70;
 								}
+								if (A_CheckDDGame())
+								{
+									IPLossPer *= 0.5;
+									IPHUDShakeinc *= 0.5;
+									IPLossHUDTInc *= 0.5;
+								}
+								IPLossHUDTimer += IPLossHUDTInc;
+								IPHUDShakeTimer += IPHUDShakeinc;
 								double IPLossAmt = (ItemPoints * IPLossPer);
 								ItemPoints -= IPLossAmt;
 								if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
@@ -3792,7 +3846,7 @@ class PlayerStatItem : Inventory
 									if (IPLossHUDTimer > 175) IPLossHUDTimer = 175;
 								}
 							}
-							if (dydudebug_ipdisplays2) Console.Printf("ItemPoints: %.1f [%.1f], IPDissipateTimer: %d / 2100", ItemPoints, globalvars.ItemPoints, IPDissipateTimer);
+							if (dydudebug_ipdisplays2) Console.Printf("\c[fire]ItemPoints: %.8f\c- \c[gold][%.8f]\c-, IPDissipateTimer: %d / 2100", ItemPoints, globalvars.ItemPoints, IPDissipateTimer);
 						}
 					}
 					else
@@ -3848,7 +3902,7 @@ class PlayerStatItem : Inventory
 				if (IPMortalBlowReduceTimer)
 				{
 					IPMortalBlowReduceTimer--;
-					//Console.Printf("IPMortalBlowReduceTimer: %d", IPMortalBlowReduceTimer);
+					if (dydudebug_ipdisplays2) Console.Printf("IPMortalBlowReduceTimer: %d", IPMortalBlowReduceTimer);
 				}
 				// IP "No Gain" Timer [for future unique situations]
 				if (IPNoGainTimer) 
@@ -3856,11 +3910,15 @@ class PlayerStatItem : Inventory
 					ItemPoints = 0;
 					globalvars.ItemPoints = 0;
 					IPNoGainTimer--;
+					if (dydudebug_ipdisplays2) Console.Printf("IPNoGainTimer: %d", IPNoGainTimer);
 				}
-				if (TrueIPCooldownTimer) TrueIPCooldownTimer--;
+				if (TrueIPCooldownTimer) 
+				{
+					TrueIPCooldownTimer--;
+					if (dydudebug_ipdisplays2) Console.Printf("TrueIPCooldownTimer: %d", TrueIPCooldownTimer);
+				}
 				if (TrueIPLevelGate < 0) TrueIPLevelGate = 0;
-				
-				//Console.Printf("TrueIPLevelGate: %d, IPNoGainTimer: %d, TrueIPCooldownTimer: %d, IPMortalBlowReduceTimer: %d", TrueIPLevelGate, IPNoGainTimer, TrueIPCooldownTimer, IPMortalBlowReduceTimer);
+				if (dydudebug_ipdisplays2) Console.Printf("TrueIPLevelGate: %d", TrueIPLevelGate);
 				
 				// HP Regeneration
 				BaseRegenMulti = 1.0;
