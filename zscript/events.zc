@@ -3392,8 +3392,73 @@ class DD_EventHandler : EventHandler
 				}
 			}
 			
-			// Wrath Chests
-			if (!A_CheckDDGame())
+			// Arcade Tokens/Heavenly Ducats [DDT Only]
+			if (player.CountInv("IsDynDuchess") || player.CountInv("IsCarnOfSouls"))
+			{
+				droptimes = 1;
+				if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
+				if (monsterrating == 2) droptimes = randompick(1,1,1,2,2);
+				if (monsterrating == 3) droptimes = randompick(1,1,2,2,2);
+				if (monsterrating == 4) droptimes = randompick(1,2,2,2,2);
+				if (monsterrating == 5) droptimes = randompick(2,2,2,2,3);
+				if (monsterrating == 6) droptimes = randompick(2,2,2,3,3);
+				if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
+				if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
+				luckbase = 0.0625 + (monsterrating * 0.015625);
+				lvldivider = 35;
+				if (IPAttack) 
+				{
+					luckbase *= baseIPLuckMul;
+					lvldivider *= baseIPLvlDivider;
+				}
+				if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
+				if (inflicter && ((source && DDPlayerPawn(source))))
+				{
+					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
+				}
+				else
+				if (inflicter && DDPlayerPawn(inflicter))
+				{
+					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
+				}
+				if (victim.bBOSS) droptimes *= (bossdropmulti * 2);
+				for (int i; i < droptimes; i++)
+				{
+					// Tokens/Ducats [Type 11]
+					basechance = exex_inventorydroprate11;
+					basechance *= skillmult;
+					luckbase = 0.5 + (monsterrating * 0.125);
+					if (IPAttack) 
+					{
+						basechance *= baseIPBaseChanceMul;
+						luckbase *= baseIPLuckMul;
+					}
+					if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
+					maxchance = basechance;
+					if (BatPuff(inflicter)) maxchance = (basechance * 0.5);
+					if (ApplePuff(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+					if (BlunderPuff(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+					if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+					if (VacPuff(inflicter)) maxchance = (basechance * 16);
+					else
+					{
+						nm = "CCards_Actor_BorrowedTimeBuff";
+						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
+					}
+					string cointype = "ArcadeChip";
+					if (player.CountInv("IsDynDuchess")) cointype = "ArcadeChip";
+					if (player.CountInv("IsCarnOfSouls")) cointype = "Money_Ducat";
+					if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx(cointype,frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (random(1,(maxchance*4)) == 1) victim.A_SpawnItemEx(cointype,frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (random(1,(maxchance*16)) == 1) victim.A_SpawnItemEx(cointype,frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [wrath chest]: %d (%d)", maxchance, basechance);
+				}
+			}
+			
+			// Wrath Chests [Main Mod or Carnival of Souls only]
+			if (!A_CheckDDGame() || player.CountInv("IsCarnOfSouls"))
 			{
 				droptimes = 1;
 				if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
@@ -3430,6 +3495,7 @@ class DD_EventHandler : EventHandler
 					basechance = exex_inventorydroprate9;
 					basechance *= skillmult;
 					if (player.CountInv("PlayingBlooM")) basechance *= 0.5;
+					if (player.CountInv("IsCarnOfSouls")) basechance *= 2.0;
 					
 					if (A_CheckDDGame()) 
 					{
@@ -3456,6 +3522,7 @@ class DD_EventHandler : EventHandler
 					}
 					if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx("WrathChest",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 					if (random(1,(maxchance*4)) == 1) victim.A_SpawnItemEx("WrathChest",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
+					if (random(1,(maxchance*16)) == 1) victim.A_SpawnItemEx("WrathChest",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [wrath chest]: %d (%d)", maxchance, basechance);
 				}
 			}
