@@ -16624,7 +16624,9 @@ class CandleWhip : DinahWeapon
 		AltFire:
 			RCAN A 0
 			{
-				if (!CountInv("CandleAmmo")) { return resolvestate("Fire"); }
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				if (!CountInv("CandleAmmo")) return resolvestate("Fire");
 				return resolvestate(null);
 			}
 			RCAN A 0 
@@ -16728,7 +16730,22 @@ class CandleWhip : DinahWeapon
 				A_CandleShot3Tics();
 				A_FireBullets(0,0,0,(dmg),shottype);
 				if (invoker.IPAttackCheck) A_FireBullets(horizspread,vertspread,(numshots-1),(dmg),shottype);
-				A_TakeInventory("CandleAmmo",1);
+				if (CountInv("CandleAmmo") > 0) A_TakeInventory("CandleAmmo",1);
+				if (CountInv("CandleAmmo") <= 0) 
+				{
+					A_SetInventory("CandleAmmo",0);
+					if (MiscItem) 
+					{
+						MiscItem.candleshotcooldown = 0;
+						MiscItem.candleshotmaxcooldown = randompick(70,105,105,105,140,140,140,140,140,140,140,140,140,140,140,140,175,175,175,210);
+						if (skill <= 0) MiscItem.candleshotmaxcooldown *= 0.25;
+						if (skill == 1) MiscItem.candleshotmaxcooldown *= 0.375;
+						if (skill == 2) MiscItem.candleshotmaxcooldown *= 0.5;
+						if (skill == 3) MiscItem.candleshotmaxcooldown *= 0.625;
+						if (skill >= 4) MiscItem.candleshotmaxcooldown *= 0.75;
+						if (invoker.IPAttackCheck) MiscItem.candleshotmaxcooldown *= 4;
+					}
+				}
 				invoker.A_CheckIPModeOnUse();
 			}
 			RCAN C 3 Bright
