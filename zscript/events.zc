@@ -6298,17 +6298,125 @@ class DD_StaticEventHandler : StaticEventHandler
 			playerNeedsRestore[i] = false;
 		}
 	}
-
+	
 	//If any world has loaded, then we're done handling new games case
 	override void WorldLoaded(WorldEvent e) 
 	{
+		actor player = players[0].mo;
+		array<int> fs_textures;
+		array<string> fs_sndinfo;
+		string defaultSndinfo;
+		array<string> allSF;
+		StringTable.Localize("$STEP_FLATS").Split(allSF,":");
+		// Trilogy-Specific CompatPack
+		if (Wads.CheckNumForName("EE-DDSERIES", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSDDT").Split(allSF,":");
+			Console.Printf("DDT Footsteps TXT Loaded");
+		}
+		// Other CompatPacks
+		if (Wads.CheckNumForName("EE-AUGZEN", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSAUGZEN").Split(allSF,":");
+			Console.Printf("AUGER;ZENITH Footsteps TXT Loaded");
+		}
+		if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSBLOOM").Split(allSF,":");
+			Console.Printf("BlooM Footsteps TXT Loaded");
+		}
+		if (Wads.CheckNumForName("EE-CIRCUS2", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSCIRCUS2").Split(allSF,":");
+			Console.Printf("Circus2 Footsteps TXT Loaded");
+		}
+		if (Wads.CheckNumForName("EE-KDIZD", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSKDIZD").Split(allSF,":");
+			Console.Printf("KDIZD Footsteps TXT Loaded");
+		}
+		if (Wads.CheckNumForName("EE-TCOTDA", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSTCOTDA").Split(allSF,":");
+			Console.Printf("TCOTDA Footsteps TXT Loaded");
+		}
+		if (Wads.CheckNumForName("EE-UNFAM", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSUNFAM").Split(allSF,":");
+			Console.Printf("Unfamiliar Footsteps TXT Loaded");
+		}
+		if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSSTAEONS").Split(allSF,":");
+			Console.Printf("Strange Aeons Footsteps TXT Loaded");
+		}
+		
+		for (int j = allSF.Size() - 1; j >= 0; j -= 1)
+		{
+			string s = StringTable.Localize(String.Format("$STEP_%s", allSF[j]));
+			
+			if (s.Length() != 0)
+			{
+				textureid t = TexMan.CheckForTexture(allSF[j], TexMan.TYPE_ANY);
+				if (t.Exists())
+				{
+					fs_textures.Push(int(t));
+					
+					fs_sndinfo.Push(s);
+				}
+			}
+		}
+		defaultSndinfo = StringTable.Localize("$STEP_DEFAULT");
+		
+		int nofsttxts = 0;
 		for (let i = 0, l = level.Sectors.Size(); i < l; i++)
 		{
+			int idx;
+			bool textfound = false;
+			string texname;
+			/*
+			Console.Printf("centfloor [%d]: %.4f", i, level.Sectors[i].CenterFloor());
+			Console.Printf("centceiling [%d]: %.4f", i, level.Sectors[i].CenterCeiling());
+			Console.Printf("centerspot [%d]: %.4f x %.4f", i, level.Sectors[i].centerspot.x, level.Sectors[i].centerspot.y);
+			let p = SectorChecker(Actor.Spawn("SectorChecker", (level.Sectors[i].centerspot.x, level.Sectors[i].centerspot.y, level.Sectors[i].CenterFloor()), ALLOW_REPLACE));
+			if (p)
+			{
+				p.place = i;
+				texname = texman.GetName(p.floorpic);
+				idx = fs_textures.Find(int(p.floorpic));
+				if (idx == fs_textures.Size()) textfound = false;
+																	else textfound = true;
+				//Console.Printf("x: %.4f, y: %.4f, z: %.4f, floorpic: %d [%s] [idx: %d]", p.pos.x, p.pos.y, p.pos.z, int(p.floorpic), texname, idx);
+			}
+			*/
+			
+			texname = texman.GetName(level.Sectors[i].GetTexture(sector.floor));
+			idx = fs_textures.Find(int(level.Sectors[i].GetTexture(sector.floor)));
+			if (idx != fs_textures.Size()) textfound = true;
+																else nofsttxts++;
+			
 			if (level.Sectors[i].damagetype == 'Fire' || level.Sectors[i].damagetype == 'Lava') level.Sectors[i].damagetype = 'Magma';
 			if (level.Sectors[i].damagetype == 'Ice') level.Sectors[i].damagetype = 'IceWater';
 			if (dydudebug_worldloaded) Console.Printf("    \czFireFloorAdjuster\c-: %d / %d", i, l);
 			
-			Console.Printf("Sector #: %d, \c[green]floorpic: %s\c-, \c[orange]damagetype: %s", i, texman.GetName(level.Sectors[i].GetTexture(sector.floor)), level.Sectors[i].damagetype);
+			int damageamt = level.Sectors[i].damageamount;
+			int damageint = level.Sectors[i].damageinterval;
+			int leakdam = level.Sectors[i].leakydamage;
+			string damagetyp = level.Sectors[i].damagetype;
+			double sectgrav = level.Sectors[i].gravity;
+			
+			String SecPrint = "Sector #: ";
+			SecPrint.AppendFormat("%d, ", i);
+			if (textfound) SecPrint.AppendFormat("\c[green]-floorpic: %s\c-", texname);
+								else SecPrint.AppendFormat("\c[red]~floorpic: %s\c-", texname);
+			if (sectgrav != 1.0) SecPrint.AppendFormat("\c[green]gravity: %.4f\c-, ", sectgrav);
+			if (damagetyp != 'None' || damageamt > 0 || damageint) SecPrint.AppendFormat(", \c[brick]damagetype: %s, damageamount: %d, damageinterval: %d, leakydamage: %d / 256", damagetyp, damageamt, damageint, leakdam);
+			Console.Printf(SecPrint);
+		}
+		if (nofsttxts > 0)
+		{
+			if (dydudebug_footsteps || dydudebug_footsteps2) player.A_StartSound("step/squeaky1",1002);
+			Console.Printf("# of textures found with no footstep definitions: %d", nofsttxts);
 		}
 		
 		if (dydudebug_resetinventorydebug) Console.Printf("\c[green]ResetInventory:\c- WorldLoaded() activated");
