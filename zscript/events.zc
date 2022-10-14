@@ -6372,7 +6372,7 @@ class DD_StaticEventHandler : StaticEventHandler
 		for (let i = 0, l = level.Sectors.Size(); i < l; i++)
 		{
 			int idx;
-			bool textfound = false;
+			int textfound = 0;
 			string texname;
 			/*
 			Console.Printf("centfloor [%d]: %.4f", i, level.Sectors[i].CenterFloor());
@@ -6392,8 +6392,13 @@ class DD_StaticEventHandler : StaticEventHandler
 			
 			texname = texman.GetName(level.Sectors[i].GetTexture(sector.floor));
 			idx = fs_textures.Find(int(level.Sectors[i].GetTexture(sector.floor)));
-			if (idx != fs_textures.Size()) textfound = true;
-																else nofsttxts++;
+			if (idx != fs_textures.Size()) textfound = 1;
+			else 
+			{
+				if (texname == "" || 
+						texname == "-NOFLAT-") textfound = -1;
+				else nofsttxts++;
+			}
 			
 			if (level.Sectors[i].damagetype == 'Fire' || level.Sectors[i].damagetype == 'Lava') level.Sectors[i].damagetype = 'Magma';
 			if (level.Sectors[i].damagetype == 'Ice') level.Sectors[i].damagetype = 'IceWater';
@@ -6407,8 +6412,9 @@ class DD_StaticEventHandler : StaticEventHandler
 			
 			String SecPrint = "Sector #: ";
 			SecPrint.AppendFormat("%d, ", i);
-			if (textfound) SecPrint.AppendFormat("\c[green]-floorpic: %s\c-", texname);
-								else SecPrint.AppendFormat("\c[red]~floorpic: %s\c-", texname);
+			if (textfound > 0) SecPrint.AppendFormat("\c[green]-floorpic: %s\c-", texname);
+			else if (textfound < 0) SecPrint.AppendFormat("\c[yellow]=floorpic: %s\c-", texname);
+			else SecPrint.AppendFormat("\c[red]~floorpic: %s\c-", texname);
 			if (sectgrav != 1.0) SecPrint.AppendFormat("\c[green]gravity: %.4f\c-, ", sectgrav);
 			if (damagetyp != 'None' || damageamt > 0 || damageint) SecPrint.AppendFormat(", \c[brick]damagetype: %s, damageamount: %d, damageinterval: %d, leakydamage: %d / 256", damagetyp, damageamt, damageint, leakdam);
 			Console.Printf(SecPrint);
@@ -6525,7 +6531,7 @@ class EEWaterHandler : StaticEventHandler
 	{
 		// set the player's timer up correctly (more-than-1-tick precision)
 		PlayerInfo p = players[consoleplayer];
-		Shader.SetUniform1f(p, "watershader", "timer", gametic + e.FracTic);
+		PPShader.SetUniform1f("watershader", "timer", gametic + e.FracTic);
 
 		bool chasecam = false;
 		if (p.cheats & CF_CHASECAM) chasecam = true;
@@ -6533,23 +6539,23 @@ class EEWaterHandler : StaticEventHandler
 		{
 			if (dydudebug_shader)
 			{
-				Shader.SetEnabled(p, "watershader", false);
-				Shader.SetEnabled(p, "waterzoomshader", false);
+				PPShader.SetEnabled("watershader", false);
+				PPShader.SetEnabled("waterzoomshader", false);
 			}
 			else
 			{
-				Shader.SetEnabled(p, "watershader", true);
-				Shader.SetEnabled(p, "waterzoomshader", true);
+				PPShader.SetEnabled("watershader", true);
+				PPShader.SetEnabled("waterzoomshader", true);
 				double effectSize = CVar.GetCVar("exex_uweffectsize", p).GetFloat();
 				if (p.mo.CountInv("PowerNoDrown")) effectSize *= frandom(0.045,0.055);
-				Shader.SetUniform1f(p, "watershader", "waterFactor", effectSize);
-				Shader.SetUniform1f(p, "waterzoomshader", "zoomFactor", 1 - (effectSize * 2));
+				PPShader.SetUniform1f("watershader", "waterFactor", effectSize);
+				PPShader.SetUniform1f("waterzoomshader", "zoomFactor", 1 - (effectSize * 2));
 			}
 		}
 		else 
 		{
-			Shader.SetEnabled(p, "watershader", false);
-			Shader.SetEnabled(p, "waterzoomshader", false);
+			PPShader.SetEnabled("watershader", false);
+			PPShader.SetEnabled("waterzoomshader", false);
 		}
 	}
 }
