@@ -207,6 +207,7 @@ class DD_EventHandler : EventHandler
 					if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet] baselinelevel: %d, tic: %d, actor: %p [%s]\c-", baselinelevel, gametic, spawnee, spawnee.GetClassName());
 				}
 				
+				
 				if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet], tic: %d, actor: %p [%s]\c-", gametic, spawnee, spawnee.GetClassName());
 				int LevelErrorRange;
 				int LevelCheck;
@@ -406,6 +407,20 @@ class DD_EventHandler : EventHandler
 							LevelCheck = clamp(LevelCheck, 0, 2000);
 							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [final calc]: %d (Previous: %d)", LevelCheck, PreviousLevelCheck);
 							levelee = true;
+						}
+						
+						if (level.GetChecksum() == 'fb8f40012606896053315ee7cdb3cccb') // ???08
+						{
+							int PreviousLevelCheck = LevelCheck;
+							if (Killetante(spawnee) || KilletanteSoloist(spawnee)) LevelCheck *= frandom(1.75,2.5);
+							if (EvilDinahEE(spawnee)) LevelCheck *= frandom(1.5,3.0);
+							if (Forsaken_Jorgensen(spawnee)) LevelCheck *= frandom(2.0,3.5);
+							if (Teacher_JorgClone(spawnee))
+							{
+								LevelCheck *= frandom(3.5,5.5);
+								spawnee.A_SetInventory("lolewatdisdo",1);
+							}
+							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [surprise]: %d (Previous: %d)", LevelCheck, PreviousLevelCheck);
 						}
 					}
 					if (levelee)
@@ -1204,6 +1219,9 @@ class DD_EventHandler : EventHandler
 			if (spawnname == "NewSpiderRed") spawnee.SetTag("Spider [Red]");
 			if (spawnname == "SpiderGreen") spawnee.SetTag("Spider [Green]");
 			
+			if (spawnname == "PossessedZombieMan") spawnee.SetTag("Possessed Zombieman");
+			if (spawnname == "PossessedShotgunGuy") spawnee.SetTag("Possessed Shotgun Guy");
+			if (spawnname == "PossessedChaingunGuy") spawnee.SetTag("Possessed Chaingun Guy");
 			if (spawnname == "Cacoyle") spawnee.SetTag("Cacoyle");
 			if (spawnname == "Cacoyle_Variant") spawnee.SetTag("Cacoyle");
 			if (spawnname == "GargoylSoul") spawnee.SetTag("Gargoyle Soul");
@@ -1241,6 +1259,7 @@ class DD_EventHandler : EventHandler
 			if (spawnname == "WereWolfOfHellAlt") spawnee.SetTag("Stone-Beast of Hell");
 			if (spawnname == "Cvltimp") spawnee.SetTag("Imp Cultist");
 			if (spawnname == "CvltimpAlt") spawnee.SetTag("Imp Cultist");
+			if (spawnname == "DeepOneShot") spawnee.SetTag("Deelp One [Shotgun]");
 			if (spawnname == "DeepOneChain") spawnee.SetTag("Deelp One [Chaingun]");
 			if (spawnname == "DeepOneTri") spawnee.SetTag("Deelp One [Trident]");
 			if (spawnname == "DemonHound") spawnee.SetTag("Pinky Hellhound");
@@ -1478,7 +1497,7 @@ class DD_EventHandler : EventHandler
 			if (level.GetChecksum() == 'dc9933f75206c48826563ee6ba6c069a' && spawnname == "TechPillar") spawnee.SetTag("Netherhell Imp");
 			
 			// BlooM
-			if (level.GetChecksum() == '51a5b19b37283d7b66eecdb82f8680ec' && spawnname == "DinahPlayer") spawnee.A_SetInventory("PlayingBlooM",1);
+			if ((level.GetChecksum() == 'f1b670e2844c1b0d4e6f56a6df82f574' || Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1) && spawnname == "DinahPlayer") spawnee.A_SetInventory("PlayingBlooM",1);
 			
 			// SiGiL
 			if (level.GetChecksum() == '61b546375618d619ab39eafd28f03c87' ||
@@ -2768,7 +2787,7 @@ class DD_EventHandler : EventHandler
 				if (vict == "Zombieman" ||
 						vict == "ZombiemanNew" ||
 						vict == "Zombieman_" || 
-						vict == "PossessedZombieman")
+						vict == "PossessedZombieMan")
 				{
 					if (random(1,basedropdiv) <= 1) victim.A_SpawnItemEx("RadSuit2",frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),frandom(-2,2),SXF_NOCHECKPOSITION);
 				}
@@ -6320,7 +6339,7 @@ class DD_StaticEventHandler : StaticEventHandler
 			StringTable.Localize("$STEP_FLATSAUGZEN").Split(allSF,":");
 			Console.Printf("AUGER;ZENITH Footsteps TXT Loaded");
 		}
-		if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1) 
+		if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1)
 		{
 			StringTable.Localize("$STEP_FLATSBLOOM").Split(allSF,":");
 			Console.Printf("BlooM Footsteps TXT Loaded");
@@ -6410,14 +6429,17 @@ class DD_StaticEventHandler : StaticEventHandler
 			string damagetyp = level.Sectors[i].damagetype;
 			double sectgrav = level.Sectors[i].gravity;
 			
-			String SecPrint = "Sector #: ";
-			SecPrint.AppendFormat("%d, ", i);
-			if (textfound > 0) SecPrint.AppendFormat("\c[green]-floorpic: %s\c-", texname);
-			else if (textfound < 0) SecPrint.AppendFormat("\c[yellow]=floorpic: %s\c-", texname);
-			else SecPrint.AppendFormat("\c[red]~floorpic: %s\c-", texname);
-			if (sectgrav != 1.0) SecPrint.AppendFormat("\c[green]gravity: %.4f\c-, ", sectgrav);
-			if (damagetyp != 'None' || damageamt > 0 || damageint) SecPrint.AppendFormat(", \c[brick]damagetype: %s, damageamount: %d, damageinterval: %d, leakydamage: %d / 256", damagetyp, damageamt, damageint, leakdam);
-			Console.Printf(SecPrint);
+			if (dydudebug_footsteps || dydudebug_footsteps2)
+			{
+				String SecPrint = "Sector #: ";
+				SecPrint.AppendFormat("%d, ", i);
+				if (textfound > 0) SecPrint.AppendFormat("\c[green]-floorpic: %s\c-", texname);
+				else if (textfound < 0) SecPrint.AppendFormat("\c[yellow]=floorpic: %s\c-", texname);
+				else SecPrint.AppendFormat("\c[red]~floorpic: %s\c-", texname);
+				if (sectgrav != 1.0) SecPrint.AppendFormat("\c[green]gravity: %.4f\c-, ", sectgrav);
+				if (damagetyp != 'None' || damageamt > 0 || damageint) SecPrint.AppendFormat(", \c[brick]damagetype: %s, damageamount: %d, damageinterval: %d, leakydamage: %d / 256", damagetyp, damageamt, damageint, leakdam);
+				Console.Printf(SecPrint);
+			}
 		}
 		if (nofsttxts > 0)
 		{
