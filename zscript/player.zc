@@ -758,7 +758,7 @@ class DDPlayerPawn : PlayerPawn
 			int DrownDmg = 2 + (-AirTime / TICRATE);
 			DrownDmg = ceil(DrownDmg * frandompick(0.625,0.75,0.875,1.000));
 			if (DrownDmg < 0) DrownDmg = 0;
-			if (dydudebug_airmeter == 1) Console.Printf("InWaterTime: %d, WaterLevel: %d, AirTime: %d / %d, DrownDmg: %d, willgasp: %d, takendrowndmg: %d", InWaterTime, waterlevel, AirTime, MaxAirTime, DrownDmg, willgasp, takendrowndmg);
+			if (dydudebug_airmeter == 1) Console.Printf("InWaterTime: %d, WaterLevel: %d (WaterDepth: %.4f), AirTime: %d / %d, DrownDmg: %d, willgasp: %d, takendrowndmg: %d", InWaterTime, waterlevel, WaterDepth, AirTime, MaxAirTime, DrownDmg, willgasp, takendrowndmg);
 			// Handle air supply	
 			//if (level.airsupply > 0)
 			{
@@ -1232,7 +1232,7 @@ class DDPlayerPawn : PlayerPawn
 	
 	override void FallAndSink(double grav, double oldfloorz)
 	{
-		if (dydudebug_playermove && WaterDepth > 0) Console.Printf("Current water depth: %f", WaterDepth);
+		if (dydudebug_playermove && WaterDepth > 0) Console.Printf("Current water depth: %.4f", WaterDepth);
 
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
 		let PlayerWeapon = MiscItem.weapon;
@@ -1245,7 +1245,7 @@ class DDPlayerPawn : PlayerPawn
 		if (dydudebug_playermove) Console.Printf("\c[orange](FallAndSink() Start)\c- Vel.Z: %.4f [oldfloorz: %.8f, grav: %.8f] [tic: %d]", Vel.Z, oldfloorz, grav, gametic);
 		if (Pos.Z > floorz && !bNOGRAVITY)
 		{
-			if (dydudebug_playermove) Console.Printf("Waterlevel: %d, Pos.Z: %.8f, floorz: %.8f [tic: %d]", waterlevel, pos.z, floorz, gametic);
+			if (dydudebug_playermove) Console.Printf("Waterlevel: %d (WaterDepth: %.4f), Pos.Z: %.8f, floorz: %.8f [tic: %d]", waterlevel, WaterDepth, pos.z, floorz, gametic);
 			double startvelz = Vel.Z;
 			
 			if (waterlevel == 0 || (player && !(cmd.forwardmove | cmd.sidemove)))
@@ -2019,7 +2019,7 @@ class DDPlayerPawn : PlayerPawn
 		int newspeedvelsy = newspeedvelsyd * 65536;
 		int newspeedvelsz = 0;
 		if (waterlevel >= 1) newspeedvelszd * 65536;
-		if (dydudebug_playermove) Console.Printf("\cz WaterLevel: %d\c-, \cz Angle: %.8f, Pitch: %.8f\c-, \czPosX: %d, PosY: %d, PosZ: %d\c-,\nVelX: %.8f/\cx%.8f\c- (%d/\cx%d\c-), VelY: %.8f/\cx%.8f\c- (%d/\cx%d\c-), VelZ: %.8f/\cx%.8f\c- (%d/\cx%d\c-)\c-", waterlevel, (angle % 360), pitch, pos.x, pos.y, pos.z, vel.x, newspeedvelsxd, (vel.x * 65536), newspeedvelsx, vel.y, newspeedvelsyd, (vel.y * 65536), newspeedvelsy, vel.z, newspeedvelszd, (vel.z * 65536), newspeedvelsz);
+		if (dydudebug_playermove) Console.Printf("\cz WaterLevel: %d (WaterDepth: %.4f)\c-, \cz Angle: %.8f, Pitch: %.8f\c-, \czPosX: %d, PosY: %d, PosZ: %d\c-,\nVelX: %.8f/\cx%.8f\c- (%d/\cx%d\c-), VelY: %.8f/\cx%.8f\c- (%d/\cx%d\c-), VelZ: %.8f/\cx%.8f\c- (%d/\cx%d\c-)\c-", waterlevel, WaterDepth, (angle % 360), pitch, pos.x, pos.y, pos.z, vel.x, newspeedvelsxd, (vel.x * 65536), newspeedvelsx, vel.y, newspeedvelsyd, (vel.y * 65536), newspeedvelsy, vel.z, newspeedvelszd, (vel.z * 65536), newspeedvelsz);
 
 		lasthealth = health;
 		Super.Tick();
@@ -2245,7 +2245,7 @@ class DDPlayerPawn : PlayerPawn
 		if (bFLY || bNOGRAVITY || waterlevel >= 1) 
 		{
 			takefalldamage = false;
-			if (dydudebug_playerdamagemobj) Console.Printf("bFLY: %d, bNOGRAVITY: %d, waterlevel: %d", bFLY, bNOGRAVITY, waterlevel);
+			if (dydudebug_playerdamagemobj) Console.Printf("bFLY: %d, bNOGRAVITY: %d, waterlevel: %d (WaterDepth: %.4f)", bFLY, bNOGRAVITY, waterlevel, WaterDepth);
 		}
 		else
 		{
@@ -4866,7 +4866,7 @@ class EVP_Footsteps : Actor
 		if (isrunning) basespd = 24.0;
 		if (dydudebug_footsteps) Console.Printf("basespd: %.8f", basespd);
 		if (speed2d >= basespd && 
-				plr.waterlevel <= 1 &&
+				(plr.waterlevel <= 1 && plr.WaterDepth <= (plr.height * 0.1667)) &&
 				(plr.pos.z - plr.floorz) <= 0 &&
 				!plr.CountInv("DashTics") &&
 				plr.GetClassName() == "DinahPlayer")
