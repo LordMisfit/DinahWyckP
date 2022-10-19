@@ -36,9 +36,51 @@ class mewantsacrifice : EECreature
 		+DONTHARMSPECIES;
 	}
 	
+	int killtauntcooldown;
+	int targlasthealth;
+	void A_KillTaunt()
+	{
+		if (dydudebug_monsterspecialai) Console.Printf("A_KillTaunt");
+		if (!killtauntcooldown)
+		{
+			double maskpitch = 1.00;
+			string voicenm;
+			double voicevol = frandom(1.25,1.75);
+			if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) voicevol *= frandompick(1.125,1.125,1.125,1.25,1.25,1.5);
+			int randvoice = random(1,4);
+			if (randvoice == 1) voicenm = "DECIMAT";
+			if (randvoice == 2) voicenm = "DISEMBO";
+			if (randvoice == 3) voicenm = "MASSACR";
+			if (randvoice == 4) voicenm = "SENTTHEL";
+			A_StopSound(124);
+			A_StopSound(125);
+			A_StopSound(126);
+			A_StopSound(127);
+			A_StartSound(voicenm,124,CHANF_DEFAULT,voicevol,ATTN_NONE,1.0);
+			A_StartSound(voicenm,125,CHANF_DEFAULT,voicevol,ATTN_NONE,1.0);
+			A_StartSound(voicenm,125,CHANF_DEFAULT,voicevol,ATTN_NONE,1.0);
+			A_StartSound(voicenm,125,CHANF_DEFAULT,voicevol,ATTN_NONE,1.0);
+			killtauntcooldown = (frandom(0.75,1.0) * TICRATE);
+		}
+	}
+	
 	override void Tick()
 	{
 		super.Tick();
+		if (killtauntcooldown) killtauntcooldown--;
+		
+		if (target)
+		{
+			if (targlasthealth > 0 && target.health <= 0)
+			{
+				if (dydudebug_monsterspecialai) Console.Printf("Has Killed Its Target");
+				A_KillTaunt();
+			}
+			targlasthealth = target.health;
+			if (dydudebug_monsterspecialai) Console.Printf("(%s) target.health: %d, targlasthealth: %d", target.GetClassName(), target.health, targlasthealth);
+		}
+		else targlasthealth = 0;
+
 		int maxage = 69;
 		if (master)
 		{
@@ -140,15 +182,21 @@ class mewantsacrifice : EECreature
 		See:
 			TCHR AAAAABBBBBCCCCC 1
 			{
-				A_EEChase();
-				if (master) A_SetAngle(master.angle);
-				Thing_Hate(0,1000,4);
+				if (GetAge() > 1) 
+				{
+					A_EEChase();
+					if (master) A_SetAngle(master.angle);
+					if (master) target = master.target;
+				}
 			}
 			TCHR DDDDDEEEEEFFFFF 1
 			{
-				A_EEChase();
-				if (master) A_SetAngle(master.angle);
-				Thing_Hate(0,1000,4);
+				if (GetAge() > 1) 
+				{
+					A_EEChase();
+					if (master) A_SetAngle(master.angle);
+					if (master) target = master.target;
+				}
 			}
 			loop;
 		Missile:
@@ -394,7 +442,7 @@ class mewantsacrifice : EECreature
 				A_SpawnItemEx(sacrifice,frandom(0,50),frandom(0,50));
 			}
 			TNT1 A 4; //A_GiveToTarget("TchernobogDead", 1); // 4 [415]
-			TCHR Y 1 A_Fadeout((deathalpha*0.0035),FTF_REMOVE);
+			TCHR Y 1 A_Fadeout((deathalpha*0.00975),FTF_REMOVE);
 			Wait;
 	}
 }
