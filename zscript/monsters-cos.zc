@@ -13,6 +13,7 @@ class EvilDinah : DDOrigBoss
 	int tauntcooldown;
 	int killtauntcooldown;
 	int numpikeglows;
+	int numsacrifice;
 	int lasthealth;
 	int targlasthealth;
 	default
@@ -362,12 +363,16 @@ class EvilDinahEE : EvilDinah
 		+NOBLOOD;
 		+MISSILEMORE;
 		+DONTHARMCLASS;
+		+THRUSPECIES;
+		+MTHRUSPECIES;
+		+DONTHARMSPECIES;
 		SeeSound "dinah/giggle";
 		PainSound "evildinah/pain";
 		DeathSound "virtuoso/death";
 		ActiveSound "dinah/giggle";
 		Obituary "%o couldn't stop hitting herself.";
 		Tag "Dinah Wyck...?";
+		Species "EvilDinah";
 		DropItem "EvilDinahWeaponDrop", 240;
 		DropItem "EvilDinahWeaponDrop", 16;
 	}
@@ -451,8 +456,30 @@ class EvilDinahEE : EvilDinah
 				else if (HealthRatio >= 0.501 && HealthRatio < 0.750) painsnd = "Dinah/Pain2A";
 				else if (HealthRatio >= 0.251 && HealthRatio <= 0.500) painsnd = "Dinah/Pain3A";
 				else if (HealthRatio < 0.251) painsnd = "Dinah/Pain4A";
-				A_StopSound(CHAN_VOICE);
-				A_StartSound(painsnd,CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+				
+				if (TID == 447 && CountInv("gimmesacrificelule"))
+				{
+					A_StopSound(124);
+					A_StopSound(125);
+					A_StopSound(126);
+					A_StopSound(127);
+					A_StartSound(painsnd,124,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+					A_StartSound(painsnd,125,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+					A_StartSound(painsnd,126,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+					A_StartSound(painsnd,127,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+
+					ThinkerIterator saclulFinder = ThinkerIterator.Create("mewantsacrifice");
+					Actor mo;
+					while (mo = mewantsacrifice(saclulFinder.Next()))
+					{
+						mo.SetStateLabel("Pain");
+					}
+				}
+				else
+				{
+					A_StopSound(CHAN_VOICE);
+					A_StartSound(painsnd,CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM);
+				}
 			}
 		}
 	}
@@ -943,9 +970,9 @@ class EvilDinahEE : EvilDinah
 		}
 		else targlasthealth = 0;
 		
-		// Allow her Pike to emit dynlights when "equipped"
 		if (health > 0)
 		{
+			// Allow her Pike to emit dynlights when "equipped"
 			//Console.Printf("Attempt - lastweaponused: %d, exex_glowingpike: %d", lastweaponused, exex_glowingpike);
 			if (lastweaponused == 5 && exex_glowingpike)
 			{
@@ -990,6 +1017,29 @@ class EvilDinahEE : EvilDinah
 						numpikeglows--;
 					}
 					if (numpikeglows) numpikeglows = 0;
+				}
+			}
+		}
+		
+		if (TID == 447 && CountInv("gimmesacrificelule"))
+		{
+			numsacrifice = 0;
+			ThinkerIterator SacAttach = ThinkerIterator.Create("mewantsacrifice");
+			Actor mo;
+			while (mo = mewantsacrifice(SacAttach.Next()))
+			{
+				numsacrifice++;
+				if (numsacrifice) break;
+			}
+			if (!numsacrifice)
+			{
+				bool success;
+				actor PGAED;
+				[success, PGAED] = A_SpawnItemEx("mewantsacrifice",self.pos.x,self.pos.y,self.pos.z,0,0,0,0,SXF_NOCHECKPOSITION);
+				if (success && PGAED)
+				{
+					numsacrifice++;
+					PGAED.master = self;
 				}
 			}
 		}
@@ -2277,7 +2327,6 @@ class EvilDinahEE : EvilDinah
 					{
 						ThrustThingZ(0, 24, 0, 0);
 						ThrustThing (angle*256/360+random(96,160), random(6,9), 0, 0);
-						A_EEPain();
 					}
 				}
 			}
@@ -2295,14 +2344,46 @@ class EvilDinahEE : EvilDinah
 			DINA H 0 Bright
 			{
 				bFORCERADIUSDMG = false;
-				A_StopSound(CHAN_VOICE);
-				A_StartSound("EDinal/DScream",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+				if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1 &&
+						(TID == 447 || CountInv("gimmesacrificelule") > 0))
+				{
+					A_StopSound(124);
+					A_StopSound(125);
+					A_StopSound(126);
+					A_StopSound(127);
+					A_StartSound("EDinal/DScream",124,CHANF_DEFAULT,1.0,ATTN_NONE,1.0);
+					A_StartSound("EDinal/DScream",125,CHANF_DEFAULT,1.0,ATTN_NONE,1.0);
+					A_StartSound("EDinal/DScream",126,CHANF_DEFAULT,1.0,ATTN_NONE,1.0);
+					A_StartSound("EDinal/DScream",127,CHANF_DEFAULT,1.0,ATTN_NONE,1.0);
+					ThinkerIterator saclulFinder = ThinkerIterator.Create("mewantsacrifice");
+					Actor mo;
+					while (mo = mewantsacrifice(saclulFinder.Next()))
+					{
+						mo.DamageMobj(mo, mo, (mo.health*128), "EDSacrifice", DMG_NO_ARMOR|DMG_THRUSTLESS|DMG_FORCED|DMG_FOILINVUL|DMG_FOILBUDDHA|DMG_NO_PROTECT|DMG_NO_ENHANCE, angle);
+						mo.SetStateLabel("Death");
+					}
+				}
+				else
+				{
+					A_StopSound(CHAN_VOICE);
+					A_StartSound("EDinal/DScream",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+				}
 			}
 			DINA HHHHHHHH 4 Bright
 			{
 				A_StartSound("weapons/cherryboom",CHAN_BODY);
 				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
 			}
+			DINA H 0
+			{
+				if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1 &&
+						(TID == 447 || CountInv("gimmesacrificelule") > 0))
+				{
+					return resolvestate("DeathExt");
+				}
+				return resolvestate(null);
+			}
+		DeathFlingBack:
 			DINA H 3 A_FaceTarget();
 			DINA H 5 
 			{
@@ -2314,6 +2395,48 @@ class EvilDinahEE : EvilDinah
 			DANS RSTUVWXYZ 2 bright;
 			TNT1 A 0 CCCardDeathCheck();
 			Stop;
+		DeathExt:
+			DINA HHHHHHHH 4 Bright
+			{
+				A_StartSound("weapons/cherryboom",CHAN_BODY);
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			DINA HHHHHHHH 4 Bright
+			{
+				A_StartSound("weapons/cherryboom",CHAN_BODY);
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			DINA HHHHHHHH 4 Bright
+			{
+				A_StartSound("weapons/cherryboom",CHAN_BODY);
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			DINA HHHHHHHH 4 Bright
+			{
+				A_StartSound("weapons/cherryboom",CHAN_BODY);
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			DINA HHHHHHHH 4 Bright
+			{
+				A_StartSound("weapons/cherryboom",CHAN_BODY);
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			DINA HHHHHHHH 4 Bright
+			{
+				A_StartSound("weapons/cherryboom",CHAN_BODY);
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			DINA HHHHHHHH 4 Bright
+			{
+				A_StartSound("weapons/cherryboom",CHAN_BODY);
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			DINA HHHHHHHH 4 Bright
+			{
+				A_StartSound("weapons/cherryboom",CHAN_BODY);
+				A_SpawnItemEX("BossBoom",random(20,64),random(-64,64),random(-64,64),0,0,0,0,SXF_NOCHECKPOSITION);
+			}
+			goto DeathFlingBack;
 	}
 }
 
