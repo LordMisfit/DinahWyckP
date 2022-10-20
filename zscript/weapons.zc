@@ -486,7 +486,7 @@ class DDWeapon : Weapon
 		}
 		
 		// >:)
-		if (t.linetarget)
+		if (t.linetarget && !t.linetarget.bDORMANT)
 		{
 			nm = "CCards_Actor_Ghost";
 			if (t.linetarget.CountInv(nm) && (pufftype == 'VacPuff' || pufftype == 'VacPuffIP')) 
@@ -598,7 +598,10 @@ class DDWeapon : Weapon
 					t.linetarget.bFULLVOLDEATH == false &&
 					t.linetarget.bBOSS == false) isCCardsIllusion = true;
 
-			if (lifesteal > 0 && !(t.linetarget.bDontDrain) && !isCCardsIllusion)
+			if (lifesteal > 0 && 
+					!(t.linetarget.bDontDrain) && 
+					!isCCardsIllusion && 
+					!t.linetarget.bDORMANT)
 			{
 				if (flags & CPF_STEALARMOR)
 				{
@@ -667,11 +670,15 @@ class DDWeapon : Weapon
 			}
 			
 			// New Section - Makes Melee IP attacks only consume IP cost if they successfully hit a damageable target
-			if (IPCostOnHit && invoker.IPCostTemp > 0 && !isCCardsIllusion)
+			if (IPCostOnHit && 
+					invoker.IPCostTemp > 0 && 
+					!isCCardsIllusion &&
+					!t.linetarget.bDORMANT)
 			{
 				if (!(t.linetarget.bINVULNERABLE || 
 							t.linetarget.bNODAMAGE || 
 							t.linetarget.bFRIENDLY || 
+							t.linetarget.bDORMANT || 
 							ExplosiveBarrel(t.linetarget) || 
 							Pod(t.linetarget) ||
 							PracticeTarget(t.linetarget) || 
@@ -689,7 +696,10 @@ class DDWeapon : Weapon
 			}
 			
 			// New Section - For IP attacks like the Pike's Melee which steal two[+] units of ammo to your collection on a hit
-			if (giveammotype != "" && giveammoamt > 0 && !isCCardsIllusion && !(t.linetarget.bNODAMAGE || t.linetarget.bFRIENDLY || t.linetarget.bINVULNERABLE))
+			if (giveammotype != "" && 
+					giveammoamt > 0 && 
+					!isCCardsIllusion && 
+					!(t.linetarget.bDORMANT || t.linetarget.bNODAMAGE || t.linetarget.bFRIENDLY || t.linetarget.bINVULNERABLE))
 			{
 				int BaseTimeAdd = random(70,103);
 				player.mo.A_StopSound(15);
@@ -857,7 +867,10 @@ class DDWeapon : Weapon
 			//
 			if (actualdamage > 0)
 			{
-				if (!EECreature(t.linetarget) && t.linetarget.bISMONSTER && !t.linetarget.bNOPAIN)
+				if (!EECreature(t.linetarget) && 
+						t.linetarget.bISMONSTER && 
+						!t.linetarget.bNOPAIN &&
+						!t.linetarget.bDORMANT)
 				{
 					bool doeet = false;
 					if (t.linetarget.bBOSS)

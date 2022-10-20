@@ -3239,12 +3239,26 @@ class PlayerStatItem : Inventory
 		{
 			if (owner.cursector && owner.cursector.Index() == 5867)
 			{
+				int maxheal = MaxHealthTrue;
 				healpoolaccel = 2;
-				if (owner.CountInv("checkfirebluheal") >= 2 && owner.CountInv("checkfirebluheal") <= 4) healpoolaccel = 3;
-				if (owner.CountInv("checkfirebluheal") >= 5 && owner.CountInv("checkfirebluheal") <= 8) healpoolaccel = 4;
+				if (owner.CountInv("checkfirebluheal") >= 2 && owner.CountInv("checkfirebluheal") <= 4)
+				{
+					healpoolaccel = 3;
+					maxheal = (MaxHealthTrue * 1.75);
+				}
+				if (owner.CountInv("checkfirebluheal") >= 5 && owner.CountInv("checkfirebluheal") <= 9)
+				{
+					healpoolaccel = 4;
+					maxheal = (MaxHealthTrue * 2.5);
+				}
+				if (owner.CountInv("checkfirebluheal") >= 10)
+				{
+					healpoolaccel = 4;
+					maxheal = (MaxHealthTrue * 3.0);
+				}
 				CoSHealPoolInt++;
-				//Console.Printf("CurrentHealth: %d / %d, CoSHealPoolInt: %d / 16", CurrentHealth, MaxHealthTrue, CoSHealPoolInt);
-				if (CurrentHealth < MaxHealthTrue)
+				Console.Printf("CurrentHealth: %d / %d, healpoolaccel: %d, checkfirebluheal: %d, CoSHealPoolInt: %d / 16", CurrentHealth, maxheal, healpoolaccel, owner.CountInv("checkfirebluheal"), CoSHealPoolInt);
+				if (CurrentHealth < maxheal)
 				{
 					if (CoSHealPoolInt >= (16 - owner.CountInv("checkfirebluheal")))
 					{
@@ -3255,7 +3269,7 @@ class PlayerStatItem : Inventory
 						if (rec && dyduhud_showhpapdmgrecregen) A_RecoverHUD(rec, 0, false);
 						
 						CurrentHealth += rec;
-						if (CurrentHealth >= MaxHealthTrue) CurrentHealth = MaxHealthTrue;
+						if (CurrentHealth >= maxheal) CurrentHealth = maxheal;
 						owner.player.health = owner.player.mo.health = CurrentHealth;
 						owner.A_SetBlend("00 00 FF",0.20,random(8,12));
 						CoSHealPoolInt = 0;
@@ -3264,6 +3278,19 @@ class PlayerStatItem : Inventory
 				else
 				{
 					CoSHealPoolInt = 0;
+				}
+				double IPGainBase = frandompick(0.0067,0.01,0.01,0.01,0.01,0.01,0.01334);
+				IPGainBase = 0.01 * (1 + (owner.CountInv("checkfirebluheal") * 0.67) + (healpoolaccel * 1.25));
+				ItemPoints += IPGainBase;
+				if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+				if (berserked) IPGainBase *= 5;
+				IPGainHUDAmt += IPGainBase;
+				if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+				else
+				{
+					IPGainHUDTimer += 5;
+					if (IPGainHUDTimer < 105 && IPGainBase > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+					if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
 				}
 			}
 			else
