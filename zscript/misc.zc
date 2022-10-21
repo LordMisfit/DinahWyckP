@@ -3275,23 +3275,28 @@ class PlayerStatItem : Inventory
 						CoSHealPoolInt = 0;
 					}
 				}
-				else
+				if (ItemPoints < MaxItemPoints)
 				{
-					CoSHealPoolInt = 0;
+					double IPGainBase = frandompick(0.0067,0.01,0.01,0.01,0.01,0.01,0.01334);
+					IPGainBase = 0.01 * (1 + (owner.CountInv("checkfirebluheal") * 0.67) + (healpoolaccel * 1.25));
+					if (berserked) IPGainBase *= 5;
+					ItemPoints += IPGainBase;
+					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+					IPGainHUDAmt += IPGainBase;
+					if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+					else
+					{
+						IPGainHUDTimer += 5;
+						if (IPGainHUDTimer < 105 && IPGainBase > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+						if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+					}
+					if (CoSHealPoolInt >= ((16 - owner.CountInv("checkfirebluheal")) / 2))
+					{
+						if (berserked) owner.A_SetBlend("FB 8B 23",0.20,random(8,12));
+											else owner.A_SetBlend("FB 8B 23",0.10,random(2,3));
+					}
 				}
-				double IPGainBase = frandompick(0.0067,0.01,0.01,0.01,0.01,0.01,0.01334);
-				IPGainBase = 0.01 * (1 + (owner.CountInv("checkfirebluheal") * 0.67) + (healpoolaccel * 1.25));
-				ItemPoints += IPGainBase;
-				if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
-				if (berserked) IPGainBase *= 5;
-				IPGainHUDAmt += IPGainBase;
-				if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-				else
-				{
-					IPGainHUDTimer += 5;
-					if (IPGainHUDTimer < 105 && IPGainBase > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-					if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
-				}
+				if (CurrentHealth >= maxheal && ItemPoints >= MaxItemPoints) CoSHealPoolInt = 0;
 			}
 			else
 			{
