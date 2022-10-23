@@ -1271,6 +1271,7 @@ class DD_EventHandler : EventHandler
 			if (spawnname ~== "BlueCultist") spawnee.SetTag("Cabal Zealot");
 			if (spawnname ~== "RedCultist") spawnee.SetTag("Cabal Priest");
 			if (spawnname ~== "BloodZombie") spawnee.SetTag("Axe Zombie");
+			if (spawnname ~== "BuriedZombie") spawnee.SetTag("Axe Zombie");
 			if (spawnname ~== "GillBeast") spawnee.SetTag("Gill Beast");
 			if (spawnname ~== "HellFish") spawnee.SetTag("Bone Eel");
 			if (spawnname ~== "ChokingHand") spawnee.SetTag("Hell Hand");
@@ -1289,13 +1290,38 @@ class DD_EventHandler : EventHandler
 			if (spawnname ~== "BloodRatGrey") spawnee.SetTag("Rat");
 			if (spawnname ~== "BloodRatWhite") spawnee.SetTag("Rat");
 			if (spawnname ~== "NewSpiderRed") spawnee.SetTag("Spider [Red]");
+			if (spawnname ~== "NewRedSpider") spawnee.SetTag("Spider [Red]");
+			if (spawnname ~== "SpiderClimber") spawnee.SetTag("Spider [Red]");
 			if (spawnname ~== "SpiderGreen") spawnee.SetTag("Spider [Green]");
+			if (spawnname ~== "GreenSpider") spawnee.SetTag("Spider [Green]");
 			if (spawnname ~== "YellowSpider") spawnee.SetTag("Spider [Yellow]");
+			if (spawnname ~== "SpiderYellow") spawnee.SetTag("Spider [Yellow]");
 			if (spawnname ~== "BlackSpider") spawnee.SetTag("Spider [Black]");
+			if (spawnname ~== "SpiderBlack") spawnee.SetTag("Spider [Black]");
 			if (spawnname ~== "BlueSpider") spawnee.SetTag("Spider [Blue]");
+			if (spawnname ~== "SpiderBlue") spawnee.SetTag("Spider [Blue]");
 			if (spawnname ~== "CyanSpider") spawnee.SetTag("Spider [Cyan]");
+			if (spawnname ~== "SpiderCyan") spawnee.SetTag("Spider [Cyan]");
 			if (spawnname ~== "PurpleSpider") spawnee.SetTag("Spider [Purple]");
+			if (spawnname ~== "SpiderPurple") spawnee.SetTag("Spider [Purple]");
 			
+			A_BloomMonsterNames2(spawnee);
+
+			//Console.Printf("bn24- [%s]", spawnee.GetTag());
+		}
+	}
+
+	void A_BloomMonsterNames2(actor spawnee)
+	{
+		let globalvars = DDGlobalVariables.Get();
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		string spawnname = spawnee.GetClassName();
+
+		//Console.Printf("@!# [%s]", spawnname);
+		if (player.CountInv("PlayingBlooM") || Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1)
+		{
+			//Console.Printf("bn24 [%s]", spawnname);
 			if (spawnname ~== "PossessedZombieMan") spawnee.SetTag("Possessed Zombieman");
 			if (spawnname ~== "PossessedShotgunGuy") spawnee.SetTag("Possessed Shotgun Guy");
 			if (spawnname ~== "PossessedChaingunGuy") spawnee.SetTag("Possessed Chaingun Guy");
@@ -1405,7 +1431,6 @@ class DD_EventHandler : EventHandler
 			if (spawnname ~== "AberrationMoron4") spawnee.SetTag("Aberrational Civilian");
 			if (spawnname ~== "AberrationMoron5") spawnee.SetTag("Aberrational Civilian");
 			if (spawnname ~== "Moron") spawnee.SetTag("Civilian");
-
 			//Console.Printf("bn24- [%s]", spawnee.GetTag());
 		}
 	}
@@ -6684,11 +6709,40 @@ class EEWaterHandler : StaticEventHandler
 					if (MiscItem)
 					{
 						double tempeffectsize = 1.0;
-						if (MiscItem.WineDefTier > 0) tempeffectsize = (MiscItem.WineDefTier * 0.5);
-						else if (MiscItem.WineDefTier < 0) tempeffectsize = (MiscItem.WineDefTier * -0.25);
+						if (MiscItem.isDDTrilogy)
+						{
+							if (MiscItem.DDChapter == 1) // 10-11y
+							{
+								if (MiscItem.WineDefTier > 0) tempeffectsize = (MiscItem.WineDefTier * 0.9);
+								else if (MiscItem.WineDefTier < 0) tempeffectsize = (MiscItem.WineDefTier * -0.45);
+							}
+							else
+							if (MiscItem.DDChapter == 2) // 11-13y
+							{
+								if (MiscItem.WineDefTier > 0) tempeffectsize = (MiscItem.WineDefTier * 0.72);
+								else if (MiscItem.WineDefTier < 0) tempeffectsize = (MiscItem.WineDefTier * -0.36);
+							}
+							else
+							if (MiscItem.DDChapter == 3) // 16y
+							{
+								if (MiscItem.WineDefTier > 0) tempeffectsize = (MiscItem.WineDefTier * 0.42);
+								else if (MiscItem.WineDefTier < 0) tempeffectsize = (MiscItem.WineDefTier * -0.21);
+							}
+						}
+						else
+						{
+							if (MiscItem.WineDefTier > 0) tempeffectsize = (MiscItem.WineDefTier * 0.5);
+							else if (MiscItem.WineDefTier < 0) tempeffectsize = (MiscItem.WineDefTier * -0.25);
+						}
 						if (MiscItem.WineDefTier != 0)
 						{
-							tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * 0.04));
+							if (MiscItem.isDDTrilogy) 
+							{
+								if (MiscItem.DDChapter == 1) tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * 0.022));
+								else if (MiscItem.DDChapter == 2) tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * 0.0275));
+								else if (MiscItem.DDChapter == 3) tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * 0.048));
+							}
+							else tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * 0.04));
 							if (tempeffectsize <= 0.0) tempeffectsize = 0.0;
 						}
 						if (playbloom == -1 && p.mo.waterlevel >= 3) tempeffectsize += 1.0;
