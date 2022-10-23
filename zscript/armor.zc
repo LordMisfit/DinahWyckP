@@ -256,6 +256,25 @@ class KGArmorBonus : BasicArmorBonus
 		return !bIgnoreSkill ? int(SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor)) : SaveAmount;
 	}
 	
+	override void Tick()
+	{
+		super.Tick();
+		Double Dbl;
+		Sector Sec;
+		[Dbl,Sec] = CurSector.LowestFloorAt(Pos.XY);
+		if (pos.z <= Dbl && !owner)
+		{
+			if (cursector.damagetype == 'InstantDeath' ||
+					cursector.damagetype == 'Massacre')
+			{
+				if (bCOUNTITEM) level.total_items--;
+				Spawn("ItemFallSpot", (pos.x, pos.y, pos.z), NO_REPLACE);
+				if (dydudebug_itempitfalls) Console.Printf("%s [%p] \c[green](KGArmorBonus)\c- fell into a bottomless pit! [tic: %d]", GetClassName(), self, gametic);
+				Destroy();
+			}
+		}
+	}
+	
 	Default
 	{
 		+Inventory.AUTOACTIVATE
@@ -553,7 +572,7 @@ class ArmorScrap : KGArmorBonus
 		
 		return true;
 	}
-
+	
 	States
 	{
 		Spawn:
