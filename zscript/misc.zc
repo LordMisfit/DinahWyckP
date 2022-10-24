@@ -1571,6 +1571,11 @@ class PlayerStatItem : Inventory
 				//*********************
 				FlatDefenseCalc();
 				
+				//
+				// ????
+				//
+				MiscModCheckStuff1();
+				
 				//*************************************
 				//*************************************
 				//*************************************
@@ -1743,6 +1748,70 @@ class PlayerStatItem : Inventory
 		globalvars.PlayerDEF = PlayerDEF;
 		globalvars.PlayerSPD = PlayerSPD;
 		globalvars.PlayerLuck = PlayerLuck;
+	}
+	
+	void MiscModCheckStuff1()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		string type;
+		
+		// Bloom
+		if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1)
+		{
+			int firemax = random(3,6);
+			string type = "PlayerBurner";
+			string type2 = "TFireTrail";
+			int dmgint = 8;
+			int fireint = random(3,5);
+			int fireburners = owner.CountInv(type);
+			if (fireburners > 0)
+			{
+				//Console.Printf("fireburners: %d", fireburners);
+				if (owner.waterlevel >= 2)
+				{
+					owner.A_SetInventory(type,0);
+				}
+				else
+				{
+					if (owner.GetAge() % fireint == 0)
+					{
+						for (int i; i < firemax; i++)
+						{
+							type2 = "TFireTrail";
+							actor FSpawn;
+							bool spawned;
+							[spawned, FSpawn] = owner.A_SpawnItemEx(type2,frandom(-owner.radius,owner.radius),frandom(-owner.radius,owner.radius),frandom((owner.height*0.375),(owner.height*0.875)),frandom(-0.5,0.5),frandom(-0.5,0.5),frandom(0.5,2.0),frandom(0.0,360.0),SXF_NOCHECKPOSITION,random(24,32));
+							if (spawned && FSpawn)
+							{
+								FSpawn.A_SetRenderStyle(frandom(0.625,0.875),STYLE_Add);
+								FSpawn.A_SetScale((FSpawn.default.scale.x*frandom(0.625,0.875)),(FSpawn.default.scale.y*frandom(0.625,0.875)));
+							}
+						}
+					}
+					if (owner.GetAge() % dmgint == 0)
+					{
+						int burndmg = randompick(1,1,1,1,1,1,1,1,1,2);
+						let firact = owner.FindInventory(type);
+						if (owner.health > burndmg && firact) 
+						{
+							if (!(owner.CountInv("PowerIronFeet") || 
+										owner.CountInv("PowerIronFeet2") || 
+										owner.CountInv("PowerMask") ||
+										owner.CountInv("PowerInvulnerable") ||
+										owner.CountInv("PowerInvulnDD") ||
+										owner.player.cheats & CF_GODMODE ||
+										owner.player.cheats & CF_GODMODE2 ||
+										owner.bINVULNERABLE))
+							{
+								owner.DamageMobj(firact, firact, burndmg, "Fire", DMG_NO_ARMOR|DMG_NO_FACTOR|DMG_NO_PROTECT|DMG_NO_ENHANCE|DMG_THRUSTLESS|DMG_NO_DODGE|DMG_CANTKILL|DMG_NODASHAVOID|DMG_IGNOREDEF|DMG_NO_SARMOR, owner.angle);
+							}
+						}
+						owner.A_TakeInventory(type,1);
+					}
+				}
+			}
+		}
 	}
 	
 	void InitStuff()
