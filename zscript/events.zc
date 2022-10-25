@@ -5017,6 +5017,7 @@ class DD_EventHandler : EventHandler
 					//*******************************
 					if (source && (DDPlayerPawn(source) || source.GetClassName() == "DinahPlayer") && (victim.bCOUNTKILL || specialtype))
 					{
+						// SuperVac
 						bool vackill = false;
 						if (inflicter && VacPuff(inflicter)) vackill = true;
 						else
@@ -5246,6 +5247,65 @@ class DD_EventHandler : EventHandler
 
 								vacgive *= exex_supervacbagunitmulti;
 								if (victim) Console.Printf("\c[sapphire]+%d\c- Vacuum Bag Units from \c[orange]%s\c-", vacgive, victim.GetTag());
+							}
+						}
+						
+						// Soul Scepter [SA]
+						// SuperVac
+						bool soulskill = false;
+						if (inflicter.GetClassName() == "SoulScepterPuff" ||
+								inflicter.GetClassName() == "DualSoulScepterPuff" ||
+								inflicter.GetClassName() == "SoulScepterPuff2" ||
+								inflicter.GetClassName() == "SoulScepterPowerPuff" ||
+								inflicter.GetClassName() == "DualSoulScepterPowerPuff")
+						{
+							soulskill = true;
+						}
+						else
+						{
+							nm = "CCards_Actor_BorrowedTimeBuff";
+							if (victim.CountInv(nm) && mod == 'Eldritch') soulskill = true;
+						}
+						if (dydudebug_worlddied) Console.Printf("soulskill: %d", soulskill);
+						if (soulskill && MiscItem)
+						{
+							//Console.Printf("soulskill");
+							if (source)
+							{
+								DDPlayerPawn PlyPwn;
+								PlyPwn = DDPlayerPawn(source);
+								if (PlyPwn)
+								{
+									//Console.Printf("PlyPwn");
+									int tempheal = PlyPwn.health;
+									int healamt = ((tempheal * randompick(1,1,2,2,2,2,2,2,3,3)) / 100);
+									if (healamt < 1) healamt = 1;
+									if (tempheal < MiscItem.MaxHealthTrue)
+									{
+										tempheal += healamt;
+										if (tempheal > MiscItem.MaxHealthTrue) tempheal = MiscItem.MaxHealthTrue;
+										PlyPwn.health = tempheal;
+										PlyPwn.A_SetBlend("ff ee ee",0.09375,random(10,15));
+										PlyPwn.A_StopSound(17);
+										PlyPwn.A_StartSound("player/hpdrain",17,CHANF_DEFAULT,frandom(0.75,1.00),ATTN_NORM,frandom(1.35,1.65));
+										MiscItem.A_RecoverHUD(healamt, 0, true);
+										
+										if (exex_combatlog)
+										{
+											string comblog = "";
+											comblog.AppendFormat("\c[red]*\c- ");
+											comblog.AppendFormat("\c[brick]%d\c- HP \c[green]drained\c-", healamt);
+											comblog.AppendFormat(" from \c[red]%s\c-", victim.GetTag());
+											if (plypwn.player.ReadyWeapon is "DualScepterOfSouls") comblog.AppendFormat(" by \c[brick]Dual Soul Scepters\c-");
+											else comblog.AppendFormat(" by the \c[brick]Soul Scepter\c-");
+											
+											comblog.AppendFormat("!");
+											if (dydudebug_showgametic) comblog.AppendFormat(" [%d]", gametic);
+											
+											Console.Printf(comblog);
+										}
+									}
+								}
 							}
 						}
 					}
