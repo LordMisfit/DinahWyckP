@@ -292,7 +292,6 @@ class DDStatusBarMain : BaseStatusBar
 								InvIconAlpha *= 0.125; 
 								InvIconScaleX *= 0.375;
 								InvIconScaleY *= 0.375;
-								ItemAlpha2 *= 0.25;
 							}
 						}
 						if (item.GetClassName() == "CherryBombPickup") 
@@ -3009,6 +3008,7 @@ class DDStatusBarMain : BaseStatusBar
 		// Slot 5
 		weaponsincurslot = 1;
 		if (MiscItem.CompatPackMode & 8) weaponsincurslot = 2;
+		if (MiscItem.CompatPackMode & 256) weaponsincurslot = 2;
 		if (weaponsincurslot > 1)
 		{
 			baseinc = 2;
@@ -3040,6 +3040,11 @@ class DDStatusBarMain : BaseStatusBar
 			{
 				wsname = "GasRocketLauncherNew";
 				wsammoname = "ClownSouls";
+			}
+			if (MiscItem.CompatPackMode & 256)
+			{
+				wsname = "ImpalerXBow";
+				wsammoname = "PikeAmmo";
 			}
 			ammotype = CPlayerPawn.FindInventory(wsammoname);
 			if (CPlayerPawn.CountInv(wsname))
@@ -3267,6 +3272,7 @@ class DDStatusBarMain : BaseStatusBar
 		wsname = "";
 		// Slot 0
 		weaponsincurslot = 1;
+		if (MiscItem.CompatPackMode & 256) weaponsincurslot = 2;
 		if (weaponsincurslot > 1)
 		{
 			baseinc = 2;
@@ -3290,6 +3296,33 @@ class DDStatusBarMain : BaseStatusBar
 			wsalpha = wsalphadefault;
 			wsscale = wsscaledefault;
 		}
+		if (weaponsincurslot > 1)
+		{
+			x += (baseinc * 2);
+			y += (baseinc * 2);
+			if (MiscItem.CompatPackMode & 256)
+			{
+				wsname = "ScepterOfSouls";
+				wsammoname = "PikeAmmo";
+			}
+			ammotype = CPlayerPawn.FindInventory(wsammoname);
+			if (CPlayerPawn.CountInv(wsname))
+			{
+				[AmmoRatio, wsfontclr] = DrawFSHUDWSlotsAmmoRatio(AmmoRatio, ammotype.Amount, ammotype.MaxAmount, 0);
+				
+				wsnum = 0;
+				if (wsweapon is wsname)
+				{
+					wsalpha = wsalphadefault2;
+					wsscale = wsscaledefault2;
+				}
+				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+				wsalpha = wsalphadefault;
+				wsscale = wsscaledefault;
+			}
+			x -= baseinc;
+			y -= baseinc;
+		}
 		
 		return x, y, VisiblePlayerLevel, CurrHealth, PlayerMaxHP, AmmoRatio, wsname, wsammoname;
 	}
@@ -3312,6 +3345,31 @@ class DDStatusBarMain : BaseStatusBar
 		int bary = -48;
 		if (ammo1 != null)
 		{
+			string temp, temp2;
+			temp = "ImpalerXBow";
+			temp2 = "DualImpalerXBow";
+			if (PlayerWeapon is temp || PlayerWeapon is temp2)
+			{
+				int energy;
+				int energymax = 1000;
+				int energypercent;
+				double meterlength = 0.4; // 0.2 vertical, 0.4 horizontal
+				if (meterlength > 1.5) meterlength = 1.5;
+				dun = TexMan.CheckForTexture("SHLDUNIT", TexMan.TYPE_MiscPatch);
+				if (MiscItem)
+				{
+					energy = MiscItem.Temp1Charge;
+					energymax = MiscItem.Temp1MaxCharge;
+				}
+				if (energymax)
+				{
+					energypercent = energy * 100 / energymax;
+					int barunits = energypercent * meterlength;
+					for (int i; i < (100 * meterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (barx+i, bary), 0, HX_SHADOW);
+					for (int i; i < barunits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+				}
+			}
+			
 			if (PlayerWeapon is "CandleWhip")
 			{
 				if (ammo1.amount <= 0)
@@ -3664,7 +3722,7 @@ class DDStatusBarMain : BaseStatusBar
 				y -= 40;
 			}
 		}
-
+		
 		// IP Icons [Weapons]
 		if (CheckIPEnabled())
 		{
