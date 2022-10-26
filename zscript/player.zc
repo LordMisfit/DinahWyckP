@@ -1658,10 +1658,20 @@ class DDPlayerPawn : PlayerPawn
 							A_IPUseHUD(truecost);
 							
 							if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer = 0;
-							MiscItem.IPNoGainTimer = 60 * TICRATE;
-							MiscItem.TrueIPCooldownTimer = ((300 * TICRATE) * (1.0 - (ActualLevel * 0.008)));
-							if (MiscItem.TrueIPCooldownTimer <= (60 * TICRATE)) MiscItem.TrueIPCooldownTimer = 60 * TICRATE;
-							A_SetBlend("ff c0 00",1.00,(random(40,70)*2));
+							if (MiscItem.HasHarmonicAnger)
+							{
+								MiscItem.IPNoGainTimer = 120 * TICRATE;
+								MiscItem.TrueIPCooldownTimer = ((600 * TICRATE) * (1.0 - (ActualLevel * 0.008)));
+								if (MiscItem.TrueIPCooldownTimer <= (120 * TICRATE)) MiscItem.TrueIPCooldownTimer = 120 * TICRATE;
+								A_SetBlend("ff c0 00",1.00,(random(40,70)*2));
+							}
+							else
+							{
+								MiscItem.IPNoGainTimer = 60 * TICRATE;
+								MiscItem.TrueIPCooldownTimer = ((300 * TICRATE) * (1.0 - (ActualLevel * 0.008)));
+								if (MiscItem.TrueIPCooldownTimer <= (60 * TICRATE)) MiscItem.TrueIPCooldownTimer = 60 * TICRATE;
+								A_SetBlend("ff c0 00",1.00,(random(40,70)*2));
+							}
 							double xp = pos.x;
 							double yp = pos.y;
 							double zp = pos.z;
@@ -1686,8 +1696,17 @@ class DDPlayerPawn : PlayerPawn
 											abs(zp - mo.pos.z) <= 32768)
 									{
 										numfound++;
-										int dmginf = (mo.health * frandompick(0.2,0.25,0.25,0.25,0.25,0.334));
-										if (mo.CountInv(nm)) dmginf = ((mo.SpawnHealth() + mo.Stamina) * 2.0);
+										int dmginf;
+										if (MiscItem.HasHarmonicAnger)
+										{
+											dmginf = (mo.health * frandompick(0.2,0.25,0.25,0.25,0.25,0.334));
+											if (mo.CountInv(nm)) dmginf = ((mo.SpawnHealth() + mo.Stamina) * 2.0);
+										}
+										else
+										{
+											dmginf = (mo.health * frandompick(0.4,0.5,0.5,0.5,0.5,0.6667));
+											if (mo.CountInv(nm)) dmginf = ((mo.SpawnHealth() + mo.Stamina) * 4.0);
+										}
 										mo.DamageMobj(self, self, dmginf, "TrueIP", DMG_NO_ARMOR|DMG_FORCED|DMG_NO_FACTOR|DMG_NO_PROTECT|DMG_NO_ENHANCE|DMG_EXPLOSION|DMG_THRUSTLESS, angle);
 									}
 								}
@@ -1723,13 +1742,23 @@ class DDPlayerPawn : PlayerPawn
 							{
 								A_SetInventory("DinahTrueIPState",1);
 								let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
-								if (TrueIPItem) TrueIPItem.EffectTics = ((60 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
+								if (TrueIPItem)
+								{
+									if (MiscItem.HasHarmonicAnger) TrueIPItem.EffectTics = ((120 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
+																						else TrueIPItem.EffectTics = ((60 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
+								}
 							}
 							else
 							{
 								let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
-								if (TrueIPItem) TrueIPItem.EffectTics += ((60 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
+								if (TrueIPItem)
+								{
+									if (MiscItem.HasHarmonicAnger) TrueIPItem.EffectTics += ((120 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
+																						else TrueIPItem.EffectTics += ((60 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
+								}
 							}
+							A_SetInventory("HarmonicAnger",0);
+							if (MiscItem) MiscItem.HasHarmonicAnger = false;
 						}
 					}
 				}
@@ -1791,7 +1820,7 @@ class DDPlayerPawn : PlayerPawn
 					A_SetBlend("00 00 00",0.00, fadetime, "00 00 00",fademax);
 				}
 				if (deadtimer > (fadetime-2)) A_SetInventory("BlackScreenHUD",1);
-				if (exex_deathmusic == 12)
+				if (exex_deathmusic == 13)
 				{
 					if (deadtimer > 107) A_SetInventory("MortisScreenHUD",1);
 													else A_SetInventory("MortisScreenHUD",0);
