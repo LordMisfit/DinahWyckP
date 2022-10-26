@@ -275,7 +275,6 @@ mixin class HUDRecovery
 		let globalvars = DDGlobalVariables.Get();
 		int TruePlayerLevel = 0;
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
-		
 		int IPTimerBaseInc = -35;
 		
 		double ssa = 1.0;
@@ -284,68 +283,65 @@ mixin class HUDRecovery
 		base *= ssa;
 		basef *= ssa;
 		
-		if (MiscItem) 
+		base *= (1.0 + (TruePlayerLevel * 0.0025));
+		if (base <= 0.01) base = 0.01;
+		if (basef <= 0.01) basef = 0.01;
+		
+		if (player.CountInv("AngerLevelEvent") || player.CountInv("AngerLevelEventN")) base *= (1.0 + (player.CountInv("AngerLevelEvent") * 0.0005) + (player.CountInv("AngerLevelEventN") * 0.00005));
+		
+		if (base)
 		{
-			base *= (1.0 + (TruePlayerLevel * 0.0025));
-			if (base <= 0.01) base = 0.01;
-			if (basef <= 0.01) basef = 0.01;
-			
-			if (player.CountInv("AngerLevelEvent") || player.CountInv("AngerLevelEventN")) base *= (1.0 + (player.CountInv("AngerLevelEvent") * 0.0005) + (player.CountInv("AngerLevelEventN") * 0.00005));
-			
-			if (base)
+			if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer = (IPTimerBaseInc * basef);
+																		else MiscItem.IPDissipateTimer += (IPTimerBaseInc * basef);
+			double oldItemPoints = MiscItem.ItemPoints;
+			MiscItem.ItemPoints += base;
+			if (MiscItem.ItemPoints > MiscItem.MaxItemPoints) MiscItem.ItemPoints = MiscItem.MaxItemPoints;
+			if (MiscItem.ItemPoints >= oldItemPoints) 
 			{
-				if (MiscItem.IPDissipateTimer > 0) MiscItem.IPDissipateTimer = (IPTimerBaseInc * basef);
-																			else MiscItem.IPDissipateTimer += (IPTimerBaseInc * basef);
-				double oldItemPoints = MiscItem.ItemPoints;
-				MiscItem.ItemPoints += base;
-				if (MiscItem.ItemPoints > MiscItem.MaxItemPoints) MiscItem.ItemPoints = MiscItem.MaxItemPoints;
-				if (MiscItem.ItemPoints >= oldItemPoints) 
+				base = (MiscItem.ItemPoints - oldItemPoints);
+				if (dydudebug_ipdisplays2) Console.Printf("\c[red]A_AddIP (base): %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", base, oldItemPoints, MiscItem.ItemPoints);
+			}
+			globalvars.ItemPoints = MiscItem.ItemPoints;
+			
+			if (base > 0)
+			{
+				if (addtohud)
 				{
-					base = (MiscItem.ItemPoints - oldItemPoints);
-					if (dydudebug_ipdisplays2) Console.Printf("\c[red]A_AddIP (base): %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", base, oldItemPoints, MiscItem.ItemPoints);
-				}
-				globalvars.ItemPoints = MiscItem.ItemPoints;
-				
-				if (base > 0)
-				{
-					if (addtohud)
-					{
-						MiscItem.IPGainHUDAmt += base;
-						if (MiscItem.IPGainHUDTimer <= 0) MiscItem.IPGainHUDTimer = 105;
-						else
-						{
-							MiscItem.IPGainHUDTimer += 35;
-							if (MiscItem.IPGainHUDTimer < 105 && base > (MiscItem.MaxItemPoints * 0.005)) MiscItem.IPGainHUDTimer = 105;
-							if (MiscItem.IPGainHUDTimer > 175) MiscItem.IPGainHUDTimer = 175;
-						}
-					}
-					
-					if (MiscItem.IPHUDPulseTimer <= 0) MiscItem.IPHUDPulseTimer = 105;
+					MiscItem.IPGainHUDAmt += base;
+					if (MiscItem.IPGainHUDTimer <= 0) MiscItem.IPGainHUDTimer = 105;
 					else
 					{
-						MiscItem.IPHUDPulseTimer += 35;
-						if (MiscItem.IPHUDPulseTimer < 105 && base > (MiscItem.MaxItemPoints * 0.10)) MiscItem.IPHUDPulseTimer = 105;
-						if (MiscItem.IPHUDPulseTimer > 175) MiscItem.IPHUDPulseTimer = 175;
+						MiscItem.IPGainHUDTimer += 35;
+						if (MiscItem.IPGainHUDTimer < 105 && base > (MiscItem.MaxItemPoints * 0.005)) MiscItem.IPGainHUDTimer = 105;
+						if (MiscItem.IPGainHUDTimer > 175) MiscItem.IPGainHUDTimer = 175;
 					}
 				}
 				
-				if (acculmuatepulse && base > 0 && (MiscItem.ItemPointsSession < MiscItem.MaxItemPoints))
+				if (MiscItem.IPHUDPulseTimer <= 0) MiscItem.IPHUDPulseTimer = 105;
+				else
 				{
-					MiscItem.ItemPointsSession += base;
-					if (MiscItem.ItemPointsSession >= MiscItem.MaxItemPoints) MiscItem.ItemPointsSession == MiscItem.MaxItemPoints;
-					if (MiscItem.ItemPointsSession > 0 && base > 0)
-					{
-						int healfactor = MiscItem.ItemPointsSession * 100 / MiscItem.MaxItemPoints;
-						if (healfactor < 10) MiscItem.IPHUDPulseType = 1;
-						if (healfactor >= 10) MiscItem.IPHUDPulseType = 2;
-						if (healfactor >= 50) MiscItem.IPHUDPulseType = 3;
-						if (healfactor >= 100) MiscItem.IPHUDPulseType = 4;
-						MiscItem.IPHUDPulseTimeP = (level.time % randompick(10,15,20));
-					}
+					MiscItem.IPHUDPulseTimer += 35;
+					if (MiscItem.IPHUDPulseTimer < 105 && base > (MiscItem.MaxItemPoints * 0.10)) MiscItem.IPHUDPulseTimer = 105;
+					if (MiscItem.IPHUDPulseTimer > 175) MiscItem.IPHUDPulseTimer = 175;
 				}
-				
-				if (exex_playerdmglog && CheckIPEnabled() && base) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
 			}
+			
+			if (acculmuatepulse && base > 0 && (MiscItem.ItemPointsSession < MiscItem.MaxItemPoints))
+			{
+				MiscItem.ItemPointsSession += base;
+				if (MiscItem.ItemPointsSession >= MiscItem.MaxItemPoints) MiscItem.ItemPointsSession == MiscItem.MaxItemPoints;
+				if (MiscItem.ItemPointsSession > 0 && base > 0)
+				{
+					int healfactor = MiscItem.ItemPointsSession * 100 / MiscItem.MaxItemPoints;
+					if (healfactor < 10) MiscItem.IPHUDPulseType = 1;
+					if (healfactor >= 10) MiscItem.IPHUDPulseType = 2;
+					if (healfactor >= 50) MiscItem.IPHUDPulseType = 3;
+					if (healfactor >= 100) MiscItem.IPHUDPulseType = 4;
+					MiscItem.IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+				}
+			}
+			
+			if (exex_playerdmglog && CheckIPEnabled() && base) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
 		}
 	}
 	

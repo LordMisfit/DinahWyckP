@@ -231,6 +231,7 @@ class PlayerStatItem : Inventory
 	int AFD_Krag, AFD_Lauritz, AFD_Quisling, AFD_Jorgensen1, AFD_Jorgensen2, AFD_JorgCannon;
 	int CoS_Fafnir, CoS_FractalHens, CoS_HandMothers, CoS_ForsakenJorg, CoS_EvilDinah, CoS_Tempest;
 	double TotalNRPGLvlPts;
+	bool HasHarmonicAnger;
 
 	default 
 	{
@@ -245,11 +246,14 @@ class PlayerStatItem : Inventory
 		let playeractor = DDPlayerPawn(owner);
 		if (!playeractor) // Removes itself if given to a non-Player Class
 		{
-			owner.A_SetInventory("PlayerStatItem",0); super.DoEffect(); 
+			HasHarmonicAnger = false;
+			owner.A_SetInventory("PlayerStatItem",0); super.DoEffect();
 		} 
 		else
 		if (playeractor) // Otherwise, Keep
 		{
+			HasHarmonicAnger = false;
+			if (playeractor.CountInv("HarmonicAnger")) HasHarmonicAnger = true;
 			IsMorphed = 0;
 			if (playeractor.GetClassName() == "RatPlayer") IsMorphed = 1;
 			if (dydudebug_morphdisplays) Console.Printf("%s, IsMorphed: %d, WasMorphed: %d, MorphTimer: %d", playeractor.GetClassName(), IsMorphed, WasMorphed, MorphTimer);
@@ -888,83 +892,86 @@ class PlayerStatItem : Inventory
 					if (owner.health < 0) owner.health = 1;
 					
 					double base;
-					if (exex_ikaripointscalctype == 1)
+					if (!HasHarmonicAnger)
 					{
-						base = (oldhealth - owner.health) * 100.0 / oldhealth; // % of remaining HP removed
-						if (base >= 0.001)
+						if (exex_ikaripointscalctype == 1)
 						{
-							if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
-							if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
-							if (base >= 65.001 && base <= 75.000) base *= 0.646154;
-							if (base >= 75.001 && base <= 85.000) base *= 0.76; 
-							if (base >= 85.001 && base <= 90.000) base *= 0.90; 
-							if (base >= 90.001 && base <= 100.000) base *= 1.00; 
-							if (base >= 100.001) base *= 1.25;
+							base = (oldhealth - owner.health) * 100.0 / oldhealth; // % of remaining HP removed
+							if (base >= 0.001)
+							{
+								if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
+								if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
+								if (base >= 65.001 && base <= 75.000) base *= 0.646154;
+								if (base >= 75.001 && base <= 85.000) base *= 0.76; 
+								if (base >= 85.001 && base <= 90.000) base *= 0.90; 
+								if (base >= 90.001 && base <= 100.000) base *= 1.00; 
+								if (base >= 100.001) base *= 1.25;
+							}
 						}
-					}
-					else
-					{
-						base = (oldhealth - owner.health) * 100.0 / MaxHealthTrue;
-						if (oldhealthratio == 0) base *= 1.0;
-						if (oldhealthratio == 1) base *= 1.125;
-						if (oldhealthratio == 2) base *= 1.25;
-						if (oldhealthratio == 3) base *= 1.5;
-						if (oldhealthratio == 4) base *= 2.25;
-						if (oldhealth > 1 && owner.health == 1) base *= 3.25;
-					}
-					double basef = base;
-					double ssa = 1.0;
-					if (owner.CountInv("ClassyRibbon")) ssa += 0.25;
-					if (owner.CountInv("ExpeditionHat")) ssa -= 0.125;
-					base *= ssa;
-					basef *= ssa;
+						else
+						{
+							base = (oldhealth - owner.health) * 100.0 / MaxHealthTrue;
+							if (oldhealthratio == 0) base *= 1.0;
+							if (oldhealthratio == 1) base *= 1.125;
+							if (oldhealthratio == 2) base *= 1.25;
+							if (oldhealthratio == 3) base *= 1.5;
+							if (oldhealthratio == 4) base *= 2.25;
+							if (oldhealth > 1 && owner.health == 1) base *= 3.25;
+						}
+						double basef = base;
+						double ssa = 1.0;
+						if (owner.CountInv("ClassyRibbon")) ssa += 0.25;
+						if (owner.CountInv("ExpeditionHat")) ssa -= 0.125;
+						base *= ssa;
+						basef *= ssa;
 
-					base *= (1.0 + (ActualLevel * 0.0025));
-					if (base <= 0.01) base = 0.01;
-					if (basef <= 0.01) basef = 0.01;
-					
-					if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) base *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
-					
-					if (base)
-					{
-						if (IPDissipateTimer > 0) IPDissipateTimer = (-350 * basef);
-																 else IPDissipateTimer += (-350 * basef);
-						double oldItemPoints = ItemPoints;
-						ItemPoints += base;
-						if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
-						if (ItemPoints >= oldItemPoints) 
-						{
-							base = (ItemPoints - oldItemPoints);
-							if (dydudebug_ipdisplays2) Console.Printf("\c[red]LevelUp (base): %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", base, oldItemPoints, ItemPoints);
-						}
-						globalvars.ItemPoints == ItemPoints;
+						base *= (1.0 + (ActualLevel * 0.0025));
+						if (base <= 0.01) base = 0.01;
+						if (basef <= 0.01) basef = 0.01;
 						
-						if (base > 0)
+						if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) base *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+						
+						if (base)
 						{
-							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-							else
+							if (IPDissipateTimer > 0) IPDissipateTimer = (-350 * basef);
+																	 else IPDissipateTimer += (-350 * basef);
+							double oldItemPoints = ItemPoints;
+							ItemPoints += base;
+							if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+							if (ItemPoints >= oldItemPoints) 
 							{
-								IPHUDPulseTimer += 35;
-								if (IPHUDPulseTimer < 105 && base > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+								base = (ItemPoints - oldItemPoints);
+								if (dydudebug_ipdisplays2) Console.Printf("\c[red]LevelUp (base): %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", base, oldItemPoints, ItemPoints);
 							}
+							globalvars.ItemPoints == ItemPoints;
 							
-							if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
+							if (base > 0)
 							{
-								ItemPointsSession += base;
-								if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-								if (ItemPointsSession > 0 && base > 0)
+								if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+								else
 								{
-									int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-									if (healfactor < 10) IPHUDPulseType = 1;
-									if (healfactor >= 10) IPHUDPulseType = 2;
-									if (healfactor >= 50) IPHUDPulseType = 3;
-									if (healfactor >= 100) IPHUDPulseType = 4;
-									IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+									IPHUDPulseTimer += 35;
+									if (IPHUDPulseTimer < 105 && base > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+									if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
 								}
+								
+								if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
+								{
+									ItemPointsSession += base;
+									if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+									if (ItemPointsSession > 0 && base > 0)
+									{
+										int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+										if (healfactor < 10) IPHUDPulseType = 1;
+										if (healfactor >= 10) IPHUDPulseType = 2;
+										if (healfactor >= 50) IPHUDPulseType = 3;
+										if (healfactor >= 100) IPHUDPulseType = 4;
+										IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+									}
+								}
+								
+								if (exex_playerdmglog && CheckIPEnabled() && base) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
 							}
-							
-							if (exex_playerdmglog && CheckIPEnabled() && base) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
 						}
 					}
 					
@@ -1638,28 +1645,31 @@ class PlayerStatItem : Inventory
 					WasMorphProj = 1;
 					owner.A_SetInventory("HitByMorphProj",0);
 					KnightGownTier = 0;
-					int IPGain = ((MaxItemPoints - ItemPoints) * frandompick(0.25,0.334,0.334,0.5,0.5,0.5,0.5,0.5,0.5,0.667,0.667,0.75));
-					ItemPoints += IPGain;
-					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
-					IPGainHUDAmt += IPGain;
-					if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-					else
+					if (!HasHarmonicAnger)
 					{
-						IPGainHUDTimer += 5;
-						if (IPGainHUDTimer < 105 && IPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-						if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
-					}
-					
-					if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-					else
-					{
-						IPHUDPulseTimer += 35;
-						if (IPHUDPulseTimer < 105 && IPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-						if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
-					}
+						int IPGain = ((MaxItemPoints - ItemPoints) * frandompick(0.25,0.334,0.334,0.5,0.5,0.5,0.5,0.5,0.5,0.667,0.667,0.75));
+						ItemPoints += IPGain;
+						if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+						IPGainHUDAmt += IPGain;
+						if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+						else
+						{
+							IPGainHUDTimer += 5;
+							if (IPGainHUDTimer < 105 && IPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+							if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+						}
+						
+						if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+						else
+						{
+							IPHUDPulseTimer += 35;
+							if (IPHUDPulseTimer < 105 && IPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+							if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+						}
 
-					if (IPDissipateTimer > -1050) IPDissipateTimer = -1050;
-																	 else IPDissipateTimer += -1050;
+						if (IPDissipateTimer > -1050) IPDissipateTimer = -1050;
+																		 else IPDissipateTimer += -1050;
+					}
 				}
 			}
 			MorphTimer++;
@@ -3355,33 +3365,40 @@ class PlayerStatItem : Inventory
 						CoSHealPoolInt = 0;
 					}
 				}
-				if (ItemPoints < MaxItemPoints)
+				if (!HasHarmonicAnger)
 				{
-					double IPGainBase = frandompick(0.0067,0.01,0.01,0.01,0.01,0.01,0.01334);
-					IPGainBase = 0.01 * (1 + (owner.CountInv("checkfirebluheal") * 0.67) + (healpoolaccel * 1.25));
-					if (berserked) IPGainBase *= 5;
-					ItemPoints += IPGainBase;
-					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
-					IPGainHUDAmt += IPGainBase;
-					if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-					else
+					if (ItemPoints < MaxItemPoints)
 					{
-						IPGainHUDTimer += 5;
-						if (IPGainHUDTimer < 105 && IPGainBase > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-						if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+						double IPGainBase = frandompick(0.0067,0.01,0.01,0.01,0.01,0.01,0.01334);
+						IPGainBase = 0.01 * (1 + (owner.CountInv("checkfirebluheal") * 0.67) + (healpoolaccel * 1.25));
+						if (berserked) IPGainBase *= 5;
+						ItemPoints += IPGainBase;
+						if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+						IPGainHUDAmt += IPGainBase;
+						if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+						else
+						{
+							IPGainHUDTimer += 5;
+							if (IPGainHUDTimer < 105 && IPGainBase > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+							if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+						}
+						if (CoSHealPoolInt >= ((16 - owner.CountInv("checkfirebluheal")) / 2))
+						{
+							if (berserked) owner.A_SetBlend("FB 8B 23",0.20,random(8,12));
+												else owner.A_SetBlend("FB 8B 23",0.10,random(2,3));
+						}
+						
+						if (IPDissipateTimer > -2100 && healpoolaccel >= 5) IPDissipateTimer = -2100;
+						else if (IPDissipateTimer > -1050 && healpoolaccel == 4) IPDissipateTimer = -1050;
+						else if (IPDissipateTimer > -525 && healpoolaccel == 3) IPDissipateTimer = -525;
+						else if (IPDissipateTimer > 0 && healpoolaccel <= 2) IPDissipateTimer = 0;
 					}
-					if (CoSHealPoolInt >= ((16 - owner.CountInv("checkfirebluheal")) / 2))
-					{
-						if (berserked) owner.A_SetBlend("FB 8B 23",0.20,random(8,12));
-											else owner.A_SetBlend("FB 8B 23",0.10,random(2,3));
-					}
-					
-					if (IPDissipateTimer > -2100 && healpoolaccel >= 5) IPDissipateTimer = -2100;
-					else if (IPDissipateTimer > -1050 && healpoolaccel == 4) IPDissipateTimer = -1050;
-					else if (IPDissipateTimer > -525 && healpoolaccel == 3) IPDissipateTimer = -525;
-					else if (IPDissipateTimer > 0 && healpoolaccel <= 2) IPDissipateTimer = 0;
+					if (CurrentHealth >= maxheal && ItemPoints >= MaxItemPoints) CoSHealPoolInt = 0;
 				}
-				if (CurrentHealth >= maxheal && ItemPoints >= MaxItemPoints) CoSHealPoolInt = 0;
+				else
+				{
+					if (CurrentHealth >= maxheal) CoSHealPoolInt = 0;
+				}
 			}
 			else
 			{
@@ -3523,530 +3540,534 @@ class PlayerStatItem : Inventory
 					else AngerLevelEventNTimer = 0;
 				}
 
-				// Check Item Points
-				int IPTimerIncMod = 0;
-				int IPTimerInc;
-				// Berserk = Gradually gain IP
-				if (berserked && IPNoGainTimer <= 0 && !owner.CountInv("IsUnconscious"))
+				if (!HasHarmonicAnger)
 				{
-					double berserkIPGain;
-					berserkIPGain = 0.0025;
-					if (ItemPoints <= 100.0000)
+					// Check Item Points
+					int IPTimerIncMod = 0;
+					int IPTimerInc;
+					// Berserk = Gradually gain IP
+					if (berserked && IPNoGainTimer <= 0 && !owner.CountInv("IsUnconscious"))
 					{
-						if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+						double berserkIPGain;
+						berserkIPGain = 0.0025;
+						if (ItemPoints <= 100.0000)
 						{
-							berserkIPGain += 0.0005;
+							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+							{
+								berserkIPGain += 0.0005;
+							}
+							else
+							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+							{
+								berserkIPGain += 0.00125;
+							}
+							else
+							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+							{
+								berserkIPGain += 0.003125;
+							}
+							else
+							if (ItemPoints <= 25.0000)
+							{
+								berserkIPGain += 0.0078125;
+							}
 						}
-						else
-						if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+						double BerIPMulti = (0.25 + (ActualLevel * 0.03));
+						if (BerIPMulti >= 1.00 || ActualLevel >= 25)
 						{
-							berserkIPGain += 0.00125;
+							BerIPMulti = (1.00 + ((ActualLevel - 25) * 0.01334));
+							if (BerIPMulti >= 2.00 || ActualLevel >= 100) BerIPMulti = 2.00;
 						}
-						else
-						if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+						
+						berserkIPGain *= BerIPMulti;
+						if (IPDissipateTimer < 0) 
 						{
-							berserkIPGain += 0.003125;
+							if (random(1,16) <= 1) berserkIPGain *= 3;
+							else 
+							{
+								if (random(1,4) <= 1) berserkIPGain *= 2.5;
+								else berserkIPGain *= 2;
+							}
+							IPTimerIncMod += 1;
 						}
-						else
-						if (ItemPoints <= 25.0000)
-						{
-							berserkIPGain += 0.0078125;
-						}
-					}
-					double BerIPMulti = (0.25 + (ActualLevel * 0.03));
-					if (BerIPMulti >= 1.00 || ActualLevel >= 25)
-					{
-						BerIPMulti = (1.00 + ((ActualLevel - 25) * 0.01334));
-						if (BerIPMulti >= 2.00 || ActualLevel >= 100) BerIPMulti = 2.00;
-					}
-					
-					berserkIPGain *= BerIPMulti;
-					if (IPDissipateTimer < 0) 
-					{
-						if (random(1,16) <= 1) berserkIPGain *= 3;
 						else 
 						{
-							if (random(1,4) <= 1) berserkIPGain *= 2.5;
-							else berserkIPGain *= 2;
+							IPTimerIncMod += 10;
 						}
-						IPTimerIncMod += 1;
-					}
-					else 
-					{
-						IPTimerIncMod += 10;
-					}
-					berserkIPGain *= (1.0 + (ActualLevel * 0.0025));
-					if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) berserkIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
-					if (dydudebug_ipdisplays2) Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPDissipateTimer, IPTimerInc, BerIPMulti);
+						berserkIPGain *= (1.0 + (ActualLevel * 0.0025));
+						if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) berserkIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+						if (dydudebug_ipdisplays2) Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPDissipateTimer, IPTimerInc, BerIPMulti);
 
-					double oldItemPoints = ItemPoints;
-					ItemPoints += berserkIPGain;
-					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
-					if (ItemPoints >= oldItemPoints) 
-					{
-						berserkIPGain = (ItemPoints - oldItemPoints);
-						if (dydudebug_ipdisplays2) Console.Printf("\c[red]berserkIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", berserkIPGain, oldItemPoints, ItemPoints);
-					}
-					globalvars.ItemPoints = ItemPoints;
-					
-					if (berserkIPGain > 0)
-					{
-						if (dydudebug_ipdisplays2) Console.Printf("berserkIPGain > 0: %.8f", berserkIPGain);
-						if (dyduhud_showmiscipgains)
+						double oldItemPoints = ItemPoints;
+						ItemPoints += berserkIPGain;
+						if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+						if (ItemPoints >= oldItemPoints) 
 						{
-							IPGainHUDAmt += berserkIPGain;
-							if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-							else
-							{
-								IPGainHUDTimer += 5;
-								if (IPGainHUDTimer < 105 && berserkIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-								if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
-							}
-							
-							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-							else
-							{
-								IPHUDPulseTimer += 35;
-								if (IPHUDPulseTimer < 105 && berserkIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
-							}
+							berserkIPGain = (ItemPoints - oldItemPoints);
+							if (dydudebug_ipdisplays2) Console.Printf("\c[red]berserkIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", berserkIPGain, oldItemPoints, ItemPoints);
 						}
+						globalvars.ItemPoints = ItemPoints;
 						
-						if (ItemPointsSession < MaxItemPoints && ItemPoints < MaxItemPoints)
+						if (berserkIPGain > 0)
 						{
-							ItemPointsSession += berserkIPGain;
-							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-							if (ItemPointsSession > 0 && berserkIPGain > 0)
+							if (dydudebug_ipdisplays2) Console.Printf("berserkIPGain > 0: %.8f", berserkIPGain);
+							if (dyduhud_showmiscipgains)
 							{
-								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-								if (healfactor < 10) IPHUDPulseType = 1;
-								if (healfactor >= 10) IPHUDPulseType = 2;
-								if (healfactor >= 50) IPHUDPulseType = 3;
-								if (healfactor >= 100) IPHUDPulseType = 4;
-								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
-							}
-						}
-					}
-				}
-				
-				// Armor IP Effect Benefits
-				double ArmorIPActive = 0;
-				if (owner.CountInv("KnightGownItem")) KnightGownTier = 1;
-				if (owner.CountInv("KnightGownItem2")) KnightGownTier = 2;
-				if (owner.CountInv("KnightGownItem3")) KnightGownTier = 3;
-				if (owner.CountInv("KnightGownItem4")) KnightGownTier = 4;
-				if (KnightGownTier == 1 && owner.CountInv("KnightGownIP1Buff")) ArmorIPActive = (1.0 * 1.5);
-				if (KnightGownTier == 2 && owner.CountInv("KnightGownIP2Buff")) ArmorIPActive = (2.15 * 1.5);
-				if (KnightGownTier == 3 && owner.CountInv("KnightGownIP3Buff")) ArmorIPActive = (3.60 * 1.5);
-				if (KnightGownTier == 4 && owner.CountInv("KnightGownIP4Buff")) ArmorIPActive = (5.35 * 1.5);
-				if (ArmorIPActive > 0 && IPNoGainTimer <= 0 && !owner.CountInv("IsUnconscious"))
-				{
-					double ArmorIPGain;
-					ArmorIPGain = 0.0025;
-					if (ItemPoints <= 100.0000)
-					{
-						if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
-						{
-							ArmorIPGain += 0.00125;
-						}
-						else
-						if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
-						{
-							ArmorIPGain += 0.003125;
-						}
-						else
-						if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
-						{
-							ArmorIPGain += 0.0078125;
-						}
-						else
-						if (ItemPoints <= 25.0000)
-						{
-							ArmorIPGain += 0.01953125;
-						}
-					}
-					double ArmorIPMulti = (0.25 + (ActualLevel * 0.03));
-					if (ArmorIPMulti >= 1.00 || (ActualLevel >= 25))
-					{
-						ArmorIPMulti = 1.00;
-						if (exex_expenabled) ArmorIPMulti = (1.00 + ((ActualLevel - 25) * 0.01334));
-						if (ArmorIPMulti >= 2.00 || (ActualLevel >= 100)) ArmorIPMulti = 2.00;
-					}
-
-					ArmorIPGain *= ArmorIPMulti;
-					ArmorIPGain *= ArmorIPActive;
-					if (IPDissipateTimer < 0) 
-					{
-						if (random(1,16) <= 1) ArmorIPGain *= 3;
-						else 
-						{
-							if (random(1,4) <= 1) ArmorIPGain *= 2.5;
-							else ArmorIPGain *= 2;
-						}
-						IPTimerIncMod += 5;
-					}
-					else 
-					{
-						IPTimerIncMod += 25;
-					}
-					ArmorIPGain *= (1.0 + (ActualLevel * 0.0025));
-					if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) ArmorIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
-
-					if (dydudebug_ipdisplays2) Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
-					double oldItemPoints = ItemPoints;
-					ItemPoints += ArmorIPGain;
-					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
-					if (ItemPoints >= oldItemPoints) 
-					{
-						ArmorIPGain = (ItemPoints - oldItemPoints);
-						if (dydudebug_ipdisplays2) Console.Printf("\c[red]ArmorIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", ArmorIPGain, oldItemPoints, ItemPoints);
-					}
-					globalvars.ItemPoints = ItemPoints;
-					
-					if (ArmorIPGain > 0)
-					{
-						if (dydudebug_ipdisplays2) Console.Printf("ArmorIPGain > 0: %.8f", ArmorIPGain);
-						if (dyduhud_showmiscipgains)
-						{
-							IPGainHUDAmt += ArmorIPGain;
-							if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-							else
-							{
-								IPGainHUDTimer += 5;
-								if (IPGainHUDTimer < 105 && ArmorIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-								if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
-							}
-							
-							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-							else
-							{
-								IPHUDPulseTimer += 35;
-								if (IPHUDPulseTimer < 105 && ArmorIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
-							}
-						}
-						
-						if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
-						{
-							ItemPointsSession += ArmorIPGain;
-							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-							if (ItemPointsSession > 0 && ArmorIPGain > 0)
-							{
-								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-								if (healfactor < 10) IPHUDPulseType = 1;
-								if (healfactor >= 10) IPHUDPulseType = 2;
-								if (healfactor >= 50) IPHUDPulseType = 3;
-								if (healfactor >= 100) IPHUDPulseType = 4;
-								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
-							}
-						}
-					}
-				}
-				
-				// Morph IP Benefits
-				if (IsMorphed == 1 && !owner.CountInv("IsUnconscious"))
-				{
-					double MorphIPGain;
-					MorphIPGain = (0.0025 * 8);
-					if (ItemPoints <= 100.0000)
-					{
-						if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
-						{
-							MorphIPGain += (0.00125 * 8);
-						}
-						else
-						if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
-						{
-							MorphIPGain += (0.003125 * 8);
-						}
-						else
-						if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
-						{
-							MorphIPGain += (0.0078125 * 8);
-						}
-						else
-						if (ItemPoints <= 25.0000)
-						{
-							MorphIPGain += (0.01953125 * 8);
-						}
-					}
-					if (IPDissipateTimer < 0) 
-					{
-						if (random(1,16) <= 1) MorphIPGain *= 2.5;
-						else 
-						{
-							if (random(1,4) <= 1) MorphIPGain *= 2;
-							else MorphIPGain *= 1.5;
-						}
-						IPTimerIncMod += 5;
-					}
-					else 
-					{
-						IPTimerIncMod += 25;
-					}
-					MorphIPGain *= (1.0 + (ActualLevel * 0.0075));
-					if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) MorphIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
-					
-					if (dydudebug_ipdisplays2) Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics", MorphIPGain, IPDissipateTimer, IPTimerIncMod);
-					double oldItemPoints = ItemPoints;
-					ItemPoints += MorphIPGain;
-					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
-					if (ItemPoints >= oldItemPoints) 
-					{
-						MorphIPGain = (ItemPoints - oldItemPoints);
-						if (dydudebug_ipdisplays2) Console.Printf("\c[red]MorphIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", MorphIPGain, oldItemPoints, ItemPoints);
-					}
-					globalvars.ItemPoints = ItemPoints;
-					
-					if (MorphIPGain > 0)
-					{
-						if (dydudebug_ipdisplays2) Console.Printf("MorphIPGain > 0: %.8f", MorphIPGain);
-						if (dyduhud_showmiscipgains)
-						{
-							IPGainHUDAmt += MorphIPGain;
-							if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-							else
-							{
-								IPGainHUDTimer += 5;
-								if (IPGainHUDTimer < 105 && MorphIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-								if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
-							}
-							
-							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-							else
-							{
-								IPHUDPulseTimer += 35;
-								if (IPHUDPulseTimer < 105 && MorphIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
-							}
-						}
-						
-						if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
-						{
-							ItemPointsSession += MorphIPGain;
-							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-							if (ItemPointsSession > 0 && MorphIPGain > 0)
-							{
-								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-								if (healfactor < 10) IPHUDPulseType = 1;
-								if (healfactor >= 10) IPHUDPulseType = 2;
-								if (healfactor >= 50) IPHUDPulseType = 3;
-								if (healfactor >= 100) IPHUDPulseType = 4;
-								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
-							}
-						}
-					}
-				}
-				
-				// Unique "Event" IP Related Gains
-				if ((owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) && !owner.CountInv("IsUnconscious"))
-				{
-					double AngerEventIPGain;
-					AngerEventIPGain = 0.00125;
-					if (ItemPoints <= 100.0000)
-					{
-						if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
-						{
-							AngerEventIPGain += 0.00025;
-						}
-						else
-						if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
-						{
-							AngerEventIPGain += 0.000625;
-						}
-						else
-						if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
-						{
-							AngerEventIPGain += 0.0015625;
-						}
-						else
-						if (ItemPoints <= 25.0000)
-						{
-							AngerEventIPGain += 0.00390625;
-						}
-					}
-					AngerEventIPGain *= (owner.CountInv("AngerLevelEvent") * 0.125) + (owner.CountInv("AngerLevelEventN") * 0.0125);
-					IPTimerIncMod += (owner.CountInv("AngerLevelEvent") * 2.5) + (owner.CountInv("AngerLevelEventN") * 0.25);
-
-					double oldItemPoints = ItemPoints;
-					ItemPoints += AngerEventIPGain;
-					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
-					if (ItemPoints >= oldItemPoints) 
-					{
-						AngerEventIPGain = (ItemPoints - oldItemPoints);
-						if (dydudebug_ipdisplays2) Console.Printf("\c[red]AngerEventIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", AngerEventIPGain, oldItemPoints, ItemPoints);
-					}
-					globalvars.ItemPoints = ItemPoints;
-
-					bool AngerHUDEnabled = false;
-					if (AngerEventIPGain > 0 && AngerHUDEnabled)
-					{
-						if (dydudebug_ipdisplays2) Console.Printf("AngerEventIPGain > 0: %.8f", AngerEventIPGain);
-						if (dyduhud_showmiscipgains)
-						{
-							IPGainHUDAmt += AngerEventIPGain;
-							if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
-							else
-							{
-								IPGainHUDTimer += 5;
-								if (IPGainHUDTimer < 105 && AngerEventIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
-								if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
-							}
-							
-							if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-							else
-							{
-								IPHUDPulseTimer += 35;
-								if (IPHUDPulseTimer < 105 && AngerEventIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-								if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
-							}
-						}
-						
-						if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
-						{
-							ItemPointsSession += AngerEventIPGain;
-							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-							if (ItemPointsSession > 0 && AngerEventIPGain > 0)
-							{
-								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-								if (healfactor < 10) IPHUDPulseType = 1;
-								if (healfactor >= 10) IPHUDPulseType = 2;
-								if (healfactor >= 50) IPHUDPulseType = 3;
-								if (healfactor >= 100) IPHUDPulseType = 4;
-								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
-							}
-						}
-					}
-				}
-				
-				if (A_CheckDDGame()) 
-				{
-					if (IPTimerIncMod < 1) IPTimerIncMod = 1;
-					double DDTFactor = 0.00;
-					if (DD_RoseMother) DDTFactor += 0.075;
-					if (DD_GameMother) DDTFactor += 0.075;
-					if (DD_MossMother) DDTFactor += 0.075;
-					if (DD_GlobeMother) DDTFactor += 0.075;
-					if (DD_SphinxMother) DDTFactor += 0.075;
-					if (DD_HandMother1) DDTFactor += 0.075;
-					if (DD_HandMother2) DDTFactor += 0.075;
-					if (DD_TrueHandMother) DDTFactor += 0.075;
-					if (AFD_Krag) DDTFactor += 0.1;
-					if (AFD_Quisling) DDTFactor += 0.1;
-					if (AFD_Lauritz) DDTFactor += 0.1;
-					if (AFD_Jorgensen1) DDTFactor += 0.1;
-					if (AFD_Jorgensen2) DDTFactor += 0.1;
-					if (AFD_JorgCannon) DDTFactor += 0.1;
-					if (CoS_Fafnir) DDTFactor += 0.1;
-					if (CoS_FractalHens) DDTFactor += 0.1;
-					if (CoS_HandMothers) DDTFactor += 0.1;
-					if (CoS_ForsakenJorg) DDTFactor += 0.1;
-					if (CoS_EvilDinah) DDTFactor += 0.1;
-					if (CoS_Tempest) DDTFactor += 0.1;
-					if (skill <= 0) DDTFactor *= 1.5;
-					if (skill == 1) DDTFactor *= 1.25;
-					if (skill == 2) DDTFactor *= 1.0;
-					if (skill == 3) DDTFactor *= 0.75;
-					if (skill >= 4) DDTFactor *= 0.5;
-					DDTFactor *= exex_nrpggeneraleffect;
-					DDTFactor += 1.00;
-					if (dydudebug_ipdisplays2) Console.Printf("DDTFactor (IPDisipation): %.8f, IPTimerIncMod: %d", DDTFactor, IPTimerIncMod);
-					IPTimerIncMod *= (DDTFactor * 1.5);
-				}
-				if (IPTimerIncMod < 1) IPTimerIncMod = 1;
-				if (dydudebug_ipdisplays2) Console.Printf("IPTimerIncMod: %d", IPTimerIncMod);
-				if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
-													 else IPTimerInc = level.time % 1;
-				if (exex_ikaripointdissipation)
-				{
-					if (ItemPoints > 0.00)
-					{
-						if (!owner.CountInv("IsUnconscious"))
-						{
-							if (IPDissipateTimer < -2100) IPDissipateTimer = -2100;
-							if (IPDissipateTimer < 2100)
-							{
-								if (IPTimerInc == 0) 
-								{
-									IPDissipateTimer++;
-								}
-							}
-							else
-							{
-								IPDissipateTimer = 0;
-								int IPLossType = random(1,17);
-								double IPLossPer;
-								int IPHUDShakeinc = random(52,53);
-								int IPLossHUDTInc = random(52,53);
-								if (IPLossType >= 1 && IPLossType <= 6)
-								{
-									IPHUDShakeType = 1;
-									IPLossPer = 0.02;
-									IPHUDShakeinc += 7;
-									IPLossHUDTInc += 7;
-								}
-								if (IPLossType >= 7 && IPLossType <= 11)
-								{
-									IPHUDShakeType = 2;
-									IPLossPer = 0.05;
-									IPHUDShakeinc += random(17,18);
-									IPLossHUDTInc += random(17,18);
-								}
-								if (IPLossType >= 12 && IPLossType <= 14)
-								{
-									IPHUDShakeType = 3;
-									IPLossPer = 0.10;
-									IPHUDShakeinc += 35;
-									IPLossHUDTInc += 35;
-								}
-								if (IPLossType >= 15 && IPLossType <= 16)
-								{
-									IPHUDShakeType = 3;
-									IPLossPer = 0.25;
-									IPHUDShakeinc += random(52,53);
-									IPLossHUDTInc += random(52,53);
-								}
-								if (IPLossType == 17)
-								{
-									IPHUDShakeType = 4;
-									IPLossPer = 0.5;
-									IPHUDShakeinc += 70;
-									IPLossHUDTInc += 70;
-								}
-								if (A_CheckDDGame())
-								{
-									IPLossPer *= 0.5;
-									IPHUDShakeinc *= 0.5;
-									IPLossHUDTInc *= 0.5;
-								}
-								IPLossHUDTimer += IPLossHUDTInc;
-								IPHUDShakeTimer += IPHUDShakeinc;
-								double IPLossAmt = (ItemPoints * IPLossPer);
-								ItemPoints -= IPLossAmt;
-								if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
-								
-								IPLossHUDAmt += IPLossAmt;
-								if (IPLossHUDTimer <= 0) IPLossHUDTimer = 105;
+								IPGainHUDAmt += berserkIPGain;
+								if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
 								else
 								{
-									IPLossHUDTimer += 35;
-									if (IPLossHUDTimer < 105 && IPLossAmt > (MaxItemPoints * 0.01)) IPLossHUDTimer = 105;
-									if (IPLossHUDTimer > 175) IPLossHUDTimer = 175;
+									IPGainHUDTimer += 5;
+									if (IPGainHUDTimer < 105 && berserkIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+									if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+								}
+								
+								if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+								else
+								{
+									IPHUDPulseTimer += 35;
+									if (IPHUDPulseTimer < 105 && berserkIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+									if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
 								}
 							}
-							if (dydudebug_ipdisplays2) Console.Printf("\c[fire]ItemPoints: %.8f\c- \c[gold][%.8f]\c-, IPDissipateTimer: %d / 2100", ItemPoints, globalvars.ItemPoints, IPDissipateTimer);
+							
+							if (ItemPointsSession < MaxItemPoints && ItemPoints < MaxItemPoints)
+							{
+								ItemPointsSession += berserkIPGain;
+								if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+								if (ItemPointsSession > 0 && berserkIPGain > 0)
+								{
+									int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+									if (healfactor < 10) IPHUDPulseType = 1;
+									if (healfactor >= 10) IPHUDPulseType = 2;
+									if (healfactor >= 50) IPHUDPulseType = 3;
+									if (healfactor >= 100) IPHUDPulseType = 4;
+									IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+								}
+							}
+						}
+					}
+					
+					// Armor IP Effect Benefits
+					double ArmorIPActive = 0;
+					if (owner.CountInv("KnightGownItem")) KnightGownTier = 1;
+					if (owner.CountInv("KnightGownItem2")) KnightGownTier = 2;
+					if (owner.CountInv("KnightGownItem3")) KnightGownTier = 3;
+					if (owner.CountInv("KnightGownItem4")) KnightGownTier = 4;
+					if (KnightGownTier == 1 && owner.CountInv("KnightGownIP1Buff")) ArmorIPActive = (1.0 * 1.5);
+					if (KnightGownTier == 2 && owner.CountInv("KnightGownIP2Buff")) ArmorIPActive = (2.15 * 1.5);
+					if (KnightGownTier == 3 && owner.CountInv("KnightGownIP3Buff")) ArmorIPActive = (3.60 * 1.5);
+					if (KnightGownTier == 4 && owner.CountInv("KnightGownIP4Buff")) ArmorIPActive = (5.35 * 1.5);
+					if (ArmorIPActive > 0 && IPNoGainTimer <= 0 && !owner.CountInv("IsUnconscious"))
+					{
+						double ArmorIPGain;
+						ArmorIPGain = 0.0025;
+						if (ItemPoints <= 100.0000)
+						{
+							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+							{
+								ArmorIPGain += 0.00125;
+							}
+							else
+							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+							{
+								ArmorIPGain += 0.003125;
+							}
+							else
+							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+							{
+								ArmorIPGain += 0.0078125;
+							}
+							else
+							if (ItemPoints <= 25.0000)
+							{
+								ArmorIPGain += 0.01953125;
+							}
+						}
+						double ArmorIPMulti = (0.25 + (ActualLevel * 0.03));
+						if (ArmorIPMulti >= 1.00 || (ActualLevel >= 25))
+						{
+							ArmorIPMulti = 1.00;
+							if (exex_expenabled) ArmorIPMulti = (1.00 + ((ActualLevel - 25) * 0.01334));
+							if (ArmorIPMulti >= 2.00 || (ActualLevel >= 100)) ArmorIPMulti = 2.00;
+						}
+
+						ArmorIPGain *= ArmorIPMulti;
+						ArmorIPGain *= ArmorIPActive;
+						if (IPDissipateTimer < 0) 
+						{
+							if (random(1,16) <= 1) ArmorIPGain *= 3;
+							else 
+							{
+								if (random(1,4) <= 1) ArmorIPGain *= 2.5;
+								else ArmorIPGain *= 2;
+							}
+							IPTimerIncMod += 5;
+						}
+						else 
+						{
+							IPTimerIncMod += 25;
+						}
+						ArmorIPGain *= (1.0 + (ActualLevel * 0.0025));
+						if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) ArmorIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+
+						if (dydudebug_ipdisplays2) Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
+						double oldItemPoints = ItemPoints;
+						ItemPoints += ArmorIPGain;
+						if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+						if (ItemPoints >= oldItemPoints) 
+						{
+							ArmorIPGain = (ItemPoints - oldItemPoints);
+							if (dydudebug_ipdisplays2) Console.Printf("\c[red]ArmorIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", ArmorIPGain, oldItemPoints, ItemPoints);
+						}
+						globalvars.ItemPoints = ItemPoints;
+						
+						if (ArmorIPGain > 0)
+						{
+							if (dydudebug_ipdisplays2) Console.Printf("ArmorIPGain > 0: %.8f", ArmorIPGain);
+							if (dyduhud_showmiscipgains)
+							{
+								IPGainHUDAmt += ArmorIPGain;
+								if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+								else
+								{
+									IPGainHUDTimer += 5;
+									if (IPGainHUDTimer < 105 && ArmorIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+									if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+								}
+								
+								if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+								else
+								{
+									IPHUDPulseTimer += 35;
+									if (IPHUDPulseTimer < 105 && ArmorIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+									if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+								}
+							}
+							
+							if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
+							{
+								ItemPointsSession += ArmorIPGain;
+								if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+								if (ItemPointsSession > 0 && ArmorIPGain > 0)
+								{
+									int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+									if (healfactor < 10) IPHUDPulseType = 1;
+									if (healfactor >= 10) IPHUDPulseType = 2;
+									if (healfactor >= 50) IPHUDPulseType = 3;
+									if (healfactor >= 100) IPHUDPulseType = 4;
+									IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+								}
+							}
+						}
+					}
+					
+					// Morph IP Benefits
+					if (IsMorphed == 1 && !owner.CountInv("IsUnconscious"))
+					{
+						double MorphIPGain;
+						MorphIPGain = (0.0025 * 8);
+						if (ItemPoints <= 100.0000)
+						{
+							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+							{
+								MorphIPGain += (0.00125 * 8);
+							}
+							else
+							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+							{
+								MorphIPGain += (0.003125 * 8);
+							}
+							else
+							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+							{
+								MorphIPGain += (0.0078125 * 8);
+							}
+							else
+							if (ItemPoints <= 25.0000)
+							{
+								MorphIPGain += (0.01953125 * 8);
+							}
+						}
+						if (IPDissipateTimer < 0) 
+						{
+							if (random(1,16) <= 1) MorphIPGain *= 2.5;
+							else 
+							{
+								if (random(1,4) <= 1) MorphIPGain *= 2;
+								else MorphIPGain *= 1.5;
+							}
+							IPTimerIncMod += 5;
+						}
+						else 
+						{
+							IPTimerIncMod += 25;
+						}
+						MorphIPGain *= (1.0 + (ActualLevel * 0.0075));
+						if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) MorphIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+						
+						if (dydudebug_ipdisplays2) Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics", MorphIPGain, IPDissipateTimer, IPTimerIncMod);
+						double oldItemPoints = ItemPoints;
+						ItemPoints += MorphIPGain;
+						if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+						if (ItemPoints >= oldItemPoints) 
+						{
+							MorphIPGain = (ItemPoints - oldItemPoints);
+							if (dydudebug_ipdisplays2) Console.Printf("\c[red]MorphIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", MorphIPGain, oldItemPoints, ItemPoints);
+						}
+						globalvars.ItemPoints = ItemPoints;
+						
+						if (MorphIPGain > 0)
+						{
+							if (dydudebug_ipdisplays2) Console.Printf("MorphIPGain > 0: %.8f", MorphIPGain);
+							if (dyduhud_showmiscipgains)
+							{
+								IPGainHUDAmt += MorphIPGain;
+								if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+								else
+								{
+									IPGainHUDTimer += 5;
+									if (IPGainHUDTimer < 105 && MorphIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+									if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+								}
+								
+								if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+								else
+								{
+									IPHUDPulseTimer += 35;
+									if (IPHUDPulseTimer < 105 && MorphIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+									if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+								}
+							}
+							
+							if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
+							{
+								ItemPointsSession += MorphIPGain;
+								if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+								if (ItemPointsSession > 0 && MorphIPGain > 0)
+								{
+									int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+									if (healfactor < 10) IPHUDPulseType = 1;
+									if (healfactor >= 10) IPHUDPulseType = 2;
+									if (healfactor >= 50) IPHUDPulseType = 3;
+									if (healfactor >= 100) IPHUDPulseType = 4;
+									IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+								}
+							}
+						}
+					}
+					
+					// Unique "Event" IP Related Gains
+					if ((owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) && !owner.CountInv("IsUnconscious"))
+					{
+						double AngerEventIPGain;
+						AngerEventIPGain = 0.00125;
+						if (ItemPoints <= 100.0000)
+						{
+							if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+							{
+								AngerEventIPGain += 0.00025;
+							}
+							else
+							if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+							{
+								AngerEventIPGain += 0.000625;
+							}
+							else
+							if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+							{
+								AngerEventIPGain += 0.0015625;
+							}
+							else
+							if (ItemPoints <= 25.0000)
+							{
+								AngerEventIPGain += 0.00390625;
+							}
+						}
+						AngerEventIPGain *= (owner.CountInv("AngerLevelEvent") * 0.125) + (owner.CountInv("AngerLevelEventN") * 0.0125);
+						IPTimerIncMod += (owner.CountInv("AngerLevelEvent") * 2.5) + (owner.CountInv("AngerLevelEventN") * 0.25);
+
+						double oldItemPoints = ItemPoints;
+						ItemPoints += AngerEventIPGain;
+						if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+						if (ItemPoints >= oldItemPoints) 
+						{
+							AngerEventIPGain = (ItemPoints - oldItemPoints);
+							if (dydudebug_ipdisplays2) Console.Printf("\c[red]AngerEventIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", AngerEventIPGain, oldItemPoints, ItemPoints);
+						}
+						globalvars.ItemPoints = ItemPoints;
+
+						bool AngerHUDEnabled = false;
+						if (AngerEventIPGain > 0 && AngerHUDEnabled)
+						{
+							if (dydudebug_ipdisplays2) Console.Printf("AngerEventIPGain > 0: %.8f", AngerEventIPGain);
+							if (dyduhud_showmiscipgains)
+							{
+								IPGainHUDAmt += AngerEventIPGain;
+								if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+								else
+								{
+									IPGainHUDTimer += 5;
+									if (IPGainHUDTimer < 105 && AngerEventIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+									if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+								}
+								
+								if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+								else
+								{
+									IPHUDPulseTimer += 35;
+									if (IPHUDPulseTimer < 105 && AngerEventIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+									if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+								}
+							}
+							
+							if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
+							{
+								ItemPointsSession += AngerEventIPGain;
+								if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+								if (ItemPointsSession > 0 && AngerEventIPGain > 0)
+								{
+									int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+									if (healfactor < 10) IPHUDPulseType = 1;
+									if (healfactor >= 10) IPHUDPulseType = 2;
+									if (healfactor >= 50) IPHUDPulseType = 3;
+									if (healfactor >= 100) IPHUDPulseType = 4;
+									IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+								}
+							}
+						}
+					}
+					
+					if (A_CheckDDGame()) 
+					{
+						if (IPTimerIncMod < 1) IPTimerIncMod = 1;
+						double DDTFactor = 0.00;
+						if (DD_RoseMother) DDTFactor += 0.075;
+						if (DD_GameMother) DDTFactor += 0.075;
+						if (DD_MossMother) DDTFactor += 0.075;
+						if (DD_GlobeMother) DDTFactor += 0.075;
+						if (DD_SphinxMother) DDTFactor += 0.075;
+						if (DD_HandMother1) DDTFactor += 0.075;
+						if (DD_HandMother2) DDTFactor += 0.075;
+						if (DD_TrueHandMother) DDTFactor += 0.075;
+						if (AFD_Krag) DDTFactor += 0.1;
+						if (AFD_Quisling) DDTFactor += 0.1;
+						if (AFD_Lauritz) DDTFactor += 0.1;
+						if (AFD_Jorgensen1) DDTFactor += 0.1;
+						if (AFD_Jorgensen2) DDTFactor += 0.1;
+						if (AFD_JorgCannon) DDTFactor += 0.1;
+						if (CoS_Fafnir) DDTFactor += 0.1;
+						if (CoS_FractalHens) DDTFactor += 0.1;
+						if (CoS_HandMothers) DDTFactor += 0.1;
+						if (CoS_ForsakenJorg) DDTFactor += 0.1;
+						if (CoS_EvilDinah) DDTFactor += 0.1;
+						if (CoS_Tempest) DDTFactor += 0.1;
+						if (skill <= 0) DDTFactor *= 1.5;
+						if (skill == 1) DDTFactor *= 1.25;
+						if (skill == 2) DDTFactor *= 1.0;
+						if (skill == 3) DDTFactor *= 0.75;
+						if (skill >= 4) DDTFactor *= 0.5;
+						DDTFactor *= exex_nrpggeneraleffect;
+						DDTFactor += 1.00;
+						if (dydudebug_ipdisplays2) Console.Printf("DDTFactor (IPDisipation): %.8f, IPTimerIncMod: %d", DDTFactor, IPTimerIncMod);
+						IPTimerIncMod *= (DDTFactor * 1.5);
+					}
+					if (IPTimerIncMod < 1) IPTimerIncMod = 1;
+					if (dydudebug_ipdisplays2) Console.Printf("IPTimerIncMod: %d", IPTimerIncMod);
+					if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
+														 else IPTimerInc = level.time % 1;
+					if (exex_ikaripointdissipation)
+					{
+						if (ItemPoints > 0.00)
+						{
+							if (!owner.CountInv("IsUnconscious"))
+							{
+								if (IPDissipateTimer < -2100) IPDissipateTimer = -2100;
+								if (IPDissipateTimer < 2100)
+								{
+									if (IPTimerInc == 0) 
+									{
+										IPDissipateTimer++;
+									}
+								}
+								else
+								{
+									IPDissipateTimer = 0;
+									int IPLossType = random(1,17);
+									double IPLossPer;
+									int IPHUDShakeinc = random(52,53);
+									int IPLossHUDTInc = random(52,53);
+									if (IPLossType >= 1 && IPLossType <= 6)
+									{
+										IPHUDShakeType = 1;
+										IPLossPer = 0.02;
+										IPHUDShakeinc += 7;
+										IPLossHUDTInc += 7;
+									}
+									if (IPLossType >= 7 && IPLossType <= 11)
+									{
+										IPHUDShakeType = 2;
+										IPLossPer = 0.05;
+										IPHUDShakeinc += random(17,18);
+										IPLossHUDTInc += random(17,18);
+									}
+									if (IPLossType >= 12 && IPLossType <= 14)
+									{
+										IPHUDShakeType = 3;
+										IPLossPer = 0.10;
+										IPHUDShakeinc += 35;
+										IPLossHUDTInc += 35;
+									}
+									if (IPLossType >= 15 && IPLossType <= 16)
+									{
+										IPHUDShakeType = 3;
+										IPLossPer = 0.25;
+										IPHUDShakeinc += random(52,53);
+										IPLossHUDTInc += random(52,53);
+									}
+									if (IPLossType == 17)
+									{
+										IPHUDShakeType = 4;
+										IPLossPer = 0.5;
+										IPHUDShakeinc += 70;
+										IPLossHUDTInc += 70;
+									}
+									if (A_CheckDDGame())
+									{
+										IPLossPer *= 0.5;
+										IPHUDShakeinc *= 0.5;
+										IPLossHUDTInc *= 0.5;
+									}
+									IPLossHUDTimer += IPLossHUDTInc;
+									IPHUDShakeTimer += IPHUDShakeinc;
+									double IPLossAmt = (ItemPoints * IPLossPer);
+									ItemPoints -= IPLossAmt;
+									if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
+									
+									IPLossHUDAmt += IPLossAmt;
+									if (IPLossHUDTimer <= 0) IPLossHUDTimer = 105;
+									else
+									{
+										IPLossHUDTimer += 35;
+										if (IPLossHUDTimer < 105 && IPLossAmt > (MaxItemPoints * 0.01)) IPLossHUDTimer = 105;
+										if (IPLossHUDTimer > 175) IPLossHUDTimer = 175;
+									}
+								}
+								if (dydudebug_ipdisplays2) Console.Printf("\c[fire]ItemPoints: %.8f\c- \c[gold][%.8f]\c-, IPDissipateTimer: %d / 2100", ItemPoints, globalvars.ItemPoints, IPDissipateTimer);
+							}
+						}
+						else
+						{
+							if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
+							IPDissipateTimer = 0;
 						}
 					}
 					else
 					{
-						if (ItemPoints <= 0) globalvars.ItemPoints = ItemPoints = 0;
 						IPDissipateTimer = 0;
 					}
 				}
-				else
-				{
-					IPDissipateTimer = 0;
-				}
+				
 				if (owner.health <= 0 || owner.CountInv("IsUnconscious"))
 				{
 					globalvars.ItemPoints = ItemPoints = 0;
