@@ -11,6 +11,7 @@ class PlayerStatItem : Inventory
 	
 	actor weapon;
 	
+	int sttabs;
 	int genticsHUD;
 	double ArmorML;
 	double ArmorM;
@@ -3552,6 +3553,110 @@ class PlayerStatItem : Inventory
 					// Check Item Points
 					int IPTimerIncMod = 0;
 					int IPTimerInc;
+					
+					// ????? ??????s
+					sttabs = 0;
+					if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
+					{
+						if (owner.CountInv("StoneTablet1")) sttabs++;
+						if (owner.CountInv("StoneTablet2")) sttabs++;
+						if (owner.CountInv("StoneTablet3")) sttabs++;
+						if (owner.CountInv("StoneTablet4")) sttabs++;
+						if (owner.CountInv("StoneTablet5")) sttabs++;
+						if (owner.CountInv("StoneTablet6")) sttabs++;
+						if (sttabs > 0)
+						{
+							double sttabIPGain;
+							sttabIPGain = 0.0025;
+							if (ItemPoints <= 100.0000)
+							{
+								if (ItemPoints >= 75.0001 && ItemPoints <= 100.0000)
+								{
+									sttabIPGain += 0.0005;
+								}
+								else
+								if (ItemPoints >= 50.0001 && ItemPoints <= 75.0000)
+								{
+									sttabIPGain += 0.00125;
+								}
+								else
+								if (ItemPoints >= 25.0001 && ItemPoints <= 50.0000)
+								{
+									sttabIPGain += 0.003125;
+								}
+								else
+								if (ItemPoints <= 25.0000)
+								{
+									sttabIPGain += 0.0078125;
+								}
+							}
+							double sttabIPMulti = (0.125 + (ActualLevel * 0.015));
+							if (sttabIPMulti >= 1.00 || ActualLevel >= 50)
+							{
+								sttabIPMulti = (1.00 + ((ActualLevel - 50) * 0.006667));
+								if (sttabIPMulti >= 2.00 || ActualLevel >= 200) sttabIPMulti = 2.00;
+							}
+							sttabIPGain *= sttabIPMulti;
+
+							sttabIPGain *= (1.0 + (ActualLevel * 0.0025));
+							if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) sttabIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.00025) + (owner.CountInv("AngerLevelEventN") * 0.000025));
+							sttabIPGain /= 12;
+							sttabIPGain *= (sttabs * 3);
+							if (dydudebug_ipdisplays2) Console.Printf("\c[red]sttabIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]sttabIPMulti: %.8f", sttabIPGain, IPDissipateTimer, IPTimerInc, sttabIPMulti);
+
+							double oldItemPoints = ItemPoints;
+							ItemPoints += sttabIPGain;
+							if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+							if (ItemPoints >= oldItemPoints) 
+							{
+								sttabIPGain = (ItemPoints - oldItemPoints);
+								if (dydudebug_ipdisplays2) Console.Printf("\c[red]sttabIPGain: %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", sttabIPGain, oldItemPoints, ItemPoints);
+							}
+							globalvars.ItemPoints = ItemPoints;
+							
+							/*
+							if (sttabIPGain > 0)
+							{
+								if (dydudebug_ipdisplays2) Console.Printf("sttabIPGain > 0: %.8f", sttabIPGain);
+								if (dyduhud_showmiscipgains)
+								{
+									IPGainHUDAmt += sttabIPGain;
+									if (IPGainHUDTimer <= 0) IPGainHUDTimer = 105;
+									else
+									{
+										IPGainHUDTimer += 5;
+										if (IPGainHUDTimer < 105 && sttabIPGain > (MaxItemPoints * 0.005)) IPGainHUDTimer = 105;
+										if (IPGainHUDTimer > 175) IPGainHUDTimer = 175;
+									}
+									
+									if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+									else
+									{
+										IPHUDPulseTimer += 35;
+										if (IPHUDPulseTimer < 105 && sttabIPGain > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+										if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+									}
+								}
+								
+								if (ItemPointsSession < MaxItemPoints && ItemPoints < MaxItemPoints)
+								{
+									ItemPointsSession += sttabIPGain;
+									if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+									if (ItemPointsSession > 0 && sttabIPGain > 0)
+									{
+										int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+										if (healfactor < 10) IPHUDPulseType = 1;
+										if (healfactor >= 10) IPHUDPulseType = 2;
+										if (healfactor >= 50) IPHUDPulseType = 3;
+										if (healfactor >= 100) IPHUDPulseType = 4;
+										IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+									}
+								}
+							}
+							*/
+						}
+					}
+					
 					// Berserk = Gradually gain IP
 					if (berserked && IPNoGainTimer <= 0 && !owner.CountInv("IsUnconscious"))
 					{
@@ -3980,7 +4085,9 @@ class PlayerStatItem : Inventory
 						IPTimerIncMod *= (DDTFactor * 1.5);
 					}
 					if (IPTimerIncMod < 1) IPTimerIncMod = 1;
+					for (int i; i < sttabs; i++) IPTimerIncMod *= 2;
 					if (dydudebug_ipdisplays2) Console.Printf("IPTimerIncMod: %d", IPTimerIncMod);
+
 					if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
 														 else IPTimerInc = level.time % 1;
 					if (exex_ikaripointdissipation)
