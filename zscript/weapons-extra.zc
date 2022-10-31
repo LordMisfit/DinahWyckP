@@ -2358,13 +2358,13 @@ class EvilWarriorShield : DinahWeapon
 		A_PHellWarShieldOn();
 		if (!CountInv("PowerInfiniteAmmo")) invoker.shieldenergy -= invoker.shieldenergycost;
 
-		if (invoker.shieldenergy <= invoker.shieldenergycost)
+		if (invoker.shieldenergy < invoker.shieldenergycost)
 		{
 			if (CountInv("PikeAmmo") > 0)
 			{
 				A_TakeInventory("PikeAmmo",1);
 				if (MiscItem) invoker.shieldenergy += MiscItem.HellWarriorMaxCharge;
-				else invoker.shieldenergy += 1000;
+								 else invoker.shieldenergy += 1000;
 			}
 		}
 
@@ -2496,18 +2496,22 @@ class EvilWarriorShield : DinahWeapon
 				let globalvars = DDGlobalVariables.Get();
 
 				//HellWarriorMaxCharge
-				invoker.shieldenergycost = (10 + (player.CountInv("HellWarriorShieldLevel") * 0.6));
-				if (invoker.shieldenergy <= invoker.shieldenergycost)
+				if (!CountInv("PowerInfiniteAmmo"))
 				{
-					if (CountInv("PikeAmmo") > 0)
+					invoker.shieldenergycost = (10 + (player.CountInv("HellWarriorShieldLevel") * 0.6));
+					if (invoker.shieldenergy < invoker.shieldenergycost)
 					{
-						A_TakeInventory("PikeAmmo",1);
-						if (MiscItem) invoker.shieldenergy += MiscItem.HellWarriorMaxCharge;
-						else invoker.shieldenergy += 1000;
-					}
-					else
-					{
-						return resolvestate("Ready");
+						if (CountInv("PikeAmmo") > 0)
+						{
+							A_TakeInventory("PikeAmmo",1);
+							if (MiscItem) invoker.shieldenergy += MiscItem.HellWarriorMaxCharge;
+											 else invoker.shieldenergy += 1000;
+						}
+						else
+						{
+							return resolvestate("Ready");
+						}
+						return resolvestate(null);
 					}
 					return resolvestate(null);
 				}
@@ -2576,29 +2580,33 @@ class EvilWarriorShield : DinahWeapon
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				A_PHellWarShieldOn();
-				if (buttons & BT_ATTACK) 
+				if (buttons & BT_ATTACK)
 				{
 					invoker.shieldrefire = 1;
 					A_CheckIPState1();
 					A_ConfirmIPAttack(191,0,2,15,true);
 					
 					//HellWarriorMaxCharge
-					invoker.shieldenergycost = (10 + (player.CountInv("HellWarriorShieldLevel") * 0.6));
-					if (invoker.shieldenergy <= invoker.shieldenergycost)
+					if (!CountInv("PowerInfiniteAmmo"))
 					{
-						if (CountInv("PikeAmmo") > 0)
+						invoker.shieldenergycost = (10 + (player.CountInv("HellWarriorShieldLevel") * 0.6));
+						if (invoker.shieldenergy < invoker.shieldenergycost)
 						{
-							A_TakeInventory("PikeAmmo",1);
-							if (MiscItem) invoker.shieldenergy += MiscItem.HellWarriorMaxCharge;
-							else invoker.shieldenergy += 1000;
+							if (CountInv("PikeAmmo") > 0)
+							{
+								A_TakeInventory("PikeAmmo",1);
+								if (MiscItem) invoker.shieldenergy += MiscItem.HellWarriorMaxCharge;
+												 else invoker.shieldenergy += 1000;
+							}
+							else
+							{
+								return resolvestate("Ready");
+							}
+							return resolvestate(null);
 						}
-						else
-						{
-							return resolvestate("Ready");
-						}
-						return resolvestate(null);
+						return resolvestate("FireShot");
 					}
-					return resolvestate("FireShot");
+					return resolvestate(null);
 				}
 				invoker.shieldrefire = 0;
 				return resolvestate(null);
