@@ -1065,6 +1065,8 @@ class DDStatusBarMain : BaseStatusBar
 				if (PowerDouble(item)) ItemFontCLR = font.CR_Red;
 				if (PowerGuard(item)) ItemFontCLR = font.CR_Green;
 				if (PowerHaste(item)) ItemFontCLR = font.CR_Sapphire;
+				if (PowerSlow(item)) ItemFontCLR = font.CR_Brick;
+				if (IsPoisoned(item)) ItemFontCLR = font.CR_darkgreen;
 				if (PowerRatMorph(item)) ItemFontCLR = font.CR_Gold;
 				if (HarmonicAnger(item)) ItemFontCLR = font.CR_Gold;
 				if (PowerNoDrown(item)) 
@@ -1122,9 +1124,18 @@ class DDStatusBarMain : BaseStatusBar
 						Debuff = true;
 					}
 				}
-				let icon = item.GetPowerupIcon();
-				if (icon.IsValid() && !item.IsBlinking())
+				if (PowerSlow(item)) Debuff = true;
+				if (IsPoisoned(item)) 
 				{
+					ItemEffectTics = CPlayerPawn.player.poisoncount;
+					ItemEffectSecs = (CPlayerPawn.player.poisoncount / thinker.TICRATE);
+					Debuff = true;
+				}
+				let icon = item.GetPowerupIcon();
+				if (icon.IsValid())
+				{
+					double transp = 1.00;
+					if (item.IsBlinking()) transp = 0.50;
 					// Each icon gets a 32x32 block.
 					if (Debuff) 
 					{
@@ -1140,8 +1151,10 @@ class DDStatusBarMain : BaseStatusBar
 						if (item.GetClassName() == "GrimophoneDEFDown1") PosDiff = (randompick(-1,0,1), randompick(-1,0,1));
 						if (item.GetClassName() == "GrimophoneDEFDown2") PosDiff = (randompick(-2,-1,0,1,2), randompick(-2,-1,0,1,2));
 						if (item.GetClassName() == "GrimophoneDEFDown3") PosDiff = (randompick(-3,-2,-1,0,1,2,3), randompick(-3,-2,-1,0,1,2,3));
+						if (IsPoisoned(item)) PosDiff = (randompick(-2,-1,0,1,2), randompick(-2,-1,0,1,2));
+						if (PowerSlow(item)) PosDiff = (randompick(-1,0,1), randompick(-1,0,1));
 					}
-					DrawTexture(icon, pos+PosDiff, DI_SCREEN_RIGHT_TOP, 1.0, (POWERUPICONSIZE, POWERUPICONSIZE));
+					DrawTexture(icon, pos+PosDiff, DI_SCREEN_RIGHT_TOP, (1.0*transp), (POWERUPICONSIZE, POWERUPICONSIZE));
 					pos.x -= POWERUPICONSIZE;
 					if (pos.x < -maxpos)
 					{
@@ -1163,7 +1176,7 @@ class DDStatusBarMain : BaseStatusBar
 						if (ItemEffectTics >= 1051) { if (ItemEffectTics % 50 >= 25) pos.y += 1; }
 						if (dyduhud_showpoweruptimers) 
 						{
-							if (!(gameinfo.gametype == GAME_Hexen && PowerFlight(item))) DrawString(mDDMFont, FormatNumber(ItemEffectSecs), (pos.x+POWERUPICONSIZE, pos.y) + PosDiff, DI_TEXT_ALIGN_CENTER, ItemFontCLR, 0.9, -1, 4, (1.0, 1.0)); // 41, -43
+							if (!(gameinfo.gametype == GAME_Hexen && PowerFlight(item))) DrawString(mDDMFont, FormatNumber(ItemEffectSecs), (pos.x+POWERUPICONSIZE, pos.y) + PosDiff, DI_TEXT_ALIGN_CENTER, ItemFontCLR, (0.9*transp), -1, 4, (1.0, 1.0)); // 41, -43
 						}
 						if (ItemEffectTics <= 175) 
 						{
@@ -1181,7 +1194,7 @@ class DDStatusBarMain : BaseStatusBar
 					{
 						pos.x += -8;
 						pos.y += -32;
-						DrawString(mDDLFont, FormatNumber(ItemEffectLevel), (pos.x+POWERUPICONSIZE, pos.y) + PosDiff, DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, 0.9, -1, 4, (1.0, 1.0)); // 41, -43
+						DrawString(mDDLFont, FormatNumber(ItemEffectLevel), (pos.x+POWERUPICONSIZE, pos.y) + PosDiff, DI_TEXT_ALIGN_RIGHT, font.cr_sapphire, (0.9*transp), -1, 4, (1.0, 1.0)); // 41, -43
 						pos.x -= -8;
 						pos.y -= -32;
 					}
