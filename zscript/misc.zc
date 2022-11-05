@@ -73,6 +73,7 @@ class PlayerStatItem : Inventory
 	int OneLinerCooldown;
 	int CanTalkUnderwater;
 	int numpikeglows;
+	int numTrueIPglows;
 	int MedStrength;
 	int IsMorphed, WasMorphed, WasMorphProj;
 	int MorphTimer;
@@ -1512,71 +1513,7 @@ class PlayerStatItem : Inventory
 				//**********************
 				//* Weapon Check Stuff *
 				//**********************
-				string nt;
-				// Hand To Hand
-				if (weapon is "HandToHand") 
-				{
-				}
-				else
-				{
-					nt = "FistPlayerSpeedFactor"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerSpeedFactor2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerSpeedFactor3"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerSpeedFactor4"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerBlock"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerBlock2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerBlock3"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerBlock4"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerBlockExtra"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerBlockExtra2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerBlockItem"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "FistPlayerBlockHold"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-				}
-				// Cricket Bat
-				if (weapon is "CricketBat")
-				{
-				}
-				else
-				{
-					nt = "IsInBatGuardFrame"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "CricketBatSwingDEF"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "CricketBatSwingDEF2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "CricketBatGuard"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "CricketBatGuard2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "CricketBatGuard3"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-					nt = "DoingSpinAttack"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
-				}
-				// Allow the Pike to emit dynlights when equipped [if you have any ammo :V]
-				if (weapon is "WizardPike" && owner.CountInv("PikeAmmo") > 0 && exex_glowingpike)
-				{
-					numpikeglows = 0;
-					ThinkerIterator GlowAttach = ThinkerIterator.Create("PikeGlowAttach");
-					Actor mo;
-					while (mo = PikeGlowAttach(GlowAttach.Next()))
-					{
-						numpikeglows++;
-						if (numpikeglows) break;
-					}
-					if (!numpikeglows)
-					{
-						A_SpawnItemEx("PikeGlowAttach",owner.pos.x,owner.pos.y,owner.pos.z,0,0,0,0,SXF_NOCHECKPOSITION);
-						numpikeglows++;
-					}
-				}
-				else
-				{
-					if (numpikeglows)
-					{
-						ThinkerIterator GlowAttach = ThinkerIterator.Create("PikeGlowAttach");
-						Actor mo;
-						while (mo = PikeGlowAttach(GlowAttach.Next()))
-						{
-							mo.Destroy();
-							numpikeglows--;
-						}
-						if (numpikeglows) numpikeglows = 0;
-					}
-				}
+				WeaponCheck();
 				
 				
 				//*********************
@@ -1623,6 +1560,110 @@ class PlayerStatItem : Inventory
 				owner.CountInv("IsCarnOfSouls") || 
 				owner.CountInv("IsWeddingCake")) return true;
 		return false;
+	}
+	
+	void WeaponCheck()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		
+		string nt;
+		// Hand To Hand
+		if (weapon is "HandToHand") 
+		{
+		}
+		else
+		{
+			nt = "FistPlayerSpeedFactor"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerSpeedFactor2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerSpeedFactor3"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerSpeedFactor4"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerBlock"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerBlock2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerBlock3"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerBlock4"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerBlockExtra"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerBlockExtra2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerBlockItem"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "FistPlayerBlockHold"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+		}
+		// Cricket Bat
+		if (weapon is "CricketBat")
+		{
+		}
+		else
+		{
+			nt = "IsInBatGuardFrame"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "CricketBatSwingDEF"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "CricketBatSwingDEF2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "CricketBatGuard"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "CricketBatGuard2"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "CricketBatGuard3"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+			nt = "DoingSpinAttack"; if (owner.CountInv(nt)) owner.A_SetInventory(nt,0);
+		}
+		// Allow the Pike to emit dynlights when equipped [if you have any ammo :V]
+		if (weapon is "WizardPike" && owner.CountInv("PikeAmmo") > 0 && exex_glowingpike)
+		{
+			numpikeglows = 0;
+			ThinkerIterator GlowAttach = ThinkerIterator.Create("PikeGlowAttach");
+			Actor mo;
+			while (mo = PikeGlowAttach(GlowAttach.Next()))
+			{
+				numpikeglows++;
+				if (numpikeglows) break;
+			}
+			if (!numpikeglows)
+			{
+				A_SpawnItemEx("PikeGlowAttach",owner.pos.x,owner.pos.y,owner.pos.z,0,0,0,0,SXF_NOCHECKPOSITION);
+				numpikeglows++;
+			}
+		}
+		else
+		{
+			if (numpikeglows)
+			{
+				ThinkerIterator GlowAttach = ThinkerIterator.Create("PikeGlowAttach");
+				Actor mo;
+				while (mo = PikeGlowAttach(GlowAttach.Next()))
+				{
+					mo.Destroy();
+					numpikeglows--;
+				}
+				if (numpikeglows) numpikeglows = 0;
+			}
+		}
+		
+		// True IP Glows
+		If (owner.CountInv("DinahTrueIPState"))
+		{
+			numTrueIPglows = 0;
+			ThinkerIterator GlowAttach = ThinkerIterator.Create("TrueIPGlowAttach");
+			Actor mo;
+			while (mo = TrueIPGlowAttach(GlowAttach.Next()))
+			{
+				numTrueIPglows++;
+				if (numTrueIPglows) break;
+			}
+			if (!numTrueIPglows)
+			{
+				A_SpawnItemEx("TrueIPGlowAttach",owner.pos.x,owner.pos.y,owner.pos.z,0,0,0,0,SXF_NOCHECKPOSITION);
+				numTrueIPglows++;
+			}
+		}
+		else
+		{
+			if (numTrueIPglows)
+			{
+				ThinkerIterator GlowAttach = ThinkerIterator.Create("TrueIPGlowAttach");
+				Actor mo;
+				while (mo = TrueIPGlowAttach(GlowAttach.Next()))
+				{
+					mo.Destroy();
+					numTrueIPglows--;
+				}
+				if (numTrueIPglows) numTrueIPglows = 0;
+			}
+		}
 	}
 	
 	void EndStuff()
