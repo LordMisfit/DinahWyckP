@@ -1747,7 +1747,7 @@ class DDPlayerPawn : PlayerPawn
 								let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
 								if (TrueIPItem)
 								{
-									if (MiscItem.HasHarmonicAnger) TrueIPItem.EffectTics = ((120 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
+									if (MiscItem.HasHarmonicAnger) TrueIPItem.EffectTics = ((120 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.01)));
 																						else TrueIPItem.EffectTics = ((60 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
 								}
 							}
@@ -1756,7 +1756,7 @@ class DDPlayerPawn : PlayerPawn
 								let TrueIPItem = DinahTrueIPState(FindInventory("DinahTrueIPState"));
 								if (TrueIPItem)
 								{
-									if (MiscItem.HasHarmonicAnger) TrueIPItem.EffectTics += ((120 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
+									if (MiscItem.HasHarmonicAnger) TrueIPItem.EffectTics += ((120 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.01)));
 																						else TrueIPItem.EffectTics += ((60 * TICRATE) * (1.0 + ((ActualLevel - 1) * 0.005)));
 								}
 							}
@@ -1796,14 +1796,29 @@ class DDPlayerPawn : PlayerPawn
 					if (!wasforceradius) bFORCERADIUSDMG = false;
 					if (!wasnodmgthrust) bNODAMAGETHRUST = false;
 					double loopvol = frandom(0.45,0.55);
-					if (TrueIPItem) loopvol = frandom(0.475,0.525) * (TrueIPItem.EffectTics * 1.0 / (60 * TICRATE));
-					//Console.Printf("loopvol: %.2f", loopvol);
+					double iptimeratio = (TrueIPItem.EffectTics * 1.0 / (60 * TICRATE));
+					if (TrueIPItem) loopvol = (frandom(0.475,0.525) * iptimeratio);
+					//Console.Printf("loopvol: %.2f, iptimeratio: %.2f", loopvol, iptimeratio);
 					IPLoopTimer++;
 					IPLoopInt = IPLoopTimer % 91;
 					if (IPLoopInt == 0)
 					{
 						A_StopSound(701);
 						A_StartSound("DinahIP/IPLoop3",701,CHANF_NOSTOP|CHANF_LOOPING,loopvol,ATTN_NORM,frandom(0.9,1.1));
+					}
+					int inter = 2;
+					if (iptimeratio < 2.000) inter = 1;
+					if (iptimeratio < 1.000) inter = 2;
+					if (iptimeratio < 0.500) inter = 3;
+					if (iptimeratio < 0.250) inter = 4;
+					if (iptimeratio < 0.125) inter = 5;
+					if (iptimeratio < 0.0625) inter = 6;
+					if (iptimeratio < 0.03125) inter = 7;
+					if (iptimeratio < 0.015625) inter = 8;
+					if (level.time % inter == 0 && player.cheats & CF_CHASECAM)
+					{
+						//Console.Printf("gametic: %d", gametic);
+						A_SpawnItemEx("DinahTIPAImage", frandom(-2,2),frandom(-2,2),frandom(-2,2), 0,0,0, 0, SXF_NOCHECKPOSITION|SXF_TRANSFERSPRITEFRAME|SXF_TRANSFERSCALE|SXF_TRANSFERALPHA);
 					}
 				}
 				else
@@ -4538,6 +4553,43 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 			goto Death;
 		Ice:
 			goto Death;
+	}
+}
+
+class DinahTIPAImage : EEVisualAImage
+{
+	default
+	{
+		Radius 16;
+		Height 8;
+		Scale 0.8;
+		Alpha 1.00;
+		+NOGRAVITY
+		+THRUACTORS
+		RenderStyle "AddStencil";
+		StencilColor "Orange";
+		-VISIBILITYPULSE
+		+NOTIMEFREEZE
+	}
+	
+	States
+	{
+		Spawn:
+			"####" "#" 0 Bright;
+			"####" "#" 0 Bright A_FadeTo(alpha * 0.75, 0.75, false);
+			"####" "#" 0 Bright ThrustThingZ(0, 2, 0, 0);
+			"####" "#" 0 A_Jump (256, "SpawnLoop");
+			Goto SpawnLoop;
+		SpawnLoop:
+			"####" "#" 0 Bright A_FadeTo(0, 0.25, true);
+			"####" "#" 1 Bright //Light("KTAIMAGE1")
+			{
+				if (GetAge() <= 0) A_SetScale(1.08334,1.08334);
+				if (GetAge() == 1) A_SetScale(1.16667,1.16667);
+				if (GetAge() == 2) A_SetScale(1.25,1.25);
+				if (GetAge() >= 3) A_SetScale(1.33334,1.33334);
+			}
+			Goto SpawnLoop;
 	}
 }
 
