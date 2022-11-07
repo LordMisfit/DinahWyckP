@@ -1708,6 +1708,8 @@ class PlayerStatPlaceholder : PlaceholderItemUndrop
 class ExpPts : PlayerStatPlaceholder { }
 class ExpPtsNeeded : PlayerStatPlaceholder { }
 class ExpPtsLeft : PlayerStatPlaceholder { }
+class IPNoGainTimer : PlayerStatPlaceholder { }
+class TrueIPCooldownTimer : PlayerStatPlaceholder { }
 class PlayerLevel : PlayerStatPlaceholder { }
 class PlayerMaxHP : PlayerStatPlaceholder { }
 class PlayerATK : PlayerStatPlaceholder { }
@@ -7152,6 +7154,8 @@ class HarmonicAnger : TempDefenseBuff
 		Inventory.MaxAmount 1;
 		Inventory.Icon "";
 		Powerup.Duration -15;
+		Powerup.Color "FF 10 10", 0.00;
+		DamageFactor "Normal", 1.00;
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
@@ -7199,5 +7203,17 @@ class HarmonicAnger : TempDefenseBuff
 		// Powerups cannot exist outside an inventory
 		if (Owner == NULL) Destroy();
 		if (EffectTics <= 0) Destroy();
+	}
+	
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (passive && damage > 0)
+		{
+			double TOTALFactor = 1.0;
+			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+			if (dydudebug_defensebuffs) Console.Printf("(%s) TOTALFactor: %.8f, damage: %d [%d]", GetClassName(), TOTALFactor, newdamage, damage);
+		}
 	}
 }
