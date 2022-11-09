@@ -278,7 +278,8 @@ mixin class HUDRecovery
 		int IPTimerBaseInc = -35;
 		
 		double sts = 1.0;
-		if (MiscItem && MiscItem.sttabs > 0) sts = 1.0 + (MiscItem.sttabs * 0.041667);
+		if (MiscItem && MiscItem.sttabs > 0) sts = 1.0 + (MiscItem.sttabs * 0.083334);
+		if (sts >= 1.50) sts = 1.50;
 		base *= sts;
 		basef *= sts;
 		
@@ -1712,8 +1713,12 @@ mixin class MonsterCollider
 		else
 		{
 			double IPDmgFactor = 0.50;
+			double sts = 1.0;
+			if (MiscItem && MiscItem.sttabs > 0) sts = 1.0 + (MiscItem.sttabs * 0.083334);
+			if (sts >= 1.50) sts = 1.50;
+			IPDmgFactor *= sts;
+
 			EEProjectile IPAtk;
-			
 			if (inflictor) IPAtk = EEProjectile(inflictor);
 			else if (source) IPAtk = EEProjectile(source);
 			if (IPAtk && IPAtk.IPAttack) ActorDefenseIgnoreFactor += (IPDmgFactor * (1.00 - ActorDefenseIgnoreFactor));
@@ -1744,10 +1749,80 @@ mixin class MonsterCollider
 			if (mod == 'Zap' && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
 			if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
+			double LeadFactor = 0.000;
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("BlunderShotUpgrade") == 1) LeadFactor = 0.1667;
+				if (inflictor.CountInv("BlunderShotUpgrade") == 2) LeadFactor = 0.4;
+				if (inflictor.CountInv("BlunderShotUpgrade") >= 3) LeadFactor = 0.75;
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("BlunderShotUpgrade") == 1) LeadFactor = 0.1667;
+				if (source.CountInv("BlunderShotUpgrade") == 2) LeadFactor = 0.4;
+				if (source.CountInv("BlunderShotUpgrade") >= 3) LeadFactor = 0.75;
+			}
+			if (mod == 'Lead') ActorDefenseIgnoreFactor += (LeadFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double CBombFactor = 0.125;
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("CBombUpgrade") == 1) CBombFactor = 0.25;
+				if (inflictor.CountInv("CBombUpgrade") == 2) CBombFactor = 0.425;
+				if (inflictor.CountInv("CBombUpgrade") >= 3) CBombFactor = 0.6125;
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("CBombUpgrade") == 1) CBombFactor = 0.25;
+				if (source.CountInv("CBombUpgrade") == 2) CBombFactor = 0.525;
+				if (source.CountInv("CBombUpgrade") >= 3) CBombFactor = 0.6125;
+			}
+			if (mod == 'CherryBomb') ActorDefenseIgnoreFactor += (CBombFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double SpinnerFactor = 0.25;
+			if (mod == 'Spinner') ActorDefenseIgnoreFactor += (SpinnerFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double BRocketFactor = 0.5;
+			if (mod == 'BRocket') ActorDefenseIgnoreFactor += (BRocketFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double PopperFactor = frandompick(0.125,0.25,0.5);
+			if (mod == 'Popper') ActorDefenseIgnoreFactor += (PopperFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
 			double BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("GrimophoneUpgrade") == 1) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.75);
+				if (inflictor.CountInv("GrimophoneUpgrade") == 2) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.125);
+				if (inflictor.CountInv("GrimophoneUpgrade") >= 3) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.625);
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("GrimophoneUpgrade") == 1) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.75);
+				if (source.CountInv("GrimophoneUpgrade") == 2) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.125);
+				if (source.CountInv("GrimophoneUpgrade") >= 3) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.625);
+			}
 			if (mod == 'Beats') ActorDefenseIgnoreFactor += (BeatsFactor * (1.00 - ActorDefenseIgnoreFactor));
 			double BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("GrimophoneUpgrade") == 1) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.75);
+				if (inflictor.CountInv("GrimophoneUpgrade") == 2) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.125);
+				if (inflictor.CountInv("GrimophoneUpgrade") >= 3) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.625);
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("GrimophoneUpgrade") == 1) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.75);
+				if (source.CountInv("GrimophoneUpgrade") == 2) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.125);
+				if (source.CountInv("GrimophoneUpgrade") >= 3) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.625);
+			}
 			if (mod == 'Beats' && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double WhistleFactor = 0.75;
+			if (inflictor && PlayerWhistle(inflictor) || source && PlayerWhistle(source)) ActorDefenseIgnoreFactor += (WhistleFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
 			double BarrelFactor = 0.50;
 			if (skill <= 0) BarrelFactor = 1.0;
@@ -1774,7 +1849,6 @@ mixin class MonsterCollider
 				else if (TruePlayerLevel >= 45) FCandleFactor = ((random(1,10) * 0.1) + (TruePlayerLevel * (random(9,11) * 0.015)));
 				else FCandleFactor = ((random(1,5) * 0.05) + (TruePlayerLevel * (random(3,5) * 0.0125)));
 				if (FCandleFactor > 1.00) FCandleFactor = 1.00;
-				
 			}
 			if (CandleShot(inflictor) ||
 					CandleShotIP(inflictor) ||
@@ -1785,7 +1859,20 @@ mixin class MonsterCollider
 					CandleTrailIcy(inflictor) ||
 					CandleTrailIcyIP(inflictor)) ActorDefenseIgnoreFactor += (FCandleFactor * (1.00 - ActorDefenseIgnoreFactor));
 
-			double SuckFactor = 0.334;
+			double SuckFactor = 0.75;
+			if (bBOSS) 
+			{
+				SuckFactor = 0.334;
+				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.334 + (TruePlayerLevel * 0.001);
+				else if (source && DDPlayerPawn(source)) SuckFactor = 0.334 + (TruePlayerLevel * 0.001);
+				
+			}
+			else
+			{
+				SuckFactor = 0.75;
+				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.75 + (TruePlayerLevel * 0.0025);
+				else if (source && DDPlayerPawn(source)) SuckFactor = 0.75 + (TruePlayerLevel * 0.0025);
+			}
 			if (mod == 'Suck') ActorDefenseIgnoreFactor += (SuckFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
 			double PuddingFactor = 0.667;
@@ -1808,6 +1895,35 @@ mixin class MonsterCollider
 				
 			if (BarrierBeam(inflictor) || BarrierBeam(source)) ActorDefenseIgnoreFactor += (frandom(0.9,1.0) * (1.00 - ActorDefenseIgnoreFactor));
 			
+			double CricketFactor = 0.00;
+			if ((inflictor && DDPlayerPawn(inflictor)) ||
+					(source && DDPlayerPawn(source)))
+			{
+				double temp = (TruePlayerLevel * 0.005);
+				if (temp > 1.00) temp = 1.00;
+				CricketFactor += (temp * (1.00 - CricketFactor));
+			}
+			else
+			if ((inflictor && Hammerduck(inflictor)) ||
+					(source && Hammerduck(source)))
+			{
+				double temp = (CountInv("MonsterLevel") * 0.0025);
+				if (temp > 0.50) temp = 0.50;
+				CricketFactor += (temp * (1.00 - CricketFactor));
+			}
+			if (IPAtk && IPAtk.IPAttack) CricketFactor += (0.875 * (1.00 - CricketFactor));
+			ActorDefenseIgnoreFactor += (CricketFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			if (inflictor && 
+					(inflictor.GetClassName() == "SoulScepterPuff" ||
+					 inflictor.GetClassName() == "DualSoulScepterPuff" ||
+					 inflictor.GetClassName() == "SoulScepterPuff2" ||
+					 inflictor.GetClassName() == "SoulScepterPowerPuff" ||
+					 inflictor.GetClassName() == "DualSoulScepterPowerPuff"))
+			{
+				ActorDefenseIgnoreFactor += (0.50 * (1.00 - ActorDefenseIgnoreFactor));
+			}
+
 			double SpinAtkFactor = 0.8;
 			if (BatSpinPuff(inflictor) || BatSpinPuff(source) ||
 					BatSpinPuffIP(inflictor) || BatSpinPuffIP(source) ||
@@ -1842,7 +1958,7 @@ mixin class MonsterCollider
 			
 			if (mod == 'Massacre') ActorDefenseIgnoreFactor += (1.00 * (1.00 - ActorDefenseIgnoreFactor));
 			
-			if (surprisehit) ActorDefenseIgnoreFactor += ((random(4,8) * 0.125) * (1.00 - ActorDefenseIgnoreFactor));
+			if (surprisehit) ActorDefenseIgnoreFactor += ((random(6,8) * 0.125) * (1.00 - ActorDefenseIgnoreFactor));
 			
 			if (CountInv("PWDefenseBuff") > 0) ActorDefenseIgnoreFactor *= 0.25;
 		}
@@ -4241,6 +4357,11 @@ mixin class IPCostCheck
 			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 			if (MiscItem) 
 			{
+				double sts = 1.0;
+				if (MiscItem.sttabs > 0) sts = 1.0 - (MiscItem.sttabs * 0.0333334);
+				if (sts <= 0.20) sts = 0.20;
+				cost *= sts;
+
 				double costf = (1.0 - ((TruePlayerLevel - 1) * 0.001) - ((MiscItem.totalallkills) * (0.0025 + (MiscItem.totalcompleted) * 0.00005)));
 				cost *= costf;
 				if (dydudebug_ipdisplays) Console.Printf("\c[olive]costf: %.4f, totalallkills: %d, totalcompleted: %d", costf, MiscItem.totalallkills, MiscItem.totalcompleted);
@@ -4285,6 +4406,11 @@ mixin class IPCostCheck
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 				if (MiscItem) 
 				{
+					double sts = 1.0;
+					if (MiscItem.sttabs > 0) sts = 1.0 - (MiscItem.sttabs * 0.083334);
+					if (sts <= 0.50) sts = 0.50;
+					cost *= sts;
+
 					double costf = (1.0 - ((TruePlayerLevel - 1) * 0.0025) - ((MiscItem.totalallkills) * (0.000625 + (MiscItem.totalcompleted) * 0.0000125)));
 					cost *= costf;
 					if (dydudebug_ipdisplays) Console.Printf("\c[olive]costf: %.4f, totalallkills: %d, totalcompleted: %d", costf, MiscItem.totalallkills, MiscItem.totalcompleted);

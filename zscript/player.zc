@@ -2436,6 +2436,24 @@ class DDPlayerPawn : PlayerPawn
 			if (FoodFactor > 0.00) PlayerDefenseIgnoreFactor = (PlayerDefenseIgnoreFactor * (1.00 - FoodFactor));
 		}
 		
+		double CricketFactor = 0.00;
+		if ((inflictor && Hammerduck(inflictor)) ||
+				(source && Hammerduck(source)))
+		{
+			double temp = (CountInv("MonsterLevel") * 0.0025);
+			if (temp > 0.50) temp = 0.50;
+			CricketFactor += (temp * (1.00 - CricketFactor));
+		}
+		else
+		if ((inflictor && GameMother(inflictor)) ||
+				(source && GameMother(source)))
+		{
+			double temp = (CountInv("MonsterLevel") * 0.005);
+			if (temp > 1.00) temp = 1.00;
+			CricketFactor += (temp * (1.00 - CricketFactor));
+		}
+		PlayerDefenseIgnoreFactor += (CricketFactor * (1.00 - PlayerDefenseIgnoreFactor));
+
 		if (PlayerDefenseIgnoreFactor <= 0.0) PlayerDefenseIgnoreFactor = 0.0;
 		if (PlayerDefenseIgnoreFactor > 1.00) PlayerDefenseIgnoreFactor = 1.00;
 		if (dydudebug_playerdamagemobj) Console.Printf("\c[orange]PlayerDefenseIgnoreFactor: %.8f", PlayerDefenseIgnoreFactor);
@@ -2467,12 +2485,30 @@ class DDPlayerPawn : PlayerPawn
 				if (dydudebug_playerdamagemobj) Console.Printf("\c[sapphire]EESource found [armor bypass]");
 				int rand1;
 				double randarmign;
-
-				// Tier 2 Enemies [i.e. very-high armor bypass, usually named bosses [Serpent Riders, Pennywise in HTC2, and the Dinah Doppelgangers] V:]
+				
+				// Tier 3 Enemies [i.e. extremely-high armor bypass, usually very powerful/ancient/eldritch named bosses [ol' Nyarly]
+				if (sour == "Nyarlathotep" ||
+						mewantsacrifice(EESource) ||
+						(EvilDinahEE(EESource) && EESource.TID == 447 && Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1))
+				{
+					ignoretier = 3;
+					rand1 += 10 + ((source.CountInv("MonsterLevel")) * 1.0);
+					randarmign += (frandompick(0.030,0.035,0.04,0.045,0.05) * exex_enemyarmorignorefactor);
+				}
+				else // Tier 2 Enemies [i.e. very-high armor bypass, usually named bosses [Serpent Riders, Pennywise in HTC2, and the Dinah Doppelgangers] V:]
 				if (sour == "PennywiseBoss" ||
 						sour == "ThamuzNew" ||
 						sour == "TchernobogNew" ||
+						sour == "Tchernobog" ||
+						sour == "TchernoDemon" ||
+						sour == "CyberBog" ||
+						sour == "NyarlathotepLesser" ||
+						sour == "StarSpawn" ||
+						sour == "SpiderGod" ||
+						Delila_Boss(EESource) ||
+						Delila_BossClone(EESource) ||
 						EvilDinah(EESource) || 
+						EvilDinahEE(EESource) || 
 						Sorcerer2New(EESource) || 
 						KoraxNew(EESource))
 				{
@@ -2482,6 +2518,9 @@ class DDPlayerPawn : PlayerPawn
 				}
 				else // Tier 1 Enemies [i.e. medium-high armor bypass, usually standard boss/mini-bosses, and BlackBears V:]
 				if (sour == "BlackBearNew" ||
+						sour == "Dhole" ||
+						(sour == "ShadowBeast" && Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1) ||
+						sour == "SpiderGodling" ||
 						RailArachnotron(EESource) ||
 						ArchvileNew(EESource) ||
 						Diabloist(EESource) ||
@@ -2511,6 +2550,8 @@ class DDPlayerPawn : PlayerPawn
 						Teacher_Jorg(EESource) ||
 						JorgSphereCannon(EESource) ||
 						Teacher_Vokter(EESource) ||
+						Tempest_Boss(EESource) ||
+						Tempest_BossClone(EESource) ||
 						Sorcerer1New(EESource))
 				{
 					ignoretier = 1;
@@ -2523,6 +2564,7 @@ class DDPlayerPawn : PlayerPawn
 						sour == "TinyBingoNew" ||
 						sour == "BabyClownNew" ||
 						sour == "BabyClown2New" ||
+						sour == "LengSpiderling" ||
 						sour == "PossessedBalloonNew")
 				{
 					ignoretier = -1;
@@ -2535,7 +2577,7 @@ class DDPlayerPawn : PlayerPawn
 					rand1 += randompick(1,1,1,2) + ((source.CountInv("MonsterLevel")) * 0.125);
 					randarmign += (frandompick(0.00375,0.004375,0.005,0.0056125,0.00625) * exex_enemyarmorignorefactor);
 				}
-
+				
 				if (source.bBOSS)
 				{
 					rand1 *= int(frandom(1.75,2.25));
