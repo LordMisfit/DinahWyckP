@@ -1290,6 +1290,73 @@ class PigRoastDishExtra : PigRoastDish
 	}
 }
 
+class MiniBerserk : CustomInventoryExt
+{
+	default
+	{
+		//$Sprite "MBSKA0"
+		//$Category Powerups
+		+COUNTITEM;
+		+DONTGIB;
+		+INVENTORY.ALWAYSPICKUP;
+		Inventory.PickupMessage "You have found a \crMini Berserk Pack\c-! Rip and Tear em' apart!";
+		Inventory.PickupSound "getberserkpack";
+	}
+	States
+	{
+		Spawn:
+			MBSK A -1 NoDelay;
+		Pickup:
+			TNT1 A 0
+			{
+				let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
+				int temp1 = player.mo.health;
+				int oldhealth = player.mo.health;
+				int prevtemp1 = temp1;
+				int temp4 = player.mo.CountInv("PlayerMaxHP");
+				int temp2 = (temp4 * 1.25);
+				int perc = 125;
+
+				int temp3 = temp4;
+				temp3 *= 0.25;
+				
+				if (temp1 < temp2)
+				{
+					temp1 += temp3;
+					if (temp1 > temp2) temp1 = temp2;
+					player.mo.health = player.health = temp1;
+					int healdiff = player.mo.health - oldhealth;
+					if (healdiff) invoker.A_RecoverHUD(healdiff, 0, true);
+				}
+				player.mo.A_GiveInventory("AngerLevelEventN",randompick(0,0,0,0,1,1,1,2));
+				
+				A_StartSound("getberserkpack",CHAN_BODY);
+				if (MiscItem && MiscItem.CanTalkUnderwater)
+				{
+					double maskpitch = 1.00;
+					if (waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+					A_StopSound(CHAN_VOICE);
+					A_StartSound("Dinah/Gotcha",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+				}
+				A_SetBlend("f0 f0 f0",0.2,random(2,3));
+				if (!player.mo.CountInv("PowerStrengthDD"))
+				{
+					player.mo.SetInventory("PowerStrengthDD",1);
+					let BerserkItem = PowerStrengthDD(player.mo.FindInventory("PowerStrengthDD"));
+					if (BerserkItem) BerserkItem.EffectTics = int(37.5 * TICRATE);
+				}
+				else
+				{
+					let BerserkItem = PowerStrengthDD(player.mo.FindInventory("PowerStrengthDD"));
+					if (BerserkItem) BerserkItem.EffectTics += int(37.5 * TICRATE);
+				}
+				if (prevtemp1 < temp2) Console.Printf("\c[red]Berserk! All Melee Attacks \c[purple]x10\c[red] Damage! \c[green]HP restored to %d%% of max!", perc);
+													else Console.Printf("\c[red]Berserk! All Melee Attacks \c[purple]x10\c[red] Damage!");
+			}
+			Stop;
+	}
+}
+
 class BerserkNew : CustomInventory replaces Berserk
 {
 	mixin HUDRecovery;
