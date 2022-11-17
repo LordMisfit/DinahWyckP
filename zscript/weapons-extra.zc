@@ -2318,7 +2318,7 @@ class EvilWarriorShield : DinahWeapon
 		Weapon.AmmoUse 0;
 		Weapon.SlotNumber 9;
 		Weapon.SlotPriority 6.0;
-		Weapon.BobSpeed 0.334;
+		Weapon.BobSpeed 1.5;
 		Weapon.BobStyle "Smooth";
 		Weapon.KickBack 0;
 		Tag "Hell Warrior's Shield: \c[purple]<FIRE>\c- uses microunits of Devil's Food [1000 microunits per full ammo] to launch ripping green magic \c[sapphire]zap\c- shots. \c[purple]<ALT-FIRE>\c- makes you guard extensively with the shield, also \c[green]greatly increasing your defense and allowing you to reflect most projectiles\c-. \c[gold]Dashing in this mode lets you do a powerful shield-dash attack.\c- \c[green]Just having this equipped also boosts your defenses by a moderate amount.\c-";
@@ -2413,6 +2413,10 @@ class EvilWarriorShield : DinahWeapon
 	
 	action void A_CheckShieldRefire()
 	{
+		actor player = players[0].mo;
+		int buttons = GetPlayerInput(INPUT_BUTTONS);
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
 		int tic;
 		if (invoker.shieldrefire)
 		{
@@ -2444,6 +2448,24 @@ class EvilWarriorShield : DinahWeapon
 		A_SetTics(tic);
 	}
 	
+	action void A_GetBobSpeed()
+	{
+		actor player = players[0].mo;
+		int buttons = GetPlayerInput(INPUT_BUTTONS);
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+		double temp = invoker.default.BobSpeed;
+		if (MiscItem)
+		{
+			int HellWarriorShieldLevel = MiscItem.HellWarriorShieldLevel;
+			temp = (invoker.default.BobSpeed + (HellWarriorShieldLevel * (invoker.default.BobSpeed * 0.10)));
+		}
+		if (A_CheckBerserk()) temp *= 0.25;
+		if (CountInv("EWShieldDefendMode") > 0) temp *= 0.25;
+		invoker.BobSpeed = temp;
+		//Console.Printf("invoker.BobSpeed: %.8f", invoker.BobSpeed);
+	}
+	
 	States
 	{
 		Pickup:
@@ -2466,6 +2488,7 @@ class EvilWarriorShield : DinahWeapon
 			EWS4 D 1
 			{
 				A_WeaponReady(WRF_ALLOWUSER4);
+				A_GetBobSpeed();
 			}
 			loop;
 
@@ -2474,6 +2497,7 @@ class EvilWarriorShield : DinahWeapon
 			{
 				A_SetInventory("EWShieldIdleMode",1);
 				A_Raise(12);
+				A_GetBobSpeed();
 			}
 			goto Select;
 
@@ -2482,12 +2506,14 @@ class EvilWarriorShield : DinahWeapon
 			{
 				A_SetInventory("EWShieldIdleMode",0);
 				A_Lower(12);
+				A_GetBobSpeed();
 			}
 			goto Deselect;
 
 		Fire:
 			EWS4 A 0
 			{
+				A_GetBobSpeed();
 				A_CheckIPState1();
 				A_ConfirmIPAttack(191,0,2,15,true);
 
@@ -2527,6 +2553,7 @@ class EvilWarriorShield : DinahWeapon
 				
 				if (A_CheckBerserk()) A_SetTics(1);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 			EWS4 C 2 Bright
 			{
@@ -2537,6 +2564,7 @@ class EvilWarriorShield : DinahWeapon
 				
 				if (A_CheckBerserk()) A_SetTics(1);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 			EWS4 B 2 Bright
 			{
@@ -2547,6 +2575,7 @@ class EvilWarriorShield : DinahWeapon
 				
 				if (A_CheckBerserk()) A_SetTics(1);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 		FireShot:
 			EWS4 A 6 Bright
@@ -2559,6 +2588,7 @@ class EvilWarriorShield : DinahWeapon
 				A_CheckShieldRefire();
 				A_SetPitch(pitch + 0.875);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 			EWS4 A 2 Bright
 			{
@@ -2574,6 +2604,7 @@ class EvilWarriorShield : DinahWeapon
 				A_CheckShieldRefire();
 				A_SetPitch(pitch - 0.875);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 			EWS4 A 0 Bright
 			{
@@ -2581,6 +2612,7 @@ class EvilWarriorShield : DinahWeapon
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 				if (buttons & BT_ATTACK)
 				{
 					invoker.shieldrefire = 1;
@@ -2622,6 +2654,7 @@ class EvilWarriorShield : DinahWeapon
 				
 				if (A_CheckBerserk()) A_SetTics(1);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 			EWS4 C 2 Bright
 			{
@@ -2632,6 +2665,7 @@ class EvilWarriorShield : DinahWeapon
 				
 				if (A_CheckBerserk()) A_SetTics(1);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 			EWS4 D 2 Bright
 			{
@@ -2642,6 +2676,7 @@ class EvilWarriorShield : DinahWeapon
 				
 				if (A_CheckBerserk()) A_SetTics(1);
 				A_PHellWarShieldOff();
+				A_GetBobSpeed();
 			}
 			Goto Ready;
 
@@ -2656,6 +2691,7 @@ class EvilWarriorShield : DinahWeapon
 				if (A_CheckBerserk()) A_SetTics(1);
 				A_ForcePlayState4("ShieldGuard");
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 		AltHold:
 			EWS4 G 2 BRIGHT
@@ -2670,9 +2706,11 @@ class EvilWarriorShield : DinahWeapon
 				A_SetInventory("HWShieldBlockHold",1);
 				A_WeaponReady(WRF_NOFIRE|WRF_DISABLESWITCH);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 			EWS4 G 0 
 			{
+				A_GetBobSpeed();
 				A_ForcePlayState4("ShieldGuard");
 				if (exex_hwshieldaltfirekeytype == 0)
 				{
@@ -2703,6 +2741,7 @@ class EvilWarriorShield : DinahWeapon
 				A_ForcePlayState4("ShieldGuard");
 				A_SetInventory("HWShieldBlockHold",0);
 				A_PHellWarShieldOn();
+				A_GetBobSpeed();
 			}
 			EWS4 D 2
 			{
@@ -2713,6 +2752,7 @@ class EvilWarriorShield : DinahWeapon
 				
 				if (A_CheckBerserk()) A_SetTics(1);
 				A_PHellWarShieldOff();
+				A_GetBobSpeed();
 			}
 			Goto Ready;
 
