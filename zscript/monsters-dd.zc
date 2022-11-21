@@ -4,6 +4,7 @@
 //HAMMERDUCK
 class Hammerduck : DDOrigCreature
 {
+	bool shotwait;
 	default
 	{
 		//$Angled
@@ -147,6 +148,9 @@ class Hammerduck : DDOrigCreature
 		Missile:
 			HDUK F 5
 			{
+				shotwait = false;
+				if (random(1,256) <= (8 + (CountInv("MonsterLevel") * 4))) shotwait = true;
+				//Console.Printf("shotwait: %d", shotwait);
 				ProjectilePassHeight = 44;
 				A_DynamicMusic();
 				A_SetInventory("HammerDuckLaidBall",0);
@@ -180,6 +184,28 @@ class Hammerduck : DDOrigCreature
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60) A_SetTics(5);
 				A_FaceTarget();
 			}
+		MissileWait:
+			HDUK I 0
+			{
+				if (shotwait)
+				{
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 75) A_SetTics(1);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60) A_SetTics(2);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 45) A_SetTics(3);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 30) A_SetTics(4);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 15) A_SetTics(5);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 0) A_SetTics(6);
+					if (target && CheckIfTargetInLOS(0, JLOSF_DEADNOJUMP, 16384)) return resolvestate("MissileFire");
+					return resolvestate(null);
+				}
+				else 
+				{
+					A_SetTics(0);
+					return resolvestate("MissileFire");
+				}
+			}
+			loop;
+		MissileFire:
 			HDUK J 4
 			{
 				ProjectilePassHeight = 48;
