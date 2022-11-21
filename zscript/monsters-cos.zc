@@ -1064,6 +1064,33 @@ class EvilDinahEE : EvilDinah
 		}
 	}
 	
+	state A_RndAttk(int base = 16)
+	{
+		double rng = (random(1,4) * 1024);
+		if (target && 
+				((bFRIENDLY && !target.bFRIENDLY) || 
+				 (!bFRIENDLY && target.bFRIENDLY)))
+		{
+			if (CheckLOF(16384,ptr_target:AAPTR_TARGET))
+			{
+				if (random(1,base) <= 1) return resolvestate("Missile");
+				return resolvestate(null);
+			}
+			else
+			if (Distance3D(target) <= rng)
+			{
+				if (random(1,(base*0.5)) <= 1) 
+				{
+					if (CheckLOF((rng*2),ptr_target:AAPTR_TARGET)) return resolvestate("Missile");
+																										else return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+			return resolvestate(null);
+		}
+		return resolvestate(null);
+	}
+	
 	States
 	{
 		Spawn:
@@ -1102,18 +1129,7 @@ class EvilDinahEE : EvilDinah
 					A_JumpUp();
 				}
 			}
-			DINA B 0 
-			{
-				if (target && 
-						Distance3D(target) <= (random(1,4) * 1024) &&
-						((bFRIENDLY && !target.bFRIENDLY) || 
-						 (!bFRIENDLY && target.bFRIENDLY)))
-				{
-					if (random(1,8) <= 1) return resolvestate("Missile");
-					return resolvestate(null);
-				}
-				return resolvestate(null);
-			}
+			DINA B 0 A_RndAttk(16);
 			DINA BBCCDDEE 2 
 			{
 				A_StopSound(65);
@@ -1134,18 +1150,7 @@ class EvilDinahEE : EvilDinah
 					A_JumpUp();
 				}
 			}
-			DINA B 0 
-			{
-				if (target && 
-						Distance3D(target) <= (random(1,4) * 1024) &&
-						((bFRIENDLY && !target.bFRIENDLY) || 
-						 (!bFRIENDLY && target.bFRIENDLY)))
-				{
-					if (random(1,12) <= 1) return resolvestate("Missile");
-					return resolvestate(null);
-				}
-				return resolvestate(null);
-			}
+			DINA B 0 A_RndAttk(24);
 			DINA E 0; // A_DynamicMusic();
 			Loop;
 		JumpUp:
@@ -2657,7 +2662,6 @@ class SpinnerShotEvil : EEProjectile
 			{
 				A_SpawnItemEx("Firetrail", 0, 0, 0, 0, 0, 0, 180, 128);
 				A_AlertMonsters();
-				A_StartSound("weapons/cherryboom",1001,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
 			}
 			SPNR AABB 1 Bright 
 			{
