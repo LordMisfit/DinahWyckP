@@ -17512,6 +17512,7 @@ class FosnianCandle : DinahWeapon
 		if (MiscItem) MiscItem.FCandleShotType = invoker.shottype;
 	}
 	
+	int shott;
 	action void A_FCandleShot(double angleerr = 0.0, double pitcherr = 0.0, double recoilerr = 0.0, int element = 0)
 	{
 		let player = self.player;
@@ -17564,12 +17565,35 @@ class FosnianCandle : DinahWeapon
 					A_StartSound("weapons/fcandlepopping",random(531,540),CHANF_DEFAULT,(sndvol*1.5),ATTN_NORM,sndpitch);
 				}
 			}
-			A_FireProjectile(atktype, frandom(-angleerr,angleerr), true, 0, 0, 0, frandom(-pitcherr,pitcherr));
+			A_FireProjectile(atktype, frandom(-angleerr,angleerr), false, 0, 0, 0, frandom(-pitcherr,pitcherr));
+			double altang = 0.0;
+			if (invoker.shott % 18 >= 0 && invoker.shott % 18 <= 2) altang = 0;
+			if (invoker.shott % 18 >= 3 && invoker.shott % 18 <= 5) altang = 1.25;
+			if (invoker.shott % 18 >= 6 && invoker.shott % 18 <= 8) altang = 2.5;
+			if (invoker.shott % 18 >= 9 && invoker.shott % 18 <= 11) altang = 3.75;
+			if (invoker.shott % 18 >= 12 && invoker.shott % 18 <= 14) altang = 2.5;
+			if (invoker.shott % 18 >= 15 && invoker.shott % 18 <= 17) altang = 1.25;
+			if (invoker.shott % 2 == 0)
+			{
+				A_FireProjectile(atktype, frandom(-angleerr,angleerr)+altang, false, 0, 0, 0, frandom(-pitcherr,pitcherr));
+				A_FireProjectile(atktype, frandom(-angleerr,angleerr)-altang, false, 0, 0, 0, frandom(-pitcherr,pitcherr));
+				A_FireProjectile(atktype, frandom(-angleerr,angleerr), false, 0, 0, 0, frandom(-pitcherr,pitcherr)+altang);
+				A_FireProjectile(atktype, frandom(-angleerr,angleerr), false, 0, 0, 0, frandom(-pitcherr,pitcherr)-altang);
+			}
+			if (invoker.shott % 2 == 1)
+			{
+				A_FireProjectile(atktype, frandom(-angleerr,angleerr)+(altang*0.5), false, 0, 0, 0, frandom(-pitcherr,pitcherr)+(altang*0.5));
+				A_FireProjectile(atktype, frandom(-angleerr,angleerr)+(altang*0.5), false, 0, 0, 0, frandom(-pitcherr,pitcherr)-(altang*0.5));
+				A_FireProjectile(atktype, frandom(-angleerr,angleerr)-(altang*0.5), false, 0, 0, 0, frandom(-pitcherr,pitcherr)+(altang*0.5));
+				A_FireProjectile(atktype, frandom(-angleerr,angleerr)-(altang*0.5), false, 0, 0, 0, frandom(-pitcherr,pitcherr)-(altang*0.5));
+			}
+
 			double mult = (random(45,55) * 0.01);
 			quakeint *= mult;
 			quakedurtime *= mult;
 			quaketremrad *= mult;
 			baserecoil *= mult;
+			if (!A_CheckInfiniteAmmo()) A_TakeInventory("FCandleAmmo",1);
 		}
 		else 
 		{
@@ -17603,6 +17627,7 @@ class FosnianCandle : DinahWeapon
 			Console.Printf("\c[fire]quakeint: %.8f, quakedurtime: %.8f, quaketremrad: %.8f\c-, crouchrefa, %.8f, \c[sapphire]player.crouchfactor: %.8f", quakeint, quakedurtime, quaketremrad, crouchrefa, player.crouchfactor);
 			Console.Printf("\c[fire]Recoil: %.8f,\c- Base: %.8f, Error: %.8f, crouchrefa, %.8f, \c[sapphire]player.crouchfactor: %.8f", truerecoil, baserecoil, recoilerr, crouchrefa, player.crouchfactor);
 		}
+		invoker.shott++;
 	}
 	
 	States
