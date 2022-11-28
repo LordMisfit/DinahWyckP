@@ -7,6 +7,7 @@ class DDWeapon : Weapon
 	mixin HUDRecovery;
 	double IPCostTemp;
 	
+	double kickx1, kickx2, kicky1, kicky2;
 	int ActualLevel;
 	int kickspeed;
 	int punchspeed;
@@ -1243,6 +1244,7 @@ class DDWeapon : Weapon
 				
 				if (player.mo.CountInv("PowerStrength") || player.mo.CountInv("PowerStrengthDD")) movespeed *= 1.5;
 			}
+			if (movespeed > 64) movespeed = 64;
 			
 			if (dydudebug_weaponstatdisplays) Console.Printf("movespeed: %d, bufffactor: %.4f, weaponfactor: %.4f", movespeed, bufffactor, weaponfactor);
 		}
@@ -1449,7 +1451,19 @@ class DDWeapon : Weapon
 				}
 
 				// Stat/Level Mitigation
-				recoilmulti = (1.0 - (TruePlayerLevel * 0.01171875));
+				double reclbase = 0.01171875;
+				if (CountInv("MAManual")) 
+				{
+					double temp1 = 0.25;
+					if (skill <= 0) temp1 = 0.125;
+					if (skill == 1) temp1 = 0.1875;
+					if (skill == 2) temp1 = 0.25;
+					if (skill == 3) temp1 = 0.3125;
+					if (skill >= 4) temp1 = 0.375;
+					double output = double(1.0 / temp1);
+					reclbase *= output;
+				}
+				recoilmulti = (1.0 - (TruePlayerLevel * reclbase));
 				if (recoilmulti < 0.0) recoilmulti = 0.0;
 				recoil *= recoilmulti;
 				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Stats]: %.8f, Multiplier: %.8f", recoil, recoilmulti);
@@ -1946,14 +1960,26 @@ class DinahWeapon : DDWeapon
 				if (A_CheckBerserk()) BerserkAdd = randompick(1,1,1,1,2,2,2,2,3); else BerserkAdd = 0;
 				recl = recl * (random(7,17) + BerserkAdd);
 				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Base]: %.8f", recl);
-
-				double recoilmulti = (1.0 - (TruePlayerLevel * 0.0234375));
+				
+				double reclbase = 0.0234375;
+				if (CountInv("MAManual")) 
+				{
+					double temp1 = 0.25;
+					if (skill <= 0) temp1 = 0.125;
+					if (skill == 1) temp1 = 0.1875;
+					if (skill == 2) temp1 = 0.25;
+					if (skill == 3) temp1 = 0.3125;
+					if (skill >= 4) temp1 = 0.375;
+					double output = double(1.0 / temp1);
+					reclbase *= output;
+				}
+				double recoilmulti = (1.0 - (TruePlayerLevel * reclbase));
 				if (recoilmulti < 0.0) recoilmulti = 0.0;
 				recl *= recoilmulti;
 				if (waterlevel >= 3) recl *= 0;
 				A_Recoil(recl);
-				A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,"KickPuff",104,0,0,"","","");
 				
+				A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,"KickPuff",104,0,0,"","","");
 				if (A_CheckMeleeDestroyProj(2) > 0)
 				{
 					int mkheight = random(28,30);
@@ -1967,11 +1993,79 @@ class DinahWeapon : DDWeapon
 					A_MeleeShieldPiece(mk,mkheight,mkdist2);
 					A_MeleeShieldPiece(mk,mkheight,mkdist3);
 				}
+				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 21)) 
+				{
+					double rand2 = randompick(8,8,8,8,8,8,8,8,8,10,10,12) * frandom(3,5);
+					double ang = angle;
+					A_SetAngle(angle+frandom((-rand2*0.667),(rand2*0.667)));
+					A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,"KickPuff",104,0,0,"","","");
+					if (A_CheckMeleeDestroyProj(2) > 0)
+					{
+						int mkheight = random(28,30);
+						int mkdist1 = 24;
+						int mkdist2 = 56;
+						int mkdist3 = 88;
+						string mk = "KickShieldNoReflect";
+						if (random(1,8) <= (1 + (TruePlayerLevel * 0.06))) mk = "KickShieldReflect";
+						
+						A_MeleeShieldPiece(mk,mkheight,mkdist1);
+						A_MeleeShieldPiece(mk,mkheight,mkdist2);
+						A_MeleeShieldPiece(mk,mkheight,mkdist3);
+					}
+					A_SetAngle(ang);
+				}
+				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 25)) 
+				{
+					double rand2 = randompick(8,8,8,8,8,8,8,8,8,10,10,12) * frandom(3,5);
+					double ang = angle;
+					A_SetAngle(angle+frandom((-rand2*0.667),(rand2*0.667)));
+					A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,"KickPuff",104,0,0,"","","");
+					if (A_CheckMeleeDestroyProj(2) > 0)
+					{
+						int mkheight = random(28,30);
+						int mkdist1 = 24;
+						int mkdist2 = 56;
+						int mkdist3 = 88;
+						string mk = "KickShieldNoReflect";
+						if (random(1,8) <= (1 + (TruePlayerLevel * 0.06))) mk = "KickShieldReflect";
+						
+						A_MeleeShieldPiece(mk,mkheight,mkdist1);
+						A_MeleeShieldPiece(mk,mkheight,mkdist2);
+						A_MeleeShieldPiece(mk,mkheight,mkdist3);
+					}
+					A_SetAngle(ang);
+				}
 				
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 17))
 				{
 					int rand = randompick(8,8,8,8,8,8,8,8,8,10,10,12);
-					A_OverlayOffset(-2,(random(-rand,rand)*frandom(3,5)),32.0+(random(-6,2)*frandom(3,5)),0);
+					double xoff = (random(-rand,rand)*frandom(3,5));
+					double yoff = 32.0+(random(-6,2)*frandom(3,5));
+					A_OverlayOffset(-2,xoff,32.0+(random(-6,2)*frandom(3,5)),0);
+					if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 21) || (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 17) && random(1,16) <= 5))
+					{
+						int rand = randompick(8,8,8,8,8,8,8,8,8,10,10,12);
+						double xoff = (random(-rand,rand)*frandom(3,5));
+						double yoff = 32.0+(random(-6,2)*frandom(3,5));
+						int layer = -3;
+						A_Overlay(layer,"KickImage1",true);
+						A_OverlayFlags(layer,PSPF_ALPHA|PSPF_FORCESTYLE,true);
+						A_OverlayOffset(layer,xoff,32.0+(random(-6,2)*frandom(3,5)),0);
+						A_OverlayRenderStyle(layer,STYLE_Translucent);
+						A_OverlayAlpha(layer,0.667);
+						if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 25) || (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 21) && random(1,16) <= 5) || (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 17) && random(1,32) <= 3))
+						{
+							int rand = randompick(8,8,8,8,8,8,8,8,8,10,10,12);
+							double xoff = (random(-rand,rand)*frandom(3,5));
+							double yoff = 32.0+(random(-6,2)*frandom(3,5));
+							int layer = -4;
+							A_Overlay(layer,"KickImage2",true);
+							A_OverlayFlags(layer,PSPF_ALPHA|PSPF_FORCESTYLE,true);
+							A_OverlayOffset(layer,xoff,32.0+(random(-6,2)*frandom(3,5)),0);
+							A_OverlayRenderStyle(layer,STYLE_Translucent);
+							A_OverlayAlpha(layer,0.334);
+						}
+					}
 				}
 				player.mo.A_SetInventory("IsKicking",1);
 			}
@@ -2189,6 +2283,23 @@ class DinahWeapon : DDWeapon
 			TNT1 A 0
 			{
 				player.mo.A_SetInventory("IsKicking",0);
+			}
+			stop;
+			
+		// Extra
+		KickImage1:
+			DKIC H 1;
+			DKIC H 1
+			{
+				A_OverlayAlpha(-3,0.334);
+			}
+			stop;
+		
+		KickImage2:
+			DKIC H 1;
+			DKIC H 1
+			{
+				A_OverlayAlpha(-4,0.1667);
 			}
 			stop;
 	}
