@@ -954,18 +954,45 @@ class DDWeapon : Weapon
 			checkvalfactor *= frandompick(0.875,1,1.125);
 		}
 		checkvalfactor *= 1.5;
+		if (CountInv("MAManual")) 
+		{
+			double temp1 = 0.25;
+			if (skill <= 0) temp1 = 0.125;
+			if (skill == 1) temp1 = 0.1875;
+			if (skill == 2) temp1 = 0.25;
+			if (skill == 3) temp1 = 0.3125;
+			if (skill >= 4) temp1 = 0.375;
+			double output = double(1.0 / temp1);
+			checkvalfactor *= output;
+		}
 		if (A_CheckBerserk()) checkvalfactor *= frandompick(3,3.5,3.5,4.0,4.0,4.0,4.375,4.375,4.375,4.375,4.375,4.75,4.75,4.75,5.125,5.125,5.5);
 		if (MiscItem) 
 		{
-			if (CountInv("DinahTrueIPState")) 
+			if (CountInv("MAManual")) 
 			{
-				if (A_CheckBerserk()) MaxCheck = (randompick(0,0,0,1,1) - (((TruePlayerLevel+1) * checkvalfactor) * 6));
-												 else MaxCheck = (randompick(1,1,1,2,2) - ((TruePlayerLevel+1) * checkvalfactor));
+				if (CountInv("DinahTrueIPState")) 
+				{
+					if (A_CheckBerserk()) MaxCheck = (randompick(0,0,0,0,1) - (((TruePlayerLevel+1) * checkvalfactor) * 6));
+													 else MaxCheck = (randompick(0,0,1,1,2) - (((TruePlayerLevel+1) * checkvalfactor) * 1));
+				}
+				else 
+				{
+					if (A_CheckBerserk()) MaxCheck = (1.3334 - (((TruePlayerLevel+1) * checkvalfactor) * 6));
+													 else MaxCheck = (8 - (((TruePlayerLevel+1) * checkvalfactor) * 1));
+				}
 			}
-			else 
+			else
 			{
-				if (A_CheckBerserk()) MaxCheck = (2.6667 - (((TruePlayerLevel+1) * checkvalfactor) * 6));
-												 else MaxCheck = (16 - ((TruePlayerLevel+1) * checkvalfactor));
+				if (CountInv("DinahTrueIPState")) 
+				{
+					if (A_CheckBerserk()) MaxCheck = (randompick(0,0,0,1,1) - (((TruePlayerLevel+1) * checkvalfactor) * 6));
+													 else MaxCheck = (randompick(1,1,1,2,2) - ((TruePlayerLevel+1) * checkvalfactor));
+				}
+				else 
+				{
+					if (A_CheckBerserk()) MaxCheck = (2.6667 - (((TruePlayerLevel+1) * checkvalfactor) * 6));
+													 else MaxCheck = (16 - ((TruePlayerLevel+1) * checkvalfactor));
+				}
 			}
 		}
 
@@ -1888,6 +1915,7 @@ class DinahWeapon : DDWeapon
 			}
 			DKIC G 1 // [12]
 			{
+				A_OverlayOffset(-2,0,32.0,0);
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
@@ -1901,6 +1929,7 @@ class DinahWeapon : DDWeapon
 				
 				player.mo.A_SetInventory("IsKicking",1);
 			}
+		KickHit:
 			DKIC H 1 // 1 [13] (Attack)
 			{
 				int tic = 1;
@@ -1939,10 +1968,17 @@ class DinahWeapon : DDWeapon
 					A_MeleeShieldPiece(mk,mkheight,mkdist3);
 				}
 				
+				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 17))
+				{
+					int rand = randompick(8,8,8,8,8,8,8,8,8,10,10,12);
+					A_OverlayOffset(-2,(random(-rand,rand)*frandom(3,5)),32.0+(random(-6,2)*frandom(3,5)),0);
+				}
 				player.mo.A_SetInventory("IsKicking",1);
 			}
+		KickRetract:
 			DKIC G 1 // 1 [14]
 			{
+				A_OverlayOffset(-2,0,32.0,0);
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
@@ -1958,6 +1994,7 @@ class DinahWeapon : DDWeapon
 			}
 			DKIC F 1 // 1 [15]
 			{
+				A_OverlayOffset(-2,0,32.0,WOF_INTERPOLATE);
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
