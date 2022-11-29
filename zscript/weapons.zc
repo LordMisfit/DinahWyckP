@@ -1244,7 +1244,7 @@ class DDWeapon : Weapon
 				
 				if (player.mo.CountInv("PowerStrength") || player.mo.CountInv("PowerStrengthDD")) movespeed *= 1.5;
 			}
-			if (movespeed > 64) movespeed = 64;
+			if (movespeed > 80) movespeed = 80;
 			
 			if (dydudebug_weaponstatdisplays) Console.Printf("movespeed: %d, bufffactor: %.4f, weaponfactor: %.4f", movespeed, bufffactor, weaponfactor);
 		}
@@ -1962,6 +1962,7 @@ class DinahWeapon : DDWeapon
 				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Base]: %.8f", recl);
 				
 				double reclbase = 0.0234375;
+				double output = 1.0;
 				if (CountInv("MAManual")) 
 				{
 					double temp1 = 0.25;
@@ -1970,7 +1971,7 @@ class DinahWeapon : DDWeapon
 					if (skill == 2) temp1 = 0.25;
 					if (skill == 3) temp1 = 0.3125;
 					if (skill >= 4) temp1 = 0.375;
-					double output = double(1.0 / temp1);
+					output = double(1.0 / temp1);
 					reclbase *= output;
 				}
 				double recoilmulti = (1.0 - (TruePlayerLevel * reclbase));
@@ -1978,8 +1979,10 @@ class DinahWeapon : DDWeapon
 				recl *= recoilmulti;
 				if (waterlevel >= 3) recl *= 0;
 				A_Recoil(recl);
-				
-				A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,"KickPuff",104,0,0,"","","");
+				int buttons = GetPlayerInput(INPUT_BUTTONS);
+				string kicktype = "KickPuff";
+				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 17) && buttons & BT_USER1 && random(1,16) <= random(11,15)) kicktype = "KickPuffNoThrust";
+				A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,kicktype,104,0,0,"","","");
 				if (A_CheckMeleeDestroyProj(2) > 0)
 				{
 					int mkheight = random(28,30);
@@ -1987,18 +1990,26 @@ class DinahWeapon : DDWeapon
 					int mkdist2 = 56;
 					int mkdist3 = 88;
 					string mk = "KickShieldNoReflect";
-					if (random(1,8) <= (1 + (TruePlayerLevel * 0.06))) mk = "KickShieldReflect";
+					if (random(1,8) <= (1 + (TruePlayerLevel * (0.06 * output)))) mk = "KickShieldReflect";
 					
 					A_MeleeShieldPiece(mk,mkheight,mkdist1);
 					A_MeleeShieldPiece(mk,mkheight,mkdist2);
 					A_MeleeShieldPiece(mk,mkheight,mkdist3);
 				}
+				double rand1 = randompick(8,8,8,8,8,8,8,8,8,10,10,12);
+				double xoff1 = (random(-rand1,rand1)*frandom(3,5));
+				double yoff1 = 32.0+(random(-6,2)*frandom(3,5));
+				
+				double rand2 = randompick(12,12,12,12,12,12,12,12,12,15,15,18);
+				double xoff2 = (random(-rand2,rand2)*frandom(3,5));
+				double yoff2 = 32.0+(random(-6,2)*frandom(3,5));
+				double ang = angle;
+				double pch = pitch;
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 21)) 
 				{
-					double rand2 = randompick(8,8,8,8,8,8,8,8,8,10,10,12) * frandom(3,5);
-					double ang = angle;
-					A_SetAngle(angle+frandom((-rand2*0.667),(rand2*0.667)));
-					A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,"KickPuff",104,0,0,"","","");
+					A_SetAngle(angle+(xoff1*0.667));
+					A_SetPitch(pitch+((yoff1-32.0)*-0.334));
+					A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,kicktype,104,0,0,"","","");
 					if (A_CheckMeleeDestroyProj(2) > 0)
 					{
 						int mkheight = random(28,30);
@@ -2006,20 +2017,20 @@ class DinahWeapon : DDWeapon
 						int mkdist2 = 56;
 						int mkdist3 = 88;
 						string mk = "KickShieldNoReflect";
-						if (random(1,8) <= (1 + (TruePlayerLevel * 0.06))) mk = "KickShieldReflect";
+						if (random(1,8) <= (1 + (TruePlayerLevel * (0.06 * output)))) mk = "KickShieldReflect";
 						
 						A_MeleeShieldPiece(mk,mkheight,mkdist1);
 						A_MeleeShieldPiece(mk,mkheight,mkdist2);
 						A_MeleeShieldPiece(mk,mkheight,mkdist3);
 					}
 					A_SetAngle(ang);
+					A_SetPitch(pch);
 				}
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 25)) 
 				{
-					double rand2 = randompick(8,8,8,8,8,8,8,8,8,10,10,12) * frandom(3,5);
-					double ang = angle;
-					A_SetAngle(angle+frandom((-rand2*0.667),(rand2*0.667)));
-					A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,"KickPuff",104,0,0,"","","");
+					A_SetAngle(angle+(xoff2*0.667));
+					A_SetPitch(pitch+((yoff2-32.0)*-0.334));
+					A_CustomPunch(A_GetKickDamage(0,0,false),true,CPF_NOTURN,kicktype,104,0,0,"","","");
 					if (A_CheckMeleeDestroyProj(2) > 0)
 					{
 						int mkheight = random(28,30);
@@ -2027,41 +2038,36 @@ class DinahWeapon : DDWeapon
 						int mkdist2 = 56;
 						int mkdist3 = 88;
 						string mk = "KickShieldNoReflect";
-						if (random(1,8) <= (1 + (TruePlayerLevel * 0.06))) mk = "KickShieldReflect";
+						if (random(1,8) <= (1 + (TruePlayerLevel * (0.06 * output)))) mk = "KickShieldReflect";
 						
 						A_MeleeShieldPiece(mk,mkheight,mkdist1);
 						A_MeleeShieldPiece(mk,mkheight,mkdist2);
 						A_MeleeShieldPiece(mk,mkheight,mkdist3);
 					}
 					A_SetAngle(ang);
+					A_SetPitch(pch);
 				}
 				
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 17))
 				{
-					int rand = randompick(8,8,8,8,8,8,8,8,8,10,10,12);
-					double xoff = (random(-rand,rand)*frandom(3,5));
-					double yoff = 32.0+(random(-6,2)*frandom(3,5));
-					A_OverlayOffset(-2,xoff,32.0+(random(-6,2)*frandom(3,5)),0);
+					double rand = frandompick(2.667,2.667,2.667,2.667,2.667,2.667,2.667,2.667,2.667,3.334,3.334,4.0);
+					double xoff = (random(-rand,rand)*frandom(1.5,2.5));
+					double yoff = 32.0+(frandom(-2,0.667)*frandom(1.5,2.5));
+					A_OverlayOffset(-2,xoff,yoff,0);
 					if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 21) || (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 17) && random(1,16) <= 5))
 					{
-						int rand = randompick(8,8,8,8,8,8,8,8,8,10,10,12);
-						double xoff = (random(-rand,rand)*frandom(3,5));
-						double yoff = 32.0+(random(-6,2)*frandom(3,5));
 						int layer = -3;
 						A_Overlay(layer,"KickImage1",true);
 						A_OverlayFlags(layer,PSPF_ALPHA|PSPF_FORCESTYLE,true);
-						A_OverlayOffset(layer,xoff,32.0+(random(-6,2)*frandom(3,5)),0);
+						A_OverlayOffset(layer,xoff1,yoff1,0);
 						A_OverlayRenderStyle(layer,STYLE_Translucent);
 						A_OverlayAlpha(layer,0.667);
 						if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 25) || (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 21) && random(1,16) <= 5) || (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 17) && random(1,32) <= 3))
 						{
-							int rand = randompick(8,8,8,8,8,8,8,8,8,10,10,12);
-							double xoff = (random(-rand,rand)*frandom(3,5));
-							double yoff = 32.0+(random(-6,2)*frandom(3,5));
 							int layer = -4;
 							A_Overlay(layer,"KickImage2",true);
 							A_OverlayFlags(layer,PSPF_ALPHA|PSPF_FORCESTYLE,true);
-							A_OverlayOffset(layer,xoff,32.0+(random(-6,2)*frandom(3,5)),0);
+							A_OverlayOffset(layer,xoff2,yoff2,0);
 							A_OverlayRenderStyle(layer,STYLE_Translucent);
 							A_OverlayAlpha(layer,0.334);
 						}
