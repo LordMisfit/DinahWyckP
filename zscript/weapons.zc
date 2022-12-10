@@ -1479,6 +1479,7 @@ class DDWeapon : Weapon
 				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Final]: %.8f", recoil);
 				
 				if (waterlevel >= 3) recoil *= 0;
+				if (bNOGRAVITY || bFLY) recoil *= 0.125;
 				A_Recoil(recoil);
 			}
 		}
@@ -1957,10 +1958,10 @@ class DinahWeapon : DDWeapon
 
 				// Base "Recoil"
 				int BerserkAdd;
-				double recl = frandompick(-0.125,-0.075,-0.025,0.025,0.075,0.125);
+				double recoil = frandompick(-0.125,-0.075,-0.025,0.025,0.075,0.125);
 				if (A_CheckBerserk()) BerserkAdd = randompick(1,1,1,1,2,2,2,2,3); else BerserkAdd = 0;
-				recl = recl * (random(7,17) + BerserkAdd);
-				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Base]: %.8f", recl);
+				recoil = recoil * (random(7,17) + BerserkAdd);
+				if (dydudebug_weaponrecoil) Console.Printf("\cxRecoil [Base]: %.8f", recoil);
 				
 				double reclbase = 0.0234375;
 				double output = 1.0;
@@ -1977,9 +1978,10 @@ class DinahWeapon : DDWeapon
 				}
 				double recoilmulti = (1.0 - (TruePlayerLevel * reclbase));
 				if (recoilmulti < 0.0) recoilmulti = 0.0;
-				recl *= recoilmulti;
-				if (waterlevel >= 3) recl *= 0;
-				A_Recoil(recl);
+				recoil *= recoilmulti;
+				if (waterlevel >= 3) recoil *= 0;
+				if (bNOGRAVITY || bFLY) recoil *= 0.125;
+				A_Recoil(recoil);
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				string kicktype = "KickPuff";
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(2) * 17) && buttons & BT_USER1 && random(1,16) <= random(11,15)) kicktype = "KickPuffNoThrust";
@@ -3916,7 +3918,7 @@ class KickPuffNoThrust : KickPuff
 				int KPower = 0;
 				if (target) KPower = (target.player.mo.Stamina / 10);
 				if (KPower > 10) KPower = 10;
-				double recl = frandom(-0.125,-0.075);
+				double recoil = frandom(-0.125,-0.075);
 				double dmg = random(28,52) + (KPower * 3.275);
 				if (KPower) dmg *= frandom(1.00,(1.00 + (KPower * frandompick(0.667,0.75,0.834))));
 				int radi = 24 * frandom(0.84375,1.15625);
@@ -3952,7 +3954,7 @@ class KickPuffNoThrust : KickPuff
 				int KPower = 0;
 				if (target) KPower = (target.player.mo.Stamina / 10);
 				if (KPower > 10) KPower = 10;
-				double recl = frandom(-0.125,-0.075);
+				double recoil = frandom(-0.125,-0.075);
 				double dmg = random(28,52) + (KPower * 3.275);
 				if (KPower) dmg *= frandom(1.00,(1.00 + (KPower * frandompick(0.667,0.75,0.834))));
 				int radi = 24 * frandom(0.84375,1.15625);
@@ -3988,7 +3990,7 @@ class KickPuffNoThrust : KickPuff
 				int KPower = 0;
 				if (target) KPower = (target.player.mo.Stamina / 10);
 				if (KPower > 10) KPower = 10;
-				double recl = frandom(-0.125,-0.075);
+				double recoil = frandom(-0.125,-0.075);
 				double dmg = random(28,52) + (KPower * 3.275);
 				if (KPower) dmg *= frandom(1.00,(1.00 + (KPower * frandompick(0.667,0.75,0.834))));
 				int radi = 24 * frandom(0.84375,1.15625);
@@ -6522,6 +6524,16 @@ class Blunderaxe : DinahWeapon
 			if (A_BlunderCheckComboLevel()) baserecoil *= frandom(1.375,1.625);
 																 else baserecoil *= frandom(1.625,1.875);
 		}
+		if (CountInv("PowerWineBuffIPMaximum")) baserecoil *= 0.0;
+		else if (CountInv("PowerWineBuffIPStrongestEven")) baserecoil *= frandompick(0.0,0.25);
+		else if (CountInv("PowerWineBuffStrongestEven")) baserecoil *= frandompick(0.40,0.55);
+		else if (CountInv("PowerWineBuffIPStrongest")) baserecoil *= frandompick(0.25,0.5);
+		else if (CountInv("PowerWineBuffStrongest")) baserecoil *= frandompick(0.55,0.70);
+		else if (CountInv("PowerWineBuffIPStrong")) baserecoil *= frandompick(0.50,0.75);
+		else if (CountInv("PowerWineBuffStrong")) baserecoil *= frandompick(0.70,0.85);
+		else if (CountInv("PowerWineBuffIPWeak")) baserecoil *= frandompick(0.75,1.000);
+		else if (CountInv("PowerWineBuffWeak")) baserecoil *= frandompick(0.85,1.000);
+		
 		if (MiscItem)
 		{
 			double RecoilReduceRate = 1.00;
@@ -6529,12 +6541,15 @@ class Blunderaxe : DinahWeapon
 			if (RecoilReduceRate <= 0.125) RecoilReduceRate = 0.125;
 			baserecoil *= RecoilReduceRate;
 		}
-		if (waterlevel >= 3) baserecoil *= 1.5;
+		if (waterlevel >= 3 || (bNOGRAVITY || bFLY)) baserecoil *= 1.5;
 		A_Recoil(baserecoil);
 	}
 	
 	action void A_BlunderShotAttack(double xyspread = 0.0, double zspread = 0.0, actor BombShots = null)
 	{
+		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = invoker.ActualLevel;
+		
 		invoker.horzspread = xyspread;
 		invoker.vertspread = zspread;
 		if (invoker.chopcombo)
@@ -6550,6 +6565,74 @@ class Blunderaxe : DinahWeapon
 				invoker.vertspread *= frandompick(1.000,1.500);
 			}
 		}
+		
+		if (CountInv("PowerWineBuffIPMaximum"))
+		{
+			invoker.horzspread *= frandompick(0.25,0.5);
+			invoker.vertspread *= frandompick(0.25,0.5);
+		}
+		else
+		if (CountInv("PowerWineBuffIPStrongestEven"))
+		{
+			invoker.horzspread *= frandompick(0.5,0.625);
+			invoker.vertspread *= frandompick(0.5,0.625);
+		}
+		else
+		if (CountInv("PowerWineBuffStrongestEven"))
+		{
+			invoker.horzspread *= frandompick(0.70,0.775);
+			invoker.vertspread *= frandompick(0.70,0.775);
+		}
+		else
+		if (CountInv("PowerWineBuffIPStrongest"))
+		{
+			invoker.horzspread *= frandompick(0.625,0.75);
+			invoker.vertspread *= frandompick(0.625,0.75);
+		}
+		else
+		if (CountInv("PowerWineBuffStrongest"))
+		{
+			invoker.horzspread *= frandompick(0.775,0.85);
+			invoker.vertspread *= frandompick(0.775,0.85);
+		}
+		else
+		if (CountInv("PowerWineBuffIPStrong"))
+		{
+			invoker.horzspread *= frandompick(0.75,0.875);
+			invoker.vertspread *= frandompick(0.75,0.875);
+		}
+		else
+		if (CountInv("PowerWineBuffStrong"))
+		{
+			invoker.horzspread *= frandompick(0.85,0.925);
+			invoker.vertspread *= frandompick(0.85,0.925);
+		}
+		else
+		if (CountInv("PowerWineBuffIPWeak"))
+		{
+			invoker.horzspread *= frandompick(0.875,1.000);
+			invoker.vertspread *= frandompick(0.875,1.000);
+		}
+		else
+		if (CountInv("PowerWineBuffWeak"))
+		{
+			invoker.horzspread *= frandompick(0.925,1.000);
+			invoker.vertspread *= frandompick(0.925,1.000);
+		}
+		
+		if (MiscItem)
+		{
+			double XYSpreadReduceRate = 1.00;
+			XYSpreadReduceRate = (1.00 - (TruePlayerLevel * 0.0125));
+			if (XYSpreadReduceRate <= 0.0875) XYSpreadReduceRate = 0.0875;
+			invoker.horzspread *= XYSpreadReduceRate;
+
+			double ZSpreadReduceRate = 1.00;
+			ZSpreadReduceRate = (1.00 - (TruePlayerLevel * 0.01625));
+			if (ZSpreadReduceRate <= 0.04375) ZSpreadReduceRate = 0.04375;
+			invoker.vertspread *= ZSpreadReduceRate;
+		}
+
 		actor BombShotsB;
 		if (random(1,2) == 1) [BombShotsB, BombShots] = A_FireProjectile("BlunderShot",frandom(-invoker.horzspread,invoker.horzspread),0,0,0,0,frandom(-invoker.vertspread,invoker.vertspread));
 										 else [BombShotsB, BombShots] = A_FireProjectile("BlunderShot",random(-invoker.horzspread,invoker.horzspread),0,0,0,0,random(-invoker.vertspread,invoker.vertspread));
@@ -6557,11 +6640,7 @@ class Blunderaxe : DinahWeapon
 		{
 			if (random(1,128) <= (randompick(6,8,8,8,10) + (CountInv("BlunderShotUpgrade") * randompick(24,32,32,32,40)))) bombshots.bDONTREFLECT = true;
 			
-			if (A_BlunderCheckComboLevel())
-			{
-				BombShots.Score = 12;
-				//Console.Printf("rn13");
-			}
+			if (A_BlunderCheckComboLevel()) BombShots.Score = 12;
 			if (invoker.IPAttackCheck)
 			{
 				EEProjectile IPCompat; 
@@ -9255,10 +9334,9 @@ class BlunderShot : EEProjectile
 	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
+		int rad = 3;
+		int hei = 3;
 		finaldamagedealt = (randompick(4,4,4,4,5) * random(2,16)); // 8-80
-		int rad, hei;
-		rad = 3;
-		hei = 3;
 		if (target && target.CountInv("BlunderShotUpgrade"))
 		{
 			if (target.CountInv("BlunderShotUpgrade") >= 3) 
@@ -9276,6 +9354,12 @@ class BlunderShot : EEProjectile
 			else if (target.CountInv("BlunderShotUpgrade") >= 1) 
 			{
 				finaldamagedealt = (randompick(4,4,4,5,5) * (random(4,16) + randompick(0,0,1))); // 16-85
+				rad = 3;
+				hei = 3;
+			}
+			else
+			{
+				finaldamagedealt = (randompick(4,4,4,4,5) * random(2,16)); // 8-80
 				rad = 3;
 				hei = 3;
 			}
@@ -9300,8 +9384,38 @@ class BlunderShot : EEProjectile
 		if (rad <= 1) rad = 1;
 		if (hei <= 1) hei = 1;
 		A_SetSize(rad,hei);
+		
+		if (target)
+		{
+			if (target.CountInv("PowerWineBuffIPMaximum")) finaldamagedealt *= frandompick(1.25,1.375);
+			else if (target.CountInv("PowerWineBuffIPStrongestEven")) finaldamagedealt *= frandompick(1.1875,1.25);
+			else if (target.CountInv("PowerWineBuffStrongestEven")) finaldamagedealt *= frandompick(1.1125,1.15);
+			else if (target.CountInv("PowerWineBuffIPStrongest")) finaldamagedealt *= frandompick(1.125,1.1875);
+			else if (target.CountInv("PowerWineBuffStrongest")) finaldamagedealt *= frandompick(1.075,1.1125);
+			else if (target.CountInv("PowerWineBuffIPStrong")) finaldamagedealt *= frandompick(1.0625,1.125);
+			else if (target.CountInv("PowerWineBuffStrong")) finaldamagedealt *= frandompick(1.0375,1.075);
+			else if (target.CountInv("PowerWineBuffIPWeak")) finaldamagedealt *= frandompick(1.00,1.0625);
+			else if (target.CountInv("PowerWineBuffWeak")) finaldamagedealt *= frandompick(1.00,1.0375);
+		}
 
 		if (dydudebug_rangedmg) Console.Printf("damage [%s]: %d", GetClassName(), finaldamagedealt);
+	}
+	
+	int A_ExplDmg(int finaldamagedealt)
+	{
+		if (target)
+		{
+			if (target.CountInv("PowerWineBuffIPMaximum")) finaldamagedealt *= frandompick(1.25,1.375);
+			else if (target.CountInv("PowerWineBuffIPStrongestEven")) finaldamagedealt *= frandompick(1.1875,1.25);
+			else if (target.CountInv("PowerWineBuffStrongestEven")) finaldamagedealt *= frandompick(1.1125,1.15);
+			else if (target.CountInv("PowerWineBuffIPStrongest")) finaldamagedealt *= frandompick(1.125,1.1875);
+			else if (target.CountInv("PowerWineBuffStrongest")) finaldamagedealt *= frandompick(1.075,1.1125);
+			else if (target.CountInv("PowerWineBuffIPStrong")) finaldamagedealt *= frandompick(1.0625,1.125);
+			else if (target.CountInv("PowerWineBuffStrong")) finaldamagedealt *= frandompick(1.0375,1.075);
+			else if (target.CountInv("PowerWineBuffIPWeak")) finaldamagedealt *= frandompick(1.00,1.0625);
+			else if (target.CountInv("PowerWineBuffWeak")) finaldamagedealt *= frandompick(1.00,1.0375);
+		}
+		return finaldamagedealt;
 	}
 	
 	States
@@ -9314,9 +9428,9 @@ class BlunderShot : EEProjectile
 			{
 				if (target && target.CountInv("BlunderShotUpgrade"))
 				{
-					if (target.CountInv("BlunderShotUpgrade") >= 3) { A_Explode(8,32,0,0,8); }
-					if (target.CountInv("BlunderShotUpgrade") == 2) { A_Explode(4,16,0,0,4); }
-					if (target.CountInv("BlunderShotUpgrade") == 1) { A_Explode(2,8,0,0,2); }
+					if (target.CountInv("BlunderShotUpgrade") >= 3) { A_Explode(A_ExplDmg(8),32,0,0,A_ExplDmg(8)); }
+					if (target.CountInv("BlunderShotUpgrade") == 2) { A_Explode(A_ExplDmg(4),16,0,0,A_ExplDmg(4)); }
+					if (target.CountInv("BlunderShotUpgrade") == 1) { A_Explode(A_ExplDmg(2),8,0,0,A_ExplDmg(2)); }
 				}
 			}
 			BBOM A 4 Bright;
@@ -9327,9 +9441,9 @@ class BlunderShot : EEProjectile
 			{
 				if (target && target.CountInv("BlunderShotUpgrade"))
 				{
-					if (target.CountInv("BlunderShotUpgrade") >= 3) { A_Explode(16,16,0,0,8); }
-					if (target.CountInv("BlunderShotUpgrade") == 2) { A_Explode(8,8,0,0,4); }
-					if (target.CountInv("BlunderShotUpgrade") == 1) { A_Explode(4,4,0,0,2); }
+					if (target.CountInv("BlunderShotUpgrade") >= 3) { A_Explode(A_ExplDmg(16),16,0,0,A_ExplDmg(8)); }
+					if (target.CountInv("BlunderShotUpgrade") == 2) { A_Explode(A_ExplDmg(8),8,0,0,A_ExplDmg(4)); }
+					if (target.CountInv("BlunderShotUpgrade") == 1) { A_Explode(A_ExplDmg(4),4,0,0,A_ExplDmg(2)); }
 				}
 			}
 			BBOM A 4 Bright;
@@ -12687,11 +12801,11 @@ class WizardPike : DinahWeapon
 		if (MiscItem)
 		{
 			double RecoilReduceRate = 1.00;
-			RecoilReduceRate = (1.00 - (TruePlayerLevel * 0.00875));
-			if (RecoilReduceRate <= 0.125) RecoilReduceRate = 0.125;
+			RecoilReduceRate = (1.00 - (TruePlayerLevel * 0.0175));
+			if (RecoilReduceRate <= 0.0625) RecoilReduceRate = 0.0625;
 			baserecoil *= RecoilReduceRate;
 		}
-		if (waterlevel >= 3) baserecoil *= 1.5;
+		if (waterlevel >= 3 || (bNOGRAVITY || bFLY)) baserecoil *= 1.5;
 		A_Recoil(baserecoil);
 	}
 	
@@ -17773,10 +17887,17 @@ class FosnianCandle : DinahWeapon
 			quakedurtime *= 0.25;
 			quaketremrad *= 0.25;
 		}
+		if (bNOGRAVITY || bFLY)
+		{
+			quakeint *= 2.0;
+			quakedurtime *= 2.0;
+			quaketremrad *= 2.0;
+		}
 		A_Quake(quakeint,quakedurtime,0,quaketremrad,0);
 		
 		double truerecoil = baserecoil + (recoilerr * baserecoil);
 		if (waterlevel >= 3) truerecoil *= 0.25;
+		if (bNOGRAVITY || bFLY) truerecoil *= 2.0;
 		A_Recoil(truerecoil);
 		if (dydudebug_weaponrecoil) 
 		{
