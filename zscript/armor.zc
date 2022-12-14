@@ -398,11 +398,11 @@ class ArmorScrap : KGArmorBonus
 	{
 		super.PostBeginPlay();
 		spawntype = 1;
-		if (skill <= 0) basespawnchance = 3;
-		if (skill == 1) basespawnchance = 4;
-		if (skill == 2) basespawnchance = 5;
-		if (skill == 3) basespawnchance = 6;
-		if (skill >= 4) basespawnchance = 7;
+		if (skill <= 0) basespawnchance = 6;
+		if (skill == 1) basespawnchance = 8;
+		if (skill == 2) basespawnchance = 10;
+		if (skill == 3) basespawnchance = 12;
+		if (skill >= 4) basespawnchance = 14;
 		if (bDROPPED) 
 		{
 			if (skill <= 0) basespawnchance *= 1.25;
@@ -411,25 +411,47 @@ class ArmorScrap : KGArmorBonus
 			if (skill == 3) basespawnchance *= 3;
 			if (skill >= 4) basespawnchance *= 4;
 		}
-		if (random(1,basespawnchance) <= 1)
+		actor player = players[0].mo;
+		let globalvars = DDGlobalVariables.Get();
+		int mapsbeat = 0;
+		if (globalvars) 
 		{
-			if (random(1,basespawnchance) <= 1)
+			if (player.CountInv("IsDynDuchess") || 
+					player.CountInv("IsAppetite") || 
+					player.CountInv("IsCarnOfSouls") || 
+					player.CountInv("IsWeddingCake"))
 			{
-				SaveAmount = 5;
-				Scale = (1.125, 1.125);
-				spawntype = 2;
-				if (random(1,basespawnchance) <= 1) 
+				mapsbeat = 0;
+			}
+			else
+			{
+				mapsbeat = (globalvars.MapsFinished + 1);
+			}
+		}
+		double base = 0.025;
+		if (bDROPPED) base *= 0.25;
+		if (random(1,basespawnchance) <= (1 + (mapsbeat * base)))
+		{
+			SaveAmount = 5;
+			Scale = (1.125, 1.125);
+			spawntype = 2;
+			
+			base = 0.0125;
+			if (bDROPPED) base *= 0.25;
+			if (random(1,basespawnchance) <= (1 + (mapsbeat * base)))
+			{
+				SaveAmount = 10;
+				Scale = (1.3125, 1.3125);
+				spawntype = 3;
+				
+				base = 0.00625;
+				if (bDROPPED) base *= 0.25;
+				if (random(1,basespawnchance) <= (1 + (mapsbeat * base))) 
 				{
-					SaveAmount = 10;
-					Scale = (1.3125, 1.3125);
-					spawntype = 3;
-					if (random(1,basespawnchance) <= 1) 
-					{
-						SaveAmount = 25;
-						Scale = (1.5, 1.5);
-						spawntype = 4;
-						bFLOATBOB = false;
-					}
+					SaveAmount = 25;
+					Scale = (1.5, 1.5);
+					spawntype = 4;
+					bFLOATBOB = false;
 				}
 			}
 		}
