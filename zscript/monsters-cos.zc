@@ -11720,6 +11720,30 @@ class Tempest_BossClone : DDOrigBoss
 		if (GetAge() % 35 == 5) A_CheckTag();
 	}
 	
+	
+	bool A_CheckForHeels()
+	{
+		bool result = true;
+		ThinkerIterator HeelFinder = ThinkerIterator.Create("ReelHeelNew");
+		Actor mo;
+		ReelHeelNew mo2;
+		int numfound = 0;
+		while (mo = Actor(HeelFinder.Next()))
+		{
+			mo2 = ReelHeelNew(mo);
+			if (mo2 && mo2.health > 0 && mo2.master == self) numfound++;
+		}
+		int maxheels = 10;
+		if (skill <= 0) maxheels -= 3;
+		if (skill == 1) maxheels -= 1;
+		if (skill == 2) maxheels += 0;
+		if (skill == 3) maxheels += 1;
+		if (skill >= 4) maxheels += 3;
+		if (numfound >= maxheels) result = false;
+		//Console.Printf("numfound: %d", numfound);
+		return result;
+	}
+
 	void A_TempestTele(int type = 0)
 	{	
 		if (type == 0) // Teleport In
@@ -11807,7 +11831,11 @@ class Tempest_BossClone : DDOrigBoss
 						else
 						{
 							int basec = random(8,12);
-							if (random(1,256) <= (basec + (CountInv("MonsterLevel") * (basec * 0.05)))) return resolvestate("SummonHeels");
+							if (random(1,256) <= (basec + (CountInv("MonsterLevel") * (basec * 0.05)))) 
+							{
+								if (A_CheckForHeels()) return resolvestate("SummonHeels");
+																	else return resolvestate(null);
+							}
 							return resolvestate(null);
 						}
 						return resolvestate(null);
@@ -11870,7 +11898,8 @@ class Tempest_BossClone : DDOrigBoss
 				int baserhc = random(16,24);
 				if (random(1,256) <= (baserhc + (CountInv("MonsterLevel") * (baserhc * 0.025)))) 
 				{
-					return resolvestate("SummonHeels");
+					if (A_CheckForHeels()) return resolvestate("SummonHeels");
+														else return resolvestate(null);
 				}
 				else
 				{
