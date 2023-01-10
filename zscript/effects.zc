@@ -2031,6 +2031,74 @@ class PowerDouble : PowerDamage
 	}
 }
 
+class PowerHalve : PowerDamage
+{
+	int timer;
+	int fadeouttic;
+	double ticpiece;
+	string texname;
+	
+	default
+	{
+		inventory.icon "ATKDOWN";
+		Powerup.Duration -30;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+	
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (!passive && damage > 0)
+		{
+			double TOTALFactor = 0.5;
+			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+		}
+	}
+	
+	override void Tick ()
+	{
+		timer++;
+		if (timer % 24 >= 0 && timer % 24 <= 5) texname = "ATKDOWN";
+		if (timer % 24 >= 6 && timer % 24 <= 11) texname = "ATKDOWN";
+		if (timer % 24 >= 12 && timer % 24 <= 17) texname = "ATKDOWN";
+		if (timer % 24 >= 18 && timer % 24 <= 23) texname = "ATKDOWN";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner)
+		{
+			if (!owner.CountInv("INTERMAPChecker"))
+			{
+				if (owner.CountInv("TimePotionTimeFreezer"))
+				{
+					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
+					if (owner.CountInv("MysteryItem2")) ticpiece *= 0.25;
+					while (ticpiece >= 10)
+					{
+						EffectTics--;
+						ticpiece -= 10;
+					}
+				}
+				else
+				{
+					EffectTics--;
+				}
+			}
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy ();
+		if (EffectTics <= 0) Destroy();
+		//Console.Printf("EffectTics: %d", EffectTics);
+	}
+}
+
 
 class PowerGuard : PowerProtection
 {
@@ -2072,6 +2140,80 @@ class PowerGuard : PowerProtection
 		if (timer % 24 >= 6 && timer % 24 <= 11) texname = "GUADB0";
 		if (timer % 24 >= 12 && timer % 24 <= 17) texname = "GUADC0";
 		if (timer % 24 >= 18 && timer % 24 <= 23) texname = "GUADD0";
+		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
+		
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (owner)
+		{
+			if (!owner.CountInv("INTERMAPChecker"))
+			{
+				if (owner.CountInv("TimePotionTimeFreezer"))
+				{
+					if (MiscItem && MiscItem.TimeFreezeIPBuff) ticpiece += (frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0) * 0.4);
+																								else ticpiece += frandompick(4.0,4.0,5.0,5.0,5.0,5.0,5.0,5.0,6.0,6.0);
+					if (owner.CountInv("MysteryItem")) ticpiece *= 0.25;
+					if (owner.CountInv("MysteryItem2")) ticpiece *= 0.25;
+					while (ticpiece >= 10)
+					{
+						EffectTics--;
+						ticpiece -= 10;
+					}
+				}
+				else
+				{
+					EffectTics--;
+				}
+			}
+		}
+		
+		// Powerups cannot exist outside an inventory
+		if (Owner == NULL) Destroy ();
+		if (EffectTics <= 0) Destroy();
+		//Console.Printf("EffectTics: %d", EffectTics);
+	}
+}
+
+class PowerWeaken : PowerProtection
+{
+	int timer;
+	int fadeouttic;
+	double ticpiece;
+	string texname;
+	
+	default
+	{
+		inventory.icon "DEFDOWN";
+		Powerup.Duration -30;
+		+INVENTORY.PERSISTENTPOWER;
+		+INVENTORY.HUBPOWER;
+		+INVENTORY.ADDITIVETIME;
+	}
+	
+	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (passive && damage > 0)
+		{
+			double TOTALFactor = 2.0;
+			if (damageType == 'Falling' ||
+					damageType == 'Crush' ||
+					damageType == 'Drowning' ||
+					damageType == 'Slime' ||
+					damageType == 'Magma') TOTALFactor = 1.142857142857143;
+			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+			if (dydudebug_defensebuffs) Console.Printf("(%s) TOTALFactor: %.8f, damage: %d [%d]", GetClassName(), TOTALFactor, newdamage, damage);
+		}
+	}
+	
+	override void Tick ()
+	{
+		timer++;
+		if (timer % 24 >= 0 && timer % 24 <= 5) texname = "DEFDOWN";
+		if (timer % 24 >= 6 && timer % 24 <= 11) texname = "DEFDOWN";
+		if (timer % 24 >= 12 && timer % 24 <= 17) texname = "DEFDOWN";
+		if (timer % 24 >= 18 && timer % 24 <= 23) texname = "DEFDOWN";
 		icon = TexMan.CheckForTexture(texname, TexMan.TYPE_MiscPatch);
 		
 		actor player = players[0].mo;

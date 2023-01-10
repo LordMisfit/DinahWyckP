@@ -8495,16 +8495,6 @@ class ArchonOfHell : BaronOfHellNew
 			BOS4 Q 2;
 			BOS4 Q 2 A_EEPain();
 			Goto See;
-		Pain.Fist: 
-			BOS4 Q 2;
-			BOS4 Q 2 A_EEPain();
-			BOS4 QQ 2;
-			Goto See;
-		Pain.Kick: 
-			BOS4 Q 2;
-			BOS4 Q 2 A_EEPain();
-			BOS4 QQQQ 2;
-			Goto See;
 		Pain.Ice:
 			BOS4 Q 2;
 			BOS4 Q 2 A_EEPain();
@@ -9024,7 +9014,6 @@ class PyroDemon : BaronofHellNew
 			}
 			PYRO Q 2;
 			PYRO Q 2 A_EEPain();
-			PYRO QQ 2;
 			Goto See;
 		Pain.Kick: 
 			PYRO A 0
@@ -9038,7 +9027,6 @@ class PyroDemon : BaronofHellNew
 			}
 			PYRO Q 2;
 			PYRO Q 2 A_EEPain();
-			PYRO QQQQ 2;
 			Goto See;
 		Pain.Ice:
 			PYRO Q 2;
@@ -9476,6 +9464,744 @@ class WalkFire2 : WalkFire
 				A_SetScale(frandom(1.25,1.5),frandom(1.25,1.5));
 			}
 			FRTF ABCDEFGHIJKLMNO 3 Bright;
+			Stop;
+	}
+}
+
+
+// Hierophant
+class Hierophant : EECreature 
+{
+	default
+	{
+		//$Angled
+		//$Color 12
+		//$Category "Monsters/Hell Nobles"
+		Tag "Hierophant";
+
+		Health 2700;
+		Radius 24;
+		Height 60;
+		Mass 2500;
+		Speed 15;
+		PainChance 24;
+		Painchance "Fist", 36; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 60; // Kick attacks have a +150% chance of stunning an enemy
+		Painchance "Fire", 3;
+		Painchance "Ice", 192;
+
+		RadiusDamageFactor 0.25;
+		DamageFactor "Explosive", 0.25;
+
+		DamageFactor "Fire", 0.25;
+		DamageFactor "Ice", 2.5;
+		DamageFactor "Crush", 0.4; // 3.2
+		MeleeDamage 15;
+		Monster;
+		Species "HellNoble";
+		+NOTARGET;
+		+FLOORCLIP;
+		+MISSILEMORE;
+		+FLOAT;
+		+NOGRAVITY;
+		+DONTHARMSPECIES;
+		SeeSound "monster/Hiesit";
+		PainSound "monster/Hiepai";
+		DeathSound "monster/Hiedth";
+		MeleeSound "baron/melee";
+		ActiveSound "monster/Hieact";
+		Obituary "%o was hexed by a Hierophant.";
+		HitObituary "%o got shredded by a Hierophant.";
+	}
+
+	States
+	{
+		Spawn: 
+			HIER A 0 NoDelay;
+			HIER AC 5 A_FloatLook(12);
+			goto Spawn+1;
+		See:
+			HIER A 0;
+			HIER AABBAACCDDCC 2
+			{
+				A_FloatChaseCheck(3,6,9,12,0.4,0.4);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { bAVOIDMELEE = true; }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(1); }
+
+				A_FastChaseCalc(16,4);
+				if (random(1,256) <= user_fastchasechance) { A_EEChase("Melee","Missile",CHF_FASTCHASE,1,3,1,1); A_FloatSetFChaseT(randompick(0,3,6)); } else { A_EEChase("Melee","Missile",0,1,3,1,1); }
+				user_painfastchase = 0;
+			}
+			HIER A 0 A_Jump(64, "Blur");
+			Loop;
+		Blur:
+			HIER A 1 A_StartSound("monster/blur");
+			HIER AAAAAAAAAAAAAAAAAAAAAA 1 
+			{
+				A_SpawnItemEx("HieroFX",0,0,0,0,0,0,0,128,0);
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+			}
+			Goto See;
+		Missile:
+			TNT1 A 0
+			{
+				user_painfastchase = 0;
+			}
+			HIER A 0 A_FaceTarget();
+			HIER A 0 A_Jump(256, "Missile1", "Missile2", "Missile3");
+		Missile1:
+			HIER EF 7 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+			}
+			HIER G 7 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+
+				user_tempvar1 = 26;
+				user_tempvar2 = 15;
+				A_SpawnProjectile("HieroBall1",user_tempvar1,0,random(-6,-1),0);
+				A_SpawnProjectile("HieroBall1",user_tempvar1,0,random(1,6),0);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= random(112,113))
+				{
+					A_SpawnProjectile("HieroBall1",user_tempvar1,0,(user_tempvar2*1)+random(1,6));
+					A_SpawnProjectile("HieroBall1",user_tempvar1,0,(user_tempvar2*-1)+random(-6,-1));
+					if (CountInv("MonsterLevel") >= 225)
+					{
+						A_SpawnProjectile("HieroBall1",user_tempvar1,0,(user_tempvar2*2)+random(1,6));
+						A_SpawnProjectile("HieroBall1",user_tempvar1,0,(user_tempvar2*-2)+random(-6,-1));
+					}
+				}
+			}
+			HIER A 3 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+			}
+			HIER HI 7 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+			}
+			HIER J 7 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+
+				user_tempvar1 = 26;
+				user_tempvar2 = 15;
+				A_SpawnProjectile("HieroBall1",26,0,random(-6,-1),0);
+				A_SpawnProjectile("HieroBall1",26,0,random(1,6),0);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= random(112,113))
+				{
+					A_SpawnProjectile("HieroBall1",user_tempvar1,0,(user_tempvar2*1)+random(1,6));
+					A_SpawnProjectile("HieroBall1",user_tempvar1,0,(user_tempvar2*-1)+random(-6,-1));
+					if (CountInv("MonsterLevel") >= 225)
+					{
+						A_SpawnProjectile("HieroBall1",user_tempvar1,0,(user_tempvar2*2)+random(1,6));
+						A_SpawnProjectile("HieroBall1",user_tempvar1,0,(user_tempvar2*-2)+random(-6,-1));
+					}
+				}
+			}
+			HIER A 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_SpidRefire();
+			}
+			HIER A 0 A_Jump(64, "Missile1");
+			Goto See;
+		Missile2: // Curse Shot
+			HIER HI 7 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+			}
+			HIER J 7 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+
+				A_SpawnProjectile("CurseBall",26,0,0,0);
+			}
+			HIER A 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_SpidRefire();
+			}
+			HIER EF 7 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) 
+				{
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+					A_FaceTarget();
+				}
+				else
+				{
+					A_SetTics(0);
+				}
+			}
+			HIER G 7 Bright 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) 
+				{
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+					A_FaceTarget();
+	
+					user_tempvar1 = 26;
+					user_tempvar2 = 15;
+					A_SpawnProjectile("CurseBall",user_tempvar1,0,0);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= random(112,113))
+					{
+						A_SpawnProjectile("CurseBall",user_tempvar1,0,(user_tempvar2*1));
+						A_SpawnProjectile("CurseBall",user_tempvar1,0,(user_tempvar2*-1));
+						if (CountInv("MonsterLevel") >= 225)
+						{
+							A_SpawnProjectile("CurseBall",user_tempvar1,0,(user_tempvar2*2));
+							A_SpawnProjectile("CurseBall",user_tempvar1,0,(user_tempvar2*-2));
+						}
+					}
+				}
+				else
+				{
+					A_SetTics(0);
+				}
+			}
+			HIER A 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) 
+				{
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+					A_SpidRefire();
+				}
+				else
+				{
+					A_SetTics(0);
+				}
+			}
+			HIER A 0 A_Jump(128,"Missile1","Missile3");
+			Goto See;
+
+		Missile3:
+			HIER KLM 5 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				
+				user_shotsfired = 0;
+				user_shotsfiredmax = 8 + ((CountInv("MonsterLevel")/7.5)*2) + random(0,2);
+				A_FaceTarget();
+			}
+		Missile3Loop:
+			HIER N 1 Bright
+			{
+				user_tempvar1 = 32;
+				user_tempvar2 = 15;
+				A_SpawnProjectile("HieroBall2",user_tempvar1,0,0);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= random(112,113))
+				{
+					A_SpawnProjectile("HieroBall2",user_tempvar1,0,(user_tempvar2*1));
+					A_SpawnProjectile("HieroBall2",user_tempvar1,0,(user_tempvar2*-1));
+					if (CountInv("MonsterLevel") >= 225)
+					{
+						A_SpawnProjectile("HieroBall2",user_tempvar1,0,(user_tempvar2*2));
+						A_SpawnProjectile("HieroBall2",user_tempvar1,0,(user_tempvar2*-2));
+					}
+				}
+			}
+			HIER O 1 Bright A_FaceTarget();
+			HIER O 0 Bright 
+			{
+				user_shotsfired += 1;
+				if (user_shotsfired >= user_shotsfiredmax) { return resolvestate("Missile3End"); }
+				return resolvestate(null);
+			}
+			loop;
+		Missile3End:
+			HIER L 5 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+			}
+			Goto See;
+
+		Melee:
+			TNT1 A 0;
+			HIER EF 8  
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 80) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 40) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 20) { A_SetTics(7); }
+				A_FaceTarget();
+			}
+			HIER G 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(15,"baron/melee","none","Melee",1); // A_MeleeAttack;
+			}
+			HIER A 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+			}
+			HIER A 0 A_Jump(128, 1);
+			Goto See;
+			HIER HI 8
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 80) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 40) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 20) { A_SetTics(7); }
+				A_FaceTarget();
+			}
+			HIER J 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(15,"baron/melee","none","Melee",1); // A_MeleeAttack;
+			}
+			HIER A 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+			}
+			Goto See;
+
+		Pain: 
+			HIER P 2;
+			HIER P 2
+			{
+				A_FloatPain(0,6,64);
+				user_painfastchase = 3 * random(1,8);
+			}
+			Goto See;
+		Pain.Ice:
+			HIER P 2;
+			HIER P 2
+			{
+				A_FloatPain(0,6,64);
+				user_painfastchase = 12 * random(1,8);
+			}
+			HIER PPPPPPPP 2;
+			Goto See;
+
+		Death:
+			HIER Q 6;
+			HIER R 6 A_Scream();
+			HIER S 6 A_NoBlocking();
+			HIER TUV 6;
+			HIER W 6;
+			HIER X 0 A_SetFloorClip();
+			HIER X -1 A_BossDeath();
+			Stop;
+		Ice:
+			HIER P 5 A_GenericFreezeDeath();
+			HIER P 1 A_FreezeDeathChunks();
+			wait;
+		Raise:
+			HIER W 6;
+			HIER VUTSRQ 6;
+			goto See;
+	}
+}
+
+// Hierophant Curses = Blunt/Sap/Deceleratle
+class CurseTrail : EEBaseZSC
+{
+	default
+	{
+		Radius 1;
+		Height 1;
+		Projectile;
+		+ForceXYBillBoard;
+		RenderStyle "Add";
+		Alpha 0.80;
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 3;
+			CURS JLMNOPR 3 Bright;
+			Stop;
+	}
+}
+
+class CurseBall : EEEffectProjectile
+{
+	default
+	{
+		Tag "CurseBane Ball";
+		Radius 6;
+		Height 16;
+		Speed 20;
+		FastSpeed 26;
+		DamageFunction (0);
+		Projectile;
+		+RANDOMIZE;
+		+FORCEXYBILLBOARD;
+		+FORCERADIUSDMG;
+		+NODAMAGETHRUST;
+		+SEEKERMISSILE;
+		RenderStyle "Add";
+		Alpha 0.90;
+		SeeSound "monster/curse1";
+		DeathSound "monster/curse2";
+		Decal "MummyScorch";
+		DamageType "Dark";
+	}
+	
+	States
+	{
+		Spawn: 
+			CURS A 2 Bright 
+			{
+				A_SpawnItemEx("CurseTrail",0,0,0,0,0,0,0,128,0);
+				A_SeekerMissile(random(6,9),random(7,10));
+			}
+			CURS B 2 Bright 
+			{
+				A_SpawnItemEx("CurseTrail",0,0,0,0,0,0,0,128,0);
+				if (random(1,10) == 1) { A_SeekerMissile(random(2,3),random(3,4)); }
+			}
+			CURS C 2 Bright 
+			{
+				A_SpawnItemEx("CurseTrail",0,0,0,0,0,0,0,128,0);
+				A_SeekerMissile(random(6,9),random(7,10));
+			}
+			CURS D 2 Bright 
+			{
+				A_SpawnItemEx("CurseTrail",0,0,0,0,0,0,0,128,0);
+				if (random(1,10) == 1) { A_SeekerMissile(random(2,3),random(3,4)); }
+			}
+			Loop;
+		Death:
+			TNT1 A 0 Bright
+			{
+				if (IsPointerEqual(AAPTR_MASTER, AAPTR_PLAYER1) == TRUE) 
+				{
+					// 1
+					A_StatusEffectChecker(4);
+					if (random(1,user_ailmentmaxchance) <= 2 && user_canafflict)
+					{
+						user_random = random(1,12);
+						if (user_random >= 1 && user_random <= 4)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerWeaken"))
+							{
+								player.mo.SetInventory("PowerWeaken",1);
+								let SapItem = PowerWeaken(player.mo.FindInventory("PowerWeaken"));
+								if (SapItem) SapItem.EffectTics = basetime;
+							}
+							else
+							{
+								let SapItem = PowerWeaken(player.mo.FindInventory("PowerWeaken"));
+								if (SapItem) SapItem.EffectTics += basetime;
+							}
+						}
+						if (user_random >= 5 && user_random <= 8)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerHalve"))
+							{
+								player.mo.SetInventory("PowerHalve",1);
+								let BluntItem = PowerHalve(player.mo.FindInventory("PowerHalve"));
+								if (BluntItem) BluntItem.EffectTics = basetime;
+							}
+							else
+							{
+								let BluntItem = PowerHalve(player.mo.FindInventory("PowerHalve"));
+								if (BluntItem) BluntItem.EffectTics += basetime;
+							}
+						}
+						if (user_random >= 9 && user_random <= 12)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerSlow"))
+							{
+								player.mo.SetInventory("PowerSlow",1);
+								let SlowItem = PowerSlow(player.mo.FindInventory("PowerSlow"));
+								if (SlowItem) SlowItem.EffectTics = basetime;
+							}
+							else
+							{
+								let SlowItem = PowerSlow(player.mo.FindInventory("PowerSlow"));
+								if (SlowItem) SlowItem.EffectTics += basetime;
+							}
+						}
+					}
+	
+					// 2
+					A_StatusEffectChecker(4);
+					if (random(1,user_ailmentmaxchance) <= 2 && user_canafflict)
+					{
+						user_random = random(1,12);
+						if (user_random >= 1 && user_random <= 4)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerWeaken"))
+							{
+								player.mo.SetInventory("PowerWeaken",1);
+								let SapItem = PowerWeaken(player.mo.FindInventory("PowerWeaken"));
+								if (SapItem) SapItem.EffectTics = basetime;
+							}
+							else
+							{
+								let SapItem = PowerWeaken(player.mo.FindInventory("PowerWeaken"));
+								if (SapItem) SapItem.EffectTics += basetime;
+							}
+						}
+						if (user_random >= 5 && user_random <= 8)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerHalve"))
+							{
+								player.mo.SetInventory("PowerHalve",1);
+								let BluntItem = PowerHalve(player.mo.FindInventory("PowerHalve"));
+								if (BluntItem) BluntItem.EffectTics = basetime;
+							}
+							else
+							{
+								let BluntItem = PowerHalve(player.mo.FindInventory("PowerHalve"));
+								if (BluntItem) BluntItem.EffectTics += basetime;
+							}
+						}
+						if (user_random >= 9 && user_random <= 12)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerSlow"))
+							{
+								player.mo.SetInventory("PowerSlow",1);
+								let SlowItem = PowerSlow(player.mo.FindInventory("PowerSlow"));
+								if (SlowItem) SlowItem.EffectTics = basetime;
+							}
+							else
+							{
+								let SlowItem = PowerSlow(player.mo.FindInventory("PowerSlow"));
+								if (SlowItem) SlowItem.EffectTics += basetime;
+							}
+						}
+					}
+	
+					// 3
+					A_StatusEffectChecker(4);
+					if (random(1,user_ailmentmaxchance) <= 2 && user_canafflict)
+					{
+						user_random = random(1,12);
+						if (user_random >= 1 && user_random <= 4)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerWeaken"))
+							{
+								player.mo.SetInventory("PowerWeaken",1);
+								let SapItem = PowerWeaken(player.mo.FindInventory("PowerWeaken"));
+								if (SapItem) SapItem.EffectTics = basetime;
+							}
+							else
+							{
+								let SapItem = PowerWeaken(player.mo.FindInventory("PowerWeaken"));
+								if (SapItem) SapItem.EffectTics += basetime;
+							}
+						}
+						if (user_random >= 5 && user_random <= 8)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerHalve"))
+							{
+								player.mo.SetInventory("PowerHalve",1);
+								let BluntItem = PowerHalve(player.mo.FindInventory("PowerHalve"));
+								if (BluntItem) BluntItem.EffectTics = basetime;
+							}
+							else
+							{
+								let BluntItem = PowerHalve(player.mo.FindInventory("PowerHalve"));
+								if (BluntItem) BluntItem.EffectTics += basetime;
+							}
+						}
+						if (user_random >= 9 && user_random <= 12)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerSlow"))
+							{
+								player.mo.SetInventory("PowerSlow",1);
+								let SlowItem = PowerSlow(player.mo.FindInventory("PowerSlow"));
+								if (SlowItem) SlowItem.EffectTics = basetime;
+							}
+							else
+							{
+								let SlowItem = PowerSlow(player.mo.FindInventory("PowerSlow"));
+								if (SlowItem) SlowItem.EffectTics += basetime;
+							}
+						}
+					}
+	
+					// 4
+					A_StatusEffectChecker(4);
+					if (random(1,user_ailmentmaxchance) <= 2 && user_canafflict)
+					{
+						user_random = random(1,12);
+						if (user_random >= 1 && user_random <= 4)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerWeaken"))
+							{
+								player.mo.SetInventory("PowerWeaken",1);
+								let SapItem = PowerWeaken(player.mo.FindInventory("PowerWeaken"));
+								if (SapItem) SapItem.EffectTics = basetime;
+							}
+							else
+							{
+								let SapItem = PowerWeaken(player.mo.FindInventory("PowerWeaken"));
+								if (SapItem) SapItem.EffectTics += basetime;
+							}
+						}
+						if (user_random >= 5 && user_random <= 8)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerHalve"))
+							{
+								player.mo.SetInventory("PowerHalve",1);
+								let BluntItem = PowerHalve(player.mo.FindInventory("PowerHalve"));
+								if (BluntItem) BluntItem.EffectTics = basetime;
+							}
+							else
+							{
+								let BluntItem = PowerHalve(player.mo.FindInventory("PowerHalve"));
+								if (BluntItem) BluntItem.EffectTics += basetime;
+							}
+						}
+						if (user_random >= 9 && user_random <= 12)
+						{
+							int basetime = random(315,525);
+							if (!player.mo.CountInv("PowerSlow"))
+							{
+								player.mo.SetInventory("PowerSlow",1);
+								let SlowItem = PowerSlow(player.mo.FindInventory("PowerSlow"));
+								if (SlowItem) SlowItem.EffectTics = basetime;
+							}
+							else
+							{
+								let SlowItem = PowerSlow(player.mo.FindInventory("PowerSlow"));
+								if (SlowItem) SlowItem.EffectTics += basetime;
+							}
+						}
+					}
+				}
+			}
+		Death2:
+			CURS E 0 Bright A_SetTranslucent(0.80, 1);
+			CURS E 3 Bright A_Explode(25, 32, 0, 1, 32, 0, 0);
+			CURS FGHI 3 Bright;
+			Stop;
+	}
+}
+
+class HieroFX : EEBaseZSC
+{
+	default
+	{
+		Radius 2;
+		Height 2;
+		+NoGravity;
+		+NoBlockMap;
+		RenderStyle "Translucent";
+		Scale 1.0;
+		Alpha 0.80;
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 3;
+			HIER A 5 A_FadeOut(0.10);
+			Goto Spawn+1;
+	}
+}
+
+class HieroBall1 : BaronBallNew
+{
+	default
+	{
+		Tag "Hierophant Fireblast";
+		Speed 10;
+		Damage 10;
+		+FORCEXYBILLBOARD;
+		Decal "RevenantScorch";
+		DamageType "Fire";
+	}
+	
+	States
+	{
+		Spawn: 
+			HIB1 AABB 2 Bright;
+			Loop;
+		Death:
+			HIB1 C 0 Bright A_SetTranslucent(0.75, 1);
+			HIB1 C 3 Bright;
+			HIB1 D 3 Bright A_Explode(32, 32, 0);
+			HIB1 EFG 3 Bright;
+			Stop;
+	}
+}
+
+class HieroBall2 : EEProjectile
+{
+	default
+	{
+		Tag "Hierophant Spiraler";
+		Radius 10;
+		Height 6;
+		Speed 16;
+		DamageFunction (6 * random(1,6));
+		Projectile;
+		+SEEKERMISSILE;
+		-ACTIVATEIMPACT;
+		-ACTIVATEPCROSS;
+		+FORCEXYBILLBOARD;
+		RenderStyle "Add";
+		Seesound "weapons/firmfi";
+		DeathSound "weapons/firex5";
+		Decal "PlasmaScorchLower";
+		DamageType "Fire";
+	}
+	States
+	{
+		Spawn: 
+			HIB2 ABCD 1 Bright A_Weave(3, 3, 1.0, 1.0);
+			HIB2 A 0 Bright A_SeekerMissile(5, 6);
+			Loop;
+		Death:
+			HIB2 E 0 Bright A_SetTranslucent(0.75, 1);
+			HIB2 EFGHIJ 3 Bright;
 			Stop;
 	}
 }
