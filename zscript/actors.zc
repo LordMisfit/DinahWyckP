@@ -3130,6 +3130,7 @@ class EECreature : EEBaseZSC abstract
 	bool isfractalspawned;
 	bool isPEspawned;
 	bool isHEspawned;
+	bool isHOspawned;
 	bool isasummonedclone;
 	int user_deathcounter, user_truekill;
 	int user_charmed;
@@ -3371,14 +3372,14 @@ class EECreature : EEBaseZSC abstract
 		if (user_gravitytype == 1 || user_gravitytype == 3) 
 		{
 			//A_Log("HP Targetter");
-			if (exex_monsterlevelenabledflags && user_monsterlevel > 120) { A_VileTarget("DiabloistGravityHPTargeter3"); }
+			if (exex_monsterlevelenabledflags && user_monsterlevel > 80) { A_VileTarget("DiabloistGravityHPTargeter3"); }
 			else if (exex_monsterlevelenabledflags && user_monsterlevel > 40) { A_VileTarget("DiabloistGravityHPTargeter2"); }
 			else { A_VileTarget("DiabloistGravityHPTargeter"); }
 		}
 		if (user_gravitytype == 2 || user_gravitytype == 3)
 		{
 			//A_Log("MP Targetter");
-			if (exex_monsterlevelenabledflags && user_monsterlevel > 120) { A_VileTarget("DiabloistGravityManaTargeter3"); }
+			if (exex_monsterlevelenabledflags && user_monsterlevel > 80) { A_VileTarget("DiabloistGravityManaTargeter3"); }
 			else if (exex_monsterlevelenabledflags && user_monsterlevel > 40) { A_VileTarget("DiabloistGravityManaTargeter2"); }
 			else { A_VileTarget("DiabloistGravityManaTargeter"); }
 		}
@@ -4086,6 +4087,94 @@ class EECreature : EEBaseZSC abstract
 		}
 	}
 
+	
+	void A_HadesTeleport(int minlevel = 45, int minchance = 64)
+	{
+		int user_monsterlevel = CountInv("MonsterLevel");
+		int splittype = 0; // 0;
+		int splittype2 = 0; // 0;
+		//if (user_legendaryevolved) minchance *= frandompick(1.25,1.5,1.75,2.0);
+
+		int RandRoll = random(1,1024);
+		if (exex_monsterlevelenabledflags)
+		{
+			A_StopSound (CHAN_WEAPON);
+			if (!CountInv("HadesTeleportCooldown")) 
+			{
+				if (user_monsterlevel >= (minlevel*9))
+				{
+					if (RandRoll <= (minchance*4)) splittype2 = 2;
+				}
+				else
+				if (user_monsterlevel >= (minlevel*4))
+				{
+					if (RandRoll <= (minchance*2)) splittype2 = random(1,2);
+				}
+				else
+				if (user_monsterlevel >= minlevel)
+				{
+					if (RandRoll <= minchance) splittype2 = randompick(1,1,1,1,1,1,1,2);
+				}
+				else
+				if (user_monsterlevel >= (minlevel/2))
+				{
+					if (RandRoll <= minchance) splittype2 = 1;
+				}
+			}
+		}
+		
+		if (splittype2 == 1)
+		{
+			SetStateLabel("Teleport");
+		}
+		else
+		if (splittype2 == 2)
+		{
+			SetStateLabel("Teleport2");
+		}
+	}
+	void A_HadesTeleportChoose(int minlevel = 90)
+	{
+		int splittype = 0; // 0;
+		int splittype2 = 0; // 0;
+
+		if (exex_monsterlevelenabledflags)
+		{
+			if (!CountInv("HadesTeleportCooldown")) 
+			{
+				if (CountInv("MonsterLevel") >= (minlevel*9))
+				{
+					splittype2 = 2;
+				}
+				else
+				if (CountInv("MonsterLevel") >= (minlevel*4))
+				{
+					splittype2 = random(1,2);
+				}
+				else
+				if (CountInv("MonsterLevel") >= minlevel)
+				{
+					randompick(1,1,1,1,1,1,1,2);
+				}
+				else
+				if (CountInv("MonsterLevel") >= (minlevel/2))
+				{
+					splittype2 = 1;
+				}
+			}
+		}
+		
+		if (splittype2 == 1)
+		{
+			SetStateLabel("Teleport");
+		}
+		else
+		if (splittype2 == 2)
+		{
+			SetStateLabel("Teleport2");
+		}
+	}
+
 	// Cacodemons' Shadow Split
 	void A_ActorStartShadowSplit()
 	{
@@ -4097,9 +4186,9 @@ class EECreature : EEBaseZSC abstract
 		
 		int nonsolidchance = 1;
 		if (GetClassName() == "CacodemonNew") nonsolidchance += (user_monsterlevel / 90);
-		//if (GetClassName() == "Cacolantern") nonsolidchance += (user_monsterlevel / random(67,68));
-		//if (GetClassName() == "Abaddon") nonsolidchance += (user_monsterlevel / 45);
-		//if (GetClassName() == "DSPainElemental") nonsolidchance += (user_monsterlevel / 45);
+		if (GetClassName() == "Cacolantern") nonsolidchance += (user_monsterlevel / random(67,68));
+		if (GetClassName() == "Abaddon") nonsolidchance += (user_monsterlevel / 45);
+		if (GetClassName() == "PainElemental") nonsolidchance += (user_monsterlevel / 45);
 		if (random(1,4) <= nonsolidchance) bSOLID = 0;
 	}
 	void A_ActorEndShadowSplit()
@@ -4400,6 +4489,7 @@ class EECreature : EEBaseZSC abstract
 						BetaLostSoul(SpawnedSoul)) SpawnedSoul.isPEspawned = true;
 				
 				if (HadesSphere(SpawnedSoul)) SpawnedSoul.isHEspawned = true;
+				if (HSOverlord(SpawnedSoul)) SpawnedSoul.isHOspawned = true;
 			}
 
 			double maxmove = other.radius - 1;
@@ -4555,6 +4645,30 @@ class EECreature : EEBaseZSC abstract
 	void A_GetHSHealthPreExp()
 	{
 		hsexphealth = health;
+	}
+
+	void A_HETeleport(statelabel tele = "TeleportChoose")
+	{
+		if (!CountInv("HadesTeleportCooldown") && target && CheckIfTargetInLOS(0, JLOSF_DEADNOJUMP))
+		{
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 180) { if (random(1,256) <= 144) { SetStateLabel(tele); } }
+			else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { if (random(1,256) <= 120) { SetStateLabel(tele); } }
+			else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { if (random(1,256) <= 96) { SetStateLabel(tele); } }
+			else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") <= 60) { if (random(1,256) <= 72) { SetStateLabel(tele); } }
+			else { if (random(1,256) <= 72) { SetStateLabel(tele); } }
+		}
+	}
+
+	void A_HOTeleport(statelabel tele = "TeleportChoose")
+	{
+		if (!CountInv("HadesTeleportCooldown") && target && CheckIfTargetInLOS(0, JLOSF_DEADNOJUMP))
+		{
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { if (random(1,256) <= 68) { SetStateLabel(tele); } }
+			else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { if (random(1,256) <= 56) { SetStateLabel(tele); } }
+			else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { if (random(1,256) <= 44) { SetStateLabel(tele); } }
+			else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") <= 30) { if (random(1,256) <= 32) { SetStateLabel(tele); } }
+			else { if (random(1,256) <= 32) { SetStateLabel(tele); } }
+		}
 	}
 
 	void A_HadesSphereTeleport(statelabel tele = "Teleport", int chance = 128, int chancemax = 1024)
