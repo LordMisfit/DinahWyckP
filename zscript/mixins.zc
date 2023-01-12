@@ -4129,9 +4129,70 @@ mixin class MonsterCollider
 
 mixin class EvolveMonsters
 {
-	action int A_GetEvolveChance()
+	action int A_GetEvolveChance(int clamp = 512)
 	{
-		int SpawnChance = exex_rnd_evolve;
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		let globalvars = DDGlobalVariables.Get();
+		int PlayerLevel = 0;
+		if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
+
+		int TempRatio;
+		int SpawnChance, TempSpawnChance, ChanceFactor, LevelCheck, MapCheck;
+		int mapcalcfactorexact = 0;
+		int mapcalcfactorpercent = 100;
+		int debugevolvestealth = false;
+		
+		SpawnChance = exex_rnd_evolve;
+		if (SpawnChance <= 0) return SpawnChance;
+		
+		SpawnChance = clamp(SpawnChance, 0, clamp);
+
+		TempRatio = exex_rnd_evolve_levels;
+		if (TempRatio > 0)
+		{
+			if (TempRatio > 1000) TempRatio = 1000;
+			
+			TempSpawnChance = (PlayerLevel * 0.0333334);
+			TempSpawnChance = TempSpawnChance * TempRatio / 100;
+			SpawnChance += TempSpawnChance;
+			if (debugevolvestealth) Console.Printf("Evolve Chance [Level]: %d - %s - (+%d)", SpawnChance, GetClassName(), TempSpawnChance);
+		}
+		
+		TempRatio = exex_rnd_evolve_skill;
+		if (TempRatio > 0)
+		{
+			if (TempRatio > 1000) TempRatio = 1000;
+			
+			TempSpawnChance = 0;
+			if (Skill <= 0) TempSpawnChance = -100;
+			if (Skill == 1) TempSpawnChance = -50;
+			if (Skill == 2) TempSpawnChance = 0;
+			if (Skill == 3) TempSpawnChance = 50;
+			if (Skill >= 4) TempSpawnChance = 125;
+	
+			TempSpawnChance = TempSpawnChance * TempRatio / 100;
+			TempSpawnChance += 1000;
+			SpawnChance *= TempSpawnChance;
+			SpawnChance /= 1000;
+			if (debugevolvestealth) Console.Printf("Evolve Chance [Skill]: %d - %s - (%d / 1000)", SpawnChance, GetClassName(), TempSpawnChance);
+		}
+		
+		TempRatio = exex_rnd_evolve_maps;
+		if (TempRatio > 0)
+		{
+			TempRatio = clamp(TempRatio, 0, 1000);
+			if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake"))
+			{
+			}
+			else
+			{
+				MapCheck = globalvars.MapsFinished;
+				MapCheck = clamp(MapCheck, 1, 100);
+			}
+		}
+		
+		if (debugevolvestealth == 1) Console.Printf("Evolve Chance [Final]: %d - %s", SpawnChance, GetClassName());
 		return SpawnChance;
 	}
 }
