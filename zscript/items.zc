@@ -6259,3 +6259,86 @@ class MAManual : CustomInventoryExt
 			Stop;
 	}
 }
+
+// Crystal Ball Item for Summoning the real Delila as a friendly ally >:3
+class StrangeCrystalBall : ExExInvBarItem
+{
+	default
+	{
+		//$Category EE Artifacts
+		Inventory.Amount 1;
+		Inventory.MaxAmount 1;
+		Inventory.Icon "MEM5I0";
+		Inventory.PickupMessage "\c[gold]Hey wait, this is Delila's Crystal Ball, Isn't It?\c-";
+		Inventory.PickupSound "Dinah/what";
+		Inventory.MaxAmount 1;
+		Tag "Delila Dorsey's Crystal Ball";
+		+FLOATBOB;
+		-NOGRAVITY;
+	}
+	
+	States
+	{
+		Spawn:
+			MEM5 A -1;
+			Stop;
+		Use:
+			TNT1 A 0 
+			{
+				actor player = players[0].mo;
+				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+				int PlayerLevel = 0;
+				if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
+				
+				ThinkerIterator DelilaFinder = ThinkerIterator.Create("DelilaDorsey_HelperFriend");
+				Actor mo;
+				DelilaDorsey_HelperFriend mo2;
+				int numfound = 0;
+				while (mo = Actor(DelilaFinder.Next()))
+				{
+					mo2 = DelilaDorsey_HelperFriend(mo);
+					if (mo2 && mo2.health > 0)
+					{
+						numfound++;
+						//Console.Printf("Found a DinahPlayer! - health: %d, [%s]", mo2.health, mo2.GetClassName());
+					}
+				}
+				
+				if (!numfound)
+				{
+					bool success;
+					actor summon;
+					[success, summon] = A_SpawnItemEx("DelilaDorsey_HelperFriend",32,0,0,0.0,0.0,0.0,0,SXF_SETMASTER|SXF_SETTRACER|SXF_NOCHECKPOSITION);
+					if (success && summon)
+					{
+						DelilaDorsey_HelperFriend summon2;
+						summon2 = DelilaDorsey_HelperFriend(summon);
+						if (summon2)
+						{
+							//Console.Printf("Player Use Summon Attempt Phase 3 [Incant]?");
+							A_SpawnItemEx("PlayerWhistle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+							A_SpawnItemEx("MinotaurSmoke",32,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+							A_StartSound("monstersummon", 161, CHANF_DEFAULT);
+							summon2.bFRIENDLY = true;
+							summon2.bNOBLOCKMONST = true;
+							summon2.bJUMPDOWN = true;
+							if (summon2.bCOUNTKILL)
+							{
+								summon2.bCOUNTKILL = false;
+								level.total_monsters -= 1;
+							}
+							summon2.ChangeTID(1000);
+							summon2.user_levelpreset = PlayerLevel;
+						}
+					}
+				}
+				else
+				{
+					double maskpitch = 1.00;
+					if (player.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+					A_StartSound("inv_fail",73,CHANF_DEFAULT,1.0,ATTN_NORM,maskpitch);
+				}
+			}
+			Fail;
+	}
+}
