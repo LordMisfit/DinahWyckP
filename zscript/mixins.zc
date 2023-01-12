@@ -1748,54 +1748,112 @@ mixin class MonsterCollider
 	// Resurrections
 	override bool CanResurrect(Actor other, bool passive)
 	{
+		Console.Printf("(CanResurrect)");
+		int maxviletimesrevived = exex_maxresperarchvile;
+		if (maxviletimesrevived <= 0) maxviletimesrevived = 32;
+		int maxtimesrevivedpervile = exex_maxarchrespermonster;
+		if (maxtimesrevivedpervile <= 0) maxtimesrevivedpervile = 32;
+
+		int maxdiabtimesrevived = exex_maxresperdiabloist;
+		if (maxdiabtimesrevived <= 0) maxdiabtimesrevived = 32;
+		int maxtimesrevivedperdiab = exex_maxdiabrespermonster;
+		if (maxtimesrevivedperdiab <= 0) maxtimesrevivedperdiab = 32;
+
 		bool ResSucceed = true;
-		if (!passive) // Monster is the one REVIVING...
+		DDPlayerPawn playpawn;
+		EECreature EEMonster;
+		EECreature RevivedMonster;
+		EECreature RevivingMonster;
+		RevivingMonster = EECreature(self);
+		RevivedMonster = EECreature(other);
+		if (RevivingMonster && RevivedMonster)
 		{
-			if (other != self)
+			Console.Printf("\c[fire]RevivingMonster: %p\c-, \c[green]RevivedMonster: %p\c-", RevivingMonster, RevivedMonster);
+			if (!passive) // Monster is the one REVIVING...
 			{
-				let Vile = Archvile(self);
-				if (!Vile) let Vile = ArchvileNew(self);
-				if (!Vile) let Vile = Diabloist(self);
-				if (Vile) 
+				if (GetClassName() == "Archvile" || GetClassName() == "ArchvileNew")
 				{
-					if (Vile.health > ((Vile.SpawnHealth() + Vile.Stamina) * 0.667))
+					if (RevivingMonster.timesrevivedamonster < maxviletimesrevived)
 					{
-						ResSucceed = true;
-						if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Vile's Health is High Enough to resurrect anything");
-					}
-					else
-					{
-						if (Vile.health > ((Vile.SpawnHealth() + Vile.Stamina) * 0.334))
+						if (RevivedMonster.timesrevivedpervile < maxtimesrevivedpervile)
 						{
-							if ((other.SpawnHealth() + other.Stamina) <= 500)
+							if (other.GetClassName() == "ArchvileNew") { if (exex_vilesressurectviles) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "Diabloist") { if (exex_vilesressurectdiabs) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "CyberdemonNew") { if (exex_vilesressurectcybers) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "Annihilator") { if (exex_vilesressurectcybers) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "SpiderMastermindNew") { if (exex_vilesressurectspiders) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "Demolisher") { if (exex_vilesressurectspiders) { ResSucceed = true; } else { ResSucceed = false; } }
+							else { ResSucceed = true; }
+							if (ResSucceed > 0)
 							{
-								ResSucceed = true;
-								if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Resurrectee's max health is low enough");
-							}
-							else
-							{
-								ResSucceed = false;
-								if (dydudebug_ressurrectdisplays) Console.Printf("Failed: Vile's Health Too Low");
-								if (exex_combatlog) Console.Printf("\c[red]*\c- \c[brick]%s\c- failed to resurrect \c[purple]%s\c- because their health is too low! [%d]", GetTag(), other.GetTag(), gametic);
+								if (exex_vilesusehealthtores != 0)
+								{
+									if (exex_vilesusehealthtores < 0) health -= exex_vilesusehealthtores;
+									if (exex_vilesusehealthtores > 0) health -= (health * (exex_vilesusehealthtores * 0.01));
+									
+									if (health < 1) health = 1;
+								}
+								RevivingMonster.timesrevivedamonster++;
+								if (RevivedMonster) 
+								{
+									RevivedMonster.timesrevivedpervile++;
+									Console.Printf("\cxRevivedMonster.timesrevivedpervile: %d, timesrevivedamonster: %d\c-", RevivedMonster.timesrevivedpervile, RevivingMonster.timesrevivedamonster);
+								}
 							}
 						}
 						else
 						{
-							if ((other.SpawnHealth() + other.Stamina) <= 150)
-							{
-								ResSucceed = true;
-								if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Resurrectee's max health is low enough");
-							}
-							else
-							{
-								ResSucceed = false;
-								if (dydudebug_ressurrectdisplays) Console.Printf("Failed: Vile's Health Too Low");
-								if (exex_combatlog) Console.Printf("\c[red]*\c- \c[brick]%s\c- failed to resurrect \c[purple]%s\c- because their health is too low! [%d]", GetTag(), other.GetTag(), gametic);
-							}
+							ResSucceed = false;
 						}
+					}
+					else
+					{
+						ResSucceed = false;
 					}
 				}
 				else
+				if (GetClassName() == "Diabloist")
+				{
+					if (RevivingMonster.timesrevivedamonster < maxdiabtimesrevived)
+					{
+						if (RevivedMonster.timesrevivedperdiabloist < maxtimesrevivedperdiab)
+						{
+							if (other.GetClassName() == "ArchvileNew") { if (exex_diabsressurectviles) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "Diabloist") { if (exex_diabsressurectdiabs) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "CyberdemonNew") { if (exex_diabsressurectcybers) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "Annihilator") { if (exex_diabsressurectcybers) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "SpiderMastermindNew") { if (exex_diabsressurectspiders) { ResSucceed = true; } else { ResSucceed = false; } }
+							else if (other.GetClassName() == "Demolisher") { if (exex_diabsressurectspiders) { ResSucceed = true; } else { ResSucceed = false; } }
+							else { ResSucceed = true; }
+							if (ResSucceed > 0)
+							{
+								if (exex_diabsusehealthtores != 0)
+								{
+									if (exex_diabsusehealthtores < 0) health -= exex_diabsusehealthtores;
+									if (exex_diabsusehealthtores > 0) health -= (health * (exex_diabsusehealthtores * 0.01));
+
+									if (health < 1) health = 1;
+								}
+								RevivingMonster.timesrevivedamonster++;
+								if (RevivedMonster) 
+								{
+									RevivedMonster.timesrevivedperdiabloist++;
+									Console.Printf("\cxRevivedMonster.timesrevivedperdiabloist: %d, timesrevivedamonster: %d\c-", RevivedMonster.timesrevivedperdiabloist, RevivingMonster.timesrevivedamonster);
+								}
+							}
+						}
+						else
+						{
+							ResSucceed = false;
+						}
+					}
+					else
+					{
+						ResSucceed = false;
+					}
+				}
+				
+				if (other != self)
 				{
 					let Forsakened = Forsaken(self);
 					if (Forsakened)
@@ -1804,10 +1862,8 @@ mixin class MonsterCollider
 						other.A_SetInventory("ForsakenResBuff",1);
 						//Console.Printf("ForsakenResurrection: %s", other.GetClassName());
 					}
-				}
-				if (exex_combatlog) 
-				{
-					if (ResSucceed)
+					
+					if (ResSucceed && exex_combatlog) 
 					{
 						string sndname = "Resurrection/Evil";
 						if (other.bBOSS) sndname = "Resurrection/EvilBig";
@@ -1816,12 +1872,9 @@ mixin class MonsterCollider
 						Console.Printf("\c[red]*\c- \c[brick]%s\c- is resurrecting \c[purple]%s\c-! [%d]", GetTag(), other.GetTag(), gametic);
 					}
 				}
-			}
-			else
-			{
-				if (exex_combatlog) 
+				else
 				{
-					if (ResSucceed && !other.CountInv("NoRessurrectMessage"))
+					if (ResSucceed && exex_combatlog && !other.CountInv("NoRessurrectMessage")) 
 					{
 						if (DDAFDNPC(other))
 						{
@@ -1857,28 +1910,34 @@ mixin class MonsterCollider
 					}
 				}
 			}
-		}
-		else // Monster is the one BEING REVIVED...
-		{
-			if (RoseMotherClone(other))
+			else // Monster is the one BEING REVIVED...
 			{
-				let Vile = Archvile(self);
-				if (Vile) 
+				if (RevivedMonster.cannotres) 
 				{
-					if (Vile.health >= (Vile.SpawnHealth() + Vile.Stamina))
+					ResSucceed = false; 
+				}
+				else
+				{
+					let Vile = Archvile(self);
+					if (Vile) 
 					{
-						ResSucceed = true;
-						if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Vile's Health is High Enough to resurrect %s! [%d]", other.GetTag(), gametic);
-					}
-					else
-					{
-						ResSucceed = false;
-						if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Vile's Health is NOT High Enough (i.e. Max or Higher) to resurrect %s! [%d]", other.GetTag(), gametic);
+						if (Vile.health >= (Vile.SpawnHealth() + Vile.Stamina))
+						{
+							ResSucceed = true;
+							if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Vile's Health is High Enough to resurrect %s! [%d]", other.GetTag(), gametic);
+						}
+						else
+						{
+							ResSucceed = false;
+							if (dydudebug_ressurrectdisplays) Console.Printf("Succeeded: Vile's Health is NOT High Enough (i.e. Max or Higher) to resurrect %s! [%d]", other.GetTag(), gametic);
+						}
 					}
 				}
+				//if (exex_combatlog) Console.Printf("\c[red]*\c- \c[purple]%s\c- is being resurrected by \c[brick]%s\c-! [%d]", GetTag(), other.GetTag(), gametic);
 			}
-			//if (exex_combatlog) Console.Printf("\c[red]*\c- \c[purple]%s\c- is being resurrected by \c[brick]%s\c-! [%d]", GetTag(), other.GetTag(), gametic);
 		}
+		else ResSucceed = true;
+		
 		return ResSucceed;
 	}
 
