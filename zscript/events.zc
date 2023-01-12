@@ -582,6 +582,96 @@ class DD_EventHandler : EventHandler
 		return spawnee, monsterlevel;
 	}
 	
+	actor, string, int CheckLevelTweaks(actor spawnee, string spawnname, int LevelCheck)
+	{
+		// Level Tweaks
+		// Micro-Boss
+		if (spawnname == "Nurse") LevelCheck += random(0,randompick(1,1,2));
+		if (spawnname == "Devil") LevelCheck += random(0,randompick(1,1,2));
+		if (spawnname == "Muddernaut") LevelCheck += random(0,randompick(1,1,2));
+		if (spawnname == "PushyArchAngel") LevelCheck += random(0,randompick(1,1,2));
+		if (spawnname == "KilletanteSoloist") LevelCheck += random(0,randompick(1,1,2));
+		
+		// Mini-Boss
+		if (spawnname == "SpiderMastermindNew") LevelCheck += random(random(1,2),3);
+		if (spawnname == "Demolisher") LevelCheck += random(random(1,2),3);
+		if (spawnname == "CyberdemonNew") LevelCheck += random(random(1,2),3);
+		if (spawnname == "Annihilator") LevelCheck += random(random(1,2),3);
+		if (spawnname == "QuisFakeClone") LevelCheck += random(random(1,2),3);
+		if (spawnname == "VokterCannon") LevelCheck += random(random(1,2),3);
+		if (spawnname == "VokterCannon_Flipped") LevelCheck += random(random(1,2),3);
+		
+		// Tier 1 Boss
+		if (spawnname == "RoseMotherClone") LevelCheck += random(2,4);
+		if (spawnname == "GameMotherClone") LevelCheck += random(2,4);
+		if (spawnname == "GlobeMotherClone") LevelCheck += random(2,4);
+		if (spawnname == "MossMotherClone") LevelCheck += random(2,4);
+		if (spawnname == "SphinxMotherClone") LevelCheck += random(2,4);
+		if (spawnname == "HandMotherVacClone") LevelCheck += random(2,4);
+		if (spawnname == "Teacher_KragClone") LevelCheck += random(2,4);
+		if (spawnname == "Teacher_QuisClone") LevelCheck += random(2,4);
+		if (spawnname == "Teacher_LauritzClone") LevelCheck += random(2,4);
+		if (spawnname == "Teacher_JorgClone") LevelCheck += random(2,4);
+		if (spawnname == "JorgSphereCannon") LevelCheck += random(2,4);
+		
+		// Tier 2 Boss
+		if (spawnname == "HandmotherPhaseAClone") LevelCheck += random(3,6);
+		if (spawnname == "HandmotherPhaseBClone") LevelCheck += random(3,6);
+		if (spawnname == "HandmotherPhaseCClone") LevelCheck += random(3,6);
+		if (spawnname == "Teacher_VokterClone") LevelCheck += random(3,6);
+		if (spawnname == "Tempest_BossClone") LevelCheck += random(3,6);
+		if (spawnname == "Delila_BossClone") LevelCheck += random(3,6);
+
+		if (Peasant(spawnee)) LevelCheck /= 4;
+		else
+		{
+			if (random(1,32) <= 1)
+			{
+				if (random(1,32) <= 1)
+				{
+					if (random(1,32) <= 1)
+					{
+						if (spawnname == "ClayDevilNew") LevelCheck += random(4,6);
+						else if (spawnname == "Skeleton") LevelCheck += random(8,12);
+						else LevelCheck += random(16,24);
+					}
+					else
+					{
+						if (spawnname == "ClayDevilNew") LevelCheck += random(1,2);
+						else if (spawnname == "Skeleton") LevelCheck += random(2,3);
+						else LevelCheck += random(8,12);
+					}
+				}
+				else
+				{
+					if (spawnname == "ClayDevilNew") LevelCheck += randompick(0,0,0,0,0,0,0,0,0,1);
+					else if (spawnname == "Skeleton") LevelCheck += random(0,1);
+					else LevelCheck += random(2,3);
+				}
+			}
+			// Rare Chance for a Level Quadruplication [i.e. Aetherius]
+			int basechance = 256;
+			if (A_CheckDDGame() && exex_nrpgmonsterlevels) basechance = 2048;
+			if (random(1,basechance) <= (1 + (skill * 0.25)))
+			{
+				if (spawnname == "ClayDevilNew") LevelCheck *= 1.5;
+				else if (spawnname == "Skeleton") LevelCheck *= 2;
+				else LevelCheck *= 4;
+				
+				basechance = 256;
+				if (A_CheckDDGame() && exex_nrpgmonsterlevels) basechance = 2048;
+				if (random(1,basechance) <= (1 + (skill * 0.25))) 
+				{
+					if (spawnname == "ClayDevilNew") LevelCheck *= 1.5;
+					else if (spawnname == "Skeleton") LevelCheck *= 2;
+					else LevelCheck *= 4;
+				}
+			}
+		}
+		
+		return spawnee, spawnname, LevelCheck;
+	}
+	
 	void MonsterStatsSet(actor spawnee, int basemonsterrating, bool practicetarget, bool specialenemy, bool ispeasant)
 	{
 		if (Level.MapName != "TITLEMAP")
@@ -665,11 +755,11 @@ class DD_EventHandler : EventHandler
 					if (!DDOrigBoss(spawnee)) baselinelevel *= frandompick(0.5,0.75,0.75,0.75,0.75,0.75,1.0);
 															 else baselinelevel *= frandompick(1.25,1.334,1.334,1.334,1.334,1.334,1.5);
 					baselinelevel *= exex_nrpgmonlevelscale;
-					if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet] baselinelevel: %d, tic: %d, actor: %p [%s]\c-", baselinelevel, gametic, spawnee, spawnee.GetClassName());
+					if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet] baselinelevel: %d, tic: %d, actor: %p [%s]\c-", baselinelevel, gametic, spawnee, spawnname);
 				}
 				
 				
-				if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet], tic: %d, actor: %p [%s]\c-", gametic, spawnee, spawnee.GetClassName());
+				if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet], tic: %d, actor: %p [%s]\c-", gametic, spawnee, spawnname);
 				int LevelErrorRange;
 				int LevelCheck;
 				int LevelChecker = 1;
@@ -791,11 +881,11 @@ class DD_EventHandler : EventHandler
 						}
 					}
 					
-					if (random(1,32) <= monsterrating)
+					if (random(1,128) <= (monsterrating * 0.25))
 					{
 						multbase *= 2;
 						if (dydudebug_monsterscaling) Console.Printf("Boosted [1] - multbase: %.8f", multbase);
-						if (random(1,32) <= (monsterrating * 0.5))
+						if (random(1,128) <= (monsterrating * 0.125))
 						{
 							multbase *= 2;
 							if (dydudebug_monsterscaling) Console.Printf("Boosted [2] - multbase: %.8f", multbase);
@@ -879,7 +969,7 @@ class DD_EventHandler : EventHandler
 								LevelCheck *= frandom(2.25,3.25);
 								spawnee.A_SetInventory("lolewatdisdo",1);
 							}
-							if (spawnee.GetClassName() == "ChtonBloom") // ???09
+							if (spawnname == "ChtonBloom") // ???09
 							{
 								LevelCheck *= frandom(3.0,4.5);
 							}
@@ -888,16 +978,16 @@ class DD_EventHandler : EventHandler
 							{
 								if (player.CountInv("lolehaiyathar"))
 								{
-									if (spawnee.GetClassName() == "ShialMastermind" ||
-											spawnee.GetClassName() == "Cyberbog" ||
-											spawnee.GetClassName() == "HandMastermind" ||
-											spawnee.GetClassName() == "TchernoDemon")
+									if (spawnname == "ShialMastermind" ||
+											spawnname == "Cyberbog" ||
+											spawnname == "HandMastermind" ||
+											spawnname == "TchernoDemon")
 									{
 										spawnee.health *= frandompick(0.625,0.75,0.75,0.75,0.75,0.75,0.875,0.875,0.875,1.0);
 										LevelCheck *= frandom(0.625,0.875);
 									}
-									if (spawnee.GetClassName() == "Romerotron" ||
-											spawnee.GetClassName() == "HandSlavedmind")
+									if (spawnname == "Romerotron" ||
+											spawnname == "HandSlavedmind")
 									{
 										spawnee.health *= frandompick(1.00,1.125,1.125,1.125,1.125,1.125,1.25,1.25,1.25,1.5);
 										LevelCheck *= frandom(1.125,1.375);
@@ -961,6 +1051,8 @@ class DD_EventHandler : EventHandler
 							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [surprise]: %d (Previous: %d)", LevelCheck, PreviousLevelCheck);
 						}
 					}
+					
+					[spawnee, spawnname, LevelCheck] = CheckLevelTweaks(spawnee,spawnname,LevelCheck);
 					
 					if (levelee)
 					{
@@ -1307,13 +1399,52 @@ class DD_EventHandler : EventHandler
 		spawnee2 = EECreature(spawnee);
 		if (spawnee2) 
 		{
-			spawnee2.user_MaxHP = spawnee2.SpawnHealth() + spawnee2.Stamina;
 			spawnee2.A_SetInventory("ActorMaxHP",spawnee2.user_MaxHP);
 			if (spawnee2.isasummonedclone)
 			{
 				spawnee2.user_MaxHP *= 0.25;
 				spawnee2.health *= 0.25;
 			}
+			
+			spawnee2.user_MaxHP = spawnee2.SpawnHealth() + spawnee2.Stamina;
+			double RangeVar;
+			int Temp;
+
+			if (skill <= 0) RangeVar = 0.250; // 25.0%
+			if (skill == 1) RangeVar = 0.313; // 31.3%
+			if (skill == 2) RangeVar = 0.375; // 37.5%
+			if (skill == 3) RangeVar = 0.437; // 43.7%
+			if (skill >= 4) RangeVar = 0.500; // 50.0%
+			Temp = (spawnee2.user_MaxHP * RangeVar) + 1;
+			if (Temp < 2) Temp = 2;
+			spawnee2.user_HPBuffRange = Temp;
+
+			if (skill <= 0) RangeVar = 0.250; // 25.0%
+			if (skill == 1) RangeVar = 0.313; // 31.3%
+			if (skill == 2) RangeVar = 0.375; // 37.5%
+			if (skill == 3) RangeVar = 0.437; // 43.7%
+			if (skill >= 4) RangeVar = 0.500; // 50.0%
+			RangeVar /= 3;
+			Temp = (spawnee2.user_MaxHP * RangeVar) + 1;
+			if (Temp < 2) Temp = 2;
+			spawnee2.user_HPLowBuffRange = Temp;
+
+			spawnee2.user_HPXDeathRange = (spawnee2.user_MaxHP * -1.0);
+			if (spawnee2.GetClassName() == "BloodZombieNew") spawnee2.user_HPXDeathRange2 = (spawnee2.user_MaxHP * -0.5);
+			
+			if (skill <= 0) RangeVar = 0.080; // 8.0%
+			if (skill == 1) RangeVar = 0.120; // 12.0%
+			if (skill == 2) RangeVar = 0.160; // 16.0%
+			if (skill == 3) RangeVar = 0.200; // 20.0%
+			if (skill >= 4) RangeVar = 0.240; // 24.0%
+			spawnee2.user_HPLowRange = (spawnee2.user_MaxHP * RangeVar);
+			
+			if (skill <= 0) RangeVar = 0.010; // 1.0%
+			if (skill == 1) RangeVar = 0.015; // 1.5%
+			if (skill == 2) RangeVar = 0.020; // 2.0%
+			if (skill == 3) RangeVar = 0.025; // 2.5%
+			if (skill >= 4) RangeVar = 0.030; // 3.0%
+			spawnee2.user_HPCritRange = (spawnee2.user_MaxHP * RangeVar);
 		}
 	}
 	
