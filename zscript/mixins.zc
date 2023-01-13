@@ -2203,12 +2203,31 @@ mixin class MonsterCollider
 					CandleTrailIcyIP(inflictor)) ActorDefenseIgnoreFactor += (FCandleFactor * (1.00 - ActorDefenseIgnoreFactor));
 
 			double SuckFactor = 0.75;
+			if (HadesElemental(self) ||
+					HadesOverlord(self) ||
+					HadesSphere(self) ||
+					HSOverlord(self))
+			{
+				SuckFactor = 0.9375;
+				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.9375 + (TruePlayerLevel * 0.0046875);
+				else if (source && DDPlayerPawn(source)) SuckFactor = 0.9375 + (TruePlayerLevel * 0.0046875);
+			}
+			else
+			if (CacoDemon(self) ||
+					CacoDemonNew(self) ||
+					Cacolantern(self) ||
+					Abaddon(self))
+			{
+				SuckFactor = 0.375;
+				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.375 + (TruePlayerLevel * 0.00125);
+				else if (source && DDPlayerPawn(source)) SuckFactor = 0.375 + (TruePlayerLevel * 0.00125);
+			}
+			else
 			if (bBOSS) 
 			{
 				SuckFactor = 0.334;
-				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.334 + (TruePlayerLevel * 0.001);
-				else if (source && DDPlayerPawn(source)) SuckFactor = 0.334 + (TruePlayerLevel * 0.001);
-				
+				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.334 + (TruePlayerLevel * 0.001112);
+				else if (source && DDPlayerPawn(source)) SuckFactor = 0.334 + (TruePlayerLevel * 0.001112);
 			}
 			else
 			{
@@ -2234,7 +2253,15 @@ mixin class MonsterCollider
 				if (angvstype == 4) ActorDefenseIgnoreFactor += (0.750 * (1.00 - ActorDefenseIgnoreFactor));
 			}
 			
-			if (bellefishzap) ActorDefenseIgnoreFactor += (0.334 * (1.00 - ActorDefenseIgnoreFactor));
+			if (bellefishzap)
+			{
+				if (CountInv("PowerNoDrown"))
+				{
+					if (waterlevel >= 2) ActorDefenseIgnoreFactor += (0.025 * (1.00 - ActorDefenseIgnoreFactor));
+													else ActorDefenseIgnoreFactor += (0.450 * (1.00 - ActorDefenseIgnoreFactor));
+				}
+				else ActorDefenseIgnoreFactor += (0.5 * (1.00 - ActorDefenseIgnoreFactor));
+			}
 				
 			if (BarrierBeam(inflictor) || BarrierBeam(source)) ActorDefenseIgnoreFactor += (frandom(0.9,1.0) * (1.00 - ActorDefenseIgnoreFactor));
 			
@@ -2293,6 +2320,25 @@ mixin class MonsterCollider
 				IF (FoundPlayer.CountInv("PowerMealBuff")) FoodFactor += 0.25; // Gourmet Meal
 				IF (FoundPlayer.CountInv("PowerMeal2Buff")) FoodFactor += 0.0625; // Turkey Dinner
 				if (FoodFactor > 0.00) ActorDefenseIgnoreFactor += (FoodFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			else
+			{
+				EECreature OtherA;
+				OtherA = EECreature(source);
+				if (!OtherA) OtherA = EECreature(inflictor);
+				if (OtherA)
+				{
+					double EggFactor = 0.00;
+					if ((EvilEggShot(inflictor) || EvilEggShot(source))) EggFactor = 0.125;
+					if ((ChookEggShot(inflictor) || ChookEggShot(source))) EggFactor = 0.125;
+					if ((BigChookGrenade(inflictor) || BigChookGrenade(source))) EggFactor = 0.125;
+					if ((EvilEggGrenade(inflictor) || EvilEggGrenade(source))) EggFactor = 0.334;
+					if ((ChookEggGrenade(inflictor) || ChookEggGrenade(source))) EggFactor = 0.334;
+					if ((ChookGrenade(inflictor) || ChookGrenade(source))) EggFactor = 0.334;
+					if ((EvilEggMini(inflictor) || EvilEggMini(source))) EggFactor = 0.75;
+					if ((ChookEggMini(inflictor) || ChookEggMini(source))) EggFactor = 0.75;
+					if (EggFactor > 0.00) ActorDefenseIgnoreFactor += (EggFactor * (1.00 - ActorDefenseIgnoreFactor));
+				}
 			}
 			
 			if (mod == 'Dashing') ActorDefenseIgnoreFactor += (0.2 * (1.00 - ActorDefenseIgnoreFactor));
