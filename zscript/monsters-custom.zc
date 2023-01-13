@@ -5409,6 +5409,7 @@ class CyBruiserMissileSeek : CyBruiserMissile
 // CyBruiser [Brusier/Archon tier Hell Noble]
 class Cybruiser : EECreature
 {
+	int painanger;
 	default
 	{
 		//$Angled;
@@ -5449,6 +5450,38 @@ class Cybruiser : EECreature
 		Obituary "%o was blown away by a Cybruiser.";
 		HitObituary "%o was smashed by a Cybruiser.";
 	}
+	
+	void A_CybruiserAtk()
+	{
+		if (random(1,256) <= 16)
+		{
+			A_SpawnProjectile("CyBruiserMissileSeek",user_tempvar1,15,0,0);
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= random(112,113))
+			{
+				A_SpawnProjectile("CyBruiserMissileSeek",user_tempvar1,15,(user_tempvar2*1));
+				A_SpawnProjectile("CyBruiserMissileSeek",user_tempvar1,15,(user_tempvar2*-1));
+				if (CountInv("MonsterLevel") >= 225)
+				{
+					A_SpawnProjectile("CyBruiserMissileSeek",user_tempvar1,15,(user_tempvar2*2));
+					A_SpawnProjectile("CyBruiserMissileSeek",user_tempvar1,15,(user_tempvar2*-2));
+				}
+			}
+		}
+		else
+		{
+			A_SpawnProjectile("CyBruiserMissile",user_tempvar1,15,0,0);
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= random(112,113))
+			{
+				A_SpawnProjectile("CyBruiserMissile",user_tempvar1,15,(user_tempvar2*1));
+				A_SpawnProjectile("CyBruiserMissile",user_tempvar1,15,(user_tempvar2*-1));
+				if (CountInv("MonsterLevel") >= 225)
+				{
+					A_SpawnProjectile("CyBruiserMissile",user_tempvar1,15,(user_tempvar2*2));
+					A_SpawnProjectile("CyBruiserMissile",user_tempvar1,15,(user_tempvar2*-2));
+				}
+			}
+		}
+	}
 
 	States 
 	{
@@ -5460,12 +5493,12 @@ class Cybruiser : EECreature
 			CBRS A 0
 			{
 				user_shotsfired = 0;
-				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120)
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60)
 				{
 					if (random(1,8) == 1) { user_shotsfiredmax = 6; } else { user_shotsfiredmax = 5; }
 				}
 				else
-				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60)
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30)
 				{
 					if (random(1,8) == 1) { user_shotsfiredmax = 5; } else { user_shotsfiredmax = 4; }
 				}
@@ -5476,8 +5509,10 @@ class Cybruiser : EECreature
 			}
 			CBRS AABBCCDD 3
 			{
+				user_shotsfired = 0;
 				user_walksound++;
-				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { bAVOIDMELEE = true; }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { bAVOIDMELEE = true; }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(2); }
 				if (user_walksound == 1) 
 				{
 					if (A_CheckWalkSnd()) A_StartSound("monster/cbruwlk"); 
@@ -5491,13 +5526,22 @@ class Cybruiser : EECreature
 			TNT1 A 0 A_DynamicMusic();
 			CBRS E 0
 			{
+				if (painanger > 8) painanger = 8;
 				if (exex_monsterlevelenabledflags)
 				{
-					if (random(1,256) <= (32 + (CountInv("MonsterLevel") / 3.75))) { return resolvestate("RageAttackStart"); }
+					if (random(1,256) <= ((16 + (CountInv("MonsterLevel") / 1.875)) * painanger)) 
+					{
+						user_shotsfiredmax *= frandompick(1.5,2.0,2.5);
+						return resolvestate("RageAttackStart"); 
+					}
 				}
 				else
 				{
-					if (random(1,256) <= 32) { return resolvestate("RageAttackStart"); }
+					if (random(1,256) <= (16 * painanger)) 
+					{
+						user_shotsfiredmax *= frandompick(1.5,2.0,2.5);
+						return resolvestate("RageAttackStart"); 
+					}
 				}
 				return resolvestate(null);
 			}
@@ -5508,10 +5552,19 @@ class Cybruiser : EECreature
 				if (user_shotsfired > 0) 
 				{
 					A_SetTics(12); 
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(6); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(7); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(8); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(9); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(10); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 15) { A_SetTics(11); }
 				}
 				else
 				{
 					A_SetTics(6); 
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(3); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(4); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(5); }
 				}
 				A_FaceTarget();
 			}
@@ -5522,26 +5575,30 @@ class Cybruiser : EECreature
 				user_tempvar1 = 38;
 				user_tempvar2 = frandompick(7.5,10.25,10.25,10.25,15,15,15,15,15,15,15,18.75,18.75,18.75,22.5);
 				A_FaceTarget();
-				if (random(1,256) <= 16)
-				{
-					A_SpawnProjectile("CyBruiserMissileSeek",user_tempvar1,15,0,0);
-				}
-				else
-				{
-					A_SpawnProjectile("CyBruiserMissile",user_tempvar1,15,0,0);
-				}
+				
+				A_CybruiserAtk();
 			}
 			goto Missile1End;
 		Missile1End:
 			CBRS F 12
 			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(7); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(8); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(9); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(10); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 15) { A_SetTics(11); }
 				A_FaceTarget();
 			}
 			TNT1 A 0
 			{
 				user_shotsfired += 1;
 			}
-			TNT1 A 0 A_JumpIf(user_shotsfired >= user_shotsfiredmax, "See");
+			TNT1 A 0 
+			{
+				if (user_shotsfired >= user_shotsfiredmax) return resolvestate("See");
+				return resolvestate(null);
+			}
 			goto MissileStart;
 
 		RageAttackStart:
@@ -5550,10 +5607,15 @@ class Cybruiser : EECreature
 				if (user_shotsfired > 0) 
 				{
 					A_SetTics(6); 
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(3); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(4); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(5); }
 				}
 				else
 				{
 					A_SetTics(3); 
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(1); }
+					else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(2); }
 				}
 				A_FaceTarget();
 			}
@@ -5564,44 +5626,49 @@ class Cybruiser : EECreature
 				user_tempvar1 = 38;
 				user_tempvar2 = frandompick(7.5,10.25,10.25,10.25,15,15,15,15,15,15,15,18.75,18.75,18.75,22.5);
 				A_FaceTarget();
-				if (random(1,256) <= 16)
-				{
-					A_SpawnProjectile("CyBruiserMissileSeek",user_tempvar1,15,0,0);
-				}
-				else
-				{
-					A_SpawnProjectile("CyBruiserMissile",user_tempvar1,15,0,0);
-				}
+				
+				A_CybruiserAtk();
 			}
 			goto RageAttackEnd;
 		RageAttackEnd:
 			CBRS F 6
 			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(5); }
 				A_FaceTarget();
 			}
 			TNT1 A 0
 			{
 				user_shotsfired += 1;
 			}
-			TNT1 A 0 A_JumpIf(user_shotsfired >= (user_shotsfiredmax * 2), "See");
+			TNT1 A 0 
+			{
+				if (user_shotsfired >= (user_shotsfiredmax * 2))
+				{
+					painanger = 0;
+					return resolvestate("See");
+				}
+				return resolvestate(null);
+			}
 			goto RageAttackStart;
 
 		Melee:
 			TNT1 A 0 A_DynamicMusic();
 			CBRS GH 8
 			{
-				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 240) { A_SetTics(4); }
-				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 180) { A_SetTics(5); }
-				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(6); }
-				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(7); }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(7); }
 				A_FaceTarget();
 			}
 			CBRS I 8 
 			{
-				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 240) { A_SetTics(4); }
-				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 180) { A_SetTics(5); }
-				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(6); }
-				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(7); }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(7); }
 				A_FaceTarget();
 				
 				int mldmg = A_CalcDamageFormula(15,random(1,10),0.005,0.3334,0.1667,0.005);
@@ -5611,8 +5678,55 @@ class Cybruiser : EECreature
 
 		Pain: 
 			CBRS J 2;
-			CBRS J 2 A_EEPain(); 
+			CBRS J 2
+			{
+				A_EEPain(); 
+				if (random(1,256) <= 240) 
+				{
+					painanger++;
+					if (random(1,256) <= 60)
+					{
+						painanger++;
+						if (random(1,256) <= 15) painanger++;
+					}
+				}
+			}
 			Goto See;
+		Pain.Fist: 
+			CBRS J 2;
+			CBRS J 2
+			{
+				A_EEPain(); 
+				if (random(1,256) <= 80) 
+				{
+					painanger++;
+					if (random(1,256) <= 20)
+					{
+						painanger++;
+						if (random(1,256) <= 5) painanger++;
+					}
+				}
+			}
+			CBRS JJ 2;
+			Goto See;
+		Pain.Kick: 
+			CBRS J 2;
+			CBRS J 2
+			{
+				A_EEPain(); 
+				if (random(1,256) <= 120) 
+				{
+					painanger++;
+					if (random(1,256) <= 30)
+					{
+						painanger++;
+						if (random(1,256) <= random(7,8)) painanger++;
+					}
+				}
+			}
+			CBRS JJJJ 2;
+			Goto See;
+
 		Death:
 			CBRS K 6 Bright A_Scream();
 			CBRS LMN 6 Bright;
