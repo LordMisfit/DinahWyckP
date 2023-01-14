@@ -602,6 +602,10 @@ class EEProjectile : EEBaseZSC abstract
 	double user_sparkscalemulti;
 	int user_noseektimer;
 	
+	actor OriginalActor;
+	string OriginalActorType;
+	bool REFLECTEDMONSTERPROJ;
+	
 	double bonusmultiplier;
 	
 	int xyspreadtime;
@@ -639,6 +643,7 @@ class EEProjectile : EEBaseZSC abstract
 	{
 		Super.PostBeginPlay();
 		if (bonusmultiplier <= 0.0) bonusmultiplier = 1.0;
+
 		if (target) 
 		{
 			playpawn = PlayerPawn(target);
@@ -655,6 +660,14 @@ class EEProjectile : EEBaseZSC abstract
 					target.bFULLVOLACTIVE == false && 
 					target.bFULLVOLDEATH == false &&
 					target.bBOSS == false) isillusionaryproj = true;
+					
+			let IsPlayer = PlayerPawn(target);
+			let IsAMonster = EECreature(target);
+			if (IsAMonster)
+			{
+				OriginalActor = IsAMonster;
+				OriginalActorType = IsAMonster.GetClassName();
+			}
 		}
 	}
 	
@@ -708,6 +721,18 @@ class EEProjectile : EEBaseZSC abstract
 				}
 			}
 		}
+		
+		if (OriginalActor != null) 
+		{ 
+			if (target != OriginalActor && target == DDPlayerPawn(target)) REFLECTEDMONSTERPROJ = true;
+		}
+		
+		if (REFLECTEDMONSTERPROJ && bDONTREFLECT == false) 
+		{
+			//Console.Printf("REFLECTEDMONSTERPROJ (%d)", level.time);
+			bDONTREFLECT = true;
+		}
+		
 		Super.Tick();
 	}
 	
@@ -2457,6 +2482,66 @@ class EEFastProjectile : EEProjectile abstract
 				A_VacUpProjectile();
 			}
 			stop;
+	}
+}
+
+class EEEffectFastProjectile : EEFastProjectile
+{
+	default
+	{
+		+HITMASTER;
+	}
+	
+	
+	int A_StatusEffectChecker(int basechance)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+
+		user_ailmentmaxchance = basechance;
+		if (master && master == player)
+		{
+			if (player.CountInv("EWShieldIdleMode") > 0) 
+			{
+				if (player.CountInv("EWShieldDefendMode") > 0)
+				{
+					if (player.CountInv("EWShieldDefendModeExtra") > 0) user_ailmentmaxchance * 20;
+																												 else user_ailmentmaxchance * 12;
+				}
+				else
+				{
+					user_ailmentmaxchance * 4;
+				}
+			}
+		}
+
+		user_canafflict = 1;
+		if (master)
+		{
+			if (master.health <= 0) user_canafflict = 0;
+
+			if (master.CountInv("EvadeAnAttack") > 0 || 
+					master.CountInv("PlayerDashing") > 0) 
+					{
+						user_canafflict = 0;
+					}
+		}
+
+		DDPlayerPawn playpawn;
+		if (master)
+		{
+			playpawn = DDPlayerPawn(master);
+			if (playpawn)
+			{
+				if (playpawn.player.cheats & CF_GODMODE2 || playpawn.player.cheats & CF_GODMODE || playpawn.bINVULNERABLE) user_canafflict = 0;
+			}
+			else
+			{
+				if (master.bINVULNERABLE) user_canafflict = 0;
+			}
+		}
+		Console.Printf("user_ailmentmaxchance: %d (%d)", user_ailmentmaxchance, basechance);
+		return user_ailmentmaxchance;
 	}
 }
 
@@ -4614,7 +4699,7 @@ class EECreature : EEBaseZSC abstract
 			}
 		}
 	}
-
+	
 	void A_PainAttack(class<Actor> spawntype = "LostSoul", double addangle = 0, int flags = 0, int limit = -1)
 	{
 		if (target)

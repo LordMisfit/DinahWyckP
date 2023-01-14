@@ -3080,6 +3080,8 @@ mixin class MonsterCollider
 	
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		double firstdmgfactor = DamageFactor;
 		if (dydudebug_actordmgdisplays) Console.Printf("firstdmgfactor: %.8f, DamageFactor: %.8f", firstdmgfactor, DamageFactor);
 		if (DeathIncarnate(self))
@@ -3104,7 +3106,38 @@ mixin class MonsterCollider
 		}
 		
 		DDPlayerPawn playpawn;
+		EECreature EEActor;
+		EECreature EEVictim;
+		EEProjectile UniqueProjectile;
+		EEFastProjectile UniqueProjectileFast;
+		EEEffectProjectile ailmentproj;
+		EEEffectFastProjectile ailmentprojfast;
+		SingleDamageRipper singleripproj;
+		SingleDamageFastRipper singlefastripproj;
+
 		playpawn = DDPlayerPawn(source);
+		if (source) 
+		{
+			playpawn = DDPlayerPawn(source);
+			if (dydudebug_actordmgdisplays && playpawn) Console.Printf("Playpawn (source) Found!");
+			EEActor = EECreature(source);
+			if (dydudebug_actordmgdisplays && EEActor) Console.Printf("EEActor (source) Found!");
+		}
+		if (inflictor)
+		{
+			UniqueProjectile = EEProjectile(inflictor);
+			if (dydudebug_actordmgdisplays && UniqueProjectile) Console.Printf("UniqueProjectile (inflictor) Found!");
+			UniqueProjectileFast = EEFastProjectile(inflictor);
+			if (dydudebug_actordmgdisplays && UniqueProjectileFast) Console.Printf("UniqueProjectileFast (inflictor) Found!");
+			ailmentproj = EEEffectProjectile(inflictor);
+			if (dydudebug_actordmgdisplays && ailmentproj) Console.Printf("ailmentproj (inflictor) Found!");
+			ailmentprojfast = EEEffectFastProjectile(inflictor);
+			if (dydudebug_actordmgdisplays && ailmentprojfast) Console.Printf("ailmentprojfast (inflictor) Found!");
+			singleripproj = SingleDamageRipper(inflictor);
+			if (dydudebug_actordmgdisplays && singleripproj) Console.Printf("singleripproj (inflictor) Found!");
+			singlefastripproj = SingleDamageFastRipper(inflictor);
+			if (dydudebug_actordmgdisplays && singlefastripproj) Console.Printf("singlefastripproj (inflictor) Found!");
+		}
 		int previoushealth = health;
 		
 		if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1)
@@ -3215,8 +3248,6 @@ mixin class MonsterCollider
 			}
 		}
 
-		actor player = players[0].mo;
-		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		if (player.CountInv("PlayingAugerZenith") && BossBrainNew(self))
 		{
 			if (level.GetCheckSum() == '8a9a22ba1deb535da066bd947190e677') damage *= 5;
@@ -3729,6 +3760,31 @@ mixin class MonsterCollider
 		double prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor;
 		[prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor] = A_DefenseIgnoreFactor(inflictor, source, damage, mod, flags, angle, wasblastedimpact, bellefishzap, surprisehit, angvstype);
 		
+		int predirdmg = damage;
+		prevDamageFactor = DamageFactor;
+		// If the Attack was Deflected by the Player
+		if (UniqueProjectile && UniqueProjectile.REFLECTEDMONSTERPROJ)
+		{
+			if (dydudebug_actordmgdisplays) Console.Printf("    (\czActor Defensive Input [STEP 3da - Player-Deflection Checking]\c-: \caUniqueProjectile = %p\c-, \caREFLECTEDMONSTERPROJ = %d\c-)", UniqueProjectile, UniqueProjectile.REFLECTEDMONSTERPROJ);
+			predirdmg = damage;
+			if (player && player.CountInv("PowerDouble"))
+			{
+				damage = floor(damage * 2);
+				if (dydudebug_actordmgdisplays && damage > 0) Console.Printf("    (\czActor Defensive Input [STEP 3dba - Player-Deflection Pre-Check [Double]\c-: \cypredmg = %d\c- / \cydmg = %d\c-)", predirdmg, damage);
+			}
+			if (player && player.CountInv("PowerHalve"))
+			{
+				damage = ceil(damage * 0.5);
+				if (dydudebug_actordmgdisplays && damage > 0) Console.Printf("    (\czActor Defensive Input [STEP 3dba - Player-Deflection Pre-Check [Halve]\c-: \cypredmg = %d\c- / \cydmg = %d\c-)", predirdmg, damage);
+			}
+			
+			double randomdmgmax = 1.25 + (random(0,25) * 0.01); //randomdmgmax = 1.50 + (random(0,50) * 0.01);
+			double randmgdiff = ((randomdmgmax - DamageFactor) * frandompick(0.875,0.9375,1.00,1.0625,1.125)); // randmgdiff = ((randomdmgmax - DamageFactor) * frandompick(0.75,0.875,1.00,1.125,1.25));
+			if (DamageFactor < randomdmgmax) DamageFactor += randmgdiff;
+			if (DamageFactor >= randomdmgmax) DamageFactor = randomdmgmax;
+			if (dydudebug_actordmgdisplays && damage > 0) Console.Printf("    (\czActor Defensive Input [STEP 3dc - Player-Deflection Checking]\c-: \caDamageFactor = %.8f\c-, \caprevDamageFactor = %.8f\c-, \carandomdmgmax = %.8f, \cbrandmgdiff = %.8f, \cypredmg = %d\c- / \cydmg = %d\c-)", DamageFactor, prevDamageFactor, randomdmgmax, randmgdiff, predirdmg, damage);
+		}
+
 		predmginr = damage;
 		// Defense Checks
 		if (mod == 'Crush' && !inflictor && !source)
@@ -3863,9 +3919,11 @@ mixin class MonsterCollider
 			miracle = true;
 		}
 		if (mod == 'IceWater') mod = 'Ice';
+		if (dydudebug_actordmgdisplays) Console.Printf("    (\czActor Defensive Input [Pre?]\c-: \cyDamageFactor: %.8f)", DamageFactor);
 		//************************************************************************
 		let ret = super.DamageMobj(inflictor, source, damage, mod, flags, angle);
 		//************************************************************************
+		if (dydudebug_actordmgdisplays) Console.Printf("    (\czActor Defensive Input [Post?]\c-: \cyDamageFactor: %.8f)", DamageFactor);
 		if (miracle && exex_monstershavemiracles)
 		{
 			if (ret >= previoushealth) 
@@ -4077,8 +4135,9 @@ mixin class MonsterCollider
 			}
 		}
 		
+		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Wrapping Up [1]: \cyDamageFactor: %.8f\c-, firstdmgfactor: %.8f", GetClassName(), DamageFactor, firstdmgfactor);
 		DamageFactor = firstdmgfactor;
-		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Wrapping Up: finaldmg: %d, DamageFactor: %.8f, firstdmgfactor: %.8f", GetClassName(), ret, DamageFactor, firstdmgfactor);
+		if (dydudebug_actordmgdisplays) Console.Printf("(\c[green]%s\c-) Wrapping Up [2]: finaldmg: %d, \cgDamageFactor: %.8f\c-, firstdmgfactor: %.8f", GetClassName(), ret, DamageFactor, firstdmgfactor);
 		return ret;
 	}
 	
