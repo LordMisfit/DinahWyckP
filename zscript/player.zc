@@ -3951,9 +3951,67 @@ class DDPlayerPawn : PlayerPawn
 		if (CheckIPEnabled() && ret && MiscItem && globalvars && health > 0 && !isCCardsIllusion)
 		{
 			int gain = 0;
+			double factor = 1.00;
 			if ((source && source != self) && (inflictor && inflictor != self)) gain += 1;
 			if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || tookflrdmg || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush')) gain += 1;
-			if ((mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || tookflrdmg || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush') && !inflictor && !source) gain -= 1;
+			if ((mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || tookflrdmg || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush') && !inflictor && !source) 
+			{
+				if (MiscItem)
+				{
+					int armortype = 0;
+					if (CountInv("ExpeditionHat")) armortype++;
+					if (CountInv("ClassyRibbon")) armortype++;
+					
+					double basechance = 3.000;
+					if (armortype >= 2) basechance = 1.500;
+					if (armortype == 1) basechance = 2.250;
+					if (armortype <= 0) basechance = 3.000;
+					if (frandom(0.001,3.000) <= (1.0000 + (MiscItem.TruePlayerLevel * 0.025)))
+					{
+						gain += 2;
+						int type = random(1,10);
+						if (armortype >= 2) type = random(1,3);
+						if (armortype == 1) type = random(1,6);
+						if (armortype <= 0) type = random(1,10);
+						if (type <= 1)
+						{
+							factor = (0.10 + (MiscItem.TruePlayerLevel * 0.04));
+							if (armortype >= 2) { if (factor > 2.0) factor = 2.0; }
+							else if (armortype == 1) { if (factor > 1.5) factor = 1.5; }
+							else if (armortype <= 0) { if (factor >= 1.25) factor = 1.25; }
+						}
+						else
+						if (type >= 2 && type <= 3)
+						{
+							factor = (0.05 + (MiscItem.TruePlayerLevel * 0.02));
+							if (armortype >= 2) { if (factor > 1.5) factor = 1.5; }
+							else if (armortype == 1) { if (factor > 1.25) factor = 1.25; }
+							else if (armortype <= 0) { if (factor >= 1.00) factor = 1.00; }
+							if (factor > 1.00) factor = 1.00;
+						}
+						else
+						if (type >= 4 && type <= 6)
+						{
+							factor = (0.025 + (MiscItem.TruePlayerLevel * 0.01));
+							if (armortype >= 2) { if (factor > 1.25) factor = 1.25; }
+							else if (armortype == 1) { if (factor > 1.0) factor = 1.0; }
+							else if (armortype <= 0) { if (factor >= 0.5) factor = 0.5; }
+						}
+						else
+						{
+							factor = (0.0125 + (MiscItem.TruePlayerLevel * 0.005));
+							if (armortype >= 2) { if (factor > 1.0) factor = 1.0; }
+							else if (armortype == 1) { if (factor > 0.5) factor = 0.5; }
+							else if (armortype <= 0) { if (factor >= 0.25) factor = 0.25; }
+						}
+					}
+					else
+					{
+						gain -= 1;
+					}
+				}
+				else gain -= 1;
+			}
 			//Console.Printf("IP Gain: %d", gain);
 			if (gain > 0 && MiscItem.IPNoGainTimer <= 0 && !MiscItem.HasHarmonicAnger)
 			{
@@ -4016,6 +4074,11 @@ class DDPlayerPawn : PlayerPawn
 				{
 					base *= 0.03125;
 					basef *= 0;
+				}
+				if (gain >= 2) 
+				{
+					base *= factor;
+					basef *= factor;
 				}
 				A_AddIP(base, basef, true, true, 0);
 			}
