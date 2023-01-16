@@ -3470,23 +3470,40 @@ mixin class MonsterCollider
 				}
 			}
 			if (dydudebug_actordmgdisplays && MiscItem) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critbase: %d / %d", GetClassName(), MiscItem.CritChance, CritRoll);
+			if (FoundPlayer.CountInv("CheatCrit") || FoundPlayer.CountInv("CheatCritUltimate")) criticalhit = true;
 		}
 		
 		initdmg = damage;
 		if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
 		double critdmgmulti = 2.0 + (0.01 * random(-10,10));
-		if (criticalhit)
+		if (criticalhit && !bINVULNERABLE)
 		{
 			if (!(ExplosiveBarrel(self) ||
 						ExplosiveBarrelNew(self) ||
 						Pod(self)))
 			{
+				double heightmult = frandompick(0.9375,1.0,1.0625,1.125,1.125,1.25,1.25,1.25,1.25,1.25);
+				actor SMASH;
+				bool success;
+				[success, SMASH] = A_SpawnItemEx("SMAAAASH",0.0,0.0,(height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
+				if (success && SMASH)
+				{
+					SMAAAASH SMASH2;
+					SMASH2 = SMAAAASH(SMASH);
+					if (SMASH2)
+					{
+						if (SMASH2.target != self) SMASH2.target = self;
+						if (SMASH2.height < (height * heightmult)) SMASH2.height = (height * heightmult);
+						SMASH2.initheight = (height * heightmult);
+					}
+				}
+
 				A_SetInventory("TookCriticalHit",1);
 				if (source == playpawn || inflictor == playpawn)
 				{
-					If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 0)
+					If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 1)
 					{
-						MiscItem.MortalBlowCritBoostTimer = 0;
+						MiscItem.MortalBlowCritBoostTimer = randompick(0,1,1,1,1,1,1,1,1,2);
 						critdmgmulti *= (2.5 + (0.0125 * random(-10,10)));
 						A_StartSound("misc/critsnd2", 216, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.625,1.375));
 						A_StartSound("misc/critsnd2", 217, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.9375,1.0625));

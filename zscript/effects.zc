@@ -7686,3 +7686,52 @@ class SpidMastChaingunCooldown : EEPowerup
 
 class EnemyShadow : PowerShadow { default { inventory.icon ""; Powerup.Strength 50; Powerup.Mode "Translucent"; Powerup.Duration 2147483646; } }
 class EnemyShadowLight : PowerShadow { default { inventory.icon ""; Powerup.Strength 25; Powerup.Mode "Translucent"; Powerup.Duration 2147483646; } }
+
+class CheatCrit : PlaceHolderItem { default { Inventory.MaxAmount 1; } } // Makes the game always allow crits [cheating]
+class CheatCritUltimate : PlaceHolderItem { default { Inventory.MaxAmount 1; } } // Makes the game always allow crits [cheating]
+class SMAAAASH : EEBaseZSC
+{
+	double initheight;
+	default
+	{
+		scale 1.00;
+		Alpha 0.01;
+		RenderStyle "Add";
+		-SOLID;
+		+NOINTERACTION;
+	}
+	
+	override void Tick()
+	{
+		super.Tick();
+		if (!target) 
+		{
+			if (GetAge() < 2) Destroy();
+		}
+		else
+		{
+			if (GetAge() <= 1)
+			{
+				double theight = initheight;
+				double ceilheight = (GetZAt(target.pos.x,target.pos.y,target.angle,GZF_CEILING) - 8);
+				if (ceilheight < pos.z) theight -= (pos.z - ceilheight);
+				A_Warp(AAPTR_TARGET,0,0,theight,0,WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+				//Console.Printf("\c[green](%p)\c- theight: %d (\c[yellow]ceilheight: %d (z: %d)\c, \c[blue]initheight: %d\c- [tic: %d])", self, theight, pos.z, ceilheight, initheight, gametic);
+			}
+		}
+	}
+	
+	states
+	{
+		Spawn:
+			SMSH A 0 BRIGHT NoDelay;
+			SMSH ABCDEF 1 BRIGHT A_FadeIn(0.25);
+			SMSH F 35 BRIGHT
+			{
+				A_SetTics(random(random(35,42),random(42,49)));
+			}
+		Death:
+			SMSH F 1 BRIGHT A_FadeOut(0.0625,FTF_REMOVE);
+			loop;
+	}
+}
