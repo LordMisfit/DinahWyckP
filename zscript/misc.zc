@@ -107,6 +107,7 @@ class PlayerStatItem : Inventory
 	int IPHUDShakeType, IPHUDShakeTimer;
 	
 	int TrueIPLevelGate;
+	int MortalBlowCritBoostTimer;
 	int IPMortalBlowReduceTimer;
 	int IPNoGainTimer;
 	int TrueIPCooldownTimer;
@@ -2099,7 +2100,7 @@ class PlayerStatItem : Inventory
 								if (DynMusSetUsed == 1001) { S_ChangeMusic("WFMAP12", 0, true, true); snglen = 6329; } // Winter' Fury 1-2
 								if (DynMusSetUsed == 1002) { S_ChangeMusic("62KRONAN", 0, true, true); snglen = 2523; } // SS2 Kronor 6-2
 								if (DynMusSetUsed == 1003) { S_ChangeMusic("54ELLENN", 0, true, true); snglen = 3734; } // SS2 Ellenier 5-4
-								if (DynMusSetUsed == 1004) { S_ChangeMusic("exlmenu", 0, true, true); snglen = 5840; } // ?
+								if (DynMusSetUsed == 1004) { S_ChangeMusic("exltheme", 0, true, true); snglen = 4980; } // ?
 								if (DynMusSetUsed == 1005) { S_ChangeMusic("temtheme", 0, true, true); snglen = 6026; } // ?
 								if (DynMusSetUsed == 1006) { S_ChangeMusic("", 0, true, true); snglen = 0; } // ?
 								if (DynMusSetUsed == 1007) { S_ChangeMusic("", 0, true, true); snglen = 0; } // ?
@@ -2198,7 +2199,7 @@ class PlayerStatItem : Inventory
 								if (DynMusSetUsed == 1001) S_ChangeMusic("WFMAP12C", 0, true, true); // Winter' Fury 1-2
 								if (DynMusSetUsed == 1002) S_ChangeMusic("62KRONAF", 0, true, true); // SS2 Kronor 6-2
 								if (DynMusSetUsed == 1003) S_ChangeMusic("54ELLENF", 0, true, true); // SS2 Ellenier 5-4
-								if (DynMusSetUsed == 1004) S_ChangeMusic("exltheme", 0, true, true); // ?
+								if (DynMusSetUsed == 1004) S_ChangeMusic("exlmenu", 0, true, true); // ?
 								if (DynMusSetUsed == 1005) S_ChangeMusic("temmenu", 0, true, true); // ?
 								if (DynMusSetUsed == 1006) S_ChangeMusic("", 0, true, true); // ?
 								if (DynMusSetUsed == 1007) S_ChangeMusic("", 0, true, true); // ?
@@ -2250,7 +2251,7 @@ class PlayerStatItem : Inventory
 									if (randmusroll == 35) S_ChangeMusic("WAWACT", 0, true, true); // SiN - Waw
 									if (randmusroll == 36) S_ChangeMusic("UWACT", 0, true, true); // SiN - Uw
 									if (randmusroll == 37) S_ChangeMusic("THRLMSTA", 0, true, true); // SiN - TMaster
-									if (randmusroll == 38) S_ChangeMusic("exlmenu", 0, true, true); // ?
+									if (randmusroll == 38) S_ChangeMusic("exltheme", 0, true, true); // ?
 									if (randmusroll == 39) S_ChangeMusic("temtheme", 0, true, true); // ?
 									if (randmusroll == 40) S_ChangeMusic("", 0, true, true); // ?
 									if (randmusroll == 41) S_ChangeMusic("", 0, true, true); // ?
@@ -2747,6 +2748,30 @@ class PlayerStatItem : Inventory
 		if (owner.CountInv("PlayerBatDashing")) CritChance *= 0.875;
 		if (owner.CountInv("MysteryItem")) CritChance *= 0.25;
 		if (owner.CountInv("MysteryItem2")) CritChance *= 0.25;
+		if (CritChance <= 4) CritChance = 4;
+
+		double specitemfactor = 1.00;
+		if (owner.CountInv("ExpeditionHat")) specitemfactor -= 0.03125;
+		if (owner.CountInv("ClassyRibbon")) specitemfactor -= 0.09375;
+		if (owner.CountInv("MAManual")) specitemfactor -= 0.125;
+		CritChance *= specitemfactor;
+		if (CritChance <= 3) CritChance = 3;
+		
+		if (MortalBlowCritBoostTimer > 0) CritChance *= 0.125;
+		else
+		{
+			if (owner.CountInv("OverFullHealth3")) CritChance *= 1.25;
+			else if (owner.CountInv("OverFullHealth2")) CritChance *= 1.125;
+			else if (owner.CountInv("OverFullHealth1")) CritChance *= 1.0625;
+			else if (owner.CountInv("NormalHealth")) CritChance *= 1.0;
+			else if (owner.CountInv("DecentHealth")) CritChance *= 0.9375;
+			else if (owner.CountInv("LowHealth")) CritChance *= 0.875;
+			else if (owner.CountInv("CriticalHealth")) CritChance *= 0.75;
+		}
+		if (CritChance <= 1) CritChance = 1;
+		if (CritChance >= 128) CritChance = 128;
+		
+		
 		CritRoll = random(1,CritChance);
 		if (CritRoll <= 1) owner.A_SetInventory("DealCriticalHit",1);
 	}
@@ -4416,10 +4441,15 @@ class PlayerStatItem : Inventory
 				}
 				
 				// IP Cost Reduction after Mortal Blow Survival Timer
-				if (IPMortalBlowReduceTimer)
+				if (IPMortalBlowReduceTimer > 0)
 				{
 					IPMortalBlowReduceTimer--;
 					if (dydudebug_ipdisplays2) Console.Printf("IPMortalBlowReduceTimer: %d", IPMortalBlowReduceTimer);
+				}
+				if (MortalBlowCritBoostTimer > 0)
+				{
+					MortalBlowCritBoostTimer--;
+					if (dydudebug_ipdisplays2) Console.Printf("MortalBlowCritBoostTimer: %d", MortalBlowCritBoostTimer);
 				}
 				// IP "No Gain" Timer [for future unique situations]
 				if (IPNoGainTimer) 

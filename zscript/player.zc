@@ -1821,6 +1821,7 @@ class DDPlayerPawn : PlayerPawn
 						//Console.Printf("gametic: %d", gametic);
 						A_SpawnItemEx("DinahTIPAImage", frandom(-2,2),frandom(-2,2),frandom(-2,2), 0,0,0, 0, SXF_NOCHECKPOSITION|SXF_TRANSFERSPRITEFRAME|SXF_TRANSFERSCALE|SXF_TRANSFERALPHA);
 					}
+					A_DynamicMusic(patktype:-1);
 				}
 				else
 				{
@@ -2058,31 +2059,37 @@ class DDPlayerPawn : PlayerPawn
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer = 0;
 						MiscItem.IPMortalBlowReduceTimer += 525;
+						MiscItem.MortalBlowCritBoostTimer += 700; // 20s
 					}
 					else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 4))
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.2;
 						MiscItem.IPMortalBlowReduceTimer += random(437,438);
+						MiscItem.MortalBlowCritBoostTimer += 525; // 15s
 					}
 					else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 3))
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.4;
 						MiscItem.IPMortalBlowReduceTimer += 350;
+						MiscItem.MortalBlowCritBoostTimer += 385; // 11s
 					}
 					else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 2))
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.6;
 						MiscItem.IPMortalBlowReduceTimer += random(262,263);
+						MiscItem.MortalBlowCritBoostTimer += 280; // 8s
 					}
 					else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement))
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.8;
 						MiscItem.IPMortalBlowReduceTimer += 175;
+						MiscItem.MortalBlowCritBoostTimer += 210; // 6s
 					}
 					else
 					{
 						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.98;
 						MiscItem.IPMortalBlowReduceTimer += random(37,38);
+						MiscItem.MortalBlowCritBoostTimer += 175; // 5s
 					}
 				}
 				
@@ -3750,7 +3757,12 @@ class DDPlayerPawn : PlayerPawn
 					source.bFULLVOLACTIVE == false && 
 					source.bFULLVOLDEATH == false &&
 					source.bBOSS == false) isCCardsIllusion = true;
-			if (source.bISMONSTER && !source.bFRIENDLY && !isCCardsIllusion) A_DynamicMusic(forcedplay:true);
+			if (source.bISMONSTER &&
+					!source.bFRIENDLY &&
+					!isCCardsIllusion &&
+					!(ExplosiveBarrel(source) ||
+						ExplosiveBarrelNew(source) ||
+						Pod(source))) A_DynamicMusic(forcedplay:true);
 		}
 		else
 		if (inflictor)
@@ -3762,7 +3774,12 @@ class DDPlayerPawn : PlayerPawn
 					inflictor.bFULLVOLACTIVE == false && 
 					inflictor.bFULLVOLDEATH == false &&
 					inflictor.bBOSS == false) isCCardsIllusion = true;
-			if (inflictor.bISMONSTER && !inflictor.bFRIENDLY && !isCCardsIllusion) A_DynamicMusic(forcedplay:true);
+			if (inflictor.bISMONSTER && 
+					!inflictor.bFRIENDLY && 
+					!isCCardsIllusion &&
+					!(ExplosiveBarrel(inflictor) ||
+						ExplosiveBarrelNew(inflictor) ||
+						Pod(inflictor))) A_DynamicMusic(forcedplay:true);
 		}
 		
 		string combatlogmsg = "\c[sapphire]*\c- ";
@@ -4631,13 +4648,14 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 			}
 			Goto Spawn;
 		Missile:
-			DINA F 0 A_DynamicMusic(200,0);
-			DINA FG 6
+			DINA F 2;
+			DINA F 2 A_DynamicMusic(patktype:0);
+			DINA FGGG 2
 			{
 			}
 			Goto Spawn;
 		Melee:
-			DINA F 0 A_DynamicMusic(200,1);
+			DINA F 0 A_DynamicMusic(patktype:1);
 			DINA FGF 4
 			{
 			}
@@ -4659,7 +4677,7 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 			}
 			Goto Spawn;
 		SpinAttackBatPre:
-			DINA F 0 A_DynamicMusic(200,1);
+			DINA F 0 A_DynamicMusic(patktype:1);
 			DINA FF 1
 			{
 			}
@@ -4668,7 +4686,7 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 			}
 			Goto Spawn;
 		SpinAttackBat:
-			DINA G 0 A_DynamicMusic(200,1);
+			DINA G 0 A_DynamicMusic(patktype:1);
 			DINA GG 1
 			{
 			}
@@ -4677,7 +4695,7 @@ class DinahPlayer : DDPlayerPawn // HereticPlayer
 			}
 			Goto Spawn;
 		PreKick:
-			DINA A 0 A_DynamicMusic(200,1);
+			DINA A 0 A_DynamicMusic(patktype:2);
 			DINK A 0
 			{
 				A_SetInventory("PKicking",0);
