@@ -3478,10 +3478,35 @@ mixin class MonsterCollider
 		double critdmgmulti = 2.0 + (0.01 * random(-10,10));
 		if (criticalhit && !bINVULNERABLE)
 		{
+			int crittype = 1;
 			if (!(ExplosiveBarrel(self) ||
 						ExplosiveBarrelNew(self) ||
 						Pod(self)))
 			{
+				A_SetInventory("TookCriticalHit",1);
+				if (source == playpawn || inflictor == playpawn)
+				{
+					bool supercrit = false;
+					If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 1)
+					{
+						MiscItem.MortalBlowCritBoostTimer = randompick(0,1,1,1,1,1,1,1,1,2);
+						supercrit = true;
+					}
+					else
+					if (FoundPlayer.CountInv("CheatCritUltimate")) supercrit = true;
+					
+					if (supercrit)
+					{
+						critdmgmulti *= (2.5 + (0.0125 * random(-10,10)));
+						A_StartSound("misc/critsnd2", 216, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.625,0.9375));
+						A_StartSound("misc/critsnd2", 217, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.9375,1.0625));
+						crittype = 2;
+					}
+				}
+				damage *= critdmgmulti;
+				if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critical Hit Dealth: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
+				A_StartSound("misc/critsnd2", 218, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, 1.0);
+
 				double heightmult = frandompick(0.9375,1.0,1.0625,1.125,1.125,1.25,1.25,1.25,1.25,1.25);
 				actor SMASH;
 				bool success;
@@ -3492,26 +3517,15 @@ mixin class MonsterCollider
 					SMASH2 = SMAAAASH(SMASH);
 					if (SMASH2)
 					{
+						double scalebase = frandom(0.875,1.125);
+						if (crittype >= 2) scalebase = frandom(1.25,1.50);
+						SMASH2.scale.x = (scalebase * self.scale.x);
+						SMASH2.scale.y = (scalebase * self.scale.y);
 						if (SMASH2.target != self) SMASH2.target = self;
 						if (SMASH2.height < (height * heightmult)) SMASH2.height = (height * heightmult);
 						SMASH2.initheight = (height * heightmult);
 					}
 				}
-
-				A_SetInventory("TookCriticalHit",1);
-				if (source == playpawn || inflictor == playpawn)
-				{
-					If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 1)
-					{
-						MiscItem.MortalBlowCritBoostTimer = randompick(0,1,1,1,1,1,1,1,1,2);
-						critdmgmulti *= (2.5 + (0.0125 * random(-10,10)));
-						A_StartSound("misc/critsnd2", 216, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.625,1.375));
-						A_StartSound("misc/critsnd2", 217, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.9375,1.0625));
-					}
-				}
-				damage *= critdmgmulti;
-				if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critical Hit Dealth: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
-				A_StartSound("misc/critsnd2", 218, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.75,1.25));
 			}
 		}
 		int shieldtype;
@@ -4356,10 +4370,8 @@ mixin class MonsterCollider
 
 mixin class EvolveMonsters
 {
-	action int A_GetEvolveChance()
+	action int A_GetEvolveChance(actor player, PlayerStatItem MiscItem)
 	{
-		actor player = players[0].mo;
-		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		int PlayerLevel = 0;
 		if (MiscItem) PlayerLevel = MiscItem.TruePlayerLevel;
 
@@ -4373,7 +4385,7 @@ mixin class EvolveMonsters
 		if (SpawnChance <= 0) return SpawnChance;
 		
 		SpawnChance = clamp(SpawnChance, 0, 512);
-
+		
 		TempRatio = exex_rnd_evolve_levels;
 		if (TempRatio > 0)
 		{
