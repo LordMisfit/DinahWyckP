@@ -10,6 +10,56 @@ class CompatVulnItem : PlaceholderItem
 	bool found;
 	double lastTOTALFactor;
 	
+	void A_DynamicMusic(int timerset = 200, int matktype = 0, bool bossfight = false, int bossmusic = -1, bool forcedplay = false, bool checkres = false)
+	{
+		timerset *= exex_dynmustimescale;
+		bool changemusic;
+		actor dmtarget;
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (MiscItem && MiscItem.DynMusSetUsed == 1004) timerset *= 2.0;
+		if (checkres && bFRIENDLY) return;
+		
+		if (A_CheckDDGame())
+		{
+			ACS_Execute(102,0,0,0,0); // Uses the ACS-Based system within the original DD/AFD maps for the dynamic music, as originally coded
+		}
+		else
+		{
+			if (dydudebug_dynmusdisplays && exex_dynamicmusic && !forcedplay) Console.Printf("DynMusActionAttempt (monsterside) [%s]", self.GetClassName());
+			// Uses the mod's own system
+			dmtarget = target;
+			if (dydudebug_dynmusdisplays && exex_dynamicmusic && dmtarget && !forcedplay) Console.Printf("DynMusActionAttempt (monsterside) [target: %s]", dmtarget.GetClassName());
+
+			if (dmtarget)
+			{
+				if (dydudebug_dynmusdisplays && exex_dynamicmusic && !forcedplay) Console.Printf("DynMusActionAttempt (monsterside) [dmtarget: %s]", dmtarget.GetClassName());
+				if (((bFRIENDLY == true || self == player) && dmtarget.bFRIENDLY == false) ||
+						 (bFRIENDLY == false && (dmtarget.bFRIENDLY == true || dmtarget == player))) changemusic = true;
+			}
+			if (matktype == 11) // Suicide Bomber type call
+			{
+				if (dmtarget && Distance3D(dmtarget) > 1024) changemusic = false;
+			}
+			if (forcedplay) changemusic = true;
+			if (exex_dynamicmusic && changemusic)
+			{
+				if (dmtarget && (dmtarget.bBOSS && !dmtarget.bFRIENDLY) || (!self.bFRIENDLY && self.bBOSS && dmtarget == player)) timerset *= 2.5;
+				if (MiscItem)
+				{
+					if (exex_deathmusic && player.health <= 0)
+					{
+					}
+					else
+					{
+						MiscItem.DynMusActCall = true;
+						if (MiscItem.DynMusFightTimer < timerset) MiscItem.DynMusFightTimer = timerset;
+					}
+				}
+			}
+		}
+	}
+	
 	double GetDoomResistances(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
 	{
 		if (dydudebug_actordmgdisplays) Console.Printf("[Doom]");
@@ -3953,6 +4003,30 @@ class CompatVulnItem : PlaceholderItem
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && source) Console.Printf("(source: \c[green]%p\c-) %s", source, source.GetClassName());
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && inflictor) Console.Printf("(inflictor: \c[green]%p\c-) %s", inflictor, inflictor.GetClassName());
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && prevtarget) Console.Printf("(owner.target: \c[green]%p\c-) %s", prevtarget, prevtarget.GetClassName());
+
+				bool domusic = false;
+				DDPlayerPawn FoundPlayer;
+				FoundPlayer = DDPlayerPawn(source);
+				if (!FoundPlayer) FoundPlayer = DDPlayerPawn(inflictor);
+				if (FoundPlayer)
+				{
+					if (!owner.bFRIENDLY) domusic = true;
+				}
+				else
+				{
+					if (owner.bFRIENDLY)
+					{
+						if (source && source.bISMONSTER && !source.bFRIENDLY) domusic = true;
+						if (inflictor && inflictor.bISMONSTER && !inflictor.bFRIENDLY) domusic = true;
+					}
+					else
+					{
+						if (source && source.bISMONSTER && source.bFRIENDLY) domusic = true;
+						if (inflictor && inflictor.bISMONSTER && inflictor.bFRIENDLY) domusic = true;
+					}
+				}
+				if (domusic) A_DynamicMusic(forcedplay:true);
+				
 				if (source && 
 						prevtarget != source && 
 						(PlayerPawn(source) || source.bFRIENDLY) && 
