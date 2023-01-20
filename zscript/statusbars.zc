@@ -4991,13 +4991,18 @@ class DDStatusBarMain : BaseStatusBar
 		return dun, x, y, VisiblePlayerLevel, FontAlpha, FontWrapWidth, FontLineSpace, FontScale, AmmoRatio, wsammoname, CurrHealth, PlayerMaxHP;
 	}
 	
-	int DrawFSHUDLevelStats(int DigY)
+	int DrawFSHUDLevelStats(int DigY, int scaleygap = 8, double textscale = 1.0)
 	{
+		bool showlevelstats = true;
+		if (textscale <= 0.0000) showlevelstats = false;
+		if (textscale >= 0.0001 && textscale <= 0.25) textscale = 0.25;
+		if (textscale >= 4.00) textscale = 4.00;
 		DDPlayerPawn CPlayerPawn;
 		CPlayerPawn = DDPlayerPawn(CPlayer.mo);
 		let MiscItem = PlayerStatItem(CPlayerPawn.FindInventory("PlayerStatItem"));
+		scaleygap *= textscale;
 		
-		if (CPlayerPawn && !automapactive)
+		if (CPlayerPawn && showlevelstats && !automapactive)
 		{
 			DigY = 0;
 			string mapnam = "";
@@ -5058,15 +5063,18 @@ class DDStatusBarMain : BaseStatusBar
 				if (dydudebug_mapbar & 2 && MiscItem) mapnam.AppendFormat(" \c[purple]{nummaps: %d}", (MiscItem.nummaps+1));
 			}
 
+			DigY = -40 + scaleygap;
 			if (dyduhud_showlevelnames)
 			{
-				DigY -= 40;
-				DrawString(mConFont, mapnam, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_darkgray);
+				DigY -= scaleygap;
+				DrawString(mConFont, mapnam, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, font.cr_darkgray, 1.0, -1, 4, (textscale, textscale));
 			}
 			
 			string tallytemp = "";
 			if (dyduhud_showleveltimes)
 			{
+				DigY -= scaleygap;
+				
 				int timeTicks =
 						hud_showtime < 4
 							? Level.maptime
@@ -5097,7 +5105,7 @@ class DDStatusBarMain : BaseStatusBar
 																							 else tallytemp.AppendFormat("%d:", leveltimemin);
 				if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
 																							 else tallytemp.AppendFormat("%d", leveltimesec);
-				DigY -= 8;
+				
 				int fontclr = font.cr_darkgray;
 				if (leveltime <= (leveltimepar * 0.5))
 				{
@@ -5124,7 +5132,8 @@ class DDStatusBarMain : BaseStatusBar
 						}
 					}
 				}
-				DrawString(mConFont, tallytemp, (-120-dayaddx, DigY), DI_TEXT_ALIGN_LEFT|DI_SCREEN_CENTER_BOTTOM, fontclr);
+				
+				DrawString(mConFont, tallytemp, (((-120-dayaddx)*textscale), DigY), DI_TEXT_ALIGN_LEFT|DI_SCREEN_CENTER_BOTTOM, fontclr, 1.0, -1, 4, (textscale, textscale));
 				// Total Time
 				tallytemp = "TOTAL: ";
 				leveltime = level.totaltime;
@@ -5141,14 +5150,13 @@ class DDStatusBarMain : BaseStatusBar
 																							 else tallytemp.AppendFormat("%d:", leveltimemin);
 				if (leveltimesec >= 0 && leveltimesec <= 9) tallytemp.AppendFormat("0%d", leveltimesec);
 																							 else tallytemp.AppendFormat("%d", leveltimesec);
-				DrawString(mConFont, tallytemp, (120+dayaddx, DigY), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM, font.cr_gray);
-				DigY += 8;
+				DrawString(mConFont, tallytemp, (((120+dayaddx)*textscale), DigY), DI_TEXT_ALIGN_RIGHT|DI_SCREEN_CENTER_BOTTOM, font.cr_gray, 1.0, -1, 4, (textscale, textscale));
 			}
 			
 			if (dyduhud_leveltallies)
 			{
 				// Level Stats
-				if (dyduhud_showleveltimes) DigY -= 8;
+				
 				//Console.Printf("DigY: %d", DigY);
 				int tallyfontclr;
 				int flashinterval = 24;
@@ -5164,9 +5172,9 @@ class DDStatusBarMain : BaseStatusBar
 				else tallypercent = scrtcnt * 100.0 / maxscrtcnt;
 				if (maxscrtcnt)
 				{
+					DigY -= scaleygap;
 					tallyfontclr = font.cr_gold;
 					if (scrtcnt >= maxscrtcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_darkgreen;
-					DigY -= 8;
 					tallytemp = "Secrets: ";
 					if (showtotaltallies)
 					{
@@ -5194,7 +5202,7 @@ class DDStatusBarMain : BaseStatusBar
 					{
 						tallytemp.AppendFormat("]");
 					}
-					DrawString(mConFont, tallytemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
+					DrawString(mConFont, tallytemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr, 1.0, -1, 4, (textscale, textscale));
 				}
 				int itemcnt = level.found_items;
 				int maxitemcnt = level.total_items;
@@ -5207,9 +5215,9 @@ class DDStatusBarMain : BaseStatusBar
 				else tallypercent = itemcnt * 100.0 / maxitemcnt;
 				if (maxitemcnt)
 				{
+					DigY -= scaleygap;
 					tallyfontclr = font.cr_lightblue;
 					if (itemcnt >= maxitemcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_brick;
-					DigY -= 8;
 					tallytemp = "Items: ";
 					if (showtotaltallies)
 					{
@@ -5237,7 +5245,7 @@ class DDStatusBarMain : BaseStatusBar
 					{
 						tallytemp.AppendFormat("]");
 					}
-					DrawString(mConFont, tallytemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
+					DrawString(mConFont, tallytemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr, 1.0, -1, 4, (textscale, textscale));
 				}
 				int killcnt = level.killed_monsters;
 				int maxkillcnt = level.total_monsters;
@@ -5250,9 +5258,9 @@ class DDStatusBarMain : BaseStatusBar
 				else tallypercent = killcnt * 100.0 / maxkillcnt;
 				if (maxkillcnt)
 				{
+					DigY -= scaleygap;
 					tallyfontclr = font.cr_brick;
 					if (killcnt >= maxkillcnt && level.time % flashinterval >= (flashinterval*0.5)) tallyfontclr = font.cr_lightblue;
-					DigY -= 8;
 					tallytemp = "Kills: ";
 					if (showtotaltallies) 
 					{
@@ -5280,8 +5288,9 @@ class DDStatusBarMain : BaseStatusBar
 					{
 						tallytemp.AppendFormat("]");
 					}
-					DrawString(mConFont, tallytemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr);
+					DrawString(mConFont, tallytemp, (0, DigY), DI_TEXT_ALIGN_CENTER|DI_SCREEN_CENTER_BOTTOM, tallyfontclr, 1.0, -1, 4, (textscale, textscale));
 				}
+				
 			}
 		}
 		return DigY;
@@ -5994,7 +6003,7 @@ class DDStatusBarMain : BaseStatusBar
 			//* Lower Center *
 			//****************
 			// Level Stats
-			DigY = DrawFSHUDLevelStats(DigY);
+			DigY = DrawFSHUDLevelStats(DigY, 8, dyduhud_stattextscale);
 			
 			// Inventory Bar
 			int yadd = 0;
