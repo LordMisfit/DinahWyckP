@@ -1996,6 +1996,30 @@ class PlayerStatItem : Inventory
 		}
 	}
 	
+	void HandlePianoSing(int type = 0)
+	{
+		Actor mo;
+		if (!isDDTrilogy)
+		{
+			ThinkerIterator SingerFinder = ThinkerIterator.Create("Singer");
+			while (mo = Actor(SingerFinder.Next()))
+			{
+				state ActState = mo.FindState("Inactive");
+				if (type == 0) ActState = mo.FindState("Inactive");
+				if (type == 1) ActState = mo.FindState("Active");
+				if (ActState) mo.SetState(ActState);
+			}
+			
+			ThinkerIterator PianoFinder = ThinkerIterator.Create("Pianoman");
+			while (mo = Actor(PianoFinder.Next()))
+			{
+				state ActState = mo.FindState("Inactive");
+				if (type == 0) ActState = mo.FindState("Inactive");
+				if (type == 1) ActState = mo.FindState("Active");
+				if (ActState) mo.SetState(ActState);
+			}
+		}
+	}
 	void HandleDynamicMusic()
 	{
 		let playeractor = DDPlayerPawn(owner);
@@ -2042,6 +2066,7 @@ class PlayerStatItem : Inventory
 				}
 				else
 				{
+					if (DynMusFightTimer == 1) HandlePianoSing(0);
 					if (DynMusFightTimer <= 0)
 					{
 						randmusroll = -1;
@@ -2132,6 +2157,7 @@ class PlayerStatItem : Inventory
 							else
 							{
 								if (dydudebug_dynmusdisplays) Console.Printf("\c[darkgrey]Resetting to Base Music (Random Fight Music Mode) [%d]\c-", DynMusCalmTimer);
+								if (DynMusFightTimer >= 0) HandlePianoSing(0);
 								S_ChangeMusic("*", 0, true, true);
 							}
 						}
@@ -2145,6 +2171,7 @@ class PlayerStatItem : Inventory
 					{
 						if (DynMusActCall)
 						{
+							if (DynMusCalmTimer >= 0) HandlePianoSing(1);
 							DynMusCalmTimer = -1;
 							if (tempdynmusictype == 1 || tempdynmusictype == 3)
 							{
@@ -2312,6 +2339,7 @@ class PlayerStatItem : Inventory
 			{
 				if (DynMusFightTimer > -1 || DynMusCalmTimer > -1)
 				{
+					if (DynMusFightTimer >= 0) HandlePianoSing(0);
 					DynMusFightTimer = -1;
 					DynMusCalmTimer = -1;
 					randmusroll = -1;
@@ -2327,6 +2355,7 @@ class PlayerStatItem : Inventory
 		{
 			if (DynMusFightTimer > -1 || DynMusCalmTimer > -1)
 			{
+				if (DynMusFightTimer >= 0) HandlePianoSing(0);
 				DynMusFightTimer = -1;
 				DynMusCalmTimer = -1;
 				randmusroll = -1;
@@ -3073,6 +3102,13 @@ class PlayerStatItem : Inventory
 				{
 					owner.A_SetInventory("AFDSchoolFlag4",1);
 				}
+			}
+		}
+		else
+		{
+			if (level.levelnum == 1801)
+			{
+				owner.ChangeTID(1001);
 			}
 		}
 		//Console.Printf("isDDTrilogy: %d", isDDTrilogy);
