@@ -301,3 +301,100 @@ class Z_TiltMe : CustomInventory
 		Stop;
 	}
 }
+
+//===========================================================================
+//
+// Custom Widgets for Tilt++
+// Adds tooltips to widgets
+//
+// Some redundant duplicates here but whatever; menus are painful to work
+// with in general anyway. >:(
+//
+//===========================================================================
+
+class OptionMenuItemTiltPlusPlusOption : OptionMenuItemOption
+{
+	String mTooltip;
+
+	OptionMenuItemTiltPlusPlusOption Init(String label, String tooltip, Name command, Name values, CVar graycheck = null, int center = 0)
+	{
+		mTooltip = tooltip;
+		Super.Init(label, command, values, graycheck, center);
+		return self;
+	}
+}
+
+class OptionMenuItemTiltPlusPlusSlider : OptionMenuItemSlider
+{
+	String mTooltip;
+
+	OptionMenuItemTiltPlusPlusSlider Init(String label, String tooltip, Name command, double min, double max, double step, int showval = 1)
+	{
+		mTooltip = tooltip;
+		Super.Init(label, command, min, max, step, showval);
+		return self;
+	}
+}
+
+//===========================================================================
+//
+// Tilt++ Menu
+//
+//===========================================================================
+
+class TiltPlusPlusMenu : OptionMenu
+{
+	override void Drawer ()
+	{
+		Super.Drawer();
+
+		String tt;
+
+		if (mDesc.mSelectedItem > -1)
+		{
+			if (mDesc.mItems[mDesc.mSelectedItem] is "OptionMenuItemTiltPlusPlusOption")
+			{
+				tt = StringTable.Localize(OptionMenuItemTiltPlusPlusOption(mDesc.mItems[mDesc.mSelectedItem]).mTooltip);
+				if (dydudebug_menutooltipdisplays) Console.Printf("Option (selection# %d): '%s' (%d)", mDesc.mSelectedItem, tt, tt.Length());
+			}
+
+			if (mDesc.mItems[mDesc.mSelectedItem] is "OptionMenuItemTiltPlusPlusSlider")
+			{
+				tt = StringTable.Localize(OptionMenuItemTiltPlusPlusSlider(mDesc.mItems[mDesc.mSelectedItem]).mTooltip);
+				if (dydudebug_menutooltipdisplays) Console.Printf("Slider (selection# %d): '%s' (%d)", mDesc.mSelectedItem, tt, tt.Length());
+			}
+		}
+
+		if (tt.Length() > 0)
+		{
+/*
+			Screen.DrawText (OptionFont(), OptionMenuSettings.mFontColorValue,
+				(Screen.GetWidth() - OptionFont().StringWidth (tt) * CleanXfac_1) / 2,
+				BigFont.GetHeight() * CleanYfac_1 * 2.5,
+				tt,
+				DTA_CleanNoMove_1, true);
+*/
+			font tipfont = OptionFont();
+			let text = tt;
+			int maxlength = ((screen.GetWidth() / CleanXfac_1) * 0.9375);
+			BrokenLines lines = tipfont.BreakLines(text, maxlength);
+
+			for (int i = 0; i < lines.Count(); ++i)
+			{
+				int fontheight = ((tipfont.GetHeight() * 0.875) * CleanYfac_1);
+				int posx = (Screen.GetWidth() - tipfont.StringWidth(lines.StringAt(i)) * CleanXfac_1) / 2;
+				int posy = ((fontheight * 2) + (i * fontheight));
+
+				Screen.DrawText (tipfont, // font
+					OptionMenuSettings.mFontColorValue, // font color
+					posx, // pos.x
+					posy, // pos.y
+					lines.StringAt(i), // string/text
+					DTA_CleanNoMove_1, 
+					true);
+				
+				if (dydudebug_menutooltipdisplays) Console.Printf("i: %d, count: %d, pos.x: %d, pos.y: %d, maxlength: %d", i, lines.Count(), posx, posy, maxlength);
+			}
+		}
+	}
+}
