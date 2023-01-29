@@ -205,6 +205,10 @@ class PlayerStatItem : Inventory
 	int MassNoRPGAdd;
 	double MassNoRPGAdd2;
 	int MassBonusAdd;
+	int AirLevelAdd;
+	int AirNoRPGAdd;
+	int AirNoRPGAdd2;
+	int AirBonusAdd;
 
 	int PlayerLevel, TruePlayerLevel, ActualLevel;
 	int PlayerATK, TruePlayerATK;
@@ -252,6 +256,24 @@ class PlayerStatItem : Inventory
 		+Inventory.UNDROPPABLE;
 		+Inventory.UNTOSSABLE;
 		+Inventory.UNCLEARABLE;
+	}
+	
+	string ReturnKeyBind1(string keybindget)
+	{
+		string LegendStr = "";
+		string UserKeyString;
+		Array<String> UserKeys;
+		
+		UserKeys.Clear();
+		UserKeyString = UIKeybinds.getKeyboard(keybindget);
+		if (UserKeyString != "")
+		{
+			UserKeyString.Split(UserKeys,", ");
+			if (UserKeys[0] == "Space") UserKeys[0] = "SBar";
+			if (UserKeys[0] == "CapsLock") UserKeys[0] = "CapsL";
+			LegendStr.AppendFormat("%s", UserKeys[0]);
+		}
+		return LegendStr;
 	}
 
 	override void DoEffect()
@@ -664,365 +686,15 @@ class PlayerStatItem : Inventory
 				ItemPointChecks();
 				
 				// Luck [DDTrilogy NO Rpg-Mode]
-				if (A_CheckDDGame())
-				{
-					double DDTFactor = 0.00;
-					if (DD_RoseMother) DDTFactor += 0.1875;
-					if (DD_GameMother) DDTFactor += 0.1875;
-					if (DD_MossMother) DDTFactor += 0.1875;
-					if (DD_GlobeMother) DDTFactor += 0.1875;
-					if (DD_SphinxMother) DDTFactor += 0.1875;
-					if (DD_HandMother1) DDTFactor += 0.1875;
-					if (DD_HandMother2) DDTFactor += 0.1875;
-					if (DD_TrueHandMother) DDTFactor += 0.1875;
-					if (AFD_Krag) DDTFactor += 0.25;
-					if (AFD_Quisling) DDTFactor += 0.25;
-					if (AFD_Lauritz) DDTFactor += 0.25;
-					if (AFD_Jorgensen1) DDTFactor += 0.25;
-					if (AFD_Jorgensen2) DDTFactor += 0.25;
-					if (AFD_JorgCannon) DDTFactor += 0.25;
-					if (CoS_Fafnir) DDTFactor += 0.25;
-					if (CoS_FractalHens) DDTFactor += 0.25;
-					if (CoS_HandMothers) DDTFactor += 0.25;
-					if (CoS_ForsakenJorg) DDTFactor += 0.25;
-					if (CoS_EvilDinah) DDTFactor += 0.25;
-					if (CoS_Tempest) DDTFactor += 0.25;
-					if (skill <= 0) DDTFactor *= 1.5;
-					if (skill == 1) DDTFactor *= 1.25;
-					if (skill == 2) DDTFactor *= 1.0;
-					if (skill == 3) DDTFactor *= 0.75;
-					if (skill >= 4) DDTFactor *= 0.5;
-					DDTFactor *= exex_nrpggeneraleffect;
-					DDTFactor += 1.00;
-					TempLUCK *= DDTFactor;
-					PlayerLuck = TempLUCK;
-				}
+				LuckChecks();
 				
-				if (owner.CountInv("PoisonCount"))
-				{
-					owner.player.poisoncount += owner.CountInv("PoisonCount");
-					owner.A_SetInventory("PoisonCount",0);
-				}
-				if (owner.CountInv("DamageCount"))
-				{
-					owner.player.DamageCount += owner.CountInv("DamageCount");
-					if (owner.player.DamageCount > 100) owner.player.DamageCount = 100;
-					owner.A_SetInventory("DamageCount",0);
-				}
-				if (owner.CountInv("BonusCount"))
-				{
-					owner.player.BonusCount += owner.CountInv("BonusCount");
-					if (owner.player.BonusCount > 100) owner.player.BonusCount = 100;
-					owner.A_SetInventory("BonusCount",0);
-				}
-				//
-				// Leveling Up
-				//
-				Experience = owner.CountInv("ExpPts");
-				owner.A_SetInventory("ExpPtsLeft",(LevelExpRequirement[(PlayerLevel)]-Experience));
-				owner.A_SetInventory("ExpPtsNeeded",LevelExpRequirement[(PlayerLevel)]);
-				PlayerLevel = owner.CountInv("PlayerLevel");
-				PlayerATK = owner.CountInv("PlayerATK");
-				PlayerDEF = owner.CountInv("PlayerDEF");
-				PlayerSPD = owner.CountInv("PlayerSPD");
-				PlayerLuck = owner.CountInv("PlayerLuck");
+				// [Poison/Damage/Bonus]Count Capper
+				CountCapper();
 
-				int levelmodulo, levelbonustype;
-				int leveluptimes = 0;
-				int leveluptimesmax = LevelCap - PlayerLevel;
-				int StatIncrease;
-				PrevATK = PlayerATK;
-				PrevDEF = PlayerDEF;
-				PrevSPD = PlayerSPD;
-				int PrevTrueIPLevelGate = TrueIPLevelGate;
-				for (leveluptimes = 0; leveluptimes < leveluptimesmax; leveluptimes++)
-				{
-					if (dydudebug_levelup) Console.Printf("%d / %d [TrueIPLevelGate: %d, TrueIPCooldownTimer: %d]", leveluptimes, leveluptimesmax, TrueIPLevelGate, TrueIPCooldownTimer);
-					if (Experience >= LevelExpRequirement[PlayerLevel])
-					{
-						PrevTrueIPLevelGate = TrueIPLevelGate;
-						if (PlayerLevel < LevelCap)
-						{
-							PlayerLevel += 1;
-							TrueIPLevelGate--;
-							
-							LevelUpProcess(0);
-							
-							owner.A_SetInventory("PlayerLevel",PlayerLevel);
-							owner.A_SetInventory("PlayerATK",PlayerATK);
-							owner.A_SetInventory("PlayerDEF",PlayerDEF);
-							owner.A_SetInventory("PlayerSPD",PlayerSPD);
-							owner.A_SetInventory("PlayerLUCK",PlayerLUCK);
-							if (!owner.CountInv("SilentLevelUp"))
-							{
-								string LevelUpMsg = "";
-								LevelUpMsg.AppendFormat("\c[Green]Congradulations, you've reached Level %d \c[brick][+%d HP]", PlayerLevel, HPMaxGain);
-								if (exex_extraatkdefspd)
-								{
-									if ((PlayerATK > PrevATK) || (PlayerDEF > PrevDEF) || (PlayerSPD > PrevSPD)) LevelUpMsg.AppendFormat("\n\n");
-									if (PlayerATK > PrevATK) LevelUpMsg.AppendFormat("\n\c[brick]Attack Increased Even More than Normal!");
-									if (PlayerDEF > PrevDEF) LevelUpMsg.AppendFormat("\n\c[olive]Defense Increased Even More than Normal!");
-									if (PlayerSPD > PrevSPD) LevelUpMsg.AppendFormat("\n\c[lightblue]Speed Increased Even More than Normal!");
-								}
-								if (PrevTrueIPLevelGate != TrueIPLevelGate && PrevTrueIPLevelGate > 0)
-								{
-									LevelUpMsg.AppendFormat("\n\n");
-												if (TrueIPLevelGate > 0) LevelUpMsg.AppendFormat("\n\c[brick]Level up %d more times to use Flower Crown IP\n\c[brick] once again!", TrueIPLevelGate);
-									else if (TrueIPLevelGate <= 0) LevelUpMsg.AppendFormat("\n\c[gold]You can now use the Flower Crown's IP again!\n\c[gold](arm Hand To Hand and go into blocking stance\n\c[gold]and press <ZOOM> while IP mode is on!)");
-								}
-								if (PlayerLevel == scramblernoarmorbonuslvlreq)
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]The Scrambler can now deal 5x damage when you have no armor!");
-								}
-								if (PlayerLevel == scramblerelnomolvlreq)
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]The Scrambler can cook a fractal egg to heal you slightly by\nholding <STRAFE LEFT> and <STRAFE RIGHT> and pressing <FIRE> or <ALT-FIRE>!");
-								}
-								if (PlayerLevel == jackcrisislvlrequirement) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]The AppleJack can now deal varying bonus damage when \nyour health falls below certain thresholds!");
-								}
-								if (PlayerLevel == pikeinvisolvlreq) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]The Wizard's Pike can now briefly make you invisible at\n the cost of 3 Devil's Food by holding\n down <STRAFE LEFT> and <STRAFE RIGHT>\n and pressing <FIRE> or <ALT-FIRE>!");
-								}
-								if (PlayerLevel == (pikeinvisolvlreq * 6.25)) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]The Wizard's Pike invisibility special now only costs 2\n Devil's Food to use!");
-								}
-								if (PlayerLevel == axecombolvlrequirement) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]The BlunderAxe can now be swung faster consectutively\nin melee if you hold down the corresponding button.\nHolding down <ALT-FIRE> right after a chop will allow\nyou to fire an immediate ranged shot if you have ammo!");
-								}
-								if (PlayerLevel == cricketspinlvlrequirement) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]The Cricket Bat can now be used for a spinning\n\c[gold]attack! (\c[sapphire]Fire + LStrafe + RStrafe\c[gold])");
-								}
-								if (PlayerLevel == 20) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]Surviving Mortal Hits Now Temporarily Reduces IP costs\nfor most abilities by 33.4%% for 5 seconds.");
-								}
-								if (PlayerLevel == axequickshotlvlrequirement)
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]The BlunderAxe's 'Chop & Fire' combo is improved!\nFiring your ranged attack w/ <ALT-FIRE> after a chop \ndoes improved damage and has a tigher spread!");
-								}
-								if (PlayerLevel == 40) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]Surviving Mortal Hits Now Temporarily Reduces IP costs\nfor most abilities by 50%% for 7.5 seconds.");
-								}
-								if (PlayerLevel == 60) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]Surviving Mortal Hits Now Temporarily Reduces IP costs\nfor most abilities by 66.7%% for 10 seconds.");
-								}
-								if (PlayerLevel == 80) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]Surviving Mortal Hits Now Temporarily Reduces IP costs\nfor most abilities by 83.4%% for 12.5 seconds.");
-								}
-								if (PlayerLevel == 100) 
-								{
-									LevelUpMsg.AppendFormat("\n\n\n\c[gold]Surviving Mortal Hits Now Temporarily Negates IP costs\nfor most abilities entirely for 15 seconds.");
-								}
-								owner.A_Print(LevelUpMsg);
-								owner.A_SetBlend("00 00 FF",0.3,3,"00 00 FF",0.0);
-							}
-						}
-					}
-				}
-				if (exex_expenabled) 
-				{
-					TruePlayerLevel = PlayerLevel;
-					TruePlayerATK = PlayerATK;
-					TruePlayerDEF = PlayerDEF;
-					TruePlayerSPD = PlayerSPD;
-				}
-				else
-				{
-					TruePlayerLevel = 0;
-					TruePlayerATK = 0;
-					TruePlayerDEF = 0;
-					TruePlayerSPD = 0;
-				}
-
-				int oldhealth = owner.health;
-				if (owner.CountInv("NormalHealth")) oldhealthratio = 0;
-				if (owner.CountInv("DecentHealth")) oldhealthratio = 1;
-				if (owner.CountInv("LowHealth")) oldhealthratio = 2;
-				if (owner.CountInv("CriticalHealth")) oldhealthratio = 3;
-				PrevATK = PlayerATK;
-				PrevDEF = PlayerDEF;
-				PrevSPD = PlayerSPD;
-				leveluptimes = 0;
-				leveluptimesmax = NumOfLegendMeds - MedCurrLvl;
-				int LMUsed;
-				
-				StatIncrease = 0;
-				PrevTrueIPLevelGate = TrueIPLevelGate;
-				for (leveluptimes = 0; leveluptimes < leveluptimesmax; leveluptimes++)
-				{
-					if (MedCurrLvl < NumOfLegendMeds)
-					{
-						PrevTrueIPLevelGate = TrueIPLevelGate;
-						MedCurrLvl += 1;
-						LMUsed++;
-						if (random(1,4) <= 3) 
-						{
-							if (TrueIPLevelGate > 0) TrueIPLevelGate = 0;
-						}
-						else
-						{
-							if (TrueIPLevelGate >= 4) 
-							{
-								TrueIPLevelGate *= 0.25;
-							}
-							else
-							if (TrueIPLevelGate > 0) 
-							{
-								TrueIPLevelGate = 0;
-							}
-						}
-						
-						LevelUpProcess(1);
-						
-						owner.A_SetInventory("PlayerATK",PlayerATK);
-						owner.A_SetInventory("PlayerDEF",PlayerDEF);
-						owner.A_SetInventory("PlayerSPD",PlayerSPD);
-						owner.A_SetInventory("PlayerLUCK",PlayerLUCK);
-						string LevelUpMsg = "";
-						LevelUpMsg.AppendFormat("\c[Green]Consumed a bottle of Potentylene! \c[brick][+%d HP]", HPMaxGain);
-						if (exex_expenabled && exex_extraatkdefspd)
-						{
-							if ((PlayerATK > PrevATK) || (PlayerDEF > PrevDEF) || (PlayerSPD > PrevSPD)) LevelUpMsg.AppendFormat("\n\n");
-							if (PlayerATK > PrevATK) LevelUpMsg.AppendFormat("\n\c[brick]Attack Increased Even More than Normal!");
-							if (PlayerDEF > PrevDEF) LevelUpMsg.AppendFormat("\n\c[olive]Defense Increased Even More than Normal!");
-							if (PlayerSPD > PrevSPD) LevelUpMsg.AppendFormat("\n\c[lightblue]Speed Increased Even More than Normal!");
-						}
-						if (PrevTrueIPLevelGate != TrueIPLevelGate && PrevTrueIPLevelGate > 0)
-						{
-							LevelUpMsg.AppendFormat("\n\n");
-									  if (TrueIPLevelGate > 0) LevelUpMsg.AppendFormat("\n\c[brick]Level up %d more times to use Flower Crown IP\n\c[brick]once again!", TrueIPLevelGate);
-							else if (TrueIPLevelGate <= 0) LevelUpMsg.AppendFormat("\n\c[gold]You can now use the Flower Crown's IP again!\n\c[gold](arm Hand To Hand and go into blocking stance\n\c[gold]and press <ZOOM> while IP mode is on!)");
-						}
-						owner.A_Print(LevelUpMsg);
-					}
-				}
-				if (LMUsed)
-				{
-					double ssb = 1.0;
-					if (owner.CountInv("ClassyRibbon")) ssb += 0.125;
-					if (owner.CountInv("ExpeditionHat")) ssb -= 0.25;
-
-					owner.A_StartSound("Dinah/PainLMS",CHAN_VOICE);
-					//Console.Printf("MedStrength: %d", MedStrength);
-					owner.A_SetBlend("8a e1 01",((0.500 * ssb) + ((MedStrength * 0.0667)) * ssb),((random(48,50) * ssb) + ((MedStrength * 12) * ssb)));
-					if (MedStrength >= 1) owner.health *= (0.5 * ssb);
-					if (MedStrength >= 2) owner.health *= (0.5 * ssb);
-					if (MedStrength >= 3) owner.health *= (0.5 * ssb);
-					if (MedStrength >= 4) owner.health *= (0.5 * ssb);
-					owner.player.poisoncount += ((random(18,30) * frandom(6.0,7.5) * (randompick(0,0,0,0,0,0,0,1,1,1,1,2,2) + MedStrength)) * ssb);
-					//Console.Printf("poisoncount: %d", owner.player.poisoncount);
-					if (owner.health < 0) owner.health = 1;
-					
-					double base;
-					if (!HasHarmonicAnger)
-					{
-						if (exex_ikaripointscalctype == 1)
-						{
-							base = (oldhealth - owner.health) * 100.0 / oldhealth; // % of remaining HP removed
-							if (base >= 0.001)
-							{
-								if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
-								if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
-								if (base >= 65.001 && base <= 75.000) base *= 0.646154;
-								if (base >= 75.001 && base <= 85.000) base *= 0.76; 
-								if (base >= 85.001 && base <= 90.000) base *= 0.90; 
-								if (base >= 90.001 && base <= 100.000) base *= 1.00; 
-								if (base >= 100.001) base *= 1.25;
-							}
-						}
-						else
-						{
-							base = (oldhealth - owner.health) * 100.0 / MaxHealthTrue;
-							if (oldhealthratio == 0) base *= 1.0;
-							if (oldhealthratio == 1) base *= 1.125;
-							if (oldhealthratio == 2) base *= 1.25;
-							if (oldhealthratio == 3) base *= 1.5;
-							if (oldhealthratio == 4) base *= 2.25;
-							if (oldhealth > 1 && owner.health == 1) base *= 3.25;
-						}
-						double basef = base;
-						double ssa = 1.0;
-						if (owner.CountInv("ClassyRibbon")) ssa += 0.25;
-						if (owner.CountInv("ExpeditionHat")) ssa -= 0.125;
-						base *= ssa;
-						basef *= ssa;
-
-						base *= (1.0 + (ActualLevel * 0.0025));
-						if (base <= 0.01) base = 0.01;
-						if (basef <= 0.01) basef = 0.01;
-						
-						if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) base *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
-						
-						if (base)
-						{
-							if (IPDissipateTimer > 0) IPDissipateTimer = (-350 * basef);
-																	 else IPDissipateTimer += (-350 * basef);
-							double oldItemPoints = ItemPoints;
-							ItemPoints += base;
-							if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
-							if (ItemPoints >= oldItemPoints) 
-							{
-								base = (ItemPoints - oldItemPoints);
-								if (dydudebug_ipdisplays2) Console.Printf("\c[red]LevelUp (base): %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", base, ItemPoints, oldItemPoints);
-							}
-							globalvars.ItemPoints == ItemPoints;
-							
-							if (base > 0)
-							{
-								if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
-								else
-								{
-									IPHUDPulseTimer += 35;
-									if (IPHUDPulseTimer < 105 && base > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
-									if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
-								}
-								
-								if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
-								{
-									ItemPointsSession += base;
-									if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
-									if (ItemPointsSession > 0 && base > 0)
-									{
-										int healfactor = ItemPointsSession * 100 / MaxItemPoints;
-										if (healfactor < 10) IPHUDPulseType = 1;
-										if (healfactor >= 10) IPHUDPulseType = 2;
-										if (healfactor >= 50) IPHUDPulseType = 3;
-										if (healfactor >= 100) IPHUDPulseType = 4;
-										IPHUDPulseTimeP = (level.time % randompick(10,15,20));
-									}
-								}
-								
-								if (exex_playerdmglog && CheckIPEnabled() && base) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
-							}
-						}
-					}
-					
-					string blehmsg = "";
-					blehmsg.AppendFormat("\c[gold]BLEGH");
-					if (MedStrength >= 1) blehmsg.AppendFormat("\c[gold]!");
-					if (MedStrength >= 2) blehmsg.AppendFormat("\c[gold]!");
-					if (MedStrength >= 3) blehmsg.AppendFormat("\c[gold]!");
-					if (MedStrength >= 4) blehmsg.AppendFormat("\c[gold]!");
-					if (MedStrength >= 5) blehmsg.AppendFormat("\c[gold]!");
-					blehmsg.AppendFormat(" These things taste absolutely toxic");
-					if (MedStrength >= 1) blehmsg.AppendFormat("\c[gold]!");
-					if (MedStrength >= 3) blehmsg.AppendFormat("\c[gold]!");
-					if (MedStrength >= 5) blehmsg.AppendFormat("\c[gold]!");
-					blehmsg.AppendFormat(" Yet I feel some power is trying to surface inside me... despite that...");
-					Console.Printf(blehmsg);
-
-					MedStrength = 0;
-					LMUsed = 0;
-				}
+				//***************
+				//* Leveling Up *
+				//***************
+				LevelUpExpStuff();
 				
 				//********************************
 				//* Armor Tier Give/Max Settings *
@@ -1591,6 +1263,645 @@ class PlayerStatItem : Inventory
 		return false;
 	}
 	
+	
+	void LevelUpProcess(int type)
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+
+		int levelmodulo, levelbonustype;
+		levelmodulo = PlayerLevel % 20;
+		if (levelmodulo == 0) levelbonustype = 0;
+		else if (levelmodulo == 4) levelbonustype = 1;
+		else if (levelmodulo == 5) levelbonustype = randompick(2,2,2,2,2,1);
+		else if (levelmodulo == 8) levelbonustype = 1;
+		else if (levelmodulo == 10) levelbonustype = randompick(2,2,2,2,2,1);
+		else if (levelmodulo == 12) levelbonustype = 1;
+		else if (levelmodulo == 15) levelbonustype = randompick(2,2,2,2,2,1);
+		else if (levelmodulo == 16) levelbonustype = 1;
+		else levelbonustype = 2;
+		if (dydudebug_levelupdisplays) Console.Printf("\cyLevel Check\c-: %d, \cxModulo\c-: %d, \czBonus Type\c-: %d", PlayerLevel, levelmodulo, levelbonustype);
+		
+		double RandomizedStatChance, RandomizedStatChance2;
+		RandomizedStatChance = 1.00000000; // 192;
+		if (levelbonustype == 0) // Levels 20, 40, 60, 80, 100, 120, 140, 160, 180 & 200
+		{
+			RandomizedStatChance -= (0.1 * random[statitem](4,8)); // 112 to 152
+		}
+		else
+		if (levelbonustype == 1) // Levels [0/2/4/6/8/10/12/14/16/18]4, [0/2/4/6/8/10/12/14/16/18]8, [1/3/5/7/9/11/13/15/17/19]2, & [1/3/5/7/9/11/13/15/17/19]6
+		{
+			RandomizedStatChance -= (0.02 * random[statitem](4,8)); // 160 to 176
+		}
+		else
+		if (levelbonustype == 2) // Any other level that's not a multiple of 4 or 20
+		{
+			RandomizedStatChance -= (0.004 * random[statitem](4,8));
+		}
+		double RNDSCSubtractor1 = 0;
+		double RNDSCSubtractor2 = 0;
+		RNDSCSubtractor1 = (PlayerLevel * 0.32);
+		RNDSCSubtractor1 = clamp(RNDSCSubtractor1, 0.00000, 0.33334);
+		if (PlayerLevel > 100)
+		{
+			RNDSCSubtractor2 = ((PlayerLevel - 100) * 0.4);
+			RNDSCSubtractor2 = clamp(RNDSCSubtractor2, 0.00000, 0.33334);
+		}
+		if (dydudebug_levelupdisplays) Console.Printf("\cyRNDSCSubtractor1\c-: %.8f, \cxRNDSCSubtractor2\c-: %.8f", RNDSCSubtractor1, RNDSCSubtractor2);
+
+		double RNDSCSubtractor = 0;
+		RNDSCSubtractor += RNDSCSubtractor1; // Adds [level 1-100] range value
+		RNDSCSubtractor += RNDSCSubtractor2; // Adds [level 101-200] range value
+		RandomizedStatChance -= RNDSCSubtractor;
+		if (owner.CountInv("MysteryItem")) RandomizedStatChance *= 0.75;
+		if (owner.CountInv("MysteryItem2")) RandomizedStatChance *= 0.75;
+		if (RandomizedStatChance < 0.005208334) RandomizedStatChance = 0.005208334;
+		if (dydudebug_levelupdisplays) Console.Printf("\cyRNDSCSubtractor\c-: %.8f, \cxRandomizedStatChance\c-: %.8f", RNDSCSubtractor, RandomizedStatChance);
+
+		RandomizedStatChance2 = 1.00000000;
+		if (PlayerLevel >= 25) RandomizedStatChance2 -= 0.041666667; // 23
+		if (PlayerLevel >= 50) RandomizedStatChance2 -= 0.041666667; // 22
+		if (PlayerLevel >= 75) RandomizedStatChance2 -= 0.041666667; // 21
+		if (PlayerLevel >= 100) RandomizedStatChance2 -= 0.041666667; // 20
+		if (PlayerLevel >= 125) RandomizedStatChance2 -= 0.083333334; // 18
+		if (PlayerLevel >= 150) RandomizedStatChance2 -= 0.083333334; // 16
+		if (PlayerLevel >= 175) RandomizedStatChance2 -= 0.083333334; // 14
+		if (dydudebug_levelupdisplays) Console.Printf("\cyStat Chance 1\c-: %.8f, \cxStat Chance 2\c-: %.8f", RandomizedStatChance, RandomizedStatChance2);
+		
+		//********************************
+		//*Random Levelups to Stat Values*
+		//********************************
+		int SeedIncreaseAmt;
+		double LvlSkillMulti;
+		double RollValue;
+		double BaseChance1;
+		double BaseChance2;
+		int LvlStatMulti = 1;
+		// Luck Boost [1]
+		BaseChance1 = (0.2 + (NumOfAfasDrops * 0.0125)) * (1.0 + (NumOfAfasDrops * 0.0625));
+		BaseChance2 = 0.083333334 * (1.0 + (NumOfAfasDrops * 0.025));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerLuck += LvlSkillMulti;
+		// Luck Boost [2]
+		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.003125)) * (1.0 + (NumOfAfasDrops * 0.03125));
+		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.0125));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerLuck += LvlSkillMulti;
+		// Luck Boost [3]
+		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.00078125)) * (1.0 + (NumOfAfasDrops * 0.015625));
+		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.00625));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerLuck += LvlSkillMulti;
+
+		// Speed Boost [1]
+		BaseChance1 = (0.125 + (NumOfAfasDrops * 0.0125)) * (1.0 + (NumOfAfasDrops * 0.0625));
+		BaseChance2 = 0.083333334 * (1.0 + (NumOfAfasDrops * 0.025));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerSPD += LvlSkillMulti;
+		// Speed Boost [2]
+		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.003125)) * (1.0 + (NumOfAfasDrops * 0.03125));
+		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.0125));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerSPD += LvlSkillMulti;
+		// Speed Boost [3]
+		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.00078125)) * (1.0 + (NumOfAfasDrops * 0.015625));
+		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.00625));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerSPD += LvlSkillMulti;
+		
+		// Attack Boost [1]
+		BaseChance1 = (0.25 + (NumOfAfasDrops * 0.0125)) * (1.0 + (NumOfAfasDrops * 0.0625));
+		BaseChance2 = 0.083333334 * (1.0 + (NumOfAfasDrops * 0.025));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerATK += LvlSkillMulti;
+		// Attack Boost [2]
+		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.003125)) * (1.0 + (NumOfAfasDrops * 0.03125));
+		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.0125));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerATK += LvlSkillMulti;
+		// Attack Boost [3]
+		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.00078125)) * (1.0 + (NumOfAfasDrops * 0.015625));
+		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.00625));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerATK += LvlSkillMulti;
+		
+		// Defense Boost [1]
+		BaseChance1 = (0.1875 + (NumOfAfasDrops * 0.0125)) * (1.0 + (NumOfAfasDrops * 0.0625));
+		BaseChance2 = 0.083333334 * (1.0 + (NumOfAfasDrops * 0.025));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerDEF += LvlSkillMulti;
+		// Defense Boost [2]
+		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.003125)) * (1.0 + (NumOfAfasDrops * 0.03125));
+		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.0125));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerDEF += LvlSkillMulti;
+		// Defense Boost [3]
+		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.00078125)) * (1.0 + (NumOfAfasDrops * 0.015625));
+		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.00625));
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
+		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
+		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
+		if (RollValue <= BaseChance1) PlayerDEF += LvlSkillMulti;
+
+		// Health/HP Boost
+		CurrentHealth = owner.player.mo.health;
+		HPMaxGain = 0;
+		
+		if (PlayerLevel >= 151 && PlayerLevel <= 200)				HPMaxGain += floor(PlayerLevel * frandompick(0.0525,0.06));
+		else if (PlayerLevel >= 101 && PlayerLevel <= 150)	HPMaxGain += floor(PlayerLevel * frandompick(0.045,0.0525));
+		else if (PlayerLevel >= 51 && PlayerLevel <= 100)		HPMaxGain += floor(PlayerLevel * frandompick(0.0375,0.045));
+		else if (PlayerLevel <= 50)													HPMaxGain += floor(PlayerLevel * frandompick(0.03,0.0375));
+		
+		HPMaxGain += 													randompick(0,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,3);
+		if (levelbonustype == 0) HPMaxGain += randompick(1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,3,3,3,3);
+		if (levelbonustype == 1) HPMaxGain += randompick(0,0,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3);
+		if (levelbonustype == 2) HPMaxGain += randompick(0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,2);
+		if (TrueGameSkill <= SKILL_VERY_EASY) 
+		{
+			HPMaxGain += randompick(1,1,2,2,3);
+			HPMaxGain += (MaxHealthTrue / (216 - (NumOfAfasDrops * 8)));
+		}
+		if (TrueGameSkill == SKILL_EASY) 
+		{
+			HPMaxGain += randompick(0,1,1,2,2);
+			HPMaxGain += (MaxHealthTrue / (270 - (NumOfAfasDrops * 6.4)));
+		}
+		if (TrueGameSkill == SKILL_NORMAL) 
+		{
+			HPMaxGain += randompick(0,0,1,1,2);
+			HPMaxGain += (MaxHealthTrue / (324 - (NumOfAfasDrops * 3.2)));
+		}
+		if (TrueGameSkill == SKILL_HARD) 
+		{
+			HPMaxGain += randompick(0,0,0,1,1);
+			HPMaxGain += (MaxHealthTrue / (378 - (NumOfAfasDrops * 3.2)));
+		}
+		if (TrueGameSkill == SKILL_VERY_HARD)
+		{
+			HPMaxGain += randompick(0,0,0,0,1);
+			HPMaxGain += (MaxHealthTrue / (432 - (NumOfAfasDrops * 1.6)));
+		}
+		if (HPMaxGain < 1) HPMaxGain = 1;
+		owner.player.mo.health += HPMaxGain;
+		HealthLevelAdd += HPMaxGain;
+		if (type == 1) 
+		{
+			HealthNoRPGAdd += HPMaxGain;
+			if (!exex_expenabled)
+			{
+				if (skill <= 0) HPMaxGain *= (4.0 + (NumOfAfasDrops * 0.08));
+				if (skill == 1) HPMaxGain *= (3.5 + (NumOfAfasDrops * 0.07));
+				if (skill == 2) HPMaxGain *= (3.0 + (NumOfAfasDrops * 0.06));
+				if (skill == 3) HPMaxGain *= (2.5 + (NumOfAfasDrops * 0.05));
+				if (skill >= 4) HPMaxGain *= (2.0 + (NumOfAfasDrops * 0.04));
+			}
+		}
+		if (!owner.CountInv("SilentLevelUp")) A_StatIncHud(HPMaxGain,0);
+		if (dydudebug_levelupdisplays) Console.Printf("HPMaxGain: %d", HPMaxGain);
+		
+		// Mass/Balance
+		double BaseMass = 1.0;
+		let playerset = DDPlayerPawn(owner);
+		if (playerset) BaseMass = playerset.originalmass;
+		MassGain = 0;
+
+		if (PlayerLevel >= 151 && PlayerLevel <= 200)				MassGain += floor(PlayerLevel * frandompick(0.0525,0.06));
+		else if (PlayerLevel >= 101 && PlayerLevel <= 150)	MassGain += floor(PlayerLevel * frandompick(0.045,0.0525));
+		else if (PlayerLevel >= 51 && PlayerLevel <= 100)		MassGain += floor(PlayerLevel * frandompick(0.0375,0.045));
+		else if (PlayerLevel <= 50)													MassGain += floor(PlayerLevel * frandompick(0.03,0.0375));
+
+		MassGain += 													randompick(0,0,0,1,1,1,1,1,1,1,1,1,1,1,2,2);
+		if (levelbonustype == 0) MassGain += randompick(1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3);
+		if (levelbonustype == 1) MassGain += randompick(0,0,0,0,1,1,1,1,1,1,1,1,2,2,2,2);
+		if (levelbonustype == 2) MassGain += randompick(0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1);
+		if (TrueGameSkill <= SKILL_VERY_EASY) 
+		{
+			MassGain += randompick(0,0,0,0,0,1,1,2,2,3);
+			MassGain += (BaseMass / (324 - (NumOfAfasDrops * 16)));
+		}
+		if (TrueGameSkill == SKILL_EASY) 
+		{
+			MassGain += randompick(0,0,0,0,0,0,1,1,2,2);
+			MassGain += (BaseMass / (405 - (NumOfAfasDrops * 12.8)));
+		}
+		if (TrueGameSkill == SKILL_NORMAL) 
+		{
+			MassGain += randompick(0,0,0,0,0,0,0,1,1,2);
+			MassGain += (BaseMass / (486 - (NumOfAfasDrops * 9.6)));
+		}
+		if (TrueGameSkill == SKILL_HARD) 
+		{
+			MassGain += randompick(0,0,0,0,0,0,0,0,1,1);
+			MassGain += (BaseMass / (557 - (NumOfAfasDrops * 6.4)));
+		}
+		if (TrueGameSkill == SKILL_VERY_HARD)
+		{
+			MassGain += randompick(0,0,0,0,0,0,0,0,0,1);
+			MassGain += (BaseMass / (648 - (NumOfAfasDrops * 3.2)));
+		}
+		MassLevelAdd += MassGain;
+		if (type == 1) 
+		{
+			MassNoRPGAdd += MassGain;
+			if (!exex_expenabled)
+			{
+				if (skill <= 0) MassGain *= (2.0 + (NumOfAfasDrops * 0.04));
+				if (skill == 1) MassGain *= (1.75 + (NumOfAfasDrops * 0.045));
+				if (skill == 2) MassGain *= (1.5 + (NumOfAfasDrops * 0.03));
+				if (skill == 3) MassGain *= (1.25 + (NumOfAfasDrops * 0.025));
+				if (skill >= 4) MassGain *= (1.0 + (NumOfAfasDrops * 0.02));
+			}
+		}
+		
+		if (!owner.CountInv("SilentLevelUp")) owner.A_StartSound("misc/bellring",101,CHANF_DEFAULT,frandom(0.6,0.75),ATTN_NORM,frandom(1.25,1.5));
+	}
+	
+	void LevelUpExpStuff()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		
+		Experience = owner.CountInv("ExpPts");
+		owner.A_SetInventory("ExpPtsLeft",(LevelExpRequirement[(PlayerLevel)]-Experience));
+		owner.A_SetInventory("ExpPtsNeeded",LevelExpRequirement[(PlayerLevel)]);
+		PlayerLevel = owner.CountInv("PlayerLevel");
+		PlayerATK = owner.CountInv("PlayerATK");
+		PlayerDEF = owner.CountInv("PlayerDEF");
+		PlayerSPD = owner.CountInv("PlayerSPD");
+		PlayerLuck = owner.CountInv("PlayerLuck");
+
+		int levelmodulo, levelbonustype;
+		int leveluptimes = 0;
+		int leveluptimesmax = LevelCap - PlayerLevel;
+		int StatIncrease;
+		PrevATK = PlayerATK;
+		PrevDEF = PlayerDEF;
+		PrevSPD = PlayerSPD;
+		int PrevTrueIPLevelGate = TrueIPLevelGate;
+		for (leveluptimes = 0; leveluptimes < leveluptimesmax; leveluptimes++)
+		{
+			if (dydudebug_levelup) Console.Printf("%d / %d [TrueIPLevelGate: %d, TrueIPCooldownTimer: %d]", leveluptimes, leveluptimesmax, TrueIPLevelGate, TrueIPCooldownTimer);
+			if (Experience >= LevelExpRequirement[PlayerLevel])
+			{
+				PrevTrueIPLevelGate = TrueIPLevelGate;
+				if (PlayerLevel < LevelCap)
+				{
+					PlayerLevel += 1;
+					TrueIPLevelGate--;
+					
+					LevelUpProcess(0);
+					
+					owner.A_SetInventory("PlayerLevel",PlayerLevel);
+					owner.A_SetInventory("PlayerATK",PlayerATK);
+					owner.A_SetInventory("PlayerDEF",PlayerDEF);
+					owner.A_SetInventory("PlayerSPD",PlayerSPD);
+					owner.A_SetInventory("PlayerLUCK",PlayerLUCK);
+					if (!owner.CountInv("SilentLevelUp"))
+					{
+						string LevelUpMsg = "";
+						LevelUpMsg.AppendFormat("\c[Green]Congradulations, you've reached Level %d \c[brick][+%d HP]", PlayerLevel, HPMaxGain);
+						if (exex_extraatkdefspd)
+						{
+							if ((PlayerATK > PrevATK) || (PlayerDEF > PrevDEF) || (PlayerSPD > PrevSPD)) LevelUpMsg.AppendFormat("\n\n");
+							if (PlayerATK > PrevATK) LevelUpMsg.AppendFormat("\n\c[brick]Attack Increased Even More than Normal!");
+							if (PlayerDEF > PrevDEF) LevelUpMsg.AppendFormat("\n\c[olive]Defense Increased Even More than Normal!");
+							if (PlayerSPD > PrevSPD) LevelUpMsg.AppendFormat("\n\c[lightblue]Speed Increased Even More than Normal!");
+						}
+						if (PrevTrueIPLevelGate != TrueIPLevelGate && PrevTrueIPLevelGate > 0)
+						{
+							LevelUpMsg.AppendFormat("\n\n");
+										if (TrueIPLevelGate > 0) LevelUpMsg.AppendFormat("\n\c[brick]Level up %d more times to use Flower Crown IP\n\c[brick] once again!", TrueIPLevelGate);
+							else if (TrueIPLevelGate <= 0) LevelUpMsg.AppendFormat("\n\c[gold]You can now use the Flower Crown's IP again!\n\c[gold](arm Hand To Hand and go into blocking stance\n\c[gold]and press <ZOOM> while IP mode is on!)");
+						}
+						if (PlayerLevel == cricketspinlvlrequirement) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]The Cricket Bat can now be used for a spinning\n\c[gold]attack by holding down the <STRAFE LEFT \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+moveleft"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]>\n and <STRAFE RIGHT \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+moveright"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]> and <FIRE \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+attack"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]> keys!");
+						}
+						if (PlayerLevel == axecombolvlrequirement) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]The BlunderAxe can now be swung faster consectutively\nin melee if you hold down the corresponding button.\nHolding down <ALT-FIRE \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+altattack"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]> right after a chop will allow\nyou to fire an immediate ranged shot if you have ammo!");
+						}
+						if (PlayerLevel == axequickshotlvlrequirement)
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]The BlunderAxe's 'Chop & Fire' combo is improved!\nFiring your ranged attack w/ <ALT-FIRE \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+altattack"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]> after a chop \ndoes improved damage and has a tigher spread!");
+							
+							//LevelUpMsg.AppendFormat(ReturnKeyBind1("+altattack"));
+						}
+						if (PlayerLevel == scramblernoarmorbonuslvlreq)
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]The Scrambler can now deal 5x damage when you have no armor!");
+						}
+						if (PlayerLevel == scramblerelnomolvlreq)
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]The Scrambler can cook a fractal egg to heal you slightly by\nholding <STRAFE LEFT \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+moveleft"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]> and <STRAFE RIGHT \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+moveright"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]> and pressing <FIRE \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+attack"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]>\n or <ALT-FIRE \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+altattack"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]>!");
+						}
+						if (PlayerLevel == jackcrisislvlrequirement) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]The AppleJack can now deal varying bonus damage when \nyour health falls below certain thresholds!");
+						}
+						if (PlayerLevel == pikeinvisolvlreq) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]The Wizard's Pike can now briefly make you invisible at\n the cost of 3 Devil's Food by holding\n down <STRAFE LEFT \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+moveleft"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]> and <STRAFE RIGHT \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+moveright"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]>\n and pressing <FIRE \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+attack"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]> or <ALT-FIRE \c[green][");
+							LevelUpMsg.AppendFormat(ReturnKeyBind1("+altattack"));
+							LevelUpMsg.AppendFormat("\c[green]]\c[gold]>!");
+						}
+						if (PlayerLevel == (pikeinvisolvlreq * 6.25)) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]The Wizard's Pike invisibility special now only costs 2\n Devil's Food to use!");
+						}
+						if (PlayerLevel == 20) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]Surviving Mortal Hits Now Temporarily Reduces IP costs\nfor most abilities by 33.4%% for 5 seconds.");
+						}
+						if (PlayerLevel == 40) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]Surviving Mortal Hits Now Temporarily Reduces IP costs\nfor most abilities by 50%% for 7.5 seconds.");
+						}
+						if (PlayerLevel == 60) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]Surviving Mortal Hits Now Temporarily Reduces IP costs\nfor most abilities by 66.7%% for 10 seconds.");
+						}
+						if (PlayerLevel == 80) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]Surviving Mortal Hits Now Temporarily Reduces IP costs\nfor most abilities by 83.4%% for 12.5 seconds.");
+						}
+						if (PlayerLevel == 100) 
+						{
+							LevelUpMsg.AppendFormat("\n\n\c[gold]Surviving Mortal Hits Now Temporarily Negates IP costs\nfor most abilities entirely for 15 seconds.");
+						}
+						owner.A_Print(LevelUpMsg);
+						owner.A_SetBlend("00 00 FF",0.3,3,"00 00 FF",0.0);
+					}
+				}
+			}
+		}
+		if (exex_expenabled) 
+		{
+			TruePlayerLevel = PlayerLevel;
+			TruePlayerATK = PlayerATK;
+			TruePlayerDEF = PlayerDEF;
+			TruePlayerSPD = PlayerSPD;
+		}
+		else
+		{
+			TruePlayerLevel = 0;
+			TruePlayerATK = 0;
+			TruePlayerDEF = 0;
+			TruePlayerSPD = 0;
+		}
+
+		int oldhealth = owner.health;
+		if (owner.CountInv("NormalHealth")) oldhealthratio = 0;
+		if (owner.CountInv("DecentHealth")) oldhealthratio = 1;
+		if (owner.CountInv("LowHealth")) oldhealthratio = 2;
+		if (owner.CountInv("CriticalHealth")) oldhealthratio = 3;
+		
+		PrevATK = PlayerATK;
+		PrevDEF = PlayerDEF;
+		PrevSPD = PlayerSPD;
+		leveluptimes = 0;
+		leveluptimesmax = NumOfLegendMeds - MedCurrLvl;
+		int LMUsed;
+		
+		StatIncrease = 0;
+		PrevTrueIPLevelGate = TrueIPLevelGate;
+		for (leveluptimes = 0; leveluptimes < leveluptimesmax; leveluptimes++)
+		{
+			if (MedCurrLvl < NumOfLegendMeds)
+			{
+				PrevTrueIPLevelGate = TrueIPLevelGate;
+				MedCurrLvl += 1;
+				LMUsed++;
+				if (random(1,4) <= 3) 
+				{
+					if (TrueIPLevelGate > 0) TrueIPLevelGate = 0;
+				}
+				else
+				{
+					if (TrueIPLevelGate >= 4) 
+					{
+						TrueIPLevelGate *= 0.25;
+					}
+					else
+					if (TrueIPLevelGate > 0) 
+					{
+						TrueIPLevelGate = 0;
+					}
+				}
+				
+				LevelUpProcess(1);
+				
+				owner.A_SetInventory("PlayerATK",PlayerATK);
+				owner.A_SetInventory("PlayerDEF",PlayerDEF);
+				owner.A_SetInventory("PlayerSPD",PlayerSPD);
+				owner.A_SetInventory("PlayerLUCK",PlayerLUCK);
+				string LevelUpMsg = "";
+				LevelUpMsg.AppendFormat("\c[Green]Consumed a bottle of Potentylene! \c[brick][+%d HP]", HPMaxGain);
+				if (exex_expenabled && exex_extraatkdefspd)
+				{
+					if ((PlayerATK > PrevATK) || (PlayerDEF > PrevDEF) || (PlayerSPD > PrevSPD)) LevelUpMsg.AppendFormat("\n\n");
+					if (PlayerATK > PrevATK) LevelUpMsg.AppendFormat("\n\c[brick]Attack Increased Even More than Normal!");
+					if (PlayerDEF > PrevDEF) LevelUpMsg.AppendFormat("\n\c[olive]Defense Increased Even More than Normal!");
+					if (PlayerSPD > PrevSPD) LevelUpMsg.AppendFormat("\n\c[lightblue]Speed Increased Even More than Normal!");
+				}
+				if (PrevTrueIPLevelGate != TrueIPLevelGate && PrevTrueIPLevelGate > 0)
+				{
+					LevelUpMsg.AppendFormat("\n\n");
+							  if (TrueIPLevelGate > 0) LevelUpMsg.AppendFormat("\n\c[brick]Level up %d more times to use Flower Crown IP\n\c[brick]once again!", TrueIPLevelGate);
+					else if (TrueIPLevelGate <= 0) LevelUpMsg.AppendFormat("\n\c[gold]You can now use the Flower Crown's IP again!\n\c[gold](arm Hand To Hand and go into blocking stance\n\c[gold]and press <ZOOM> while IP mode is on!)");
+				}
+				owner.A_Print(LevelUpMsg);
+			}
+		}
+		if (LMUsed)
+		{
+			double ssb = 1.0;
+			if (owner.CountInv("ClassyRibbon")) ssb += 0.125;
+			if (owner.CountInv("ExpeditionHat")) ssb -= 0.25;
+
+			owner.A_StartSound("Dinah/PainLMS",CHAN_VOICE);
+			//Console.Printf("MedStrength: %d", MedStrength);
+			owner.A_SetBlend("8a e1 01",((0.500 * ssb) + ((MedStrength * 0.0667)) * ssb),((random(48,50) * ssb) + ((MedStrength * 12) * ssb)));
+			if (MedStrength >= 1) owner.health *= (0.5 * ssb);
+			if (MedStrength >= 2) owner.health *= (0.5 * ssb);
+			if (MedStrength >= 3) owner.health *= (0.5 * ssb);
+			if (MedStrength >= 4) owner.health *= (0.5 * ssb);
+			owner.player.poisoncount += ((random(18,30) * frandom(6.0,7.5) * (randompick(0,0,0,0,0,0,0,1,1,1,1,2,2) + MedStrength)) * ssb);
+			//Console.Printf("poisoncount: %d", owner.player.poisoncount);
+			if (owner.health < 0) owner.health = 1;
+			
+			double base;
+			if (!HasHarmonicAnger)
+			{
+				if (exex_ikaripointscalctype == 1)
+				{
+					base = (oldhealth - owner.health) * 100.0 / oldhealth; // % of remaining HP removed
+					if (base >= 0.001)
+					{
+						if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
+						if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
+						if (base >= 65.001 && base <= 75.000) base *= 0.646154;
+						if (base >= 75.001 && base <= 85.000) base *= 0.76; 
+						if (base >= 85.001 && base <= 90.000) base *= 0.90; 
+						if (base >= 90.001 && base <= 100.000) base *= 1.00; 
+						if (base >= 100.001) base *= 1.25;
+					}
+				}
+				else
+				{
+					base = (oldhealth - owner.health) * 100.0 / MaxHealthTrue;
+					if (oldhealthratio == 0) base *= 1.0;
+					if (oldhealthratio == 1) base *= 1.125;
+					if (oldhealthratio == 2) base *= 1.25;
+					if (oldhealthratio == 3) base *= 1.5;
+					if (oldhealthratio == 4) base *= 2.25;
+					if (oldhealth > 1 && owner.health == 1) base *= 3.25;
+				}
+				double basef = base;
+				double ssa = 1.0;
+				if (owner.CountInv("ClassyRibbon")) ssa += 0.25;
+				if (owner.CountInv("ExpeditionHat")) ssa -= 0.125;
+				base *= ssa;
+				basef *= ssa;
+
+				base *= (1.0 + (ActualLevel * 0.0025));
+				if (base <= 0.01) base = 0.01;
+				if (basef <= 0.01) basef = 0.01;
+				
+				if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) base *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+				
+				if (base)
+				{
+					if (IPDissipateTimer > 0) IPDissipateTimer = (-350 * basef);
+															 else IPDissipateTimer += (-350 * basef);
+					double oldItemPoints = ItemPoints;
+					ItemPoints += base;
+					if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
+					if (ItemPoints >= oldItemPoints) 
+					{
+						base = (ItemPoints - oldItemPoints);
+						if (dydudebug_ipdisplays2) Console.Printf("\c[red]LevelUp (base): %.8f (ItemPoints: %.8f, oldItemPoints: %.8f)", base, ItemPoints, oldItemPoints);
+					}
+					globalvars.ItemPoints == ItemPoints;
+					
+					if (base > 0)
+					{
+						if (IPHUDPulseTimer <= 0) IPHUDPulseTimer = 105;
+						else
+						{
+							IPHUDPulseTimer += 35;
+							if (IPHUDPulseTimer < 105 && base > (MaxItemPoints * 0.10)) IPHUDPulseTimer = 105;
+							if (IPHUDPulseTimer > 175) IPHUDPulseTimer = 175;
+						}
+						
+						if ((ItemPointsSession < MaxItemPoints) && (ItemPoints < MaxItemPoints))
+						{
+							ItemPointsSession += base;
+							if (ItemPointsSession >= MaxItemPoints) ItemPointsSession == MaxItemPoints;
+							if (ItemPointsSession > 0 && base > 0)
+							{
+								int healfactor = ItemPointsSession * 100 / MaxItemPoints;
+								if (healfactor < 10) IPHUDPulseType = 1;
+								if (healfactor >= 10) IPHUDPulseType = 2;
+								if (healfactor >= 50) IPHUDPulseType = 3;
+								if (healfactor >= 100) IPHUDPulseType = 4;
+								IPHUDPulseTimeP = (level.time % randompick(10,15,20));
+							}
+						}
+						
+						if (exex_playerdmglog && CheckIPEnabled() && base) Console.Printf("\c[red]+%.2f%% IP Gained!", base);
+					}
+				}
+			}
+			
+			string blehmsg = "";
+			blehmsg.AppendFormat("\c[gold]BLEGH");
+			if (MedStrength >= 1) blehmsg.AppendFormat("\c[gold]!");
+			if (MedStrength >= 2) blehmsg.AppendFormat("\c[gold]!");
+			if (MedStrength >= 3) blehmsg.AppendFormat("\c[gold]!");
+			if (MedStrength >= 4) blehmsg.AppendFormat("\c[gold]!");
+			if (MedStrength >= 5) blehmsg.AppendFormat("\c[gold]!");
+			blehmsg.AppendFormat(" These things taste absolutely toxic");
+			if (MedStrength >= 1) blehmsg.AppendFormat("\c[gold]!");
+			if (MedStrength >= 3) blehmsg.AppendFormat("\c[gold]!");
+			if (MedStrength >= 5) blehmsg.AppendFormat("\c[gold]!");
+			blehmsg.AppendFormat(" Yet I feel some power is trying to surface inside me... despite that...");
+			Console.Printf(blehmsg);
+
+			MedStrength = 0;
+			LMUsed = 0;
+		}
+	}
+	
+	void CountCapper()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		if (owner.CountInv("PoisonCount"))
+		{
+			owner.player.poisoncount += owner.CountInv("PoisonCount");
+			owner.A_SetInventory("PoisonCount",0);
+		}
+		if (owner.CountInv("DamageCount"))
+		{
+			owner.player.DamageCount += owner.CountInv("DamageCount");
+			if (owner.player.DamageCount > 100) owner.player.DamageCount = 100;
+			owner.A_SetInventory("DamageCount",0);
+		}
+		if (owner.CountInv("BonusCount"))
+		{
+			owner.player.BonusCount += owner.CountInv("BonusCount");
+			if (owner.player.BonusCount > 100) owner.player.BonusCount = 100;
+			owner.A_SetInventory("BonusCount",0);
+		}
+	}
+	
 	void WeaponCheck()
 	{
 		let globalvars = DDGlobalVariables.Get();
@@ -1820,6 +2131,10 @@ class PlayerStatItem : Inventory
 		globalvars.MassNoRPGAdd = MassNoRPGAdd;
 		globalvars.MassNoRPGAdd2 = MassNoRPGAdd2;
 		globalvars.MassBonusAdd = MassBonusAdd;
+		globalvars.AirLevelAdd = AirLevelAdd;
+		globalvars.AirNoRPGAdd = AirNoRPGAdd;
+		globalvars.AirNoRPGAdd2 = AirNoRPGAdd2;
+		globalvars.AirBonusAdd = AirBonusAdd;
 		globalvars.MaxHealthTrue = MaxHealthTrue;
 		globalvars.Experience = Experience;
 		globalvars.PlayerLevel = PlayerLevel;
@@ -1927,6 +2242,10 @@ class PlayerStatItem : Inventory
 			globalvars.MassNoRPGAdd = MassNoRPGAdd = 0;
 			globalvars.MassNoRPGAdd2 = MassNoRPGAdd2 = 0;
 			globalvars.MassBonusAdd = MassBonusAdd = 0;
+			globalvars.AirLevelAdd = AirLevelAdd = 0;
+			globalvars.AirNoRPGAdd = AirNoRPGAdd = 0;
+			globalvars.AirNoRPGAdd2 = AirNoRPGAdd2 = 0;
+			globalvars.AirBonusAdd = AirBonusAdd = 0;
 			globalvars.ItemPoints = ItemPoints = 0;
 			globalvars.MaxIPExtensions = MaxIPExtensions = 0;
 			if (itemtimer == 0 && dydudebug_deathexitdebug) Console.Printf("exex_deathexitaffectsstats: YES", exex_deathexitaffectsstats);
@@ -1955,6 +2274,10 @@ class PlayerStatItem : Inventory
 			MassNoRPGAdd = globalvars.MassNoRPGAdd;
 			MassNoRPGAdd2 = globalvars.MassNoRPGAdd2;
 			MassBonusAdd = globalvars.MassBonusAdd;
+			AirLevelAdd = globalvars.AirLevelAdd;
+			AirNoRPGAdd = globalvars.AirNoRPGAdd;
+			AirNoRPGAdd2 = globalvars.AirNoRPGAdd2;
+			AirBonusAdd = globalvars.AirBonusAdd;
 			ItemPoints = globalvars.ItemPoints;
 			MaxIPExtensions = globalvars.MaxIPExtensions;
 			BaseStartMaxHealth = globalvars.BaseStartMaxHealth;
@@ -2833,6 +3156,46 @@ class PlayerStatItem : Inventory
 		
 		CritRoll = random(1,CritChance);
 		if (CritRoll <= 1) owner.A_SetInventory("DealCriticalHit",1);
+	}
+	
+	void LuckChecks()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		
+		if (A_CheckDDGame())
+		{
+			double DDTFactor = 0.00;
+			if (DD_RoseMother) DDTFactor += 0.1875;
+			if (DD_GameMother) DDTFactor += 0.1875;
+			if (DD_MossMother) DDTFactor += 0.1875;
+			if (DD_GlobeMother) DDTFactor += 0.1875;
+			if (DD_SphinxMother) DDTFactor += 0.1875;
+			if (DD_HandMother1) DDTFactor += 0.1875;
+			if (DD_HandMother2) DDTFactor += 0.1875;
+			if (DD_TrueHandMother) DDTFactor += 0.1875;
+			if (AFD_Krag) DDTFactor += 0.25;
+			if (AFD_Quisling) DDTFactor += 0.25;
+			if (AFD_Lauritz) DDTFactor += 0.25;
+			if (AFD_Jorgensen1) DDTFactor += 0.25;
+			if (AFD_Jorgensen2) DDTFactor += 0.25;
+			if (AFD_JorgCannon) DDTFactor += 0.25;
+			if (CoS_Fafnir) DDTFactor += 0.25;
+			if (CoS_FractalHens) DDTFactor += 0.25;
+			if (CoS_HandMothers) DDTFactor += 0.25;
+			if (CoS_ForsakenJorg) DDTFactor += 0.25;
+			if (CoS_EvilDinah) DDTFactor += 0.25;
+			if (CoS_Tempest) DDTFactor += 0.25;
+			if (skill <= 0) DDTFactor *= 1.5;
+			if (skill == 1) DDTFactor *= 1.25;
+			if (skill == 2) DDTFactor *= 1.0;
+			if (skill == 3) DDTFactor *= 0.75;
+			if (skill >= 4) DDTFactor *= 0.5;
+			DDTFactor *= exex_nrpggeneraleffect;
+			DDTFactor += 1.00;
+			TempLUCK *= DDTFactor;
+			PlayerLuck = TempLUCK;
+		}
 	}
 	
 	void ItemPointChecks()
@@ -6491,280 +6854,6 @@ class PlayerStatItem : Inventory
 				Console.Printf("\c[fire]Total 100%: %d / %d", totalcompleted, (globalvars.MapsFinished+1));
 			}
 		}
-	}
-	
-	void LevelUpProcess(int type)
-	{
-		let globalvars = DDGlobalVariables.Get();
-		let playeractor = DDPlayerPawn(owner);
-
-		int levelmodulo, levelbonustype;
-		levelmodulo = PlayerLevel % 20;
-		if (levelmodulo == 0) levelbonustype = 0;
-		else if (levelmodulo == 4) levelbonustype = 1;
-		else if (levelmodulo == 5) levelbonustype = randompick(2,2,2,2,2,1);
-		else if (levelmodulo == 8) levelbonustype = 1;
-		else if (levelmodulo == 10) levelbonustype = randompick(2,2,2,2,2,1);
-		else if (levelmodulo == 12) levelbonustype = 1;
-		else if (levelmodulo == 15) levelbonustype = randompick(2,2,2,2,2,1);
-		else if (levelmodulo == 16) levelbonustype = 1;
-		else levelbonustype = 2;
-		if (dydudebug_levelupdisplays) Console.Printf("\cyLevel Check\c-: %d, \cxModulo\c-: %d, \czBonus Type\c-: %d", PlayerLevel, levelmodulo, levelbonustype);
-		
-		double RandomizedStatChance, RandomizedStatChance2;
-		RandomizedStatChance = 1.00000000; // 192;
-		if (levelbonustype == 0) // Levels 20, 40, 60, 80, 100, 120, 140, 160, 180 & 200
-		{
-			RandomizedStatChance -= (0.1 * random[statitem](4,8)); // 112 to 152
-		}
-		else
-		if (levelbonustype == 1) // Levels [0/2/4/6/8/10/12/14/16/18]4, [0/2/4/6/8/10/12/14/16/18]8, [1/3/5/7/9/11/13/15/17/19]2, & [1/3/5/7/9/11/13/15/17/19]6
-		{
-			RandomizedStatChance -= (0.02 * random[statitem](4,8)); // 160 to 176
-		}
-		else
-		if (levelbonustype == 2) // Any other level that's not a multiple of 4 or 20
-		{
-			RandomizedStatChance -= (0.004 * random[statitem](4,8));
-		}
-		double RNDSCSubtractor1 = 0;
-		double RNDSCSubtractor2 = 0;
-		RNDSCSubtractor1 = (PlayerLevel * 0.32);
-		RNDSCSubtractor1 = clamp(RNDSCSubtractor1, 0.00000, 0.33334);
-		if (PlayerLevel > 100)
-		{
-			RNDSCSubtractor2 = ((PlayerLevel - 100) * 0.4);
-			RNDSCSubtractor2 = clamp(RNDSCSubtractor2, 0.00000, 0.33334);
-		}
-		if (dydudebug_levelupdisplays) Console.Printf("\cyRNDSCSubtractor1\c-: %.8f, \cxRNDSCSubtractor2\c-: %.8f", RNDSCSubtractor1, RNDSCSubtractor2);
-
-		double RNDSCSubtractor = 0;
-		RNDSCSubtractor += RNDSCSubtractor1; // Adds [level 1-100] range value
-		RNDSCSubtractor += RNDSCSubtractor2; // Adds [level 101-200] range value
-		RandomizedStatChance -= RNDSCSubtractor;
-		if (owner.CountInv("MysteryItem")) RandomizedStatChance *= 0.75;
-		if (owner.CountInv("MysteryItem2")) RandomizedStatChance *= 0.75;
-		if (RandomizedStatChance < 0.005208334) RandomizedStatChance = 0.005208334;
-		if (dydudebug_levelupdisplays) Console.Printf("\cyRNDSCSubtractor\c-: %.8f, \cxRandomizedStatChance\c-: %.8f", RNDSCSubtractor, RandomizedStatChance);
-
-		RandomizedStatChance2 = 1.00000000;
-		if (PlayerLevel >= 25) RandomizedStatChance2 -= 0.041666667; // 23
-		if (PlayerLevel >= 50) RandomizedStatChance2 -= 0.041666667; // 22
-		if (PlayerLevel >= 75) RandomizedStatChance2 -= 0.041666667; // 21
-		if (PlayerLevel >= 100) RandomizedStatChance2 -= 0.041666667; // 20
-		if (PlayerLevel >= 125) RandomizedStatChance2 -= 0.083333334; // 18
-		if (PlayerLevel >= 150) RandomizedStatChance2 -= 0.083333334; // 16
-		if (PlayerLevel >= 175) RandomizedStatChance2 -= 0.083333334; // 14
-		if (dydudebug_levelupdisplays) Console.Printf("\cyStat Chance 1\c-: %.8f, \cxStat Chance 2\c-: %.8f", RandomizedStatChance, RandomizedStatChance2);
-		
-		//********************************
-		//*Random Levelups to Stat Values*
-		//********************************
-		int SeedIncreaseAmt;
-		double LvlSkillMulti;
-		double RollValue;
-		double BaseChance1;
-		double BaseChance2;
-		int LvlStatMulti = 1;
-		// Luck Boost [1]
-		BaseChance1 = (0.2 + (NumOfAfasDrops * 0.0125)) * (1.0 + (NumOfAfasDrops * 0.0625));
-		BaseChance2 = 0.083333334 * (1.0 + (NumOfAfasDrops * 0.025));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerLuck += LvlSkillMulti;
-		// Luck Boost [2]
-		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.003125)) * (1.0 + (NumOfAfasDrops * 0.03125));
-		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.0125));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerLuck += LvlSkillMulti;
-		// Luck Boost [3]
-		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.00078125)) * (1.0 + (NumOfAfasDrops * 0.015625));
-		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.00625));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerLuck += LvlSkillMulti;
-
-		// Speed Boost [1]
-		BaseChance1 = (0.125 + (NumOfAfasDrops * 0.0125)) * (1.0 + (NumOfAfasDrops * 0.0625));
-		BaseChance2 = 0.083333334 * (1.0 + (NumOfAfasDrops * 0.025));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerSPD += LvlSkillMulti;
-		// Speed Boost [2]
-		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.003125)) * (1.0 + (NumOfAfasDrops * 0.03125));
-		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.0125));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerSPD += LvlSkillMulti;
-		// Speed Boost [3]
-		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.00078125)) * (1.0 + (NumOfAfasDrops * 0.015625));
-		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.00625));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerSPD += LvlSkillMulti;
-		
-		// Attack Boost [1]
-		BaseChance1 = (0.25 + (NumOfAfasDrops * 0.0125)) * (1.0 + (NumOfAfasDrops * 0.0625));
-		BaseChance2 = 0.083333334 * (1.0 + (NumOfAfasDrops * 0.025));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerATK += LvlSkillMulti;
-		// Attack Boost [2]
-		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.003125)) * (1.0 + (NumOfAfasDrops * 0.03125));
-		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.0125));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerATK += LvlSkillMulti;
-		// Attack Boost [3]
-		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.00078125)) * (1.0 + (NumOfAfasDrops * 0.015625));
-		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.00625));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerATK += LvlSkillMulti;
-		
-		// Defense Boost [1]
-		BaseChance1 = (0.1875 + (NumOfAfasDrops * 0.0125)) * (1.0 + (NumOfAfasDrops * 0.0625));
-		BaseChance2 = 0.083333334 * (1.0 + (NumOfAfasDrops * 0.025));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerDEF += LvlSkillMulti;
-		// Defense Boost [2]
-		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.003125)) * (1.0 + (NumOfAfasDrops * 0.03125));
-		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.0125));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerDEF += LvlSkillMulti;
-		// Defense Boost [3]
-		BaseChance1 *= (0.2 + (NumOfAfasDrops * 0.00078125)) * (1.0 + (NumOfAfasDrops * 0.015625));
-		BaseChance2 *= 0.825 * (1.0 + (NumOfAfasDrops * 0.00625));
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance2);
-		if (RollValue <= BaseChance2) { LvlSkillMulti = 2; } else { LvlSkillMulti = 1; } LvlSkillMulti *= LvlStatMulti;
-		RollValue = frandom[statitem2](0.00000001,RandomizedStatChance);
-		if (RollValue <= BaseChance1) PlayerDEF += LvlSkillMulti;
-
-		// Health/HP Boost
-		CurrentHealth = owner.player.mo.health;
-		HPMaxGain = 0;
-		
-		if (PlayerLevel >= 151 && PlayerLevel <= 200)				HPMaxGain += floor(PlayerLevel * frandompick(0.0525,0.06));
-		else if (PlayerLevel >= 101 && PlayerLevel <= 150)	HPMaxGain += floor(PlayerLevel * frandompick(0.045,0.0525));
-		else if (PlayerLevel >= 51 && PlayerLevel <= 100)		HPMaxGain += floor(PlayerLevel * frandompick(0.0375,0.045));
-		else if (PlayerLevel <= 50)													HPMaxGain += floor(PlayerLevel * frandompick(0.03,0.0375));
-		
-		HPMaxGain += 													randompick(0,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,3);
-		if (levelbonustype == 0) HPMaxGain += randompick(1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,3,3,3,3);
-		if (levelbonustype == 1) HPMaxGain += randompick(0,0,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3);
-		if (levelbonustype == 2) HPMaxGain += randompick(0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,2);
-		if (TrueGameSkill <= SKILL_VERY_EASY) 
-		{
-			HPMaxGain += randompick(1,1,2,2,3);
-			HPMaxGain += (MaxHealthTrue / (216 - (NumOfAfasDrops * 8)));
-		}
-		if (TrueGameSkill == SKILL_EASY) 
-		{
-			HPMaxGain += randompick(0,1,1,2,2);
-			HPMaxGain += (MaxHealthTrue / (270 - (NumOfAfasDrops * 6.4)));
-		}
-		if (TrueGameSkill == SKILL_NORMAL) 
-		{
-			HPMaxGain += randompick(0,0,1,1,2);
-			HPMaxGain += (MaxHealthTrue / (324 - (NumOfAfasDrops * 3.2)));
-		}
-		if (TrueGameSkill == SKILL_HARD) 
-		{
-			HPMaxGain += randompick(0,0,0,1,1);
-			HPMaxGain += (MaxHealthTrue / (378 - (NumOfAfasDrops * 3.2)));
-		}
-		if (TrueGameSkill == SKILL_VERY_HARD)
-		{
-			HPMaxGain += randompick(0,0,0,0,1);
-			HPMaxGain += (MaxHealthTrue / (432 - (NumOfAfasDrops * 1.6)));
-		}
-		if (HPMaxGain < 1) HPMaxGain = 1;
-		owner.player.mo.health += HPMaxGain;
-		HealthLevelAdd += HPMaxGain;
-		if (type == 1) 
-		{
-			HealthNoRPGAdd += HPMaxGain;
-			if (!exex_expenabled)
-			{
-				if (skill <= 0) HPMaxGain *= (4.0 + (NumOfAfasDrops * 0.08));
-				if (skill == 1) HPMaxGain *= (3.5 + (NumOfAfasDrops * 0.07));
-				if (skill == 2) HPMaxGain *= (3.0 + (NumOfAfasDrops * 0.06));
-				if (skill == 3) HPMaxGain *= (2.5 + (NumOfAfasDrops * 0.05));
-				if (skill >= 4) HPMaxGain *= (2.0 + (NumOfAfasDrops * 0.04));
-			}
-		}
-		if (!owner.CountInv("SilentLevelUp")) A_StatIncHud(HPMaxGain,0);
-		if (dydudebug_levelupdisplays) Console.Printf("HPMaxGain: %d", HPMaxGain);
-		
-		// Mass/Balance
-		double BaseMass = 1.0;
-		let playerset = DDPlayerPawn(owner);
-		if (playerset) BaseMass = playerset.originalmass;
-		MassGain = 0;
-
-		if (PlayerLevel >= 151 && PlayerLevel <= 200)				MassGain += floor(PlayerLevel * frandompick(0.0525,0.06));
-		else if (PlayerLevel >= 101 && PlayerLevel <= 150)	MassGain += floor(PlayerLevel * frandompick(0.045,0.0525));
-		else if (PlayerLevel >= 51 && PlayerLevel <= 100)		MassGain += floor(PlayerLevel * frandompick(0.0375,0.045));
-		else if (PlayerLevel <= 50)													MassGain += floor(PlayerLevel * frandompick(0.03,0.0375));
-
-		MassGain += 													randompick(0,0,0,1,1,1,1,1,1,1,1,1,1,1,2,2);
-		if (levelbonustype == 0) MassGain += randompick(1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3);
-		if (levelbonustype == 1) MassGain += randompick(0,0,0,0,1,1,1,1,1,1,1,1,2,2,2,2);
-		if (levelbonustype == 2) MassGain += randompick(0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1);
-		if (TrueGameSkill <= SKILL_VERY_EASY) 
-		{
-			MassGain += randompick(0,0,0,0,0,1,1,2,2,3);
-			MassGain += (BaseMass / (324 - (NumOfAfasDrops * 16)));
-		}
-		if (TrueGameSkill == SKILL_EASY) 
-		{
-			MassGain += randompick(0,0,0,0,0,0,1,1,2,2);
-			MassGain += (BaseMass / (405 - (NumOfAfasDrops * 12.8)));
-		}
-		if (TrueGameSkill == SKILL_NORMAL) 
-		{
-			MassGain += randompick(0,0,0,0,0,0,0,1,1,2);
-			MassGain += (BaseMass / (486 - (NumOfAfasDrops * 9.6)));
-		}
-		if (TrueGameSkill == SKILL_HARD) 
-		{
-			MassGain += randompick(0,0,0,0,0,0,0,0,1,1);
-			MassGain += (BaseMass / (557 - (NumOfAfasDrops * 6.4)));
-		}
-		if (TrueGameSkill == SKILL_VERY_HARD)
-		{
-			MassGain += randompick(0,0,0,0,0,0,0,0,0,1);
-			MassGain += (BaseMass / (648 - (NumOfAfasDrops * 3.2)));
-		}
-		MassLevelAdd += MassGain;
-		if (type == 1) 
-		{
-			MassNoRPGAdd += MassGain;
-			if (!exex_expenabled)
-			{
-				if (skill <= 0) MassGain *= (2.0 + (NumOfAfasDrops * 0.04));
-				if (skill == 1) MassGain *= (1.75 + (NumOfAfasDrops * 0.045));
-				if (skill == 2) MassGain *= (1.5 + (NumOfAfasDrops * 0.03));
-				if (skill == 3) MassGain *= (1.25 + (NumOfAfasDrops * 0.025));
-				if (skill >= 4) MassGain *= (1.0 + (NumOfAfasDrops * 0.02));
-			}
-		}
-		
-		if (!owner.CountInv("SilentLevelUp")) owner.A_StartSound("misc/bellring",101,CHANF_DEFAULT,frandom(0.6,0.75),ATTN_NORM,frandom(1.25,1.5));
 	}
 	
 	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive)
