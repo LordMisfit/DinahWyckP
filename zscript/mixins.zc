@@ -3108,6 +3108,53 @@ mixin class MonsterCollider
 		return inflictor, source, damage, mod, flags, angle, angvstype;
 	}
 	
+	double A_DamageMobCheckShielding(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
+	{
+		string infl, sour, vict;
+		if (inflictor == null) infl = "NONE"; else infl = inflictor.GetClassName();
+		if (source == null) sour = "NONE"; else sour = source.GetClassName();
+
+		int finaldmg = damage;
+		double shieldfactor;
+		
+		shieldfactor = 1.0;
+		if (CountInv("HWShieldDefense")) shieldfactor *= 0.134;
+		if (CountInv("HWShieldDefenseExtra")) shieldfactor *= 0.0268;
+		//if (CountInv("ImpWarlordShieldDefend")) shieldfactor *= 0.5;
+		//if (CountInv("ImpWarlordShieldDefendExtra")) shieldfactor *= 0.1;
+		//if (CountInv("DKnightShieldDefend")) shieldfactor *= 0.25;
+		//if (CountInv("DKnightShieldDefendExtra")) shieldfactor *= 0.05;
+		//if (CountInv("AcolyteShieldDefend")) shieldfactor *= 0.75;
+		//if (CountInv("AcolyteShieldDefendExtra")) shieldfactor *= 0.30;
+		if (CountInv("CentaurShieldDefend")) shieldfactor *= 0.333;
+		if (CountInv("CentaurShieldDefendExtra")) shieldfactor *= 0.0666;
+		if (CountInv("SlaughtaurShieldDefend")) shieldfactor *= 0.167;
+		if (CountInv("SlaughtaurShieldDefendExtra")) shieldfactor *= 0.0333;
+		//if (CountInv("MaulotaurChargeDefense")) shieldfactor *= 0.25;
+		//if (CountInv("HeresiarchShieldDefense")) shieldfactor *= 0.125;
+		//if (CountInv("NightmarePhaseOutDefense")) shieldfactor *= 0.0625;
+		//String nm = "ThamuzApocalypseDefendMode"; MiscCheck = nm; if (CountInv(MiscCheck)) shieldfactor *= 0.20;
+		shieldfactor *= -1;
+		shieldfactor += 1.0;
+
+		if (infl == "HubbleBubble" || infl == "GlimmeringGlobe") shieldfactor *= (random(0,1) * 0.01);
+		if (mod == 'Sceptre')
+		{
+			if (infl == "SceptrePuffSpinning" || infl == "SceptrePuffSpinningSilent") shieldfactor *= (random(75,80) * 0.005);
+			else shieldfactor *= (random(75,80) * 0.01);
+		}
+
+		shieldfactor *= -1;
+		shieldfactor += 1.0;
+		if (shieldfactor > 1.0) shieldfactor = 1.0;
+		
+		finaldmg = ceil(finaldmg * shieldfactor);
+		if (finaldmg < 1) finaldmg = 1;
+		if (dvdsdebug_actordmgdisplays && shieldfactor >= 0.01) Console.Printf("    (\czActor Defensive Input [STEP ?? - Shielding Monsters]\c-: finaldmg: %d (prevdamage: %d), shieldfactor: %4f", finaldmg, damage, shieldfactor);
+
+		return finaldmg;
+	}
+
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
 		actor player = players[0].mo;
@@ -5166,10 +5213,10 @@ mixin class IPCostCheck
 				{
 					if (!(player.CountInv("MysteryItem") || player.CountInv("MysteryItem2")))
 					{
-						if (player && player.CountInv("KnightGownIP1Buff")) cost *= 1.075;
-						if (player && player.CountInv("KnightGownIP2Buff")) cost *= 1.15;
-						if (player && player.CountInv("KnightGownIP3Buff")) cost *= 1.225;
-						if (player && player.CountInv("KnightGownIP4Buff")) cost *= 1.30;
+						if (player && player.CountInv("KnightGownIP1Buff")) cost *= 1.15;
+						if (player && player.CountInv("KnightGownIP2Buff")) cost *= 1.35;
+						if (player && player.CountInv("KnightGownIP3Buff")) cost *= 1.45;
+						if (player && player.CountInv("KnightGownIP4Buff")) cost *= 1.60;
 					}
 				}
 			}
