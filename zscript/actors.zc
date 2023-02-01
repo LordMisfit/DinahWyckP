@@ -20,6 +20,7 @@ class EEBaseZSC : Actor abstract
 	
 	double temp1, temp2;
 	double expshare;
+	int user_chargechance;
 	int user_Fuse;
 	int user_fusemax;
 	int user_spread, user_spread1, user_spread2;
@@ -3220,6 +3221,17 @@ class EEProp : EEBaseZSC abstract
 class EECreature : EEBaseZSC abstract
 {
 	mixin EvolveMonsters;
+
+	// Gargoyle
+	bool extremecrash;
+	// Afrit
+	const FIREDEMON_ATTACK_RANGE = 64*8.;
+	int fdstrafecount;
+	// Bishop
+	int missilecount;
+	int bobstate;
+	
+	//
 	int cannotres;
 	int timesrevivedamonster;
 	int timesrevivedpervile;
@@ -5095,7 +5107,314 @@ class EECreature : EEBaseZSC abstract
 			A_ShieldBlastVelFactor(0.5,0.5,4,1);
 		}
 	}
+	
+	void A_GargDashCheck()
+	{
+		if (!target) { SetStateLabel("See"); }
+	}
+	
+	void A_GargDashCheck2()
+	{
+		if (!target) 
+		{ 
+			SetStateLabel("See"); 
+		}
+		else
+		{
+			if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) 
+			{
+				if (!A_JumpIfTargetInLOS("See", frandom(77.5,82.5)))
+				{
+					A_Stop();
+					SetStateLabel("See"); 
+				}
+			}
+			else
+			{
+				if (random(1,8) <= 1)
+				{
+					if (!A_JumpIfTargetInLOS("See", frandom(77.5,82.5)))
+					{
+						A_Stop();
+						SetStateLabel("See"); 
+					}
+				}
+			}
+		}
+	}
 
+	//**************************
+	//*HERETIC-UNIQUE FUNCTIONS*
+	//**************************
+	// Gargoyle
+	void A_ImpMsAttack()
+	{
+		if (!target || random[ImpMSAtk]() > 64)
+		{
+			SetState (SeeState);
+			return;
+		}
+		A_SkullAttack(12);
+	}
+
+	void A_ImpExplode()
+	{
+		Actor chunk;
+
+		bNoGravity = false;
+
+		chunk = Spawn("HereticImpChunk1", pos, ALLOW_REPLACE);
+		if (chunk != null)
+		{
+			chunk.vel.x = random2[ImpExplode]() / 64.;
+			chunk.vel.y = random2[ImpExplode]() / 64.;
+			chunk.vel.z = 9;
+		}
+
+		chunk = Spawn("HereticImpChunk2", pos, ALLOW_REPLACE);
+		if (chunk != null)
+		{
+			chunk.vel.x = random2[ImpExplode]() / 64.;
+			chunk.vel.y = random2[ImpExplode]() / 64.;
+			chunk.vel.z = 9;
+		}
+		
+		if (extremecrash)
+		{
+			SetStateLabel ("XCrash");
+		}
+	}
+
+ 	void A_ImpDeath()
+	{
+		bSolid = false;
+		bFloorClip = true;
+	}
+
+	void A_ImpXDeath1()
+	{
+		bSolid = false;
+		bFloorClip = true;
+		bNoGravity = true;
+		extremecrash = true;
+	}
+	
+	//************************
+	//*HEXEN-UNIQUE FUNCTIONS*
+	//************************
+	
+	// Centaur
+	void A_CentaurDefend()
+	{
+		A_FaceTarget ();
+		if (CheckMeleeRange() && random[CentaurDefend]() < 32)
+		{
+			// This should unset REFLECTIVE as well
+			// (unless you want the Centaur to reflect projectiles forever!)
+			bReflective = false;
+			bInvulnerable = false;
+			SetState(MeleeState);
+		}
+	}
+
+    // Afrit
+	private void A_FiredSpawnRock ()
+	{
+		Actor mo;
+		class<Actor> rtype;
+
+		switch (random[FireDemonRock](0, 4))
+		{
+			case 0:
+				rtype = "FireDemonRock1";
+				break;
+			case 1:
+				rtype = "FireDemonRock2";
+				break;
+			case 2:
+				rtype = "FireDemonRock3";
+				break;
+			case 3:
+				rtype = "FireDemonRock4";
+				break;
+			case 4:
+			default:
+				rtype = "FireDemonRock5";
+				break;
+		}
+
+		double xo = (random[FireDemonRock]() - 128) / 16.;
+		double yo = (random[FireDemonRock]() - 128) / 16.;
+		double zo = random[FireDemonRock]() / 32.;
+		mo = Spawn (rtype, Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.target = self;
+			mo.Vel.X = (random[FireDemonRock]() - 128) / 64.;
+			mo.Vel.Y = (random[FireDemonRock]() - 128) / 64.;
+			mo.Vel.Z = (random[FireDemonRock]() / 64.);
+			mo.special1 = 2;		// Number bounces
+		}
+
+		// Initialize fire demon
+		fdstrafecount = 0;
+		bJustAttacked = false;
+	}
+
+	void A_FiredRocks()
+	{
+		A_FiredSpawnRock ();
+		A_FiredSpawnRock ();
+		A_FiredSpawnRock ();
+		A_FiredSpawnRock ();
+		A_FiredSpawnRock ();
+	}
+
+	void A_FiredAttack()
+	{
+		if (target == null)	return;
+		Actor mo = SpawnMissile (target, "FireDemonMissile");
+		if (mo) A_StartSound("FireDemonAttack", CHAN_BODY);
+	}
+
+	void A_FireDChase(int minheight = 64, int strafecnt = 3, int strafechance = 30, int atkchance = 20, int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		if (type == 0)
+		{
+			if (value1) value1 = 0;
+			if (value2) value2 = 0;
+			if (value3) value3 = 0;
+			if (value4) value4 = 0;
+			if (value5) value5 = 0;
+			if (value6) value6 = 0;
+		}
+		if (type == 1)
+		{
+			if (value1 <= 0) value1 = 3; // ticdecrement
+			if (value2 <= 0) value2 = 1; // speedtimerdecrement
+			if (value3 <= 0) value3 = 1; // lowcap
+			if (value6 <= 0) value6 = 8; // move/thrust strength
+
+			if (specialspeed1)
+			{
+				specialspeed1 -= value2;
+				tics -= value1;
+				if (tics < value3) tics = value3;
+				if (dvdsdebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_FireDChase]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
+			}
+		}
+		
+		int weaveindex = special1;
+		double ang;
+		double dist;
+
+		if (reactiontime) reactiontime--;
+		if (threshold) threshold--;
+
+		// Float up and down
+		AddZ(BobSin(weaveindex));
+		special1 = (weaveindex + 2) & 63;
+
+		// Ensure it stays above certain height
+		if (pos.Z < floorz + minheight)
+		{
+			AddZ(2);
+		}
+
+		if (!target || !target.bShootable)
+		{
+			// Invalid target
+			LookForPlayers (true);
+			return;
+		}
+
+		// Strafe
+		if (fdstrafecount > 0)
+		{
+			fdstrafecount--;
+		}
+		else
+		{
+			fdstrafecount = 0;
+			Vel.X = Vel.Y = 0;
+			dist = Distance2D(target);
+			if (dist < FIREDEMON_ATTACK_RANGE)
+			{
+				if (random[FiredChase]() < strafechance)
+				{
+					ang = AngleTo(target);
+					if (random[FiredChase]() < 128)
+						ang += 90;
+					else
+						ang -= 90;
+					Thrust(value6, ang); // value6 = thrust [8]
+					fdstrafecount = strafecnt;	// strafe time
+				}
+			}
+		}
+
+		FaceMovementDirection ();
+
+		// Normal movement
+		if (!fdstrafecount)
+		{
+			if ((movecount -= 1) < 0 || !MonsterMove ())
+			{
+				NewChaseDir ();
+			}
+		}
+
+		// Do missile attack
+		if (!bJustAttacked)
+		{
+			if (CheckMissileRange () && (random[FiredChase]() < 20))
+			{
+				if (!target || !target.bShootable || target.health < 1)
+				{
+					// Invalid target
+					LookForPlayers (true);
+					return;
+				}
+				else
+				{
+					SetState (MissileState);
+					bJustAttacked = true;
+					return;
+				}
+			}
+		}
+		else
+		{
+			bJustAttacked = false;
+		}
+
+		// make active sound
+		if (random[FiredChase]() < 3)
+		{
+			PlayActiveSound ();
+		}
+	}
+
+	void A_FiredSplotch()
+	{
+		Actor mo;
+
+		mo = Spawn ("FireDemonSplotch1", Pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.Vel.X = (random[FireDemonSplotch]() - 128) / 32.;
+			mo.Vel.Y = (random[FireDemonSplotch]() - 128) / 32.;
+			mo.Vel.Z = (random[FireDemonSplotch]() / 64.) + 3;
+		}
+		mo = Spawn ("FireDemonSplotch2", Pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.Vel.X = (random[FireDemonSplotch]() - 128) / 32.;
+			mo.Vel.Y = (random[FireDemonSplotch]() - 128) / 32.;
+			mo.Vel.Z = (random[FireDemonSplotch]() / 64.) + 3;
+		}
+	}
+	
 	states
 	{
 		DeathCC:
