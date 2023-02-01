@@ -4914,6 +4914,217 @@ class RavenPlayer : DDPlayerPawn
 	}
 }
 
+class EggFXEE : MorphProjectile replaces EggFX
+{
+	Default
+	{
+		Radius 8;
+		Height 8;
+		Speed 18;
+		MorphProjectile.PlayerClass "ChickenPlayerDD";
+		MorphProjectile.MonsterClass "Chicken";
+		MorphProjectile.MorphStyle MRF_UNDOBYTOMEOFPOWER;
+	}
+	States
+	{
+		Spawn:
+			EGGM ABCDE 4;
+			Loop;
+		Death:
+			FX01 FFGH 3 Bright;
+			Stop;
+	}
+}
+
+
+class ChickenPlayerDD : DDPlayerPawn
+{
+	Default
+	{
+		Health 30;
+		ReactionTime 0;
+		PainChance 255;
+		Radius 16;
+		Height 24;
+		Speed 1;
+		Gravity 0.125;
+		+NOSKIN
+		+PLAYERPAWN.CANSUPERMORPH
+		PainSound "chicken/pain";
+		DeathSound "chicken/death";
+		Player.JumpZ 1;
+		Player.Viewheight 21;
+		Player.ForwardMove 1.22, 1.22;
+		Player.SideMove 1.22, 1.22;
+		Player.SpawnClass "Chicken";
+		Player.SoundClass "Chicken";
+		Player.DisplayName "Chicken";
+		Player.MorphWeapon "Beak";
+		-PICKUP
+	}
+
+	States
+	{
+		Spawn:
+			CHKN A -1;
+			Stop;
+		See:
+			CHKN ABAB 3;
+			Loop;
+		Melee:
+		Missile:
+			CHKN C 12;
+			Goto Spawn;
+		Pain:
+			CHKN D 4 A_Feathers;
+			CHKN C 4 A_Pain;
+			Goto Spawn;
+		Death:
+			CHKN E 6 A_Scream;
+			CHKN F 6 A_Feathers;
+			CHKN G 6;
+			CHKN H 6 A_NoBlocking;
+			CHKN IJK 6;
+			CHKN L -1;
+			Stop;
+	}
+	
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_UpdateBeak
+	//
+	//---------------------------------------------------------------------------
+
+	override void MorphPlayerThink ()
+	{
+		if (health > 0)
+		{ // Handle beak movement
+			PSprite pspr;
+			if (player != null && (pspr = player.FindPSprite(PSP_WEAPON)) != null)
+			{
+				pspr.y = WEAPONTOP + player.chickenPeck / 2;
+			}
+		}
+		if (player.morphTics & 15)
+		{
+			return;
+		}
+		if (Vel.X == 0 && Vel.Y == 0 && random[ChickenPlayerThink]() < 160)
+		{ // Twitch view ang
+			angle += Random2[ChickenPlayerThink]() * (360. / 256. / 32.);
+		}
+		if ((pos.z <= floorz) && (random[ChickenPlayerThink]() < 32))
+		{ // Jump and noise
+			Vel.Z += JumpZ;
+
+			State painstate = FindState('Pain');
+			if (painstate != null) SetState (painstate);
+		}
+		if (random[ChickenPlayerThink]() < 48)
+		{ // Just noise
+			A_StartSound ("chicken/active", CHAN_VOICE);
+		}
+	}
+}
+
+class PorkFXEE : MorphProjectile replaces PorkFX
+{
+	Default
+	{
+		Radius 8;
+		Height 8;
+		Speed 18;
+		MorphProjectile.PlayerClass "PigPlayerDD";
+		MorphProjectile.MonsterClass "Pig";
+		MorphProjectile.MorphStyle MRF_UNDOBYTOMEOFPOWER|MRF_UNDOBYCHAOSDEVICE;
+	}
+	States
+	{
+		Spawn:
+			PRKM ABCDE 4;
+			Loop;
+		Death:
+			FHFX IJKL 3 Bright;
+			Stop;
+	}
+}
+class PigPlayerDD : DDPlayerPawn
+{
+	Default
+	{
+		Health 30;
+		ReactionTime 0;
+		PainChance 255;
+		Radius 16;
+		Height 24;
+		Speed 1;
+		+WINDTHRUST
+		+NOSKIN
+		-PICKUP
+		PainSound "PigPain";
+		DeathSound "PigDeath";
+		Player.JumpZ 6;
+		Player.Viewheight 28;
+		Player.ForwardMove 0.96, 0.98;
+		Player.SideMove 0.95833333, 0.975;
+		Player.SpawnClass "Pig";
+		Player.SoundClass "Pig";
+		Player.DisplayName "Pig";
+		Player.MorphWeapon "Snout";
+	}
+
+	States
+	{
+		Spawn:
+			PIGY A -1;
+			Stop;
+		See:
+			PIGY ABCD 3;
+			Loop;
+		Pain:
+			PIGY D 4 A_PigPain();
+			Goto Spawn;
+		Melee:
+		Missile:
+			PIGY A 12;
+			Goto Spawn;
+		Death:
+			PIGY E 4 A_Scream();
+			PIGY F 3 A_NoBlocking();
+			PIGY G 4;
+			PIGY H 3;
+			PIGY IJK 4;
+			PIGY L -1;
+			Stop;
+		Ice:
+			PIGY M 5 A_FreezeDeath();
+			PIGY M 1 A_FreezeDeathChunks();
+			Wait;
+	}
+	
+
+	override void MorphPlayerThink ()
+	{
+		if (player.morphTics & 15)
+		{
+			return;
+		}
+		if(Vel.X == 0 && Vel.Y == 0 && random[PigPlayerThink]() < 64)
+		{ // Snout sniff
+			if (player.ReadyWeapon != null)
+			{
+				player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.FindState('Grunt'));
+			}
+			A_StartSound ("PigActive1", CHAN_VOICE); // snort
+			return;
+		}
+		if (random[PigPlayerThink]() < 48)
+		{
+			A_StartSound ("PigActive", CHAN_VOICE); // snort
+		}
+	}
+}
+
 class RatPlayer : DDPlayerPawn
 {
 	default
