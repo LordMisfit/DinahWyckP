@@ -533,7 +533,6 @@ class ChickenNew : EECreature replaces Chicken
 		Painchance 200;
 		Painchance "Fist", 255; // Fist attacks have a +50% chance of stunning an enemy
 		Painchance "Kick", 255; // Kick attacks have a +150% chance of stunning an enemy
-		Painchance "Gauntlets", 255; // Fist attacks have a +50% chance of stunning an enemy
 		DamageFactor 0.5;
 		RadiusDamageFactor 0.5;
 		DamageFactor "Explosion", 0.5;
@@ -618,7 +617,6 @@ class HereticImpNew : EECreature replaces HereticImp
 		Painchance 200;
 		Painchance "Fist", 255; // Fist attacks have a +50% chance of stunning an enemy
 		Painchance "Kick", 255; // Kick attacks have a +150% chance of stunning an enemy
-		Painchance "Gauntlets", 255; // Fist attacks have a +50% chance of stunning an enemy
 		DamageFactor "Fire", 0.75;
 		Painchance "Fire", 150;
 		DamageFactor "Ice", 1.334;
@@ -796,7 +794,6 @@ class HereticImpLeaderNew : HereticImpNew replaces HereticImpLeader
 		Painchance 150;
 		Painchance "Fist", 225; // Fist attacks have a +50% chance of stunning an enemy
 		Painchance "Kick", 255; // Kick attacks have a +150% chance of stunning an enemy
-		Painchance "Gauntlets", 225; // Fist attacks have a +50% chance of stunning an enemy
 		Tag "Gargoyle Leader";
 		DamageFactor "Fire", 0.5;
 		Painchance "Fire", 75;
@@ -891,13 +888,19 @@ class HereticImpBallNew : EEProjectile replaces HereticImpBall
 	}
 }
 
-class MummyNew : Mummy replaces Mummy
+class MummyNew : EECreature replaces Mummy
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "Golem";
+		Health 80;
+		Radius 22;
+		Height 62;
+		Mass 75;
+		Speed 12;
 		Painchance 128;
+		Painchance "Fist", 192; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 255; // Kick attacks have a +150% chance of stunning an enemy
 		DamageFactor "Fire", 1.0;
 		Painchance "Fire", 128;
 		DamageFactor "Ice", 1.5;
@@ -926,15 +929,101 @@ class MummyNew : Mummy replaces Mummy
 		Painchance "Spinner", 144;
 		DamageFactor "Beats", 1;
 		Painchance "Beats", 128;
+		Species "Golem";
+		Monster;
+		+FLOORCLIP;
+		+DONTHARMSPECIES;
+		SeeSound "mummy/sight";
+		AttackSound "mummy/attack1";
+		PainSound "mummy/pain";
+		DeathSound "mummy/death";
+		ActiveSound "mummy/active";
+		HitObituary "%o was smashed by a golem.";
+		DropItem "GoldWandAmmo", 84, 3;
+		DropItem "GoldWandHefty", 8, 15;
+	}
+	
+	states
+	{
+		Spawn:
+			MUMM A 0 NoDelay;
+			MUMM AB 10 A_Look();
+			goto Spawn+1;
+		See:
+			MUMM A 0;
+			MUMM ABCD 4
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(3); }
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+			}
+			Loop;
+		Melee:
+			MUMM E 0 A_DynamicMusic();
+			MUMM E 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			MUMM F 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(random[MummyAttack](1,8)*2, "mummy/attack2", "mummy/attack");
+			}
+			MUMM G 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			Goto See;
+		Pain:
+			MUMM H 4;
+			MUMM H 4 A_EEPain();
+			Goto See;
+		Pain.Fist:
+			MUMM H 4;
+			MUMM H 4 A_EEPain();
+			MUMM HH 4;
+			Goto See;
+		Pain.Kick:
+			MUMM H 4;
+			MUMM H 4 A_EEPain();
+			MUMM HHHH 4;
+			Goto See;
+		Death:
+			MUMM I 5;
+			MUMM J 5 A_Scream();
+			MUMM K 5 A_SpawnItemEx("MummySoul", 0, 0, 10, 0, 0, 1);
+			MUMM L 5;
+			MUMM M 5 A_NoBlocking();
+			MUMM NO 5; 
+			MUMM P -1;
+			Stop;
+		Ice:
+			MUMM H 5 A_GenericFreezeDeath();
+			MUMM H 1 A_FreezeDeathChunks();
+			Wait;
+		Raise:
+			MUMM O 5;
+			MUMM NMLKJI 5;
+			Goto See;
 	}
 }
 
-class MummyGhostNew : MummyGhost replaces MummyGhost
+class MummyGhostNew : MummyNew replaces MummyGhost
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "Golem (Ghost)";
+		+SHADOW;
+		+GHOST;
+		RenderStyle "Translucent";
+		Alpha 0.4;
+		DamageFactor "Eldritch", 0.4;
 		Painchance 128;
 		DamageFactor "Fire", 1.0;
 		Painchance "Fire", 128;
@@ -967,13 +1056,19 @@ class MummyGhostNew : MummyGhost replaces MummyGhost
 	}
 }
 
-class MummyLeaderNew : MummyLeader replaces MummyLeader
+class MummyLeaderNew : EECreature replaces MummyLeader
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "NitroGolem";
+		Health 100;
+		Radius 22;
+		Height 62;
+		Mass 75;
+		Speed 12;
 		Painchance 64;
+		Painchance "Fist", 96; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 160; // Kick attacks have a +150% chance of stunning an enemy
 		DamageFactor "Fire", 1.0;
 		Painchance "Fire", 64;
 		DamageFactor "Ice", 2.0;
@@ -1002,15 +1097,145 @@ class MummyLeaderNew : MummyLeader replaces MummyLeader
 		Painchance "Spinner", 72;
 		DamageFactor "Beats", 1;
 		Painchance "Beats", 64;
+		Species "Golem";
+		Monster;
+		+FLOORCLIP;
+		+DONTHARMSPECIES;
+		SeeSound "mummy/sight";
+		AttackSound "mummy/attack1";
+		PainSound "mummy/pain";
+		DeathSound "mummy/death";
+		ActiveSound "mummy/active";
+		Obituary "$OB_MUMMYLEADER";
+		HitObituary "%o was smashed by a golem.";
+		DropItem "GoldWandAmmo", 84, 3;
+		DropItem "GoldWandHefty", 8, 15;
+	}
+	
+	
+	states
+	{
+		Spawn:
+			MUMA A 0 NoDelay;
+			MUMA AB 10 A_Look();
+			goto Spawn+1;
+		See:
+			MUMA A 0;
+			MUMA ABCD 4
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { bAVOIDMELEE = true; }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(3); }
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+			}
+			Loop;
+		Melee:
+			MUMM E 0 A_DynamicMusic();
+			MUMM E 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			MUMM F 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(random[MummyAttack](1,8)*2, "mummy/attack2", "mummy/attack");
+			}
+			MUMM G 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			Goto See;
+		Missile:
+			MUMA X 0 A_DynamicMusic();
+			MUMA X 5
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+			}
+			MUMA Y 5 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+			}
+			MUMA X 5
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+			}
+			MUMA Y 5 Bright
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+			}
+			MUMA X 5
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+			}
+			MUMA Y 5 Bright 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+
+				A_CustomComboAttack("MummyFX1", 32, random[MummyAttack2](1,8)*2, "mummy/attack2");
+			}
+			Goto See;
+		Pain:
+			MUMA H 4;
+			MUMA H 4 A_EEPain();
+			Goto See;
+		Pain.Fist:
+			MUMA H 4;
+			MUMA H 4 A_EEPain();
+			MUMA HH 4;
+			Goto See;
+		Pain.Kick:
+			MUMA H 4;
+			MUMA H 4 A_EEPain();
+			MUMA HHHH 4;
+			Goto See;
+		Death:
+			MUMM I 5;
+			MUMM J 5 A_Scream();
+			MUMM K 5 A_SpawnItemEx("MummySoul", 0, 0, 10, 0, 0, 1);
+			MUMM L 5;
+			MUMM M 5 A_NoBlocking();
+			MUMM NO 5; 
+			MUMM P -1;
+			Stop;
+		Ice:
+			MUMA H 5 A_GenericFreezeDeath();
+			MUMA H 1 A_FreezeDeathChunks();
+			Wait;
+		Raise:
+			MUMM O 5;
+			MUMM NMLKJI 5;
+			Goto See;
 	}
 }
 
-class MummyLeaderGhostNew : MummyLeaderGhost replaces MummyLeaderGhost
+class MummyLeaderGhostNew : MummyLeaderNew replaces MummyLeaderGhost
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "NitroGolem (Ghost)";
+		+SHADOW;
+		+GHOST;
+		RenderStyle "Translucent";
+		Alpha 0.4;
+		DamageFactor "Eldritch", 0.4;
 		Painchance 64;
 		DamageFactor "Fire", 1.0;
 		Painchance "Fire", 64;
@@ -1040,6 +1265,38 @@ class MummyLeaderGhostNew : MummyLeaderGhost replaces MummyLeaderGhost
 		Painchance "Spinner", 72;
 		DamageFactor "Beats", 1;
 		Painchance "Beats", 64;
+	}
+}
+
+class MummyFX1New : EEProjectile replaces MummyFX1 
+{
+	default
+	{
+		Tag "Screamer Fireskull";
+		Radius 8;
+		Height 14;
+		Speed 9;
+		FastSpeed 18;
+		DamageFunction (4 * random(1,8));
+		DamageType "Fire";
+		RenderStyle "Add";
+		Projectile;
+		-ACTIVATEPCROSS;
+		-ACTIVATEIMPACT;
+		+SEEKERMISSILE;
+	}
+	
+	States
+	{
+		Spawn:
+			FX15 A 5 Bright A_StartSound("mummy/head");
+			FX15 B 5 Bright A_SeekerMissile(10, 20);
+			FX15 C 5 Bright;
+			FX15 B 5 Bright A_SeekerMissile(10, 20);
+			Loop;
+		Death:
+			FX15 DEFG 5 Bright;
+			Stop;
 	}
 }
 
@@ -1500,7 +1757,6 @@ class PigNew : EECreature replaces Pig
 		Painchance 128;
 		Painchance "Fist", 192; // Fist attacks have a +50% chance of stunning an enemy
 		Painchance "Kick", 255; // Kick attacks have a +150% chance of stunning an enemy
-		Painchance "Gauntlets", 192; // Fist attacks have a +50% chance of stunning an enemy
 		DamageFactor 0.5;
 		RadiusDamageFactor 0.5;
 		DamageFactor "Explosion", 0.5;
@@ -1571,7 +1827,6 @@ class FireDemonNew : EECreature replaces FireDemon
 		PainChance 1;
 		Painchance "Fist", 32;
 		Painchance "Kick", 80; // Kick attacks have a +150% chance of stunning an enemy
-		Painchance "Gauntlets", 32;
 		Tag "Afrit";
 		PainChance 1;
 		DamageFactor "Fire", 0.1;
@@ -1743,7 +1998,6 @@ class EttinNew : EECreature replaces Ettin
 		Painchance 60;
 		Painchance "Fist", 90; // Fist attacks have a +50% chance of stunning an enemy
 		Painchance "Kick", 150; // Kick attacks have a +150% chance of stunning an enemy
-		Painchance "Gauntlets", 90; // Fist attacks have a +50% chance of stunning an enemy
 		DamageFactor "Fire", 1.5;
 		Painchance "Fire", 90;
 		DamageFactor "CherryBomb", 1.25;
@@ -1906,13 +2160,18 @@ class EttinGhostNew : EttinNew replaces EttinMash
 	}
 }
 
-class CentaurNew : Centaur replaces Centaur
+class CentaurNew : EECreature replaces Centaur
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "Centaur";
-		PainChance 135;
+		Health 200;
+		Painchance 135;
+		Painchance "Fist", 201; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 255; // Kick attacks have a +150% chance of stunning an enemy
+		DamageFactor 0.875;
+		RadiusDamageFactor 0.875;
+		DamageFactor "Explosion", 0.875;
 		DamageFactor "Fire", 0.5;
 		Painchance "Fire", 67;
 		DamageFactor "CherryBomb", 0.75;
@@ -1941,15 +2200,191 @@ class CentaurNew : Centaur replaces Centaur
 		Painchance "Spinner", 68;
 		DamageFactor "Beats", 1.5;
 		Painchance "Beats", 203;
+		Speed 13;
+		Height 64;
+		Mass 120;
+		MeleeRange 80;
+		Monster;
+		+FLOORCLIP;
+		+TELESTOMP;
+		+SHIELDREFLECT;
+		SeeSound "CentaurSight";
+		AttackSound "CentaurAttack";
+		PainSound "CentaurPain";
+		DeathSound "CentaurDeath";
+		ActiveSound "CentaurActive";
+		HowlSound "PuppyBeat";
+		Obituary "$OB_CENTAUR";
+	}
+	
+	
+	States
+	{
+		Spawn:
+			CENT A 0 NoDelay;
+			CENT AB 10 A_Look();
+			goto Spawn+1;
+		See:
+			CENT A 0;
+			CENT ABCD 4
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(3); }
+				A_CentaurShieldOff();
+				A_SlaughtaurShieldOff();
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+			}
+			Loop;
+		Melee:
+			TNT1 A 0 A_DynamicMusic();
+			CENT H 5 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+			}
+			CENT I 4 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+				A_FaceTarget();
+			}
+			CENT J 7
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(random[CentaurAttack](3, 9));
+			}
+			Goto See;
+		Pain:
+			CENT G 6 A_EEPain();
+			Goto ShieldDefend;
+		Pain.Fist:
+			CENT G 6 A_EEPain();
+			CENT GG 6;
+			Goto ShieldDefend;
+		Pain.Kick:
+			CENT G 6 A_EEPain();
+			CENT GGGG 6;
+			Goto ShieldDefend;
+		ShieldDefend:
+			CENT G 1 // A_SetReflectiveInvulnerable()
+			{
+				A_CentaurShieldOn();
+				A_FaceTarget();
+
+				if (random(1,128) <= 1) { user_defendtimer += 1; }
+				if (random(1,32) <= 1) { user_defendtimer += 1; }
+				if (random(1,8) <= 1) { user_defendtimer += 1; }
+				user_defendtimer += 1;
+
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 135) { user_defendtimermax = 3; }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { user_defendtimermax = 4; }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { user_defendtimermax = 5; }
+				else { user_defendtimermax = 6; }
+
+				if (user_defendtimer >= user_defendtimermax) { user_defendtimer = 0; return resolvestate("ShieldBlocking"); }
+				return resolvestate(null);
+			}
+			Loop;
+		ShieldBlocking:
+			// Defense Cycles
+			CENT E 1 // A_CentaurDefend
+			{
+				A_CentaurShieldOn();
+				user_defendtimer += 1;
+
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { user_defendtimermax = random(17,18); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { user_defendtimermax = random(16,17); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { user_defendtimermax = random(15,16); }
+				else { user_defendtimermax = 15; }
+
+				if (user_defendtimer >= user_defendtimermax)
+				{
+					user_defendtimer = 0;
+					user_defendcycles += 1;
+					if (random(1,8) == 1 && A_JumpIfTargetInsideMeleeRange("Melee"))
+					{
+						A_CentaurShieldOff();
+						A_SlaughtaurShieldOff();
+						return resolvestate("Melee");
+					}
+					A_FaceTarget();
+				}
+				if (user_defendcycles >= 3) { return resolvestate("ShieldEnding"); }
+				return resolvestate(null);
+			}
+			Loop;
+		ShieldEnding:
+			CENT E 1 // A_UnsetReflectiveInvulnerable
+			{
+				A_CentaurShieldOff();
+				A_SlaughtaurShieldOff();
+				A_FaceTarget();
+			}
+			Goto See;
+
+		Death:
+			CENT K 4;
+			CENT L 4 A_Scream();
+			CENT MN 4;
+			CENT O 4 A_NoBlocking();
+			CENT PQ 4;
+			CENT R 4 A_QueueCorpse();
+			CENT S 4;
+			CENT T -1;
+			Stop;
+
+		XDeath:
+			CTXD A 4;
+			CTXD B 4 A_NoBlocking();
+			CTXD C 0 A_SpawnItemEx("CentaurSword", 0, 0, 45, 1 + random[CentaurDrop](-128,127)*0.03125,1 + random[CentaurDrop](-128,127)*0.03125, 8 + random[CentaurDrop](0,255)*0.015625, 270);
+			CTXD C 4 
+			{
+				if (random(1,256) == 1)
+				{
+					A_SpawnProjectile("EvilWarriorShield",44,-32,90,0);
+				}
+				else
+				{
+					A_SpawnItemEx("CentaurShield", 0, 0, 45, 1 + random[CentaurDrop](-128,127)*0.03125,
+												1 + random[CentaurDrop](-128,127)*0.03125, 8 + random[CentaurDrop](0,255)*0.015625, 90);
+				}
+			}
+			CTXD D 3 A_Scream();
+			CTXD E 4 A_QueueCorpse();
+			CTXD F 3;
+			CTXD G 4;
+			CTXD H 3;
+			CTXD I 4;
+			CTXD J 3;
+			CTXD K -1;
+			stop;
+		Ice:
+			CENT U 5 A_FreezeDeath();
+			CENT U 1 A_FreezeDeathChunks();
+			Wait;
+		Raise:
+			CENT T 4;
+			CENT SRQPONMLK 4;
+			Goto See;
 	}
 }
 
-class CentaurMashNew : CentaurMash replaces CentaurMash
+class CentaurGhostNew : CentaurNew replaces CentaurMash
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "Centaur (Ghost)";
+		+NOBLOOD;
+		+BLASTED;
+		-TELESTOMP;
+		+NOICEDEATH;
+		RenderStyle "Translucent";
+		Alpha 0.4;
+		DamageFactor "Eldritch", 0.4;
 		PainChance 135;
 		DamageFactor "Fire", 0.5;
 		Painchance "Fire", 67;
@@ -1980,44 +2415,270 @@ class CentaurMashNew : CentaurMash replaces CentaurMash
 		DamageFactor "Beats", 1.5;
 		Painchance "Beats", 203;
 	}
+	
+	States
+	{
+		Death:
+		XDeath:
+		Ice:
+			TNT1 A 3;
+			Stop;
+	}
 }
 
-class CentaurLeaderNew : CentaurLeader replaces CentaurLeader
+class SlaughtaurNew : CentaurNew replaces CentaurLeader
 {
-	mixin MonsterCollider;
 	default
 	{
-		Tag "Slaughtaur";
-		PainChance 96;
+		Health 325;
+		Speed 12.5;
+		MeleeRange 80;
+		Painchance 84;
+		Painchance "Fist", 126; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 210; // Kick attacks have a +150% chance of stunning an enemy
+		Painchance "Gauntlets", 126; // Fist attacks have a +50% chance of stunning an enemy
+		DamageFactor 0.75;
+		RadiusDamageFactor 0.75;
+		DamageFactor "Explosive", 0.75;
+
 		DamageFactor "Fire", 0.25;
-		Painchance "Fire", 24;
+		Painchance "Fire", 21;
 		DamageFactor "CherryBomb", 0.625;
-		Painchance "CherryBomb", 60;
+		Painchance "CherryBomb", 53;
 		DamageFactor "Bonk", 0.75;
-		Painchance "Bonk", 72;
+		Painchance "Bonk", 63;
 		DamageFactor "Cricket", 0.75;
-		Painchance "Cricket", 72;
+		Painchance "Cricket", 63;
 		DamageFactor "Lead", 1.125;
-		Painchance "Lead", 108;
+		Painchance "Lead", 95;
 		DamageFactor "Chop", 1.125;
-		Painchance "Chop", 108;
+		Painchance "Chop", 95;
 		DamageFactor "Breakfast", 1.25;
-		Painchance "Breakfast", 120;
+		Painchance "Breakfast", 105;
 		DamageFactor "Suck", 0.5;
-		Painchance "Suck", 48;
+		Painchance "Suck", 42;
 		DamageFactor "Zap", 1.25;
-		Painchance "Zap", 120;
+		Painchance "Zap", 63;
 		DamageFactor "Dust", 1.125;
-		Painchance "Dust", 108;
+		Painchance "Dust", 95;
 		DamageFactor "BRocket", 0.5;
-		Painchance "BRocket", 48;
+		Painchance "BRocket", 42;
 		DamageFactor "Popper", 2.25;
-		Painchance "Popper", 216;
+		Painchance "Popper", 189;
 		DamageFactor "Spinner", 0.25;
-		Painchance "Spinner", 24;
+		Painchance "Spinner", 21;
 		DamageFactor "Beats", 1.25;
-		Painchance "Beats", 120;
+		Painchance "Beats", 105;
 		Translation "81:96=85:92", "97:121=101:113", "0:32=231:235", "33:50=231:235";  // Dark Skin, Obsidian Armor
+	}
+	
+	States
+	{
+		Melee:
+			TNT1 A 0 A_DynamicMusic();
+			CENT H 5 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+			}
+			CENT I 4 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+				A_FaceTarget();
+			}
+			CENT J 7
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(random[CentaurAttack](5, 13));
+			}
+			Goto See;
+		Missile:
+			TNT1 A 0 A_DynamicMusic();
+		MissilePhase1:
+			CENT E 1
+			{
+				A_SlaughtaurShieldOn();
+				A_FaceTarget();
+				user_defendtimer += 1;
+
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { user_defendtimermax = random(7,8); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { user_defendtimermax = random(8,9); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { user_defendtimermax = random(9,10); }
+				else { user_defendtimermax = 10; }
+
+				if (user_defendtimer >= user_defendtimermax) { user_defendtimer = 0; return resolvestate("MissilePhase2"); }
+				return resolvestate(null); 
+			}
+			Loop;
+		MissilePhase2:
+			CENT F 1 Bright 
+			{
+				A_SlaughtaurShieldOn();
+				A_FaceTarget();
+				user_defendtimer += 1;
+				if (user_defendtimer == 1) 
+				{
+					A_SpawnProjectile("CentaurFXNew", 45, 0, 0, CMF_AIMOFFSET); 
+				}
+
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 135) { user_defendtimermax = random(5,6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { user_defendtimermax = random(6,7); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { user_defendtimermax = random(7,8); }
+				else { user_defendtimermax = 8; }
+
+				if (user_defendtimer >= user_defendtimermax) { user_defendtimer = 0; return resolvestate("MissilePhase3"); }
+				return resolvestate(null); 
+			}
+			Loop;
+		MissilePhase3:
+			CENT E 1
+			{
+				A_SlaughtaurShieldOn();
+				A_FaceTarget();
+				user_defendtimer += 1;
+	
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { user_defendtimermax = random(7,8); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { user_defendtimermax = random(8,9); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { user_defendtimermax = random(9,10); }
+				else { user_defendtimermax = 10; }
+	
+				if (user_defendtimer >= user_defendtimermax) { user_defendtimer = 0; return resolvestate("MissilePhase4"); }
+				return resolvestate(null); 
+			}
+			Loop;
+		MissilePhase4:
+			CENT F 1 Bright 
+			{
+				A_SlaughtaurShieldOn();
+				A_FaceTarget();
+				user_defendtimer += 1;
+				if (user_defendtimer == 1) 
+				{
+					A_SpawnProjectile("CentaurFXNew", 45, 0, 0, CMF_AIMOFFSET); 
+				}
+			
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 135) { user_defendtimermax = random(5,6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { user_defendtimermax = random(6,7); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { user_defendtimermax = random(7,8); }
+				else { user_defendtimermax = 8; }
+	
+				if (user_defendtimer >= user_defendtimermax) 
+				{
+					A_CentaurShieldOff();
+					A_SlaughtaurShieldOff();
+					return resolvestate("See"); 
+				}
+				return resolvestate(null); 
+			}
+			Loop;
+		Pain:
+			CENT G 5 A_EEPain();
+			Goto ShieldDefend;
+		Pain.Fist:
+			CENT G 5 A_EEPain();
+			CENT GG 5;
+			Goto ShieldDefend;
+		Pain.Kick:
+			CENT G 5 A_EEPain();
+			CENT GGGG 5;
+			Goto ShieldDefend;
+		ShieldDefend:
+			CENT G 1 // A_SetReflectiveInvulnerable()
+			{
+				A_SlaughtaurShieldOn();
+				A_FaceTarget();
+	
+				if (random(1,32) == 1) { user_defendtimer += 1; }
+				if (random(1,8) == 1) { user_defendtimer += 1; }
+				user_defendtimer += 1;
+	
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(157,158)) { user_defendtimermax = 2; }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 105) { user_defendtimermax = 3; }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(52,53)) { user_defendtimermax = 4; }
+				else { user_defendtimermax = 5; }
+	
+				if (user_defendtimer >= user_defendtimermax) { user_defendtimer = 0; return resolvestate("ShieldBlocking"); }
+				return resolvestate(null);
+			}
+			Loop;
+		ShieldBlocking:
+			// Defense Cycles
+			CENT E 1 // A_CentaurDefend
+			{
+				A_SlaughtaurShieldOn();
+				user_defendtimer += 1;
+	
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { user_defendtimermax = random(21,22); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { user_defendtimermax = random(19,20); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { user_defendtimermax = random(18,19); }
+				else { user_defendtimermax = 18; }
+	
+				if (user_defendtimer >= user_defendtimermax)
+				{
+					user_defendtimer = 0;
+					user_defendcycles += 1;
+					if (random(1,8) == 1 && A_JumpIfTargetInsideMeleeRange("Melee"))
+					{
+						A_CentaurShieldOff();
+						A_SlaughtaurShieldOff();
+						return resolvestate("Melee");
+					}
+					A_FaceTarget();
+				}
+				if (user_defendcycles >= 3) { return resolvestate("ShieldEnding"); }
+				return resolvestate(null);
+			}
+			Loop;
+		ShieldEnding:
+			CENT E 1 // A_UnsetReflectiveInvulnerable
+			{
+				A_CentaurShieldOff();
+				A_SlaughtaurShieldOff();
+				A_FaceTarget();
+	
+				user_paintomissile = 10;
+				if (exex_monsterlevelenabledflags) user_paintomissile -= (CountInv("MonsterLevel") * (0.1));
+				if (user_paintomissile < 1) user_paintomissile = 1;
+	
+				if (random(1,user_paintomissile) == 1) { return resolvestate("Missile"); }
+				return resolvestate(null);
+			}
+			Goto See;
+	}
+}
+
+class CentaurFXNew : EEProjectile replaces CentaurFX
+{
+	default
+	{
+		Tag "Shield Blast";
+		Speed 20;
+		DamageFunction (4 * random(1,8));
+		Projectile;
+		+SPAWNSOUNDSOURCE;
+		RenderStyle "Add";
+		SeeSound "CentaurLeaderAttack";
+		DeathSound "CentaurMissileExplode";
+	}
+	
+	States
+	{
+		Spawn:
+			CTFX A -1 Bright;
+			Loop;
+		Death:
+			CTFX B 4 Bright;
+			CTFX C 3 Bright;
+			CTFX D 4 Bright;
+			CTFX E 3 Bright;
+			CTFX F 2 Bright;
+			Stop;
 	}
 }
 
