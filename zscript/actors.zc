@@ -557,6 +557,7 @@ class EECustomGib : EEBaseZSC abstract
 }
 
 // Custom Powerups/Items that obey the effect of "AetheriusTimeFreezer" that might be used for monsters [buffs/debuffs/cooldowns]
+// Custom Powerups/Items that obey the effect of "AetheriusTimeFreezer" that might be used for monsters [buffs/debuffs/cooldowns]
 class EEPowerup : Powerup
 {
 	override void Tick()
@@ -2113,7 +2114,7 @@ class EEProjectile : EEBaseZSC abstract
 			mo.Gravity = 1./8;
 		}
 	}
-	
+
 	states
 	{
 		VaccedUp:
@@ -5427,6 +5428,49 @@ class EECreature : EEBaseZSC abstract
 			mo.Vel.X = (random[FireDemonSplotch]() - 128) / 32.;
 			mo.Vel.Y = (random[FireDemonSplotch]() - 128) / 32.;
 			mo.Vel.Z = (random[FireDemonSplotch]() / 64.) + 3;
+		}
+	}
+	
+	
+	// Disciple
+	void A_GhostOff()
+	{
+		A_SetRenderStyle(1.0, STYLE_Normal);
+		bGhost = false;
+	}
+
+	void A_WizAtk1()
+	{
+		A_FaceTarget();
+		A_GhostOff();
+	}
+
+	void A_WizAtk2()
+	{
+		A_FaceTarget();
+		A_SetRenderStyle(HR_SHADOW, STYLE_Translucent);
+		bGHOST = true;
+	}
+
+	// Disciple Shot [Heretic]
+	void A_WizAtk3(string missiletype = "WizardFX1New", int meleedamage = 4)
+	{
+		A_GhostOff();
+		if (!target) return;
+		A_StartSound(AttackSound, CHAN_WEAPON);
+		if (CheckMeleeRange())
+		{
+			int damage = meleedamage;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			return;
+		}
+		
+		Actor mo = SpawnMissile (target, missiletype);
+		if (mo != null)
+		{
+			SpawnMissileAngle(missiletype, mo.Angle - 45. / 8, mo.Vel.Z);
+			SpawnMissileAngle(missiletype, mo.Angle + 45. / 8, mo.Vel.Z);
 		}
 	}
 	
