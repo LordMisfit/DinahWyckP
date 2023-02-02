@@ -4485,6 +4485,46 @@ class EECreature : EEBaseZSC abstract
 		}
 	}
 
+	double XSpread;
+	double YSpread;
+	void A_ActorGetHitScanXSpread(int type = 0)
+	{
+		double spread = 0.0;
+		double spreadfactor = 1.0;
+		int StrifeAccuracyLevel;
+		int accuracydebug;
+
+		// Special
+		if (type == 101) // Strife Rebel Shots [checking player's accuracy to set their own] :V
+		{
+			spread = 8.0;
+			spreadfactor = 1.0 - (StrifeAccuracyLevel * 0.1);
+		}
+		
+		spread *= spreadfactor;
+		if (accuracydebug) Console.Printf("XSpread: %.8f, XSpreadFactor %.8f" ,spread, spreadfactor);
+		XSpread = spread;
+	}
+	
+	void A_ActorGetHitScanYSpread(int type = 0)
+	{
+		double spread = 0.0;
+		double spreadfactor = 1.0;
+		int StrifeAccuracyLevel;
+		int accuracydebug;
+
+		// Special
+		if (type == 101) // Strife Rebel Shots [checking player's accuracy to set their own] :V
+		{
+			spread = 0.0;
+			spreadfactor = 1.0 - (StrifeAccuracyLevel * 0.1);
+		}
+		
+		spread *= spreadfactor;
+		if (accuracydebug) Console.Printf("YSpread: %.8f, YSpreadFactor %.8f" ,spread, spreadfactor);
+		YSpread = spread;
+	}
+
 	// Cacodemons' Shadow Split
 	void A_ActorStartShadowSplit()
 	{
@@ -5861,7 +5901,17 @@ class EECreature : EEBaseZSC abstract
 			A_ShieldBlastVelFactor(0.8375,0.8375,6,1);
 		}
 	}
-
+	
+	void A_DropFire(string missiletype = "FireDroplet", int expdmg = 64, int exprad = 64, int expflags = XF_NOSPLASH, string type = "Fire")
+	{
+		Actor drop = Spawn(missiletype, pos + (0,0,24), ALLOW_REPLACE);
+		if (drop != null)
+		{
+			drop.Vel.Z = -1.;
+		}
+		A_Explode(expdmg, exprad, expflags, damagetype: type);
+	}	
+	
 	void A_GiveGold(int basegold)
 	{
 		actor player = players[0].mo;

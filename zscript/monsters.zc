@@ -5372,66 +5372,255 @@ class AcolyteToBeNew : AcolyteToBe replaces AcolyteToBe
 	}
 }
 
-class RebelNew : Rebel replaces Rebel
+class RebelNew : StrifeHumanoidBase replaces Rebel // Base class for Rebels
 {
-	mixin MonsterCollider;
 	default
 	{
-		PainChance 250;
+		Tag "Front Rebel";
+		Health 75; // 1.25x the HP
+		PainChance 187; // 75% the original pain chance
+		DamageFactor "PoisonBolt", 25.0;
+		Speed 10; // 25% more speed than before
+		Radius 20;
+		Height 56;
+		Monster;
+		+FRIENDLY;
+		-COUNTKILL;
+		+NOSPLASHALERT;
+		+CANTSEEK;
+		species "Players";
+		MinMissileChance 150;
+		Tag "$TAG_REBEL"; // "Rebel"
+		SeeSound "rebel/sight";
+		PainSound "rebel/pain";
+		DeathSound "rebel/death";
+		ActiveSound "rebel/active";
+		Obituary "$OB_REBEL"; // "%o was gunned down by a Rebel."
+	}
+	
+	States
+	{
+		Spawn:
+			HMN1 P 0 NoDelay;
+			HMN1 P 5 A_Look2();
+			goto Spawn+1;
+			HMN1 Q 0;
+			HMN1 Q 8;
+			goto Spawn+1;
+			HMN1 R 0;
+			HMN1 R 8;
+			goto Spawn+1;
+			HMN1 A 0;
+			HMN1 ABCDABCD 6 A_EEWander(0,1,3,1,1);
+			goto Spawn+1;
+		See:
+			HMN1 A 0;
+			HMN1 AABBCCDD 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { bAVOIDMELEE = true; }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(2); }
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+			}
+			Loop;
+		Missile:
+			TNT1 A 0
+			{
+				A_CheckIfTargetDead("See");
+			}
+			HMN1 E 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(112,113)) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+
+		Shoot1:
+			TNT1 A 0
+			{
+				A_CheckIfTargetDead("See");
+			}
+			HMN1 F 6 Bright 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(112,113)) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+
+				A_StartSound("monsters/rifle", CHAN_WEAPON);
+				if (exex_bulletstracers == 0)
+				{
+					A_ActorGetHitScanXSpread(101);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) 
+					{
+						A_CustomBulletAttack(frandom(XSpread*-1,XSpread), 0, 1, 3*random(3,15), "StrifePuff", 2048, CBAF_NORANDOM); 
+					}
+					else 
+					{
+						A_CustomBulletAttack(frandom(XSpread*-1,XSpread), 0, 1, 3*random(1,5), "StrifePuff", 2048, CBAF_NORANDOM); 
+					}
+				}
+				else
+				{
+					A_ActorGetHitScanXSpread(101);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) 
+					{
+						A_SpawnProjectile("StrifeGenBulletTracer2", 32, 12, frandom(XSpread*-1,XSpread), CMF_OFFSETPITCH|CMF_BADPITCH, 0); 
+					}
+					else 
+					{
+						A_SpawnProjectile("StrifeGenBulletTracer", 32, 12, frandom(XSpread*-1,XSpread), CMF_OFFSETPITCH|CMF_BADPITCH, 0); 
+					}
+				}
+			}
+			TNT1 A 0
+			{
+				A_CheckIfTargetDead("See");
+			}
+			HMN1 E 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(112,113)) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+
+				A_StartSound("monsters/rifle", CHAN_WEAPON);
+				if (exex_bulletstracers == 0)
+				{
+					A_ActorGetHitScanXSpread(101);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) 
+					{
+						A_CustomBulletAttack(frandom(XSpread*-1,XSpread), 0, 1, 3*random(3,15), "StrifePuff", 2048, CBAF_NORANDOM); 
+					}
+					else 
+					{
+						A_CustomBulletAttack(frandom(XSpread*-1,XSpread), 0, 1, 3*random(1,5), "StrifePuff", 2048, CBAF_NORANDOM); 
+					}
+				}
+				else
+				{
+					A_ActorGetHitScanXSpread(101);
+					if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) 
+					{
+						A_SpawnProjectile("StrifeGenBulletTracer2", 32, 12, frandom(XSpread*-1,XSpread), CMF_OFFSETPITCH|CMF_BADPITCH, 0); 
+					}
+					else 
+					{
+						A_SpawnProjectile("StrifeGenBulletTracer", 32, 12, frandom(XSpread*-1,XSpread), CMF_OFFSETPITCH|CMF_BADPITCH, 0); 
+					}
+				}
+			}
+			HMN1 O 0 A_Jump(96,"See");
+			HMN1 O 0 A_MonsterRefire(48,"See");
+			Goto See;
+
+		Pain:
+			HMN1 O 2;
+			HMN1 O 2 A_EEPain();
+			HMN1 O 0 A_Jump(80,"Missile");
+			Goto See;
+		Pain.Fist:
+			HMN1 O 2;
+			HMN1 O 2 A_EEPain();
+			HMN1 OO 2;
+			HMN1 O 0 A_Jump(80,"Missile");
+			Goto See;
+		Pain.Kick:
+			HMN1 O 2;
+			HMN1 O 2 A_EEPain();
+			HMN1 OOOO 2;
+			HMN1 O 0 A_Jump(80,"Missile");
+			Goto See;
+		Death:
+			TNT1 A 0 A_GiveGold(random(3,8));
+			HMN1 G 5;
+			HMN1 H 5 A_Scream();
+			HMN1 I 3 A_NoBlocking();
+			HMN1 J 4;
+			HMN1 KLM 3;
+			HMN1 N -1;
+			Stop;
+		XDeath:
+			TNT1 A 0 A_GiveGold(random(3,8));
+			RGIB A 4 A_TossGib();
+			RGIB B 4 A_XScream();
+			RGIB C 3 A_NoBlocking();
+			RGIB DEF 3 A_TossGib();
+			RGIB G 3;
+			RGIB H 1400;
+			Stop;
+		Burn:
+			TNT1 A 0 A_GiveGold(random(3,8));
+			BURN A 3 Bright A_StartSound("human/imonfire",CHAN_VOICE);
+			BURN B 3 Bright A_DropFire();
+			BURN C 3 Bright A_EEWander(0,1,3,1,1);
+			BURN D 3 Bright A_NoBlocking();
+			BURN E 5 Bright A_DropFire();
+			BURN FGH 5 Bright A_EEWander(0,1,3,1,1);
+			BURN I 5 Bright A_DropFire();
+			BURN JKL 5 Bright A_EEWander(0,1,3,1,1);
+			BURN M 5 Bright A_DropFire();
+			BURN NOPQPQ 5 Bright;
+			BURN RSTU 7 Bright;
+			BURN V -1;
+			Stop;
+		Disintegrate:
+			TNT1 A 0 A_GiveGold(random(3,8));
+			DISR A 5 A_StartSound("misc/disruptordeath",CHAN_VOICE);
+			DISR BC 5;
+			DISR D 5 A_NoBlocking();
+			DISR EF 5;
+			DISR GHIJ 4;
+			MEAT D 700;
+			Stop;
+		Ice:
+			TNT1 A 0 { bCANTSEEK = true; }
+			HMN1 A 5 A_FreezeDeath();
+			HMN1 A 1 A_FreezeDeathChunks();
+			Wait;
 	}
 }
-
-class Rebel1New : Rebel1 replaces Rebel1
+class Rebel1New : RebelNew replaces Rebel1
 {
-	mixin MonsterCollider;
 	default
 	{
-		PainChance 250;
+		Tag "Front Rebel";
+		DropItem "ClipOfBullets";
 	}
 }
-
-class Rebel2New : Rebel2 replaces Rebel2
+class Rebel2New : RebelNew replaces Rebel2
 {
-	mixin MonsterCollider;
 	default
 	{
-		PainChance 250;
+		Tag "Front Rebel";
 	}
 }
-
-class Rebel3New : Rebel3 replaces Rebel3
+class Rebel3New : RebelNew replaces Rebel3
 {
-	mixin MonsterCollider;
 	default
 	{
-		PainChance 250;
+		Tag "Front Rebel";
 	}
 }
-
-class Rebel4New : Rebel4 replaces Rebel4
+class Rebel4New : RebelNew replaces Rebel4
 {
-	mixin MonsterCollider;
 	default
 	{
-		PainChance 250;
+		Tag "Front Rebel";
 	}
 }
-
-class Rebel5New : Rebel5 replaces Rebel5
+class Rebel5New : RebelNew replaces Rebel5
 {
-	mixin MonsterCollider;
 	default
 	{
-		PainChance 250;
+		Tag "Front Rebel";
 	}
 }
-
-class Rebel6New : Rebel6 replaces Rebel6
+class Rebel6New : RebelNew replaces Rebel6
 {
-	mixin MonsterCollider;
 	default
 	{
-		PainChance 250;
+		Tag "Front Rebel";
 	}
 }
 
