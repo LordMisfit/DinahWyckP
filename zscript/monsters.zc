@@ -4200,13 +4200,15 @@ class IceGuyFX2New : EEEffectProjectile replaces IceGuyFX2
 	}
 }
 
-class SerpentNew : Serpent replaces Serpent
+class StalkerNew : EECreature replaces Serpent
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "Stalker";
-		PainChance 96;
+		Health 90;
+		Painchance 96;
+		Painchance "Fist", 144; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 240; // Kick attacks have a +150% chance of stunning an enemy
 		DamageFactor "Fire", 2.0;
 		Painchance "Fire", 192;
 		DamageFactor "Ice", 0.75;
@@ -4235,18 +4237,223 @@ class SerpentNew : Serpent replaces Serpent
 		Painchance "Spinner", 256;
 		DamageFactor "Beats", 0.25;
 		Painchance "Beats", 36;
-		Mass 100000;
+		Meleerange 72;
+		Speed 12;
+		Radius 32;
+		Height 70;
+		Mass 160000;
+		Monster;
+		-SHOOTABLE;
+		+NOBLOOD;
+		+CANTLEAVEFLOORPIC;
+		+NONSHOOTABLE;
+		+STAYMORPHED;
+		+DONTBLAST;
+		+NOTELEOTHER;
+		+INVISIBLE;
+		SeeSound "SerpentSight";
+		AttackSound "SerpentAttack";
+		PainSound "SerpentPain";
+		DeathSound "SerpentDeath";
+		HitObituary "$OB_SERPENTHIT"; // "%o was mauled by a Stalker.";
+	}
+	
+	States
+	{
+		Spawn:
+			SSPT H 0 NoDelay; 
+			SSPT H 10 A_Look();
+			goto Spawn+1;
+		See:
+			SSPT HH 1 
+			{
+				A_EEChase("Melee", "None", CHF_NIGHTMAREFAST|CHF_NOPLAYACTIVE,1,3,1,1);
+			}
+			SSPT H 2
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(1); }
+				A_SerpentHumpDecide();
+			}
+			Loop;
+		Pain:
+			SSPT L 5;
+			SSPT L 5 A_EEPain();
+			Goto Dive;
+		Pain.Fist:
+			SSPT L 5;
+			SSPT L 5 A_EEPain();
+			SSPT L 5;
+			Goto Dive;
+		Pain.Kick:
+			SSPT L 5;
+			SSPT L 5 A_EEPain();
+			SSPT LLLLL 5;
+			Goto Dive;
+		Dive:
+			SSDV ABC 4
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+			}
+			SSDV D 4 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+				A_UnSetShootable();
+			}
+			SSDV E 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_StartSound("SerpentActive",CHAN_BODY);
+			}
+			SSDV F 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+			}
+			SSDV GH 4
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+			}
+			SSDV I 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+			}
+			SSDV J 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_SerpentHide();
+			}
+			Goto See;
+		Melee:
+			SSPT A 0 A_DynamicMusic();
+			SSPT A 1 A_UnHideThing();
+			SSPT A 1 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(0); }
+				A_StartSound("SerpentBirth",CHAN_VOICE);
+			}
+			SSPT B 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_SetShootable();
+			}
+			SSPT C 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+			}
+			SSPT D 4 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+				A_SerpentCheckForAttack();
+			}
+			Goto Dive;
+		Death:
+			SSPT O 4;
+			SSPT P 4 A_Scream();
+			SSPT Q 4 A_NoBlocking();
+			SSPT RSTUVWXYZ 4;
+			Stop;
+		XDeath:
+			SSXD A 4;
+			SSXD B 4 A_SpawnItemEx("SerpentHead", 0, 0, 45);
+			SSXD C 4 A_NoBlocking();
+			SSXD DE 4;
+			SSXD FG 3;
+			SSXD H 3 A_SerpentSpawnGibs();
+			Stop;
+		Ice:
+			SSPT [ 5 A_FreezeDeath();
+			SSPT [ 1 A_FreezeDeathChunks();
+			Wait;
+		Walk:
+			SSPT IJI 5 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_EEChase("Attack", "None", CHF_NIGHTMAREFAST,1,3,1,1);
+			}
+			SSPT J 5 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_SerpentCheckForAttack();
+			}
+			Goto Dive;
+		Hump:
+			SSPT H 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_SerpentUnHide();
+			}
+			SSPT EFGEF 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_SerpentRaiseHump();
+			}
+			SSPT GEF 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+			}
+			SSPT GEFGE 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_SerpentLowerHump();
+			}
+			SSPT F 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_SerpentHide();
+			}
+			Goto See;
+		Attack:
+			SSPT K 6 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			SSPT L 5 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_SerpentChooseAttack();
+			}
+			Goto MeleeAttack;
+		MeleeAttack:
+			SSPT N 5 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(5*random(1,8));
+				if (random (1,256) < 96) { A_SerpentCheckForAttack(); }
+			}
+			Goto Dive;
 	}
 }
-
-class SerpentLeaderNew : SerpentLeader replaces SerpentLeader
+class StalkerLeaderNew : StalkerNew replaces SerpentLeader
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "Alpha Stalker";
-		Translation "51:66=51:58", "186:202=186:194", "233:239=235:239", "33:50=33:41", "0:32=0:16";
+		Health 120;
 		Meleerange 72;
+		Translation "51:66=51:58", "186:202=186:194", "233:239=235:239", "33:50=33:41", "0:32=0:16";
 		PainChance 96;
 		DamageFactor "Fire", 1.75;
 		Painchance "Fire", 168;
@@ -4276,7 +4483,53 @@ class SerpentLeaderNew : SerpentLeader replaces SerpentLeader
 		Painchance "Spinner", 256;
 		DamageFactor "Beats", 0.25;
 		Painchance "Beats", 36;
-		Mass 100000;
+	}
+	
+	States
+	{
+		Missile:
+			SSPT N 5
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+
+				A_SpawnProjectile("SerpentFXNew", 32, 0);
+			}
+			Goto Dive;
+	}
+}
+class SerpentFXNew : EEProjectile replaces SerpentFX
+{
+	default
+	{
+		Tag "Sizzling Slime";
+		DamageFunction (4 * random(1,8));
+		Speed 15;
+		Radius 8;
+		Height 10;
+		Projectile;
+		-ACTIVATEIMPACT;
+		-ACTIVATEPCROSS;
+		RenderStyle "Add";
+		DeathSound "SerpentFXHit";
+	}
+	
+	States
+	{
+		Spawn:
+			SSFX A 0;
+			SSFX A 3 Bright
+			{
+				A_StartSound("SerpentFXContinuous",CHAN_BODY,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+			}
+			SSFX BAB 3 Bright
+			{
+			}
+			Goto Spawn+1;
+		Death:
+			SSFX C 4 Bright A_StopSound(CHAN_BODY);
+			SSFX DEFGH 4 Bright;
+			Stop;
 	}
 }
 
@@ -5883,7 +6136,7 @@ class CeilingTurretNew : EECreature replaces CeilingTurret
 	}
 }
 
-class StalkerNew : Stalker replaces Stalker
+class OStalkerNew : Stalker replaces Stalker
 {
 	mixin MonsterCollider;
 	default
