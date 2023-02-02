@@ -20,6 +20,7 @@ class EEBaseZSC : Actor abstract
 	
 	double temp1, temp2;
 	double expshare;
+	int user_legendaryevolved;
 	int user_paintomissile;
 	int user_chargechance;
 	int user_Fuse;
@@ -3400,6 +3401,7 @@ class EECreature : EEBaseZSC abstract
 	int bobstate;
 	
 	//
+	int user_golddrop;
 	int cannotres;
 	int timesrevivedamonster;
 	int timesrevivedpervile;
@@ -5763,6 +5765,155 @@ class EECreature : EEBaseZSC abstract
 		SpawnMissileXYZ(Vec3Angle(radius / 2, angle + 90, 40.), target, specialmissile);
 		SpawnMissileXYZ(Vec3Angle(radius / 2, angle - 90, 40.), target, specialmissile);
 		A_StartSound(AttackSound, CHAN_WEAPON);
+	}
+	
+	//*************************
+	//*STRIFE-UNIQUE FUNCTIONS*
+	//*************************
+	// Acolyte
+	void A_AcolyteDie ()
+	{
+		// [RH] Disable translucency here.
+		A_SetRenderStyle(1, STYLE_Normal);
+
+		// Only the Blue Acolyte does extra stuff on death.
+		if (self is "AcolyteBlue")
+		{
+			int i;
+			// Make sure somebody is still alive
+			for (i = 0; i < MAXPLAYERS; ++i)
+			{
+				if (playeringame[i] && players[i].health > 0)
+					break;
+			}
+			if (i == MAXPLAYERS)
+				return;
+
+			// Make sure all the other blue acolytes are dead, but do this only once in case of simultaneous kills.
+			if (CheckBossDeath() && !players[i].mo.FindInventory("QuestItem7"))
+			{
+				players[i].mo.GiveInventoryType ("QuestItem7");
+				players[i].SetLogNumber (14);
+				A_StopSound (CHAN_VOICE);
+				A_StartSound("svox/voc14", CHAN_VOICE);
+			}
+		}
+	}
+
+	void A_BeShadowy()
+	{
+		A_SetRenderStyle(HR_SHADOW, STYLE_Translucent);
+	}
+
+	void A_BeShadowyFoe()
+	{
+		A_SetRenderStyle(HR_SHADOW, STYLE_Translucent);
+		if (bFriendly) bFriendly = false;
+	}
+
+	void A_AcolyteBits()
+	{
+		if (SpawnFlags & MTF_SHADOW)
+		{
+			A_BeShadowy();
+		}
+		if (SpawnFlags & MTF_ALTSHADOW)
+		{
+			if (bShadow)
+			{
+				// I dunno.
+			}
+			else
+			{
+				A_SetRenderStyle(0, STYLE_None);
+			}
+		}
+	}
+	
+	// Shielding Acolytes
+	void A_AcolyteShieldOff()
+	{
+		bNOBLOOD = 0;
+		bNOPAIN = 0;
+		A_SetInventory("AcolyteShieldDefend",0); // A_UnSetInvulnerable
+		A_SetInventory("AcolyteShieldDefendExtra",0);
+	}
+	
+	void A_AcolyteShieldOn()
+	{
+		if (random(1,2) == 1)
+		{
+			bNOPAIN = 1;
+			bNOBLOOD = 1;
+		}
+		else
+		{
+			bNOPAIN = 0;
+			bNOBLOOD = 0;
+		}
+		A_SetInventory("AcolyteShieldDefend",1); // A_SetInvulnerable
+		A_SetInventory("AcolyteShieldDefendExtra",0);
+		A_ShieldBlastVelFactor(0.8375,0.8375,24,1);
+
+		if (random(1,4) == 1) 
+		{
+			A_SetInventory("AcolyteShieldDefendExtra",1); 
+			A_ShieldBlastVelFactor(0.8375,0.8375,6,1);
+		}
+	}
+
+	void A_GiveGold(int basegold)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int goldamt = CountInv("Coin",AAPTR_DEFAULT);
+		user_golddrop = basegold;
+		if (goldamt < 1) user_golddrop += goldamt;
+		
+		int LDLMulti = 2; // 2 = 100%
+		if (user_legendaryevolved) LDLMulti = random(4,6);
+		user_golddrop = (user_golddrop * LDLMulti) / 2;
+
+		int PlayerLuck;
+		if (MiscItem) PlayerLuck = MiscItem.PlayerLUCK;
+		int extragold;
+		int extragold2;
+		int luckbonus;
+		int bonuspart1;
+		int bonuspart2;
+		int bonusgold;
+		int bonusgold2;
+		int basecoins = user_golddrop;
+
+		PlayerPawn playpawn;
+		if (target) playpawn = PlayerPawn(target);
+		if (playpawn)
+		{
+			luckbonus = PlayerLuck / 4;
+			luckbonus = (luckbonus * LDLMulti) / 4;
+			bonusgold2 = (100 + luckbonus);
+			user_golddrop = user_golddrop * (bonusgold2) / 100;
+
+			extragold2 = PlayerLuck / 32;
+			if (extragold < 0) extragold2 = 0;
+			extragold2 = (extragold2 * LDLMulti) / 4;
+
+			user_golddrop += extragold2;
+		}
+		int lowcap = (basegold / random(2,3));
+		if (user_golddrop < lowcap) user_golddrop = lowcap;
+
+		A_GiveToTarget("Coin",user_golddrop);
+		A_TakeInventory("Coin",goldamt,0,AAPTR_DEFAULT);
+		
+		/*
+		if (playpawn) 
+		{
+			if (dvdsdebug_coindropdisplays) Console.Printf("Gained \cy%d\c- [lowcap: %d] Coins! [bonusdft%: %d, extra2: %d, bonus%: %d, extra: %d, base2: %d, base1: %d, LDLMulti: \cx%d\c- / 2]", user_golddrop, lowcap, bonusgold2, extragold2, bonusgold, extragold, basecoins, basegold, LDLMulti);
+																else Console.Printf("Gained %d Coins!", user_golddrop);
+		}
+		*/
 	}
 
 	states
