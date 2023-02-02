@@ -2144,6 +2144,19 @@ class EEProjectile : EEBaseZSC abstract
 		}
 	}
 	
+	// Wendigo/IceLich Balls
+	void A_IceGuyMissileExplode(string missiletype = "IceGuyFX2", int numshots = 8, double pitch = -0.3)
+	{
+		for (int i = 0; i < numshots; i++)
+		{
+			Actor mo = SpawnMissileAngleZ (pos.z+3, missiletype, i*45., pitch);
+			if (mo)
+			{
+				mo.target = target;
+			}
+		}
+	}	
+
 	states
 	{
 		VaccedUp:
@@ -2234,6 +2247,57 @@ class EEEffectProjectile : EEProjectile
 	default
 	{
 		+HITMASTER;
+	}
+	
+	void A_InflictHalve(int basetime = 35, int sndchannel = 401)
+	{
+		actor player = players[0].mo;
+		if (!player.CountInv("PowerHalve"))
+		{
+			player.SetInventory("PowerHalve",1);
+			let BluntItem = PowerHalve(player.FindInventory("PowerHalve"));
+			if (BluntItem) BluntItem.EffectTics = basetime;
+		}
+		else
+		{
+			let BluntItem = PowerHalve(player.FindInventory("PowerHalve"));
+			if (BluntItem) BluntItem.EffectTics += basetime;
+		}
+		player.A_StartSound("debuff/atkdown",sndchannel,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+	}
+	
+	void A_InflictWeaken(int basetime = 35, int sndchannel = 401)
+	{
+		actor player = players[0].mo;
+		if (!player.CountInv("PowerWeaken"))
+		{
+			player.SetInventory("PowerWeaken",1);
+			let SapItem = PowerWeaken(player.FindInventory("PowerWeaken"));
+			if (SapItem) SapItem.EffectTics = basetime;
+		}
+		else
+		{
+			let SapItem = PowerWeaken(player.FindInventory("PowerWeaken"));
+			if (SapItem) SapItem.EffectTics += basetime;
+		}
+		player.A_StartSound("debuff/defdown",sndchannel,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+	}
+	
+	void A_InflictSlow(int basetime = 35, int sndchannel = 401)
+	{
+		actor player = players[0].mo;
+		if (!player.CountInv("PowerSlow"))
+		{
+			player.SetInventory("PowerSlow",1);
+			let SlowItem = PowerSlow(player.FindInventory("PowerSlow"));
+			if (SlowItem) SlowItem.EffectTics = basetime;
+		}
+		else
+		{
+			let SlowItem = PowerSlow(player.FindInventory("PowerSlow"));
+			if (SlowItem) SlowItem.EffectTics += basetime;
+		}
+		player.A_StartSound("debuff/spddown",sndchannel,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
 	}
 	
 	int A_StatusEffectChecker(int basechance)
@@ -5638,6 +5702,69 @@ class EECreature : EEBaseZSC abstract
 		}
 	}
 	
+	// Wendigo
+	private void SpawnWisp()
+	{
+		static const class<Actor> WispTypes[] = { "IceGuyWisp1", "IceGuyWisp2" };
+
+		double dist = (random[IceGuyLook]() - 128) * radius / 128.;
+		double an = angle + 90;
+		Actor mo = Spawn(WispTypes[random[IceGuyLook]() & 1], Vec3Angle(dist, an, 60.), ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.Vel = Vel;
+			mo.target = self;
+		}
+	}
+
+	void A_IceGuyLook()
+	{
+		A_Look();
+		if (random[IceGuyLook]() < 64) SpawnWisp();
+	}
+
+	void A_IceGuyChase(statelabel melee = '_a_chase_default', statelabel missile = '_a_chase_default', int flags = 0, int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		if (type == 0)
+		{
+			if (value1) value1 = 0;
+			if (value2) value2 = 0;
+			if (value3) value3 = 0;
+			if (value4) value4 = 0;
+			if (value5) value5 = 0;
+		}
+		if (type == 1)
+		{
+			if (value1 <= 0) value1 = 3; // ticdecrement
+			if (value2 <= 0) value2 = 1; // speedtimerdecrement
+			if (value3 <= 0) value3 = 1; // lowcap
+
+			if (specialspeed1)
+			{
+				specialspeed1 -= value2;
+				tics -= value1;
+				if (tics < value3) tics = value3;
+				if (dvdsdebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_IceGuyChase]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
+			}
+		}
+		
+		A_Chase(melee,missile,flags);
+		if (random[IceGuyLook]() < 128) SpawnWisp();
+	}
+
+	void A_IceGuyAttack(string missiletype = "IceGuyFXNew")
+	{
+		if (!target) 
+		{
+			return;
+		}
+		string specialmissile = missiletype;
+
+		SpawnMissileXYZ(Vec3Angle(radius / 2, angle + 90, 40.), target, specialmissile);
+		SpawnMissileXYZ(Vec3Angle(radius / 2, angle - 90, 40.), target, specialmissile);
+		A_StartSound(AttackSound, CHAN_WEAPON);
+	}
+
 	states
 	{
 		DeathCC:
