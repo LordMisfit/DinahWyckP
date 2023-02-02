@@ -1873,13 +1873,19 @@ class WizardFX1New : EEProjectile replaces WizardFX1
 	}
 }
 
-class IronLichNew : IronLich replaces IronLich
+class IronLichNew : EECreature replaces IronLich
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "Iron Lich";
+		Health 700;
+		Radius 40;
+		Height 72;
+		Mass 325;
+		Speed 6;
 		Painchance 32;
+		Painchance "Fist", 48; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 80; // Kick attacks have a +150% chance of stunning an enemy
 		DamageFactor "Fire", 0.25;
 		Painchance "Fire", 8;
 		DamageFactor "Ice", 2.0;
@@ -1910,6 +1916,288 @@ class IronLichNew : IronLich replaces IronLich
 		Painchance "Spinner", 64;
 		DamageFactor "Beats", 1.0;
 		Painchance "Beats", 32;
+		Monster;
+		+NOBLOOD;
+		+DONTMORPH;
+		+DONTSQUASH;
+		+BOSSDEATH;
+		SeeSound "ironlich/sight";
+		AttackSound "ironlich/attack";
+		PainSound "ironlich/pain";
+		DeathSound "ironlich/death";
+		ActiveSound "ironlich/active";
+		Obituary "$OB_IRONLICH";
+		HitObituary "$OB_IRONLICHHIT";
+		DropItem "BlasterAmmo", 84, 10;
+		DropItem "BlasterHefty", 8, 50;
+		DropItem "ArtiEgg", 51, 0;
+	}
+	
+	States
+	{
+		Spawn:
+			LICH A 0 NoDelay;
+			LICH A 10 A_Look();
+			goto Spawn+1;
+		See:
+			LICH A 4
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { bAVOIDMELEE = true; A_SetTics(3); }
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+			}
+			Loop;
+		Missile:
+			LICH A 5 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(4); }
+				A_FaceTarget();
+			}
+			LICH B 20 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 100) { A_SetTics(10); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(11); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 80) { A_SetTics(12); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 70) { A_SetTics(13); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(14); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 50) { A_SetTics(15); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 40) { A_SetTics(16); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(17); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 20) { A_SetTics(18); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 10) { A_SetTics(19); }
+
+				if (exex_monsterlevelenabledflags) A_LichAttack(5 + (CountInv("MonsterLevel") / 30), 1 + (CountInv("MonsterLevel") / 45), 6 * random(1,8), "HeadFX1New", "HeadFX3New", "WhirlwindNew");
+																			else A_LichAttack(5, 1, 6 * random(1,8), "HeadFX1New", "HeadFX3New", "WhirlwindNew");
+			}
+			goto See;
+		Pain:
+			LICH A 4;
+			LICH A 4 A_EEPain();
+			goto See;
+		Pain.Fist:
+			LICH A 4;
+			LICH A 4 A_EEPain();
+			LICH AA 4;
+			goto See;
+		Pain.Kick:
+			LICH A 4;
+			LICH A 4 A_EEPain();
+			LICH AAAA 4;
+			goto See;
+		Death:
+			LICH C 7;
+			LICH D 7 A_Scream();
+			LICH EF 7;
+			LICH G 7 A_NoBlocking();
+			LICH H 7;
+			LICH I -1 A_BossDeath();
+			Stop;
+		Ice:
+			LICH A 5 A_GenericFreezeDeath();
+			LICH A 1 A_FreezeDeathChunks();
+			Wait;
+		Raise:
+			LICH H 7;
+			LICH GFEDC 7;
+			goto See;
+	}
+}
+
+class HeadFX1New : EEEffectProjectile replaces HeadFX1 
+{
+	default
+	{
+		Tag "Ice Sphere";
+		DamageFunction (1 * random(1,8));
+		Radius 12;
+		Height 6;
+		Speed 13;
+		FastSpeed 20;
+		Projectile;
+		-ACTIVATEIMPACT;
+		-ACTIVATEPCROSS;
+		+THRUGHOST; // Icon Lich Ice Ball
+		DamageType "Ice";
+		RenderStyle "Add";
+		DeathSound "misc/icehit";
+	}
+	
+	States
+	{
+		Spawn:
+			FX05 AAABBBCCC 2 Bright;
+			Loop;
+		Death:
+			TNT1 A 0 Bright
+			{
+				actor player = players[0].mo;
+				if (master == player)
+				{
+					A_StatusEffectChecker(12);
+					if (random(1,user_ailmentmaxchance) <= 3 && user_canafflict)
+					{
+						int basetime = random(105,175);
+						if (!player.CountInv("PowerSlow"))
+						{
+							player.SetInventory("PowerSlow",1);
+							let SlowItem = PowerSlow(player.FindInventory("PowerSlow"));
+							if (SlowItem) SlowItem.EffectTics = basetime;
+						}
+						else
+						{
+							let SlowItem = PowerSlow(player.FindInventory("PowerSlow"));
+							if (SlowItem) SlowItem.EffectTics += basetime;
+						}
+						player.A_StartSound("debuff/spddown",401,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+					}
+				}
+			}
+		Death2:
+			FX05 D 5 Bright A_LichIceImpact("HeadFX2New", 8, -0.6);
+			FX05 EFG 5 Bright;
+			Stop;
+	}
+}
+class HeadFX2New : EEEffectProjectile replaces HeadFX2 
+{
+	default
+	{
+		Tag "Ice Shard";
+		DamageFunction (3 * random(1,8));
+		DamageType "Ice";
+		Radius 12;
+		Height 6;
+		Speed 8;
+		Projectile;
+		-ACTIVATEIMPACT;
+		-ACTIVATEPCROSS;
+		RenderStyle "Add";
+		DeathSound "misc/icehit";
+	}
+	
+	States
+	{
+		Spawn:
+			FX05 HHHIIIJJJ 2 Bright;
+			Loop;
+		Death:
+			TNT1 A 0 Bright
+			{
+				actor player = players[0].mo;
+				if (master == player)
+				{
+					A_StatusEffectChecker(24);
+					if (random(1,user_ailmentmaxchance) <= 3 && user_canafflict)
+					{
+						int basetime = random(35,52);
+						if (!player.CountInv("PowerSlow"))
+						{
+							player.SetInventory("PowerSlow",1);
+							let SlowItem = PowerSlow(player.FindInventory("PowerSlow"));
+							if (SlowItem) SlowItem.EffectTics = basetime;
+						}
+						else
+						{
+							let SlowItem = PowerSlow(player.FindInventory("PowerSlow"));
+							if (SlowItem) SlowItem.EffectTics += basetime;
+						}
+						player.A_StartSound("debuff/spddown",401,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+					}
+				}
+			}
+		Death2:
+			FX05 DEFG 5 Bright;
+			Stop;
+	}
+}
+class HeadFX3New : EEEffectProjectile replaces HeadFX3 
+{ 
+	default
+	{
+		Tag "Fire Pillar";
+		DamageFunction (5 * random(1,8));
+		DamageType "Fire";
+		Radius 14;
+		Height 12;
+		Speed 10;
+		FastSpeed 18;
+		Projectile;
+		+WINDTHRUST;
+		-ACTIVATEIMPACT;
+		-ACTIVATEPCROSS;
+		-NOBLOCKMAP;
+		RenderStyle "Add";
+		DeathSound "misc/fireballbig";
+	}
+	
+	States
+	{
+		Spawn:
+			FX06 A 2 Bright;
+			FX06 A 2 Bright
+			{
+				A_LichFireGrow();
+			}
+			FX06 B 2 Bright;
+			FX06 B 2 Bright
+			{
+				A_LichFireGrow();
+			}
+			FX06 C 2 Bright;
+			FX06 C 2 Bright
+			{
+				A_LichFireGrow();
+			}
+			Loop;
+		NoGrow:
+			FX06 AA 2 Bright;
+			FX06 A 1 Bright;
+			FX06 BB 2 Bright;
+			FX06 B 1 Bright;
+			FX06 CC 2 Bright;
+			FX06 C 1 Bright;
+			Loop;
+		Death:
+			FX06 DEFG 5 Bright;
+			Stop;
+	}
+}
+class WhirlwindNew : EEWhirlwind replaces Whirlwind 
+{
+	default
+	{
+		Tag "Whirlwind";
+		DamageFunction (1 * random(1,8));
+		DamageType "Wind";
+		Radius 16;
+		Height 74;
+		Speed 10;
+		Accuracy 8; // Sets how long [tics] to wait between hits when the tornado is touching a target
+		Projectile;
+		-ACTIVATEIMPACT;
+		-ACTIVATEMCROSS;
+		+SEEKERMISSILE;
+		+EXPLOCOUNT;
+		+STEPMISSILE;
+		RenderStyle "Translucent";
+		DefThreshold 60;
+		Threshold 50;
+		Alpha 0.4;
+	}
+	
+	States
+	{
+		Spawn:
+			FX07 DEFG 3;
+		Idle:
+			FX07 ABC 3 
+			{
+				A_WhirlwindSeek();
+			}
+			Loop;
+		Death:
+			FX07 GFED 4;
+			Stop;
 	}
 }
 
