@@ -6294,13 +6294,16 @@ class WraithFX1New : EEProjectile replaces WraithFX1
 	}
 }
 
-class DragonNew : Dragon replaces Dragon
+class DragonNew : EECreature replaces Dragon
 {
-	mixin MonsterCollider;
 	default
 	{
 		Tag "Death Wyvern";
+		Health 2560; //10240;
+		Mass 51200;
 		PainChance 16; // 8 times less than before
+		Painchance "Fist", 24; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 40; // Kick attacks have a +150% chance of stunning an enemy
 		DamageFactor "Fire", 2.5;
 		Painchance "Fire", 40;
 		DamageFactor "Ice", 0.125;
@@ -6331,6 +6334,151 @@ class DragonNew : Dragon replaces Dragon
 		Painchance "Spinner", 2;
 		DamageFactor "Beats", 1.25;
 		Painchance "Beats", 0; // Does NOT flinch from the Grimophone despite having a weakness to it
+		DamageFactor 0.833;
+		RadiusDamageFactor 0.833;
+		DamageFactor "Explosive", 0.833;
+		Speed 10;
+		Height 65;
+		Monster;
+		+NOGRAVITY;
+		+FLOAT;
+		+NOBLOOD;
+		+BOSS;
+		+DONTMORPH;
+		+NOTARGET;
+		+NOICEDEATH;
+		+AVOIDMELEE;
+		+NODAMAGETHRUST;
+		SeeSound "DragonSight";
+		AttackSound "DragonAttack";
+		PainSound "DragonPain";
+		DeathSound "DragonDeath";
+		ActiveSound "DragonActive";
+		Obituary "$OB_DRAGON";
+	}
+	
+	States
+	{
+		Spawn:
+			DRAG A 0 NoDelay;
+			DRAG D 10 A_Look();
+			goto Spawn+1;
+		See:
+			DRAG A 0;
+			DRAG CB 5;
+			DRAG A 5 A_DragonInitFlight();
+			DRAG B 3 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(2); }
+
+				A_DragonFlap(4.0,8.0,10*random(1,8), "DragonFireball");
+			}
+			DRAG BCCDDCCBBAA 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(2); }
+
+				A_DragonFlight(4.0,8.0,10*random(1,8), "DragonFireball");
+			}
+			Goto See+4;
+		Pain:
+			DRAG F 10 A_DragonPain();
+			Goto See+4;
+		Pain.Fist:
+			DRAG F 10 A_DragonPain();
+			DRAG F 5;
+			Goto See+4;
+		Pain.Kick:
+			DRAG F 10 A_DragonPain();
+			DRAG F 15;
+			Goto See+4;
+		Missile:
+			DRAG E 8 Fast
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 135) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(112,113)) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(67,68)) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(22,23)) { A_SetTics(7); }
+				
+				A_DragonAttack("DragonFireball");
+			}
+			Goto See+4;
+
+		Death:
+			DRAG G 5 A_Scream();
+			DRAG H 4 A_NoBlocking();
+			DRAG I 4;
+			DRAG J 4 A_DragonCheckCrash();
+			Wait;
+		Crash:
+			DRAG KL 5;
+			DRAG M -1;
+			Stop;
+	}
+}
+class DragonFireballNew : EEProjectile replaces DragonFireball
+{
+	default
+	{
+		Tag "Wyvern Clusterblast";
+		DamageFunction (6 * random(1,8));
+		Speed 24;
+		Radius 12;
+		Height 10;
+		DamageType "Fire";
+		Projectile;
+		-ACTIVATEIMPACT;
+		-ACTIVATEPCROSS;
+		RenderStyle "Add";
+		DeathSound "DragonFireballExplode";
+	}
+	
+	States
+	{
+		Spawn:
+			DRFX AABBCCDDEEFF 2 Bright;
+			Loop;
+		Death:
+			DRFX GHI 4 Bright;
+			DRFX J 4 Bright
+			{
+				A_DragonFX2("DragonExplosion");
+			}
+			DRFX KL 3 Bright;
+			Stop;
+  }
+}
+class DragonExplosionNew : EEProjectile replaces DragonExplosion
+{
+	default
+	{
+		Tag "Wyvern Clusterblast";
+		Radius 8;
+		Height 8;
+		DamageType "Fire";
+		+NOBLOCKMAP;
+		+NOTELEPORT;
+		+INVISIBLE;
+		RenderStyle "Add";
+		DeathSound "DragonFireballExplode";
+	}
+	
+	States
+	{
+		Spawn:
+			CFCF Q 1 Bright;
+			CFCF Q 4 Bright A_UnHideThing();
+			CFCF R 3 Bright A_Scream();
+			CFCF S 4 Bright;
+			CFCF T 3 Bright A_Explode(80, 128, 0);
+			CFCF U 4 Bright;
+			CFCF V 3 Bright;
+			CFCF W 4 Bright;
+			CFCF X 3 Bright;
+			CFCF Y 4 Bright;
+			CFCF Z 3 Bright;
+			Stop;
 	}
 }
 
