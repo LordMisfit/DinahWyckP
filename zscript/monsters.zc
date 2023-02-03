@@ -3263,13 +3263,239 @@ class SnakeProjBNew : SnakeProjANew replaces SnakeProjB
 	}
 }
 
-class Sorcerer1New : Sorcerer1 replaces Sorcerer1
+class DSparilBase : EEUniqueBoss
 {
-	mixin MonsterCollider;
+	//**********
+	//*D'Sparil*
+	//**********
+	// w/ Chaos Serpent
+	void A_Sor1Pain()
+	{
+		int extrasteps;
+		if (exex_monsterlevelenabledflags) extrasteps = CountInv("MonsterLevel") / 8;
+		special1 = random(18,22) + extrasteps; // Number of steps to walk fast
+		A_Pain();
+	}
+
+	void A_Sor1Chase(statelabel melee = '_a_chase_default', statelabel missile = '_a_chase_default', int flags = 0)
+	{
+		if (special1)
+		{
+			special1--;
+			tics -= 3;
+			if (tics < 1) tics = 1;
+		}
+		A_Chase(melee,missile,flags);
+	}
+
+	void A_Srcr1Attack(int meleedamage = 8, string missiletype = "SorcererFX1New")
+	{
+		string projtype = missiletype;
+
+		if (!target)
+		{
+			return;
+		}
+		A_StartSound(AttackSound, CHAN_BODY);
+		if (CheckMeleeRange ())
+		{
+			int damage = meleedamage;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			return;
+		}
+
+		int fireballhealth1;
+		if (User_MaxHP <= 0) fireballhealth1 = SpawnHealth()/3*2; else fireballhealth1 = User_MaxHP/3*2;
+		int fireballhealth2;
+		if (User_MaxHP <= 0) fireballhealth2 = SpawnHealth()/3; else fireballhealth2 = User_MaxHP/3;
+		if (health > fireballhealth1)
+		{
+			// Spit one fireball
+			SpawnMissileZ (pos.z + 48, target, projtype);
+		}
+		else
+		{
+			// Spit three fireballs
+			Actor mo = SpawnMissileZ (pos.z + 48, target, projtype);
+			if (mo != null)
+			{
+				double ang = mo.angle;
+				SpawnMissileAngleZ(pos.z + 48, projtype, ang - 3, mo.Vel.Z);
+				SpawnMissileAngleZ(pos.z + 48, projtype, ang + 3, mo.Vel.Z);
+			}
+			if (health < fireballhealth2)
+			{
+				// Maybe attack again
+				if (special1)
+				{
+					// Just attacked, so don't attack again
+					special1 = 0;
+				}
+				else
+				{
+					// Set state to attack again
+					special1 = 1;
+					SetStateLabel("Missile2");
+				}
+			}
+		}
+	}
+
+	void A_SorcererRise ()
+	{
+		bSolid = false;
+		Actor mo = Spawn("Sorcerer2", Pos, ALLOW_REPLACE);
+		if (mo != null)
+		{
+			mo.Translation = Translation;
+			mo.SetStateLabel("Rise");
+			mo.angle = angle;
+			mo.CopyFriendliness (self, true);
+		}
+	}
+
+	void A_Sor2Chase(statelabel melee = '_a_chase_default', statelabel missile = '_a_chase_default', int flags = 0)
+	{
+		if (special2)
+		{
+			special2--;
+			tics -= 2;
+			if (tics < 1) tics = 1;
+			if (dvdsdebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_Sor2Chase]\c- \cytics: %d\c-", GetClassName(), gametic, tics);
+		}
+		A_Chase(melee,missile,flags);
+	}
+
+	void A_Sor2Pain()
+	{
+		if (random[Sorc2Pain](1,4) <= 3)
+		{
+			int extrasteps;
+			if (exex_monsterlevelenabledflags) extrasteps = CountInv("MonsterLevel") / 3;
+			special2 = random(16,24) + extrasteps; // Number of steps to walk fast
+			A_Pain();
+		}
+	}
+
+	// without Chaos Serpent
+	void DSparilTeleport()
+	{
+		SpotState state = Level.GetSpotState();
+		if (state == null) return;
+
+		Actor spot = state.GetSpotWithMinMaxDistance("BossSpot", pos.x, pos.y, 128, 0);
+		if (spot == null) return;
+
+		Vector3 prev = Pos;
+		if (TeleportMove (spot.Pos, false))
+		{
+			Actor mo = Spawn("Sorcerer2Telefade", prev, ALLOW_REPLACE);
+			if (mo) 
+			{
+				mo.Translation = Translation;
+				mo.A_StartSound("misc/teleport", CHAN_BODY);
+			}
+			SetStateLabel("Teleport");
+			A_StartSound("misc/teleport", CHAN_BODY);
+			SetZ(floorz);
+			angle = spot.angle;
+			vel = (0,0,0); 
+		}
+	}
+
+	void A_Srcr2Decide ()
+	{
+		static const int chance[] =
+		{
+			192, 120, 120, 120, 64, 64, 32, 16, 0
+		};
+
+		int teleporthealth;
+		if (User_MaxHP <= 0) teleporthealth = SpawnHealth(); else teleporthealth = User_MaxHP;
+
+		int health8 = max(1, teleporthealth / 8);
+		int chanceindex = min(8, health / health8);
+
+		if (random[Srcr2Decide]() < chance[chanceindex])
+		{
+			int ExtraChance;
+			if (user_legendaryevolved)
+			{
+				ExtraChance = 1 + (CountInv("MonsterLevel") / 90);
+				if (random(1,16) <= ExtraChance) DSparilTeleport ();
+			}
+			else
+			{
+				ExtraChance = 2 + (CountInv("MonsterLevel") / 90);
+				if (random(1,4) <= ExtraChance) DSparilTeleport ();
+			}
+		}
+	}
+
+	void A_Srcr2Attack (int meleedamage = 20, string missiletype1 = "Sorcerer2FX1New", string missiletype2 = "Sorcerer2FX2New")
+	{
+		string attacktype1 = missiletype1;
+		string attacktype2 = missiletype2;
+
+		int attackhealth;
+		if (User_MaxHP <= 0) attackhealth = SpawnHealth(); else attackhealth = User_MaxHP;
+		if (!target)
+		{
+			return;
+		}
+		A_StartSound(AttackSound, CHAN_BODY, 1, false, ATTN_NONE);
+		if (CheckMeleeRange())
+		{
+			int damage = meleedamage;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			return;
+		}
+		int chance = health < attackhealth/2 ? 96 : 48;
+		if (random[Srcr2Atk]() < chance)
+		{
+			// Wizard spawners
+			SpawnMissileAngle(attacktype2, Angle - 45, 0.5);
+			SpawnMissileAngle(attacktype2, Angle + 45, 0.5);
+		}
+		else
+		{
+			// Blue bolt
+			SpawnMissile (target, attacktype1);
+		}
+	}
+
+	void A_Sor2DthInit ()
+	{
+		special1 = 7; // Animation loop counter
+		Thing_Destroy(0); // Kill monsters early
+	}
+
+	void A_Sor2DthLoop ()
+	{
+		if (--special1)
+		{
+			// Need to loop
+			SetStateLabel("DeathLoop");
+		}
+	}
+
+}
+
+class DSparilMountedNew : DSparilBase replaces Sorcerer1
+{
 	default
 	{
 		Tag "\c[gold]D'Sparil (on Serpent)";
+		Health 24000;
+		Radius 28;
+		Height 100;
+		Mass 800;
+		Speed 16;
 		Painchance 56;
+		Painchance "Fist", 84; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 140; // Kick attacks have a +150% chance of stunning an enemy
 		DamageFactor "Fire", 1.125;
 		Painchance "Fire", 63;
 		DamageFactor "Ice", 1.125;
@@ -3300,15 +3526,166 @@ class Sorcerer1New : Sorcerer1 replaces Sorcerer1
 		Painchance "Beats", 168;
 		DamageFactor "Zap", 1.25;
 		Painchance "Zap", 70;
+		meleerange 82;
+		Monster;
+		+BOSS;
+		+DONTMORPH;
+		+NORADIUSDMG;
+		+NOTARGET;
+		+NOICEDEATH;
+		+FLOORCLIP;
+		+DONTGIB;
+		+AVOIDMELEE;
+		+NOFEAR;
+		SeeSound "dsparilserpent/sight";
+		AttackSound "dsparilserpent/attack";
+		PainSound "dsparilserpent/pain";
+		DeathSound "dsparilserpent/death";
+		ActiveSound "dsparilserpent/active";
+		Obituary "$OB_DSPARIL1";
+		HitObituary "$OB_DSPARIL1HIT";
+	}
+	
+	States
+	{
+		Pain.Charm: Goto See;
+		Spawn:
+			SRCR A 0 NoDelay;
+			SRCR AB 10 A_Look();
+			goto Spawn+1;
+		See:
+			SRCR A 0;
+			SRCR ABCD 5 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { bAVOIDMELEE = true; }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(22,23)) { A_SetTics(4); }
+				A_Sor1Chase();
+			}
+			Loop;
+		Missile:
+			SRCR Q 7 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+			}
+			SRCR R 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			SRCR S 10 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 100) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 80) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(7); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 40) { A_SetTics(8); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 20) { A_SetTics(9); }
+				A_Srcr1Attack(8 * random(1,8), "SorcererFX1New");
+			}
+			Goto See;
+		Missile2:
+			SRCR S 10 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 100) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 80) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(7); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 40) { A_SetTics(8); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 20) { A_SetTics(9); }
+				A_FaceTarget();
+			}
+			SRCR Q 7 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(6); }
+				A_FaceTarget();
+			}
+			SRCR R 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(3); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			SRCR S 10 
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 100) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 80) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(7); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 40) { A_SetTics(8); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 20) { A_SetTics(9); }
+				A_Srcr1Attack(8*random(1,8), "SorcererFX1New");
+			}
+			Goto See;
+		Pain:
+			SRCR Q 6 A_Sor1Pain();
+			Goto See;
+		Pain.Fist:
+			SRCR Q 6 A_Sor1Pain();
+			SRCR Q 6;
+			Goto See;
+		Pain.Kick:
+			SRCR Q 6 A_Sor1Pain();
+			SRCR QQ 6;
+			Goto See;
+		Death:
+			SRCR E 7;
+			SRCR F 7 A_Scream();
+			SRCR G 7;
+			SRCR HIJK 6;
+			SRCR L 25 A_StartSound("dsparil/zap", CHAN_BODY, CHANF_DEFAULT, 1, ATTN_NONE);
+			SRCR MN 5;
+			SRCR O 4;
+			SRCR L 20 A_StartSound("dsparil/zap", CHAN_BODY, CHANF_DEFAULT, 1, ATTN_NONE);
+			SRCR MN 5;
+			SRCR O 4;
+			SRCR L 12;
+			SRCR P -1 A_SorcererRise();
+			Stop;
+		Ice:
+			goto Death;
+	}
+}
+class SorcererFX1New : EEProjectile replaces SorcererFX1 
+{
+	default
+	{
+		Tag "Serpentfire";
+		DamageFunction (10 * random(1,8));
+		DamageType "Fire";
+		Radius 10;
+		Height 10;
+		Speed 20;
+		FastSpeed 28;
+		Projectile;
+		-ACTIVATEIMPACT;
+		-ACTIVATEPCROSS;
+		RenderStyle "Add";
+	}
+	
+	States
+	{
+		Spawn:
+			FX14 AAABBBCCC 2 Bright;
+			Loop;
+		Death:
+			FX14 DEFGH 5 Bright;
+			Stop;
 	}
 }
 
 class Sorcerer2New : Sorcerer2 replaces Sorcerer2
 {
-	mixin MonsterCollider;
+	int user_chaseteleportchance;
+	int user_chaseteleportchance2;
 	int lulwat;
 	int lultimer1, lultimer1max;
-
+	mixin MonsterCollider;
 	default
 	{
 		Tag "\c[gold]D'Sparil";
