@@ -1703,7 +1703,7 @@ mixin class MonsterCollider
 			}
 		}
 	}
-	//
+	
 	void A_RecoverHUD(int recovery, int type, bool acculmuatepulse)
 	{
 		if (dydudebug_hudrecdmgdisplays) Console.Printf("A_RecoverHUD called");
@@ -2037,7 +2037,6 @@ mixin class MonsterCollider
 	
 	// Damage Tracking
 	int initdmg;
-	
 	double, double, double A_DefenseIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool wasblastedimpact, bool bellefishzap, bool surprisehit, int angvstype)
 	{
 		actor player = players[0].mo;
@@ -2442,6 +2441,21 @@ mixin class MonsterCollider
 		if (HadesElemental(input)) type = 4; // Hades Scion
 		if (HadesOverlord(input)) type = 4; // Hades Scion
 		// Heretic/Hexen [tbc]
+		if (HereticImp(input) || HereticImpNew(input)) type = 5; // Creature
+		if (Mummy(input) || MummyNew(input)) type = 6; // Inanimate/Creature
+		if (Knight(input) || KnightNew(input)) type = 2; // Zombie/Undead
+		if (Minotaur(input) || MaulotaurNew(input) || MaulotaurFriendNew(input)) type = 5; // Creature
+		if (Snake(input) || SnakeNew(input)) type = 5; // Creature
+		if (Sorcerer1(input) || Sorcerer1New(input)) type = 5; // Creature
+		if (Sorcerer2(input) || Sorcerer2New(input)) type = 1; // Demonic
+		if (FireDemon(input) || FireDemonNew(input)) type = 5; // Creature
+		if (Ettin(input) || EttinNew(input)) type = 5; // Creature
+		if (Centaur(input) || CentaurNew(input)) type = 5; // Creature
+		if (Demon1(input) || Demon2(input) || GreenChaosSerpentNew(input) || BrownChaosSerpentNew(input)) type = 5; // Creature
+		if (Serpent(input) || StalkerNew(input)) type = 5; // Creature
+		if (Dragon(input) || DragonNew(input)) type = 2; // Zombie/Undead
+		if (Wraith(input) || WraithNew(input)) type = 2; // Zombie/Undead
+		if (Korax(input) || KoraxNew(input)) type = 1; // Demonic
 		// Strife [tbc]
 		// DD/AFD/COS
 		if (Hammerduck(input)) type = 5; // Creature
@@ -2486,7 +2500,7 @@ mixin class MonsterCollider
 		if (PushyAngel(input)) type = 10; // Angelic/Heavenly
 		if (Devil(input)) type = 1; // Demonic
 		if (Reaper(input)) type = 1; // Demonic
-		if (Forsaken(input) || Forsaken_Quisling(input) || Forsaken_Jorgensen(input)) type = 2; // Demonic
+		if (Forsaken(input) || Forsaken_Quisling(input) || Forsaken_Jorgensen(input)) type = 12; // Undead/Demonic
 		if (Tempest_Boss(input) || Tempest_BossClone(input)) type = 8; // Human
 		if (Delila_Boss(input) || Delila_BossClone(input)) type = 8; // Human
 		// EE Unique
@@ -2495,6 +2509,81 @@ mixin class MonsterCollider
 		return type;
 	}
 	
+	// Reduces Damage Based on Type infighting
+	int A_TargDmgCalc(int damage, int type)
+	{
+		if (type == 1) damage /= frandompick(2.5,2.75,3.0); // Demonic foes
+		if (type == 2) damage /= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
+		if (type == 3) damage /= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
+		if (type == 4) damage /= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+		if (type == 7) damage /= frandompick(1.75,1.875,2.0); // Inanimate/Demonic-hybrid foes
+		if (type == 12) damage /= frandompick(2.125,2.3125,2.5); // Undead/Demonic-Hybrid foes
+		return damage;
+	}
+	
+	// INCREASES Damage Based on Type infighting [for angel/reaper checks]
+	int A_TargDmgCalcAngVs(int damage, int angvstype)
+	{
+		if (angvstype == 1) damage *= frandompick(2.5,2.75,3.0); // Demonic foes
+		if (angvstype == 2) damage *= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
+		if (angvstype == 3) damage *= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
+		if (angvstype == 4) damage *= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+		if (angvstype == 7) damage *= frandompick(1.75,1.875,2.0); // Inanimate/Demonic-hybrid foes
+		if (angvstype == 12) damage *= frandompick(2.125,2.3125,2.5); // Undead/Demonic-Hybrid foes
+		return damage;
+	}
+	
+	void A_TypeInfightRetargetChance(int type, actor target, actor dmgsource)
+	{
+		if (target && dmgsource)
+		{
+			if (PlayerPawn(target))
+			{
+				if (type == 1 && random(1,100) <= 95) target = dmgsource;
+				if (type == 2 && random(1,100) <= 45) target = dmgsource;
+				if (type == 3 && random(1,100) <= 20) target = dmgsource;
+				if (type == 4 && random(1,100) <= 70) target = dmgsource;
+				if (type == 7 && random(1,100) <= 45) target = dmgsource;
+				if (type == 12 && random(1,100) <= 70) target = dmgsource;
+			}
+			else
+			{
+				if (type == 1 && random(1,100) <= 80) target = dmgsource;
+				if (type == 2 && random(1,100) <= 30) target = dmgsource;
+				if (type == 3 && random(1,100) <= 5) target = dmgsource;
+				if (type == 4 && random(1,100) <= 55) target = dmgsource;
+				if (type == 7 && random(1,100) <= 30) target = dmgsource;
+				if (type == 12 && random(1,100) <= 55) target = dmgsource;
+			}
+		}
+	}
+	
+	void A_TypeInfightRetargetPChance(int angvstype, actor target, actor dmgsource)
+	{
+		if (target && dmgsource)
+		{
+			if (angvstype == 1 && random(1,100) <= 95) target = dmgsource;
+			if (angvstype == 2 && random(1,100) <= 45) target = dmgsource;
+			if (angvstype == 3 && random(1,100) <= 20) target = dmgsource;
+			if (angvstype == 4 && random(1,100) <= 70) target = dmgsource;
+			if (angvstype == 7 && random(1,100) <= 45) target = dmgsource;
+			if (angvstype == 12 && random(1,100) <= 70) target = dmgsource;
+		}
+	}
+	
+	void A_TypeInfightRetargetEChance(int angvstype, actor target, actor dmgsource)
+	{
+		if (target && dmgsource)
+		{
+			if (angvstype == 1 && random(1,100) <= 80) target = dmgsource;
+			if (angvstype == 2 && random(1,100) <= 30) target = dmgsource;
+			if (angvstype == 3 && random(1,100) <= 5) target = dmgsource;
+			if (angvstype == 4 && random(1,100) <= 55) target = dmgsource;
+			if (angvstype == 7 && random(1,100) <= 30) target = dmgsource;
+			if (angvstype == 12 && random(1,100) <= 55) target = dmgsource;
+		}
+	}
+
 	Actor, Actor, int, Name, int, double, int CheckMonType(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
 		DDPlayerPawn playpawn;
@@ -2744,55 +2833,17 @@ mixin class MonsterCollider
 			if (source)
 			{
 				int type = A_CheckTargType(source);
-				if (type == 1) damage /= frandompick(2.5,2.75,3.0); // Demonic foes
-				if (type == 2) damage /= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
-				if (type == 3) damage /= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
-				if (type == 4) damage /= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+				damage = A_TargDmgCalc(damage, type);
 				
-				if (target)
-				{
-					if (PlayerPawn(target))
-					{
-						if (type == 1 && random(1,100) <= 95) target = source;
-						if (type == 2 && random(1,100) <= 45) target = source;
-						if (type == 3 && random(1,100) <= 20) target = source;
-						if (type == 4 && random(1,100) <= 70) target = source;
-					}
-					else
-					{
-						if (type == 1 && random(1,100) <= 80) target = source;
-						if (type == 2 && random(1,100) <= 30) target = source;
-						if (type == 3 && random(1,100) <= 5) target = source;
-						if (type == 4 && random(1,100) <= 55) target = source;
-					}
-				}
+				if (target) A_TypeInfightRetargetChance(type, target, source);
 			}
 			else
 			if (inflictor)
 			{
 				int type = A_CheckTargType(inflictor);
-				if (type == 1) damage /= frandompick(2.5,2.75,3.0); // Demonic foes
-				if (type == 2) damage /= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
-				if (type == 3) damage /= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
-				if (type == 4) damage /= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+				damage = A_TargDmgCalc(damage, type);
 					
-				if (target)
-				{
-					if (PlayerPawn(target))
-					{
-						if (type == 1 && random(1,100) <= 95) target = inflictor;
-						if (type == 2 && random(1,100) <= 45) target = inflictor;
-						if (type == 3 && random(1,100) <= 20) target = inflictor;
-						if (type == 4 && random(1,100) <= 70) target = inflictor;
-					}
-					else
-					{
-						if (type == 1 && random(1,100) <= 80) target = inflictor;
-						if (type == 2 && random(1,100) <= 30) target = inflictor;
-						if (type == 3 && random(1,100) <= 5) target = inflictor;
-						if (type == 4 && random(1,100) <= 55) target = inflictor;
-					}
-				}
+				if (target) A_TypeInfightRetargetChance(type, target, inflictor);
 			}
 		}
 		
@@ -2806,10 +2857,7 @@ mixin class MonsterCollider
 														 else damage *= frandom(0.00,0.05);
 				}
 				int type = A_CheckTargType(source);
-				if (type == 1) damage /= frandompick(2.5,2.75,3.0); // Demonic foes
-				if (type == 2) damage /= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
-				if (type == 3) damage /= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
-				if (type == 4) damage /= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+				damage = A_TargDmgCalc(damage, type);
 				if (FlyingBalrog(source) || FlyingBalrogDVDS(source))
 				{
 					damage = 0;
@@ -2824,23 +2872,7 @@ mixin class MonsterCollider
 						return inflictor, source, -1, mod, flags, angle, angvstype;
 					}
 					
-					if (target)
-					{
-						if (PlayerPawn(target))
-						{
-							if (type == 1 && random(1,100) <= 95) target = source;
-							if (type == 2 && random(1,100) <= 45) target = source;
-							if (type == 3 && random(1,100) <= 20) target = source;
-							if (type == 4 && random(1,100) <= 70) target = source;
-						}
-						else
-						{
-							if (type == 1 && random(1,100) <= 80) target = source;
-							if (type == 2 && random(1,100) <= 30) target = source;
-							if (type == 3 && random(1,100) <= 5) target = source;
-							if (type == 4 && random(1,100) <= 55) target = source;
-						}
-					}
+					if (target) A_TypeInfightRetargetChance(type, target, source);
 				}
 			}
 			else
@@ -2852,10 +2884,7 @@ mixin class MonsterCollider
 																else damage *= frandom(0.00,0.05);
 				}
 				int type = A_CheckTargType(inflictor);
-				if (type == 1) damage /= frandompick(2.5,2.75,3.0); // Demonic foes
-				if (type == 2) damage /= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
-				if (type == 3) damage /= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
-				if (type == 4) damage /= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+				damage = A_TargDmgCalc(damage, type);
 				if (FlyingBalrog(inflictor) || FlyingBalrogDVDS(inflictor))
 				{
 					damage = 0;
@@ -2870,23 +2899,7 @@ mixin class MonsterCollider
 						return inflictor, source, -1, mod, flags, angle, angvstype;
 					}
 					
-					if (target)
-					{
-						if (PlayerPawn(target))
-						{
-							if (type == 1 && random(1,100) <= 95) target = inflictor;
-							if (type == 2 && random(1,100) <= 45) target = inflictor;
-							if (type == 3 && random(1,100) <= 20) target = inflictor;
-							if (type == 4 && random(1,100) <= 70) target = inflictor;
-						}
-						else
-						{
-							if (type == 1 && random(1,100) <= 80) target = inflictor;
-							if (type == 2 && random(1,100) <= 30) target = inflictor;
-							if (type == 3 && random(1,100) <= 5) target = inflictor;
-							if (type == 4 && random(1,100) <= 55) target = inflictor;
-						}
-					}
+					if (target) A_TypeInfightRetargetChance(type, target, inflictor);
 				}
 			}
 			else
@@ -2902,50 +2915,32 @@ mixin class MonsterCollider
 				return inflictor, source, -1, mod, flags, angle, angvstype;
 			}
 			angvstype = A_CheckTargType(self);
-			if (angvstype == 1) damage *= frandompick(2.5,2.75,3.0); // Demonic foes
-			if (angvstype == 2) damage *= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
-			if (angvstype == 3) damage *= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
-			if (angvstype == 4) damage *= frandompick(2.125,2.3125,2.5); // Hades Scion foes
+			damage = A_TargDmgCalcAngVs(damage, angvstype);
+			
 			if (target)
 			{
 				if (PlayerPawn(target))
 				{
 					if (source && Reaper(source))
 					{
-						if (angvstype == 1 && random(1,100) <= 95) target = source;
-						if (angvstype == 2 && random(1,100) <= 45) target = source;
-						if (angvstype == 3 && random(1,100) <= 20) target = source;
-						if (angvstype == 4 && random(1,100) <= 70) target = source;
+						A_TypeInfightRetargetPChance(angvstype, target, source);
 					}
 					else
+					if (inflictor && Reaper(inflictor))
 					{
-						if (inflictor && Reaper(inflictor))
-						{
-							if (angvstype == 1 && random(1,100) <= 95) target = inflictor;
-							if (angvstype == 2 && random(1,100) <= 45) target = inflictor;
-							if (angvstype == 3 && random(1,100) <= 20) target = inflictor;
-							if (angvstype == 4 && random(1,100) <= 70) target = inflictor;
-						}
+						A_TypeInfightRetargetPChance(angvstype, target, inflictor);
 					}
 				}
 				else
 				{
 					if (source && Reaper(source))
 					{
-						if (angvstype == 1 && random(1,100) <= 80) target = source;
-						if (angvstype == 2 && random(1,100) <= 30) target = source;
-						if (angvstype == 3 && random(1,100) <= 5) target = source;
-						if (angvstype == 4 && random(1,100) <= 55) target = source;
+						A_TypeInfightRetargetEChance(angvstype, target, inflictor);
 					}
 					else
+					if (inflictor && Reaper(inflictor))
 					{
-						if (inflictor && Reaper(inflictor))
-						{
-							if (angvstype == 1 && random(1,100) <= 80) target = inflictor;
-							if (angvstype == 2 && random(1,100) <= 30) target = inflictor;
-							if (angvstype == 3 && random(1,100) <= 5) target = inflictor;
-							if (angvstype == 4 && random(1,100) <= 55) target = inflictor;
-						}
+						A_TypeInfightRetargetEChance(angvstype, target, inflictor);
 					}
 				}
 			}
@@ -2962,11 +2957,7 @@ mixin class MonsterCollider
 			else
 			{
 				angvstype = A_CheckTargType(self);
-				if (angvstype == 1) damage *= frandompick(2.5,2.75,3.0); // Demonic foes
-				if (angvstype == 2) damage *= frandompick(1.75,1.875,2.0); // Zombie/Undead foes
-				if (angvstype == 3) damage *= frandompick(1.375,1.4375,1.5); // Human/Demon hybrid foes
-				if (angvstype == 4) damage *= frandompick(2.125,2.3125,2.5); // Hades Scion foes
-				//Console.Printf("angvstype: %d", angvstype);
+				damage = A_TargDmgCalcAngVs(damage, angvstype);
 				if (FlyingBalrog(self) || FlyingBalrogDVDS(self))
 				{
 					damage += ((SpawnHealth() + Stamina) * frandom(2.5,4.5));
@@ -2979,40 +2970,24 @@ mixin class MonsterCollider
 						{
 							if (source && PushyArchAngel(source))
 							{
-								if (angvstype == 1 && random(1,100) <= 95) target = source;
-								if (angvstype == 2 && random(1,100) <= 45) target = source;
-								if (angvstype == 3 && random(1,100) <= 20) target = source;
-								if (angvstype == 4 && random(1,100) <= 70) target = source;
+								A_TypeInfightRetargetPChance(angvstype, target, inflictor);
 							}
 							else
+							if (inflictor && PushyArchAngel(inflictor))
 							{
-								if (inflictor && PushyArchAngel(inflictor))
-								{
-									if (angvstype == 1 && random(1,100) <= 95) target = inflictor;
-									if (angvstype == 2 && random(1,100) <= 45) target = inflictor;
-									if (angvstype == 3 && random(1,100) <= 20) target = inflictor;
-									if (angvstype == 4 && random(1,100) <= 70) target = inflictor;
-								}
+								A_TypeInfightRetargetPChance(angvstype, target, inflictor);
 							}
 						}
 						else
 						{
 							if (source && PushyArchAngel(source))
 							{
-								if (angvstype == 1 && random(1,100) <= 80) target = source;
-								if (angvstype == 2 && random(1,100) <= 30) target = source;
-								if (angvstype == 3 && random(1,100) <= 5) target = source;
-								if (angvstype == 4 && random(1,100) <= 55) target = source;
+								A_TypeInfightRetargetEChance(angvstype, target, inflictor);
 							}
 							else
+							if (inflictor && PushyArchAngel(inflictor))
 							{
-								if (inflictor && PushyArchAngel(inflictor))
-								{
-									if (angvstype == 1 && random(1,100) <= 80) target = inflictor;
-									if (angvstype == 2 && random(1,100) <= 30) target = inflictor;
-									if (angvstype == 3 && random(1,100) <= 5) target = inflictor;
-									if (angvstype == 4 && random(1,100) <= 55) target = inflictor;
-								}
+								A_TypeInfightRetargetEChance(angvstype, target, inflictor);
 							}
 						}
 					}
