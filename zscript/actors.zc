@@ -2172,8 +2172,30 @@ class EEProjectile : EEBaseZSC abstract
 				mo.target = target;
 			}
 		}
-	}	
-
+	}
+	
+	void A_WraithFX2()
+	{
+		for (int i = 2; i; --i)
+		{
+			Actor mo = Spawn ("WraithFX2", Pos, ALLOW_REPLACE);
+			if (mo)
+			{
+				double newangle = random[WraithFX2]() * (360 / 1024.f);
+				if (random[WraithFX2]() >= 128)
+				{
+					newangle = -newangle;
+				}
+				newangle += angle;
+				mo.Vel.X = ((random[WraithFX2]() / 512.) + 1) * cos(newangle);
+				mo.Vel.Y = ((random[WraithFX2]() / 512.) + 1) * sin(newangle);
+				mo.Vel.Z = 0;
+				mo.target = self;
+				mo.Floorclip = 10;
+			}
+		}
+	}
+	
 	states
 	{
 		VaccedUp:
@@ -5526,7 +5548,7 @@ class EECreature : EEBaseZSC abstract
 				specialspeed1 -= value2;
 				tics -= value1;
 				if (tics < value3) tics = value3;
-				if (dvdsdebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_FireDChase]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
+				if (dydudebug_showactormoveinfo) Console.Printf("\cx(%s) (gametic: %d) [A_FireDChase]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
 			}
 		}
 		
@@ -5641,6 +5663,155 @@ class EECreature : EEBaseZSC abstract
 		}
 	}
 	
+	// Bishop
+	void A_BishopAttack(int meleedmg = 4, int missilenum = 5)
+	{
+		if (!target)
+		{
+			return;
+		}
+		A_StartSound(AttackSound, CHAN_BODY);
+		if (CheckMeleeRange())
+		{
+			int damage = meleedmg;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			return;
+		}
+		missilecount = missilenum;
+	}
+
+	void A_BishopAttack2(string missiletype = "BishopFX")
+	{
+		string atktype = missiletype;
+
+		if (!target || !missilecount)
+		{
+			missilecount = 0;
+			SetState (SeeState);
+			return;
+		}
+		Actor mo = SpawnMissile (target, atktype);
+		if (mo != null)
+		{
+			mo.tracer = target;
+		}
+		missilecount--;
+		return;
+	}
+	
+	void A_BishopDecide()
+	{
+		if (!target) { return; }
+
+		if (random[BishopDecide]() >= 220)
+		{
+			SetStateLabel ("Blur");
+		}
+	}
+
+	void A_BishopDoBlur(int blurrand = 3, int blurnum = 3, double thrustamt = 11.0)
+	{
+		if (!target) { return; }
+
+		missilecount = (random[BishopDoBlur]() & blurrand) + blurnum; // Random number of blurs
+		if (random[BishopDoBlur]() <= 224)
+		{
+			if (random(1,2) == 1)
+			{
+				Thrust(thrustamt, Angle + 90);
+			}
+			else
+			{
+				Thrust(thrustamt, Angle - 90);
+			}
+		}
+		else
+		{
+			if (random(1,2) == 1)
+			{
+				// Thrust Backwards
+				Thrust(thrustamt, Angle - 180);
+			}
+			else
+			{
+				// Thrust forward
+				Thrust(thrustamt, Angle + 0);
+			}
+		}
+		A_StartSound("BishopBlur", CHAN_BODY);
+	}
+
+	void A_BishopSpawnBlur(int seestatechance = 96)
+	{
+		if (!--missilecount)
+		{
+			Vel.XY = (0,0);// = Vel.Y = 0;
+			if (random[BishopSpawnBlur]() > seestatechance)
+			{
+				SetState (SeeState);
+			}
+			else
+			{
+				SetState (MissileState);
+			}
+		}
+		Actor mo = Spawn ("BishopBlur", Pos, ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.angle = angle;
+		}
+	}
+
+	void A_BishopChase(int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		if (type == 0)
+		{
+			if (value1) value1 = 0;
+			if (value2) value2 = 0;
+			if (value3) value3 = 0;
+			if (value4) value4 = 0;
+			if (value5) value5 = 0;
+			if (value6) value6 = 0;
+		}
+		if (type == 1)
+		{
+			if (value1 <= 0) value1 = 3; // ticdecrement
+			if (value2 <= 0) value2 = 1; // speedtimerdecrement
+			if (value3 <= 0) value3 = 1; // lowcap
+
+			if (specialspeed1)
+			{
+				specialspeed1 -= value2;
+				tics -= value1;
+				if (tics < value3) tics = value3;
+				if (dydudebug_showactormoveinfo) Console.Printf("\cx(%s) (gametic: %d) [A_BishopChase]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
+			}
+		}
+
+		double newz = pos.z - BobSin(bobstate) / 2.;
+		bobstate = (bobstate + 4) & 63;
+		newz += BobSin(bobstate) / 2.;
+		SetZ(newz);
+	}
+
+	void A_BishopPainBlur(int chance = 64, double xveldiv = 16.0, double yveldiv = 16.0, double zveldiv = 32.0)
+	{
+		if (random[BishopPainBlur]() <= chance)
+		{
+			SetStateLabel ("Blur");
+			return;
+		}
+		double xo = random2[BishopPainBlur]() / xveldiv;
+		double yo = random2[BishopPainBlur]() / yveldiv;
+		double zo = random2[BishopPainBlur]() / zveldiv;
+		Actor mo = Spawn ("BishopPainBlur", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		if (mo)
+		{
+			mo.angle = angle;
+		}
+	}
+
 	// Stalker
 	void A_SerpentUnHide()
 	{
@@ -5899,6 +6070,174 @@ class EECreature : EEBaseZSC abstract
 		}
 	}
 	
+	// Reiver
+	void A_WraithInit()
+	{
+		AddZ(48);
+
+		// [RH] Make sure the wraith didn't go into the ceiling
+		if (pos.z + height > ceilingz)
+		{
+			SetZ(ceilingz - Height);
+		}
+
+		WeaveIndexZ = 0;			// index into floatbob
+	}
+
+	void A_WraithChase(statelabel melee = '_a_chase_default', statelabel missile = '_a_chase_default', int flags = 0, int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		if (type == 0)
+		{
+			if (value1) value1 = 0;
+			if (value2) value2 = 0;
+			if (value3) value3 = 0;
+			if (value4) value4 = 0;
+			if (value5) value5 = 0;
+		}
+		if (type == 1)
+		{
+			if (value1 <= 0) value1 = 3; // ticdecrement
+			if (value2 <= 0) value2 = 1; // speedtimerdecrement
+			if (value3 <= 0) value3 = 1; // lowcap
+
+			if (specialspeed1)
+			{
+				specialspeed1 -= value2;
+				tics -= value1;
+				if (tics < value3) tics = value3;
+				if (dydudebug_showactormoveinfo) Console.Printf("\cx(%s) (gametic: %d) [A_WraithChase]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
+			}
+		}
+		
+		int weaveindex = WeaveIndexZ;
+		AddZ(BobSin(weaveindex));
+		WeaveIndexZ = (weaveindex + 2) & 63;
+		A_Chase(melee,missile,flags);
+		A_WraithFX4 ();
+	}
+
+	void A_WraithFX3()
+	{
+		int numdropped = random[WraithFX3](0,14);
+
+		while (numdropped-- > 0)
+		{
+			double xo = (random[WraithFX3]() - 128) / 32.;
+			double yo = (random[WraithFX3]() - 128) / 32.;
+			double zo = random[WraithFX3]() / 64.;
+
+			Actor mo = Spawn("WraithFX3", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+			if (mo)
+			{
+				mo.floorz = floorz;
+				mo.ceilingz = ceilingz;
+				mo.target = self;
+			}
+		}
+	}
+
+	void A_WraithFX4 ()
+	{
+		int chance = random[WraithFX4]();
+		bool spawn4, spawn5;
+
+		if (chance < 10)
+		{
+			spawn4 = true;
+			spawn5 = false;
+		}
+		else if (chance < 20)
+		{
+			spawn4 = false;
+			spawn5 = true;
+		}
+		else if (chance < 25)
+		{
+			spawn4 = true;
+			spawn5 = true;
+		}
+		else
+		{
+			spawn4 = false;
+			spawn5 = false;
+		}
+
+		if (spawn4)
+		{
+			double xo = (random[WraithFX4]() - 128) / 16.;
+			double yo = (random[WraithFX4]() - 128) / 16.;
+			double zo = (random[WraithFX4]() / 64.);
+
+			Actor mo = Spawn ("WraithFX4", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+			if (mo)
+			{
+				mo.floorz = floorz;
+				mo.ceilingz = ceilingz;
+				mo.target = self;
+			}
+		}
+		if (spawn5)
+		{
+			double xo = (random[WraithFX4]() - 128) / 32.;
+			double yo = (random[WraithFX4]() - 128) / 32.;
+			double zo = (random[WraithFX4]() / 64.);
+
+			Actor mo = Spawn ("WraithFX5", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+			if (mo)
+			{
+				mo.floorz = floorz;
+				mo.ceilingz = ceilingz;
+				mo.target = self;
+			}
+		}
+	}
+	
+	void A_WraithMelee(int drainamount)
+	{
+		int maxdrain;
+		if (drainamount == 0) drainamount = random[StealHealth](1,8)*2;
+
+		if (user_MaxHP <= 0) maxdrain = spawnhealth(); else maxdrain = user_MaxHP;
+		// Steal health from target and give to self
+		if (CheckMeleeRange() && (random[StealHealth]() < maxdrain))
+		{
+			int amount = drainamount;
+			amount = target.DamageMobj (self, self, amount, 'Melee');
+			if (health < maxdrain && target.bINVULNERABLE == 0)
+			{
+				health += (amount * frandom(0.45,0.65));
+				health = clamp(health, health, maxdrain);
+			}
+		}
+	}
+
+	void A_WraithRaiseInit()
+	{
+		bInvisible = false;
+		bNonShootable = false;
+		bDontBlast = false;
+		bShootable = true;
+		bSolid = true;
+		Floorclip = Height;
+	}
+
+	void A_WraithRaise()
+	{
+		if (RaiseMobj (2))
+		{
+			// Reached it's target height
+			// [RH] Once a buried wraith is fully raised, it should be
+			// morphable, right?
+			bDontMorph = false;
+			bSpecialFloorClip = false;
+			SetStateLabel ("Chase");
+			// [RH] Reset PainChance to a normal wraith's.
+			PainChance = GetDefaultByType("Wraith").PainChance;
+		}
+
+		SpawnDirt (radius);
+	}
+
 	// Wendigo
 	private void SpawnWisp()
 	{
@@ -5941,7 +6280,7 @@ class EECreature : EEBaseZSC abstract
 				specialspeed1 -= value2;
 				tics -= value1;
 				if (tics < value3) tics = value3;
-				if (dvdsdebug_showactormoveinformation) Console.Printf("\cx(%s) (gametic: %d) [A_IceGuyChase]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
+				if (dydudebug_showactormoveinfo) Console.Printf("\cx(%s) (gametic: %d) [A_IceGuyChase]\c- specialspeed1: %d, ticdecrement: %d, speedtimerdecrement: %d, lowcap: %d \cytics: %d\c-", GetClassName(), gametic, specialspeed1, value1, value2, value3, tics);
 			}
 		}
 		
