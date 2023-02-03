@@ -2196,6 +2196,74 @@ class EEProjectile : EEBaseZSC abstract
 		}
 	}
 	
+	// WraithVerge
+	void A_CHolyAttack2(string missiletype = "HolySpirit", int spiritnums = 4, int spiritfuse = 105, int spiritfusedm = 85)
+	{
+		for (int j = 0; j < spiritnums; j++)
+		{
+			Actor mo = Spawn(missiletype, Pos, ALLOW_REPLACE);
+			if (!mo)
+			{
+				continue;
+			}
+			switch (j)
+			{
+				// float bob index
+
+				case 0:
+					mo.WeaveIndexZ = random[HolyAtk2]() & 7; // upper-left
+					break;
+				case 1:
+					mo.WeaveIndexZ = 32 + (random[HolyAtk2]() & 7); // upper-right
+					break;
+				case 2:
+					mo.WeaveIndexXY = 32 + (random[HolyAtk2]() & 7); // lower-left
+					break;
+				case 3:
+					mo.WeaveIndexXY = 32 + (random[HolyAtk2]() & 7);
+					mo.WeaveIndexZ = 32 + (random[HolyAtk2]() & 7);
+					break;
+			}
+			mo.SetZ(pos.z);
+			mo.angle = angle + 67.5 - 45.*j;
+			mo.Thrust();
+			mo.target = target;
+			mo.args[0] = 10; // initial turn value
+			mo.args[1] = 0; // initial look angle
+			if (deathmatch)
+			{
+				// Ghosts last slightly less longer in DeathMatch
+				mo.health = spiritfusedm;
+				if (spiritfusedm <= 0) mo.health = 85;
+			}
+			else
+			{
+				mo.health = spiritfuse;
+				if (spiritfuse <= 0) mo.health = 105;
+			}
+			if (tracer)
+			{
+				mo.tracer = tracer;
+				mo.bNoClip = true;
+				mo.bSkullFly = true;
+				mo.bMissile = false;
+			}
+			HolyTail.SpawnSpiritTail (mo);
+		}
+	}
+	
+	// Quietus Sword Flames
+	void A_FSwordFlames()
+	{
+		for (int i = random[FSwordFlame](1, 4); i; i--)
+		{
+			double xo = (random[FSwordFlame]() - 128) / 16.;
+			double yo = (random[FSwordFlame]() - 128) / 16.;
+			double zo = (random[FSwordFlame]() - 128) / 8.;
+			Spawn ("FSwordFlame", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+		}
+	}
+	
 	// DragonFX2
 	void A_DragonFX2(string missiletype = "DragonExplosion")
 	{
@@ -6292,6 +6360,54 @@ class EECreature : EEBaseZSC abstract
 		{
 			SetStateLabel ("Crash");
 		}
+	}
+	
+	// Traductus
+	void A_ClericAttack(string missiletype = "HolyMissile")
+	{
+		string atktype = missiletype;
+		if (!target) return;
+		
+		Actor missile = SpawnMissileZ (pos.z + 40., target, atktype);
+		if (missile != null) missile.tracer = null;	// No initial target
+		A_StartSound("HolySymbolFire", CHAN_WEAPON);
+	}
+	
+	// Menelkir	
+	void MStaffSpawn2 (double angle, string missiletype = "MageStaffFX2")
+	{
+		string atktype = missiletype;
+
+		Actor mo = SpawnMissileAngleZ (pos.z + 40, atktype, angle, 0.);
+		if (mo)
+		{
+			mo.target = self;
+			mo.tracer = RoughMonsterSearch(10, true, true);
+		}
+	}
+	void A_MageAttack(string missiletype = "MageStaffFX2")
+	{
+		if (!target) return;
+		
+		MStaffSpawn2(angle,missiletype);
+		MStaffSpawn2(angle-5,missiletype);
+		MStaffSpawn2(angle+5,missiletype);
+		A_StartSound("MageStaffFire", CHAN_WEAPON);
+	}
+
+	// Zedek
+	void A_FighterAttack(string missiletype = "FSwordMissile")
+	{
+		string atktype = missiletype;
+
+		if (!target) return;
+
+		SpawnMissileAngle(atktype, Angle + (45. / 4), 0);
+		SpawnMissileAngle(atktype, Angle + (45. / 8), 0);
+		SpawnMissileAngle(atktype, Angle, 0);
+		SpawnMissileAngle(atktype, Angle - (45. / 8), 0);
+		SpawnMissileAngle(atktype, Angle - (45. / 4), 0);
+		A_StartSound("FighterSwordFire", CHAN_WEAPON);
 	}
 	
 	//*************************
