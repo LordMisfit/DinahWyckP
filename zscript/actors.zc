@@ -2145,6 +2145,22 @@ class EEProjectile : EEBaseZSC abstract
 		}
 	}
 	
+	//
+	void A_MntrFloorFire(string missiletype = "MinotaurFX3")
+	{
+		SetZ(floorz);
+		double x = Random2[MntrFloorFire]() / 64.;
+		double y = Random2[MntrFloorFire]() / 64.;
+		
+		Actor mo = Spawn(missiletype, Vec2OffsetZ(x, y, floorz), ALLOW_REPLACE);
+		if (mo != null)
+		{
+			mo.target = target;
+			mo.Vel.X = MinVel; // Force block checking
+			mo.CheckMissileSpawn (radius);
+		}
+	}
+
 	// Wendigo/IceLich Balls
 	void A_IceGuyMissileExplode(string missiletype = "IceGuyFX2", int numshots = 8, double pitch = -0.3)
 	{
@@ -6149,6 +6165,459 @@ class EEHelperFriend : EECreature
 class EEUniqueBoss : EECreature abstract
 {
 }
+
+class MaulotaurBase : EECreature
+{
+ const MAULATORTICS = 25 * TICRATE;
+ const MNTR_CHARGE_SPEED =13.;
+ const MINOTAUR_LOOK_DIST = 16*54.;
+	
+	void MinotaurSlam (Actor target)
+	{
+		double ang = AngleTo(target);
+		double thrust = 16 + random[MinotaurSlam]() / 64.;
+		target.VelFromAngle(ang, thrust);
+		int damage = random[MinotaurSlam](1, 8) * (bSummonedMonster? 4 : 6);
+		int newdam = target.DamageMobj (null, null, damage, 'Melee');
+		target.TraceBleedAngle (newdam > 0 ? newdam : damage, ang, 0.);
+		if (target.player)
+		{
+			target.reactiontime = random[MinotaurSlam](14, 21);
+		}
+	}
+
+	override void Tick ()
+	{
+		Super.Tick ();
+		
+		// The unfriendly Minotaur (Heretic's) is invulnerable while charging
+		if (!bSummonedMonster)
+		{
+			bInvulnerable = bSkullFly;
+		}
+	}
+
+	override bool Slam (Actor thing)
+	{
+		// Slamming minotaurs shouldn't move non-creatures
+		if (!thing.bIsMonster && !thing.player)
+		{
+			return false;
+		}
+		return Super.Slam (thing);
+	}
+
+	override int DoSpecialDamage (Actor target, int damage, Name damagetype)
+	{
+		damage = Super.DoSpecialDamage (target, damage, damagetype);
+		if (damage != -1 && bSkullFly)
+		{
+			// Slam only when in charge mode
+			MinotaurSlam (target);
+			return -1;
+		}
+		return damage;
+	}
+
+	void A_MinotaurAtk1(int atkdamage = 4, int squishamount = -16)
+	{
+		if (!target)
+		{
+			return;
+		}
+		A_StartSound("minotaur/melee", CHAN_WEAPON);
+		if (CheckMeleeRange())
+		{
+			int damage = atkdamage;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			PlayerInfo player = target.player;
+			if (player != null && player.mo == target)
+			{
+				// Squish the player
+				player.deltaviewheight = squishamount;
+			}
+		}
+	}
+
+	void A_MinotaurDecide()
+	{
+		bool friendly = bSummonedMonster;
+
+		if (!target)
+		{
+			return;
+		}
+		if (!friendly)
+		{
+			A_StartSound("minotaur/sight", CHAN_WEAPON);
+		}
+		double dist = Distance2D(target);
+		if (target.pos.z + target.height > pos.z
+			&& target.pos.z + target.height < pos.z + height
+			&& dist < (friendly ? 16*64. : 8*64.)
+			&& dist > 1*64.
+			&& random[MinotaurDecide]() < 150)
+		{
+			// Charge attack
+			// Don't call the state function right away
+			SetStateLabel("Charge", true);
+			bSkullFly = true;
+			if (!friendly)
+			{
+				// Heretic's Minotaur is invulnerable during charge attack
+				// bInvulnerable = true;
+				A_SetInventory("MaulotaurChargeDefense",1);
+				bNoPain = true;
+				bNoBlood = true;
+			}
+			A_FaceTarget ();
+			VelFromAngle(MNTR_CHARGE_SPEED);
+			special1 = TICRATE/2; // Charge duration
+		}
+		else if (target.pos.z == target.floorz
+				&& dist < 9*64.
+				&& random[MinotaurDecide]() < (friendly ? 100 : 220))
+		{
+			// Floor fire attack
+			SetStateLabel("Hammer");
+			special2 = 0;
+		}
+		else
+		{
+			// Swing attack
+			A_FaceTarget ();
+			// Don't need to call P_SetMobjState because the current state
+			// falls through to the swing attack
+		}
+	}
+	
+	void A_MinotaurCharge()
+	{
+		if (target == null)
+		{
+			return;
+		}
+		if (special1 > 0)
+		{
+			Class<Actor> type;
+
+			if (gameinfo.gametype == GAME_Heretic)
+			{
+				type = "PhoenixPuff";
+			}
+			else
+			{
+				type = "PunchPuff";
+			}
+			Actor puff = Spawn (type, Pos, ALLOW_REPLACE);
+			if (puff != null) puff.Vel.Z = 2;
+			special1--;
+		}
+		else
+		{
+			bSkullFly = false;
+			bInvulnerable = false;
+			A_SetInventory("MaulotaurChargeDefense",0);
+			bNoPain = false;
+			bNoBlood = false;
+			SetState (SeeState);
+		}
+	}
+
+	void A_MinotaurAtk2(string missiletype = "MinotaurFX1", int meleedamage = 5, int friendlymeleedamage = 3)
+	{
+		bool friendly = bSummonedMonster;
+
+		int actualmeleedmg = meleedamage;
+		if (friendly == 1) actualmeleedmg = friendlymeleedamage;
+		string actualmissile = missiletype;
+		
+		if (target == null)
+		{
+			return;
+		}
+		A_StartSound("minotaur/attack2", CHAN_WEAPON);
+		if (CheckMeleeRange())
+		{
+			int damage = actualmeleedmg;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			return;
+		}
+		double z = pos.z + 40;
+		Class<Actor> fx = actualmissile;
+		Actor mo = SpawnMissileZ (z, target, fx);
+		if (mo != null)
+		{
+			//S_Sound (mo, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
+			double vz = mo.Vel.Z;
+			double ang = mo.angle;
+			SpawnMissileAngleZ (z, fx, ang-(45./8), vz);
+			SpawnMissileAngleZ (z, fx, ang+(45./8), vz);
+			SpawnMissileAngleZ (z, fx, ang-(45./16), vz);
+			SpawnMissileAngleZ (z, fx, ang+(45./16), vz);
+		}
+	}
+
+	void A_MinotaurAtk3(int atkdamage = 4, int squishamount = -16, string missiletype = "MinotaurFX2New")
+	{
+		string attacktype = missiletype;
+
+		if (!target)
+		{
+			return;
+		}
+		A_StartSound("minotaur/attack3", CHAN_VOICE);
+		if (CheckMeleeRange())
+		{
+			int damage = atkdamage;
+			int newdam = target.DamageMobj (self, self, damage, 'Melee');
+			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			PlayerInfo player = target.player;
+			if (player != null && player.mo == target)
+			{
+				// Squish the player
+				player.deltaviewheight = squishamount;
+			}
+		}
+		else
+		{
+			if (Floorclip > 0 && compat_minotaur)
+			{
+				// only play the sound. 
+				A_StartSound("minotaur/fx2hit", CHAN_WEAPON);
+			}
+			else
+			{
+				Actor mo = SpawnMissile (target, attacktype);
+				if (mo != null)
+				{
+					mo.A_StartSound("minotaur/attack1", CHAN_WEAPON);
+				}
+			}
+		}
+		if (random[MinotaurAtk3]() < 192 && special2 == 0)
+		{
+			SetStateLabel ("HammerLoop");
+			special2 = 1;
+		}
+	}
+
+	void A_MinotaurDeath()
+	{
+		if (Wads.CheckNumForName ("MNTRF1", Wads.ns_sprites) < 0 &&
+			Wads.CheckNumForName ("MNTRF0", Wads.ns_sprites) < 0)
+			SetStateLabel("FadeOut");
+	}
+
+	void A_MinotaurRoam()
+	{
+		// In case pain caused him to skip his fade in.
+		A_SetRenderStyle(1, STYLE_Normal);
+
+		let mf = MinotaurFriend(self);
+		if (mf)
+		{
+			if (mf.StartTime >= 0 && (level.maptime - mf.StartTime) >= MAULATORTICS)
+			{
+				DamageMobj (null, null, TELEFRAG_DAMAGE, 'None', 0, 0.0);
+				return;
+			}
+		}
+
+		if (random[MinotaurRoam]() < 30)
+			A_MinotaurLook();		// adjust to closest target
+
+		if (random[MinotaurRoam]() < 6)
+		{
+			//Choose new direction
+			movedir = random[MinotaurRoam]() % 8;
+			FaceMovementDirection ();
+		}
+		if (!MonsterMove())
+		{
+			// Turn
+			if (random[MinotaurRoam]() & 1)
+				movedir = (movedir + 1) % 8;
+			else
+				movedir = (movedir + 7) % 8;
+			FaceMovementDirection ();
+		}
+	}
+
+	void A_MinotaurLook()
+	{
+		if (!(self is "MinotaurFriend"))
+		{
+			A_Look();
+			return;
+		}
+
+		Actor mo = null;
+		PlayerInfo player;
+		double dist;
+		Actor master = tracer;
+
+		target = null;
+		if (deathmatch)					// Quick search for players
+		{
+			for (int i = 0; i < MAXPLAYERS; i++)
+			{
+				if (!playeringame[i]) continue;
+				player = players[i];
+				mo = player.mo;
+				if (mo == master) continue;
+				if (mo.health <= 0) continue;
+				dist = Distance2D(mo);
+				if (dist > MINOTAUR_LOOK_DIST) continue;
+				target = mo;
+				break;
+			}
+		}
+
+		if (!target)				// Near player monster search
+		{
+			if (master && (master.health > 0) && (master.player))
+				mo = master.RoughMonsterSearch(20);
+			else
+				mo = RoughMonsterSearch(20);
+			target = mo;
+		}
+
+		if (!target)				// Normal monster search
+		{
+			ThinkerIterator it = ThinkerIterator.Create("Actor");
+
+			while ((mo = Actor(it.Next())) != null)
+			{
+				if (!mo.bIsMonster) continue;
+				if (mo.health <= 0) continue;
+				if (!mo.bShootable) continue;
+				dist = Distance2D(mo);
+				if (dist > MINOTAUR_LOOK_DIST) continue;
+				if (mo == master || mo == self) continue;
+				if (mo.bSummonedMonster && mo.tracer == master) continue;
+				target = mo;
+				break;			// Found actor to attack
+			}
+		}
+
+		if (target)
+		{
+			SetState (SeeState, true);
+		}
+		else
+		{
+			SetStateLabel ("Roam", true);
+		}
+	}
+
+	void A_MinotaurChase(statelabel melee = '_a_chase_default', statelabel missile = '_a_chase_default', int flags = 0, int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		let mf = MinotaurFriend(self);
+		if (!mf)
+		{
+			A_EEChase(melee,missile,flags,type,value1,value2,value3,value4,value5,value6);
+			return;
+		}
+
+		// In case pain caused him to skip his fade in.
+		A_SetRenderStyle(1, STYLE_Normal);
+
+		if (mf.StartTime >= 0 && (level.maptime - mf.StartTime) >= MAULATORTICS)
+		{
+			DamageMobj (null, null, TELEFRAG_DAMAGE, 'None', 0, 0.0);
+			return;
+		}
+
+		if (random[MinotaurChase]() < 30)
+			A_MinotaurLook();		// adjust to closest target
+
+		if (!target || (target.health <= 0) || !target.bShootable)
+		{
+			// look for a new target
+			SetIdle();
+			return;
+		}
+
+		FaceMovementDirection ();
+		reactiontime = 0;
+
+		// Melee attack
+		if (MeleeState && CheckMeleeRange ())
+		{
+			if (AttackSound)
+			{
+				A_StartSound(AttackSound, CHAN_WEAPON);
+			}
+			SetState (MeleeState);
+			return;
+		}
+
+		// Missile attack
+		if (MissileState && CheckMissileRange())
+		{
+			SetState (MissileState);
+			return;
+		}
+
+		// chase towards target
+		if (!MonsterMove ())
+		{
+			NewChaseDir ();
+			FaceMovementDirection ();
+		}
+
+		// Active sound
+		if (random[MinotaurChase]() < 6)
+		{
+			PlayActiveSound ();
+		}
+	}
+}
+class MaulotaurFriendBase : MaulotaurBase
+{
+	int StartTime;
+
+	override void BeginPlay ()
+	{
+		Super.BeginPlay ();
+		StartTime = -1;
+	}
+
+	override void Die (Actor source, Actor inflictor, int dmgflags)
+	{
+		Super.Die (source, inflictor, dmgflags);
+
+		if (tracer && tracer.health > 0 && tracer.player)
+		{
+			// Search thinker list for minotaur
+			ThinkerIterator it = ThinkerIterator.Create("MaulotaurFriendBase");
+			MinotaurFriend mo;
+
+			while ((mo = MinotaurFriend(it.Next())) != null)
+			{
+				if (mo.health <= 0) continue;
+				// [RH] Minotaurs can't be morphed, so this isn't needed
+				//if (!(mo.flags&MF_COUNTKILL)) continue;		// for morphed minotaurs
+				if (mo.bCorpse) continue;
+				if (mo.StartTime >= 0 && (level.maptime - StartTime) >= MAULATORTICS) continue;
+				if (mo.tracer != null && mo.tracer.player == tracer.player) break;
+			}
+
+			if (mo == null)
+			{
+				Inventory power = tracer.FindInventory("PowerMinotaur");
+				if (power != null)
+				{
+					power.Destroy ();
+				}
+			}
+		}
+	}
+}
+
 
 // A subclass for the DD/AFD unique monsters
 class DDOrigCreature : EECreature abstract
