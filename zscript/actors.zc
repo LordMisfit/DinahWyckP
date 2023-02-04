@@ -2102,6 +2102,48 @@ class EEProjectile : EEBaseZSC abstract
 		return Level;
 	}
 	
+	// D'Sparil Bolt
+	void A_BlueSpark()
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			Actor mo = Spawn("Sorcerer2FXSpark", pos, ALLOW_REPLACE);
+			if (mo != null)
+			{
+				mo.Vel.X = Random2[BlueSpark]() / 128.;
+				mo.Vel.Y = Random2[BlueSpark]() / 128.;
+				mo.Vel.Z = 1. + Random[BlueSpark]() / 256.;
+			}
+		}
+	}
+
+	void A_GenWizard()
+	{
+		Actor mo = Spawn("Wizard", pos, ALLOW_REPLACE);
+		if (mo != null)
+		{
+			mo.AddZ(-mo.Default.Height / 2, false);
+			if (!mo.TestMobjLocation ())
+			{ // Didn't fit
+				mo.ClearCounters();
+				mo.Destroy ();
+			}
+			else
+			{ // [RH] Make the new wizards inherit D'Sparil's target
+				if (self.target != null)
+				{
+					mo.CopyFriendliness (self.target, true);
+				}
+
+				Vel = (0,0,0);
+				SetStateLabel('Death');
+				bMissile = false;
+				mo.master = target;
+				SpawnTeleportFog(pos, false, true);
+			}
+		}
+	}
+
 	// Red Axe [Heretic]
 	void A_DripBlood (string missiletype = "Blood")
 	{
