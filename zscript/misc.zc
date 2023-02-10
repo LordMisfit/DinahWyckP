@@ -8186,6 +8186,8 @@ class PlayerDashJump : Inventory
 	int SuperVacBaseMax;
 	double SuperVacBaseMaxFactor;
 	double SuperVacAmmoFactor;
+	int firsttic;
+	int input, oldInput, taps, taptics, last;
 	
 	Default
 	{
@@ -8215,6 +8217,11 @@ class PlayerDashJump : Inventory
 		}
 		if (dydudebug_playerlevelchecks) Console.Printf("\c[green](%s) \c[gold](A_CheckActualLevel - PlayerDashJump)\c- PlayerLevel: %d [%d]", GetClassName(), level, gametic);
 		return Level;
+	}
+	
+	int IsButtonPressed (int input, int oldInput, int mask)
+	{
+		return (input & ~oldInput) & mask;
 	}
 	
 	override void Tick()
@@ -8920,24 +8927,83 @@ class PlayerDashJump : Inventory
 
 		if (dydudebug_dashmeter) Console.Printf("DashMaxCharge: %d (%d, %d, %d), DashCost: %d", DashMaxCharge, BaseDashChargeMax, AddDashLevel, ExtraDashCharge, DashCost);
 		
+		if (dydudebug_dashcheat) 
+		{
+			DashCost = DashCharge * 0.25;
+			if (DashCost <= 1) DashCost = 1;
+		}
+
+		bool doubletapdash = GetCVar("exex_doubledash");
+		if (dydudebug_dashing) Console.Printf("DashCost [start]: %d, DashCooldown: %d", DashCost, MaxDashCooldown);
 		airdashtype = 0;
 		// 0 = No loss of altitude
 		// 1 = Start with a short "hop" but fall to the ground afterwards.
 		
+		double settings[2][4];
+		settings[0][0] = BT_FORWARD;
+		settings[1][0] = 0.00;
+		settings[0][1] = BT_MOVELEFT;
+		settings[1][1] = 0.25;
+		settings[0][2] = BT_BACK;
+		settings[1][2] = 0.50;
+		settings[0][3] = BT_MOVERIGHT;
+		settings[1][3] = 0.75;
+		oldInput = owner.GetPlayerInput(INPUT_OLDBUTTONS);
+
 		int pushingdirection = 0;
 		If (BTInput & BT_FORWARD) pushingdirection += 1;
 		If (BTInput & BT_BACK) pushingdirection += 2;
 		If (BTInput & BT_MOVELEFT) pushingdirection += 4;
 		If (BTInput & BT_MOVERIGHT) pushingdirection += 8;
 		
+		int dashtapwindow = 8;
+		bool dashactivated = false;
+		if (doubletapdash)
+		{
+			if (dydudebug_dashing) Console.Printf("\cy[double-tap dashing enabled]:\c- doubletapdash: %d, taps: %d, BTInput: %d", doubletapdash, taps, BTInput);
+			for (int i = 0; i < 4; i++)
+			{
+				input = BTInput;
+				if (IsButtonPressed(input, oldInput, settings[0][i]) && DashCharge >= DashCost)
+				{
+					taps++;
+					taptics = dashtapwindow;
+				
+					if (taps >= 2 && last == i)
+					{
+						taps = 0;
+						input = 0;
+						oldinput = 0;
+						dashactivated = true;
+					}
+					last = i;
+				}
+			}
+			
+			If (taptics)
+			{
+				taptics--;
+				If (!taptics)
+				{
+					taps = 0;
+				}
+			}
+		}
+		else
+		{
+		 if (!doubletapdash && (BTInput & BT_USER3)) dashactivated = true;
+		}
+
 		if (!Waiting &&
 				!owner.CountInv("NoDashing") &&
-				(BTInput & BT_USER3) && 
+				dashactivated && 
 				DashCharge >= DashCost && 
 				pushingdirection &&
 				!DashTics &&
 				DashCooldown == 0)
 		{
+			taptics = 0;
+			taps = 0;
 			//Console.Printf("OnGround: %d", PlayDash.OnGround);
 			DashDir = 0;
 			If (BTInput & BT_FORWARD) DashDir = 0;
@@ -9357,6 +9423,7 @@ class PlayerDashJump : Inventory
 						basecharge *= DDTFactor;
 					}
 				}
+				if (dydudebug_dashcheat) basecharge *= 4;
 				DashCharge += basecharge;
 				if (DashCharge > DashMaxCharge) DashCharge = DashMaxCharge;
 			}
