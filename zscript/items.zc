@@ -4977,6 +4977,61 @@ class BlunderAxeSchematic : CustomInventoryExt
 	}
 }
 
+class SuperVacSchematic : CustomInventoryExt
+{
+	Default
+	{
+		Height 12;
+		Radius 6;
+		Scale 0.375;
+		+FLOATBOB
+		+INVENTORY.AUTOACTIVATE
+		+INVENTORY.ALWAYSPICKUP
+		Inventory.MaxAmount 0;
+		Inventory.PickupMessage "\c[gold]Oooh... This schematics booklet is about the SuperVac. Time for an upgrade! >:3";
+		Inventory.PickupSound "Dinah/Ooh1";
+		CustomInventoryExt.PickUpVoice true;
+	}
+	
+	override String PickupMessage()
+	{
+		actor player = players[0].mo;
+		string msg = PickupMsg;
+		if (!player.CountInv("SuperVac")) msg = "\c[gold]Ah, this is an upgrade document for the SuperVac? If I had one, I'll be able to upgrade it with this...\c-";
+		else
+		{
+			if (player.CountInv("SuperVacUpgrade") == 1) msg = "\c[gold]Oooh... This schematics booklet is about the SuperVac. Time for an upgrade! >:3";
+			if (player.CountInv("SuperVacUpgrade") == 2) msg = "\c[gold]Neat, another upgrade document on the SuperVac...";
+			if (player.CountInv("SuperVacUpgrade") >= 3) msg = "\c[gold]Ohohohoho... I can still upgrade the Vac one more time it seems! >:D";
+		}
+		return msg;
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 0 NoDelay
+			{
+				actor player = players[0].mo;
+				if (player.CountInv("SuperVacUpgrade") >= 3)
+				{
+					A_SpawnItemEx("VSchematicReplacer",0.0,0.0,0.0, 0.0,0.0,0.0, 0.0, SXF_NOCHECKPOSITION);
+					Destroy();
+				}
+			}
+		Idle:
+			SVUG A 6;
+			SVUG A 6 bright;
+			loop;
+		Pickup:
+			TNT1 A 0
+			{
+				A_GiveInventory("SuperVacUpgrade",1);
+			}
+			stop;
+	}
+}
+
 class GrimophoneMicrochip : CustomInventoryExt
 {
 	Default

@@ -989,6 +989,7 @@ mixin class CollisionChecker
 	// Sets up what projectiles can be eaten by the active SuperVac, and how many units they give V:
 	int, int A_CheckCollisionProjShieldExemptionSV(Actor actr)
 	{
+		actor player = players[0].mo;
 		bool IPAttack = false;
 		if (GetClassName() == "SuperVacAbsorbsionPartIP") IPAttack = true;
 		string nm, nn, no, np;
@@ -1296,6 +1297,15 @@ mixin class CollisionChecker
 					defaultroll += remainder;
 					if (defaultroll > 100) defaultroll = 100;
 				}
+				if (player.CountInv("SuperVacUpgrade") > 0 && defaultroll < 100)
+				{
+					double remainder = (100 - defaultroll);
+					if (player.CountInv("SuperVacUpgrade") == 1) remainder *= 0.167;
+					if (player.CountInv("SuperVacUpgrade") == 2) remainder *= 0.25;
+					if (player.CountInv("SuperVacUpgrade") >= 3) remainder *= 0.3;
+					defaultroll += remainder;
+					if (defaultroll > 100) defaultroll = 100;
+				}
 				if (IPAttack)
 				{
 					double remainder = (100 - defaultroll);
@@ -1345,6 +1355,14 @@ mixin class CollisionChecker
 					{
 						vacgive *= frandom(2.5,3.25);
 					}
+					
+					if (vacgive > 0)
+					{
+						if (player.CountInv("SuperVacUpgrade") == 1) vacgive *= 1.15;
+						if (player.CountInv("SuperVacUpgrade") == 2) vacgive *= 1.25;
+						if (player.CountInv("SuperVacUpgrade") >= 3) vacgive *= 1.3;
+					}
+					
 					if (dydudebug_supervacproj) Console.Printf("(\c[gold]%s\c-): type: %d, vacgive: %d, roll [%d] vs defaultroll [%d] [\c[green]succeed\c-]", actr.GetClassName(), type, vacgive, roll, defaultroll);
 					return type, vacgive;
 				}
@@ -1355,8 +1373,14 @@ mixin class CollisionChecker
 				}
 			}
 			
-			// Else, Default to "yes"
 			if (vacgive < 1 && type > 0) vacgive = 1;
+			// Else, Default to "yes"
+			if (vacgive > 0)
+			{
+				if (player.CountInv("SuperVacUpgrade") == 1) vacgive *= 1.15;
+				if (player.CountInv("SuperVacUpgrade") == 2) vacgive *= 1.25;
+				if (player.CountInv("SuperVacUpgrade") >= 3) vacgive *= 1.3;
+			}
 			return type, vacgive;
 		}
 		else return 0, 0;
@@ -2263,6 +2287,21 @@ mixin class MonsterCollider
 				SuckFactor = 0.75;
 				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.75 + (TruePlayerLevel * 0.0025);
 				else if (source && DDPlayerPawn(source)) SuckFactor = 0.75 + (TruePlayerLevel * 0.0025);
+			}
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("SuperVacUpgrade") == 1) SuckFactor *= 1.125;
+				if (inflictor.CountInv("SuperVacUpgrade") == 2) SuckFactor *= 1.25;
+				if (inflictor.CountInv("SuperVacUpgrade") >= 3) SuckFactor *= 1.375;
+				if (SuckFactor > 1.00) SuckFactor = 1.00;
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("SuperVacUpgrade") == 1) SuckFactor *= 1.125;
+				if (source.CountInv("SuperVacUpgrade") == 2) SuckFactor *= 1.25;
+				if (source.CountInv("SuperVacUpgrade") >= 3) SuckFactor *= 1.375;
+				if (SuckFactor > 1.00) SuckFactor = 1.00;
 			}
 			if (mod == 'Suck') ActorDefenseIgnoreFactor += (SuckFactor * (1.00 - ActorDefenseIgnoreFactor));
 			

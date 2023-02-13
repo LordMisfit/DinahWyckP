@@ -3790,12 +3790,23 @@ class DD_EventHandler : EventHandler
 							droptype = "SuperVac";
 							if (player.CountInv(droptype)) 
 							{
-								droptype = "ItemSatchel";
-								if (random(1,32) <= 1) droptype = "MegaSatchel";
-								double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
-								double raredropsndvol = frandom(1.75,2.25);
-								int raredropsndchannel = randompick(191,192,222,223,264,265);
-								victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
+								if (random(1,64) <= 1 && player.CountInv("SuperVacUpgrade") < 3)
+								{
+									droptype = "SuperVacSchematic";
+									double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+									double raredropsndvol = frandom(1.75,2.25);
+									int raredropsndchannel = randompick(191,192,222,223,264,265);
+									victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
+								}
+								else
+								{
+									droptype = "ItemSatchel";
+									if (random(1,32) <= 1) droptype = "MegaSatchel";
+									double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+									double raredropsndvol = frandom(1.75,2.25);
+									int raredropsndchannel = randompick(191,192,222,223,264,265);
+									victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
+								}
 							}
 						}
 						if (user_type == 9)
@@ -4473,7 +4484,7 @@ class DD_EventHandler : EventHandler
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 				if (random(1,maxchance) <= 1)
 				{
-					user_type = random(1,385);
+					user_type = random(1,401);
 					if (user_type >= 1 && user_type <= 140) 
 					{
 						victim.A_SpawnItemEx("FuryPotion",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); 
@@ -4530,7 +4541,15 @@ class DD_EventHandler : EventHandler
 						int raredropsndchannel = randompick(191,192,222,223,264,265);
 						victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
 					}
-					if (user_type >= 385) 
+					if (user_type >= 385 && user_type <= 400) 
+					{
+						victim.A_SpawnItemEx("SuperVacSchematic",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION);
+						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+						double raredropsndvol = frandom(1.75,2.25);
+						int raredropsndchannel = randompick(191,192,222,223,264,265);
+						victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
+					}
+					if (user_type >= 401) 
 					{
 						victim.A_SpawnItemEx("DoorBell",0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); 
 						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
@@ -6200,7 +6219,7 @@ class DD_EventHandler : EventHandler
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 				if (MiscItem)
 				{
-					if (MiscItem.whistlecooldown == 0)
+					if (player.health > 0 && MiscItem.whistlecooldown == 0)
 					{
 						player.A_SpawnItemEx("PlayerWhistle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
 						if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) MiscItem.whistlecooldown = random(28,33);
@@ -6226,8 +6245,8 @@ class DD_EventHandler : EventHandler
 		if (Level.MapName == "TITLEMAP" && level.GetCheckSum() == "61c6789c85c32479cc09d84685813272")
 		{
 			int d;
-			d = Wads.CheckNumForName("EE-UNFAM", Wads.ns_global, -1, true);
-			if (d == -1) d = Wads.CheckNumForName("smooshed", Wads.ns_global, -1, true);
+			
+			d = Wads.CheckNumForName("smooshed", Wads.ns_global, -1, true);
 			//Console.Printf("d: %d", d);
 			if (d == -1)
 			{
@@ -6261,8 +6280,15 @@ class DD_EventHandler : EventHandler
 					SetMusicVolume(1.25);
 					if (gameinfo.GameType == GAME_Doom)
 					{
-						if (Wads.CheckNumForName("MAP01", Wads.ns_global, -1, false)) S_ChangeMusic("$MUSIC_DM2TTL", 0, true, true);
-						if (Wads.CheckNumForName("E1M1", Wads.ns_global, -1, false)) S_ChangeMusic("$MUSIC_INTRO", 0, true, true);
+						if (Wads.CheckNumForName("EE-UNFAM", Wads.ns_global, -1, true) != -1)
+						{
+							S_ChangeMusic("$MUSIC_INTRO", 0, true, true);
+						}
+						else
+						{
+							if (Wads.CheckNumForName("MAP01", Wads.ns_global, -1, false)) S_ChangeMusic("$MUSIC_DM2TTL", 0, true, true);
+							if (Wads.CheckNumForName("E1M1", Wads.ns_global, -1, false)) S_ChangeMusic("$MUSIC_INTRO", 0, true, true);
+						}
 					}
 					if (gameinfo.GameType == GAME_Heretic) S_ChangeMusic("MUS_TITL", 0, true, true);
 					if (gameinfo.GameType == GAME_Hexen) S_ChangeMusic("HEXEN", 0, true, true);
@@ -6632,6 +6658,8 @@ class DD_StaticEventHandler : StaticEventHandler
 						// Not checking for level-specific stuff like keys as this
 						// seems to be automatically invalidated
 						if (item is 'BlunderShotUpgrade' || 
+								item is 'CBombUpgrade' || 
+								item is 'SuperVacUpgrade' || 
 								item is 'GrimophoneUpgrade' || 
 								item is 'ArmorScavengerKit' || 
 								item is 'HellWarriorShieldLevel')
@@ -6845,6 +6873,8 @@ class DD_StaticEventHandler : StaticEventHandler
 				}
 				if (!keepWeaponUpgrades &&
 						(item is 'BlunderShotUpgrade' || 
+						item is 'CBombUpgrade' || 
+						item is 'SuperVacUpgrade' || 
 						item is 'GrimophoneUpgrade' || 
 						item is 'ArmorScavengerKit' || 
 						item is 'HellWarriorShieldLevel'))
@@ -6972,6 +7002,8 @@ class DD_StaticEventHandler : StaticEventHandler
 					else
 					if (!keepWeaponUpgrades &&
 							(item is 'BlunderShotUpgrade' || 
+							 item is 'CBombUpgrade' || 
+							 item is 'SuperVacUpgrade' || 
 							 item is 'GrimophoneUpgrade' || 
 							 item is 'ArmorScavengerKit' || 
 							 item is 'HellWarriorShieldLevel'))
