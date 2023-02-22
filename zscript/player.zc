@@ -2558,6 +2558,15 @@ class DDPlayerPawn : PlayerPawn
 			CricketFactor += (temp * (1.00 - CricketFactor));
 		}
 		PlayerDefenseIgnoreFactor += (CricketFactor * (1.00 - PlayerDefenseIgnoreFactor));
+		
+		if (mod == 'PSI') 
+		{
+			if (!CountInv("DinahTrueIPState"))
+			{
+				double PSIFactor = 0.5;
+				PlayerDefenseIgnoreFactor += (PSIFactor * (1.00 - PlayerDefenseIgnoreFactor));
+			}
+		}
 
 		if (PlayerDefenseIgnoreFactor <= 0.0) PlayerDefenseIgnoreFactor = 0.0;
 		if (PlayerDefenseIgnoreFactor > 1.00) PlayerDefenseIgnoreFactor = 1.00;
@@ -2754,6 +2763,7 @@ class DDPlayerPawn : PlayerPawn
 	{
 		int origdmg = damage;
 		let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+		let weapon = player.ReadyWeapon;
 		if (inflictor && MorphProjectile(inflictor) || source && MorphProjectile(source)) A_GiveInventory("HitByMorphProj",1);
 		
 		if ((mod == 'Explosive' ||
@@ -3057,7 +3067,46 @@ class DDPlayerPawn : PlayerPawn
 			if (dydudebug_playerdamagemobj) Console.Printf("Jumping Skull Afterimage");
 		}
 		
-		if (mod == 'PSI') flags |= DMG_NO_ARMOR;
+		if (mod == 'PSI') 
+		{
+			bool weapcheck = false;
+			flags |= DMG_NO_ARMOR;
+			if (weapon is "HandToHand" && CountInv("FistPlayerBlockItem")) 
+			{
+				damage *= frandompick(0.001,0.001,0.01,0.01,0.01,0.01,0.1,0.1);
+				weapcheck = true;
+			}
+			if (weapon is "CricketBat") 
+			{
+				if (CountInv("CricketBatGuard")) damage *= 0.98;
+				else if (CountInv("CricketBatGuard2")) damage *= 0.95;
+				else if (CountInv("CricketBatGuard3")) damage *= 0.91;
+			}
+			if (weapon is "SigilDD") 
+			{
+				damage *= frandompick(0.334,0.334,0.334,0.334,0.334,0.334,0.334,0.334,0.334,0.1667);
+				weapcheck = true;
+			}
+			if (weapon is "WizardPike") 
+			{
+				damage *= frandompick(0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.25);
+				weapcheck = true;
+			}
+			if (weapon is "Grimophone") 
+			{
+				damage *= frandompick(0.667,0.667,0.667,0.667,0.667,0.667,0.667,0.667,0.667,0.334);
+				weapcheck = true;
+			}
+			if (weapon is "SuperVac") 
+			{
+				damage *= frandompick(0.125,0.125,0.125,0.125,0.125,0.125,0.125,0.125,0.125,0.0625);
+				weapcheck = true;
+			}
+			if (weapcheck && damage >= health)
+			{
+				if (player.cheats & CF_BUDDHA) { } else player.cheats |= CF_BUDDHA;
+			}
+		}
 		bool bellefishzap;
 		if (mod == 'Melee' && flags & DMG_EXPLOSION && 
 				(BelleFish(Source) || BelleFish(Inflictor)))
@@ -3467,7 +3516,6 @@ class DDPlayerPawn : PlayerPawn
 		}
 		
 		olddmg = damage;
-		let weapon = player.ReadyWeapon;
 		if (mod == 'Zap' && weapon is "WizardPike")
 		{
 			if (!(ddafd_disablepikegiveszapres && (CountInv("IsDynDuchess") || CountInv("IsAppetite") || CountInv("IsCarnOfSouls") || CountInv("IsWeddingCake"))))
