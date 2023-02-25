@@ -2492,6 +2492,7 @@ class EEEffectProjectile : EEProjectile
 			if (BluntItem) BluntItem.EffectTics += basetime;
 		}
 		player.A_StartSound("debuff/atkdown",sndchannel,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+		if (dydudebug_inflictstatuseffect) Console.Printf("(A_InflictHalve)");
 	}
 	
 	void A_InflictWeaken(int basetime = 35, int sndchannel = 401)
@@ -2509,6 +2510,7 @@ class EEEffectProjectile : EEProjectile
 			if (SapItem) SapItem.EffectTics += basetime;
 		}
 		player.A_StartSound("debuff/defdown",sndchannel,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+		if (dydudebug_inflictstatuseffect) Console.Printf("(A_InflictWeaken)");
 	}
 	
 	void A_InflictSlow(int basetime = 35, int sndchannel = 401)
@@ -2526,26 +2528,38 @@ class EEEffectProjectile : EEProjectile
 			if (SlowItem) SlowItem.EffectTics += basetime;
 		}
 		player.A_StartSound("debuff/spddown",sndchannel,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+		if (dydudebug_inflictstatuseffect) Console.Printf("(A_InflictSlow)");
 	}
 	
 	int A_StatusEffectChecker(int basechance)
 	{
+		if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile [\c[green]%s\c[orange])", GetClassName());
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 
 		user_ailmentmaxchance = basechance;
 		if (master && master == player)
 		{
+			if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- master == player");
 			if (player.CountInv("EWShieldIdleMode") > 0) 
 			{
 				if (player.CountInv("EWShieldDefendMode") > 0)
 				{
-					if (player.CountInv("EWShieldDefendModeExtra") > 0) user_ailmentmaxchance * 20;
-																												 else user_ailmentmaxchance * 12;
+					if (player.CountInv("EWShieldDefendModeExtra") > 0) 
+					{
+						user_ailmentmaxchance *= 20;
+						if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- HWShield [Extra Guarding]");
+					}
+					else 
+					{
+						user_ailmentmaxchance *= 12;
+						if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- HWShield [Guarding]");
+					}
 				}
 				else
 				{
-					user_ailmentmaxchance * 4;
+					user_ailmentmaxchance *= 4;
+					if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- HWShield [Equipped but Idle]");
 				}
 			}
 		}
@@ -2553,29 +2567,38 @@ class EEEffectProjectile : EEProjectile
 		user_canafflict = 1;
 		if (master)
 		{
-			if (master.health <= 0) user_canafflict = 0;
+			if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- Health Check");
+			if (master.health <= 0) 
+			{
+				user_canafflict = 0;
+				if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- Health Is < 0");
+			}
 
 			if (master.CountInv("EvadeAnAttack") > 0 || 
 					master.CountInv("PlayerDashing") > 0) 
 					{
 						user_canafflict = 0;
+						if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- Evaded/Dashing");
 					}
 		}
 
 		DDPlayerPawn playpawn;
 		if (master)
 		{
+			if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- Invuln Check");
 			playpawn = DDPlayerPawn(master);
 			if (playpawn)
 			{
 				if (playpawn.player.cheats & CF_GODMODE2 || playpawn.player.cheats & CF_GODMODE || playpawn.bINVULNERABLE) user_canafflict = 0;
+				if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- Invuln Check [found player]: %d", user_canafflict);
 			}
 			else
 			{
 				if (master.bINVULNERABLE) user_canafflict = 0;
+				if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- Invuln Check [found non-player]: %d", user_canafflict);
 			}
 		}
-		if (dydudebug_projectilespawns || dydudebug_projectilecollisions) Console.Printf("user_ailmentmaxchance: %d (%d), user_canafflict: %d", user_ailmentmaxchance, basechance, user_canafflict);
+		if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectProjectile - A_StatusEffectChecker:)\c- user_ailmentmaxchance: %d (basechance: %d), user_canafflict: %d", user_ailmentmaxchance, basechance, user_canafflict);
 		return user_ailmentmaxchance;
 	}
 }
@@ -2890,25 +2913,35 @@ class EEEffectFastProjectile : EEFastProjectile
 		+HITMASTER;
 	}
 	
-	
 	int A_StatusEffectChecker(int basechance)
 	{
+		if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile [\c[green]%s\c[orange])", GetClassName());
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 
 		user_ailmentmaxchance = basechance;
 		if (master && master == player)
 		{
+			if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- master == player");
 			if (player.CountInv("EWShieldIdleMode") > 0) 
 			{
 				if (player.CountInv("EWShieldDefendMode") > 0)
 				{
-					if (player.CountInv("EWShieldDefendModeExtra") > 0) user_ailmentmaxchance * 20;
-																												 else user_ailmentmaxchance * 12;
+					if (player.CountInv("EWShieldDefendModeExtra") > 0) 
+					{
+						user_ailmentmaxchance *= 20;
+						if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- HWShield [Extra Guarding]");
+					}
+					else 
+					{
+						user_ailmentmaxchance *= 12;
+						if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- HWShield [Guarding]");
+					}
 				}
 				else
 				{
-					user_ailmentmaxchance * 4;
+					user_ailmentmaxchance *= 4;
+					if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- HWShield [Equipped but Idle]");
 				}
 			}
 		}
@@ -2916,29 +2949,38 @@ class EEEffectFastProjectile : EEFastProjectile
 		user_canafflict = 1;
 		if (master)
 		{
-			if (master.health <= 0) user_canafflict = 0;
+			if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- Health Check");
+			if (master.health <= 0) 
+			{
+				user_canafflict = 0;
+				if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- Health Is < 0");
+			}
 
 			if (master.CountInv("EvadeAnAttack") > 0 || 
 					master.CountInv("PlayerDashing") > 0) 
 					{
 						user_canafflict = 0;
+						if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- Evaded/Dashing");
 					}
 		}
 
 		DDPlayerPawn playpawn;
 		if (master)
 		{
+			if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- Invuln Check");
 			playpawn = DDPlayerPawn(master);
 			if (playpawn)
 			{
 				if (playpawn.player.cheats & CF_GODMODE2 || playpawn.player.cheats & CF_GODMODE || playpawn.bINVULNERABLE) user_canafflict = 0;
+				if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- Invuln Check [found player]: %d", user_canafflict);
 			}
 			else
 			{
 				if (master.bINVULNERABLE) user_canafflict = 0;
+				if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- Invuln Check [found non-player]: %d", user_canafflict);
 			}
 		}
-		if (dydudebug_projectilespawns || dydudebug_projectilecollisions) Console.Printf("user_ailmentmaxchance: %d (%d), user_canafflict: %d", user_ailmentmaxchance, basechance, user_canafflict);
+		if (dydudebug_inflictstatuseffect) Console.Printf("\c[orange](EEEffectFastProjectile - A_StatusEffectChecker:)\c- user_ailmentmaxchance: %d (basechance: %d), user_canafflict: %d", user_ailmentmaxchance, basechance, user_canafflict);
 		return user_ailmentmaxchance;
 	}
 }
