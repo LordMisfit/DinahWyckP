@@ -2158,6 +2158,7 @@ class DD_EventHandler : EventHandler
 			if (dydudebug_hitsounds) Console.Printf("hitsounds (WorldThingDamaged check)");
 			actor player = players[0].mo;
 			let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+			let globalvars = DDGlobalVariables.Get();
 			int blundebuff = 0;
 			int scramblerdebuff = 0;
 			actor victim = e.Thing;
@@ -2183,8 +2184,7 @@ class DD_EventHandler : EventHandler
 				debugmsg.AppendFormat(", damage: %d, damagetype: %s, flags: %d", dmg, mod, flags);
 				Console.Printf(debugmsg);
 			}
-
-			let globalvars = DDGlobalVariables.Get();
+			
 			if (MiscItem) 
 			{
 				PLuck = MiscItem.PlayerLUCK;
@@ -2241,7 +2241,7 @@ class DD_EventHandler : EventHandler
 					nm = "Skeleton"; if (victim.GetClassName() == nm) specialtype += 8;
 				}
 				if (dydudebug_worlddamaged) Console.Printf("[%s] SpecialType [WorldDamaged]: %d", vict, specialtype);
-
+				
 				/*
 				// Ally Check
 				actor IsRebel;
@@ -2358,7 +2358,7 @@ class DD_EventHandler : EventHandler
 								}
 							}
 						}
-
+						
 						if (!victim.bINVULNERABLE || !practicetarget || !isCCardsIllusion)
 						{
 							// Scrambler = Inflicts confusion/fear on enemies occasionally, causing hestitation in combat
@@ -2783,7 +2783,7 @@ class DD_EventHandler : EventHandler
 						}
 					}
 				}
-
+				
 				bool playdthsounds = false;
 				if (vict != "PracticeTarget" || vict != "PracticeTarget2" || vict != "BowlingPin" || vict != "OldPipe") playdthsounds = true;
 				if (EEProp(victim)) playdthsounds = false;
@@ -3359,6 +3359,7 @@ class DD_EventHandler : EventHandler
 				basedropdiv *= skillmult;
 				if (A_CheckDDGame()) basechance *= 16;
 				luckbase = 0.25 + (monsterrating * 0.0625);
+				if (PLuck) basedropdiv -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 				if (IPAttack) 
 				{
 					basedropdiv *= baseIPBaseChanceMul;
@@ -3373,6 +3374,7 @@ class DD_EventHandler : EventHandler
 				basedropdiv *= skillmult;
 				if (A_CheckDDGame()) basechance *= 16;
 				luckbase = 0.25 + (monsterrating * 0.0625);
+				if (PLuck) basedropdiv -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 				if (IPAttack) 
 				{
 					basedropdiv *= baseIPBaseChanceMul;
@@ -3596,6 +3598,7 @@ class DD_EventHandler : EventHandler
 				basedropdiv *= skillmult;
 				if (A_CheckDDGame()) basechance *= 16;
 				luckbase = 0.25 + (monsterrating * 0.0625);
+				if (PLuck) basedropdiv -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 				if (IPAttack) 
 				{
 					basedropdiv *= baseIPBaseChanceMul;
@@ -3728,11 +3731,11 @@ class DD_EventHandler : EventHandler
 									droptype = "ItemSatchel";
 									if (random(1,32) <= 1) droptype = "MegaSatchel";
 								}
+								double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+								double raredropsndvol = frandom(1.75,2.25);
+								int raredropsndchannel = randompick(191,192,222,223,264,265);
+								victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
 							}
-							double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
-							double raredropsndvol = frandom(1.75,2.25);
-							int raredropsndchannel = randompick(191,192,222,223,264,265);
-							victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
 						}
 						if (user_type == 4) 
 						{
@@ -4311,7 +4314,6 @@ class DD_EventHandler : EventHandler
 						}
 					}
 				}
-
 				
 				if (MiscItem && MiscItem.IsDDTrilogy) tearolls = (randompick(0,0,0,0,0,0,1,1) + (TruePlayerLevel * 0.0078125));
 																				 else tearolls = (randompick(0,0,0,1,1,1,1,2) + (TruePlayerLevel * 0.03125));
@@ -4394,7 +4396,7 @@ class DD_EventHandler : EventHandler
 					if (random(1,512) <= 1) victim.A_SpawnItemEx("CupOfRageSpawner",frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
 				}
 			}
-
+			
 			// Random Inventory Item Drops
 			droptimes = 1;
 			if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
