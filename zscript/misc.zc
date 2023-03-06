@@ -16,6 +16,10 @@ class PlayerStatItem : Inventory
 	double ArmorML;
 	double ArmorM;
 	
+	double MercyFlickerAlpha;
+	int InvisPulseTimer;
+	int DashTics;
+	
 	int candleshotcooldown;
 	int candleshotmaxcooldown;
 	
@@ -684,6 +688,7 @@ class PlayerStatItem : Inventory
 					}
 				}
 				if (dydudebug_airmeter) Console.Printf("CanTalkUnderwater %d", CanTalkUnderwater);
+				DashTics = owner.CountInv("DashTics");
 				
 				// DD Trilogy Game Control
 				DDTrilogyGameControl();
@@ -966,34 +971,7 @@ class PlayerStatItem : Inventory
 				//***************
 				//* Land Damage *
 				//***************
-				landdmgbonus = 0;
-				if (dydudebug_landdamage && owner.vel.z) Console.Printf("    \ceLanding Damage (ZVel: %.8f, OnGround: %d, WaterLevel: %d)", owner.vel.z, owner.player.onground, owner.waterlevel);
-				if (owner.waterlevel <= 0 && !owner.player.onground)
-				{
-					if (owner.vel.z < -162.0)
-					{
-						landdmgbonus = 4;
-						if (dydudebug_landdamage) Console.Printf("    \ceLanding Damage [Lvl 4 - 13.9453125x Melee Dmg]");
-					}
-					else
-					if (owner.vel.z < -54.0)
-					{
-						landdmgbonus = 3;
-						if (dydudebug_landdamage) Console.Printf("    \ceLanding Damage [Lvl 3 - 6.5625x Melee Dmg]");
-					}
-					else
-					if (owner.vel.z < -18.0)
-					{
-						landdmgbonus = 2;
-						if (dydudebug_landdamage) Console.Printf("    \ceLanding Damage [Lvl 2 - 3.5x Melee Dmg]");
-					}
-					else
-					if (owner.vel.z < -6.0)
-					{
-						landdmgbonus = 1;
-						if (dydudebug_landdamage) Console.Printf("    \ceLanding Damage [Lvl 1 - 2x Melee Dmg]");
-					}
-				}
+				LandDamageStuff();
 				
 				//*******************
 				//* Set Max HP Item *
@@ -1009,7 +987,6 @@ class PlayerStatItem : Inventory
 				//*********************
 				//* Grimophone Debuff *
 				//*********************
-				int DashTics = owner.CountInv("DashTics");
 				int gdebuffbase = 90;
 				if (!owner.CountInv("INTERMAPChecker"))
 				{
@@ -1085,123 +1062,12 @@ class PlayerStatItem : Inventory
 				//*************************
 				//* Mercy Invulnerability *
 				//*************************
-				double MercyFlickerAlpha = 1.0;
-				if (!owner.CountInv("INTERMAPChecker"))
-				{
-					if (MercyInvulnOn)
-					{
-						if (MercyInvulnTimer > 0)
-						{
-							if (!(owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")))
-							{
-								owner.player.cheats |= CF_GODMODE;
-								owner.bINVULNERABLE = 1;
-							}
-							MercyInvulnMod = MercyInvulnTimer % 120;
-							if (MercyInvulnMod >= 0 && MercyInvulnMod <= 14) MercyFlickerAlpha = 0.25;
-							if (MercyInvulnMod >= 15 && MercyInvulnMod <= 29) MercyFlickerAlpha = 0.3125;
-							if (MercyInvulnMod >= 30 && MercyInvulnMod <= 44) MercyFlickerAlpha = 0.375;
-							if (MercyInvulnMod >= 45 && MercyInvulnMod <= 59) MercyFlickerAlpha = 0.4375;
-							if (MercyInvulnMod >= 60 && MercyInvulnMod <= 74) MercyFlickerAlpha = 0.5;
-							if (MercyInvulnMod >= 75 && MercyInvulnMod <= 89) MercyFlickerAlpha = 0.4375;
-							if (MercyInvulnMod >= 90 && MercyInvulnMod <= 104) MercyFlickerAlpha = 0.375;
-							if (MercyInvulnMod >= 105 && MercyInvulnMod <= 119) MercyFlickerAlpha = 0.3125;
-							if (dydudebug_mercyinvulndisplays) Console.Printf("MercyFlickerAlpha: %.8f, MercyInvulnMod [Timer]: %d [%d]", MercyFlickerAlpha, owner.GetRenderStyle(), MercyInvulnMod, MercyInvulnTimer);
-							MercyInvulnTimer -= 20;
-						}
-						else // Timer at zero
-						{
-							if (!(owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")))
-							{
-								owner.player.cheats &= ~CF_GODMODE;
-								owner.bINVULNERABLE = 0;
-							}
-							MercyInvulnTimer = MercyInvulnMod = 0;
-							MercyInvulnOn = false;
-						}
-					}
-					else
-					{
-						if (!(owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")))
-						{
-							owner.player.cheats &= ~CF_GODMODE;
-							owner.bINVULNERABLE = 0;
-						}
-					}
-					if (dydudebug_mercyinvulndisplays) Console.Printf("MercyInvuln: %d {%d} [%d]", MercyInvulnOn, MercyInvulnMod, MercyInvulnTimer);
-				}
+				MercyInvulnStuff();
 				
 				//**************************************************
 				//* RenderStyle Stuff [Dashing, Invisibility, etc] *
 				//**************************************************
-				int InvisPulseTimer = level.totaltime % 40;
-				double InvisPulseAlpha = 1.00;
-				double DashAlpha = 1.00;
-
-				int InvisibilityTimer;
-				if (!owner.CountInv("INTERMAPChecker"))
-				{
-					let MiscItem = PowerGhost(owner.FindInventory("PowerGhost",true));
-					let MiscItem2 = PowerInvisibility(owner.FindInventory("PowerInvisibility",true));
-					if (MiscItem || MiscItem2)
-					{
-						if (MiscItem) InvisibilityTimer = MiscItem.EffectTics;
-						else if (MiscItem2) InvisibilityTimer = MiscItem2.EffectTics;
-						//Console.Printf("InvisibilityTimer: %d", InvisibilityTimer);
-						if (InvisibilityTimer > 0)
-						{
-							if (InvisPulseTimer == 0 || InvisPulseTimer == 20 || InvisPulseTimer == 40) InvisPulseAlpha = 0.20;
-							if (InvisPulseTimer == 1 || InvisPulseTimer == 19) InvisPulseAlpha = 0.205;
-							if (InvisPulseTimer == 2 || InvisPulseTimer == 18) InvisPulseAlpha = 0.21;
-							if (InvisPulseTimer == 3 || InvisPulseTimer == 17) InvisPulseAlpha = 0.215;
-							if (InvisPulseTimer == 4 || InvisPulseTimer == 16) InvisPulseAlpha = 0.22;
-							if (InvisPulseTimer == 5 || InvisPulseTimer == 15) InvisPulseAlpha = 0.225;
-							if (InvisPulseTimer == 6 || InvisPulseTimer == 14) InvisPulseAlpha = 0.23;
-							if (InvisPulseTimer == 7 || InvisPulseTimer == 13) InvisPulseAlpha = 0.235;
-							if (InvisPulseTimer == 8 || InvisPulseTimer == 12) InvisPulseAlpha = 0.24;
-							if (InvisPulseTimer == 9 || InvisPulseTimer == 11) InvisPulseAlpha = 0.245;
-							if (InvisPulseTimer == 10) InvisPulseAlpha = 0.25;
-							if (InvisPulseTimer == 21 || InvisPulseTimer == 39) InvisPulseAlpha = 0.195;
-							if (InvisPulseTimer == 22 || InvisPulseTimer == 38) InvisPulseAlpha = 0.19;
-							if (InvisPulseTimer == 23 || InvisPulseTimer == 37) InvisPulseAlpha = 0.185;
-							if (InvisPulseTimer == 24 || InvisPulseTimer == 36) InvisPulseAlpha = 0.18;
-							if (InvisPulseTimer == 25 || InvisPulseTimer == 35) InvisPulseAlpha = 0.175;
-							if (InvisPulseTimer == 26 || InvisPulseTimer == 34) InvisPulseAlpha = 0.17;
-							if (InvisPulseTimer == 27 || InvisPulseTimer == 33) InvisPulseAlpha = 0.165;
-							if (InvisPulseTimer == 28 || InvisPulseTimer == 32) InvisPulseAlpha = 0.16;
-							if (InvisPulseTimer == 29 || InvisPulseTimer == 31) InvisPulseAlpha = 0.155;
-							if (InvisPulseTimer == 30) InvisPulseAlpha = 0.15;
-						}
-
-						if (DashTics)
-						{
-							if (random(1,128) <= (68 + (ActualLevel * frandom(2.75,4.25)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
-						}
-						else
-						{
-							if (random(1,128) <= (64 + (ActualLevel * frandom(0.75,1.25)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
-						}
-					}
-					else
-					{
-						if (DashTics)
-						{
-							if (random(1,128) <= (4 + (ActualLevel * frandom(2,3)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
-						}
-						else
-						{
-							Owner.bCANTSEEK = false;
-						}
-					}
-
-					if (DashTics)
-					{
-						if (level.time % 4 <= 1) DashAlpha = frandompick(0.375,0.5,0.625);
-																else DashAlpha = frandompick(0.625,0.75,0.875);
-					}
-					if (DashTics) owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha*MercyFlickerAlpha),STYLE_Add);
-									 else owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha*MercyFlickerAlpha),STYLE_Translucent);
-				}
+				RenderStyleStuff();
 				
 				// Track Doorbell Uses [Normal use, not IP]
 				if (!(A_CheckDDGame()))
@@ -1280,12 +1146,46 @@ class PlayerStatItem : Inventory
 		return false;
 	}
 	
+	void LandDamageStuff()
+	{
+		let globalvars = DDGlobalVariables.Get();
+		let playeractor = DDPlayerPawn(owner);
+		
+		landdmgbonus = 0;
+		if (dydudebug_landdamage && owner.vel.z) Console.Printf("    \ceLanding Damage (ZVel: %.8f, OnGround: %d, WaterLevel: %d)", owner.vel.z, owner.player.onground, owner.waterlevel);
+		if (owner.waterlevel <= 0 && !owner.player.onground)
+		{
+			if (owner.vel.z < -162.0)
+			{
+				landdmgbonus = 4;
+				if (dydudebug_landdamage) Console.Printf("    \ceLanding Damage [Lvl 4 - 13.9453125x Melee Dmg]");
+			}
+			else
+			if (owner.vel.z < -54.0)
+			{
+				landdmgbonus = 3;
+				if (dydudebug_landdamage) Console.Printf("    \ceLanding Damage [Lvl 3 - 6.5625x Melee Dmg]");
+			}
+			else
+			if (owner.vel.z < -18.0)
+			{
+				landdmgbonus = 2;
+				if (dydudebug_landdamage) Console.Printf("    \ceLanding Damage [Lvl 2 - 3.5x Melee Dmg]");
+			}
+			else
+			if (owner.vel.z < -6.0)
+			{
+				landdmgbonus = 1;
+				if (dydudebug_landdamage) Console.Printf("    \ceLanding Damage [Lvl 1 - 2x Melee Dmg]");
+			}
+		}
+	}
 	
 	void LevelUpProcess(int type)
 	{
 		let globalvars = DDGlobalVariables.Get();
 		let playeractor = DDPlayerPawn(owner);
-
+		
 		int levelmodulo, levelbonustype;
 		levelmodulo = PlayerLevel % 20;
 		if (levelmodulo == 0) levelbonustype = 0;
@@ -2362,6 +2262,130 @@ class PlayerStatItem : Inventory
 													else owner.A_SetInventory("CricketBatSwingDEF",1);
 				if (dydudebug_cricketbatguard) Console.Printf("timer: %d", CricketBatSwingBuffTimer);
 			}
+		}
+	}
+	
+	void RenderStyleStuff()
+	{
+		let playeractor = DDPlayerPawn(owner);
+		InvisPulseTimer = level.totaltime % 40;
+		double InvisPulseAlpha = 1.00;
+		double DashAlpha = 1.00;
+
+		int InvisibilityTimer;
+		if (!owner.CountInv("INTERMAPChecker"))
+		{
+			let MiscItem = PowerGhost(owner.FindInventory("PowerGhost",true));
+			let MiscItem2 = PowerInvisibility(owner.FindInventory("PowerInvisibility",true));
+			if (MiscItem || MiscItem2)
+			{
+				if (MiscItem) InvisibilityTimer = MiscItem.EffectTics;
+				else if (MiscItem2) InvisibilityTimer = MiscItem2.EffectTics;
+				//Console.Printf("InvisibilityTimer: %d", InvisibilityTimer);
+				if (InvisibilityTimer > 0)
+				{
+					if (InvisPulseTimer == 0 || InvisPulseTimer == 20 || InvisPulseTimer == 40) InvisPulseAlpha = 0.20;
+					if (InvisPulseTimer == 1 || InvisPulseTimer == 19) InvisPulseAlpha = 0.205;
+					if (InvisPulseTimer == 2 || InvisPulseTimer == 18) InvisPulseAlpha = 0.21;
+					if (InvisPulseTimer == 3 || InvisPulseTimer == 17) InvisPulseAlpha = 0.215;
+					if (InvisPulseTimer == 4 || InvisPulseTimer == 16) InvisPulseAlpha = 0.22;
+					if (InvisPulseTimer == 5 || InvisPulseTimer == 15) InvisPulseAlpha = 0.225;
+					if (InvisPulseTimer == 6 || InvisPulseTimer == 14) InvisPulseAlpha = 0.23;
+					if (InvisPulseTimer == 7 || InvisPulseTimer == 13) InvisPulseAlpha = 0.235;
+					if (InvisPulseTimer == 8 || InvisPulseTimer == 12) InvisPulseAlpha = 0.24;
+					if (InvisPulseTimer == 9 || InvisPulseTimer == 11) InvisPulseAlpha = 0.245;
+					if (InvisPulseTimer == 10) InvisPulseAlpha = 0.25;
+					if (InvisPulseTimer == 21 || InvisPulseTimer == 39) InvisPulseAlpha = 0.195;
+					if (InvisPulseTimer == 22 || InvisPulseTimer == 38) InvisPulseAlpha = 0.19;
+					if (InvisPulseTimer == 23 || InvisPulseTimer == 37) InvisPulseAlpha = 0.185;
+					if (InvisPulseTimer == 24 || InvisPulseTimer == 36) InvisPulseAlpha = 0.18;
+					if (InvisPulseTimer == 25 || InvisPulseTimer == 35) InvisPulseAlpha = 0.175;
+					if (InvisPulseTimer == 26 || InvisPulseTimer == 34) InvisPulseAlpha = 0.17;
+					if (InvisPulseTimer == 27 || InvisPulseTimer == 33) InvisPulseAlpha = 0.165;
+					if (InvisPulseTimer == 28 || InvisPulseTimer == 32) InvisPulseAlpha = 0.16;
+					if (InvisPulseTimer == 29 || InvisPulseTimer == 31) InvisPulseAlpha = 0.155;
+					if (InvisPulseTimer == 30) InvisPulseAlpha = 0.15;
+				}
+
+				if (DashTics)
+				{
+					if (random(1,128) <= (68 + (ActualLevel * frandom(2.75,4.25)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
+				}
+				else
+				{
+					if (random(1,128) <= (64 + (ActualLevel * frandom(0.75,1.25)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
+				}
+			}
+			else
+			{
+				if (DashTics)
+				{
+					if (random(1,128) <= (4 + (ActualLevel * frandom(2,3)))) Owner.bCANTSEEK = true; else Owner.bCANTSEEK = false;
+				}
+				else
+				{
+					Owner.bCANTSEEK = false;
+				}
+			}
+
+			if (DashTics)
+			{
+				if (level.time % 4 <= 1) DashAlpha = frandompick(0.375,0.5,0.625);
+														else DashAlpha = frandompick(0.625,0.75,0.875);
+			}
+			if (DashTics) owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha*MercyFlickerAlpha),STYLE_Add);
+							 else owner.A_SetRenderStyle((DashAlpha*InvisPulseAlpha*MercyFlickerAlpha),STYLE_Translucent);
+		}
+	}
+
+	void MercyInvulnStuff()
+	{
+		let playeractor = DDPlayerPawn(owner);
+		
+		MercyFlickerAlpha = 1.0;
+		if (!owner.CountInv("INTERMAPChecker"))
+		{
+			if (MercyInvulnOn)
+			{
+				if (MercyInvulnTimer > 0)
+				{
+					if (!(owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")))
+					{
+						owner.player.cheats |= CF_GODMODE;
+						owner.bINVULNERABLE = 1;
+					}
+					MercyInvulnMod = MercyInvulnTimer % 120;
+					if (MercyInvulnMod >= 0 && MercyInvulnMod <= 14) MercyFlickerAlpha = 0.25;
+					if (MercyInvulnMod >= 15 && MercyInvulnMod <= 29) MercyFlickerAlpha = 0.3125;
+					if (MercyInvulnMod >= 30 && MercyInvulnMod <= 44) MercyFlickerAlpha = 0.375;
+					if (MercyInvulnMod >= 45 && MercyInvulnMod <= 59) MercyFlickerAlpha = 0.4375;
+					if (MercyInvulnMod >= 60 && MercyInvulnMod <= 74) MercyFlickerAlpha = 0.5;
+					if (MercyInvulnMod >= 75 && MercyInvulnMod <= 89) MercyFlickerAlpha = 0.4375;
+					if (MercyInvulnMod >= 90 && MercyInvulnMod <= 104) MercyFlickerAlpha = 0.375;
+					if (MercyInvulnMod >= 105 && MercyInvulnMod <= 119) MercyFlickerAlpha = 0.3125;
+					if (dydudebug_mercyinvulndisplays) Console.Printf("MercyFlickerAlpha: %.8f, MercyInvulnMod [Timer]: %d [%d]", MercyFlickerAlpha, owner.GetRenderStyle(), MercyInvulnMod, MercyInvulnTimer);
+					MercyInvulnTimer -= 20;
+				}
+				else // Timer at zero
+				{
+					if (!(owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")))
+					{
+						owner.player.cheats &= ~CF_GODMODE;
+						owner.bINVULNERABLE = 0;
+					}
+					MercyInvulnTimer = MercyInvulnMod = 0;
+					MercyInvulnOn = false;
+				}
+			}
+			else
+			{
+				if (!(owner.CountInv("PowerInvulnDD") || owner.CountInv("PowerInvulnerable")))
+				{
+					owner.player.cheats &= ~CF_GODMODE;
+					owner.bINVULNERABLE = 0;
+				}
+			}
+			if (dydudebug_mercyinvulndisplays) Console.Printf("MercyInvuln: %d {%d} [%d]", MercyInvulnOn, MercyInvulnMod, MercyInvulnTimer);
 		}
 	}
 	
