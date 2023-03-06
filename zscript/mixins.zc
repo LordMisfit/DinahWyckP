@@ -1526,6 +1526,8 @@ mixin class DynMusicControl
 						if (ShieldPartBigVisual(dmtarget)) dmtarget = null;
 
 						if (ExplosiveBarrel(dmtarget)) dmtarget = null;
+						if (ExplosiveBarrel2(dmtarget)) dmtarget = null;
+						if (Pod(dmtarget)) dmtarget = null;
 						if (ExplosiveBarrelNew(dmtarget)) dmtarget = null;
 						if (dmtarget && !dmtarget.bISMONSTER) dmtarget = null;
 					}
@@ -1798,7 +1800,7 @@ mixin class MonsterCollider
 			}
 		}
 	}
-
+	
 	// Resurrections
 	override bool CanResurrect(Actor other, bool passive)
 	{
@@ -1994,7 +1996,7 @@ mixin class MonsterCollider
 		
 		return ResSucceed;
 	}
-
+	
 	// Collisions
 	override bool CanCollideWith(Actor other, bool passive)
 	{
@@ -2024,6 +2026,8 @@ mixin class MonsterCollider
 				{
 					if (dydudebug_generalcollisions) Console.Printf("\c[sapphire]Collision: Passive - \c[green]%s\c- [MeleeShieldPart] vs (\c[orange]%s\c-) {gametic: %d}", GetClassName(), other.GetClassName(), gametic);
 					if (ExplosiveBarrel(self)) return false;
+					if (ExplosiveBarrel2(self)) return false;
+					if (Pod(self)) return false;
 					return true;
 				}
 				return false;
@@ -2226,7 +2230,13 @@ mixin class MonsterCollider
 			if (skill == 2) BarrelFactor = 0.5;
 			if (skill == 3) BarrelFactor = 0.25;
 			if (skill >= 4) BarrelFactor = 0.0;
-			if ((ExplosiveBarrel(inflictor) || ExplosiveBarrel(source) || Pod(inflictor) || Pod(source)) && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BarrelFactor * (1.00 - ActorDefenseIgnoreFactor));
+			if ((ExplosiveBarrel(inflictor) || 
+					 ExplosiveBarrel(source) || 
+					 ExplosiveBarrel2(inflictor) || 
+					 ExplosiveBarrel2(source) || 
+					 Pod(inflictor) || 
+					 Pod(source)) && 
+					 flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BarrelFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
 			double CandleFactor = 0.00;
 			if (MiscItem)
@@ -3722,7 +3732,10 @@ mixin class MonsterCollider
 		}
 		if (mod == 'Beats' && flags & DMG_EXPLOSION) flags &= ~DMG_EXPLOSION;
 		
-		if (ExplosiveBarrelNew(self))
+		if (ExplosiveBarrel(self) ||
+				ExplosiveBarrel2(self) ||
+				Pod(self) ||
+				ExplosiveBarrelNew(self))
 		{
 			if (mod == 'Beats' && flags & DMG_EXPLOSION)
 			{
@@ -4183,7 +4196,7 @@ mixin class MonsterCollider
 		
 		bool checkmusic = true;
 		bool domusic = false;
-		if (ExplosiveBarrelNew(self)) checkmusic = false;
+		if (ExplosiveBarrelNew(self) || ExplosiveBarrel(self) || ExplosiveBarrel2(self) || Pod(self)) checkmusic = false;
 		if (ret > 0 && checkmusic)
 		{
 			if (FoundPlayer) 
