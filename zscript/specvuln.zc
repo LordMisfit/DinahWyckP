@@ -3981,6 +3981,10 @@ class CompatVulnItem : PlaceholderItem
 	
 	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
 	{
+		let globalvars = DDGlobalVariables.Get();
+		actor playera = players[0].mo;
+		let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
+		
 		bool surprisehit;
 		if (owner)
 		{
@@ -4053,6 +4057,113 @@ class CompatVulnItem : PlaceholderItem
 						newdamage *= frandompick(1.1667,1.25);
 					}
 					if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("(\c[green]%s\c-) surprisehit: damage: %d (initdmg: %d)", GetClassName(), newdamage, initdmg);
+				}
+				
+				bool criticalhit = false;
+				int CritRoll;
+				int TruePlayerLevel;
+				if (MiscItem)
+				{
+					if (kc_expgains) TruePlayerLevel = MiscItem.PlayerLevel;
+				}
+				if (FoundPlayer) 
+				{
+					if (FoundPlayer.CountInv("DealCriticalHit")) 
+					{
+						criticalhit = true;
+						if (owner.bBOSS && random(1,4) >= 2) 
+						{
+							criticalhit = false;
+							if (source == FoundPlayer || inflictor == FoundPlayer)
+							{
+								If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 0)
+								{
+									if (!criticalhit && random(1,16) <= 15) criticalhit = true;
+								}
+							}
+						}
+					}
+					else
+					{
+						If (MiscItem)
+						{
+							CritRoll = MiscItem.CritRoll;
+							if (MiscItem.CritRoll <= 1) 
+							{
+								criticalhit = true;
+								if (owner.bBOSS && random(1,4) >= 2) 
+								{
+									criticalhit = false;
+									if (source == FoundPlayer || inflictor == FoundPlayer)
+									{
+										If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 0)
+										{
+											if (!criticalhit && random(1,16) <= 15) criticalhit = true;
+										}
+									}
+								}
+							}
+						}
+					}
+					if (kcdebug_actordmgdisplays && MiscItem) Console.Printf("DamageMobj [SpecVuln] (\c[green]%s\c-): Critbase: %d / %d", GetClassName(), MiscItem.CritChance, CritRoll);
+					if (FoundPlayer.CountInv("CheatCrit") || FoundPlayer.CountInv("CheatCritUltimate")) criticalhit = true;
+				}
+				
+				int initdmg = newdamage;
+				if (kcdebug_actordmgdisplays) Console.Printf("DamageMobj [SpecVuln] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, newdamage, damageType);
+				double critdmgmulti = 2.0 + (0.01 * random(-10,10));
+				if (criticalhit && !owner.bINVULNERABLE)
+				{
+					int crittype = 1;
+					if (!(ExplosiveBarrel(owner) ||
+								ExplosiveBarrel2(owner) ||
+								//ExplosiveBarrelNew(owner) ||
+								Pod(self)))
+					{
+						owner.A_SetInventory("TookCriticalHit",1);
+						if (source == FoundPlayer || inflictor == FoundPlayer)
+						{
+							bool supercrit = false;
+							If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 1)
+							{
+								MiscItem.MortalBlowCritBoostTimer = randompick(0,1,1,1,1,1,1,1,1,2);
+								supercrit = true;
+							}
+							else
+							if (FoundPlayer.CountInv("CheatCritUltimate")) supercrit = true;
+							
+							if (supercrit)
+							{
+								critdmgmulti *= (2.5 + (0.0125 * random(-10,10)));
+								owner.A_StartSound("misc/critsnd2", 216, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.625,0.9375));
+								owner.A_StartSound("misc/critsnd2", 217, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.9375,1.0625));
+								crittype = 2;
+							}
+						}
+						newdamage *= critdmgmulti;
+						if (kcdebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critical Hit Dealth: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, newdamage, damagefactor);
+						owner.A_StartSound("misc/critsnd2", 218, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, 1.0);
+		
+						double heightmult = frandompick(0.9375,1.0,1.0625,1.125,1.125,1.25,1.25,1.25,1.25,1.25);
+						actor SMASH;
+						bool success;
+						[success, SMASH] = owner.A_SpawnItemEx("SMAAAASH",0.0,0.0,(owner.height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
+						if (success && SMASH)
+						{
+							SMAAAASH SMASH2;
+							SMASH2 = SMAAAASH(SMASH);
+							if (SMASH2)
+							{
+								double scalebase = frandom(0.875,1.125);
+								if (crittype >= 2) scalebase = frandom(1.25,1.50);
+								SMASH2.scale.x = (scalebase * owner.scale.x);
+								SMASH2.scale.y = (scalebase * owner.scale.y);
+								if (SMASH2.target != owner) SMASH2.target = owner;
+								if (SMASH2.height < (height * heightmult)) SMASH2.height = (height * heightmult);
+								SMASH2.initheight = (height * heightmult);
+							}
+						}
+					}
 				}
 				
 				if (inflictor)
