@@ -2926,61 +2926,68 @@ class DDPlayerPawn : PlayerPawn
 			}
 		}
 		
-		if (CountInv("EvadeAnAttack") && !flags & DMG_NO_DODGE)
+		if (CountInv("EvadeAnAttack"))
 		{
-			if (EggShot(inflictor) ||
-			    EggGrenade(inflictor) ||
-			    EggMini(inflictor))
+			if (flags & DMG_NO_DODGE)
 			{
-				if (dydudebug_playerdamagemobj) Console.Printf("Evasion (Eggs) - no damage");
-				return 0;
-			}
-			else 
-			if (isbarrierbeam) 
-			{
-				flags |= DMG_NO_DODGE;
-				A_SetInventory("EvadeAnAttack",0);
+				if (dydudebug_playerdamagemobj) Console.Printf("Evasion - DMG_NO_DODGE");
 			}
 			else
 			{
-				if (!(((source == null && inflictor == null) &&
-						(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'IceWater' || mod == 'Crush' || mod == 'Drowning' || mod == 'SigilDrain' || mod == 'Falling')) || mod == 'SigilDrain'))
+				if (EggShot(inflictor) ||
+						EggGrenade(inflictor) ||
+						EggMini(inflictor))
 				{
-					A_StartSound("player/dodge",305,CHANF_OVERLAP|CHANF_LOCAL,frandom(0.75,1.25),ATTN_NORM,frandom(0.75,1.25));
-					if (exex_playerdmglog)
-					{
-						if (mod == 'NONE') mod = 'Typeless';
-						string combatlogmsg = "\c[sapphire]*\c- Dodged";
-						if (source) // Has a source
-						{
-							combatlogmsg.AppendFormat(" \c[purple]%s\c-", source.GetTag());
-							if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[purple]'s\c- \c[brick]%s\c-", inflictor.GetTag());
-						}
-						else
-						if (inflictor) // No source, but has an inflictor
-						{
-							combatlogmsg.AppendFormat(" \c[brick]%s!", inflictor.GetTag());
-						}
-						else // If no source OR inflictor
-						{
-							if (mod == 'Slime') combatlogmsg.AppendFormat(" a damaging surface");
-							else if (mod == 'Lava' || mod == 'Magma' || mod == 'IceWater') combatlogmsg.AppendFormat(" a damaging surface");
-							else if (mod == 'Crush') combatlogmsg.AppendFormat(" a crushing ceiling");
-							combatlogmsg.AppendFormat("!");
-						}
-						combatlogmsg.AppendFormat(" [%s]", mod);
-						if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-");
-						if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
-						Console.Printf(combatlogmsg);
-					}
-					if (dydudebug_playerdamagemobj) Console.Printf("Evasion - no damage");
+					if (dydudebug_playerdamagemobj) Console.Printf("Evasion (Eggs) - no damage");
 					return 0;
+				}
+				else 
+				if (isbarrierbeam) 
+				{
+					flags |= DMG_NO_DODGE;
+					A_SetInventory("EvadeAnAttack",0);
 				}
 				else
 				{
-					int prevdmg = damage;
-					damage *= (frandompick(0.2,0.2,0.2,0.25,0.25,0.25,0.25,0.25,0.25,0.334) * randompick(1,1,1,2,2,2,2,2,2,3));
-					if (damage > prevdmg) damage = prevdmg;
+					if (!(((source == null && inflictor == null) &&
+							(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'IceWater' || mod == 'Crush' || mod == 'Drowning' || mod == 'SigilDrain' || mod == 'Falling')) || mod == 'SigilDrain'))
+					{
+						A_StartSound("player/dodge",305,CHANF_OVERLAP|CHANF_LOCAL,frandom(0.75,1.25),ATTN_NORM,frandom(0.75,1.25));
+						if (exex_playerdmglog)
+						{
+							if (mod == 'NONE') mod = 'Typeless';
+							string combatlogmsg = "\c[sapphire]*\c- Dodged";
+							if (source) // Has a source
+							{
+								combatlogmsg.AppendFormat(" \c[purple]%s\c-", source.GetTag());
+								if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[purple]'s\c- \c[brick]%s\c-", inflictor.GetTag());
+							}
+							else
+							if (inflictor) // No source, but has an inflictor
+							{
+								combatlogmsg.AppendFormat(" \c[brick]%s!", inflictor.GetTag());
+							}
+							else // If no source OR inflictor
+							{
+								if (mod == 'Slime') combatlogmsg.AppendFormat(" a damaging surface");
+								else if (mod == 'Lava' || mod == 'Magma' || mod == 'IceWater') combatlogmsg.AppendFormat(" a damaging surface");
+								else if (mod == 'Crush') combatlogmsg.AppendFormat(" a crushing ceiling");
+								combatlogmsg.AppendFormat("!");
+							}
+							combatlogmsg.AppendFormat(" [%s]", mod);
+							if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-");
+							if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
+							Console.Printf(combatlogmsg);
+						}
+						if (dydudebug_playerdamagemobj) Console.Printf("Evasion - no damage");
+						return 0;
+					}
+					else
+					{
+						int prevdmg = damage;
+						damage *= (frandompick(0.2,0.2,0.2,0.25,0.25,0.25,0.25,0.25,0.25,0.334) * randompick(1,1,1,2,2,2,2,2,2,3));
+						if (damage > prevdmg) damage = prevdmg;
+					}
 				}
 			}
 		}
@@ -3559,7 +3566,11 @@ class DDPlayerPawn : PlayerPawn
 		// Armor/Defense Checks
 		int basearmorflat;
 		int basearmormax = 1;
-		if (!flags & DMG_IGNOREDEF)
+		if (flags & DMG_IGNOREDEF)
+		{
+			if (dydudebug_playerdamagemobj) Console.Printf("useflatdefense: DMG_IGNOREDEF");
+		}
+		else
 		{
 			if (MiscItem)
 			{
@@ -3800,7 +3811,11 @@ class DDPlayerPawn : PlayerPawn
 		if (dydudebug_playerdamagemobj) Console.Printf("damage [pre-ssa]: %d", damage);
 		if (mod != 'SigilDrain') 
 		{
-			if (!flags & DMG_NO_SARMOR)
+			if (flags & DMG_NO_SARMOR)
+			{
+				if (dydudebug_playerdamagemobj) Console.Printf("damage [post-ssa]: DMG_NO_SARMOR");
+			}
+			else
 			{
 				double ssa = 1.00;
 				if (mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || mod == 'IceWater')
