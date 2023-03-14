@@ -1003,13 +1003,9 @@ class DDWeapon : Weapon
 
 		return MeleeDestroyProjectiles;
 	}
-
-	// Used to Create Multiple "Shields" for Punches/Melee
-	action void A_MeleeShieldPiece(string attackname = "", int spawnheight = 32, int spawndistance = 0)
+	
+	action void A_MeleeSetUpAttach(actor mo, double xpos, double ypos, double zpos)
 	{
-		bool spawned;
-		actor mo;
-		[spawned, mo] = A_SpawnItemEx(attackname, cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
 		if (mo)
 		{
 			if (dydudebug_showvisibleshieldparts) Console.Printf("[mo]: %s", mo.GetClassName());
@@ -1019,14 +1015,23 @@ class DDWeapon : Weapon
 			{
 				actor playera = players[0].mo;
 				if (dydudebug_showvisibleshieldparts) Console.Printf("[SHmo]: %s", SHmo.GetClassName());
-				SHmo.attachx = (cos(-pitch) * spawndistance);
-				SHmo.attachy = 0;
-				SHmo.attachz = (spawnheight + (sin(-pitch) * spawndistance));
+				SHmo.attachx = xpos;
+				SHmo.attachy = ypos;
+				SHmo.attachz = zpos;
 				SHmo.shieldee = playera;
 				SHmo.target = playera;
 				if (dydudebug_showvisibleshieldparts) Console.Printf("attachx: %.2f, attachy: %.2f, attachz: %.2f, shieldee: %s", SHmo.attachx, SHmo.attachy, SHmo.attachz, SHmo.shieldee.GetClassName());
 			}
 		}
+	}
+	
+	// Used to Create Multiple "Shields" for Punches/Melee
+	action void A_MeleeShieldPiece(string attackname = "", int spawnheight = 32, int spawndistance = 0)
+	{
+		bool spawned;
+		actor mo;
+		[spawned, mo] = A_SpawnItemEx(attackname, cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+		if (mo) A_MeleeSetUpAttach(mo, cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance));
 	}
 
 	action void A_CheckIPState1()
