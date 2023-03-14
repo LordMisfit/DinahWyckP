@@ -5179,7 +5179,7 @@ class EECreature : EEBaseZSC abstract
 		return MeleeDestroyProjectiles;
 	}
 	
-	action void A_MeleeSetUpAttach(actor mo, double xpos, double ypos, double zpos)
+	action void A_MeleeSetUpAttach(actor mo, double xpos = 0.0, double ypos = 0.0, double zpos = 0.0, double ang = 0.0, double ptc = 0.0)
 	{
 		if (mo)
 		{
@@ -5193,6 +5193,8 @@ class EECreature : EEBaseZSC abstract
 				SHmo.attachx = xpos;
 				SHmo.attachy = ypos;
 				SHmo.attachz = zpos;
+				SHmo.attachang = ang;
+				SHmo.attachptc = ptc;
 				SHmo.shieldee = self;
 				SHmo.target = self;
 				if (dydudebug_showvisibleshieldparts) Console.Printf("attachx: %.2f, attachy: %.2f, attachz: %.2f, shieldee: %s", SHmo.attachx, SHmo.attachy, SHmo.attachz, SHmo.shieldee.GetClassName());
@@ -5206,7 +5208,7 @@ class EECreature : EEBaseZSC abstract
 		bool spawned;
 		actor mo;
 		[spawned, mo] = A_SpawnItemEx(attackname, cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
-		if (mo) A_MeleeSetUpAttach(mo, cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance));
+		if (mo) A_MeleeSetUpAttach(mo, cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), angle, pitch);
 	}
 	
 	void A_HandMotherChase()
@@ -7362,7 +7364,7 @@ class ShieldPartBase : EEBaseZSC
 {
 	Actor oldtarget;
 	
-	double attachx, attachy, attachz;
+	double attachx, attachy, attachz, attachang, attachptc;
 	actor shieldee;
 	default
 	{
@@ -7413,7 +7415,7 @@ class ShieldPartBase : EEBaseZSC
 			if (dydudebug_showvisibleshieldparts) Console.Printf("[ShieldPartBase (Tick)]: %p [%p]", shieldee, target);
 			if (target) 
 			{
-				A_Warp(AAPTR_TARGET,attachx,attachy,attachz,0,WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+				A_Warp(AAPTR_TARGET,attachx,attachy,attachz,attachang,WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE,null,0,0,attachptc);
 				if (dydudebug_showvisibleshieldparts) Console.Printf("A_Warp [ShieldPartBase (Tick)]: %d", GetAge());
 			}
 		}
