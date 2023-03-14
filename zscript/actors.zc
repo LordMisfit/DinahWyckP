@@ -5182,7 +5182,26 @@ class EECreature : EEBaseZSC abstract
 	// Used to Create Multiple "Shields" for Punches/Melee
 	action void A_MeleeShieldPiece(string attackname = "", int spawnheight = 32, int spawndistance = 0)
 	{
-		A_SpawnItemEx(attackname, cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+		bool spawned;
+		actor mo;
+		[spawned, mo] = A_SpawnItemEx(attackname, cos(-pitch) * spawndistance, 0, spawnheight + (sin(-pitch) * spawndistance), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_NOCHECKPOSITION);
+		if (spawned && mo)
+		{
+			if (dydudebug_showvisibleshieldparts) Console.Printf("[mo]: %s", mo.GetClassName());
+			ShieldPartBase SHmo;
+			SHmo = ShieldPartBase(mo);
+			if (SHmo)
+			{
+				actor playera = players[0].mo;
+				if (dydudebug_showvisibleshieldparts) Console.Printf("[SHmo]: %s", SHmo.GetClassName());
+				SHmo.attachx = (cos(-pitch) * spawndistance);
+				SHmo.attachy = 0;
+				SHmo.attachz = (spawnheight + (sin(-pitch) * spawndistance));
+				SHmo.shieldee = self;
+				SHmo.target = self;
+				if (dydudebug_showvisibleshieldparts) Console.Printf("attachx: %.2f, attachy: %.2f, attachz: %.2f, shieldee: %s", SHmo.attachx, SHmo.attachy, SHmo.attachz, SHmo.shieldee.GetClassName());
+			}
+		}
 	}
 	
 	void A_HandMotherChase()
@@ -7337,7 +7356,9 @@ class DDMorphedCreature : MorphedMonster abstract
 class ShieldPartBase : EEBaseZSC
 {
 	Actor oldtarget;
-
+	
+	double attachx, attachy, attachz;
+	actor shieldee;
 	default
 	{
 		Species "Players";
@@ -7381,6 +7402,16 @@ class ShieldPartBase : EEBaseZSC
 	override void Tick()
 	{
 		if (dydudebug_showvisibleshieldparts) A_FadeTo(0.25,0.25);
+		if (shieldee && target)
+		{
+			target = shieldee;
+			if (dydudebug_showvisibleshieldparts) Console.Printf("[ShieldPartBase (Tick)]: %p [%p]", shieldee, target);
+			if (target) 
+			{
+				A_Warp(AAPTR_TARGET,attachx,attachy,attachz,0,WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+				if (dydudebug_showvisibleshieldparts) Console.Printf("A_Warp [ShieldPartBase (Tick)]: %d", GetAge());
+			}
+		}
 		Super.Tick();
 	}
 
