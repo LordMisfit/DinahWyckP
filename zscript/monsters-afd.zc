@@ -2752,6 +2752,8 @@ class JorgSong : EEProjectile
 //NURSE
 class Nurse : DDOrigCreature
 {
+	int healcharges;
+	property HealingCharges: healcharges;
 	default
 	{
 		//$Category EE Teachers
@@ -2782,6 +2784,7 @@ class Nurse : DDOrigCreature
 		Obituary "%o was vaccinated by a demented nurse.";
 		HitObituary "%o was whipped into shape by a demented nurse.";
 		Tag "Nurse";
+		Nurse.HealingCharges 32;
 		//DropItem "CandleWhip", 64;
 	}
 	
@@ -2802,6 +2805,163 @@ class Nurse : DDOrigCreature
 		}
 	}
 	
+	int ticincs;
+	void A_SeekHealees(double dist3d = 1792, int ticincmax = 12)
+	{
+		bool debugheal = false;
+		int numfound;
+		int agemod = 175;
+		if (exex_monsterlevelenabledflags) 
+		{
+			agemod *= (1.0 - (CountInv("MonsterLevel") * 0.0025));
+			agemod *= (1.0 - (CountInv("MonsterRating") * 0.015625));
+		}
+		if (GetAge() % agemod && healcharges < 32)
+		{
+			healcharges += 1;
+			if (healcharges > 32) healcharges = 32;
+		}
+		if (debugheal) Console.Printf("healcharges: %d", healcharges);
+		if (healcharges < 0) return;
+		
+		ThinkerIterator EECreatureFinder = ThinkerIterator.Create("EECreature");
+		Actor mo;
+		while (mo = Actor(EECreatureFinder.Next()))
+		{
+			if (mo && mo.health > 0 && 
+					mo.health < (mo.SpawnHealth() + mo.stamina) 
+					&& Distance3D(mo) < dist3d 
+					&& mo != self)
+			{
+				if (Zombieman(mo) || ZombiemanNew(mo) ||
+						ShotgunGuy(mo) || ShotgunGuyNew(mo) ||
+						ChaingunGuy(mo) || ChaingunGuyNew(mo) ||
+						PlasmaGuy(mo) ||
+						RepeaterZombie(mo) ||
+						KarasawaGuy(mo) ||
+						RocketLauncherGuy(mo) ||
+						SuperShotgunGuy(mo) ||
+						FemaleRailZombie(mo) ||
+						Minigunner(mo) ||
+						BFGGuy(mo) ||
+						SuicideBomber(mo) ||
+						HadesSphere(mo) ||
+						HSOverlord(mo))
+				{
+					if (debugheal) Console.Printf("Found Undead/Hades Sphere, no heal attempt");
+				}
+				else
+				{
+					numfound++;
+					break;
+				}
+			}
+		}
+		if (!numfound && health > 0 && health < (SpawnHealth() + stamina))
+		{
+			mo = self;
+			numfound++;
+			if (debugheal) Console.Printf("self heal attempt");
+		}
+		if (mo && numfound > 0 && random(1,16) <= random(14,15)) 
+		{
+			int maxhp = (mo.SpawnHealth() + mo.stamina);
+			if (debugheal) Console.Printf("numfound: %d, mo: %p", numfound, mo);
+			if (skill <= 0) ticincmax *= 1.25;
+			if (skill == 1) ticincmax *= 1.125;
+			if (skill == 2) ticincmax *= 1.0;
+			if (skill == 3) ticincmax *= 0.9;
+			if (skill >= 4) ticincmax *= 0.8;
+			if (mo == self) 
+			{
+						if (mo.health < (maxhp * 0.05)) ticincmax *= 0.445;
+				else if (mo.health < (maxhp * 0.2)) ticincmax *= 0.889;
+																			else ticincmax *= 1.334;
+			}
+			if (exex_monsterlevelenabledflags) 
+			{
+				ticincmax *= (1.0 - (CountInv("MonsterLevel") * 0.005));
+				ticincmax *= (1.0 - (CountInv("MonsterRating") * 0.03125));
+			}
+			ticincs += 1;
+			if (ticincs >= ticincmax)
+			{
+				bool megacharge;
+				if (random(1,32) <= 1 && healcharges >= 2)
+				{
+					megacharge = true;
+					healcharges -= 1;
+				}
+				healcharges -= 1;
+				ticincs = 0;
+				int healamt = (maxhp - mo.health);
+				if (random(1,8) <= 1) 
+				{
+					if (random(1,8) <= 1) healamt = (maxhp - (mo.health * 0.1112));
+													 else healamt = (maxhp - (mo.health * 0.3334));
+				}
+				if (exex_monsterlevelenabledflags) 
+				{
+					healamt *= (1.0 + (CountInv("MonsterLevel") * 0.01));
+					healamt *= (1.0 + (CountInv("MonsterRating") * 0.0625));
+				}
+				if (skill <= 0) healamt *= frandom(0.08333,0.0909);
+				if (skill == 1) healamt *= frandom(0.0909,0.10);
+				if (skill == 2) healamt *= frandom(0.10,0.125);
+				if (skill == 3) healamt *= frandom(0.1429,0.125);
+				if (skill >= 4) healamt *= frandom(0.1429,0.1667);
+				if (Nurse(mo)) healamt *= frandom(0.75,0.875);
+									else healamt *= frandom(1.25,1.50);
+				if (mo == self) 
+				{
+					healamt *= frandom(1.25,1.50);
+				}
+				else
+				{
+					if (mo.bBOSS || DDOrigBoss(mo)) healamt *= frandom(0.625,0.875);
+				}
+				if (megacharge) 
+				{
+					healamt *= 2.5;
+					if (healamt < 3) healamt = 3; 
+				}
+				else
+				{
+					if (healamt < 1) healamt = 1; 
+				}
+				mo.health += healamt;
+				if (debugheal) Console.Printf("healamt: %d", healamt);
+				if (bSHADOW)
+				{
+					mo.A_StopSound(103);
+					mo.A_StartSound("HealSpell1",103,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.175,0.275));
+					if (random(1,16) <= random(9,15))
+					{
+						mo.A_StopSound(104);
+						mo.A_StartSound("HealSpell1",104,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.225,0.325));
+					}
+					if (random(1,16) <= random(3,5)) mo.A_SpawnItemEx("Micronote2", frandom(6,7), frandom(6,7), (frandom(24,28)*2), 0, frandom(-1.5, 1.5), frandom(-1.5, 1.5));
+					if (random(1,16) <= random(3,5)) mo.A_SpawnItemEx("Micronote2", frandom(6,7), frandom(6,7), (frandom(24,28)*2), 0, frandom(-1.5, 1.5), frandom(-1.5, 1.5));
+				}
+				else
+				{
+					mo.A_StopSound(103);
+					mo.A_StartSound("HealSpell1",103,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.7,1.1));
+					mo.A_StopSound(104);
+					mo.A_StartSound("HealSpell1",104,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.3));
+					mo.A_SpawnItemEx("Micronote2", frandom(6,7), frandom(6,7), (frandom(24,28)*2), 0, frandom(-1.5, 1.5), frandom(-1.5, 1.5));
+					mo.A_SpawnItemEx("Micronote2", frandom(6,7), frandom(6,7), (frandom(24,28)*2), 0, frandom(-1.5, 1.5), frandom(-1.5, 1.5));
+				}
+				if (mo.health > maxhp) mo.health = maxhp;
+			}
+		}
+		else
+		{
+			if (level.time % 6 && ticincs > 0) ticincs -= 1;
+		}
+		if (debugheal && ticincs > 0) Console.Printf("Nurse Heal Timer: %d / %d", ticincs, ticincmax);
+	}
+	
 	States
 	{
 		Spawn:
@@ -2810,7 +2970,8 @@ class Nurse : DDOrigCreature
 		See:
 			NURS AABBCCDD 3 fast
 			{
-				A_EEChase("Melee","Missile",0,1,3,1,1);
+				A_EEChase("Melee",null,0,1,3,1,1);
+				A_SeekHealees(1792,23);
 			}
 			Loop;
 		Melee:
@@ -2913,6 +3074,7 @@ class NightmareNurse : Nurse
 			{
 				A_SetTics(randompick(2,3,3,3));
 				A_EEChase("Melee","Missile",0,1,3,1,1);
+				A_SeekHealees(2048,19);
 			}
 			Loop;
 		Melee:
