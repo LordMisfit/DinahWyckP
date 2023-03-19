@@ -2806,15 +2806,16 @@ class Nurse : DDOrigCreature
 	}
 	
 	int ticincs;
-	void A_SeekHealees(double dist3d = 1792, int ticincmax = 12)
+	void A_SeekHealees(double dist3d = 1792, int ticincmax = 12, int agemod = 175, bool selfhealonly = false)
 	{
 		bool debugheal = false;
 		int numfound;
-		int agemod = 175;
 		if (exex_monsterlevelenabledflags) 
 		{
 			agemod *= (1.0 - (CountInv("MonsterLevel") * 0.0025));
 			agemod *= (1.0 - (CountInv("MonsterRating") * 0.015625));
+			dist3d *= (1.0 + (CountInv("MonsterLevel") * 0.0025));
+			dist3d *= (1.0 + (CountInv("MonsterRating") * 0.015625));
 		}
 		if (GetAge() % agemod && healcharges < 32)
 		{
@@ -2857,11 +2858,11 @@ class Nurse : DDOrigCreature
 				}
 			}
 		}
-		if (!numfound && health > 0 && health < (SpawnHealth() + stamina))
+		if ((!numfound || selfhealonly) && health > 0 && health < (SpawnHealth() + stamina))
 		{
 			mo = self;
 			numfound++;
-			if (debugheal) Console.Printf("self heal attempt");
+			if (debugheal) Console.Printf("self heal attempt [%d]", selfhealonly);
 		}
 		if (mo && numfound > 0 && random(1,16) <= random(14,15)) 
 		{
@@ -2876,7 +2877,7 @@ class Nurse : DDOrigCreature
 			{
 						if (mo.health < (maxhp * 0.05)) ticincmax *= 0.445;
 				else if (mo.health < (maxhp * 0.2)) ticincmax *= 0.889;
-																			else ticincmax *= 1.334;
+																			 else ticincmax *= 1.334;
 			}
 			if (exex_monsterlevelenabledflags) 
 			{
@@ -2953,6 +2954,26 @@ class Nurse : DDOrigCreature
 					mo.A_SpawnItemEx("Micronote2", frandom(6,7), frandom(6,7), (frandom(24,28)*2), 0, frandom(-1.5, 1.5), frandom(-1.5, 1.5));
 				}
 				if (mo.health > maxhp) mo.health = maxhp;
+				
+				if (exex_combatlog)
+				{
+					string comblog = "";
+					comblog.AppendFormat("\c[red]*\c- ");
+					if (mo != self) 
+					{
+						comblog.AppendFormat("\c[red]%s\c- \c[gold][%d]\c- ", mo.GetClassName(), mo.CountInv("MonsterLevel"));
+						comblog.AppendFormat("was healed \c[green]%d\c- HP by ", healamt);
+						comblog.AppendFormat("\c[purple]%s \c[gold][%d]\c-!", self.GetClassName(), self.CountInv("MonsterLevel"));
+					}
+					else
+					{
+						comblog.AppendFormat("\c[purple]%s\c- \c[gold][%d]\c- ", mo.GetClassName(), mo.CountInv("MonsterLevel"));
+						comblog.AppendFormat("healed herself for \c[green]%d\c- HP!", healamt);
+					}
+					
+					actor playera = players[0].mo;
+					if (playera && Distance3D(playera) <= 2048) Console.Printf(comblog);
+				}
 			}
 		}
 		else
@@ -2965,17 +2986,24 @@ class Nurse : DDOrigCreature
 	States
 	{
 		Spawn:
-			NURS E 10 fast A_Look();
+			NURS E 10 fast 
+			{
+				A_Look();
+				A_SeekHealees(896,randompick(7,7,8,8,8),140,true);
+			}
 			Loop;
 		See:
 			NURS AABBCCDD 3 fast
 			{
 				A_EEChase("Melee",null,0,1,3,1,1);
-				A_SeekHealees(1792,23);
+				A_SeekHealees(1792,23,175,false);
 			}
 			Loop;
 		Melee:
-			NURS E 0 fast A_DynamicMusic();
+			NURS E 0 fast 
+			{
+				A_DynamicMusic();
+			}
 			NURS EF 4 fast A_FaceTarget();
 			NURS G 4 fast A_StartSound("jorg/attack",CHAN_BODY);
 			NURS H 4 fast 
@@ -2984,11 +3012,31 @@ class Nurse : DDOrigCreature
 				int dmg = A_CalcDamageFormula2(random(35,50),0.005,random(17,34),0.3334,random(8,26),0.1667,0.005);
 				
 				A_CustomMeleeAttack(dmg, "", "", "Chop", 1);
+				
+				if (random(1,16) <= random(13,15))
+				{
+					ticincs *= frandompick(1.334,1.5,1.5,1.5,1.5,1.5,1.667);
+				}
+				else
+				{
+					ticincs += randompick(0,0,1,1,1,1,1,1,1,1,2,2);
+				}
 			}
 			NURS IJ 4 fast;
 			Goto See;
 		Pain:
-			NURS K 6 fast A_EEPain();
+			NURS K 6 fast 
+			{
+				A_EEPain();
+				if (random(1,16) <= random(13,15))
+				{
+					ticincs *= frandompick(0.334,0.5,0.5,0.5,0.5,0.5,0.667);
+				}
+				else
+				{
+					ticincs -= randompick(0,0,1,1,1,1,1,1,1,1,2,2);
+				}
+			}
 			Goto See;
 		/*
 		Death.Suck:
@@ -3067,14 +3115,18 @@ class NightmareNurse : Nurse
 	States
 	{
 		Spawn:
-			NURS EE 5 fast A_Look();
+			NURS EE 5 fast 
+			{
+				A_Look();
+				A_SeekHealees(1024,randompick(11,11,12,12,12),100,true);
+			}
 			Loop;
 		See:
 			NURS AABBCCDD 3 fast 
 			{
 				A_SetTics(randompick(2,3,3,3));
 				A_EEChase("Melee","Missile",0,1,3,1,1);
-				A_SeekHealees(2048,19);
+				A_SeekHealees(2048,19,125,false);
 			}
 			Loop;
 		Melee:
@@ -3095,6 +3147,15 @@ class NightmareNurse : Nurse
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") >= 60) A_SetTics(2);
 				int dmg = A_CalcDamageFormula2(random(50,80),0.005,random(26,52),0.3334,random(12,40),0.1667,0.005);
 				A_CustomMeleeAttack(dmg, "", "", "Chop", 1);
+				
+				if (random(1,64) <= random(60,62))
+				{
+					ticincs *= frandompick(1.334,1.5,1.5,1.5,1.5,1.5,1.667);
+				}
+				else
+				{
+					ticincs += randompick(0,0,1,1,1,1,1,1,1,1,2,2);
+				}
 			}
 			NURS IJ 3 fast
 			{
@@ -3102,7 +3163,18 @@ class NightmareNurse : Nurse
 			}
 			Goto See;
 		Pain:
-			NURS K 3 fast A_EEPain();
+			NURS K 3 fast 
+			{
+				A_EEPain();
+				if (random(1,16) <= random(9,11))
+				{
+					ticincs *= frandompick(0.334,0.5,0.5,0.5,0.5,0.5,0.667);
+				}
+				else
+				{
+					ticincs -= randompick(0,0,1,1,1,1,1,1,1,1,2,2);
+				}
+			}
 			Goto See;
 		/*
 		Death.Suck:
