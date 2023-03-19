@@ -121,7 +121,7 @@ class DD_EventHandler : EventHandler
 		}
 	}
 	
-	actor, int SetUpMiracles(actor spawnee, int monsterlevel)
+	actor, int, int SetUpMiracles(actor spawnee, int monsterlevel, int monsterrating)
 	{
 		EECreature EEC;
 		EEC = EECreature(spawnee);
@@ -241,10 +241,10 @@ class DD_EventHandler : EventHandler
 				}
 			}
 		}
-		return spawnee, monsterlevel;
+		return spawnee, monsterlevel, monsterrating;
 	}
 	
-	actor, int AddLevelSpecials(actor spawnee, int monsterlevel)
+	actor, int, int AddLevelSpecials(actor spawnee, int monsterlevel, int monsterrating)
 	{
 		double levelmulfact = 1.5;
 		if (exex_monsterlevelenabledflags)
@@ -585,7 +585,7 @@ class DD_EventHandler : EventHandler
 				}
 			}
 		}
-		return spawnee, monsterlevel;
+		return spawnee, monsterlevel, monsterrating;
 	}
 	
 	actor, string, int CheckLevelTweaks(actor spawnee, string spawnname, int LevelCheck)
@@ -1408,9 +1408,8 @@ class DD_EventHandler : EventHandler
 					spawnee.SetTag(montag);
 				}
 				
-				[spawnee, monsterlevel] = AddLevelSpecials(spawnee,monsterlevel);
-				
-				[spawnee, monsterlevel] = SetUpMiracles(spawnee,monsterlevel);
+				[spawnee, monsterlevel, monsterrating] = AddLevelSpecials(spawnee,monsterlevel,monsterrating);
+				[spawnee, monsterlevel, monsterrating] = SetUpMiracles(spawnee,monsterlevel,monsterrating);
 			}
 		}
 		EECreature spawnee2;
@@ -2086,21 +2085,16 @@ class DD_EventHandler : EventHandler
 			
 			if (CroquetBall(spawnee) && (spawnee.target && HammerDuck(spawnee.target)))
 			{
-				if (exex_monsterlevelenabledflags && spawnee.target.CountInv("MonsterLevel") > 15)
+				if (exex_monsterlevelenabledflags)
 				{
-					spawnee.Speed = 24;
-				}
-				if (exex_monsterlevelenabledflags && spawnee.target.CountInv("MonsterLevel") > 30)
-				{
-					spawnee.Speed = 32;
-				}
-				if (exex_monsterlevelenabledflags && spawnee.target.CountInv("MonsterLevel") > 45)
-				{
-					spawnee.Speed = 40;
-				}
-				if (exex_monsterlevelenabledflags && spawnee.target.CountInv("MonsterLevel") > 60)
-				{
-					spawnee.Speed = 48;
+					if (spawnee.target.CountInv("MonsterLevel") > 90) spawnee.Speed *= 2.0;
+					else if (spawnee.target.CountInv("MonsterLevel") > 75) spawnee.Speed *= 1.8334;
+					else if (spawnee.target.CountInv("MonsterLevel") > 60) spawnee.Speed *= 1.6667;
+					else if (spawnee.target.CountInv("MonsterLevel") > 45) spawnee.Speed *= 1.5000;
+					else if (spawnee.target.CountInv("MonsterLevel") > 30) spawnee.Speed *= 1.3334;
+					else if (spawnee.target.CountInv("MonsterLevel") > 15) spawnee.Speed *= 1.1667;
+					
+					spawnee.Speed *= (1.0 + (spawnee.target.CountInv("MonsterRating") * 0.0625));
 				}
 			}
 		}
