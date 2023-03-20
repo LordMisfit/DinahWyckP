@@ -2784,7 +2784,7 @@ class Nurse : DDOrigCreature
 		Obituary "%o was vaccinated by a demented nurse.";
 		HitObituary "%o was whipped into shape by a demented nurse.";
 		Tag "Nurse";
-		Nurse.HealingCharges 32;
+		Nurse.HealingCharges 64;
 		//DropItem "CandleWhip", 64;
 	}
 	
@@ -2807,7 +2807,7 @@ class Nurse : DDOrigCreature
 	
 	int ticincs;
 	int regentics;
-	void A_SeekHealees(double dist3d = 1792, int ticincmax = 12, int agemod = 175, bool selfhealonly = false, int regeninc = 3)
+	void A_SeekHealees(double dist3d = 896, int ticincmax = 12, int agemod = 87, bool selfhealonly = false, int regeninc = 3)
 	{
 		if (!ddafd_nursescanheal && A_CheckDDGame()) return;
 		bool debugheal = false;
@@ -2821,15 +2821,15 @@ class Nurse : DDOrigCreature
 			dist3d *= (1.0 + (CountInv("MonsterRating") * 0.015625));
 		}
 		regentics += regeninc;
-		if (healcharges < 32)
+		if (healcharges < 64)
 		{
 			if (regentics >= agemod)
 			{
 				regentics -= agemod;
 				healcharges += 1;
-				if (healcharges > 32) 
+				if (healcharges > 64) 
 				{
-					healcharges = 32;
+					healcharges = 64;
 					regentics = 0;
 				}
 			}
@@ -2845,6 +2845,7 @@ class Nurse : DDOrigCreature
 		{
 			if (mo && mo.health > 0 &&
 					mo.health < (mo.SpawnHealth() + mo.stamina) &&
+					mo.bFRIENDLY != bFRIENDLY &&
 					Distance3D(mo) < dist3d &&
 					CheckSight(mo, SF_SEEPASTBLOCKEVERYTHING|SF_SEEPASTSHOOTABLELINES|SF_IGNOREWATERBOUNDARY) &&
 					mo != self)
@@ -2862,9 +2863,13 @@ class Nurse : DDOrigCreature
 						BFGGuy(mo) ||
 						SuicideBomber(mo) ||
 						HadesSphere(mo) ||
-						HSOverlord(mo))
+						HSOverlord(mo) ||
+						CoSForsaken(mo) ||
+						Tempest_Forsaken(mo) ||
+						Forsaken_Prop(mo) ||
+						DDAFDNPC(mo))
 				{
-					if (debugheal) Console.Printf("Found Undead/Hades Sphere, no heal attempt");
+					if (debugheal) Console.Printf("Found Undead/HadesSphere/Ghost/NPC, no heal attempt");
 				}
 				else
 				{
@@ -2955,6 +2960,7 @@ class Nurse : DDOrigCreature
 				if (skill == 2) healamt *= frandom(0.10,0.125);
 				if (skill == 3) healamt *= frandom(0.125,0.1429);
 				if (skill >= 4) healamt *= frandom(0.1429,0.1667);
+				healamt *= 0.625;
 				if (Nurse(mo)) healamt *= frandom(0.75,0.875);
 									else healamt *= frandom(1.25,1.50);
 				if (mo == self) 
@@ -3005,13 +3011,13 @@ class Nurse : DDOrigCreature
 					comblog.AppendFormat("\c[red]*\c- ");
 					if (mo != self) 
 					{
-						comblog.AppendFormat("\c[red]%s\c- \c[gold][L%d]\c- ", mo.GetTag(), mo.CountInv("MonsterLevel"));
+						comblog.AppendFormat("\c[red]%s\c- ", mo.GetTag());
 						comblog.AppendFormat("was healed \c[green]%d\c- HP by ", healamt);
-						comblog.AppendFormat("\c[purple]%s \c[gold][L%d]\c-!", self.GetTag(), self.CountInv("MonsterLevel"));
+						comblog.AppendFormat("\c[purple]%s\c-!", self.GetTag());
 					}
 					else
 					{
-						comblog.AppendFormat("\c[purple]%s\c- \c[gold][L%d]\c- ", mo.GetTag(), mo.CountInv("MonsterLevel"));
+						comblog.AppendFormat("\c[purple]%s\c- ", mo.GetTag());
 						comblog.AppendFormat("healed herself for \c[green]%d\c- HP!", healamt);
 					}
 					
@@ -3033,14 +3039,14 @@ class Nurse : DDOrigCreature
 			NURS E 10 fast 
 			{
 				A_Look();
-				A_SeekHealees(896,randompick(7,7,8,8,8),140,true,10);
+				A_SeekHealees(448,randompick(3,3,4,4,4),70,true,10);
 			}
 			Loop;
 		See:
 			NURS AABBCCDD 3 fast
 			{
 				A_EEChase("Melee",null,0,1,3,1,1);
-				A_SeekHealees(1792,23,175,false,3);
+				A_SeekHealees(896,12,random(87,88),false,3);
 			}
 			Loop;
 		Melee:
@@ -3162,7 +3168,7 @@ class NightmareNurse : Nurse
 			NURS EE 5 fast 
 			{
 				A_Look();
-				A_SeekHealees(1024,randompick(11,11,12,12,12),100,true,5);
+				A_SeekHealees(512,randompick(2,2,2,3,3,3,3,3,3,3),50,true,5);
 			}
 			Loop;
 		See:
@@ -3171,7 +3177,7 @@ class NightmareNurse : Nurse
 				int tic = randompick(2,3,3,3);
 				A_SetTics(tic);
 				A_EEChase("Melee","Missile",0,1,3,1,1);
-				A_SeekHealees(2048,19,125,false,tic);
+				A_SeekHealees(1024,9,random(62,63),false,tic);
 			}
 			Loop;
 		Melee:
