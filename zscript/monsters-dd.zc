@@ -4477,6 +4477,139 @@ class ReelHeel : DDOrigCreature
 		Species "T1";
 	}
 	
+	int rolltype;
+	void A_HeelBuff(double dist3d = 1280, int type = 0)
+	{
+		if (exex_monsterlevelenabledflags) 
+		{
+			dist3d *= (1.0 + (CountInv("MonsterLevel") * 0.005));
+			dist3d *= (1.0 + (CountInv("MonsterRating") * 0.03125));
+		}
+		ThinkerIterator EECreatureFinder = ThinkerIterator.Create("EECreature");
+		Actor mo;
+		while (mo = Actor(EECreatureFinder.Next()))
+		{
+			//Console.Printf("32t23r");
+			if (mo && mo.health > 0 &&
+					!mo.bFRIENDLY &&
+					Distance3D(mo) < dist3d)
+			{
+				//Console.Printf("mo [%s]: %p", mo.GetClassName(), mo);
+				if (!(Forsaken_Prop(mo) ||
+						DDAFDNPC(mo)))
+				{
+					if (type <= 0) // Give ATK Buff
+					{
+						if (!mo.CountInv("HeelATKBuff"))
+						{
+							mo.SetInventory("HeelATKBuff",1);
+							let BuffItem = HeelATKBuff(mo.FindInventory("HeelATKBuff"));
+							if (BuffItem) BuffItem.EffectTics = int(60 * TICRATE);
+						}
+						else
+						{
+							let BuffItem = HeelATKBuff(mo.FindInventory("HeelATKBuff"));
+							if (BuffItem) BuffItem.EffectTics += int(60 * TICRATE);
+						}
+					}
+					else // Give DEF Buff
+					{
+						if (!mo.CountInv("HeelDEFBuff"))
+						{
+							mo.SetInventory("HeelDEFBuff",1);
+							let BuffItem = HeelDEFBuff(mo.FindInventory("HeelDEFBuff"));
+							if (BuffItem) BuffItem.EffectTics = int(60 * TICRATE);
+						}
+						else
+						{
+							let BuffItem = HeelDEFBuff(mo.FindInventory("HeelDEFBuff"));
+							if (BuffItem) BuffItem.EffectTics += int(60 * TICRATE);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	void A_HeelJackpot()
+	{
+	}
+	
+	void A_HeelSummon()
+	{
+		string spawntype = "Demon";
+		int randroll = random(1,100);
+		if (randroll <= 25) 
+		{
+			if (random(1,2) <= 1) spawntype = "Spectre";
+														spawntype = "Demon";
+		}
+		if (randroll >= 26 && randroll <= 40) 
+		{
+			spawntype = "Revenant";
+		}
+		if (randroll >= 41 && randroll <= 55) 
+		{
+			spawntype = "Cacodemon";
+		}
+		if (randroll >= 56 && randroll <= 70) 
+		{
+			spawntype = "PainElemental";
+		}
+		if (randroll >= 71 && randroll <= 85) 
+		{
+			spawntype = "Arachnotron";
+		}
+		if (randroll >= 86 && randroll <= 100) 
+		{
+			spawntype = "HellKnight";
+		}
+		A_SpawnItemEx(spawntype,0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,0);
+	}
+	
+	void A_HeelSpinUp()
+	{
+		double slotrollrand = frandom(0.00001,100.00000);
+		rolltype = 1;
+		if (exex_reelhealoptions >= 1)
+		{
+			// 35.15625% - Apple [vanilla DD]
+			// 22.65625% - Cherry [vanilla DD]
+			// 21.09375% - Bomb [vanilla DD]
+			// 21.09375% - Others
+			// - 8.42750% Sword [AOE ATK Buff]
+			// - 8.42750% Shield [AOE DEF Buff]
+			// - 4.21375% Obisidian Skull [Summon Monster]
+			// - 0.02500% - Jackpot [instant self destruct with rare drops, etc]
+			if (slotrollrand <= 0.02500) rolltype = 7; // hehehe :V
+			if (slotrollrand >= 0.02501 && slotrollrand <= 4.23875) rolltype = 6;
+			else if (slotrollrand >= 4.23876 && slotrollrand <= 12.66625) rolltype = 5;
+			else if (slotrollrand >= 12.66626 && slotrollrand <= 21.09375) rolltype = 4;
+			else if (slotrollrand >= 21.09376 && slotrollrand <= 42.18750) rolltype = 3;
+			else if (slotrollrand >= 42.18751 && slotrollrand <= 77.34375) rolltype = 2;
+			else if (slotrollrand >= 77.34376 && slotrollrand <= 100.00000) rolltype = 1;
+			if (rolltype >= 4)
+			{
+				A_StartSound("slots/jackpot",104,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+			}
+			if (rolltype >= 7)
+			{
+				A_StartSound("slots/jackpot",105,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.775,1.225));
+				A_StartSound("slots/jackpot",106,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.625,1.375));
+			}
+		}
+		else
+		{
+			// 56.25000% - Apple [vanilla DD]
+			// 22.65625% - Cherry [vanilla DD]
+			// 21.09375% - Bomb [vanilla DD]
+			if (slotrollrand <= 56.25000) rolltype = 3;
+			if (slotrollrand >= 56.25001 && slotrollrand <= 78.90625) rolltype = 2;
+			if (slotrollrand >= 78.90626 && slotrollrand <= 100.00000) rolltype = 1;
+		}
+		Console.Printf("rolltype: %d, slotrollrand: %.5f, heeloptions: %d", rolltype, slotrollrand, exex_reelhealoptions);
+	}
+	
 	States
 	{
 		Spawn:
@@ -4494,12 +4627,24 @@ class ReelHeel : DDOrigCreature
 			Loop;
 		Missile:
 			SLOT A 0 fast A_DynamicMusic();
-			SLOT A 0 fast A_StartSound("slots/jackpot");
+			SLOT A 0 fast
+			{
+				A_StartSound("slots/jackpot");
+				A_HeelSpinUp();
+			}
 			SLOT EGIEGIEGI 2 fast Bright;
-			SLOT A 0 fast A_Jump(112,"slotapple"); // 56.25%
-			SLOT A 0 fast A_Jump(96,"slotbomb"); // 21.09375%
-			SLOT A 0 fast A_Jump(256,"slotcherry"); // 22.65625%
-			/*
+			SLOT EGIEGIEGI 2 fast Bright { if (rolltype < 4) A_SetTics(0); }
+			SLOT EGI 3 fast Bright { if (rolltype < 7) A_SetTics(0); }
+			SLOT EGI 4 fast Bright { if (rolltype < 7) A_SetTics(0); }
+			SLOT EGI 5 fast Bright { if (rolltype < 7) A_SetTics(0); }
+			SLOT EGI 6 fast Bright { if (rolltype < 7) A_SetTics(0); }
+			SLOT EGI 7 fast Bright { if (rolltype < 7) A_SetTics(0); }
+			SLOT EGI 8 fast Bright { if (rolltype < 7) A_SetTics(0); }
+			SLOT EGI 9 fast Bright { if (rolltype < 7) A_SetTics(0); }
+			SLOT EGI 10 fast Bright { if (rolltype < 7) A_SetTics(0); }
+			//SLOT A 0 fast A_Jump(112,"slotapple"); // 56.25%
+			//SLOT A 0 fast A_Jump(96,"slotbomb"); // 21.09375%
+			//SLOT A 0 fast A_Jump(256,"slotcherry"); // 22.65625%
 			SLOT A 0 fast
 			{
 				// 35.15625% - Apple [vanilla DD] (56.25% in vanilla rolls)
@@ -4511,16 +4656,15 @@ class ReelHeel : DDOrigCreature
 				// - 4.21375% Obisidian Skull [Summon Monster]
 				// - 0.02500% - Jackpot [instant self destruct with rare drops, etc]
 				double slotrollrand = frandom(0.00001,100.00000);
-				if (slotrollrand <= 0.02500) return resolvestate("SlotJackpot");
-				if (slotrollrand >= 0.02501 && slotrollrand <= 4.23875) return resolvestate("SlotObSkull");
-				if (slotrollrand >= 4.23876 && slotrollrand <= 12.66625) return resolvestate("SlotShield");
-				if (slotrollrand >= 12.66626 && slotrollrand <= 21.09375) return resolvestate("SlotSword");
-				if (slotrollrand >= 21.09376 && slotrollrand <= 42.18750) return resolvestate("SlotBomb");
-				if (slotrollrand >= 42.18751 && slotrollrand <= 77.34375) return resolvestate("SlotApple");
-				if (slotrollrand >= 77.34376 && slotrollrand <= 100.00000) return resolvestate("SlotCherry");
+				if (rolltype == 7) return resolvestate("SlotJackpot");
+				if (rolltype == 6) return resolvestate("SlotObSkull");
+				if (rolltype == 5) return resolvestate("SlotShield");
+				if (rolltype == 4) return resolvestate("SlotSword");
+				if (rolltype == 3) return resolvestate("SlotBomb");
+				if (rolltype == 2) return resolvestate("SlotApple");
+				if (rolltype == 1) return resolvestate("SlotCherry");
 				return resolvestate("SlotCherry");
 			}
-			*/
 			Goto See;
 		SlotApple:
 			SLOT GHGHGHGH 2 fast Bright A_FaceTarget();
@@ -4551,10 +4695,38 @@ class ReelHeel : DDOrigCreature
 			SLOT LLLLLLL 4 fast A_SpawnProjectile("CoinShotS",40,0,random(-6,6));
 			SLOT A 3 fast;
 			Goto See;
-		//SlotShield: // ?
-		//SlotSword: // ?
-		//SlotObSkull: // ?
-		//SlotJackpot: // ?
+		SlotShield: // ?
+			SLOT VWVWVWVW 2 fast Bright A_FaceTarget();
+			SLOT K 6 fast;
+			SLOT L 12 fast
+			{
+				A_StartSound("slots/burp",CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+				A_HeelBuff(1280,1);
+			}
+			SLOT A 3 fast;
+			Goto See;
+		SlotSword: // ?
+			SLOT TUTUTUTU 2 fast Bright A_FaceTarget();
+			SLOT K 6 fast;
+			SLOT L 12 fast
+			{
+				A_StartSound("slots/burp",CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+				A_HeelBuff(1280,0);
+			}
+			SLOT A 3 fast;
+			Goto See;
+		SlotObSkull: // ?
+			SLOT XYXYXYXY 2 fast Bright A_FaceTarget();
+			SLOT K 6 fast;
+			SLOT L 12 fast
+			{
+				A_StartSound("slots/burp",CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+				A_HeelSummon();
+			}
+			SLOT A 3 fast;
+			Goto See;
+		SlotJackpot:
+			Goto Death;
 		Pain:
 			SLOT M 3 fast A_EEPain();
 			SLOT M 3 fast; //A_DynamicMusic();
@@ -4642,36 +4814,6 @@ class ReelHeelNew : ReelHeel
 			SLOT SSSS 2 fast A_EEChase("Melee","Missile",0,1,3,1,1);
 			SLOT R 5 fast;
 			Loop;
-		Missile:
-			SLOT A 0 fast A_DynamicMusic();
-			SLOT A 0 fast A_StartSound("slots/jackpot");
-			SLOT EGIEGIEGI 2 fast Bright;
-			SLOT A 0 fast A_Jump(112,"slotapple");
-			SLOT A 0 fast A_Jump(96,"slotbomb");
-			SLOT A 0 fast A_Jump(256,"slotcherry");
-			Goto See;
-		SlotApple:
-			SLOT GHGHGHGH 2 fast Bright A_FaceTarget();
-			SLOT K 6 fast;
-			SLOT L 12 fast
-			{
-				A_StartSound("slots/burp",CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
-				A_SpawnProjectile("SeedBall",40,0,random(-9,9));
-				A_SpawnProjectile("SeedBall",40,0,random(-9,9));
-				A_SpawnProjectile("SeedBall",40,0,random(-6,6));
-			}
-			SLOT A 3 fast;
-			Goto See;
-		SlotBomb:
-			SLOT IJIJIJIJ 2 fast Bright A_FaceTarget();
-			SLOT K 6 fast;
-			SLOT L 12 fast
-			{
-				A_StartSound("slots/burp",CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
-				A_SpawnProjectile("BadCherryBomb",40,0,random(-6,6));
-			}
-			SLOT A 3 fast;
-			Goto See;
 		SlotCherry:
 			SLOT EFEFEFEF 2 fast Bright A_FaceTarget();
 			SLOT K 6 fast;
