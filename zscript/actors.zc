@@ -3630,6 +3630,625 @@ class BFGBallBase : EEProjectile
 	}
 }
 
+// Heal Projectiles [basically a projectile form of the Healing spells to use on other creatures]
+class HealGlitter1 : EEBaseTeleGlitter
+{
+	default
+	{
+		Scale 0.5;
+		+NOINTERACTION;
+		+NOBLOCKMAP;
+		+NOCLIP;
+	}
+	
+	States
+	{
+		Spawn:
+			NULL A 2;
+		Travel:
+			HLGT ABCDEABCDEABCDE 2 Bright { A_FadeOut(0.0667); A_SetScale(scale.x-0.0667,scale.y-0.0667); }
+			Stop;
+	}
+}
+class HealGlitter2 : HealGlitter1
+{
+	default
+	{
+		Scale 0.75;
+	}
+}
+class HealGlitter3 : HealGlitter1
+{
+	default
+	{
+		Scale 1;
+	}
+}
+class HealGlitter4 : HealGlitter1
+{
+	default
+	{
+		Scale 1.25;
+	}
+}
+
+class HealMissile : EEProjectile
+{
+	bool hashit;
+	// A_SeekerMissile variant that seeks out friends in need of healing.
+	action void A_HealingSeekerMissile(int threshold, int maxturnangle, int flags = 0, int chance = 50, int distance = 10, int healtype = 0)
+	{
+		int maxhealth;
+		if (
+			(flags & SMF_LOOK) // this projectile should seek new targets
+			&& target // this projectile's shooter is known
+			&& (!tracer || !(tracer.bShootable && CanSeek(tracer))) // not already seeking something
+			&& ((chance >= 255) || ((random() & 255) < chance)) // the random roll checks out
+		)
+		{
+			for (let it = BlockThingsIterator.Create(self, distance); it.Next();)
+			if (target != it.thing && target.isFriend(it.thing) && it.thing is "EECreature")
+			{
+				let healee = EECreature(it.thing);
+				if (healtype == 0) maxhealth = healee.User_MaxHP; else maxhealth = healee.User_MaxHP*2;
+				if (healee.health > 0 && healee.health < maxhealth)
+				{
+						tracer = it.thing;
+						break;
+				}
+			}
+		}
+		A_SeekerMissile(threshold,maxturnangle,flags & ~SMF_LOOK,chance,distance);
+	}
+	
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		// Non-passive means the one moving into the other is performing the checks.
+		if (!passive)
+		{
+			if (!other.bFRIENDLY) return false;
+		}
+		// We don't really care about others making the check.
+		return true;
+	}
+
+	override int SpecialMissileHit (Actor victim) // HealMissile
+ 	{
+		EECreature healee;
+		DDPlayerPawn healee2;
+		if (victim) healee = EECreature(victim);
+		if (victim) healee2 = DDPlayerPawn(victim);
+		int healamount;
+		
+		if (hashit) return -1;
+
+		if (healee)
+		{
+			if (healee == target) return 1;
+			if (healee == tracer && !healee.bFRIENDLY) return 1;
+
+			if (healee.bFRIENDLY)
+			{
+				if (self.GetClassName() == "Heal1Shot")
+				{
+					if (healee.health > 0 && healee.health < healee.User_MaxHP)
+					{
+						healamount = 0; //CallACS("Healing_Actor",0,1);
+						healee.health += healamount; 
+						if (healee.health > healee.User_MaxHP) healee.health = healee.User_MaxHP;
+						/*
+						if ((dvds_showdamagemessages & 2) && healamount > 0) 
+						{
+							if (target) A_PrintHealingMessage(healee, healamount, target);
+										 else A_PrintHealingMessage(healee, healamount);
+						}
+						*/
+						//Console.Printf("%s to %s = return -1, gametic: %d", GetClassName(), healee.GetClassName(), gametic);
+						hashit = true;
+						return -1;
+					}
+					else 
+					{ 
+						//Console.Printf("%s to %s = return 1, gametic: %d", GetClassName(), healee.GetClassName(), gametic);
+						return 1; 
+					}
+				}
+
+				if (self.GetClassName() == "Heal2Shot")
+				{
+					if (healee.health > 0 && healee.health < healee.User_MaxHP)
+					{
+						healamount = 0; //CallACS("Healing_Actor",1,1);
+						healee.health += healamount; 
+						if (healee.health > healee.User_MaxHP) healee.health = healee.User_MaxHP;
+						/*
+						if ((dvds_showdamagemessages & 2) && healamount > 0) 
+						{
+							if (target) A_PrintHealingMessage(healee, healamount, target);
+										 else A_PrintHealingMessage(healee, healamount);
+						}
+						*/
+						//Console.Printf("%s to %s = return -1, gametic: %d", GetClassName(), healee.GetClassName(), gametic);
+						hashit = true;
+						return -1;
+					}
+					else 
+					{
+						//Console.Printf("%s to %s = return 1, gametic: %d", GetClassName(), healee.GetClassName(), gametic);
+						return 1; 
+					}
+				}
+
+				if (self.GetClassName() == "Heal3Shot")
+				{
+					if (healee.health > 0 && healee.health < (healee.User_MaxHP*2))
+					{
+						healamount = 0; //CallACS("Healing_Actor",2,1);
+						healee.health += healamount; 
+						if (healee.health > (healee.User_MaxHP*2)) healee.health = (healee.User_MaxHP*2);
+						/*
+						if ((dvds_showdamagemessages & 2) && healamount > 0) 
+						{
+							if (target) A_PrintHealingMessage(healee, healamount, target);
+										 else A_PrintHealingMessage(healee, healamount);
+						}
+						*/
+						//Console.Printf("%s to %s = return -1, gametic: %d", GetClassName(), healee.GetClassName(), gametic);
+						hashit = true;
+						return -1;
+					}
+					else 
+					{
+						//Console.Printf("%s to %s = return 1, gametic: %d", GetClassName(), healee.GetClassName(), gametic);
+						return 1;
+					}
+				}
+			}
+		}
+		else
+		if (healee2)
+		{
+			//Console.Printf("(%s to %s) = return 1, gametic: %d", GetClassName(), victim.GetClassName(), gametic);
+			return 1;
+		}
+
+		//Console.Printf("(%s to %s) = return -1, gametic: %d", GetClassName(), victim.GetClassName(), gametic);
+ 		return -1;
+ 	}
+}
+
+class Heal1Shot : HealMissile
+{
+	default
+	{
+		Radius 4;
+		Height 4;
+		Speed 60;
+		FastSpeed 60;
+		DamageFunction (0);
+		Projectile;
+		+RANDOMIZE;
+		+PAINLESS;
+		+DONTREFLECT;
+		+FOILINVUL;
+		//+CAUSEPAIN;
+		+BOUNCEONWALLS;
+		+BOUNCEONFLOORS;
+		+BOUNCEONCEILINGS;
+		+CANBOUNCEWATER;
+		+SEEKERMISSILE;
+		BounceType "Hexen";
+		BounceFactor 1.00125;
+		WallBounceFactor 1.00125;
+		RenderStyle "Add";
+		Scale 0.5;
+		Alpha 0.75;
+		SeeSound "null";
+		DeathSound "null";
+		DamageType "Heal1";
+	}
+	
+	States
+	{
+		Spawn:
+			HLS5 AAABBBCCCDDD 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter1", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter1", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_ScaleVelocity(1.0025);
+				A_HealingSeekerMissile(90,90,SMF_LOOK|SMF_PRECISE|SMF_CURSPEED,256,64,0); 
+				user_fuse++;
+				if (user_fuse >= 350) { return resolvestate("Death"); }
+				return resolvestate(null);
+			}
+			Loop;
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter1", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter1", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+			}
+			Stop;
+	}
+}
+
+class Heal1Spark : EEBaseZSC
+{
+	default
+	{
+		Radius 4;
+		Height 4;
+		RenderStyle "Add";
+		Scale 0.5;
+		Alpha 0.75;
+		SeeSound "null";
+		DeathSound "null";
+		+NOINTERACTION;
+		+NOBLOCKMAP;
+		+NOCLIP;
+	}
+	
+	States
+	{
+		Spawn:
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter1", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter1", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_Warp(AAPTR_PLAYER1,0,0,24,0, WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+			}
+			Stop;
+	}
+}
+
+class Heal2Shot : Heal1Shot
+{
+	default
+	{
+		Scale 0.75;
+		Alpha 0.875;
+		DamageType "Heal2";
+	}
+	
+	States
+	{
+		Spawn:
+			HLS5 AABBCCDD 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_ScaleVelocity(1.0025);
+				A_HealingSeekerMissile(90,90,SMF_LOOK|SMF_PRECISE|SMF_CURSPEED,256,64,0); 
+				user_fuse++;
+				if (user_fuse >= 350) { return resolvestate("Death"); }
+				return resolvestate(null);
+			}
+			Loop;
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+			}
+			Stop;
+	}
+}
+
+class Heal2Spark : EEBaseZSC
+{
+	default
+	{
+		Radius 4;
+		Height 4;
+		RenderStyle "Add";
+		Scale 0.75;
+		Alpha 0.875;
+		SeeSound "null";
+		DeathSound "null";
+		+NOINTERACTION;
+		+NOBLOCKMAP;
+		+NOCLIP;
+	}
+	
+	States
+	{
+		Spawn:
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_Warp(AAPTR_PLAYER1,0,0,24,0, WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+			}
+			Stop;
+	}
+}
+
+class Heal3Shot : Heal1Shot
+{
+	default
+	{
+		Scale 1;
+		Alpha 1;
+		DamageType "Heal3";
+	}
+	
+	States
+	{
+		Spawn:
+			HLS5 ABCD 1 Bright
+			{
+				//A_SeekerMissile(90,90,SMF_LOOK|SMF_PRECISE|SMF_CURSPEED,256,32);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_ScaleVelocity(1.0025);
+				A_HealingSeekerMissile(90,90,SMF_LOOK|SMF_PRECISE|SMF_CURSPEED,256,64,1); 
+				user_fuse++;
+				if (user_fuse >= 350) { return resolvestate("Death"); }
+				return resolvestate(null);
+			}
+			Loop;
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+			}
+			Stop;
+	}
+}
+
+class Heal3Spark : EEBaseZSC
+{
+	default
+	{
+		Radius 4;
+		Height 4;
+		RenderStyle "Add";
+		Scale 1;
+		Alpha 1;
+		SeeSound "null";
+		DeathSound "null";
+		+NOINTERACTION;
+		+NOBLOCKMAP;
+		+NOCLIP;
+	}
+	States
+	{
+		Spawn:
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_Warp(AAPTR_PLAYER1,0,0,24,0, WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+			}
+			Stop;
+	}
+}
+
+class Heal4Shot : Heal1Shot
+{
+	default
+	{
+		Scale 1.25;
+		Alpha 1;
+		DamageType "Heal4";
+	}
+	
+	States
+	{
+		Spawn:
+			HLS5 ABCD 1 Bright
+			{
+				//A_SeekerMissile(90,90,SMF_LOOK|SMF_PRECISE|SMF_CURSPEED,256,32);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+			}
+			Loop;
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+			}
+			Stop;
+	}
+}
+
+class Heal4Spark : EEBaseZSC
+{
+	default
+	{
+		Radius 4;
+		Height 4;
+		RenderStyle "Add";
+		Scale 1.25;
+		Alpha 1;
+		SeeSound "null";
+		DeathSound "null";
+		+NOINTERACTION;
+		+NOBLOCKMAP;
+		+NOCLIP;
+	}
+	
+	States
+	{
+		Spawn:
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter4", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_Warp(AAPTR_PLAYER1,0,0,24,0, WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+			}
+			Stop;
+	}
+}
+
+class Heal1SparkAlly : EEBaseZSC
+{
+	default
+	{
+		Radius 4;
+		Height 4;
+		RenderStyle "Add";
+		Scale 0.5;
+		Alpha 0.75;
+		SeeSound "null";
+		DeathSound "null";
+		+NOINTERACTION;
+		+NOBLOCKMAP;
+		+NOCLIP;
+	}
+	States
+	{
+		Spawn:
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter1", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter1", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_Warp(AAPTR_TARGET,0.0,0.0,0.0+(target.height/2),0.0,WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+			}
+			Stop;
+	}
+}
+
+class Heal2SparkAlly : EEBaseZSC
+{
+	default
+	{
+		Radius 4;
+		Height 4;
+		RenderStyle "Add";
+		Scale 0.75;
+		Alpha 0.875;
+		SeeSound "null";
+		DeathSound "null";
+		+NOINTERACTION;
+		+NOBLOCKMAP;
+		+NOCLIP;
+	}
+	States
+	{
+		Spawn:
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter2", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_Warp(AAPTR_TARGET,0.0,0.0,0.0+(target.height/2),0.0,WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+			}
+			Stop;
+	}
+}
+
+class Heal3SparkAlly : EEBaseZSC
+{
+	default
+	{
+		Radius 4;
+		Height 4;
+		RenderStyle "Add";
+		Scale 1;
+		Alpha 1;
+		SeeSound "null";
+		DeathSound "null";
+		+NOINTERACTION;
+		+NOBLOCKMAP;
+		+NOCLIP;
+	}
+	
+	States
+	{
+		Spawn:
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_SpawnItemEx("HealGlitter3", 0, 0, 0, random(-2,2), random(-2,2), random(-2,2) ,128);
+				A_Warp(AAPTR_TARGET,0.0,0.0,0.0+(target.height/2),0.0,WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+			}
+			Stop;
+	}
+}
+
+class CustomHealSpark : EEBaseZSC
+{
+	default
+	{
+		Radius 4; // 52/39/66/62/81/70/93/92/100/97 = avg 75.2px
+		Height 4; // 52/39/66/62/81/70/93/92/100/97 = avg 75.2px
+		RenderStyle "Add";
+		Scale 1;
+		Alpha 1;
+		SeeSound "null";
+		DeathSound "null";
+		+NOINTERACTION;
+		+NOBLOCKMAP;
+		+NOCLIP;
+	}
+	
+	int glitterspawns;
+	string glittertype;
+	double glitterxscale;
+	double glitteryscale;
+	double glitterxspeed;
+	double glitteryspeed;
+	double glitterzspeed;
+	
+	void A_GlitterSpawn(string glittertype, double xscal = 1.0, double yscal = 1.0)
+	{
+		bool success;
+		Actor spawnedglitter;
+		
+		[success, spawnedglitter] = A_SpawnItemEx(glittertype, 0, 0, 0, frandom(-2.0,2.0), frandom(-2.0,2.0), frandom(-2.0,2.0) , 128, SXF_NOCHECKPOSITION);
+		if (spawnedglitter && success)
+		{
+			spawnedglitter.scale.x *= xscal;
+			spawnedglitter.scale.y *= yscal;
+			spawnedglitter.vel.x *= glitterxspeed;
+			spawnedglitter.vel.y *= glitteryspeed;
+			spawnedglitter.vel.z *= glitterzspeed;
+		}
+	}
+	
+	States
+	{
+		Spawn:
+		Death:
+			HHI2 ABCDEFGHIJ 1 Bright
+			{
+				for (int i = 0; i < glitterspawns; i++)
+				{
+					A_GlitterSpawn(glittertype, glitterxscale, glitteryscale);
+				}
+				if (target)
+				{
+					A_Warp(AAPTR_TARGET,0.0,0.0,0.0+(target.height/2),0.0,WARPF_NOCHECKPOSITION|WARPF_INTERPOLATE);
+				}
+			}
+			Stop;
+	}
+}
+
 class EEVisualAImage : EEBaseZSC abstract
 {
 	default
