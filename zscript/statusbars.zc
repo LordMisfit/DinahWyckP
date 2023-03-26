@@ -30,7 +30,14 @@ class DDStatusBarMain : BaseStatusBar
 	int HPShakeInc, APShakeInc, IPShakeInc;
 	int HPPulseInc, APPulseInc;
 	int HPPulseTimer, APPulseTimer;
-
+	
+	bool A_CheckUOHYM()
+	{
+		bool UOHYM = false;
+		if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1) UOHYM = true;
+		return UOHYM;
+	}
+	
 	override void Init()
 	{
 		Super.Init();
@@ -1513,6 +1520,7 @@ class DDStatusBarMain : BaseStatusBar
 		string MassVal = "";
 		int ExtY = 0;
 		int BaseY = -27; // -21
+		if (!level.IsJumpingAllowed()) BaseY = -24;
 		if (MiscItem && CurrHealth > 0) 
 		{
 			if (CurrHealth != PlayerMaxHP) ExtY = -3;
@@ -1523,11 +1531,14 @@ class DDStatusBarMain : BaseStatusBar
 			if (BaseSpeed < 100.0000) SpeedCLR = font.cr_red;
 			SpeedVal.AppendFormat("%.2f%% MoveSpd", BaseSpeed);
 			DrawString(mArmSaveFont, SpeedVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, SpeedCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
-
-			BaseY += 6;
-			JumpHeight = MiscItem.TrueJumpHeight;
-			JumpVal.AppendFormat("%d Jump Height", JumpHeight);
-			DrawString(mArmSaveFont, JumpVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, SpeedCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			
+			if (level.IsJumpingAllowed())
+			{
+				BaseY += 6;
+				JumpHeight = MiscItem.TrueJumpHeight;
+				JumpVal.AppendFormat("%d Jump Height", JumpHeight);
+				DrawString(mArmSaveFont, JumpVal, (79, (BaseY+ExtY)), DI_TEXT_ALIGN_LEFT, SpeedCLR, FontAlpha, FontWrapWidth, FontLineSpace, FontScale); // 41, -43
+			}
 
 			BaseY += 6;
 			BaseMass = MiscItem.TotalMass;
@@ -1613,8 +1624,18 @@ class DDStatusBarMain : BaseStatusBar
 		double ScaleAmtBase = 1.334;
 		if (ValueAmt <= 0)
 		{
-			HealthAlpha *= 0.1;
-			HealthColor = font.CR_black;
+			if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1 &&
+					level.mapname == "MAP01" && 
+					!CPlayerPawn.hasDied)
+			{
+				HealthAlpha *= 1.0;
+				HealthColor = font.CR_Gray;
+			}
+			else
+			{
+				HealthAlpha *= 0.1;
+				HealthColor = font.CR_black;
+			}
 		}
 		else
 		{

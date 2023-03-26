@@ -10,7 +10,7 @@ class DD_EventHandler : EventHandler
 	const SKILL_IMPOSSIBLE = 7;
 	const SKILL_OMEGA = 8;
 	
-	bool A_CheckUOHMY()
+	bool A_CheckUOHYM()
 	{
 		bool UOHYM = false;
 		if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1) UOHYM = true;
@@ -2107,18 +2107,23 @@ class DD_EventHandler : EventHandler
 		}
 		
 		Super.WorldThingSpawned(e);
-		// Billboarder
-		// Written by Nash Muhandes
-		bool isProjectile = e.Thing.bMissile;
-		bool isPuff = (e.Thing is "BulletPuff" || e.Thing is "StrifePuff");
-		bool isBlood = (e.Thing is "Blood");
-		bool isSmokeTrail = (e.Thing is "RocketSmokeTrail" || e.Thing is "GrenadeSmokeTrail" || e.Thing is "RocketTrail");
 		
-		if (A_CheckUOHMY() && level.GetChecksum() == 'c4f05c26410edfe5085b6f8504be47a8')
+		if (A_CheckUOHYM())
 		{
-			if (isProjectile || isPuff || isBlood || isSmokeTrail)
+			if (level.mapname == "MAP01" ||
+					level.mapname == "20PAM" ||
+					level.mapname == "MAP02")
 			{
-				e.Thing.bForceXYBillboard = true;
+				// Billboarder
+				// Written by Nash Muhandes
+				bool isProjectile = e.Thing.bMissile;
+				bool isPuff = (e.Thing is "BulletPuff" || e.Thing is "StrifePuff");
+				bool isBlood = (e.Thing is "Blood");
+				bool isSmokeTrail = (e.Thing is "RocketSmokeTrail" || e.Thing is "GrenadeSmokeTrail" || e.Thing is "RocketTrail");
+				if (isProjectile || isPuff || isBlood || isSmokeTrail)
+				{
+					e.Thing.bForceXYBillboard = true;
+				}
 			}
 		}
 	}
@@ -6130,10 +6135,20 @@ class DD_EventHandler : EventHandler
 	
 	override void PlayerDied(PlayerEvent e) 
 	{
-		if (A_CheckUOHMY() && level.GetChecksum() == 'c4f05c26410edfe5085b6f8504be47a8')
+		bool check1 = true;
+		if (A_CheckUOHYM())
 		{
+			if (level.mapname == "MAP01" ||
+					level.mapname == "20PAM" ||
+					level.mapname == "MAP02")
+			{
+				check1 = false;
+				if (random(1,2) <= 1) S_ChangeMusic("GAMOVR", 0, false, true);
+												 else S_ChangeMusic("GAMOVR2", 0, false, true);
+			}
 		}
-		else
+		
+		if (check1)
 		{
 			actor Player = players[0].mo;
 			let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
@@ -6178,13 +6193,7 @@ class DD_EventHandler : EventHandler
 	
 	override void PlayerRespawned(PlayerEvent e) 
 	{
-		if (A_CheckUOHMY() && level.GetChecksum() == 'c4f05c26410edfe5085b6f8504be47a8')
-		{
-		}
-		else
-		{
-			S_ChangeMusic("*", 0, true, true);
-		}
+		S_ChangeMusic("*", 0, true, true);
 		Super.PlayerRespawned(e);
 	}
 	
@@ -6436,24 +6445,25 @@ class DD_EventHandler : EventHandler
 		}
 		
 		if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1 &&
-				level.GetChecksum() == 'c4f05c26410edfe5085b6f8504be47a8')
+				level.mapname == "MAP01")
 		{
 			PlayerPawn player = PlayerPawn(players[consoleplayer].mo);
 			if (player)
 			{
-				let zplayer = DDPlayerPawn(player);
+				let mhplayer = DDPlayerPawn(player);
 				
-				if (zplayer.whitehot > 0)
+				if (mhplayer.whitehot > 0)
 				{
-					double alpha = double(zplayer.whitehot) / double(15 * 1);
+					double alpha = double(mhplayer.whitehot) / double(15 * 1);
 					Screen.dim(Color(0xFFFFFF), alpha, 0, 0, Screen.getWidth(), screen.getHeight());
 				}
 				
-				if (zplayer.deathtimer < 20 * 35) return;
+				if (mhplayer.deathtimer < mhplayer.deathtimerthres4) return;
 				else
 				{
 					//10 seconds to fade to black
-					double alpha = double(zplayer.deathtimer_b) / double(10 * 35);
+					double alpha = 1.0;
+					if (mhplayer.deathfadetimebase > 0) alpha = double(mhplayer.deathtimer_b) / double(mhplayer.deathfadetimebase);
 					Screen.dim(Color(0), alpha, 0, 0, Screen.getWidth(), screen.getHeight());
 				}
 			}
