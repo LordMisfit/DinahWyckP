@@ -89,7 +89,22 @@ class DDPlayerPawn : PlayerPawn
 	
 	class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
 	string nm, nn, no, np;
-
+	
+	bool hasDied;
+	bool clinicstart;
+	
+	Vector3 spot;
+	Double lastAngle;
+	
+	int deathtimer;
+	int deathtimer_b;
+	
+	Array<Name> weapons;
+	
+	bool revived;
+	
+	int whitehot;
+	
 	default
 	{
 		+CASTSPRITESHADOW;
@@ -120,12 +135,27 @@ class DDPlayerPawn : PlayerPawn
 		return Level;
 	}
 	
+	bool A_CheckUOHMY()
+	{
+		bool UOHYM = false;
+		if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1) UOHYM = true;
+		return UOHYM;
+	}
+	
+	override void CheatGive(String name, int amount)
+	{
+		// empty
+		// or you can add custom code here.
+		if (A_CheckUOHMY()) { } else super.CheatGive(name, amount); // use this to call the original function
+	}
+	
 	override void PlayerLandedMakeGruntSound(actor onmobj)
 	{
 		bool grunted;
 
 		// [RH] only make noise if alive
-		if (self.health > 0 && !self.player.morphTics)
+		if (self.health > 0 && 
+				self.player.morphTics == 0)
 		{
 			grunted = false;
 			// Why should this number vary by gravity?
@@ -453,6 +483,59 @@ class DDPlayerPawn : PlayerPawn
 					special1 = 0;
 				}
 			}
+		}
+		
+		if (A_CheckUOHMY() && level.GetChecksum() == 'c4f05c26410edfe5085b6f8504be47a8')
+		{
+			double speed = sqrt((vel.x * vel.x) + (vel.y * vel.y) + (vel.z * vel.z));
+			if (speed <= 0) 
+			{
+				clinicstart = true;
+				spot = self.pos;
+				lastAngle = self.angle;
+			}
+		
+			if (!clinicstart || hasDied || self.curSector.special == 115) return;
+		
+			++deathTimer;
+			if (deathtimer > (30 * 35) && deathtimer < (60 * 35)) 
+			{
+				++deathtimer_b;
+				if (!self.findInventory('FadeToken'))
+				{
+					SetMusicVolume(1.0 - double(deathtimer_b / double(10 * 35)));
+				}
+			}
+			
+			if (deathtimer > (60 * 35))
+			{
+				self.player.resurrect();
+				Teleport_NoFog(1964, 1, 0);
+				self.player.cheats |= CF_TotallyFrozen;
+				revived = true;
+				
+				weapons.clear();
+				
+				DepositWeapon('CricketBat');
+				DepositWeapon('BlunderAxe');
+				DepositWeapon('Scrambler');
+				DepositWeapon('Applejack');
+				DepositWeapon('WizardPike');
+				DepositWeapon('SuperVac');
+				DepositWeapon('Grimophone');
+				DepositWeapon('CandleWhip');
+				DepositWeapon('FosnianCandle');
+			}
+		}
+		
+	}
+	
+	void DepositWeapon(name weap)
+	{
+		if (self.findInventory(weap))
+		{
+			weapons.push(Int(weap));
+			self.takeInventory(weap, 1);
 		}
 	}
 	
@@ -1890,39 +1973,45 @@ class DDPlayerPawn : PlayerPawn
 			
 			// Death Stuff
 			double fademax = 1.00;
-			if (health <= 0)
+			if (A_CheckUOHMY() && level.GetChecksum() == 'c4f05c26410edfe5085b6f8504be47a8')
 			{
-				if (deadtimer <= 0) 
+			}
+			else
+			{
+				if (health <= 0)
 				{
-					fadetime = int(TICRATE*frandom(2.1667,2.8334));
-					A_SetBlend("00 00 00",0.00, fadetime, "00 00 00",fademax);
-				}
-				if (deadtimer > (fadetime-2)) A_SetInventory("BlackScreenHUD",1);
-				if (!A_CheckDDGame())
-				{
-					if (exex_deathmusic == 13)
+					if (deadtimer <= 0) 
 					{
-						if (deadtimer == 108) A_StartSound("mortis",145,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
-						if (deadtimer > 107) A_SetInventory("MortisScreenHUD",1);
-														else A_SetInventory("MortisScreenHUD",0);
+						fadetime = int(TICRATE*frandom(2.1667,2.8334));
+						A_SetBlend("00 00 00",0.00, fadetime, "00 00 00",fademax);
+					}
+					if (deadtimer > (fadetime-2)) A_SetInventory("BlackScreenHUD",1);
+					if (!A_CheckDDGame())
+					{
+						if (exex_deathmusic == 13)
+						{
+							if (deadtimer == 108) A_StartSound("mortis",145,CHANF_DEFAULT,1.0,ATTN_NORM,1.0);
+							if (deadtimer > 107) A_SetInventory("MortisScreenHUD",1);
+															else A_SetInventory("MortisScreenHUD",0);
+						}
+						else A_SetInventory("MortisScreenHUD",0);
 					}
 					else A_SetInventory("MortisScreenHUD",0);
-				}
-				else A_SetInventory("MortisScreenHUD",0);
-				deadtimer++;
-				//Console.Printf("DeadTimer: %d, FadeTime: %d", deadtimer, fadetime);
-			}
-			else 
-			{
-				if (deadtimer > 0) 
-				{
-					fadetime *= 0.25;
-					A_SetBlend("00 00 00",fademax, fadetime, "00 00 00",0.00);
-					A_SetInventory("BlackScreenHUD",0);
-					A_SetInventory("MortisScreenHUD",0);
+					deadtimer++;
 					//Console.Printf("DeadTimer: %d, FadeTime: %d", deadtimer, fadetime);
 				}
-				deadtimer = 0;
+				else 
+				{
+					if (deadtimer > 0) 
+					{
+						fadetime *= 0.25;
+						A_SetBlend("00 00 00",fademax, fadetime, "00 00 00",0.00);
+						A_SetInventory("BlackScreenHUD",0);
+						A_SetInventory("MortisScreenHUD",0);
+						//Console.Printf("DeadTimer: %d, FadeTime: %d", deadtimer, fadetime);
+					}
+					deadtimer = 0;
+				}
 			}
 			
 			// Heartbeat [low health]
@@ -2189,6 +2278,50 @@ class DDPlayerPawn : PlayerPawn
 
 		lasthealth = health;
 		Super.Tick();
+		
+		if (A_CheckUOHMY() && level.GetChecksum() == 'c4f05c26410edfe5085b6f8504be47a8')
+		{
+			if (deathtimer > 0 && deathtimer < 90 * 35)
+			{
+				++deathtimer;
+			}
+			
+			if (deathtimer >= 90 * 35)
+			{
+				--deathtimer_b;
+				if (deathtimer_b <= 0) 
+				{
+					deathtimer = 0;
+					self.player.cheats &= ~(CF_TotallyFrozen);
+				}
+			}
+			
+			if (self.findInventory('AED_Token'))
+			{
+				if (!self.findInventory('FadeToken'))
+				{
+					SetMusicVolume(1.0);
+				}
+				
+				self.takeInventory('AED_Token', 1);
+				self.setOrigin(spot, false);
+				self.angle = lastangle;
+				
+				whitehot = 1 * 15;
+				
+				for (int i; i < weapons.size(); ++i)
+				{
+					self.giveInventory(name(weapons[i]), 1);
+				}
+				
+				let AED = Actor.spawn('Adrenaline');
+				AED.touch(self);
+				
+				hasDied = true;
+			}
+			
+			if (whitehot > 0) --whitehot;
+		}
 	}
 	
 	override void CheckCrouch(bool totallyfrozen)
