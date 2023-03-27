@@ -106,6 +106,8 @@ class DDPlayerPawn : PlayerPawn
 	int revivebeattimer;
 	
 	Array<Name> weapons;
+	Array<Name> invitems;
+	Array<Int> invitemsamt;
 	
 	bool revived;
 	
@@ -462,7 +464,7 @@ class DDPlayerPawn : PlayerPawn
 					level.mapname == "20PAM" ||
 					level.mapname == "MAP02")
 			{
-				defaultviewheight = ((ViewHeight + player.crouchviewdelta) * 1.317073170731707);
+				if (player.health > 0) defaultviewheight *= 1.166666666666667;
 			}
 		}
 
@@ -678,16 +680,39 @@ class DDPlayerPawn : PlayerPawn
 				revived = true;
 				
 				weapons.clear();
+				invitems.clear();
+				invitemsamt.clear();
 				
 				DepositWeapon('CricketBat');
 				DepositWeapon('BlunderAxe');
 				DepositWeapon('Scrambler');
-				DepositWeapon('Applejack');
+				DepositWeapon('AppleJack');
 				DepositWeapon('WizardPike');
 				DepositWeapon('SuperVac');
 				DepositWeapon('Grimophone');
 				DepositWeapon('CandleWhip');
 				DepositWeapon('FosnianCandle');
+				DepositWeapon('SigilDD');
+				DepositWeapon('CrazyBallDD');
+				DepositWeapon('EvilWarriorShield');
+				
+				DepositInvItem('FCandlePickup');
+				DepositInvItem('PortalSatchel');
+				DepositInvItem('TurkeyDinner');
+				DepositInvItem('AppleWine');
+				DepositInvItem('CherryBombPickup');
+				DepositInvItem('SpinnerPickup');
+				DepositInvItem('BRocketPickup');
+				DepositInvItem('PopperPickup');
+				DepositInvItem('SnakePickup');
+				DepositInvItem('BirdPotion');
+				DepositInvItem('TimePotion');
+				DepositInvItem('FuryPotion');
+				DepositInvItem('DivingHelm');
+				DepositInvItem('PalaceKeyNew');
+				DepositInvItem('RatPotion');
+				DepositInvItem('LegendaryMedicine');
+				DepositInvItem('StrangeCrystalBall');
 			}
 		}
 		
@@ -699,6 +724,16 @@ class DDPlayerPawn : PlayerPawn
 		{
 			weapons.push(Int(weap));
 			self.takeInventory(weap, 1);
+		}
+	}
+	
+	void DepositInvItem(name invi)
+	{
+		if (self.findInventory(invi))
+		{
+			invitems.push(Int(invi));
+			invitemsamt.push(CountInv(invi));
+			self.takeInventory(invi, CountInv(invi));
 		}
 	}
 	
@@ -1797,7 +1832,7 @@ class DDPlayerPawn : PlayerPawn
 		deathtimerthres2 = (30 * 35);
 		deathtimerthres3 = (45 * 35);
 		deathtimerthres4 = (10 * 35);
-		deathfadetimebase = (5 * 35);
+		deathfadetimebase = (20 * 35);
 		
 		// VOODOO Doll Protection
 		if ((!player || !player.mo || player.mo != self)) 
@@ -2310,7 +2345,6 @@ class DDPlayerPawn : PlayerPawn
 				if (level.mapname == "MAP01")
 				{
 					bINVISIBLEINMIRRORS = true;
-					Player.viewheight = (default.viewheight * sizemult);
 					if (deathtimer > 0 && deathtimer < deathtimerthres3)
 					{
 						++deathtimer;
@@ -2349,6 +2383,11 @@ class DDPlayerPawn : PlayerPawn
 						for (int i; i < weapons.size(); ++i)
 						{
 							self.giveInventory(name(weapons[i]), 1);
+						}
+						
+						for (int i; i < invitems.size(); ++i)
+						{
+							self.giveInventory(name(invitems[i]), invitemsamt[i]);
 						}
 						
 						let AED = Actor.spawn('Adrenaline');
@@ -2527,10 +2566,6 @@ class DDPlayerPawn : PlayerPawn
 
 		lasthealth = health;
 		Super.Tick();
-		
-		if (A_CheckUOHYM())
-		{
-		}
 	}
 	
 	override void CheckCrouch(bool totallyfrozen)
