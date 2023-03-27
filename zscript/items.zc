@@ -788,6 +788,113 @@ class GoldApple : CustomInventoryExt
 	}
 }
 
+class MHArtifactApple : GoldApple
+{
+	States
+	{
+		Spawn:
+			TNT1 A 5 NoDelay;
+			stop;
+		Pickup:
+			TNT1 A 0
+			{
+				int temp1 = player.mo.health;
+				int oldhealth = player.mo.health;
+				int temp2 = player.mo.CountInv("PlayerMaxHP");
+				int temp3 = temp2 * 3.0;
+				int inc = 2;
+				int inc2 = inc;
+				int inc3 = randompick(0,0,1,1,2);
+				
+				let globalvars = DDGlobalVariables.Get();
+				let MiscItem2 = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+				if (MiscItem2) MiscItem2.GoldApples += 1;
+				
+				temp2 += inc;
+				temp1 += inc2;
+				temp3 = temp2 * 3.0;
+				if (temp1 > temp3) temp1 = temp3;
+				if (MiscItem2) 
+				{
+					MiscItem2.HealthBonusAdd += inc;
+					MiscItem2.PlayerLuck += inc3;
+				}
+				if (globalvars) 
+				{
+					globalvars.HealthBonusAdd += inc;
+					globalvars.PlayerLuck += inc3;
+				}
+				if (!exex_expenabled)
+				{
+					if (A_CheckDDGame())
+					{
+						if (skill <= 0) inc *= 2.0;
+						if (skill == 1) inc *= 1.75;
+						if (skill == 2) inc *= 1.5;
+						if (skill == 3) inc *= 1.25;
+						if (skill >= 4) inc *= 1.0;
+						inc *= exex_nrpggeneraleffect;
+					}
+					else
+					{
+						if (skill <= 0) inc *= 4.0;
+						if (skill == 1) inc *= 3.5;
+						if (skill == 2) inc *= 3.0;
+						if (skill == 3) inc *= 2.5;
+						if (skill >= 4) inc *= 2.0;
+					}
+				}
+				invoker.A_StatIncHud(inc,0);
+				player.mo.health = player.health = temp1;
+				//int healdiff = player.mo.health - oldhealth;
+				//if (healdiff) invoker.A_RecoverHUD(healdiff, 0, true);
+				player.mo.A_SetInventory("PlayerMaxHP",temp2);
+				
+				if (MiscItem2) 
+				{
+					MiscItem2.AirBonusAdd += randompick(1,2,2,3,4);
+					MiscItem2.MassBonusAdd += randompick(0,1,1,2,3);
+				}
+
+				let MiscItem = PlayerDashJump(player.mo.FindInventory("PlayerDashJump"));
+				int dashinc = randompick(0,1,1);
+				if (MiscItem)
+				{
+					MiscItem.ExtraDashCharge += dashinc;
+					if (!exex_expenabled)
+					{
+						if (A_CheckDDGame())
+						{
+							if (skill <= 0) dashinc *= 2.0;
+							if (skill == 1) dashinc *= 1.75;
+							if (skill == 2) dashinc *= 1.5;
+							if (skill == 3) dashinc *= 1.25;
+							if (skill >= 4) dashinc *= 1.0;
+							dashinc *= exex_nrpggeneraleffect;
+						}
+						else
+						{
+							if (skill <= 0) dashinc *= 4.0;
+							if (skill == 1) dashinc *= 3.5;
+							if (skill == 2) dashinc *= 3.0;
+							if (skill == 3) dashinc *= 2.5;
+							if (skill >= 4) dashinc *= 2.0;
+						}
+					}
+					invoker.A_StatIncHud(dashinc,1);
+				}
+
+				//A_StartSound("player/statsup6",111,CHANF_DEFAULT,frandom(0.335,0.5),ATTN_NORM,frandom(0.8,1.25));
+				//A_StartSound("Dinah/eatapple",100);
+				//A_StartSound("Dinah/eatapple",101,CHANF_DEFAULT,1.0,ATTN_NONE,frandom(0.90,1.10));
+				//A_SetBlend("f1 ff f1",0.25,10);
+				//Console.Printf("\c[red]A Golden gala apple! \c[green]+%d HP! \c[gold]+%d Maximum HP!", inc2, inc);
+				//invoker.A_FadeOut(1.0,FTF_REMOVE);
+			}
+			stop;
+	}
+}
+
 class PlatinumApple : CustomInventoryExt
 {
 	default
