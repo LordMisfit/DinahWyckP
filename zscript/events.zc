@@ -770,6 +770,23 @@ class DD_EventHandler : EventHandler
 					baselinelevel *= exex_nrpgmonlevelscale;
 					if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet] baselinelevel: %d, tic: %d, actor: %p [%s]\c-", baselinelevel, gametic, spawnee, spawnname);
 				}
+				if (A_CheckUOHYM()) 
+				{
+					baselinelevel += randompick(0,1,1,1,2,2,2,2,2,2,2,2,3,3,3,4);
+					if (random(1,16) <= 1) baselinelevel *= 2.5;
+					else
+					{
+						if (random(1,8) <= 1) baselinelevel *= 1.75;
+						else
+						{
+							if (random(1,4) <= 1) baselinelevel *= 1.375;
+							else
+							{
+								if (random(1,2) <= 1) baselinelevel *= 1.1875;
+							}
+						}
+					}
+				}
 				
 				
 				if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet], tic: %d, actor: %p [%s]\c-", gametic, spawnee, spawnname);
@@ -925,6 +942,7 @@ class DD_EventHandler : EventHandler
 						if (exex_enemyscalingplevel && globalvars && MiscItem)
 						{
 							int TruePlayerLevel = A_GetPlayerLevel(1);
+							TruePlayerLevel += baselinelevel;
 							LevelCheck += TruePlayerLevel;
 							if (dydudebug_monsterscaling) Console.Printf("\ckMonsterLevel [PlayerLevel Check]: %d (PlayLvl: +%d)", LevelCheck, TruePlayerLevel);
 
@@ -1416,7 +1434,7 @@ class DD_EventHandler : EventHandler
 				}
 				
 				[spawnee, monsterlevel, monsterrating] = AddLevelSpecials(spawnee,monsterlevel,monsterrating);
-				[spawnee, monsterlevel, monsterrating] = SetUpMiracles(spawnee,monsterlevel,monsterrating);
+				if (!A_CheckUOHYM()) [spawnee, monsterlevel, monsterrating] = SetUpMiracles(spawnee,monsterlevel,monsterrating);
 			}
 		}
 		EECreature spawnee2;
@@ -3004,14 +3022,25 @@ class DD_EventHandler : EventHandler
 		Super.WorldThingDamaged(e);
 	}
 	
-	int A_DropCheckDDGames(int basechance)
+	int A_DropCheckMiscGames(int basechance)
 	{
 		if (A_CheckDDGame()) 
 		{
 			if (exex_nrpgmonsterlevels) basechance *= 4;
 														 else basechance *= 8;
 		}
+		if (A_CheckUOHYM()) basechance *= 4;
 		return basechance;
+	}
+	
+	int A_UOHYMDropCheck(int droptimes)
+	{
+		if (A_CheckUOHYM() && random(1,6) <= 1 && droptimes > 1) 
+		{
+			droptimes *= 0.25;
+			if (droptimes < 1 && random(1,6) <= 5) droptimes = 1;
+		}
+		return droptimes;
 	}
 	
 	int, int, actor, actor, actor, actor, actor, int, int, bool, bool A_KillDropTables(int PLuck, int TrueLuck, actor victim, actor inflicter, actor source, actor mastor, actor IPAttack, int specialtype, int monsterrating, bool playerkill, bool allykill)
@@ -3131,6 +3160,7 @@ class DD_EventHandler : EventHandler
 		int tutlevelmin = 1801;
 		int tutlevelmax = 1804;
 		if (level.levelnum >= tutlevelmin && level.levelnum <= tutlevelmax) candropitems = false;
+		if (A_CheckUOHYM() && random(1,6) <= 1) candropitems = false;
 		
 		if (candropitems)
 		{
@@ -3183,6 +3213,7 @@ class DD_EventHandler : EventHandler
 				lvldivider *= baseIPLvlDivider;
 			}
 			if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
+			if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 			if (inflicter && ((source && DDPlayerPawn(source))))
 			{
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -3204,6 +3235,7 @@ class DD_EventHandler : EventHandler
 				basedropdiv = 512;
 				basedropdiv *= skillmult;
 				if (A_CheckDDGame()) basechance *= 16;
+				if (A_CheckUOHYM()) basechance *= 4;
 				luckbase = 0.25 + (monsterrating * 0.0625);
 				if (IPAttack) 
 				{
@@ -3357,6 +3389,7 @@ class DD_EventHandler : EventHandler
 				basedropdiv = 512;
 				basedropdiv *= skillmult;
 				if (A_CheckDDGame()) basechance *= 16;
+				if (A_CheckUOHYM()) basechance *= 4;
 				luckbase = 0.25 + (monsterrating * 0.0625);
 				if (PLuck) basedropdiv -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 				if (IPAttack) 
@@ -3372,6 +3405,7 @@ class DD_EventHandler : EventHandler
 				basedropdiv = 512;
 				basedropdiv *= skillmult;
 				if (A_CheckDDGame()) basechance *= 16;
+				if (A_CheckUOHYM()) basechance *= 4;
 				luckbase = 0.25 + (monsterrating * 0.0625);
 				if (PLuck) basedropdiv -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 				if (IPAttack) 
@@ -3596,6 +3630,7 @@ class DD_EventHandler : EventHandler
 				basedropdiv = 512;
 				basedropdiv *= skillmult;
 				if (A_CheckDDGame()) basechance *= 16;
+				if (A_CheckUOHYM()) basechance *= 4;
 				luckbase = 0.25 + (monsterrating * 0.0625);
 				if (PLuck) basedropdiv -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 				if (IPAttack) 
@@ -3626,6 +3661,7 @@ class DD_EventHandler : EventHandler
 				lvldivider *= baseIPLvlDivider;
 			}
 			if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
+			if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 			if (inflicter && ((source && DDPlayerPawn(source))))
 			{
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -3651,6 +3687,7 @@ class DD_EventHandler : EventHandler
 					if (exex_nrpgmonsterlevels) basechance *= 8;
 																 else basechance *= 16;
 				}
+				if (A_CheckUOHYM()) basechance *= 8;
 				luckbase = 0.25 + (monsterrating * 0.0625);
 				if (IPAttack) 
 				{
@@ -3916,6 +3953,7 @@ class DD_EventHandler : EventHandler
 					lvldivider *= baseIPLvlDivider;
 				}
 				if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
+				if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 				if (inflicter && ((source && DDPlayerPawn(source))))
 				{
 					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -3983,6 +4021,7 @@ class DD_EventHandler : EventHandler
 					lvldivider *= baseIPLvlDivider;
 				}
 				if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
+				if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 				if (inflicter && ((source && DDPlayerPawn(source))))
 				{
 					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -4005,7 +4044,7 @@ class DD_EventHandler : EventHandler
 					if (player.CountInv("PlayingBlooM")) basechance *= 0.5;
 					if (player.CountInv("IsCarnOfSouls")) basechance *= 2.0;
 					
-					basechance = A_DropCheckDDGames(basechance);
+					basechance = A_DropCheckMiscGames(basechance);
 					luckbase = 0.5 + (monsterrating * 0.125);
 					if (IPAttack) 
 					{
@@ -4049,6 +4088,7 @@ class DD_EventHandler : EventHandler
 				lvldivider *= baseIPLvlDivider;
 			}
 			if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
+			if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 			if (inflicter && ((source && DDPlayerPawn(source))))
 			{
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -4072,6 +4112,7 @@ class DD_EventHandler : EventHandler
 				{
 					if (exex_nrpgmonsterlevels) basechance *= 0.5;
 				}
+				if (A_CheckUOHYM()) basechance *= 2;
 				if (player.CountInv("PlayingBlooM")) basechance *= 0.875;
 				
 				luckbase = 0.5 + (monsterrating * 0.125);
@@ -4123,6 +4164,7 @@ class DD_EventHandler : EventHandler
 				lvldivider *= baseIPLvlDivider;
 			}
 			if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
+			if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 			if (inflicter && ((source && DDPlayerPawn(source))))
 			{
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -4148,6 +4190,7 @@ class DD_EventHandler : EventHandler
 					if (exex_nrpgmonsterlevels) basechance *= 1;
 																 else basechance *= 2;
 				}
+				if (A_CheckUOHYM()) basechance *= 2;
 				luckbase = 1.0 + (monsterrating * 0.25);
 				if (IPAttack) 
 				{
@@ -4414,6 +4457,7 @@ class DD_EventHandler : EventHandler
 				lvldivider *= baseIPLvlDivider;
 			}
 			if (PLuck) droptimes = floor(droptimes + (TrueLuck * frandompick((luckbase*0),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase),(luckbase*2),(luckbase*2))));
+			if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 			if (inflicter && ((source && DDPlayerPawn(source))))
 			{
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -4434,7 +4478,7 @@ class DD_EventHandler : EventHandler
 				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 				if (player.CountInv("PlayingBlooM")) basechance *= 0.5;
 				
-				basechance = A_DropCheckDDGames(basechance);
+				basechance = A_DropCheckMiscGames(basechance);
 				luckbase = 0.0625 + (monsterrating * 0.015625); // (512)
 				if (IPAttack) 
 				{
@@ -4475,7 +4519,7 @@ class DD_EventHandler : EventHandler
 				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 				if (player.CountInv("PlayingBlooM")) basechance *= 0.75;
 				
-				basechance = A_DropCheckDDGames(basechance);
+				basechance = A_DropCheckMiscGames(basechance);
 				luckbase = 0.5 + (monsterrating * 0.125); // (512)
 				if (IPAttack) 
 				{
@@ -4578,7 +4622,7 @@ class DD_EventHandler : EventHandler
 				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 				if (player.CountInv("PlayingBlooM")) basechance *= 0.8;
 				
-				basechance = A_DropCheckDDGames(basechance);
+				basechance = A_DropCheckMiscGames(basechance);
 				luckbase = 2.0 + (monsterrating * 0.5); // (512) 
 				if (IPAttack) 
 				{
@@ -4641,7 +4685,7 @@ class DD_EventHandler : EventHandler
 				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 				if (player.CountInv("PlayingBlooM")) basechance *= 0.9;
 				
-				basechance = A_DropCheckDDGames(basechance);
+				basechance = A_DropCheckMiscGames(basechance);
 				luckbase = 0.25 + (monsterrating * 0.0625); // (512)
 				if (IPAttack) 
 				{
@@ -4677,7 +4721,7 @@ class DD_EventHandler : EventHandler
 				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 				if (player.CountInv("PlayingBlooM")) basechance *= 0.8;
 				
-				basechance = A_DropCheckDDGames(basechance);
+				basechance = A_DropCheckMiscGames(basechance);
 				luckbase = 3.0 + (monsterrating * 0.75); // (682.66667)
 				if (IPAttack) 
 				{
@@ -4732,7 +4776,7 @@ class DD_EventHandler : EventHandler
 				basechance = exex_inventorydroprate10;
 				basechance *= skillmult;
 				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 2;
-				basechance = A_DropCheckDDGames(basechance);
+				basechance = A_DropCheckMiscGames(basechance);
 				luckbase = 1.25 + (monsterrating * 0.3125);
 				// Weapons and IP Attacks do not effect drop rates here V:
 				if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
@@ -5205,6 +5249,7 @@ class DD_EventHandler : EventHandler
 						}
 
 						int ExpGain = (victim.SpawnHealth() + victim.Stamina);
+						if (A_CheckUOHYM()) ExpGain *= 0.25;
 						
 						if ((source && source.CountInv("PlayingBlooM")) || 
 								(inflicter && inflicter.CountInv("PlayingBlooM"))) 
@@ -7223,6 +7268,11 @@ class DD_StaticEventHandler : StaticEventHandler
 		{
 			StringTable.Localize("$STEP_FLATSHELLG").Split(allSF,":");
 			Console.Printf("Hell Ground Footsteps TXT Loaded");
+		}
+		if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSUOHYM").Split(allSF,":");
+			Console.Printf("UOHYM TXT Loaded");
 		}
 		
 		for (int j = allSF.Size() - 1; j >= 0; j -= 1)
