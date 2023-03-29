@@ -302,6 +302,8 @@ class PlayerStatItem : Inventory
 		else
 		if (playeractor) // Otherwise, Keep
 		{
+			if (A_CheckUOHYM()) owner.ChangeTID(1001);
+			
 			cricketspinlvlrequirement = exex_cricketspinlvlrequirement;
 			axecombolvlrequirement = exex_axecombolvlrequirement;
 			axequickshotlvlrequirement = exex_axequickshotlvlrequirement;
@@ -5008,6 +5010,12 @@ class PlayerStatItem : Inventory
 								inc = 20;
 								inc += ((TruePlayerLevel * 0.05) + (TruePlayerDEF * 0.05));
 								inc += ((GoldApples * 0.1) + (PlatinumApples * 0.25) + (PrismaticApples + 1.0));
+								
+								if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0)
+								{
+									inc *= 0.01;
+									if (inc < 1 && random(1,16) <= 1) inc = 1;
+								}
 							}
 							if (owner.CountInv("HealthRegenTutorialAccel") > 0)
 							{
@@ -5059,8 +5067,19 @@ class PlayerStatItem : Inventory
 								}
 							}
 							BaseRegenMulti = inc;
-							if (HPRegenBoostTimer > 0) inc *= 2.5;
-							if (HPRegenBoostTimer < 0) inc *= 0.4;
+							if (HPRegenBoostTimer > 0) 
+							{
+								if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0)
+								{
+									if (inc < 0) inc = 1;
+									inc *= 20;
+								}
+								else inc *= 2.5;
+							}
+							if (HPRegenBoostTimer < 0) 
+							{
+								inc *= 0.4;
+							}
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Regen]: %d", HPRegenBoostTimer);
 							if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) inc *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.005) + (owner.CountInv("AngerLevelEventN") * 0.0005));
 							
@@ -5207,6 +5226,11 @@ class PlayerStatItem : Inventory
 								inc = 20;
 								inc -= ((TruePlayerLevel * 0.025) + (TruePlayerDEF * 0.025));
 								inc -= ((GoldApples * 0.0125) + (PlatinumApples * 0.03125) + (PrismaticApples + 0.125));
+								if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) 
+								{
+									inc *= 0.01;
+									if (inc < 1 && random(1,16) <= 1) inc = 1;
+								}
 							}
 							if (owner.CountInv("HealthRegenTutorialAccel") > 0)
 							{
@@ -5259,7 +5283,15 @@ class PlayerStatItem : Inventory
 							}
 							BaseRegenMulti = inc;
 							if (HPRegenBoostTimer > 0) inc *= 0.4;
-							if (HPRegenBoostTimer < 0) inc *= 2.5;
+							if (HPRegenBoostTimer < 0) 
+							{
+								if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0)
+								{
+									if (inc < 0) inc = 1;
+									inc *= 20;
+								}
+								else inc *= 2.5;
+							}
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Degen]: %d", HPRegenBoostTimer);
 							if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) inc *= (1.0 - (owner.CountInv("AngerLevelEvent") * 0.003334) - (owner.CountInv("AngerLevelEventN") * 0.0003334));
 							
@@ -5569,6 +5601,8 @@ class PlayerStatItem : Inventory
 			else EvasionRate = SPDEvadeCheck;
 			if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 1 - Base (Agl/Evade, Lvl/Evade)]: %d\c-", EvasionRate);
 			
+			if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) EvasionRate *= 2.5;
+			
 			if (Owner.CountInv("PowerHaste")) EvasionRate *= 2.5;
 			if (Owner.CountInv("PowerSlow")) EvasionRate *= 0.4;
 			
@@ -5588,12 +5622,14 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility"))
 			{
 				PerkFactor = 3334;
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2;
 				if (Owner.CountInv("PowerRavenInvisibility")) PerkFactor = randompick[statitem](6666,6667,6667);
 				SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
 				EvasionRate += SkillFactor;
 				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 3 - Invisibility Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
 				
 				PerkFactor = 3334;
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				if (Owner.CountInv("PowerRavenInvisibility")) PerkFactor = randompick[statitem](6666,6667,6667);
 				SkillFactor = (10000 - EvadeRateCap) * PerkFactor / 10000;
 				EvadeRateCap += SkillFactor;
@@ -5603,6 +5639,7 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("DoingSpinAttack"))
 			{
 				PerkFactor = 1250;
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				if (ActualLevel >= (cricketspinlvlrequirement * 1.75)) PerkFactor = 1875;
 				if (ActualLevel >= (cricketspinlvlrequirement * 2.5)) PerkFactor = 2500;
 				if (ActualLevel >= (cricketspinlvlrequirement * 3.25)) PerkFactor = 3125;
@@ -5615,6 +5652,7 @@ class PlayerStatItem : Inventory
 				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 4 - Cricket Bat Spin-Attack Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
 				
 				PerkFactor = 1250;
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				if (ActualLevel >= (cricketspinlvlrequirement * 2.5)) PerkFactor = 1875;
 				if (ActualLevel >= (cricketspinlvlrequirement * 4)) PerkFactor = 2500;
 				if (ActualLevel >= (cricketspinlvlrequirement * 5.5)) PerkFactor = 3125;
@@ -5626,11 +5664,13 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("ClassyRibbon"))
 			{
 				PerkFactor = 625 * frandompick[statitem](0.5,1,1,1,1,1,1,1,1,2);
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
 				EvasionRate += SkillFactor;
 				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 5 - Classy Ribbon Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
 				
 				PerkFactor = 125;
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				SkillFactor = (10000 - EvadeRateCap) * PerkFactor / 10000;
 				EvadeRateCap += SkillFactor;
 				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 5a - Classy Ribbon Check]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
@@ -5639,11 +5679,13 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("ExpeditionHat"))
 			{
 				PerkFactor = random[statitem](312,313) * frandompick[statitem](0.5,1,1,1,1,1,1,1,1,2);
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
 				EvasionRate += SkillFactor;
 				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 6 - Expedition Hat Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
 				
 				PerkFactor = random[statitem](156,157);
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				SkillFactor = (10000 - EvadeRateCap) * PerkFactor / 10000;
 				EvadeRateCap += SkillFactor;
 				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 6a - Expedition Hat Check]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
@@ -5763,6 +5805,11 @@ class PlayerStatItem : Inventory
 			if (WineDefTier == 5 || WineDefTier == -5) SurvivalRate += random[statitem](1562,1563);
 			if (Owner.CountInv("DoingSpinAttack")) SurvivalRate += (2500 * 1.334);
 			if (dydudebug_survivalrate) Console.Printf("SurvivalRate [Buffs]: %d", SurvivalRate);
+			
+			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility"))
+			{
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) SurvivalRate += ((10000 - SurvivalRate) * 0.5);
+			}
 			
 			int buddhatype = 0;
 			if (Owner.CountInv("CricketBatGuard")) 
@@ -7124,7 +7171,11 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerGuard")) BuffFactor *= 2;
 			if (Owner.CountInv("PowerWeaken")) BuffFactor *= 0.5;
 			if (Owner.CountInv("DinahTrueIPState")) BuffFactor *= 5;
-			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility")) BuffFactor *= frandompick[statitem](1.00,1.00,1.125,1.125,1.25);
+			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility"))
+			{
+				BuffFactor *= frandompick[statitem](1.00,1.00,1.125,1.125,1.25);
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) BuffFactor *= frandompick[statitem](1.00,1.00,1.125,1.125,1.25);
+			}
 			if (WineDefTier == 1 || WineDefTier == -1) BuffFactor *= frandompick[statitem](0.985,1.015);
 			if (WineDefTier == 2 || WineDefTier == -2) BuffFactor *= frandompick[statitem](0.955,1.045);
 			if (WineDefTier == 3 || WineDefTier == -3) BuffFactor *= frandompick[statitem](0.91,1.09);
@@ -7341,7 +7392,11 @@ class PlayerStatItem : Inventory
 			if (Owner.CountInv("PowerWeaken")) BuffFactor *= 2;
 			if (Owner.CountInv("DinahTrueIPState")) BuffFactor *= 0.20;
 			if (berserked) BuffFactor *= frandompick[statitem](0.8,0.9,0.9,0.9,1.0);
-			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility")) BuffFactor *= frandompick[statitem](1.00,1.00,0.875,0.875,0.75);
+			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility"))
+			{
+				BuffFactor *= frandompick[statitem](1.00,1.00,0.875,0.875,0.75);
+				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) BuffFactor *= frandompick[statitem](1.00,1.00,0.875,0.875,0.75);
+			}
 			if (WineDefTier == 1 || WineDefTier == -1) BuffFactor *= frandompick[statitem](0.995,1.005);
 			if (WineDefTier == 2 || WineDefTier == -2) BuffFactor *= frandompick[statitem](0.985,1.015);
 			if (WineDefTier == 3 || WineDefTier == -3) BuffFactor *= frandompick[statitem](0.97,1.03);

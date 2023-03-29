@@ -695,6 +695,7 @@ class DD_EventHandler : EventHandler
 			int TruePlayerLevel = 0;
 			if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 			string spawnname = spawnee.GetClassName();
+			string nm, nn, no, np;
 			
 			double hpmulti, atkmulti, defmulti, spdmulti, massmulti;
 			double hpmulti2, atkmulti2, defmulti2, spdmulti2, massmulti2;
@@ -770,10 +771,24 @@ class DD_EventHandler : EventHandler
 					baselinelevel *= exex_nrpgmonlevelscale;
 					if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet] baselinelevel: %d, tic: %d, actor: %p [%s]\c-", baselinelevel, gametic, spawnee, spawnname);
 				}
-				if (A_CheckUOHYM()) 
+				if (A_CheckUOHYM() && level.mapname == "MAP01") 
 				{
 					baselinelevel += randompick(0,1,1,1,2,2,2,2,2,2,2,2,3,3,3,4);
-					string nm = "Mite"; if (spawnname == nm) baselinelevel *= random(2,3);
+					nm = "Blot"; if (spawnname == nm) baselinelevel *= random(1,2);
+					nm = "Shadow"; if (spawnname == nm) baselinelevel *= random(1,2);
+					nm = "Mite"; if (spawnname == nm) baselinelevel *= random(2,3);
+					nm = "Vampyr"; if (spawnname == nm) baselinelevel *= random(2,3);
+					nm = "Striga"; if (spawnname == nm) baselinelevel *= random(2,3);
+					nm = "Putrefier"; if (spawnname == nm) baselinelevel *= random(2,3);
+					nm = "Hemodemon"; if (spawnname == nm) baselinelevel *= random(2,3);
+					nm = "Wight1"; if (spawnname == nm) baselinelevel *= random(2,3);
+					nm = "KDiZDNightmare"; if (spawnname == nm) baselinelevel *= random(8,12);
+					nm = "MirrorArchvile"; if (spawnname == nm) baselinelevel *= random(8,12);
+					nm = "KevCerberus"; if (spawnname == nm) baselinelevel *= random(8,12);
+					nm = "ChildhoodNightmare"; if (spawnname == nm) baselinelevel *= random(8,12);
+					nm = "Hellfish"; if (spawnname == nm) baselinelevel *= random(8,12);
+					nm = "SphinxMotherClone"; if (spawnname == nm) baselinelevel *= random(8,12);
+					nm = "SkinStealer"; if (spawnname == nm) baselinelevel *= random(16,24);
 					if (random(1,16) <= 1) baselinelevel *= 2.5;
 					else
 					{
@@ -1802,7 +1817,6 @@ class DD_EventHandler : EventHandler
 				if (YellowCard(IsInv) || BlueCard(IsInv) || RedCard(IsInv)) IsInv.PickupSound = "getkeycard";
 				if (YellowSkull(IsInv) || BlueSkull(IsInv) || RedSkull(IsInv)) IsInv.PickupSound = "getskullkey";
 			}
-
 			string nm, nn, no, np, nq, nr;
 			nm = "KDIZDGreenKey";
 			nn = "KDIZDSilverKey";
@@ -2283,11 +2297,19 @@ class DD_EventHandler : EventHandler
 				if (victim.CountInv(nm)) specialtype += 2;
 				nm = "CCardRespawnedMarker";
 				if (victim.CountInv(nm)) specialtype += 4;
-				nm = "CCards_Actor_TheAncientOne"; if (victim.GetClassName() == nm) specialtype += 8;
+				nm = "CCards_Actor_TheAncientOne";
+				if (victim.GetClassName() == nm) specialtype += 8;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype += 8;
-					nm = "Skeleton"; if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "PurpleTentacle";
+					if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "Skeleton";
+					if (victim.GetClassName() == nm) specialtype += 8;
+				}
+				if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1)
+				{
+					nm = "Mite";
+					if (victim.GetClassName() == nm) specialtype += 8;
 				}
 				if (dydudebug_worlddamaged) Console.Printf("[%s] SpecialType [WorldDamaged]: %d", vict, specialtype);
 				
@@ -5178,8 +5200,15 @@ class DD_EventHandler : EventHandler
 				if (victim.GetClassName() == nm) specialtype += 8;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype += 8;
-					nm = "Skeleton"; if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "PurpleTentacle";
+					if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "Skeleton";
+					if (victim.GetClassName() == nm) specialtype += 8;
+				}
+				if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1)
+				{
+					nm = "Mite";
+					if (victim.GetClassName() == nm) specialtype += 16;
 				}
 				if (dydudebug_worlddied) Console.Printf("[%s] SpecialType [WorldDied]: %d", vict, specialtype);
 
@@ -5250,7 +5279,11 @@ class DD_EventHandler : EventHandler
 						}
 
 						int ExpGain = (victim.SpawnHealth() + victim.Stamina);
-						if (A_CheckUOHYM()) ExpGain *= 0.25;
+						if (A_CheckUOHYM()) 
+						{
+							if (specialtype & 16) ExpGain *= (frandom(0.8,1.2) * frandompick(0.875,1.0,1.0,1.0,1.125));
+															 else ExpGain *= (frandom(0.3,0.45) * frandompick(0.75,0.875,1.0,1.125,1.25));
+						}
 						
 						if ((source && source.CountInv("PlayingBlooM")) || 
 								(inflicter && inflicter.CountInv("PlayingBlooM"))) 
