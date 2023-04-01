@@ -19,7 +19,15 @@ class PuzzleItemEE : PuzzleItem
 		if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1) UOHYM = true;
 		return UOHYM;
 	}
-
+	
+	bool A_CheckDDGame()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
 	override String PickupMessage()
 	{
 		return PickupMsg;
@@ -995,6 +1003,7 @@ class PrayerCandle : PuzzleItemEE
 		Inventory.Icon "PCDLI0";
 		Inventory.PickupMessage "\c[gold]A prayer candle needed for something in Purgatorium...\c-";
 		Inventory.PickupSound "misc/i_pkup";
+		PuzzleItemEE.PickUpVoice false;
 		PuzzleItem.Number 94;
 		Inventory.MaxAmount 1;
 		Tag "Prayer Candle";
@@ -1008,7 +1017,12 @@ class PrayerCandle : PuzzleItemEE
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		string itemname = GetClassName();
 		string tagg = "Prayer Candle";
-		if (A_CheckUOHYM() && player.CountInv(itemname) > 0) tagg.AppendFormat(": Too bad there's nothing like a marked grave to place this... It's so out of place...");
+		if (A_CheckUOHYM()) 
+		{
+			PickupUseVoice = true;
+			PickupSound = "Dinah/What";
+			if (player.CountInv(itemname) > 0) tagg.AppendFormat(": Too bad there's nothing like a marked grave to place this... It's so out of place...");
+		}
 		SetTag(tagg);
 		super.Tick();
 	}
@@ -1022,11 +1036,110 @@ class PrayerCandle : PuzzleItemEE
 		return msg;
 	}
 	
+	int flickertype;
 	States
 	{
 		Spawn:
-			PCDL AB 10 bright;
+			PCDL A 0 NoDelay bright
+			{
+				if (A_CheckUOHYM()) return resolvestate("IdleLightUOHYM");
+				else if (A_CheckDDGame()) return resolvestate("IdleLight");
+				return resolvestate(null);
+			}
+			PCDL AABB 5 bright;
 			Loop;
+		IdleLight:
+			PCDL A 0 bright
+			{
+				flickertype = random(0,1);
+			}
+			PCDL A 3 bright Light("PRAYERCANDLE1P")
+			{
+				if (flickertype == 0) A_SetTics(3);
+												 else A_SetTics(2);
+			}
+			PCDL A 2 bright Light("PRAYERCANDLE2P")
+			{
+				if (flickertype == 0) A_SetTics(2);
+												 else A_SetTics(3);
+			}
+			PCDL A 2 bright Light("PRAYERCANDLE3P")
+			{
+				if (flickertype == 0) A_SetTics(2);
+												 else A_SetTics(3);
+			}
+			PCDL A 3 bright Light("PRAYERCANDLE4P")
+			{
+				if (flickertype == 0) A_SetTics(3);
+												 else A_SetTics(2);
+			}
+			PCDL B 3 bright Light("PRAYERCANDLE1P")
+			{
+				if (flickertype == 0) A_SetTics(3);
+												 else A_SetTics(2);
+			}
+			PCDL B 2 bright Light("PRAYERCANDLE2P")
+			{
+				if (flickertype == 0) A_SetTics(2);
+												 else A_SetTics(3);
+			}
+			PCDL B 2 bright Light("PRAYERCANDLE3P")
+			{
+				if (flickertype == 0) A_SetTics(2);
+												 else A_SetTics(3);
+			}
+			PCDL B 3 bright Light("PRAYERCANDLE4P")
+			{
+				if (flickertype == 0) A_SetTics(3);
+												 else A_SetTics(2);
+			}
+			goto Spawn;
+		IdleLightUOHYM:
+			PCDL A 0 bright
+			{
+				flickertype = random(0,1);
+			}
+			PCDL A 3 bright Light("PRAYERCANDLE1UOHYMP")
+			{
+				if (flickertype == 0) A_SetTics(3);
+												 else A_SetTics(2);
+			}
+			PCDL A 2 bright Light("PRAYERCANDLE2UOHYMP")
+			{
+				if (flickertype == 0) A_SetTics(2);
+												 else A_SetTics(3);
+			}
+			PCDL A 2 bright Light("PRAYERCANDLE3UOHYMP")
+			{
+				if (flickertype == 0) A_SetTics(2);
+												 else A_SetTics(3);
+			}
+			PCDL A 3 bright Light("PRAYERCANDLE4UOHYMP")
+			{
+				if (flickertype == 0) A_SetTics(3);
+												 else A_SetTics(2);
+			}
+			PCDL B 3 bright Light("PRAYERCANDLE1UOHYMP")
+			{
+				if (flickertype == 0) A_SetTics(3);
+												 else A_SetTics(2);
+			}
+			PCDL B 2 bright Light("PRAYERCANDLE2UOHYMP")
+			{
+				if (flickertype == 0) A_SetTics(2);
+												 else A_SetTics(3);
+			}
+			PCDL B 2 bright Light("PRAYERCANDLE3UOHYMP")
+			{
+				if (flickertype == 0) A_SetTics(2);
+												 else A_SetTics(3);
+			}
+			PCDL B 3 bright Light("PRAYERCANDLE4UOHYMP")
+			{
+				if (flickertype == 0) A_SetTics(3);
+												 else A_SetTics(2);
+			}
+			goto Spawn;
 	}
 }
 

@@ -1,3 +1,96 @@
+class EEHelperDog : EECreature replaces MBFHelperDog
+{
+	default
+	{
+		Tag "Attack Dog";
+		Health 375; // 500
+		Speed 15; // 10
+		Radius 12;
+		Height 28;
+		Mass 100; // 100
+		PainChance 120; // 180
+		Painchance "Fist", 180; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 255; // Kick attacks have a +150% chance of stunning an enemy
+		Monster;
+		+JUMPDOWN;
+		ActiveSound "dog/active";
+		AttackSound "dog/attack";
+		DeathSound "dog/death";
+		PainSound "dog/pain";
+		SeeSound "dog/sight";
+		Obituary "$OB_DOG"; // "%o was mauled by a dog."
+	}
+
+	States
+	{
+		Spawn:
+			DOGS A 0 NoDelay;
+			DOGS AABB 5 A_Look();
+			goto Spawn+1;
+		See:
+			DOGS A 0;
+			DOGS AABBCCDD 2
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(1); }
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+			}
+			Loop;
+		Melee:
+			DOGS A 0;
+			DOGS EF 8
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 80) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 40) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 20) { A_SetTics(7); }
+				A_FaceTarget();
+			}
+			DOGS G 8
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 80) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 40) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 20) { A_SetTics(7); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack((random(1,10)*randompick(4,4,4,4,6,6,8)),"none","none","Melee",true); // A_SargAttack
+			}
+			Goto See;
+
+		Pain:
+			DOGS H 2;
+			DOGS H 2 A_EEPain();
+			Goto See;
+		Pain.Fist:
+			DOGS H 2;
+			DOGS H 2 A_EEPain();
+			DOGS HH 2;
+			Goto See;
+		Pain.Kick: 
+			DOGS H 2;
+			DOGS H 2 A_EEPain();
+			DOGS HHHH 2; 
+			Goto See; 
+
+		Death:
+			DOGS I 8;
+			DOGS J 8 A_Scream();
+			DOGS K 4;
+			DOGS L 4 A_Fall();
+			DOGS M 4;
+			DOGS N -1;
+			stop;
+		Ice:
+			DOGS H 5 A_GenericFreezeDeath();
+			DOGS H 1 A_FreezeDeathChunks();
+			wait;
+		Raise:
+			DOGS N 5;
+			DOGS MLKJI 5;
+			Goto See;
+	}
+}
+
 class ZombiemanNew : EECreature
 {
 	default
@@ -67,7 +160,7 @@ class ZombiemanNew : EECreature
 			double slope = AimLineAttack(ang, MISSILERANGE);
 			ang += Random2[PosAttack]() * (user_shotaccuracy/256);
 			slope += Random2[PosAttack]() * (user_shotzaccuracy/256);
-			A_StartSound("grunt/attack", CHAN_WEAPON);
+			A_StartSound(AttackSound, CHAN_WEAPON);
 			int damage = A_CalcDamageFormula(3,random(1,5),0.005,0.3334,0.1667,0.005);
 			if (exex_bulletstracers == 0)
 			{
@@ -151,6 +244,8 @@ class ZombiemanNew : EECreature
 				
 				A_PosAttack();
 			}
+			goto Missile1Post;
+		Missile1Post:
 			POSS E 8
 			{
 				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(4); }
@@ -862,6 +957,7 @@ class DoomImpNew : EECreature
 		PainSound "imp/pain";
 		DeathSound "imp/death";
 		ActiveSound "imp/active";
+		MeleeSound "imp/melee";
 		HitObituary "$OB_IMPHIT";
 		Obituary "$OB_IMP";
 		Species "Imp";
@@ -893,7 +989,7 @@ class DoomImpNew : EECreature
 					damage = A_CalcDamageFormula(3,random(1,8),0.005,0.3334,0.1667,0.005); 
 				}
 
-				A_StartSound ("imp/melee", CHAN_WEAPON);
+				A_StartSound(MeleeSound, CHAN_WEAPON);
 				int newdam = targ.DamageMobj (self, self, damage, "Melee");
 				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			}
