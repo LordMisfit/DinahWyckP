@@ -33,6 +33,8 @@ class DDPlayerPawn : PlayerPawn
 	int TruePlayerDEF;
 	int TruePlayerSPD;
 	
+	int dimtimer;
+	
 	actor DmgSource;
 	actor DmgInflictor;
 	int DmgFlags;
@@ -107,6 +109,8 @@ class DDPlayerPawn : PlayerPawn
 	int revivebeattimer;
 	
 	Array<Name> weapons;
+	Array<Name> ammos;
+	Array<int> ammosamt;
 	Array<Name> invitems;
 	Array<Int> invitemsamt;
 	
@@ -656,70 +660,82 @@ class DDPlayerPawn : PlayerPawn
 				lastAngle = self.angle;
 			}
 		
-			if (!clinicstart || hasDied || self.curSector.special == 115) return;
-		
-			if (deathtimer <= 0) ++deathTimer;
-			
-			if (deathtimer > deathtimerthres1 && deathtimer < deathtimerthres2) 
-			{
-				++deathtimer_b;
-				if (!self.findInventory('FadeToken'))
-				{
-					if (deathfadetimebase > 0) SetMusicVolume(1.0 - double(deathtimer_b / double(deathfadetimebase)));
-				}
-				if (dydudebug_deathtimerdisplays) Console.Printf("[processing] UOHYMTimer: %d, UOHYMTimer_b: %d", deathTimer, deathTimer_b);
-			}
+			if (!clinicstart || hasDied || self.curSector.special == 115) { }
 			else
 			{
-				if (dydudebug_deathtimerdisplays) Console.Printf("[dying] UOHYMTimer: %d, UOHYMTimer_b: %d", deathTimer, deathTimer_b);
-				A_CheckDeathHeartBeats(deathTimer);
-			}
-			
-			if (deathtimer > deathtimerthres2)
-			{
-				self.player.resurrect();
-				deathsongused = 0;
-				Teleport_NoFog(1964, 1, 0);
-				self.player.cheats |= CF_TotallyFrozen;
-				revived = true;
+				if (deathtimer <= 0) ++deathTimer;
 				
-				weapons.clear();
-				invitems.clear();
-				invitemsamt.clear();
+				if (deathtimer > deathtimerthres1 && deathtimer < deathtimerthres2) 
+				{
+					++deathtimer_b;
+					if (!self.findInventory('FadeToken'))
+					{
+						if (deathfadetimebase > 0) SetMusicVolume(1.0 - double(deathtimer_b / double(deathfadetimebase)));
+					}
+					if (dydudebug_deathtimerdisplays) Console.Printf("[processing] UOHYMTimer: %d, UOHYMTimer_b: %d", deathTimer, deathTimer_b);
+				}
+				else
+				{
+					if (dydudebug_deathtimerdisplays) Console.Printf("[dying] UOHYMTimer: %d, UOHYMTimer_b: %d", deathTimer, deathTimer_b);
+					A_CheckDeathHeartBeats(deathTimer);
+				}
 				
-				DepositWeapon('CricketBat');
-				DepositWeapon('BlunderAxe');
-				DepositWeapon('Scrambler');
-				DepositWeapon('AppleJack');
-				DepositWeapon('WizardPike');
-				DepositWeapon('SuperVac');
-				DepositWeapon('Grimophone');
-				DepositWeapon('CandleWhip');
-				DepositWeapon('FosnianCandle');
-				DepositWeapon('SigilDD');
-				DepositWeapon('CrazyBallDD');
-				DepositWeapon('EvilWarriorShield');
-				
-				DepositInvItem('FCandlePickup');
-				DepositInvItem('PortalSatchel');
-				DepositInvItem('TurkeyDinner');
-				DepositInvItem('AppleWine');
-				DepositInvItem('CherryBombPickup');
-				DepositInvItem('SpinnerPickup');
-				DepositInvItem('BRocketPickup');
-				DepositInvItem('PopperPickup');
-				DepositInvItem('SnakePickup');
-				DepositInvItem('BirdPotion');
-				DepositInvItem('TimePotion');
-				DepositInvItem('FuryPotion');
-				DepositInvItem('DivingHelm');
-				DepositInvItem('PalaceKeyNew');
-				DepositInvItem('RatPotion');
-				DepositInvItem('LegendaryMedicine');
-				DepositInvItem('StrangeCrystalBall');
+				if (deathtimer > deathtimerthres2)
+				{
+					self.player.resurrect();
+					deathsongused = 0;
+					Teleport_NoFog(1964, 1, 0);
+					self.player.cheats |= CF_TotallyFrozen;
+					revived = true;
+					
+					weapons.clear();
+					ammos.clear();
+					invitems.clear();
+					invitemsamt.clear();
+					
+					DepositWeapon('CricketBat');
+					DepositAmmo('MalletAmmo');
+					DepositWeapon('BlunderAxe');
+					DepositAmmo('BlunderAmmo');
+					DepositWeapon('Scrambler');
+					DepositAmmo('EggAmmo');
+					DepositWeapon('AppleJack');
+					DepositAmmo('JackAmmo');
+					DepositWeapon('WizardPike');
+					DepositWeapon('EvilWarriorShield');
+					DepositAmmo('PikeAmmo');
+					DepositWeapon('SuperVac');
+					DepositAmmo('VacAmmo');
+					DepositWeapon('Grimophone');
+					DepositAmmo('MusicAmmo');
+					DepositWeapon('CandleWhip');
+					DepositAmmo('CandleAmmo');
+					DepositWeapon('FosnianCandle');
+					DepositAmmo('FCandleAmmo');
+					DepositWeapon('CrazyBallDD');
+					DepositAmmo('CzBall');
+					DepositWeapon('SigilDD');
+					
+					DepositInvItem('FCandlePickup');
+					DepositInvItem('PortalSatchel');
+					DepositInvItem('TurkeyDinner');
+					DepositInvItem('AppleWine');
+					DepositInvItem('CherryBombPickup');
+					DepositInvItem('SpinnerPickup');
+					DepositInvItem('BRocketPickup');
+					DepositInvItem('PopperPickup');
+					DepositInvItem('SnakePickup');
+					DepositInvItem('BirdPotion');
+					DepositInvItem('TimePotion');
+					DepositInvItem('FuryPotion');
+					DepositInvItem('DivingHelm');
+					DepositInvItem('PalaceKeyNew');
+					DepositInvItem('RatPotion');
+					DepositInvItem('LegendaryMedicine');
+					DepositInvItem('StrangeCrystalBall');
+				}
 			}
 		}
-		
 	}
 	
 	void DepositWeapon(name weap)
@@ -728,6 +744,16 @@ class DDPlayerPawn : PlayerPawn
 		{
 			weapons.push(Int(weap));
 			self.takeInventory(weap, 1);
+		}
+	}
+	
+	void DepositAmmo(name ammo)
+	{
+		if (self.findInventory(ammo))
+		{
+			ammos.push(Int(ammo));
+			ammosamt.push(CountInv(ammo));
+			self.SetInventory(ammo, 0);
 		}
 	}
 	
@@ -2179,6 +2205,19 @@ class DDPlayerPawn : PlayerPawn
 				}
 			}
 			
+			// Dimming
+			if (A_CheckUOHYM() && 
+					level.mapname == "MAP01")
+			{
+				if (CountInv("UOHEnd4")) 
+				{
+					if (dimtimer < 175) dimtimer++;
+					Console.Printf("dimtimer: %d", dimtimer);
+				}
+				else dimtimer = 0;
+			}
+			else dimtimer = 0;
+			
 			// Death Stuff
 			double fademax = 1.00;
 			if (A_CheckUOHYM() && 
@@ -2365,7 +2404,7 @@ class DDPlayerPawn : PlayerPawn
 					
 					if (deathtimer >= deathtimerthres3)
 					{
-						--deathtimer_b;
+						deathtimer_b -= randompick(1,2,2,2,2,3);
 						if (deathtimer_b <= 0) 
 						{
 							deathtimer = 0;
@@ -2392,9 +2431,14 @@ class DDPlayerPawn : PlayerPawn
 							self.giveInventory(name(weapons[i]), 1);
 						}
 						
+						for (int i; i < ammos.size(); ++i)
+						{
+							self.SetInventory(name(ammos[i]), ammosamt[i]);
+						}
+						
 						for (int i; i < invitems.size(); ++i)
 						{
-							self.giveInventory(name(invitems[i]), invitemsamt[i]);
+							self.GiveInventory(name(invitems[i]), invitemsamt[i]);
 						}
 						
 						let AED = Actor.spawn('Adrenaline');
