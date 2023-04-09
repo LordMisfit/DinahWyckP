@@ -615,6 +615,7 @@ class EEFOVTriggerObject2 : EEBaseZSC
 {
 	bool seen;
 	double user_pFOV;
+	double user_pDistance;
 	string user_pACSstr;
 	int user_pACSnum;
 	int user_pACSmap;
@@ -623,6 +624,7 @@ class EEFOVTriggerObject2 : EEBaseZSC
 	int user_pACSarg2;
 	int user_pACSarg3;
 	int user_pACSarg4;
+	bool user_pDestroySelf;
 	default
 	{
 		radius 1;
@@ -633,17 +635,22 @@ class EEFOVTriggerObject2 : EEBaseZSC
 	override void tick()
 	{
 		super.Tick();
-		Console.Printf("posx: %d, posy: %d, posz: %d, seen: %d: pFOV: %.8f, pACSnum: %d, pACSstr: '%s', pACSmap: %d, pACSarg0: %d, pACSarg1: %d, pACSarg2: %d [gametic: %d]", pos.x, pos.y, pos.z, seen, user_pFOV, user_pACSnum, user_pACSstr, user_pACSmap, user_pACSarg0, user_pACSarg1, user_pACSarg2, gametic);
+		Console.Printf("posx: %d, posy: %d, posz: %d, seen: %d: pFOV: %.8f, pDistance: %.8f, pACSnum: %d, pACSstr: '%s', pACSmap: %d, pACSarg0: %d, pACSarg1: %d, pACSarg2: %d [gametic: %d]", pos.x, pos.y, pos.z, seen, user_pFOV, user_pDistance, user_pACSnum, user_pACSstr, user_pACSmap, user_pACSarg0, user_pACSarg1, user_pACSarg2, gametic);
 		if (!seen)
 		{
+			if (user_pDistance == 0) user_pDistance = 1024;
 			actor player = players[0].mo;
 			target = player;
-			if (CheckIfInTargetLOS(user_pFOV,0,0,0))
+			if ((user_pDistance > 0 && Distance3D(target) <= user_pDistance) ||
+					(user_pDistance < 0 && Distance2D(target) <= (-user_pDistance)))
 			{
-				if (user_pACSnum > -1) ACS_Execute(user_pACSnum,user_pACSmap,user_pACSarg0,user_pACSarg1,user_pACSarg2);
-				else if (user_pACSstr != "") ACS_NamedExecute(user_pACSstr,user_pACSmap,user_pACSarg0,user_pACSarg1,user_pACSarg2);
-				seen = true;
-				Destroy();
+				if (CheckIfInTargetLOS(user_pFOV,0,0,0))
+				{
+					if (user_pACSnum > -1) ACS_Execute(user_pACSnum,user_pACSmap,user_pACSarg0,user_pACSarg1,user_pACSarg2);
+					else if (user_pACSstr != "") ACS_NamedExecute(user_pACSstr,user_pACSmap,user_pACSarg0,user_pACSarg1,user_pACSarg2);
+					seen = true;
+					if (user_pDestroySelf) Destroy();
+				}
 			}
 		}
 	}
