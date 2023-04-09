@@ -555,6 +555,107 @@ class EEBaseZSC : Actor abstract
 	}
 }
 
+class EEFOVTriggerObject : EEBaseZSC
+{
+	bool seen;
+	double pFOV;
+	string pACSstr;
+	int pACSnum;
+	int pACSmap;
+	int pACSarg0;
+	int pACSarg1;
+	int pACSarg2;
+	int pACSarg3;
+	int pACSarg4;
+	property ACSstr: pACSstr;
+	property ACSnum: pACSnum;
+	property ACSmap: pACSmap;
+	property ACSarg0: pACSarg0;
+	property ACSarg1: pACSarg1;
+	property ACSarg2: pACSarg2;
+	property FOV: pFOV;
+	default
+	{
+		EEFOVTriggerObject.FOV 90;
+		EEFOVTriggerObject.ACSnum -1;
+		EEFOVTriggerObject.ACSstr "";
+		EEFOVTriggerObject.ACSmap 0;
+		EEFOVTriggerObject.ACSarg0 0;
+		EEFOVTriggerObject.ACSarg1 0;
+		EEFOVTriggerObject.ACSarg2 0;
+	}
+	
+	override void tick()
+	{
+		super.Tick();
+		//Console.Printf("seen: %d: pFOV: %.8f, pACSnum: %d, pACSstr: '%s', pACSmap: %d, pACSarg0: %d, pACSarg1: %d, pACSarg2: %d [gametic: %d]", seen, pFOV, pACSnum, pACSstr, pACSmap, pACSarg0, pACSarg1, pACSarg2, gametic);
+		if (!seen)
+		{
+			actor player = players[0].mo;
+			target = player;
+			if (CheckIfInTargetLOS(pFOV,0,0,0))
+			{
+				if (pACSnum > -1) ACS_Execute(pACSnum,pACSmap,pACSarg0,pACSarg1,pACSarg2);
+				else if (pACSstr != "") ACS_NamedExecute(pACSstr,pACSmap,pACSarg0,pACSarg1,pACSarg2);
+				seen = true;
+				Destroy();
+			}
+		}
+	}
+	
+	states
+	{
+		Spawn:
+			TNT1 A -1;
+			stop;
+	}
+}
+
+class EEFOVTriggerObject2 : EEBaseZSC
+{
+	bool seen;
+	double user_pFOV;
+	string user_pACSstr;
+	int user_pACSnum;
+	int user_pACSmap;
+	int user_pACSarg0;
+	int user_pACSarg1;
+	int user_pACSarg2;
+	int user_pACSarg3;
+	int user_pACSarg4;
+	default
+	{
+		radius 1;
+		height 1;
+		+NOGRAVITY;
+		+NOCLIP;
+	}
+	override void tick()
+	{
+		super.Tick();
+		Console.Printf("posx: %d, posy: %d, posz: %d, seen: %d: pFOV: %.8f, pACSnum: %d, pACSstr: '%s', pACSmap: %d, pACSarg0: %d, pACSarg1: %d, pACSarg2: %d [gametic: %d]", pos.x, pos.y, pos.z, seen, user_pFOV, user_pACSnum, user_pACSstr, user_pACSmap, user_pACSarg0, user_pACSarg1, user_pACSarg2, gametic);
+		if (!seen)
+		{
+			actor player = players[0].mo;
+			target = player;
+			if (CheckIfInTargetLOS(user_pFOV,0,0,0))
+			{
+				if (user_pACSnum > -1) ACS_Execute(user_pACSnum,user_pACSmap,user_pACSarg0,user_pACSarg1,user_pACSarg2);
+				else if (user_pACSstr != "") ACS_NamedExecute(user_pACSstr,user_pACSmap,user_pACSarg0,user_pACSarg1,user_pACSarg2);
+				seen = true;
+				Destroy();
+			}
+		}
+	}
+	
+	states
+	{
+		Spawn:
+			TNT1 A -1;
+			stop;
+	}
+}
+
 class EESwitchableDecoration : SwitchableDecoration
 {
 	
