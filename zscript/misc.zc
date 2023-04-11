@@ -4203,7 +4203,7 @@ class PlayerStatItem : Inventory
 					}
 					else AngerLevelEventNTimer = 0;
 				}
-
+				
 				if (!HasHarmonicAnger)
 				{
 					// Check Item Points
@@ -4831,12 +4831,48 @@ class PlayerStatItem : Inventory
 						if (dydudebug_ipdisplays2) Console.Printf("DDTFactor (IPDisipation): %.8f, IPTimerIncMod: %d", DDTFactor, IPTimerIncMod);
 						IPTimerIncMod *= (DDTFactor * 1.5);
 					}
+					else
+					{
+						if (A_CheckUOHYM())
+						{
+							if (owner.CountInv("UOHInCL") > 0)
+							{
+								IPTimerIncMod *= 350;
+								if (IPTimerIncMod < 350) IPTimerIncMod = 350;
+							}
+							else
+							if (owner.CountInv("UOHInBR") > 0)
+							{
+								IPTimerIncMod *= 2100;
+								if (IPTimerIncMod < 2100) IPTimerIncMod = 2100;
+							}
+							else
+							{
+								nm = "ZDoomDummy";
+								if (owner.CountInv(nm) > 0)
+								{
+									int rand = randompick(2,2,2,3);
+									IPTimerIncMod *= rand;
+									if (IPTimerIncMod < rand) IPTimerIncMod = rand;
+								}
+								else
+								{
+									int rand = randompick(1,1,1,1,1,1,1,2);
+									IPTimerIncMod *= rand;
+									if (IPTimerIncMod < rand) IPTimerIncMod = rand;
+								}
+							}
+						}
+					}
 					if (IPTimerIncMod < 1) IPTimerIncMod = 1;
 					for (int i; i < sttabs; i++) IPTimerIncMod *= 2;
-					if (dydudebug_ipdisplays2) Console.Printf("IPTimerIncMod: %d", IPTimerIncMod);
-
 					if (IPTimerIncMod != 0) IPTimerInc = level.time % IPTimerIncMod;
 														 else IPTimerInc = level.time % 1;
+					if (dydudebug_ipdisplays2) Console.Printf("IPTimerInc: %d / %d", IPTimerInc, IPTimerIncMod);
+					
+					//******************
+					//* IP Dissipation *
+					//******************
 					if (exex_ikaripointdissipation)
 					{
 						if (ItemPoints > 0.00)
@@ -4846,10 +4882,7 @@ class PlayerStatItem : Inventory
 								if (IPDissipateTimer < -2100) IPDissipateTimer = -2100;
 								if (IPDissipateTimer < 2100)
 								{
-									if (IPTimerInc == 0) 
-									{
-										IPDissipateTimer++;
-									}
+									if (IPTimerInc == 0) IPDissipateTimer++;
 								}
 								else
 								{
