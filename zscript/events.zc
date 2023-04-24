@@ -1507,11 +1507,30 @@ class DD_EventHandler : EventHandler
 		}
 	}
 	
+	int CountPlayers()
+	{
+		int count = 0, i;
+	
+		for (i = 0; i < MAXPLAYERS; i++)
+		{
+			if (PlayerInGame[i]) count++;
+		}
+		return count;
+	}
+	
 	void A_LegendaryCheck(actor spawnee)
 	{
 		class<Inventory> LDLPreload, LDLToken, LDLCheck, MiscCheck, MiscCheck2, MiscCheck3, MiscCheck4;
 		EECreature spawnee2;
 		spawnee2 = EECreature(spawnee);
+		
+		bool NoLegendary;
+		bool boo;
+		bool LEGENDARIFY;
+		bool LEGENDARIFYSuccess;
+		bool BOSSTIEM;
+		bool BOSSACTIVAAAATE;
+		
 		if (spawnee2)
 		{
 			String nm = "LDLegendaryMonsterTracker";
@@ -1552,7 +1571,103 @@ class DD_EventHandler : EventHandler
 						GetClassName() == "ArmorerNew" ||
 						GetClassName() == "MedicNew"))
 			{
-				spawnee2.A_GiveInventory(LDLPreload,1);
+				int ldlchance = (random(2,4) + (CountPlayers() * 4) + (LD_legendarychance * 3));
+				if (skill == 1) ldlchance = (random(3,6) + (CountPlayers() * 6) + (LD_legendarychance * 4));
+				if (skill == 2) ldlchance = (random(4,8) + (CountPlayers() * 8) + (LD_legendarychance * 5));
+				if (skill == 3) ldlchance = (random(5,10) + (CountPlayers() * 10) + (LD_legendarychance * 6));
+				if (skill == 4) ldlchance = (random(7,14) + (CountPlayers() * 14) + (LD_legendarychance * 7));
+				if (skill == 5) ldlchance = (random(8,18) + (CountPlayers() * 18) + (LD_legendarychance * 8));
+				if (skill == 6) ldlchance = (random(11,22) + (CountPlayers() * 22) + (LD_legendarychance * 9));
+				if (skill == 7) ldlchance = (random(13,27) + (CountPlayers() * 27) + (LD_legendarychance * 10));
+				if (skill >= 8) ldlchance = (random(16,32) + (CountPlayers() * 32) + (LD_legendarychance * 11));
+				if (LD_legendarydebug) Console.Printf("[%s @ %p] chance: %d / 256", spawnee2.GetClassName(), spawnee2, ldlchance);
+				
+				if (LD_nomonsters == 1) 
+				{
+					if (LD_legendarydebug) Console.Printf("\c[green][%s @ %p] LD_nomonsters == 1", spawnee2.GetClassName(), spawnee2);
+					NoLegendary = true; // NoLegendary
+				}
+				else
+				{
+					if (LD_nobosses == 2) // BOSSCheckeroonie
+					{
+						if (LD_legendarydebug) Console.Printf("\c[green][%s @ %p] LD_nobosses == 2", spawnee2.GetClassName(), spawnee2);
+						if (spawnee2.bBOSS) BOSSACTIVAAAATE = true; // BOSSACTIVAAAATE
+													 else LEGENDARIFY = true; // DifficultyChance
+					}
+					else
+					{
+						if (LD_legendarydebug) Console.Printf("\c[darkgreen][%s @ %p] LD_nobosses != 2", spawnee2.GetClassName(), spawnee2);
+						if (LD_diemode == 1) LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
+														else LEGENDARIFY = true; // DifficultyChance
+					}
+				}
+				//spawnee2.A_GiveInventory(LDLPreload,1);
+				
+				// bool checks
+				if (LEGENDARIFY)
+				{
+					if (LD_legendarydebug) Console.Printf("\c[orange][%s @ %p] LEGENDARIFY", spawnee2.GetClassName(), spawnee2);
+					if (random(1,256) <= ldlchance) // LEGENDARIFY
+					{
+						if (spawnee2.bSPECIAL) NoLegendary = true;
+						else
+						{
+							if (LD_monstercheck == 0) // Makes it ignore the next check if disabled
+							{
+								if (random(1,256) <= 160) NoLegendary = true; // NoLegendary
+																		 else LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
+							}
+							else boo = true; // Added to stop stuff like legendary trees
+						}
+					}
+				}
+				if (BOSSTIEM)
+				{
+					if (LD_legendarydebug) Console.Printf("\c[orange][%s @ %p] BOSSTIEM", spawnee2.GetClassName(), spawnee2);
+					if (LD_nobosses == 1) NoLegendary = true; // NoLegendary
+					else
+					{
+						if (random(1,256) <= 120) NoLegendary = true; // NoLegendary
+																 else LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
+					}
+				}
+				
+				if (boo)
+				{
+					if (LD_legendarydebug) Console.Printf("\c[orange][%s @ %p] boo", spawnee2.GetClassName(), spawnee2);
+					if (spawnee2.bCOUNTKILL) // Boo
+					{
+						if (spawnee2.bBOSS) BOSSTIEM = true; // BOSSTIEM
+						else
+						{
+							if (random(1,256) <= 160) NoLegendary = true; // NoLegendary
+																	 else LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
+						}
+					}
+				}
+				
+				if (BOSSACTIVAAAATE)
+				{
+					if (LD_legendarydebug) Console.Printf("\c[sapphire][%s @ %p] BOSSACTIVAAAATE", spawnee2.GetClassName(), spawnee2);
+					if (LD_legendarymarkers) { spawnee2.A_SpawnItemEx("LDLegendaryMonsterBossMarker", 0,0,0, 0,0,0, 0, SXF_NOCHECKPOSITION); }
+					spawnee2.A_GiveInventory(LDLPreload,1); // BRING THE PAIN
+					return;
+				}
+				else
+				if (LEGENDARIFYSuccess)
+				{
+					if (LD_legendarydebug) Console.Printf("\c[gold][%s @ %p] LEGENDARIFYSuccess", spawnee2.GetClassName(), spawnee2);
+					if (LD_legendarymarkers) { spawnee2.A_SpawnItemEx("LDLegendaryMonsterMarker", 0,0,0, 0,0,0, 0, SXF_NOCHECKPOSITION); }
+					spawnee2.A_GiveInventory(LDLPreload,1); // POWER UP TIME
+					return;
+				}
+				else
+				if (NoLegendary)
+				{
+					if (LD_legendarydebug) Console.Printf("\c[red][%s @ %p] NoLegendary", spawnee2.GetClassName(), spawnee2);
+					return;
+				}
 			}
 		}
 	}
