@@ -13,6 +13,7 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 	int EESpawnHealth;
 	int SpawnHealthX;
 	int RealSpawnHealth;
+	bool condemned;
 	
 	int penttics, pentticsmax;
 	double pentalpha, pentradmulti;
@@ -35,7 +36,7 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 		if (penttics == 0 && pentticsmax) 
 		{
 			pentfadeout = false;
-			pentalpha = double(1 / 256);
+			pentalpha = 0.00390625;
 		}
 		
 		posx = owner.pos.x;
@@ -83,9 +84,9 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 		
 		if (!pentfadeout)
 		{
-			if (pentticsmax)
+			if (pentticsmax > 0)
 			{
-				pentalpha += double(20 / 256); //0.078125;
+				pentalpha += 0.078125;
 				
 				if (pentalpha >= 1.0)
 				{
@@ -96,14 +97,14 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 		}
 		else
 		{
-			if (pentticsmax)
+			if (pentticsmax > 0)
 			{
-				pentalpha -= double(2 / 256); // 0.15625;
-				
-				if (pentalpha < 0.0) return;
+				pentalpha -= 0.0078125;
+				if (pentalpha < 0.0) pentalpha = 0.0;
 			}
 		}
-		if (LD_legendarydebug) Console.Printf("[circle] pentalpha: %.8f", pentalpha);
+		if (LD_legendarydebug) Console.Printf("[circle] pentalpha: %.8f, penttics: %d, pentfadeout: %d", pentalpha, penttics, pentfadeout);
+		if (LD_legendarydebug) Console.Printf("[circle] radius: %.8f (%.8f)", radius, pentaradius);
 	}
 	
 	override void Tick()
@@ -143,7 +144,7 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 				
 				if (owner.health > 0 && owner.health <= EvolveHPLevel && !evolved)
 				{
-					penttics = pentticsmax = random(28,36);
+					penttics = pentticsmax = random(105,140);
 					if (owner.bBOSS) newhp = (oldhp * LD_legendaryhealthboss) / 100;
 											else newhp = (oldhp * LD_legendaryhealth) / 100;
 					owner.health = newhp;
@@ -190,6 +191,30 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 						if (LD_legendarydebug) Console.Printf("New Mass: %d", newmass);
 						owner.Mass = newmass;
 					}            
+					if (owner.GetClassName() == "Delila_BossClone")
+					{
+						if (owner.CountInv("MiracleMonster") > 1)
+						{
+							if (random(1,16) <= 15) owner.A_SetInventory("MiracleMonster",1);
+						}
+						if (owner.CountInv("MiracleBoss") > 1)
+						{
+							if (random(1,16) <= 15) owner.A_SetInventory("MiracleBoss",1);
+						}
+					}
+					else
+					{
+						if (owner.CountInv("MiracleMonster") > 0)
+						{
+							if (random(1,16) <= 15) owner.A_SetInventory("MiracleMonster",0);
+																 else owner.A_SetInventory("MiracleMonster",1);
+						}
+						if (owner.CountInv("MiracleBoss") > 0)
+						{
+							if (random(1,16) <= 15) owner.A_SetInventory("MiracleBoss",0);
+																 else owner.A_SetInventory("MiracleBoss",1);
+						}
+					}
 					owner.A_StartSound("effects/legendaryenemyloop", CHAN_6, CHANF_LOOPING, 0.8, ATTN_NORM);
 					owner.A_StartSound("effects/legendaryenemy", CHAN_7, CHANF_DEFAULT, 1.0, ATTN_NONE);
 					owner.bJUMPDOWN = true;
@@ -213,8 +238,9 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 				
 				if (penttics > 0 && pentticsmax > 0 && evolved) 
 				{
-					Draw_Pentagram((owner.radius*pentradmulti));
+					Draw_Pentagram(owner.radius);
 					penttics--;
+					if (LD_legendarydebug) Console.Printf("penttics: %d / %d", penttics, pentticsmax);
 				}
 				
 				if (owner.health <= 0 && evolved)
@@ -226,20 +252,6 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 					owner.A_StopSound(7);
 					owner.A_SetInventory("LDLegendaryMonsterVisualEffectMaker",0);
 					owner.A_SetInventory("LDLegendaryMonsterVisualEffectAlternator",0);
-					if (owner.GetClassName() == "Delila_BossClone")
-					{
-						if (owner.CountInv("MiracleMonster") > 1)
-						{
-							if (random(1,16) <= 15) owner.A_SetInventory("MiracleMonster",1);
-						}
-						if (owner.CountInv("MiracleBoss") > 1)
-						{
-							if (random(1,16) <= 15) owner.A_SetInventory("MiracleBoss",1);
-						}
-					}
-					else
-					{
-					}
 					if (owner.bBOSS)
 					{
 						owner.bNOPAIN = false;
@@ -275,6 +287,8 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 			}
 		}
 		else Destroy();
+		
+		if (condemned) Destroy();
 	}
 }
 
