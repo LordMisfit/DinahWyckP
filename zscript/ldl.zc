@@ -14,13 +14,13 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 	int SpawnHealthX;
 	int RealSpawnHealth;
 	
-	void Draw_Pentagram(double radius)
+	int penttics;
+	void Draw_Pentagram(int pentaradius)
 	{
-		/*
 		int px, py, c_angle, icount;
 		int posx, posy, posz;
-		int radius = pentaradius << 16;
-		int angle;
+		int radius = (owner.radius * 1.9);
+		double angle;
 		int offset = 0;
 		
 		int linepoints_x[5];
@@ -29,73 +29,68 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 		int linepos;
 		int vec;
 		
-		int alpha = 1;
+		double alpha = 1.0;
 		bool fadeout = false;
 		
-		posx = GetActorX(0);
-		posy = GetActorY(0);
-		posz = GetActorZ(0);
+		posx = owner.pos.x;
+		posy = owner.pos.y;
+		posz = owner.pos.z;
 		
-		while (true)
+		// Draw the circle, 360 points
+		for (icount = 360; icount > 0; icount--)
 		{
-			// Draw the circle, 360 points
-			for (icount = 360; icount > 0; icount--)
-			{
-				angle = 1.0 / 360 * icount;
-				px = posx + FixedMul(cos(angle), radius);
-				py = posy + FixedMul(sin(angle), radius);
-				
-				SpawnParticle(0xFF0000, true, Random(1, 3), Random(5, 7), px, py, posz, 0, 0, 0, 0, 0, 0, alpha, 255);
-			}
+			angle = icount; // double(1.0 / 360 * icount);
+			px = (cos(angle) * radius);
+			py = (sin(angle) * radius);
 			
-			// Draw each line, 5 points
-			// First build the point positions
-			for (icount = 5; icount > 0; icount--)
-			{
-				angle = 1.0 / 5 * icount;
-				linepoints_x[icount - 1] = posx + FixedMul(cos(angle), radius);
-				linepoints_y[icount - 1] = posy + FixedMul(sin(angle), radius);
-			}
-			
-			// Now draw 5 line vectors, skipping every second number to draw the star
-			point1 = 0;
-			point2 = 2; // (point1 + 2) % 5
-			for (icount = 0; icount < 5; icount++)
-			{
-				for (linepos = FixedMul(radius, 1.9) >> 16; linepos > 0; linepos--)
-				{
-						vec = VectorAngle(linepoints_x[point2] - linepoints_x[point1], linepoints_y[point2] - linepoints_y[point1]);
-						px = linepoints_x[point1] + linepos * Cos(vec);
-						py = linepoints_y[point1] + linepos * Sin(vec);
-					
-						SpawnParticle(0xFF0000, true, Random(1, 3), Random(5, 7), px, py, posz, 0, 0, 0, 0, 0, 0, alpha, 255);
-				}
-				
-				point1 = point2;
-				point2 = (point1 + 2) % 5;
-			}
-			
-			if (!fadeout)
-			{
-				alpha += 20;
-				
-				if (alpha > 255)
-				{
-					alpha = 255;
-					fadeout = true;
-				}
-			}
-			else
-			{
-				alpha -= 2;
-				
-				if (alpha < 2)
-					terminate;
-			}
-			
-			Delay(1);
+			owner.A_SpawnParticle("FF 00 00", SPF_NOTIMEFREEZE|SPF_FULLBRIGHT, Random(1, 3), Random(5, 7), angle, px, py, 0, 0, 0, 0, 0, 0, 0, 1.0, 1.0);
+			if (LD_legendarydebug) Console.Printf("[circle] icount: %d, angle: %.8f, posx: %d (px: %d), posy: %d (py: %d)", icount, angle, posx, px, posy, py);
 		}
-		*/
+		
+		// Draw each line, 5 points
+		// First build the point positions
+		for (icount = 5; icount > 0; icount--)
+		{
+			angle = (72.0) * icount;
+			linepoints_x[icount - 1] = (cos(angle) * radius);
+			linepoints_y[icount - 1] = (sin(angle) * radius);
+		}
+		
+		// Now draw 5 line vectors, skipping every second number to draw the star
+		point1 = 0;
+		point2 = 2; // (point1 + 2) % 5
+		for (icount = 0; icount < 5; icount++)
+		{
+			for (linepos = (radius * 1.9); linepos > 0; linepos--)
+			{
+				vec = VectorAngle(linepoints_x[point2] - linepoints_x[point1], linepoints_y[point2] - linepoints_y[point1]);
+				px = linepoints_x[point1] + linepos * Cos(vec);
+				py = linepoints_y[point1] + linepos * Sin(vec);
+				
+				owner.A_SpawnParticle("FF 00 00", SPF_NOTIMEFREEZE|SPF_FULLBRIGHT, Random(1, 3), Random(5, 7), angle, px, py, 0, 0, 0, 0, 0, 0, 0, 1.0, 1.0);
+				if (LD_legendarydebug) Console.Printf("[circle] icount: %d, angle: %.8f, posx: %d (px: %d), posy: %d (py: %d)", icount, angle, posx, px, posy, py);
+			}
+			
+			point1 = point2;
+			point2 = (point1 + 2) % 5;
+		}
+		
+		if (!fadeout)
+		{
+			alpha += 0.078125;
+			
+			if (alpha >= 1.0)
+			{
+				alpha = 1.0;
+				fadeout = true;
+			}
+		}
+		else
+		{
+			alpha -= 0.15625;
+			
+			if (alpha < 0.0) return;
+		}
 	}
 	
 	override void Tick()
@@ -134,6 +129,7 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 				
 				if (owner.health > 0 && owner.health <= EvolveHPLevel && !evolved)
 				{
+					penttics = 35;
 					if (owner.bBOSS) newhp = (oldhp * LD_legendaryhealthboss) / 100;
 											else newhp = (oldhp * LD_legendaryhealth) / 100;
 					owner.health = newhp;
@@ -199,6 +195,12 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 					owner.bBRIGHT = true;
 					owner.bBUDDHA = false;
 					evolved = true;
+				}
+				
+				if (penttics > 0 && evolved) 
+				{
+					Draw_Pentagram(owner.radius);
+					penttics--;
 				}
 				
 				if (owner.health <= 0 && evolved)
@@ -479,7 +481,7 @@ class LDLiteEEItem : LDMaxHax
 				if (random(1,256) == 1) { A_SpawnItemEx ("LDLiteEEItemSpawner", 0,0,0, vel.x+random(-8,8),vel.y+random(-8,8),vel.z+random(-8,8), 0, SXF_NOCHECKPOSITION); }
 				if (random(1,4096) == 1) { A_SpawnItemEx ("LDLiteEEItemSpawner", 0,0,0, vel.x+random(-8,8),vel.y+random(-8,8),vel.z+random(-8,8), 0, SXF_NOCHECKPOSITION); }
 
-				if (CallACS("CheckCharacterClass") != 2)
+				if (random(1,16) <= 1)
 				{
 					A_SpawnItemEx ("LDLiteEEArmorSpawner", 0,0,0, vel.x,vel.y,vel.z, 0, SXF_NOCHECKPOSITION);
 					if (random(1,16) == 1) { A_SpawnItemEx ("LDLiteEEArmorSpawner", 0,0,0, vel.x+random(-8,8),vel.y+random(-8,8),vel.z+random(-8,8), 0, SXF_NOCHECKPOSITION); }
@@ -566,7 +568,7 @@ class LDLiteEEBossItem : LDMaxHax
 					A_SpawnItemEx ("LDLiteEEBossItemSpawner", 0,0,0, vel.x+random(-8,8),vel.y+random(-8,8),vel.z+random(-8,8), 0, SXF_NOCHECKPOSITION);
 				}
 
-				if (CallACS("CheckCharacterClass") != 2)
+				if (random(1,16) <= 1)
 				{
 					A_SpawnItemEx ("LDLiteEEBossArmorSpawner", 0,0,0, vel.x,vel.y,vel.z, 0, SXF_NOCHECKPOSITION);
 					A_SpawnItemEx ("LDLiteEEBossArmorSpawner", 0,0,0, vel.x,vel.y,vel.z, 0, SXF_NOCHECKPOSITION);
