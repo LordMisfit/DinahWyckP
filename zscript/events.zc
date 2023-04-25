@@ -56,7 +56,7 @@ class DD_EventHandler : EventHandler
 		{
 			if (ldlmo.bISMONSTER && ldlmo.health > 0)
 			{
-				if (ldlmo.CountInv("LDLLegendaryEvolved"))
+				if (ldlmo.CountInv("LDLegendaryMonsterTransformed"))
 				{
 					ldlmo.A_GiveInventory("LDLegendaryMonsterVisualEffectMaker",1);
 				}
@@ -1587,15 +1587,31 @@ class DD_EventHandler : EventHandler
 						GetClassName() == "ArmorerNew" ||
 						GetClassName() == "MedicNew"))
 			{
-				int ldlchance = (random(2,4) + (CountPlayers() * 4) + (LD_legendarychance * 3));
-				if (skill == 1) ldlchance = (random(3,6) + (CountPlayers() * 6) + (LD_legendarychance * 4));
-				if (skill == 2) ldlchance = (random(4,8) + (CountPlayers() * 8) + (LD_legendarychance * 5));
-				if (skill == 3) ldlchance = (random(5,10) + (CountPlayers() * 10) + (LD_legendarychance * 6));
-				if (skill == 4) ldlchance = (random(7,14) + (CountPlayers() * 14) + (LD_legendarychance * 7));
-				if (skill == 5) ldlchance = (random(8,18) + (CountPlayers() * 18) + (LD_legendarychance * 8));
-				if (skill == 6) ldlchance = (random(11,22) + (CountPlayers() * 22) + (LD_legendarychance * 9));
-				if (skill == 7) ldlchance = (random(13,27) + (CountPlayers() * 27) + (LD_legendarychance * 10));
-				if (skill >= 8) ldlchance = (random(16,32) + (CountPlayers() * 32) + (LD_legendarychance * 11));
+				int ldlchance = ((CountPlayers() * 4) + (LD_legendarychance * 5));
+				if (exexLDL_newldlchances) // uses the chances from LDL 4.1
+				{
+					if (skill <= 0) ldlchance = (random(0,4) + (CountPlayers() * 4) + (LD_legendarychance * 5)); // Very Easy
+					if (skill == 1) ldlchance = (random(0,6) + (CountPlayers() * 6) + (LD_legendarychance * 5)); // Easy
+					if (skill == 2) ldlchance = (random(0,8) + (CountPlayers() * 8) + (LD_legendarychance * 5)); // Normal
+					if (skill == 3) ldlchance = (random(0,10) + (CountPlayers() * 10) + (LD_legendarychance * 5)); // Hard
+					if (skill == 4) ldlchance = (random(0,20) + (CountPlayers() * 20) + (LD_legendarychance * 5)); // Very Hard
+					if (skill == 5) ldlchance = (random(0,25) + (CountPlayers() * 25) + (LD_legendarychance * random(4,6))); // Extreme
+					if (skill == 6) ldlchance = (random(0,30) + (CountPlayers() * 30) + (LD_legendarychance * random(4,6))); // Horrible
+					if (skill == 7) ldlchance = (random(0,35) + (CountPlayers() * 35) + (LD_legendarychance * random(3,7))); // Impossible
+					if (skill >= 8) ldlchance = (random(0,40) + (CountPlayers() * 40) + (LD_legendarychance * random(2,8))); // Omega
+				}
+				else // uses the older-skool chances of EE/Aetherius [which is based on LDL 3.0]
+				{
+					if (skill <= 0) ldlchance = (random(2,4) + (CountPlayers() * 4) + (LD_legendarychance * 3)); // Very Easy
+					if (skill == 1) ldlchance = (random(3,6) + (CountPlayers() * 6) + (LD_legendarychance * 4)); // Easy
+					if (skill == 2) ldlchance = (random(4,8) + (CountPlayers() * 8) + (LD_legendarychance * 5)); // Normal
+					if (skill == 3) ldlchance = (random(5,10) + (CountPlayers() * 10) + (LD_legendarychance * 6)); // Hard
+					if (skill == 4) ldlchance = (random(7,14) + (CountPlayers() * 14) + (LD_legendarychance * 7)); // Very Hard
+					if (skill == 5) ldlchance = (random(8,18) + (CountPlayers() * 18) + (LD_legendarychance * 8)); // Extreme
+					if (skill == 6) ldlchance = (random(11,22) + (CountPlayers() * 22) + (LD_legendarychance * 9)); // Horrible
+					if (skill == 7) ldlchance = (random(13,27) + (CountPlayers() * 27) + (LD_legendarychance * 10)); // Impossible
+					if (skill >= 8) ldlchance = (random(16,32) + (CountPlayers() * 32) + (LD_legendarychance * 11)); // Omega
+				}
 				if (LD_legendarydebug) Console.Printf("[%s @ %p] chance: %d / 256", spawnee2.GetClassName(), spawnee2, ldlchance);
 				
 				if (LD_nomonsters == 1) 
@@ -1631,8 +1647,10 @@ class DD_EventHandler : EventHandler
 						{
 							if (LD_monstercheck == 0) // Makes it ignore the next check if disabled
 							{
-								if (random(1,256) <= 160) NoLegendary = true; // NoLegendary
-																		 else LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
+								int chance2 = 160;
+								if (exexLDL_newldlchances) chance2 = 240;
+								if (random(1,256) <= chance2) NoLegendary = true; // NoLegendary
+																				 else LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
 							}
 							else boo = true; // Added to stop stuff like legendary trees
 						}
@@ -1644,8 +1662,10 @@ class DD_EventHandler : EventHandler
 					if (LD_nobosses == 1) NoLegendary = true; // NoLegendary
 					else
 					{
-						if (random(1,256) <= 120) NoLegendary = true; // NoLegendary
-																 else LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
+						int chance2 = 120;
+						if (exexLDL_newldlchances) chance2 = 180;
+						if (random(1,256) <= chance2) NoLegendary = true; // NoLegendary
+																		 else LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
 					}
 				}
 				
@@ -1657,8 +1677,10 @@ class DD_EventHandler : EventHandler
 						if (spawnee2.bBOSS) BOSSTIEM = true; // BOSSTIEM
 						else
 						{
-							if (random(1,256) <= 160) NoLegendary = true; // NoLegendary
-																	 else LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
+							int chance2 = 160;
+							if (exexLDL_newldlchances) chance2 = 240;
+							if (random(1,256) <= chance2) NoLegendary = true; // NoLegendary
+																			 else LEGENDARIFYSuccess = true; // LEGENDARIFYSuccess
 						}
 					}
 				}
@@ -5256,7 +5278,7 @@ class DD_EventHandler : EventHandler
 			bool isCCardsIllusion = false;
 			if (victim)
 			{
-				victim.SetInventory("LDLLegendaryEvolved", 0);
+				victim.SetInventory("LDLegendaryMonsterTransformed", 0);
 				victim.SetInventory("LDLegendaryMonsterVisualEffectMaker", 0);
 				victim.SetInventory("LDLegendaryMonsterVisualEffectAlternator", 0);
 				if (victim.CountInv("LDLegendaryMonsterTracker") > 0)

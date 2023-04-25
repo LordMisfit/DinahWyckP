@@ -1,8 +1,42 @@
 //==============================================================================
 //				MAIN STUFF
 //==============================================================================
+class LDPermanentInventory : Inventory
+{
+	default
+	{
+		//	+INVENTORY.UNDROPPABLE;
+		+INVENTORY.UNTOSSABLE;
+		+INVENTORY.IGNORESKILL;
+		inventory.maxamount 1;
+	}
+}
+
+class LDCustomFunction : CustomInventoryExt
+{
+	default
+	{
+		-COUNTITEM;
+		+INVENTORY.ALWAYSPICKUP;
+		Inventory.PickupMessage "";
+		Inventory.PickupSound "";
+	}
+	
+	States
+	{
+		Spawn:
+			TNT1 A 1;
+			Stop;
+		Pickup:
+			TNT1 A 0;
+			TNT1 A 0;
+			Stop;
+	}
+}
+
 class LDLWillBecomeLegendary : PlaceHolderItem { }
-class LDLLegendaryEvolved : PlaceHolderItem { }
+class LDLegendaryMonsterToken : LDPermanentInventory { }
+class LDLegendaryMonsterTransformed : LDPermanentInventory { }
 
 class LDLegendaryMonsterTracker : PlaceHolderItem
 {
@@ -21,9 +55,10 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 	
 	void Draw_Pentagram(double pentaradius)
 	{
-		int px, py, c_angle, icount;
+		int px, py, pz, c_angle, icount;
 		int posx, posy, posz;
-		double radius = (pentaradius * 1.9);
+		if (!pentradmulti) pentradmulti = 1.0;
+		double radius = (pentaradius * 1.9 * pentradmulti);
 		double angle;
 		int offset = 0;
 		
@@ -33,78 +68,90 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 		int linepos;
 		int vec;
 		
-		if (penttics == 0 && pentticsmax) 
+		if (pentticsmax > 0)
 		{
-			pentfadeout = false;
-			pentalpha = 0.00390625;
-		}
-		
-		posx = owner.pos.x;
-		posy = owner.pos.y;
-		posz = owner.pos.z;
-		
-		// Draw the circle, 360 points
-		for (icount = 360; icount > 0; icount--)
-		{
-			angle = icount; // double(1.0 / 360 * icount);
-			px = (cos(angle) * radius);
-			py = (sin(angle) * radius);
-			
-			owner.A_SpawnParticle("FF 00 00", SPF_NOTIMEFREEZE|SPF_FULLBRIGHT, Random(1, 3), Random(5, 7), angle, px, py, 0, 0, 0, 0, 0, 0, 0, pentalpha, 1.0);
-			if (LD_legendarydebug) Console.Printf("[circle] icount: %d, angle: %.8f, posx: %d (px: %d), posy: %d (py: %d)", icount, angle, posx, px, posy, py);
-		}
-		
-		// Draw each line, 5 points
-		// First build the point positions
-		for (icount = 5; icount > 0; icount--)
-		{
-			angle = (72.0) * icount;
-			linepoints_x[icount - 1] = (cos(angle) * radius);
-			linepoints_y[icount - 1] = (sin(angle) * radius);
-		}
-		
-		// Now draw 5 line vectors, skipping every second number to draw the star
-		point1 = 0;
-		point2 = 2; // (point1 + 2) % 5
-		for (icount = 0; icount < 5; icount++)
-		{
-			for (linepos = (radius * 1.9); linepos > 0; linepos--)
+			if (penttics == 0) 
 			{
-				vec = VectorAngle(linepoints_x[point2] - linepoints_x[point1], linepoints_y[point2] - linepoints_y[point1]);
-				px = linepoints_x[point1] + linepos * Cos(vec);
-				py = linepoints_y[point1] + linepos * Sin(vec);
-				
-				owner.A_SpawnParticle("FF 00 00", SPF_NOTIMEFREEZE|SPF_FULLBRIGHT, Random(1, 3), Random(5, 7), angle, px, py, 0, 0, 0, 0, 0, 0, 0, pentalpha, 1.0);
-				if (LD_legendarydebug) Console.Printf("[circle] icount: %d, angle: %.8f, posx: %d (px: %d), posy: %d (py: %d)", icount, angle, posx, px, posy, py);
+				pentfadeout = false;
+				if (owner.bBOSS) pentalpha = 0.00390625;
+										else pentalpha = 0.015625;
 			}
 			
-			point1 = point2;
-			point2 = (point1 + 2) % 5;
-		}
-		
-		if (!pentfadeout)
-		{
-			if (pentticsmax > 0)
+			posx = owner.pos.x;
+			posy = owner.pos.y;
+			posz = (owner.pos.z + ((pentticsmax - penttics) * 1.25)); //owner.pos.z;
+			
+			// Draw the circle, 360 points
+			for (icount = 360; icount > 0; icount--)
 			{
-				pentalpha += 0.078125;
+				angle = icount; // double(1.0 / 360 * icount);
+				px = (cos(angle) * radius);
+				py = (sin(angle) * radius);
+				if (owner.bBOSS) pz = ((pentticsmax - penttics) * 1.25);
+										else pz = ((pentticsmax - penttics) * 1.625);
 				
-				if (pentalpha >= 1.0)
+				owner.A_SpawnParticle("FF 00 00", SPF_NOTIMEFREEZE|SPF_FULLBRIGHT, Random(1, 3), Random(5, 7), angle, px, py, pz, 0, 0, 0, 0, 0, 0, pentalpha, 1.0);
+				//if (LD_legendarydebug) Console.Printf("[circle] icount: %d, angle: %.8f, posx: %d (px: %d), posy: %d (py: %d), posz: %d (pz: %d)", icount, angle, posx, px, posy, py, posz, pz);
+			}
+			
+			// Draw each line, 5 points
+			// First build the point positions
+			for (icount = 5; icount > 0; icount--)
+			{
+				angle = (72.0) * icount;
+				linepoints_x[icount - 1] = (cos(angle) * radius);
+				linepoints_y[icount - 1] = (sin(angle) * radius);
+			}
+			
+			// Now draw 5 line vectors, skipping every second number to draw the star
+			point1 = 0;
+			point2 = 2; // (point1 + 2) % 5
+			for (icount = 0; icount < 5; icount++)
+			{
+				for (linepos = (radius * 1.9); linepos > 0; linepos--)
 				{
-					pentalpha = 1.0;
-					pentfadeout = true;
+					vec = VectorAngle(linepoints_x[point2] - linepoints_x[point1], linepoints_y[point2] - linepoints_y[point1]);
+					px = linepoints_x[point1] + linepos * Cos(vec);
+					py = linepoints_y[point1] + linepos * Sin(vec);
+					
+					owner.A_SpawnParticle("FF 00 00", SPF_NOTIMEFREEZE|SPF_FULLBRIGHT, Random(1, 3), Random(5, 7), angle, px, py, pz, 0, 0, 0, 0, 0, 0, pentalpha, 1.0);
+					//if (LD_legendarydebug) Console.Printf("[circle] icount: %d, angle: %.8f, posx: %d (px: %d), posy: %d (py: %d), posz: %d (pz: %d)", icount, angle, posx, px, posy, py, posz, pz);
+				}
+				
+				point1 = point2;
+				point2 = (point1 + 2) % 5;
+			}
+			
+			if (!pentfadeout)
+			{
+				if (pentticsmax > 0)
+				{
+					if (owner.bBOSS) pentalpha += 0.0390625;
+													 pentalpha += 0.15625;
+					
+					if (pentalpha >= 1.0)
+					{
+						pentalpha = 1.0;
+						pentfadeout = true;
+					}
 				}
 			}
-		}
-		else
-		{
-			if (pentticsmax > 0)
+			else
 			{
-				pentalpha -= 0.0078125;
-				if (pentalpha < 0.0) pentalpha = 0.0;
+				if (pentticsmax > 0)
+				{
+					if (owner.bBOSS) pentalpha -= 0.0078125;
+											else pentalpha -= 0.03125;
+					if (pentalpha < 0.0) 
+					{
+						pentalpha = 0.0;
+						pentticsmax = 0;
+					}
+				}
 			}
+			if (LD_legendarydebug) Console.Printf("[circle] pentalpha: %.8f, penttics: %d, pentfadeout: %d", pentalpha, penttics, pentfadeout);
+			if (LD_legendarydebug) Console.Printf("[circle] radius: %.8f (%.8f)", radius, pentaradius);
 		}
-		if (LD_legendarydebug) Console.Printf("[circle] pentalpha: %.8f, penttics: %d, pentfadeout: %d", pentalpha, penttics, pentfadeout);
-		if (LD_legendarydebug) Console.Printf("[circle] radius: %.8f (%.8f)", radius, pentaradius);
 	}
 	
 	override void Tick()
@@ -127,7 +174,8 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 					owner.bBUDDHA = true;
 					owner.A_SetInventory("LDLWillBecomeLegendary", 1);
 					pentradmulti = frandom(0.925,1.325);
-					if (LD_legendarydebug) Console.Printf("\cdLD DEBUG\c-: \ca%s \c-(%d / %d) has been \cdLEGENDARIFIED\c-", owner.GetClassName(), StartTID, newtid);
+					if (owner.bBOSS) pentradmulti *= frandom(1.125,1.25);
+					if (LD_legendarydebug) Console.Printf("\cdLD DEBUG\c-: \ca%s \c-(%d / %d) has been \cdLEGENDARIFIED\c- [pentradmulti: %.8f]", owner.GetClassName(), StartTID, newtid, pentradmulti);
 				}
 				int health = owner.health;
 				double olddamagemulti = owner.DamageMultiply;
@@ -149,7 +197,7 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 											else newhp = (oldhp * LD_legendaryhealth) / 100;
 					owner.health = newhp;
 					owner.Stamina = (newhp - owner.SpawnHealth());
-					owner.A_SetInventory("LDLLegendaryEvolved", 1);
+					owner.A_SetInventory("LDLegendaryMonsterTransformed", 1);
 					if (owner.bBUDDHA) owner.bBUDDHA = false;
 					if (owner.bBOSS)
 					{
@@ -289,39 +337,6 @@ class LDLegendaryMonsterTracker : PlaceHolderItem
 		else Destroy();
 		
 		if (condemned) Destroy();
-	}
-}
-
-class LDPermanentInventory : Inventory
-{
-	default
-	{
-		//	+INVENTORY.UNDROPPABLE;
-		+INVENTORY.UNTOSSABLE;
-		+INVENTORY.IGNORESKILL;
-		inventory.maxamount 1;
-	}
-}
-
-class LDCustomFunction : CustomInventoryExt
-{
-	default
-	{
-		-COUNTITEM;
-		+INVENTORY.ALWAYSPICKUP;
-		Inventory.PickupMessage "";
-		Inventory.PickupSound "";
-	}
-	
-	States
-	{
-		Spawn:
-			TNT1 A 1;
-			Stop;
-		Pickup:
-			TNT1 A 0;
-			TNT1 A 0;
-			Stop;
 	}
 }
 
