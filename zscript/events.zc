@@ -3292,7 +3292,16 @@ class DD_EventHandler : EventHandler
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		int user_type;
 		EECreature EECVict;
-		if (victim) EECVict = EECreature(victim);
+		bool waslegendary = false;
+		if (victim) 
+		{
+			if (victim.CountInv("LDLegendaryMonsterTracker") > 0)
+			{
+				waslegendary = true;
+				victim.A_SetInventory("LDLegendaryMonsterTracker",0);
+			}
+			EECVict = EECreature(victim);
+		}
 		
 		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
 		string nm, nn, no, np;
@@ -3323,6 +3332,7 @@ class DD_EventHandler : EventHandler
 			bossdropmulti *= 4;
 			skillmult *= 0.25;
 		}
+		if (waslegendary) skillmult *= frandom(0.667,0.917);
 		bool candropitems = false;
 		if (specialtype) candropitems = true;
 		if (!victim.bFRIENDLY && (victim.bCOUNTKILL || specialtype)) candropitems = true;
@@ -5240,12 +5250,19 @@ class DD_EventHandler : EventHandler
 			bool giveexp;
 			bool playerkill;
 			bool allykill;
+			bool waslegendary = false;
 			
 			bool isCCardsIllusion = false;
 			if (victim)
 			{
+				victim.SetInventory("LDLLegendaryEvolved", 0);
 				victim.SetInventory("LDLegendaryMonsterVisualEffectMaker", 0);
 				victim.SetInventory("LDLegendaryMonsterVisualEffectAlternator", 0);
+				if (victim.CountInv("LDLegendaryMonsterTracker") > 0)
+				{
+					waslegendary = true;
+					victim.A_SetInventory("LDLegendaryMonsterTracker",0);
+				}
 
 				if (victim.bNOBLOOD == true && 
 						victim.bNOPAIN == true &&
@@ -5468,8 +5485,9 @@ class DD_EventHandler : EventHandler
 								MiscItem.IPDissipateTimer *= factor1;
 							}
 						}
-
+						
 						int ExpGain = (victim.SpawnHealth() + victim.Stamina);
+						if (waslegendary) ExpGain *= 1.25;
 						if (A_CheckUOHYM()) 
 						{
 									 if (specialtype & 32) ExpGain *= (frandom(3.2,4.8) * frandompick(0.875,1.0,1.0,1.0,1.125));
@@ -5486,14 +5504,28 @@ class DD_EventHandler : EventHandler
 						
 						if (monsterrating)
 						{
-							if (monsterrating == 1) ExpGain *= 1.0125;
-							if (monsterrating == 2) ExpGain *= 1.025;
-							if (monsterrating == 3) ExpGain *= 1.05;
-							if (monsterrating == 4) ExpGain *= 1.1;
-							if (monsterrating == 5) ExpGain *= 1.2;
-							if (monsterrating == 6) ExpGain *= 1.4;
-							if (monsterrating == 7) ExpGain *= 1.8;
-							if (monsterrating >= 8) ExpGain *= 2.6;
+							if (waslegendary)
+							{
+								if (monsterrating == 1) ExpGain *= 1.05;
+								if (monsterrating == 2) ExpGain *= 1.1;
+								if (monsterrating == 3) ExpGain *= 1.2;
+								if (monsterrating == 4) ExpGain *= 1.4;
+								if (monsterrating == 5) ExpGain *= 1.8;
+								if (monsterrating == 6) ExpGain *= 2.6;
+								if (monsterrating == 7) ExpGain *= 4.2;
+								if (monsterrating >= 8) ExpGain *= 7.4;
+							}
+							else
+							{
+								if (monsterrating == 1) ExpGain *= 1.0125;
+								if (monsterrating == 2) ExpGain *= 1.025;
+								if (monsterrating == 3) ExpGain *= 1.05;
+								if (monsterrating == 4) ExpGain *= 1.1;
+								if (monsterrating == 5) ExpGain *= 1.2;
+								if (monsterrating == 6) ExpGain *= 1.4;
+								if (monsterrating == 7) ExpGain *= 1.8;
+								if (monsterrating >= 8) ExpGain *= 2.6;
+							}
 						}
 						if (specialtype & 1) ExpGain *= 0.5;
 						if (specialtype & 2) ExpGain *= frandompick(1.8,2.2);
@@ -5501,19 +5533,29 @@ class DD_EventHandler : EventHandler
 						if (specialtype & 8) ExpGain *= frandompick(1.75,2.5);
 						if (victim.CountInv("MiraclesUsed") && exex_monstershavemiracles) ExpGain *= (1.0 + (victim.CountInv("MiraclesUsed") * 0.625));
 						if ((source && source.CountInv("DinahTrueIPState")) || (inflicter && inflicter.CountInv("DinahTrueIPState"))) ExpGain *= 0.2;
-						if (VacPuff(inflicter) || VacPuffIP(inflicter)) ExpGain *= frandompick(0.125,0.1667,0.1667,0.2,0.2,0.2,0.25,0.25,0.25,0.25,0.3,0.3,0.3,0.3334,0.3334,0.375);
+						if (VacPuff(inflicter) || VacPuffIP(inflicter)) 
+						{
+							if (waslegendary) ExpGain *= frandom(1.0625,1.25);
+							ExpGain *= frandompick(0.125,0.1667,0.1667,0.2,0.2,0.2,0.25,0.25,0.25,0.25,0.3,0.3,0.3,0.3334,0.3334,0.375);
+						}
 						else
 						{
 							nm = "CCards_Actor_BorrowedTimeBuff";
-							if (victim.CountInv(nm) && mod == 'Suck') ExpGain *= frandompick(0.125,0.1667,0.1667,0.2,0.2,0.2,0.25,0.25,0.25,0.25,0.3,0.3,0.3,0.3334,0.3334,0.375);
+							if (victim.CountInv(nm) && mod == 'Suck') 
+							{
+								if (waslegendary) ExpGain *= frandom(1.0625,1.25);
+								ExpGain *= frandompick(0.125,0.1667,0.1667,0.2,0.2,0.2,0.25,0.25,0.25,0.25,0.3,0.3,0.3,0.3334,0.3334,0.375);
+							}
 						}
 						if (EvilDinah(victim))
 						{
+							if (waslegendary) ExpGain *= frandom(1.75,2.5);
 							if (IPAttack) ExpGain *= frandom(0.25,0.5);
 											 else ExpGain *= frandom(0.125,0.25);
 						}
 						else
 						{
+							if (waslegendary) ExpGain *= frandom(1.0925,1.185);
 							if (IPAttack) ExpGain *= frandom(0.125,0.25);
 											 else ExpGain *= frandom(0.05,0.125);
 						}
