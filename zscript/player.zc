@@ -33,6 +33,8 @@ class DDPlayerPawn : PlayerPawn
 	int TruePlayerDEF;
 	int TruePlayerSPD;
 	
+	int CLWater;
+	
 	int dimtimer;
 	
 	actor DmgSource;
@@ -1133,6 +1135,17 @@ class DDPlayerPawn : PlayerPawn
 
 			int DrownDmg = 2 + (-AirTime / TICRATE);
 			DrownDmg = ceil(DrownDmg * frandompick(0.625,0.75,0.875,1.000));
+			if (CLWater == 1) 
+			{
+				DrownDmg = 8 + (-AirTime / TICRATE);
+				DrownDmg = ceil(DrownDmg * frandompick(0.875,0.9375,0.9675,1.000));
+			}
+			if (CLWater == 2) 
+			{
+				DrownDmg = 3 + (-AirTime / TICRATE);
+				DrownDmg = ceil(DrownDmg * frandompick(0.6875,0.8375,0.9375,1.000));
+			}
+
 			if (DrownDmg < 0) DrownDmg = 0;
 			if (dydudebug_airmeter == 1) Console.Printf("InWaterTime: %d, WaterLevel: %d (WaterDepth: %.4f), AirTime: %d / %d, DrownDmg: %d, willgasp: %d, takendrowndmg: %d", InWaterTime, waterlevel, WaterDepth, AirTime, MaxAirTime, DrownDmg, willgasp, takendrowndmg);
 			// Handle air supply	
@@ -1183,11 +1196,40 @@ class DDPlayerPawn : PlayerPawn
 					if (!(CountInv("PowerNoDrown") || 
 								CountInv("PowerIronFeet") || 
 								CountInv("PowerIronFeet2") || 
-								CountInv("PowerMask"))) AirTime--;
+								CountInv("PowerMask"))) 
+					{
+						if (CLWater)
+						{
+							if (CLWater == 2)
+							{
+								if (random(1,16) <= random(3,6)) airtime -= random(1,2);
+																						else airtime -= random(2,4);
+							}
+							else airtime -= random(4,8);
+						}
+						else
+						{
+							AirTime--;
+						}
+					}
 					if (AirTime > MaxAirTime) AirTime = MaxAirTime;
 					if (AirTime <= 0)
 					{
-						if (!(level.maptime & 31) && DrownDmg)
+						int drownint = 31;
+						if (CLWater)
+						{
+							if (AirTime <= 0) AirTime = 0;
+							if (CLWater == 2)
+							{
+								if (random(1,16) <=  random(3,6)) drownint = 31;
+																						 else drownint = 27;
+							}
+							else
+							{
+								drownint = 22;
+							}
+						}
+						if (!(level.maptime & drownint) && DrownDmg)
 						{
 							DamageMobj(NULL, NULL, DrownDmg, 'Drowning');
 							string drownsnd = "misc/drowning";
@@ -1200,7 +1242,22 @@ class DDPlayerPawn : PlayerPawn
 									if (MiscItem.drowndebufflevel < 10)
 									{
 										MiscItem.drowndebufflevel++;
-										MiscItem.drowndebufftimer += random(25,35);
+										if (CLWater)
+										{
+											if (CLWater == 2)
+											{
+												if (random(1,16) <= random(3,6)) MiscItem.drowndebufftimer += random(38,53);
+																										else MiscItem.drowndebufftimer += random(25,35);
+											}
+											else
+											{
+												MiscItem.drowndebufftimer += random(50,70);
+											}
+										}
+										else
+										{
+											MiscItem.drowndebufftimer += random(25,35);
+										}
 									}
 								}
 							}
@@ -1221,6 +1278,24 @@ class DDPlayerPawn : PlayerPawn
 									SpawnBubbles("AirBubble1",frandom(-11,11),frandom(-11,11),frandom(-7,7));
 									SpawnBubbles("AirBubble1",frandom(-11,11),frandom(-11,11),frandom(-7,7));
 									SpawnBubbles("AirBubble1",frandom(-11,11),frandom(-11,11),frandom(-7,7));
+								}
+							}
+							if (CLWater == 1)
+							{
+								SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+								SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+								SpawnBubbles("AirBubble1",frandom(-5,5),frandom(-5,5),frandom(-3,3));
+								if (random(1,3) <= random(1,2))
+								{
+									SpawnBubbles("AirBubble1",frandom(-8,8),frandom(-8,8),frandom(-5,5));
+									SpawnBubbles("AirBubble1",frandom(-8,8),frandom(-8,8),frandom(-5,5));
+									SpawnBubbles("AirBubble1",frandom(-8,8),frandom(-8,8),frandom(-5,5));
+									if (random(1,3) <= 1) 
+									{
+										SpawnBubbles("AirBubble1",frandom(-11,11),frandom(-11,11),frandom(-7,7));
+										SpawnBubbles("AirBubble1",frandom(-11,11),frandom(-11,11),frandom(-7,7));
+										SpawnBubbles("AirBubble1",frandom(-11,11),frandom(-11,11),frandom(-7,7));
+									}
 								}
 							}
 						}
@@ -1715,7 +1790,6 @@ class DDPlayerPawn : PlayerPawn
 			{
 				if (waterlevel > 1)
 				{
-					int CLWater;
 					if (A_CheckUOHYM() && 
 							level.mapname == "MAP01" &&
 							cursector.Index() == 30479) CLWater = 1;
