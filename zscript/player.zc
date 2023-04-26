@@ -1656,7 +1656,8 @@ class DDPlayerPawn : PlayerPawn
 			if (dydudebug_playermove) Console.Printf("Waterlevel: %d (WaterDepth: %.4f), Pos.Z: %.8f, floorz: %.8f [tic: %d]", waterlevel, WaterDepth, pos.z, floorz, gametic);
 			double startvelz = Vel.Z;
 			
-			if (waterlevel == 0 || (player && !(cmd.forwardmove | cmd.sidemove)))
+			if (waterlevel == 0 || 
+					(player && !(cmd.forwardmove | cmd.sidemove)))
 			{
 				// [RH] Double gravity only if running off a ledge. Coming down from
 				// an upward thrust (e.g. a jump) should not double it.
@@ -1668,6 +1669,7 @@ class DDPlayerPawn : PlayerPawn
 				{
 					Vel.Z -= grav;
 				}
+				if (dydudebug_playermove) Console.Printf("\c[orange](FallAndSink() waterlevel=0/(!forwardside/sidemove))\c- Vel.Z: %.4f [oldfloorz: %.8f, grav: %.8f] [tic: %d]", Vel.Z, oldfloorz, grav, gametic);
 			}
 			
 			if (player == NULL)
@@ -1709,10 +1711,23 @@ class DDPlayerPawn : PlayerPawn
 					}
 				}
 			}
-			else
+			else // Player
 			{
 				if (waterlevel > 1)
 				{
+					int CLWater;
+					if (A_CheckUOHYM() && 
+							level.mapname == "MAP01" &&
+							cursector.Index() == 30479) CLWater = 1;
+					if (CLWater)
+					{
+						if (PlayerWeapon is "WizardPike" &&
+								CountInv("PikeAmmo") > 0)
+						{
+							CLWater = 2;
+						}
+					}
+							
 					double massfactor = (MiscItem.PreBuffMass * 0.01);
 					if (massfactor > 40.00) massfactor = 40.00;
 					double massfactor2 = 1.0 - (ActualLevel * 0.015);
@@ -1790,8 +1805,24 @@ class DDPlayerPawn : PlayerPawn
 						}
 						if (PlayerWeapon is "WizardPike")
 						{
-							if (berserked) weaponsinkfactor -= 0.08125;
-												else weaponsinkfactor -= 0.0625;
+							if (CLWater)
+							{
+								if (CLWater == 2)
+								{
+									if (berserked) weaponsinkfactor -= 0.325;
+														else weaponsinkfactor -= 0.25;
+								}
+								else
+								{
+									if (berserked) weaponsinkfactor -= 0.08125;
+														else weaponsinkfactor -= 0.0625;
+								}
+							}
+							else
+							{
+								if (berserked) weaponsinkfactor -= 0.08125;
+													else weaponsinkfactor -= 0.0625;
+							}
 						}
 						if (PlayerWeapon is "FosnianCandle") 
 						{
@@ -1836,20 +1867,66 @@ class DDPlayerPawn : PlayerPawn
 						}
 						weaponsinkfactor *= exex_weaponencumbrance;
 						weaponsinkfactor += 1.00;
-						if (dydudebug_playermove) Console.Printf("\c[sapphire]weaponsinkfactor: %.8f, sinkspeed: %.8f [tic: %d]", weaponsinkfactor, sinkspeed, gametic);
 						sinkspeed *= weaponsinkfactor;
+						if (dydudebug_playermove) Console.Printf("\c[sapphire]weaponsinkfactor: %.8f, sinkspeed: %.8f [tic: %d]", weaponsinkfactor, sinkspeed, gametic);
 						
-						if (waterlevel == 2) sinkspeed *= 0.25;
+						if (waterlevel == 2) 
+						{
+							if (CLWater)
+							{
+								if (CLWater == 2) sinkspeed *= 0.0875;
+														 else sinkspeed *= 0.875;
+							}
+							else sinkspeed *= 0.25;
+						}
 						if (dydudebug_playermove) Console.Printf("\c[sapphire]Vel.Z: %.8f, startvelz: %.8f, sinkspeed: %.8f, ArmorEnc: %.8f [tic: %d]", Vel.Z, startvelz, sinkspeed, ArmorEnc, gametic);
 					}
-				
+					if (CLWater) 
+					{
+						if (player && (cmd.forwardmove | cmd.sidemove))
+						{
+							if (Vel.Z == 0 && oldfloorz > floorz && Pos.Z == oldfloorz)
+							{
+								if (CLWater == 2) Vel.Z -= grav;
+														 else Vel.Z -= grav + grav;
+							}
+							else
+							{
+								if (CLWater == 2) Vel.Z -= (grav * 0.5);
+														 else Vel.Z -= grav;
+							}
+						}
+						if (waterlevel >= 2)
+						{
+							if (waterlevel >= 3) sinkspeed *= 22.5;
+															else sinkspeed *= 16.875;
+						}
+						else sinkspeed *= 11.25;
+						if (CLWater == 2) sinkspeed *= 0.1;
+						if (dydudebug_playermove) Console.Printf("\c[sapphire]Vel.Z: %.8f, startvelz: %.8f, sinkspeed: %.8f, CLWater: %d [tic: %d]", Vel.Z, startvelz, sinkspeed, CLWater, gametic);
+					}
+					
 					if (Vel.Z < sinkspeed)
 					{
-						Vel.Z = (startvelz < sinkspeed) ? startvelz : sinkspeed;
+						if (CLWater) 
+						{
+							double randmul = frandom(1.5,2.25);
+							if (CLWater == 2) randmul = frandom(1.05,1.125);
+							Vel.Z = (startvelz < (sinkspeed * randmul)) ? startvelz : (sinkspeed * randmul);
+						}
+						else 
+						{
+							Vel.Z = (startvelz < sinkspeed) ? startvelz : sinkspeed;
+						}
 					}
 					else
 					{
 						double temp = ((Vel.Z - startvelz) * (waterlevel == 1 ? 0.25 : 0.125));
+						if (CLWater) 
+						{
+							if (CLWater == 2) temp = ((Vel.Z - startvelz) * (waterlevel == 1 ? 0.4625 : 0.23125));
+													 else temp = ((Vel.Z - startvelz) * (waterlevel == 1 ? 0.675 : 0.3375));
+						}
 						Vel.Z = startvelz + temp;
 					}
 				}
