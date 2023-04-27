@@ -1724,6 +1724,7 @@ class DDPlayerPawn : PlayerPawn
 		UserCmd cmd = player.cmd;
 		bool berserked;
 		if (CountInv("PowerStrength") || CountInv("PowerStrengthDD")) berserked = true;
+		CLWater = 0;
 		
 		if (dydudebug_playermove) Console.Printf("\c[orange](FallAndSink() Start)\c- Vel.Z: %.4f [oldfloorz: %.8f, grav: %.8f] [tic: %d]", Vel.Z, oldfloorz, grav, gametic);
 		if (Pos.Z > floorz && !bNOGRAVITY)
@@ -1883,8 +1884,8 @@ class DDPlayerPawn : PlayerPawn
 							{
 								if (CLWater == 2)
 								{
-									if (berserked) weaponsinkfactor -= 0.325;
-														else weaponsinkfactor -= 0.25;
+									if (berserked) weaponsinkfactor -= 0.40625;
+														else weaponsinkfactor -= 0.3125;
 								}
 								else
 								{
@@ -1948,7 +1949,7 @@ class DDPlayerPawn : PlayerPawn
 						{
 							if (CLWater)
 							{
-								if (CLWater == 2) sinkspeed *= 0.0875;
+								if (CLWater == 2) sinkspeed *= 0.175;
 														 else sinkspeed *= 0.875;
 							}
 							else sinkspeed *= 0.25;
@@ -1962,12 +1963,12 @@ class DDPlayerPawn : PlayerPawn
 							if (Vel.Z == 0 && oldfloorz > floorz && Pos.Z == oldfloorz)
 							{
 								if (CLWater == 2) Vel.Z -= grav;
-														 else Vel.Z -= grav + grav;
+														 else Vel.Z -= (grav * 2.5);
 							}
 							else
 							{
 								if (CLWater == 2) Vel.Z -= (grav * 0.5);
-														 else Vel.Z -= grav;
+														 else Vel.Z -= (grav * 1.25);
 							}
 						}
 						if (waterlevel >= 2)
@@ -1976,7 +1977,19 @@ class DDPlayerPawn : PlayerPawn
 															else sinkspeed *= 16.875;
 						}
 						else sinkspeed *= 11.25;
-						if (CLWater == 2) sinkspeed *= 0.1;
+						if (skill <= 0) sinkspeed *= 0.6;
+						if (skill == 1) sinkspeed *= 0.8;
+						if (skill == 2) sinkspeed *= 1.0;
+						if (skill == 3) sinkspeed *= 1.2;
+						if (skill >= 4) sinkspeed *= 1.4;
+						if (CLWater == 2) 
+						{
+							if (skill <= 0) sinkspeed *= 0.00;
+							if (skill == 1) sinkspeed *= 0.05;
+							if (skill == 2) sinkspeed *= 0.10;
+							if (skill == 3) sinkspeed *= 0.15;
+							if (skill >= 4) sinkspeed *= 0.20;
+						}
 						if (dydudebug_playermove) Console.Printf("\c[sapphire]Vel.Z: %.8f, startvelz: %.8f, sinkspeed: %.8f, CLWater: %d [tic: %d]", Vel.Z, startvelz, sinkspeed, CLWater, gametic);
 					}
 					
@@ -1984,8 +1997,23 @@ class DDPlayerPawn : PlayerPawn
 					{
 						if (CLWater) 
 						{
-							double randmul = frandom(1.5,2.25);
-							if (CLWater == 2) randmul = frandom(1.05,1.125);
+							double randmul;
+							if (CLWater == 2) 
+							{
+								if (skill <= 0) randmul = frandom(1.025,1.0625);
+								if (skill == 1) randmul = frandom(1.0375,1.09375);
+								if (skill == 2) randmul = frandom(1.05,1.125);
+								if (skill == 3) randmul = frandom(1.0625,1.15675);
+								if (skill >= 4) randmul = frandom(1.075,1.1875);
+							}
+							else
+							{
+								if (skill <= 0) randmul = frandom(1.25,1.625);
+								if (skill == 1) randmul = frandom(1.375,1.9375);
+								if (skill == 2) randmul = frandom(1.5,2.25);
+								if (skill == 3) randmul = frandom(1.625,2.5675);
+								if (skill >= 4) randmul = frandom(1.75,2.875);
+							}
 							Vel.Z = (startvelz < (sinkspeed * randmul)) ? startvelz : (sinkspeed * randmul);
 						}
 						else 
@@ -2365,7 +2393,7 @@ class DDPlayerPawn : PlayerPawn
 				if (CountInv("UOHEnd4")) 
 				{
 					if (dimtimer < 175) dimtimer++;
-					Console.Printf("dimtimer: %d", dimtimer);
+					//Console.Printf("dimtimer: %d", dimtimer);
 				}
 				else dimtimer = 0;
 			}
@@ -3222,8 +3250,7 @@ class DDPlayerPawn : PlayerPawn
 				{
 					nm = "SkinStealer";
 					nn = "IllusGhost";
-					if (inflictor.GetClassName() == nm || source.GetClassName() == nm ||
-							inflictor.GetClassName() == nn || source.GetClassName() == nn)
+					if (source.GetClassName() == nm || source.GetClassName() == nn)
 					{
 						if (!CountInv("MysteryItem2"))
 						{
@@ -3362,8 +3389,7 @@ class DDPlayerPawn : PlayerPawn
 			{
 				nm = "SkinStealer";
 				nn = "IllusGhost";
-				if (inflictor.GetClassName() == nm || source.GetClassName() == nm ||
-						inflictor.GetClassName() == nn || source.GetClassName() == nn)
+				if (inflictor.GetClassName() == nm || inflictor.GetClassName() == nn)
 				{
 					if (!CountInv("MysteryItem2"))
 					{
