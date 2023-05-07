@@ -449,7 +449,15 @@ class DD_EventHandler : EventHandler
 				if (MummyLeaderGhost(spawnee)) spawnee.bAVOIDMELEE = true;
 				if (Knight(spawnee)) spawnee.bAVOIDMELEE = true;
 			}
-			
+		}
+		return spawnee, monsterlevel, monsterrating;
+	}
+	
+	actor, int, int AddLevelSpecials2(actor spawnee, int monsterlevel, int monsterrating)
+	{
+		double levelmulfact = 1.5;
+		if (exex_monsterlevelenabledflags)
+		{
 			if (monsterlevel >= (40 * levelmulfact))
 			{
 				if (Teacher_Jorg(spawnee)) spawnee.bAVOIDMELEE = true;
@@ -570,7 +578,15 @@ class DD_EventHandler : EventHandler
 				if (HadesElemental(spawnee)) spawnee.bAVOIDHAZARDS = true;
 				if (HadesOverlord(spawnee)) spawnee.bAVOIDHAZARDS = true;
 			}
-			
+		}
+		return spawnee, monsterlevel, monsterrating;
+	}
+	
+	actor, int, int AddLevelSpecials3(actor spawnee, int monsterlevel, int monsterrating)
+	{
+		double levelmulfact = 1.5;
+		if (exex_monsterlevelenabledflags)
+		{
 			int fastchance = 0;
 			if (monsterlevel >= (25 * levelmulfact))
 			{
@@ -718,8 +734,14 @@ class DD_EventHandler : EventHandler
 			
 			double hpmulti, atkmulti, defmulti, spdmulti, massmulti;
 			double hpmulti2, atkmulti2, defmulti2, spdmulti2, massmulti2;
+			
+			bool exception = false;
+			if (Wads.CheckNumForName("EE-EXDAY", Wads.ns_global, -1, true) != -1)
+			{
+				nm = "WaterActivation"; if (spawnname = nm) exception = true;
+			}
 			// Monster "Scaling"
-			if (spawnee.bISMONSTER && !practicetarget)
+			if (spawnee.bISMONSTER && !practicetarget && !exception)
 			{
 				double baselinelevel = 0;
 				if (dydudebug_monsterscaling && player) Console.Printf("A_CheckDDGame(): %d, exex_nrpgmonsterlevels: %d, ContinousMode: %d", A_CheckDDGame(), exex_nrpgmonsterlevels, player.CountInv("IsDDContinuous"));
@@ -1480,6 +1502,8 @@ class DD_EventHandler : EventHandler
 				}
 				
 				[spawnee, monsterlevel, monsterrating] = AddLevelSpecials(spawnee,monsterlevel,monsterrating);
+				[spawnee, monsterlevel, monsterrating] = AddLevelSpecials2(spawnee,monsterlevel,monsterrating);
+				[spawnee, monsterlevel, monsterrating] = AddLevelSpecials3(spawnee,monsterlevel,monsterrating);
 				if (!LD_nomonsters) A_LegendaryCheck(spawnee);
 				if (!A_CheckUOHYM()) [spawnee, monsterlevel, monsterrating] = SetUpMiracles(spawnee,monsterlevel,monsterrating);
 			}
@@ -2043,7 +2067,13 @@ class DD_EventHandler : EventHandler
 		int TruePlayerLevel = 0;
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		
-		if (!EEBaseZSC(spawnee) && spawnee.bISMONSTER) 
+		bool exception = false;
+		if (Wads.CheckNumForName("EE-EE-EXDAY", Wads.ns_global, -1, true) != -1)
+		{
+			nm = "WaterActivation"; if (spawnname = nm) exception = true;
+		}
+		
+		if (!EEBaseZSC(spawnee) && spawnee.bISMONSTER && !exception) 
 		{
 			spawnee.A_SetInventory("CompatVulnItem",1);
 		}
