@@ -5840,7 +5840,12 @@ class DD_EventHandler : EventHandler
 						if (playoneliner && player.GetClassName() == "DinahPlayer" && MiscItem)
 						{
 							if (dydudebug_worlddied) Console.Printf("Voice Check");
-							if (exex_dinahextravoices && exex_dinahoneliners && !MiscItem.OneLinerCooldown)
+							bool voicecheck = false;
+							if (exex_dinahextravoices && exex_dinahoneliners) 
+							{
+								if (MiscItem.OneLinerCooldown <= 0 || waslegendary) voicecheck = true;
+							}
+							if (voicecheck)
 							{
 								int basechance = exex_dinahonelinerbasechance; // 8
 								if (basechance < 0) basechance = 0;
@@ -5851,6 +5856,7 @@ class DD_EventHandler : EventHandler
 									if (player.CountInv("DecentHealth")) basechance *= 1.25;
 									if (player.CountInv("LowHealth")) basechance *= 1.5;
 									if (player.CountInv("CriticalHealth")) basechance *= 1.875;
+									if (waslegendary) basechance *= 5;
 									if (MiscItem)
 									{
 										if (MiscItem.WineDefTier == 1 || MiscItem.WineDefTier == -1) basechance *= 1.125;
@@ -5872,8 +5878,10 @@ class DD_EventHandler : EventHandler
 									}
 									if (victim.bBOSS) basechance *= 8;
 									if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) basechance *= frandompick(1.25,1.25,1.25,1.5,1.5,2);
-									if (dydudebug_worlddied) Console.Printf("%d / 256", basechance);
-									if (random(1,256) <= basechance && (MiscItem && MiscItem.CanTalkUnderwater))
+									int maxchance = 256;
+									if (waslegendary) maxchance *= 0.25;
+									if (dydudebug_worlddied) Console.Printf("%d / %d", basechance, maxchance);
+									if (random(1,maxchance) <= basechance && (MiscItem && MiscItem.CanTalkUnderwater))
 									{
 										double maskpitch = 1.00;
 										if (player.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
