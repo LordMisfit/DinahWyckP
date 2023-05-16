@@ -2123,11 +2123,64 @@ mixin class MonsterCollider
 			else if (source) TrueIPPlayer = DDPlayerPawn(source);
 			if (TrueIPPlayer && TrueIPPlayer.CountInv("DinahTrueIPState")) ActorDefenseIgnoreFactor += (TrueIPFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
+			double PikeFactor = 0.0;
+			if (mod == 'Zap') 
+			{
+				if ((inflictor && inflictor.CountInv("SpellDiaryEE")) || 
+						(source && source.CountInv("SpellDiaryEE"))) PikeFactor += (frandom(0.25,0.334) * (1.00 - PikeFactor));   
+				if (CountInv("SpellDiaryEE")) PikeFactor -= (frandom(0.25,0.334) * (1.00 - PikeFactor));
+				ActorDefenseIgnoreFactor += (PikeFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
 			double PikeAOEFactor = 0.334;
-			if (mod == 'Zap') ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
-			if (mod == 'Zap' && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			if (mod == 'Zap') 
+			{
+				if ((inflictor && inflictor.CountInv("SpellDiaryEE")) || 
+						(source && source.CountInv("SpellDiaryEE"))) PikeAOEFactor += (frandom(0.25,0.334) * (1.00 - PikeAOEFactor));   
+				if (CountInv("SpellDiaryEE")) PikeAOEFactor -= (frandom(0.25,0.334) * (1.00 - PikeAOEFactor));
+				ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+				if (flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+				if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
 			if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
+			double ChopFactor = 0.000;
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("BlunderShotUpgrade") == 1) ChopFactor = 0.1667;
+				if (inflictor.CountInv("BlunderShotUpgrade") == 2) ChopFactor = 0.4;
+				if (inflictor.CountInv("BlunderShotUpgrade") >= 3) ChopFactor = 0.75;
+
+				double temp = (1.00 - ChopFactor);
+				if (inflictor.CountInv("PowerWineBuffIPMaximum")) ChopFactor += (temp * frandom(0.25,0.375));
+				else if (inflictor.CountInv("PowerWineBuffIPStrongestEven")) ChopFactor += (temp * frandom(0.1875,0.25));
+				else if (inflictor.CountInv("PowerWineBuffStrongestEven")) ChopFactor += (temp * frandom(0.1125,0.15));
+				else if (inflictor.CountInv("PowerWineBuffIPStrongest")) ChopFactor += (temp * frandom(0.125,0.1875));
+				else if (inflictor.CountInv("PowerWineBuffStrongest")) ChopFactor += (temp * frandom(0.075,0.1125));
+				else if (inflictor.CountInv("PowerWineBuffIPStrong")) ChopFactor += (temp * frandom(0.0625,0.125));
+				else if (inflictor.CountInv("PowerWineBuffStrong")) ChopFactor += (temp * frandom(0.0375,0.075));
+				else if (inflictor.CountInv("PowerWineBuffIPWeak")) ChopFactor += (temp * frandom(0.0,0.0625));
+				else if (inflictor.CountInv("PowerWineBuffWeak")) ChopFactor += (temp * frandom(0.0,0.0375));
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("BlunderShotUpgrade") == 1) ChopFactor = 0.1667;
+				if (source.CountInv("BlunderShotUpgrade") == 2) ChopFactor = 0.4;
+				if (source.CountInv("BlunderShotUpgrade") >= 3) ChopFactor = 0.75;
+
+				double temp = (1.00 - ChopFactor);
+				if (source.CountInv("PowerWineBuffIPMaximum")) ChopFactor += (temp * frandom(0.25,0.375));
+				else if (source.CountInv("PowerWineBuffIPStrongestEven")) ChopFactor += (temp * frandom(0.1875,0.25));
+				else if (source.CountInv("PowerWineBuffStrongestEven")) ChopFactor += (temp * frandom(0.1125,0.15));
+				else if (source.CountInv("PowerWineBuffIPStrongest")) ChopFactor += (temp * frandom(0.125,0.1875));
+				else if (source.CountInv("PowerWineBuffStrongest")) ChopFactor += (temp * frandom(0.075,0.1125));
+				else if (source.CountInv("PowerWineBuffIPStrong")) ChopFactor += (temp * frandom(0.0625,0.125));
+				else if (source.CountInv("PowerWineBuffStrong")) ChopFactor += (temp * frandom(0.0375,0.075));
+				else if (source.CountInv("PowerWineBuffIPWeak")) ChopFactor += (temp * frandom(0.0,0.0625));
+				else if (source.CountInv("PowerWineBuffWeak")) ChopFactor += (temp * frandom(0.0,0.0375));
+			}
+			if (mod == 'Chop') ActorDefenseIgnoreFactor += (ChopFactor * (1.00 - ActorDefenseIgnoreFactor));
+
 			double LeadFactor = 0.000;
 			if (inflictor && DDPlayerPawn(inflictor))
 			{
@@ -3247,6 +3300,13 @@ mixin class MonsterCollider
 				if (mod == 'Zap' || mod == 'Ice') damage *= 2;
 			}
 		}
+		if (mod == 'Zap')
+		{
+			if((inflictor && inflictor.CountInv("SpellDiaryEE")) || 
+				 (source && source.CountInv("SpellDiaryEE"))) damage *= frandom(1.25,1.334);
+			if (CountInv("SpellDiaryEE")) damage *= frandom(0.667,0.75);
+		}
+		
 		
 		if (mewantsacrifice(self))
 		{

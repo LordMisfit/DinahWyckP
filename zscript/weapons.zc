@@ -638,41 +638,58 @@ class DDWeapon : Weapon
 				}
 				else // Other Steal HP :V
 				{
-					int prevhealth = player.mo.health;
-					int stealamt = (actualdamage * lifesteal);
-					if (CacoDemon(t.linetarget) || CacoDemonNew(t.linetarget))
+					bool canstealHP = true;
+					if (pufftype == 'VacPuff' || pufftype == 'VacPuffIP')
 					{
-						stealamt *= frandom(2,4);
-						lifestealmax *= 2;
-					}
-					if (Arachnotron(t.linetarget) || ArachnotronNew(t.linetarget) || RailArachnotron(t.linetarget) || FusionArachnotron(t.linetarget) || ArachnotronMK2(t.linetarget))
-					{
-						stealamt *= frandom(1.5,2);
-						lifestealmax *= 1.5;
-					}
-					if (stealamt > lifestealmax) stealamt = lifestealmax;
-					GiveBody(stealamt);
-					int draindiff = player.mo.health - prevhealth;
-					if (draindiff) 
-					{
-						player.mo.A_SetBlend("ff ee ee",0.1875,random(21,31));
-						player.mo.A_StopSound(17);
-						player.mo.A_StopSound(18);
-						player.mo.A_StartSound("player/hpdrain",17,CHANF_DEFAULT,frandom(0.75,1.00),ATTN_NORM,frandom(1.35,1.65));
-						player.mo.A_StartSound("player/hpdrain",18,CHANF_DEFAULT,frandom(0.75,1.00),ATTN_NORM,frandom(1.8,2.2));
-						invoker.A_RecoverHUD(draindiff, 0, true);
-						
-						if (exex_combatlog)
+						EEVaccableObject VacObj;
+						VacObj = EEVaccableObject(t.linetarget);
+						if (VacObj)
 						{
-							string comblog = "";
-							comblog.AppendFormat("\c[red]*\c- ");
-							comblog.AppendFormat("\c[brick]%d\c- HP \c[green]drained\c-", draindiff);
-							if (t.linetarget) comblog.AppendFormat(" from \c[red]%s\c-", t.linetarget.GetTag());
-							if (pufftype == 'VacPuff' || pufftype == 'VacPuffIP') comblog.AppendFormat(" by the \c[brick]SuperVac\c-");
-							comblog.AppendFormat("!");
-							if (dydudebug_showgametic) comblog.AppendFormat(" [%d]", gametic);
+							if (VacObj.canleechHP) canstealHP = true;
+																else canstealHP = false;
+						}
+						else canstealHP = true;
+					}
+					else canstealHP = true;
+					
+					if (canstealHP)
+					{
+						int prevhealth = player.mo.health;
+						int stealamt = (actualdamage * lifesteal);
+						if (CacoDemon(t.linetarget) || CacoDemonNew(t.linetarget))
+						{
+							stealamt *= frandom(2,4);
+							lifestealmax *= 2;
+						}
+						if (Arachnotron(t.linetarget) || ArachnotronNew(t.linetarget) || RailArachnotron(t.linetarget) || FusionArachnotron(t.linetarget) || ArachnotronMK2(t.linetarget))
+						{
+							stealamt *= frandom(1.5,2);
+							lifestealmax *= 1.5;
+						}
+						if (stealamt > lifestealmax) stealamt = lifestealmax;
+						GiveBody(stealamt);
+						int draindiff = player.mo.health - prevhealth;
+						if (draindiff) 
+						{
+							player.mo.A_SetBlend("ff ee ee",0.1875,random(21,31));
+							player.mo.A_StopSound(17);
+							player.mo.A_StopSound(18);
+							player.mo.A_StartSound("player/hpdrain",17,CHANF_DEFAULT,frandom(0.75,1.00),ATTN_NORM,frandom(1.35,1.65));
+							player.mo.A_StartSound("player/hpdrain",18,CHANF_DEFAULT,frandom(0.75,1.00),ATTN_NORM,frandom(1.8,2.2));
+							invoker.A_RecoverHUD(draindiff, 0, true);
 							
-							Console.Printf(comblog);
+							if (exex_combatlog)
+							{
+								string comblog = "";
+								comblog.AppendFormat("\c[red]*\c- ");
+								comblog.AppendFormat("\c[brick]%d\c- HP \c[green]drained\c-", draindiff);
+								if (t.linetarget) comblog.AppendFormat(" from \c[red]%s\c-", t.linetarget.GetTag());
+								if (pufftype == 'VacPuff' || pufftype == 'VacPuffIP') comblog.AppendFormat(" by the \c[brick]SuperVac\c-");
+								comblog.AppendFormat("!");
+								if (dydudebug_showgametic) comblog.AppendFormat(" [%d]", gametic);
+								
+								Console.Printf(comblog);
+							}
 						}
 					}
 				}
@@ -7132,19 +7149,20 @@ class Blunderaxe : DinahWeapon
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = invoker.ActualLevel;
+		double ticr = 2;
 		
 		if (invoker.meleetimes > 0)
 		{
 			if (invoker.IPAttackCheck)
 			{
-				if (random(1,4) <= 3) A_SetTics(0);
-												 else A_SetTics(1);
+				if (random(1,4) <= 3) ticr = 0;
+												 else ticr = 1;
 			}
 			else
 			if (random(1,16) <= 15)
 			{
-				if (random(1,8) <= 1) A_SetTics(0);
-												 else A_SetTics(1);
+				if (random(1,8) <= 1) ticr = 0;
+												 else ticr = 1;
 			}
 		}
 		else
@@ -7157,24 +7175,24 @@ class Blunderaxe : DinahWeapon
 					{
 						if (TruePlayerLevel >= 75)
 						{
-							if (random(1,16) <= 15) A_SetTics(0);
-																 else A_SetTics(1);
+							if (random(1,16) <= 15) ticr = 0;
+																 else ticr = 1;
 						}
 						else
 						{
-							if (random(1,4) <= 3) A_SetTics(0);
-															 else A_SetTics(1);
+							if (random(1,4) <= 3) ticr = 0;
+															 else ticr = 1;
 						}
 					}
 					else
 					{
-						if (random(1,4) <= 1) A_SetTics(0);
-														else A_SetTics(1);
+						if (random(1,4) <= 1) ticr = 0;
+														 else ticr = 1;
 					}
 				}
 				else
 				{
-					A_SetTics(1);
+					ticr = 1;
 				}
 			}
 			else
@@ -7185,18 +7203,18 @@ class Blunderaxe : DinahWeapon
 					{
 						if (TruePlayerLevel >= 60)
 						{
-							if (random(1,6) <= 5) A_SetTics(0);
-							else A_SetTics(1);
+							if (random(1,6) <= 5) ticr = 0;
+															 else ticr = 1;
 						}
 						else
 						{
-							if (random(1,6) <= 2) A_SetTics(0);
-							else A_SetTics(1);
+							if (random(1,6) <= 2) ticr = 0;
+															 else ticr = 1;
 						}
 					}
 					else
 					{
-						A_SetTics(1);
+						ticr = 1;
 					}
 				}
 				else
@@ -7207,29 +7225,31 @@ class Blunderaxe : DinahWeapon
 						{
 							if (TruePlayerLevel >= 90)
 							{
-								if (random(1,6) <= 5) A_SetTics(0);
-								else A_SetTics(1);
+								if (random(1,6) <= 5) ticr = 0;
+																 else ticr = 1;
 							}
 							else
 							{
-								if (random(1,6) <= 2) A_SetTics(0);
-								else A_SetTics(1);
+								if (random(1,6) <= 2) ticr = 0;
+																 else ticr = 1;
 							}
 						}
 						else
 						{
-							A_SetTics(1);
+							ticr = 1;
 						}
 					}
 				}
 			}
 		}
+		A_SetTics(ticr);
 	}
 
 	action void A_AxeChopSet2Tics2()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = invoker.ActualLevel;
+		double ticr = 2;
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -7237,13 +7257,13 @@ class Blunderaxe : DinahWeapon
 			{
 				if (TruePlayerLevel >= 45)
 				{
-					if (random(1,16) <= 13) A_SetTics(0);
-														 else A_SetTics(1);
+					if (random(1,16) <= 13) ticr = 0;
+														 else ticr = 1;
 				}
 				else
 				{
-					if (random(1,4) <= 3) A_SetTics(0);
-													 else A_SetTics(1);
+					if (random(1,4) <= 3) ticr = 0;
+													 else ticr = 1;
 				}
 			}
 			else
@@ -7252,13 +7272,13 @@ class Blunderaxe : DinahWeapon
 				{
 					if (TruePlayerLevel >= 30)
 					{
-						if (random(1,16) <= 13) A_SetTics(0);
-															 else A_SetTics(1);
+						if (random(1,16) <= 13) ticr = 0;
+															 else ticr = 1;
 					}
 					else
 					{
-						if (random(1,4) <= 3) A_SetTics(0);
-														 else A_SetTics(1);
+						if (random(1,4) <= 3) ticr = 0;
+														 else ticr = 1;
 					}
 				}
 				else
@@ -7267,19 +7287,19 @@ class Blunderaxe : DinahWeapon
 					{
 						if (TruePlayerLevel >= 60)
 						{
-							if (random(1,8) <= 7) A_SetTics(0);
-															 else A_SetTics(1);
+							if (random(1,8) <= 7) ticr = 0;
+															 else ticr = 1;
 						}
 						else
 						{
-							if (random(1,8) <= 4) A_SetTics(0);
-															else A_SetTics(1);
+							if (random(1,8) <= 4) ticr = 0;
+															 else ticr = 1;
 						}
 					}
 					else
 					{
-						if (random(1,8) <= 1) A_SetTics(0);
-														 else A_SetTics(1);
+						if (random(1,8) <= 1) ticr = 0;
+														 else ticr = 1;
 					}
 				}
 			}
@@ -7290,11 +7310,11 @@ class Blunderaxe : DinahWeapon
 			{ 
 				if (invoker.IPAttackCheck) 
 				{
-					if (random(1,4) <= 1) A_SetTics(0);
+					if (random(1,4) <= 1) ticr = 0;
 				}
 				else
 				{
-					A_SetTics(1); 
+					ticr = 1; 
 				}
 			}
 			else
@@ -7305,28 +7325,30 @@ class Blunderaxe : DinahWeapon
 					{
 						if (TruePlayerLevel >= 60)
 						{
-							if (random(1,8) <= 5) A_SetTics(0);
-							else A_SetTics(1);
+							if (random(1,8) <= 5) ticr = 0;
+															 else ticr = 1;
 						}
 						else
 						{
-							if (random(1,8) <= 3) A_SetTics(0);
-							else A_SetTics(1);
+							if (random(1,8) <= 3) ticr = 0;
+															 else ticr = 1;
 						}
 					}
 					else
 					{
-						A_SetTics(1);
+						ticr = 1;
 					}
 				}
 			}
 		}
+		A_SetTics(ticr);
 	}
 	
 	action void A_AxeChopSet4Tics1()
 	{
 		let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = invoker.ActualLevel;
+		double ticr = 4;
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -7334,13 +7356,13 @@ class Blunderaxe : DinahWeapon
 			{
 				if (TruePlayerLevel >= 30)
 				{
-					if (random(1,4) <= 2) A_SetTics(0);
-													 else A_SetTics(1);
+					if (random(1,4) <= 2) ticr = 0;
+													 else ticr = 1;
 				}
 				else
 				{
-					if (random(1,4) <= 3) A_SetTics(1);
-													 else A_SetTics(2);
+					if (random(1,4) <= 3) ticr = 1;
+													 else ticr = 2;
 				}
 			}
 			else
@@ -7350,19 +7372,19 @@ class Blunderaxe : DinahWeapon
 				{
 					if (TruePlayerLevel >= 60)
 					{
-						if (random(1,4) <= 1) A_SetTics(0);
-														 else A_SetTics(1);
+						if (random(1,4) <= 1) ticr = 0;
+														 else ticr = 1;
 					}
 					else
 					{
-						if (random(1,8) <= 5) A_SetTics(1);
-														 else A_SetTics(2);
+						if (random(1,8) <= 5) ticr = 1;
+														 else ticr = 2;
 					}
 				}
 				else
 				{
-					if (random(1,8) <= 1) A_SetTics(1);
-													 else A_SetTics(2);
+					if (random(1,8) <= 1) ticr = 1;
+													 else ticr = 2;
 				}
 			}
 		}
@@ -7370,26 +7392,25 @@ class Blunderaxe : DinahWeapon
 		{
 			if (A_CheckBerserk()) 
 			{ 
-				
 				if (invoker.IPAttackCheck)
 				{
 					if (TruePlayerLevel >= 30)
 					{
 						if (TruePlayerLevel >= 60)
 						{
-							if (random(1,4) <= 1) A_SetTics(randompick(0,0,0,0,1,1));
-							else A_SetTics(randompick(0,0,1,1,1,2));
+							if (random(1,4) <= 1) ticr = randompick(0,0,0,0,1,1);
+															 else ticr = randompick(0,0,1,1,1,2);
 						}
 						else
 						{
-							if (random(1,4) <= 1) A_SetTics(randompick(0,0,0,1,1,1));
-							else A_SetTics(randompick(0,0,1,1,2,2));
+							if (random(1,4) <= 1) ticr = randompick(0,0,0,1,1,1);
+															 else ticr = randompick(0,0,1,1,2,2);
 						}
 					}
 					else
 					{
-						if (random(1,4) <= 1) A_SetTics(randompick(0,0,1,1,2,2));
-						else A_SetTics(randompick(1,1,2,2,3,3));
+						if (random(1,4) <= 1) ticr = randompick(0,0,1,1,2,2);
+														 else ticr = randompick(1,1,2,2,3,3);
 					}
 				}
 				else
@@ -7398,19 +7419,19 @@ class Blunderaxe : DinahWeapon
 					{
 						if (TruePlayerLevel >= 60)
 						{
-							if (random(1,4) <= 1) A_SetTics(randompick(0,0,0,1,1,1));
-							else A_SetTics(randompick(0,0,1,1,2,2));
+							if (random(1,4) <= 1) ticr = randompick(0,0,0,1,1,1);
+															 else ticr = randompick(0,0,1,1,2,2);
 						}
 						else
 						{
-							if (random(1,4) <= 1) A_SetTics(randompick(0,0,1,1,2,2));
-							else A_SetTics(randompick(1,1,2,2,3,3));
+							if (random(1,4) <= 1) ticr = randompick(0,0,1,1,2,2);
+															 else ticr = randompick(1,1,2,2,3,3);
 						}
 					}
 					else
 					{
-						if (random(1,4) <= 1) A_SetTics(randompick(0,1,1,2,2,3));
-						else A_SetTics(randompick(1,2,2,3,3,3));
+						if (random(1,4) <= 1) ticr = randompick(0,1,1,2,2,3);
+														 else ticr = randompick(1,2,2,3,3,3);
 					}
 				}
 			}
@@ -7418,25 +7439,27 @@ class Blunderaxe : DinahWeapon
 			{
 				if (invoker.IPAttackCheck) 
 				{
-					A_SetTics(randompick(1,1,2,2,3,3));
+					ticr = randompick(1,1,2,2,3,3);
 				}
 				else
 				{
-					if (random(1,8) <= 1) A_SetTics(randompick(2,2,3,3,3,4));
-					else A_SetTics(randompick(3,3,3,4,4,4));
+					if (random(1,8) <= 1) ticr = randompick(2,2,3,3,3,4);
+													 else ticr = randompick(3,3,3,4,4,4);
 				}
 			}
 		}
+		A_SetTics(ticr);
 	}
 
 	action void A_AxeChopSet3Tics1()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = invoker.ActualLevel;
+		double ticr = 3;
 		
 		if (invoker.meleetimes > 0)
 		{
-			if (A_CheckBerserk()) 
+			if (A_CheckBerserk())
 			{
 				if (invoker.IPAttackCheck)
 				{
@@ -7758,6 +7781,7 @@ class Blunderaxe : DinahWeapon
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = invoker.ActualLevel;
+		double ticr = 3;
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -7769,7 +7793,7 @@ class Blunderaxe : DinahWeapon
 					{
 						if (random(1,64) <= 63) 
 						{
-							if (random(1,7) <= 4) 
+							if (random(1,7) <= 4)
 							{
 								A_SetTics(0);
 							}
@@ -8083,6 +8107,7 @@ class Blunderaxe : DinahWeapon
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = invoker.ActualLevel;
+		double ticr = 2;
 		
 		if (invoker.meleetimes > 0)
 		{
@@ -8180,6 +8205,7 @@ class Blunderaxe : DinahWeapon
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = invoker.ActualLevel;
+		double ticr = 1;
 		
 		if (A_CheckBerserk()) 
 		{
@@ -8189,16 +8215,16 @@ class Blunderaxe : DinahWeapon
 				{
 					if (TruePlayerLevel >= 45)
 					{
-						if (random(1,12) <= 9) A_SetTics(0);
+						if (random(1,12) <= 9) ticr = 0;
 					}
 					else
 					{
-						if (random(1,12) <= 5) A_SetTics(0);
+						if (random(1,12) <= 5) ticr = 0;
 					}
 				}
 				else
 				{
-					if (random(1,12) <= 1) A_SetTics(0);
+					if (random(1,12) <= 1) ticr = 0;
 				}
 			}
 			else
@@ -8209,16 +8235,16 @@ class Blunderaxe : DinahWeapon
 					{
 						if (TruePlayerLevel >= 60)
 						{
-							if (random(1,12) <= 9) A_SetTics(0);
+							if (random(1,12) <= 9) ticr = 0;
 						}
 						else
 						{
-							if (random(1,12) <= 5) A_SetTics(0);
+							if (random(1,12) <= 5) ticr = 0;
 						}
 					}
 					else
 					{
-						if (random(1,12) <= 1) A_SetTics(0);
+						if (random(1,12) <= 1) ticr = 0;
 					}
 				}
 			}
@@ -8229,11 +8255,11 @@ class Blunderaxe : DinahWeapon
 			{
 				if (TruePlayerLevel >= 30)
 				{
-					A_SetTics(0);
+					ticr = 0;
 				}
 				else
 				{
-					if (random(1,4) <= 3) A_SetTics(0);
+					if (random(1,4) <= 3) ticr = 0;
 				}
 			}
 			else
@@ -8242,21 +8268,23 @@ class Blunderaxe : DinahWeapon
 				{
 					if (TruePlayerLevel >= 75) 
 					{
-						if (random(1,4) <= 3) A_SetTics(0);
+						if (random(1,4) <= 3) ticr = 0;
 					}
 					else
 					{
-						if (random(1,4) <= 1) A_SetTics(0);
+						if (random(1,4) <= 1) ticr = 0;
 					}
 				}
 			}
 		}
+		A_SetTics(ticr);
 	}
 	
 	action void A_AxeChopSet1Tic2()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = invoker.ActualLevel;
+		double ticr = 1;
 		
 		if (A_CheckBerserk()) 
 		{ 
@@ -8266,16 +8294,16 @@ class Blunderaxe : DinahWeapon
 				{
 					if (TruePlayerLevel >= 45)
 					{
-						if (random(1,18) <= 9) A_SetTics(0);
+						if (random(1,18) <= 9) ticr = 0;
 					}
 					else
 					{
-						if (random(1,18) <= 5) A_SetTics(0);
+						if (random(1,18) <= 5) ticr = 0;
 					}
 				}
 				else
 				{
-					if (random(1,18) <= 1) A_SetTics(0);
+					if (random(1,18) <= 1) ticr = 0;
 				}
 			}
 		}
@@ -8287,43 +8315,42 @@ class Blunderaxe : DinahWeapon
 				{
 					if (TruePlayerLevel >= 45)
 					{
-						A_SetTics(0);
+						ticr = 0;
 					}
 					else
 					{
-						if (random(1,4) <= 3) A_SetTics(0);
+						if (random(1,4) <= 3) ticr = 0;
 					}
 				}
 				else
 				{
-					if (random(1,4) <= 2) A_SetTics(0);
+					if (random(1,4) <= 2) ticr = 0;
 				}
 			}
 		}
+		A_SetTics(ticr);
 	}
 	
 	action void A_AxeChopSet1Tic3()
 	{
 		let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = invoker.ActualLevel;
-		
+		double ticr = 1;
+
 		if (invoker.meleetimes > 0)
 		{
-			if (invoker.IPAttackCheck)
-			{
-				A_SetTics(0);
-			}
+			if (invoker.IPAttackCheck) ticr = 0;
 			else
 			{
 				if (TruePlayerLevel >= 45)
 				{
 					if (TruePlayerLevel >= 75)
 					{
-						A_SetTics(0);
+						ticr = 0;
 					}
 					else
 					{
-						if (random(1,16) <= 15) A_SetTics(0);
+						if (random(1,16) <= 15) ticr = 0;
 					}
 				}
 			}
@@ -8336,11 +8363,11 @@ class Blunderaxe : DinahWeapon
 				{
 					if (TruePlayerLevel >= 45)
 					{
-						if (random(1,4) <= 3) A_SetTics(0);
+						if (random(1,4) <= 3) ticr = 0;
 					}
 					else
 					{
-						if (random(1,4) <= 1) A_SetTics(0);
+						if (random(1,4) <= 1) ticr = 0;
 					}
 				}
 				else
@@ -8349,11 +8376,11 @@ class Blunderaxe : DinahWeapon
 					{
 						if (TruePlayerLevel >= 75)
 						{
-							if (random(1,4) <= 3) A_SetTics(0);
+							if (random(1,4) <= 3) ticr = 0;
 						}
 						else
 						{
-							if (random(1,4) <= 1) A_SetTics(0);
+							if (random(1,4) <= 1) ticr = 0;
 						}
 					}
 				}
@@ -8370,26 +8397,26 @@ class Blunderaxe : DinahWeapon
 							{
 								if (TruePlayerLevel >= 75)
 								{
-									if (random(1,24) <= 14) A_SetTics(0);
+									if (random(1,24) <= 14) ticr = 0;
 								}
 								else
 								{
-									if (random(1,24) <= 1) A_SetTics(0);
+									if (random(1,24) <= 1) ticr = 0;
 								}
 							}
 							else
 							{
-								if (random(1,24) <= 1) A_SetTics(0);
+								if (random(1,24) <= 1) ticr = 0;
 							}
 						}
 						else
 						{
-							if (random(1,24) <= 1) A_SetTics(0);
+							if (random(1,24) <= 1) ticr = 0;
 						}
 					}
 					else
 					{
-						if (random(1,24) <= 1) A_SetTics(0);
+						if (random(1,24) <= 1) ticr = 0;
 					}
 				}
 				else
@@ -8404,31 +8431,32 @@ class Blunderaxe : DinahWeapon
 								{
 									if (TruePlayerLevel >= 90)
 									{
-										if (random(1,24) <= 14) A_SetTics(0);
+										if (random(1,24) <= 14) ticr = 0;
 									}
 									else
 									{
-										if (random(1,24) <= 1) A_SetTics(0);
+										if (random(1,24) <= 1) ticr = 0;
 									}
 								}
 								else
 								{
-									if (random(1,24) <= 1) A_SetTics(0);
+									if (random(1,24) <= 1) ticr = 0;
 								}
 							}
 							else
 							{
-								if (random(1,24) <= 1) A_SetTics(0);
+								if (random(1,24) <= 1) ticr = 0;
 							}
 						}
 						else
 						{
-							if (random(1,24) <= 1) A_SetTics(0);
+							if (random(1,24) <= 1) ticr = 0;
 						}
 					}
 				}
 			}
 		}
+		A_SetTics(ticr);
 	}
 	
 	action void A_AxeChopDmg()
@@ -8446,15 +8474,27 @@ class Blunderaxe : DinahWeapon
 		
 		string pufftype = "BlunderPuff";
 		double dmg = (random(16,20) * random(1,8));
+		if (CountInv("BlunderShotUpgrade") == 1) dmg = (random(8,10) * random(3,16));
+		if (CountInv("BlunderShotUpgrade") == 2) dmg = (random(16,20) * random(2,8));
+		if (CountInv("BlunderShotUpgrade") >= 3) dmg = (random(8,20) * random(5,16));
 		int range = 96;
+		if (CountInv("BlunderShotUpgrade") == 1) range *= 1.025;
+		if (CountInv("BlunderShotUpgrade") == 2) range *= 1.05;
+		if (CountInv("BlunderShotUpgrade") >= 3) range *= 1.10;
 		if (invoker.IPAttackCheck) 
 		{
 			dmg = (random(16,20) * random(5,8));
+			if (CountInv("BlunderShotUpgrade") == 1) dmg = (random(16,20) * random(7,8));
+			if (CountInv("BlunderShotUpgrade") == 2) dmg = (random(8,20) * random(16,17));
+			if (CountInv("BlunderShotUpgrade") >= 3) dmg = (random(16,20) * random(8,10));
 			pufftype = "BlunderPuffIP";
 		}
 		else
 		{
 			dmg = (random(16,20) * random(1,8));
+			if (CountInv("BlunderShotUpgrade") == 1) dmg = (random(8,10) * random(3,16));
+			if (CountInv("BlunderShotUpgrade") == 2) dmg = (random(16,20) * random(2,8));
+			if (CountInv("BlunderShotUpgrade") >= 3) dmg = (random(8,20) * random(5,16));
 			pufftype = "BlunderPuff";
 		}
 		
@@ -8465,13 +8505,37 @@ class Blunderaxe : DinahWeapon
 			int rngroll;
 			if (random(1,96) <= (95 - (TruePlayerLevel * 0.0375)))
 			{
-				if (invoker.IPAttackCheck) adddmg = randompick(8,9,11,13,14,15);
-															else adddmg = randompick(3,4,4,5,5,6);
+				if (invoker.IPAttackCheck) 
+				{
+					adddmg = randompick(8,9,11,13,14,15);
+					if (CountInv("BlunderShotUpgrade") == 1) randompick(10,11,13,15,16,17);
+					if (CountInv("BlunderShotUpgrade") == 2) randompick(11,12,14,16,17,18);
+					if (CountInv("BlunderShotUpgrade") >= 3) randompick(13,14,16,18,19,20);
+				}
+				else 
+				{
+					adddmg = randompick(3,4,4,5,5,6);
+					if (CountInv("BlunderShotUpgrade") == 1) randompick(4,4,5,5,6,6);
+					if (CountInv("BlunderShotUpgrade") == 2) randompick(5,5,6,6,7,7);
+					if (CountInv("BlunderShotUpgrade") >= 3) randompick(5,6,6,7,7,8);
+				}
 			}
 			else
 			{
-				if (invoker.IPAttackCheck) adddmg = randompick(16,18,19,21,23,25);
-															else adddmg = randompick(6,7,8,9,10,11);
+				if (invoker.IPAttackCheck) 
+				{
+					adddmg = randompick(16,18,19,21,23,25);
+					if (CountInv("BlunderShotUpgrade") == 1) randompick(20,22,23,25,27,29);
+					if (CountInv("BlunderShotUpgrade") == 2) randompick(22,24,25,27,29,31);
+					if (CountInv("BlunderShotUpgrade") >= 3) randompick(26,28,29,31,33,35);
+				}
+				else 
+				{
+					adddmg = randompick(6,7,8,9,10,11);
+					if (CountInv("BlunderShotUpgrade") == 1) randompick(7,8,9,10,11,11);
+					if (CountInv("BlunderShotUpgrade") == 2) randompick(8,9,10,11,11,12);
+					if (CountInv("BlunderShotUpgrade") >= 3) randompick(9,10,11,11,12,12);
+				}
 				rngroll = 1;
 			}
 			adddmg *= exex_strmeleescale;
@@ -8500,6 +8564,9 @@ class Blunderaxe : DinahWeapon
 		if (invoker.IPAttackCheck) // IP Attack: Octo-strike [~8x damage]
 		{
 			dmg *= frandompick(7,7.5,7.5,8,8,8,8,8,8,8,8,8.5,8.5,9);
+			if (CountInv("BlunderShotUpgrade") == 1) dmg *= 1.0125;
+			if (CountInv("BlunderShotUpgrade") == 2) dmg *= 1.0375;
+			if (CountInv("BlunderShotUpgrade") >= 3) dmg *= 1.075;
 			range *= 1.1875;
 		}
 		if (dydudebug_meleedmg) Console.Printf("dmg (IPAttack): %.8f [%.8f]", dmg, prevdmg);
@@ -13498,11 +13565,16 @@ class WizardPike : DinahWeapon
 			SCEP A 1
 			{
 				invoker.InvisoCost = 3;
+				if (CountInv("SpellDiaryEE")) invoker.InvisoCost *= frandom(0.667,0.75);
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				if (MiscItem && TruePlayerLevel >= (MiscItem.pikeinvisolvlreq * 6.25)) invoker.InvisoCost = 2;
+				if (MiscItem && TruePlayerLevel >= (MiscItem.pikeinvisolvlreq * 6.25)) 
+				{
+					invoker.InvisoCost = 2;
+					if (CountInv("SpellDiaryEE")) invoker.InvisoCost *= frandom(0.667,0.75);
+				}
 				A_WeaponReady();
 			}
 			loop;
@@ -13871,6 +13943,10 @@ class WizardPike : DinahWeapon
 					A_StartSound("Handmother/Zap",8,CHANF_DEFAULT,sndvol,ATTN_NORM,sndpitch);
 				}
 				if (random(1,32) <= 31) { A_AlertMonsters(); }
+				
+				int stics = 2;
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 			}
 			SCEP B 1 bright 
 			{
@@ -13892,6 +13968,10 @@ class WizardPike : DinahWeapon
 					A_PikeShotIPSetup(BombShots);
 					A_SetAngle(angle+invoker.ang4);
 				}
+				
+				int stics = 1;
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 			}
 			SCEP A 1 bright
 			{
@@ -13946,6 +14026,10 @@ class WizardPike : DinahWeapon
 					A_PikeShotIPSetup(BombShots);
 					A_SetAngle(angle-invoker.ang4);
 				}
+				
+				int stics = 1;
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 			}
 			SCEP C 1 bright
 			{
@@ -14031,6 +14115,10 @@ class WizardPike : DinahWeapon
 					A_PikeShotIPSetup(BombShots);
 					A_SetAngle(angle-invoker.ang4);
 				}
+				
+				int stics = 1;
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 			}
 			SCEP C 1 bright
 			{
@@ -14204,6 +14292,10 @@ class WizardPike : DinahWeapon
 					if (invoker.IPAttackCheck) A_TakeInventory("PikeAmmo",invoker.IPATKAmmoAmt);
 																else A_TakeInventory("PikeAmmo",1);
 				}
+				
+				int stics = 6;
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 			}
 			SCEP CBA 2 bright
 			{
@@ -14290,6 +14382,10 @@ class WizardPike : DinahWeapon
 					}
 				}
 				invoker.A_CheckIPModeOnUse();
+				
+				int stics = 2;
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 			}
 			goto Ready;
 		Inviso:
@@ -14298,20 +14394,27 @@ class WizardPike : DinahWeapon
 				A_CheckIPState1();
 				A_ConfirmIPAttackExtra(143,0,0,true);
 				
-				A_SetTics(random(3,5));
+				int stics = random(3,5);
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 			}
 			SCEP BABCBC 2 bright
 			{
-				A_SetTics(random(2,3));
+				int stics = random(2,3);
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 			}
 			SCEP D 12 bright
 			{
-				A_SetTics(random(8,12));
+				int stics = random(8,12);
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
 				double invistime = frandom(6.75,8.25);
+				if (CountInv("SpellDiaryEE")) invistime *= frandom(1.25,1.334);
 				if (MiscItem && TruePlayerLevel >= MiscItem.pikeinvisolvlreq)
 				{
 					invistime += ((TruePlayerLevel - MiscItem.pikeinvisolvlreq) * 0.0133334);
@@ -14371,7 +14474,9 @@ class WizardPike : DinahWeapon
 			}
 			SCEP CBA 2 bright
 			{
-				A_SetTics(random(2,3));
+				int stics = random(2,3);
+				if (CountInv("SpellDiaryEE")) stics *= frandom(0.667,0.75);
+				A_SetTics(stics);
 			}
 			goto Ready;
 	}
