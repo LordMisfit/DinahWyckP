@@ -5546,14 +5546,23 @@ class PlayerStatItem : Inventory
 					}
 				}
 
-				int BaseEVA = SPDEvadeCheck;
+				double BaseEVA = SPDEvadeCheck;
 				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0a - SPD Evade Check (base)]: %.4f\c-", SPDEvadeCheck);
 				
 				// Luck
 				double mult = (BaseEVA * 0.1);
-				double LUKEvaAlt = 0.0 + (PlayerLuck * frandompick[statitem](0,0,0,0,0,0,0,0,0,0,0,(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.25),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*0.5),(mult*1),(mult*1),(mult*1),(mult*2)));
+				double multfactor = 0.00;
+				int randroll = random(1,111) + (PlayerLuck * 0.125);
+				if (randroll <= 50) multfactor = 0.00;
+				if (randroll <= 51 && randroll <= 75) multfactor = 0.0625;
+				if (randroll >= 76 && randroll <= 90) multfactor = 0.125;
+				if (randroll >= 91 && randroll <= 100) multfactor = 0.25;
+				if (randroll >= 101 && randroll <= 106) multfactor = 0.5;
+				if (randroll >= 107 && randroll <= 110) multfactor = 1.0;
+				if (randroll >= 111) multfactor = 2.0;
+				double LUKEvaAlt = 0.0 + (PlayerLuck * (mult * multfactor));
 				SPDEvadeCheck += LUKEvaAlt;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0b - SPD Evade Check (luck check)]: %.4f\c-", SPDEvadeCheck);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0b - SPD Evade Check (luck check)]: %.4f (mult: %.4f, LUKEvaAlt: %.4f, Luck: %d)\c-", SPDEvadeCheck, mult, LUKEvaAlt, PlayerLuck);
 
 				// Wine
 				double SPDEvaWineAlt = 0.0;
@@ -5568,7 +5577,7 @@ class PlayerStatItem : Inventory
 				if (WineDefTier == -4) SPDEvaWineAlt = (BaseEVA * ((random[statitem](1,5) * 0.16) * 0.25));
 				if (WineDefTier == -5) SPDEvaWineAlt = (BaseEVA * ((random[statitem](1,4) * 0.32) * 0.25));
 				SPDEvadeCheck -= SPDEvaWineAlt;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0c - SPD Evade Check (wine check)]: %.4f\c-", SPDEvadeCheck);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0c - SPD Evade Check (wine check)]: %.4f (-%.4f)\c-", SPDEvadeCheck, SPDEvaWineAlt);
 				
 				// Food
 				double FoodEvaAlt = 0.0;
@@ -5578,7 +5587,7 @@ class PlayerStatItem : Inventory
 				if (owner.CountInv("PowerMealBuff") || owner.CountInv("PowerMealBuff2")) FoodEvaAlt += (BaseEVA * 0.16);
 				if (owner.CountInv("PowerMeal2Buff") || owner.CountInv("PowerMeal2Buff2")) FoodEvaAlt += (BaseEVA * 0.16);
 				SPDEvadeCheck += FoodEvaAlt;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0d - SPD Evade Check (food check)]: %.4f\c-", SPDEvadeCheck);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0d - SPD Evade Check (food check)]: %.4f (%.4f)\c-", SPDEvadeCheck, FoodEvaAlt);
 				
 				// Weapon
 				weapon = owner.player.ReadyWeapon;
@@ -5627,7 +5636,7 @@ class PlayerStatItem : Inventory
 				nm = "GasRocketLauncherNew"; if (weapon is nm) WeapEvaAlt -= (BaseEVA * (0.125));
 				
 				SPDEvadeCheck += WeapEvaAlt;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0e - SPD Evade Check (weapon check)]: %.4f\c-", SPDEvadeCheck);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0e - SPD Evade Check (weapon check)]: %.4f (%.4f)\c-", SPDEvadeCheck, WeapEvaAlt);
 				
 				// Berserk
 				double BersEvaAlt = 0.0;
@@ -5640,31 +5649,35 @@ class PlayerStatItem : Inventory
 					if (skill >= 4) BersEvaAlt += (BaseEVA * 0.0625);
 				}
 				SPDEvadeCheck += BersEvaAlt;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0f - SPD Evade Check (berserk check)]: %.4f\c-", SPDEvadeCheck);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0f - SPD Evade Check (berserk check)]: %.4f (%.4f)\c-", SPDEvadeCheck, BersEvaAlt);
 			}
 			
 			if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 0x - SPD Evade Check]: %.4f\c-", SPDEvadeCheck);
 			
 			if (exex_expenabled) EvasionRate = (((TruePlayerLevel + 1) * SPDEvadeCheck) + ((TruePlayerSPD + 1) * SPDEvadeCheck)) * 0.5;
-			else EvasionRate = SPDEvadeCheck;
-			if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 1 - Base (Agl/Evade, Lvl/Evade)]: %d\c-", EvasionRate);
+											else EvasionRate = SPDEvadeCheck;
+			if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 1 - Base (Agl/Evade, Lvl/Evade)]: %d (SPDEvadeCheck: %.8f, Level: %d, Agility: %d)\c-", EvasionRate, SPDEvadeCheck, TruePlayerLevel, TruePlayerSPD);
 			
 			if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) EvasionRate *= 2.5;
 			
-			if (Owner.CountInv("PowerHaste")) EvasionRate *= 2.5;
-			if (Owner.CountInv("PowerSlow")) EvasionRate *= 0.4;
+			if (Owner.CountInv("PowerHaste") || Owner.CountInv("PowerSlow"))
+			{
+				if (Owner.CountInv("PowerHaste")) EvasionRate *= 2.5;
+				if (Owner.CountInv("PowerSlow")) EvasionRate *= 0.4;
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate [STEP 2 - Haste/Slow]: %d\c-", EvasionRate);
+			}
 			
 			if (IsMorphed == 1) // Rat Form gives up to +75% evasion chance
 			{
 				PerkFactor = 7500;
 				SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
 				EvasionRate += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 2 - Rat Morph Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 3a - Rat Morph Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
 		
 				PerkFactor = 7500;
 				SkillFactor = (10000 - EvadeRateCap) * PerkFactor / 10000;
 				EvadeRateCap += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 2a - Rat Morph Check (Cap)]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 3b - Rat Morph Check (Cap)]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
 			}
 			
 			if (Owner.CountInv("PowerInvisibility") || Owner.CountInv("PowerInvisibility2") || Owner.CountInv("PowerGhost") || Owner.CountInv("PowerGhost2") || Owner.CountInv("PowerRavenInvisibility"))
@@ -5674,14 +5687,14 @@ class PlayerStatItem : Inventory
 				if (Owner.CountInv("PowerRavenInvisibility")) PerkFactor = randompick[statitem](6666,6667,6667);
 				SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
 				EvasionRate += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 3 - Invisibility Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 4a - Invisibility Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
 				
 				PerkFactor = 3334;
 				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				if (Owner.CountInv("PowerRavenInvisibility")) PerkFactor = randompick[statitem](6666,6667,6667);
 				SkillFactor = (10000 - EvadeRateCap) * PerkFactor / 10000;
 				EvadeRateCap += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 3a - Invisibility Check (Cap)]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 4b - Invisibility Check (Cap)]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
 			}
 			
 			if (Owner.CountInv("DoingSpinAttack"))
@@ -5697,7 +5710,7 @@ class PlayerStatItem : Inventory
 				PerkFactor *= 1.334;
 				SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
 				EvasionRate += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 4 - Cricket Bat Spin-Attack Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 5a - Cricket Bat Spin-Attack Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
 				
 				PerkFactor = 1250;
 				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
@@ -5706,7 +5719,7 @@ class PlayerStatItem : Inventory
 				if (ActualLevel >= (cricketspinlvlrequirement * 5.5)) PerkFactor = 3125;
 				SkillFactor = (10000 - EvadeRateCap) * PerkFactor / 10000;
 				EvadeRateCap += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 4a - Cricket Bat Spin-Attack Check (Cap)]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 5b - Cricket Bat Spin-Attack Check (Cap)]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
 			}
 			
 			if (Owner.CountInv("ClassyRibbon"))
@@ -5715,13 +5728,13 @@ class PlayerStatItem : Inventory
 				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
 				EvasionRate += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 5 - Classy Ribbon Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 6a - Classy Ribbon Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
 				
 				PerkFactor = 125;
 				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				SkillFactor = (10000 - EvadeRateCap) * PerkFactor / 10000;
 				EvadeRateCap += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 5a - Classy Ribbon Check]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 6b - Classy Ribbon Check]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
 			}
 			
 			if (Owner.CountInv("ExpeditionHat"))
@@ -5730,13 +5743,13 @@ class PlayerStatItem : Inventory
 				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				SkillFactor = (10000 - EvasionRate) * PerkFactor / 10000;
 				EvasionRate += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 6 - Expedition Hat Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 7a - Expedition Hat Check]: %d,\c- Added: %d, PerkFactor: %d", EvasionRate, SkillFactor, PerkFactor);
 				
 				PerkFactor = random[statitem](156,157);
 				if (owner.CountInv("UOHInCL") > 0 || owner.CountInv("UOHInBR") > 0) PerkFactor *= 2.5;
 				SkillFactor = (10000 - EvadeRateCap) * PerkFactor / 10000;
 				EvadeRateCap += SkillFactor;
-				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 6a - Expedition Hat Check]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
+				if (dydudebug_showevadestuff) Console.Printf("    \cwEvasion Rate % [STEP 7b - Expedition Hat Check]: %d,\c- Added: %d, PerkFactor: %d", EvadeRateCap, SkillFactor, PerkFactor);
 			}
 			
 			if (EvadeRateCap >= 10000) EvadeRateCap = 10000;
