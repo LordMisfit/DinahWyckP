@@ -402,7 +402,7 @@ class PlayerStatItem : Inventory
 				if (ClassicDoomType & 2) { owner.A_SetInventory("PlayingHeretic",1); } // Heretic
 				if (ClassicDoomType & 4) { owner.A_SetInventory("PlayingHexen",1); } // HeXen
 				if (ClassicDoomType & 8) { owner.A_SetInventory("PlayingStrife",1); } // Strife
-				if (dydudebug_miscitemdebug) Console.Printf("%d", ClassicDoomType);
+				if (dydudebug_miscitemdebug) Console.Printf("ClassicDoomType: %d", ClassicDoomType);
 				buttons = owner.GetPlayerInput(INPUT_BUTTONS);
 				TrueGameSkill = skill;
 				
@@ -3316,11 +3316,13 @@ class PlayerStatItem : Inventory
 		MaxItemPoints = 100;
 		if (exex_expenabled)
 		{
-			if (TrueGameSkill == SKILL_VERY_EASY) MaxItemPoints += (ActualLevel * 1.5);
-			if (TrueGameSkill == SKILL_EASY) MaxItemPoints += (ActualLevel * 1.25);
-			if (TrueGameSkill == SKILL_NORMAL) MaxItemPoints += (ActualLevel * 1.0);
-			if (TrueGameSkill == SKILL_HARD) MaxItemPoints += (ActualLevel * 0.75);
-			if (TrueGameSkill == SKILL_VERY_HARD) MaxItemPoints += (ActualLevel * 0.5);
+			double MaxIPAdd = 0;
+			if (TrueGameSkill <= SKILL_VERY_EASY) MaxIPAdd += ((ActualLevel * 1.5) + (TruePlayerATK * 0.375) + (TruePlayerDEF * 1.125));
+			if (TrueGameSkill == SKILL_EASY) MaxIPAdd += ((ActualLevel * 1.25) + (TruePlayerATK * 0.3125) + (TruePlayerDEF * 0.9375));
+			if (TrueGameSkill == SKILL_NORMAL) MaxIPAdd += ((ActualLevel * 1.0) + (TruePlayerATK * 0.25) + (TruePlayerDEF * 0.75));
+			if (TrueGameSkill == SKILL_HARD) MaxIPAdd += ((ActualLevel * 0.75) + (TruePlayerATK * 0.1875) + (TruePlayerDEF * 0.5625));
+			if (TrueGameSkill >= SKILL_VERY_HARD) MaxIPAdd += ((ActualLevel * 0.5) + (TruePlayerATK * 0.125) + (TruePlayerDEF * 0.375));
+			MaxItemPoints += MaxIPAdd;
 		}
 		if (!exex_expenabled)
 		{
@@ -3363,7 +3365,7 @@ class PlayerStatItem : Inventory
 			if (MaxIPExtensions > 150) MaxIPExtensions = 150;
 			MaxItemPoints += ((MaxItemPoints * 0.01) * MaxIPExtensions);
 		}
-		if (MaxItemPoints > (BaseMaxItemPoints * 2.5)) MaxItemPoints = (BaseMaxItemPoints * 2.5);
+		if (MaxItemPoints > (BaseMaxItemPoints * 10.0)) MaxItemPoints = (BaseMaxItemPoints * 10.0);
 		if (ItemPoints > MaxItemPoints) ItemPoints = MaxItemPoints;
 	}
 	
