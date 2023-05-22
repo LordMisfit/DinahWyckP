@@ -15282,6 +15282,108 @@ class PikeAmmoBig : PikeAmmo
 //************
 //* SUPERVAC *
 //************
+class SuperVacSmokeAbsorbPiece : EEBaseZSC
+{
+	default
+	{
+		Radius 2;
+		Height 4;
+		Scale 0.5;
+		Alpha 0.5;
+		RenderStyle "None";
+	}
+	
+	void A_DetectSmoke(string actortype = "CCards_Actor_Smoke", double radius = 256, double sabsamtmin = 0.015625, double sabsamtmax = 0.03125, double salpfloor = 0.0)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		double upgradeboost = (player.CountInv("SuperVacUpgrade") * frandom(0.1667,0.3334));
+		double upgradeboost2 = (player.CountInv("SuperVacUpgrade") * frandom(0.1667,0.3334));
+
+		radius *= (1.0 + upgradeboost);
+		sabsamtmin *= (1.0 + upgradeboost2);
+		sabsamtmax *= (1.0 + upgradeboost2);
+
+		if (dydudebug_supervacproj) Console.Printf("actortype: %s, radius: %.4f, sabsamtmin: %.4f, sabsamtmax: %.4f, salpfloor: %.4f", actortype, radius, sabsamtmin, sabsamtmax, salpfloor);
+		double xp = pos.x;
+		double yp = pos.y;
+		double zp = pos.z;
+		string nm = actortype;
+		ThinkerIterator it = ThinkerIterator.Create(nm);
+		Actor mo;
+		while (mo = Actor(it.Next()))
+		{
+			if (dydudebug_supervacproj) Console.Printf("mo: %p, type: %s", mo, mo.GetClassName());
+			double absx = abs(xp - mo.pos.x);
+			double absy = abs(yp - mo.pos.y);
+			double absz = abs(zp - mo.pos.z);
+			if (dydudebug_supervacproj)
+			{
+				string debug = "\c[green]absx: ";
+				if (absx <= radius)	debug.AppendFormat("\c[gold]");
+											 else debug.AppendFormat("\c[red]");
+				debug.AppendFormat("%.4f\c[green], ", absx);
+				debug.AppendFormat("\c[green]absy: ");
+				if (absy <= radius)	debug.AppendFormat("\c[gold]");
+											 else debug.AppendFormat("\c[red]");
+				debug.AppendFormat("%.4f\c[green], ", absy);
+				debug.AppendFormat("\c[green]absz: ");
+				if (absz <= radius)	debug.AppendFormat("\c[gold]");
+											 else debug.AppendFormat("\c[red]");
+				debug.AppendFormat("%.4f", absz);
+				Console.Printf(debug);
+			}
+			if (absx <= radius &&
+					absy <= radius &&
+					absz <= radius)
+			{
+				if (dydudebug_supervacproj) Console.Printf("In Radius (%.4f)", radius);
+				double moalph = mo.alpha;
+				if (mo.alpha >= salpfloor)
+				{
+					if (dydudebug_supervacproj) Console.Printf("Reduce Smoke Alpha");
+					mo.A_FadeOut(frandom(sabsamtmin,sabsamtmax));
+					moalph = mo.alpha;
+					if (moalph <= 0.00) 
+					{
+						if (dydudebug_supervacproj) Console.Printf("Remove Smoke Actor");
+						mo.Destroy();
+					}
+				}
+			}
+		}
+	}
+	
+	states
+	{
+		Spawn:
+			HEXA A 1 bright NoDelay
+			{
+				double cradius = 256;
+				double minreduce = double(1.0/64);
+				double maxreduce = double(1.0/32);
+				double alpfloor = 0.0;
+				if (Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true) != -1)
+				{
+					A_DetectSmoke("CCards_NukeSmoke",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_Smoke",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_BloodSmoke",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_DevourSmoke",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_DamageSmoke",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_RomeroSmoke",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_RevengeSmokeFX",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_BossRevengeSmokeFX",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_LeapSmoke",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_MiasmaSmoke",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_PumpkinBombFX",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_Actor_Mist",cradius,minreduce,maxreduce,alpfloor);
+					A_DetectSmoke("CCards_VesselFX",cradius,minreduce,maxreduce,alpfloor);
+				}
+			}
+			stop;
+	}
+}
+
 class SuperVacAbsorbsionPart : ShieldPartNoReflect
 {
 	mixin IPCostCheck;
@@ -15379,8 +15481,11 @@ class SuperVacAbsorbsionPart : ShieldPartNoReflect
 			else
 			if (other && other.bMISSILE)
 			{
-				if (dydudebug_supervacproj && other) Console.Printf("(other [attempt - passive] %s)", other.GetClassName());
-				if (dydudebug_supervacproj && other) Console.Printf("(other.accuracy: %d", other.accuracy);
+				if (dydudebug_supervacproj && other)
+				{
+					Console.Printf("(other [attempt - passive] %s)", other.GetClassName());
+					Console.Printf("(other.accuracy: %d", other.accuracy);
+				}
 				if (other.accuracy == 1)
 				{
 					[suckup, vacgive] = A_CheckCollisionProjShieldExemptionSV(other);
@@ -15516,6 +15621,33 @@ class SuperVac : DinahWeapon
 		}
 	}
 	
+	action void A_VacAbsorbSmoke(int type = 0, double dist = 128.0, double turnang = 0.0, double angoffset = 0.0, double ptcoffset = 0.0)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = A_GetPlayerLvl();
+
+		double yoffset = frandompick(-0.325,0,0.325);
+		
+		double distx, disty, distz;
+		double heightmulti = 0.5;
+		double heightmultivari = 0.125;
+		double m = dist;
+		double m2 = m;
+		double m3 = (m * frandom(0.95,1.05));
+
+		A_SetAngle(angle+turnang);
+		string vispart = "SuperVacSmokeAbsorbPiece";
+		
+		actor mo1;
+		bool spawned;
+		
+		distx = m3;
+		disty = 0.0;
+		distz = (height * heightmulti) + yoffset;
+		[spawned, mo1] = A_SpawnItemEx(vispart, (cos(-pitch) * A_SetShieldPieceDist(distx)), disty, (A_SetShieldPieceDist(distz) + (sin(-pitch) * A_SetShieldPieceDist(distx))), 0, 0, 0, 0, SXF_SETMASTER|SXF_TRANSFERPOINTERS|SXF_TRANSFERPITCH|SXF_NOCHECKPOSITION);
+	}
+
 	action void A_VacAbsorb(int type = 0, double dist = 128.0, double turnang = 0.0, double angoffset = 0.0, double ptcoffset = 0.0)
 	{
 		actor player = players[0].mo;
@@ -15776,6 +15908,8 @@ class SuperVac : DinahWeapon
 				A_CustomPunch(int(dmg), true, 0, pufftype, range, drainamt, drainlimit, IPCostOnHit: true);
 				if (exex_supervaccaneatprojectiles > 0)
 				{
+					A_VacAbsorbSmoke();
+					
 					A_VacAbsorb(0, range, 0);
 					A_VacAbsorb(-1, range, 11.25);
 					A_VacAbsorb(-1, range, -11.25);
