@@ -15297,19 +15297,12 @@ class SuperVacSmokeAbsorbPiece : EEBaseZSC
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
-		double upgradeboost = (player.CountInv("SuperVacUpgrade") * frandom(0.1667,0.3334));
-		double upgradeboost2 = (player.CountInv("SuperVacUpgrade") * frandom(0.1667,0.3334));
-
-		radius *= (1.0 + upgradeboost);
-		sabsamtmin *= (1.0 + upgradeboost2);
-		sabsamtmax *= (1.0 + upgradeboost2);
 
 		if (dydudebug_supervacproj) Console.Printf("actortype: %s, radius: %.4f, sabsamtmin: %.4f, sabsamtmax: %.4f, salpfloor: %.4f", actortype, radius, sabsamtmin, sabsamtmax, salpfloor);
 		double xp = pos.x;
 		double yp = pos.y;
 		double zp = pos.z;
-		string nm = actortype;
-		ThinkerIterator it = ThinkerIterator.Create(nm);
+		ThinkerIterator it = ThinkerIterator.Create(actortype);
 		Actor mo;
 		while (mo = Actor(it.Next()))
 		{
@@ -15331,26 +15324,114 @@ class SuperVacSmokeAbsorbPiece : EEBaseZSC
 				if (absz <= radius)	debug.AppendFormat("\c[gold]");
 											 else debug.AppendFormat("\c[red]");
 				debug.AppendFormat("%.4f", absz);
-				Console.Printf(debug);
+				if (absx <= radius &&
+						absy <= radius &&
+						absz <= radius)
+				{
+					Console.Printf(debug);
+				}
 			}
 			if (absx <= radius &&
 					absy <= radius &&
 					absz <= radius)
 			{
-				if (dydudebug_supervacproj) Console.Printf("In Radius (%.4f)", radius);
+				if (dydudebug_supervacproj) Console.Printf("\c[lightblue]In Radius (\c[green]%.4f\c[lightblue])", radius);
 				double moalph = mo.alpha;
 				if (mo.alpha >= salpfloor)
 				{
-					if (dydudebug_supervacproj) Console.Printf("Reduce Smoke Alpha");
 					mo.A_FadeOut(frandom(sabsamtmin,sabsamtmax));
+					if (dydudebug_supervacproj) Console.Printf("\c[brick]Reduce Smoke Alpha [from \c[green]%.4f\c[brick] to \c[green]%.4f\c[brick]]", moalph, mo.alpha);
 					moalph = mo.alpha;
 					if (moalph <= 0.00) 
 					{
-						if (dydudebug_supervacproj) Console.Printf("Remove Smoke Actor");
+						if (dydudebug_supervacproj) Console.Printf("\c[red]Remove Smoke Actor");
 						mo.Destroy();
 					}
 				}
 			}
+		}
+	}
+	
+	void A_PreCheckSmoke(double cradius = 256, double minreduce = double(1.0/64), double maxreduce = double(1.0/32), double alpfloor = 0.0)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		double upgradeboost = (player.CountInv("SuperVacUpgrade") * frandom(0.1667,0.3334));
+		double upgradeboost2 = (player.CountInv("SuperVacUpgrade") * frandom(0.1667,0.3334));
+
+		cradius *= (1.0 + upgradeboost);
+		minreduce *= (1.0 + upgradeboost2);
+		maxreduce *= (1.0 + upgradeboost2);
+
+		A_DetectSmoke("GhostCloud",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("PoisonCloud",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("PoisonCloudEE",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("BigSmokes",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("ExplosionSmoke",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("RevenantTracerSmoke",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("DBTPuffSmoke",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("MinotaurSmoke",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("RocketSmokeTrail",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("GrenadeSmokeTrail",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("RocketTrail",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("BlunderSmokeSmall",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("BlunderSmokeSmallD",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("BlunderSmokeSmallH",cradius,minreduce,maxreduce,alpfloor);
+		if (Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true) != -1)
+		{
+			A_DetectSmoke("CCards_NukeSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_Smoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_BloodSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_DevourSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_DamageSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_RomeroSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_RevengeSmokeFX",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_BossRevengeSmokeFX",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_LeapSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_MiasmaSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_PumpkinBombFX",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_Mist",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_VesselFX",cradius,minreduce,maxreduce,alpfloor);
+		}
+		if (Wads.CheckNumForName("EE-EXDAY", Wads.ns_global, -1, true) != -1)
+		{
+			A_DetectSmoke("DestroyedBuildingSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SmokePillarParticle",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SmokePillarParticleHorizontal",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BurningBuildingParticle",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXBrownSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXBigExplosionBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXSmallExplosionBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXTinyExplosionBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXDistantExplosionSmokeBombing",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BigNeoSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("HugeNeoSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("RidiculousNeoSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("HeavyExplosionSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ShinnySmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CasingSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("TankShellSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ExplosionSmokeFast22",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("PlasmaSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ExplosionSmokeHD",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ExplosionSmokeHDLarge",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BigBlackSmokeLarger",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BigBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MediumBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("NukeSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("NukeSmokeBig",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SmallSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ShotSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("AltSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MeleeSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("PuffSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("HitpuffSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("OldschoolRocketSmokeTrail2",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("OldschoolRocketSmokeTrail2Bigger",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("OldschoolRocketSmokeTrailDarker",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("GunFireSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("RocketSmokeTrail52",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("GunBarrelSmoke",cradius,minreduce,maxreduce,alpfloor);
 		}
 	}
 	
@@ -15359,26 +15440,29 @@ class SuperVacSmokeAbsorbPiece : EEBaseZSC
 		Spawn:
 			HEXA A 1 bright NoDelay
 			{
-				double cradius = 256;
-				double minreduce = double(1.0/64);
-				double maxreduce = double(1.0/32);
-				double alpfloor = 0.0;
-				if (Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true) != -1)
-				{
-					A_DetectSmoke("CCards_NukeSmoke",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_Smoke",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_BloodSmoke",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_DevourSmoke",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_DamageSmoke",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_RomeroSmoke",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_RevengeSmokeFX",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_BossRevengeSmokeFX",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_LeapSmoke",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_MiasmaSmoke",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_PumpkinBombFX",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_Actor_Mist",cradius,minreduce,maxreduce,alpfloor);
-					A_DetectSmoke("CCards_VesselFX",cradius,minreduce,maxreduce,alpfloor);
-				}
+				A_PreCheckSmoke(256,double(1.0/64),double(1.0/32),0.0);
+			}
+			stop;
+	}
+}
+
+class SuperVacSmokeAbsorbPieceIP : SuperVacSmokeAbsorbPiece
+{
+	default
+	{
+		Radius 2;
+		Height 4;
+		Scale 0.5;
+		Alpha 0.5;
+		RenderStyle "None";
+	}
+	
+	states
+	{
+		Spawn:
+			HEXA A 1 bright NoDelay
+			{
+				A_PreCheckSmoke(384,double(1.0/48),double(1.0/24),0.0);
 			}
 			stop;
 	}
@@ -15638,6 +15722,7 @@ class SuperVac : DinahWeapon
 
 		A_SetAngle(angle+turnang);
 		string vispart = "SuperVacSmokeAbsorbPiece";
+		if (invoker.IPAttackCheck) vispart = "SuperVacSmokeAbsorbPieceIP";
 		
 		actor mo1;
 		bool spawned;
@@ -15908,7 +15993,7 @@ class SuperVac : DinahWeapon
 				A_CustomPunch(int(dmg), true, 0, pufftype, range, drainamt, drainlimit, IPCostOnHit: true);
 				if (exex_supervaccaneatprojectiles > 0)
 				{
-					A_VacAbsorbSmoke();
+					A_VacAbsorbSmoke(0, range, 0);
 					
 					A_VacAbsorb(0, range, 0);
 					A_VacAbsorb(-1, range, 11.25);
@@ -15917,6 +16002,8 @@ class SuperVac : DinahWeapon
 					A_VacAbsorb(-1, range, -22.5);
 					if (invoker.IPAttackCheck)
 					{
+						A_VacAbsorbSmoke(0, range, 22.5);
+						A_VacAbsorbSmoke(0, range, -22.5);
 						A_VacAbsorb(0, range, 11.25);
 						A_VacAbsorb(0, range, -11.25);
 						A_VacAbsorb(-1, range, 22.5);
