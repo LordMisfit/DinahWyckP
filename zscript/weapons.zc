@@ -1694,6 +1694,28 @@ class DDWeapon : Weapon
 			}
 		}
 	}
+
+	/*
+	action void A_UnmakerSpawn(int maxchance = 256, int chancethreshold = 1)
+	{
+		if (bDROPPED) maxchance *= 8;
+		if (CountInv("UnmakerEE",AAPTR_PLAYER1) > 0) maxchance *= frandom(1.0,1.2);
+		if (CountInv("UnmakerUpgrades",AAPTR_PLAYER1) >= 1) maxchance *= frandom(1.0,1.4);
+		if (CountInv("UnmakerUpgrades",AAPTR_PLAYER1) >= 2) maxchance *= frandom(1.0,1.4);
+		if (CountInv("UnmakerUpgrades",AAPTR_PLAYER1) >= 3) { return; }
+
+		int roll = random(1,maxchance);
+		if (dydudebug_weaponspawndisplays) Console.Printf("[\cx%s\c-] Unmaker PreSpawn Check 1 [Dropped: %d] (%d/%d) [%d] ", GetClassName(), bDROPPED, chancethreshold, maxchance, roll);
+
+		if (roll <= chancethreshold) 
+		{
+			if (dydudebug_weaponspawndisplays) Console.Printf("Unmaker PreSpawn Check Succeeded");
+			A_SpawnItemEx("UnmakerEE",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+			Thing_Remove(0);
+			SetStateLabel("Null");
+		}
+	}
+	*/
 	
 	States
 	{
@@ -15362,7 +15384,10 @@ class SuperVacSmokeAbsorbPiece : EEBaseZSC
 		cradius *= (1.0 + upgradeboost);
 		minreduce *= (1.0 + upgradeboost2);
 		maxreduce *= (1.0 + upgradeboost2);
-
+		
+		A_DetectSmoke("FogPatchSmall",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("FogPatchMedium",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("FogPatchLarge",cradius,minreduce,maxreduce,alpfloor);
 		A_DetectSmoke("GhostCloud",cradius,minreduce,maxreduce,alpfloor);
 		A_DetectSmoke("PoisonCloud",cradius,minreduce,maxreduce,alpfloor);
 		A_DetectSmoke("PoisonCloudEE",cradius,minreduce,maxreduce,alpfloor);
@@ -15432,6 +15457,22 @@ class SuperVacSmokeAbsorbPiece : EEBaseZSC
 			A_DetectSmoke("GunFireSmoke",cradius,minreduce,maxreduce,alpfloor);
 			A_DetectSmoke("RocketSmokeTrail52",cradius,minreduce,maxreduce,alpfloor);
 			A_DetectSmoke("GunBarrelSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("Haze1",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("Haze2",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("Haze3",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("Haze4",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BrownCloud",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BrownCloudSmall",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BrownCloudSmallLong",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BrownCloudShort",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MudDust",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MudDustSmall",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MudDustFromTrail",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloud",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloudShort",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloudSmall",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloudSmallLong",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloudFootstep",cradius,minreduce,maxreduce,alpfloor);
 		}
 	}
 	
@@ -15991,10 +16032,17 @@ class SuperVac : DinahWeapon
 				}
 
 				A_CustomPunch(int(dmg), true, 0, pufftype, range, drainamt, drainlimit, IPCostOnHit: true);
-				if (exex_supervaccaneatprojectiles > 0)
+				if (exex_supervaccanclearsmokefogmist > 0)
 				{
 					A_VacAbsorbSmoke(0, range, 0);
-					
+					if (invoker.IPAttackCheck)
+					{
+						A_VacAbsorbSmoke(0, range, 22.5);
+						A_VacAbsorbSmoke(0, range, -22.5);
+					}
+				}
+				if (exex_supervaccaneatprojectiles > 0)
+				{
 					A_VacAbsorb(0, range, 0);
 					A_VacAbsorb(-1, range, 11.25);
 					A_VacAbsorb(-1, range, -11.25);
@@ -16002,8 +16050,6 @@ class SuperVac : DinahWeapon
 					A_VacAbsorb(-1, range, -22.5);
 					if (invoker.IPAttackCheck)
 					{
-						A_VacAbsorbSmoke(0, range, 22.5);
-						A_VacAbsorbSmoke(0, range, -22.5);
 						A_VacAbsorb(0, range, 11.25);
 						A_VacAbsorb(0, range, -11.25);
 						A_VacAbsorb(-1, range, 22.5);

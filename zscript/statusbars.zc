@@ -3462,11 +3462,11 @@ class DDStatusBarMain : BaseStatusBar
 		x += wsspace;
 		wsname = "";
 		// Slot 0
-		weaponsincurslot = 1;
-		if (MiscItem.CompatPackMode & 256) weaponsincurslot = 2;
-		if (weaponsincurslot > 1)
+		weaponsincurslot = 2;
+		if (MiscItem.CompatPackMode & 256) weaponsincurslot = 3;
+		if (weaponsincurslot >= 2)
 		{
-			baseinc = 2;
+			baseinc = weaponsincurslot;
 			x -= baseinc;
 			y -= baseinc;
 		}
@@ -3487,15 +3487,20 @@ class DDStatusBarMain : BaseStatusBar
 			wsalpha = wsalphadefault;
 			wsscale = wsscaledefault;
 		}
-		if (weaponsincurslot > 1)
+		if (weaponsincurslot >= 2)
 		{
-			x += (baseinc * 2);
-			y += (baseinc * 2);
-			if (MiscItem.CompatPackMode & 256)
+			if (weaponsincurslot >= 3)
 			{
-				wsname = "ScepterOfSouls";
-				wsammoname = "PikeAmmo";
+				x += baseinc;
+				y += baseinc;
 			}
+			else
+			{
+				x += (baseinc * 2);
+				y += (baseinc * 2);
+			}
+			wsname = "UnmakerEE";
+			wsammoname = "PikeAmmo";
 			ammotype = CPlayerPawn.FindInventory(wsammoname);
 			if (CPlayerPawn.CountInv(wsname))
 			{
@@ -3511,28 +3516,58 @@ class DDStatusBarMain : BaseStatusBar
 				wsalpha = wsalphadefault;
 				wsscale = wsscaledefault;
 			}
-			if (MiscItem.CompatPackMode & 256)
+			if (weaponsincurslot >= 3)
 			{
-				wsname = "DualScepterOfSouls";
-				wsammoname = "PikeAmmo";
-			}
-			ammotype = CPlayerPawn.FindInventory(wsammoname);
-			if (CPlayerPawn.CountInv(wsname))
-			{
-				[AmmoRatio, wsfontclr] = DrawFSHUDWSlotsAmmoRatio(AmmoRatio, ammotype.Amount, ammotype.MaxAmount, 0);
-				
-				wsnum = 0;
-				if (wsweapon is wsname)
+				x += baseinc;
+				y += baseinc;
+				if (MiscItem.CompatPackMode & 256)
 				{
-					wsalpha = wsalphadefault2;
-					wsscale = wsscaledefault2;
+					wsname = "ScepterOfSouls";
+					wsammoname = "PikeAmmo";
 				}
-				DrawString(mDDLFont, FormatNumber((wsnum%10)), (x+1, y+1), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
-				wsalpha = wsalphadefault;
-				wsscale = wsscaledefault;
+				ammotype = CPlayerPawn.FindInventory(wsammoname);
+				if (CPlayerPawn.CountInv(wsname))
+				{
+					[AmmoRatio, wsfontclr] = DrawFSHUDWSlotsAmmoRatio(AmmoRatio, ammotype.Amount, ammotype.MaxAmount, 0);
+					
+					wsnum = 0;
+					if (wsweapon is wsname)
+					{
+						wsalpha = wsalphadefault2;
+						wsscale = wsscaledefault2;
+					}
+					DrawString(mDDLFont, FormatNumber((wsnum%10)), (x, y), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+					wsalpha = wsalphadefault;
+					wsscale = wsscaledefault;
+				}
+				if (MiscItem.CompatPackMode & 256)
+				{
+					wsname = "DualScepterOfSouls";
+					wsammoname = "PikeAmmo";
+				}
+				ammotype = CPlayerPawn.FindInventory(wsammoname);
+				if (CPlayerPawn.CountInv(wsname))
+				{
+					[AmmoRatio, wsfontclr] = DrawFSHUDWSlotsAmmoRatio(AmmoRatio, ammotype.Amount, ammotype.MaxAmount, 0);
+					
+					wsnum = 0;
+					if (wsweapon is wsname)
+					{
+						wsalpha = wsalphadefault2;
+						wsscale = wsscaledefault2;
+					}
+					DrawString(mDDLFont, FormatNumber((wsnum%10)), (x+1, y+1), wsflags, wsfontclr, wsalpha, -1, 4, wsscale);
+					wsalpha = wsalphadefault;
+					wsscale = wsscaledefault;
+				}
+				x -= baseinc;
+				y -= baseinc;
 			}
-			x -= baseinc;
-			y -= baseinc;
+			else
+			{
+				x -= baseinc;
+				y -= baseinc;
+			}
 		}
 		
 		return x, y, VisiblePlayerLevel, CurrHealth, PlayerMaxHP, AmmoRatio, wsname, wsammoname;
@@ -3899,6 +3934,41 @@ class DDStatusBarMain : BaseStatusBar
 				}
 				vector2 poss = (-32, -40); // -16, -64
 				DrawTexture(candmode, poss, DI_ITEM_CENTER, FontAlpha, (-1,-1), (0.667, 0.667)); // 51, -3
+			}
+			if (PlayerWeapon is "UnmakerEE")
+			{
+				int unmakerenergy;
+				int unmakerenergymax = 1000;
+				int unmakerenergypercent;
+				double unmakermeterlength = 0.4; // 0.2 vertical, 0.4 horizontal
+				if (unmakermeterlength > 1.5) unmakermeterlength = 1.5;
+				dun = TexMan.CheckForTexture("UNMKUNIT", TexMan.TYPE_MiscPatch);
+				let UnM = UnmakerEE(CPlayerPawn.FindInventory("UnmakerEE"));
+				if (UnM && MiscItem)
+				{
+					unmakerenergy = UnM.unmakerenergy;
+					unmakerenergymax = MiscItem.UnmakerMaxCharge;
+				}
+				if (unmakerenergymax)
+				{
+					unmakerenergypercent = unmakerenergy * 100 / unmakerenergymax;
+					int unmakerbarunits = unmakerenergypercent * unmakermeterlength;
+					for (int i; i < (100 * unmakermeterlength); i++) DrawTexture(TexMan.CheckForTexture("BLAKUNIT", TexMan.TYPE_MiscPatch), (barx+i, bary), 0, HX_SHADOW);
+					for (int i; i < unmakerbarunits; i++) DrawTexture(dun, (barx+i, bary), 0, HX_SHADOW); // -46, -1
+				}
+				
+				int upgrades = MiscItem.UnmakerLevel;
+				if (upgrades)
+				{
+					int jx, jy;
+					jx = -50;
+					jy = bary + -40;
+					textureid blimg = TexMan.CheckForTexture("WIUNMAKA", TexMan.TYPE_MiscPatch);
+					DrawTexture(blimg, (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, FontAlpha, (-1,-1), (0.25, 0.25)); // 51, -3
+					jx += 48;
+					jy += 8;
+					DrawString(mDDLFont, FormatNumber(upgrades, 1), (jx, jy), DI_ITEM_OFFSETS|DI_TEXT_ALIGN_RIGHT, font.cr_gray, FontAlpha, FontWrapWidth, FontLineSpace, FontScale);
+				}
 			}
 			
 			int AmmoFontCLR = font.cr_gray;
