@@ -3046,8 +3046,11 @@ class UnmakerLaser : SingleDamageFastRipper
 
 		double randmulvalue = random(12,16) * 0.05;
 		edamage *= randmulvalue;
+		if (IPattack) edamage *= frandompick(1.20,1.25,1.25,1.25,1.30);
 		extradmg1 *= randmulvalue;
+		if (IPattack) extradmg1 *= frandompick(1.20,1.25,1.25,1.25,1.30);
 		extradmg2 *= randmulvalue;
+		if (IPattack) extradmg2 *= frandompick(1.20,1.25,1.25,1.25,1.30);
 		
 		finaldamagedealt = (edamage + extradmg1 + extradmg2);
 		Super.PostBeginPlay();
@@ -3295,6 +3298,7 @@ class UnmakerEE : DinahWeapon
 	{
 		actor player = players[0].mo;
 		int buttons = GetPlayerInput(INPUT_BUTTONS);
+
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		let globalvars = DDGlobalVariables.Get();
 		if (player)
@@ -3303,6 +3307,8 @@ class UnmakerEE : DinahWeapon
 			if (player.CountInv("UnmakerUpgrades") == 2) dfooduse *= 0.625;
 			if (player.CountInv("UnmakerUpgrades") >= 3) dfooduse *= 0.5;
 		}
+		if (invoker.IPAttackCheck) dfooduse *= 0.4;
+		if (A_CheckInfiniteAmmo()) dfooduse = 0;
 		
 		bool useenergy = true;
 		if (player.CountInv("PikeAmmo") <= 0)
@@ -3332,6 +3338,42 @@ class UnmakerEE : DinahWeapon
 		}
 		
 		return ResolveState(null);
+	}
+	
+	action void A_UnmakerLaser(string sname = "UnmakerLaser", double angle = 0.0)
+	{
+		actor BombShotsB, BombShots;
+		EEProjectile IPCompat;
+		[BombShotsB, BombShots] = A_FireProjectile(sname,angle);
+		if (BombShots && invoker.IPAttackCheck)
+		{
+			IPCompat = EEProjectile(BombShots);
+			if (IPCompat)
+			{
+				IPCompat.IPattack = true;
+			}
+		}
+		if (invoker.IPAttackCheck)
+		{
+			[BombShotsB, BombShots] = A_FireProjectile(sname,angle+1.25);
+			if (BombShots && invoker.IPAttackCheck)
+			{
+				IPCompat = EEProjectile(BombShots);
+				if (IPCompat)
+				{
+					IPCompat.IPattack = true;
+				}
+			}
+			[BombShotsB, BombShots] = A_FireProjectile(sname,angle-1.25);
+			if (BombShots && invoker.IPAttackCheck)
+			{
+				IPCompat = EEProjectile(BombShots);
+				if (IPCompat)
+				{
+					IPCompat.IPattack = true;
+				}
+			}
+		}
 	}
 	
 	States
@@ -3393,7 +3435,6 @@ class UnmakerEE : DinahWeapon
 			Loop;
 
 		Fire:
-			UNMA A 0 A_UnmakerCheck();
 			// --- UPGRADES INFORMATION: -------------------------------------------
 			//No upgrade level = standard single shot (10 tics)
 			//1st upgrade level = slightly faster single shot (7 tics)
@@ -3405,9 +3446,17 @@ class UnmakerEE : DinahWeapon
 			UNMA A 0 A_JumpIfInventory("UnmakerUpgrades", 1, "FireUpgradeOne", AAPTR_PLAYER1);
 			UNMA A 0 
 			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
+			UNMA A 0 
+			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",0.0);
+				A_UnmakerLaser("UnmakerLaser",0.0);
+				
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 10
 			{
@@ -3421,9 +3470,16 @@ class UnmakerEE : DinahWeapon
 			UNMA A 0 A_JumpIfInventory("UnmakerUpgrades", 2, "FireUpgradeTwo", AAPTR_PLAYER1);
 			UNMA A 0 
 			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
+			UNMA A 0 
+			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",0.0);
+				A_UnmakerLaser("UnmakerLaser",0.0);
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 7
 			{
@@ -3437,11 +3493,18 @@ class UnmakerEE : DinahWeapon
 			UNMA A 0 A_JumpIfInventory("UnmakerUpgrades", 3, "FireUpgradeThree", AAPTR_PLAYER1);
 			UNMA A 0 
 			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
+			UNMA A 0 
+			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",1.0);
+				A_UnmakerLaser("UnmakerLaser",1.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",-1.0);
+				A_UnmakerLaser("UnmakerLaser",-1.0);
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 5
 			{
@@ -3454,14 +3517,20 @@ class UnmakerEE : DinahWeapon
 			}
 			Goto Ready;
 		F2Hold1:
-			UNMA A 0 A_UnmakerCheck();
+			UNMA A 0
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",2.0);
+				A_UnmakerLaser("UnmakerLaser",2.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",-2.0);
+				A_UnmakerLaser("UnmakerLaser",-2.0);
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 5
 			{
@@ -3474,14 +3543,20 @@ class UnmakerEE : DinahWeapon
 			}
 			Goto Ready;
 		F2Hold2:
-			UNMA A 0 A_UnmakerCheck();
+			UNMA A 0
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",3.0);
+				A_UnmakerLaser("UnmakerLaser",3.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",-3.0);
+				A_UnmakerLaser("UnmakerLaser",-3.0);
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 5
 			{
@@ -3494,33 +3569,46 @@ class UnmakerEE : DinahWeapon
 			}
 			Goto Ready;
 		F2Hold3:
-			UNMA A 0 A_UnmakerCheck();
+			UNMA A 0
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",4.0);
+				A_UnmakerLaser("UnmakerLaser",4.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",-4.0);
+				A_UnmakerLaser("UnmakerLaser",-4.0);
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 5
 			{
 				A_SetTics(5);
 			}
-			UNMA A 0 A_CheckReload();
+			UNMA A 0 A_ReFire("FireUpgradeTwo");
 			Goto Ready;
 		
 		// This will be used if the player has three upgrades
 		FireUpgradeThree:
+			UNMA A 0
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",0.0);
+				A_UnmakerLaser("UnmakerLaser",0.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",3.0);
+				A_UnmakerLaser("UnmakerLaser",3.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",-3.0);
+				A_UnmakerLaser("UnmakerLaser",-3.0);
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 5
 			{
@@ -3529,20 +3617,26 @@ class UnmakerEE : DinahWeapon
 			UNMA A 0 
 			{
 				if (invoker.unmakerrefire >= 1) A_ReFire("F3Hold1");
-																	 else A_ReFire("FireUpgradeTwo");
+																	 else A_ReFire("FireUpgradeThree");
 			}
 			Goto Ready;
 		F3Hold1:
-			UNMA A 0 A_UnmakerCheck();
+			UNMA A 0
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",0.0);
+				A_UnmakerLaser("UnmakerLaser",0.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",6.0);
+				A_UnmakerLaser("UnmakerLaser",6.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",-6.0);
+				A_UnmakerLaser("UnmakerLaser",-6.0);
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 5
 			{
@@ -3551,20 +3645,26 @@ class UnmakerEE : DinahWeapon
 			UNMA A 0 
 			{
 				if (invoker.unmakerrefire >= 1) A_ReFire("F3Hold2");
-																	 else A_ReFire("FireUpgradeTwo");
+																	 else A_ReFire("FireUpgradeThree");
 			}
 			Goto Ready;
 		F3Hold2:
-			UNMA A 0 A_UnmakerCheck();
+			UNMA A 0
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",0.0);
+				A_UnmakerLaser("UnmakerLaser",0.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",9.0);
+				A_UnmakerLaser("UnmakerLaser",9.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",-9.0);
+				A_UnmakerLaser("UnmakerLaser",-9.0);
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 5
 			{
@@ -3573,26 +3673,32 @@ class UnmakerEE : DinahWeapon
 			UNMA A 0 
 			{
 				if (invoker.unmakerrefire >= 1) A_ReFire("F3Hold3");
-																	 else A_ReFire("FireUpgradeTwo");
+																	 else A_ReFire("FireUpgradeThree");
 			}
 			Goto Ready;
 		F3Hold3:
-			UNMA A 0 A_UnmakerCheck();
+			UNMA A 0
+			{
+				A_CheckIPState1();
+				A_ConfirmIPAttack(221,0,2,9,true);
+				A_UnmakerCheck();
+			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
-				A_FireProjectile("UnmakerLaser",0.0);
+				A_UnmakerLaser("UnmakerLaser",0.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",12.0);
+				A_UnmakerLaser("UnmakerLaser",12.0);
 				A_UnmakerCheck();
-				A_FireProjectile("UnmakerLaser",-12.0);
+				A_UnmakerLaser("UnmakerLaser",-12.0);
+				invoker.A_CheckIPModeOnUse();
 			}
 			UNMA A 5
 			{
 				A_SetTics(5);
 			}
-			UNMA A 0 A_CheckReload();
+			UNMA A 0 A_ReFire("FireUpgradeThree");
 			Goto Ready;
 
 		Flash:
