@@ -3294,7 +3294,7 @@ class UnmakerEE : DinahWeapon
 		+DONTGIB;
 	}
 	
-	action state A_UnmakerCheck(int dfooduse = 50)
+	action bool A_UnmakerCheck(int dfooduse = 50)
 	{
 		actor player = players[0].mo;
 		int buttons = GetPlayerInput(INPUT_BUTTONS);
@@ -3308,9 +3308,9 @@ class UnmakerEE : DinahWeapon
 			if (player.CountInv("UnmakerUpgrades") >= 3) dfooduse *= 0.5;
 		}
 		if (invoker.IPAttackCheck) dfooduse *= 0.8;
+		bool useenergy = true;
 		if (A_CheckInfiniteAmmo()) dfooduse = 0;
 		
-		bool useenergy = true;
 		if (player.CountInv("PikeAmmo") <= 0)
 		{
 			if (invoker.unmakerenergy < dfooduse) 
@@ -3326,6 +3326,9 @@ class UnmakerEE : DinahWeapon
 				player.A_TakeInventory("PikeAmmo",1);
 			}
 		}
+		if (A_CheckInfiniteAmmo() && !useenergy) useenergy = true;
+		//Console.Printf("useenergy: %d, dfooduse: %d, PikeAmmo: %d", useenergy, dfooduse, player.CountInv("PikeAmmo"));
+		
 		if (useenergy) 
 		{
 			invoker.unmakerenergy -= dfooduse;
@@ -3333,11 +3336,10 @@ class UnmakerEE : DinahWeapon
 		}
 		else 
 		{
-			A_StartSound("inv_fail",84,CHANF_DEFAULT,1.0,ATTN_NORM);
-			return ResolveState("Ready");
+			invoker.A_CheckIPModeOnUse();
+			//A_StartSound("inv_fail",84,CHANF_DEFAULT,1.0,ATTN_NORM);
 		}
-		
-		return ResolveState(null);
+		return useenergy;
 	}
 	
 	action void A_UnmakerLaser(string sname = "UnmakerLaser", double pangle = 0.0, double ppitch = 0.0)
@@ -3431,6 +3433,10 @@ class UnmakerEE : DinahWeapon
 			}
 			LGUN A 1;
 			loop;
+		Empty:
+			UNMA A 17
+			{
+			}
 		Ready:
 			UNMA A 1 
 			{
@@ -3467,7 +3473,8 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
@@ -3491,7 +3498,8 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
@@ -3514,16 +3522,18 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
 				A_UnmakerLaser("UnmakerLaser",1.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",-1.0);
 				invoker.A_CheckIPModeOnUse();
+				return resolvestate(null);
 			}
 			UNMA A 5
 			{
@@ -3540,16 +3550,18 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
 				A_UnmakerLaser("UnmakerLaser",2.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",-2.0);
 				invoker.A_CheckIPModeOnUse();
+				return resolvestate(null);
 			}
 			UNMA A 5
 			{
@@ -3566,16 +3578,18 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
 				A_UnmakerLaser("UnmakerLaser",3.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",-3.0);
 				invoker.A_CheckIPModeOnUse();
+				return resolvestate(null);
 			}
 			UNMA A 5
 			{
@@ -3592,16 +3606,18 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
 				A_UnmakerLaser("UnmakerLaser",4.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",-4.0);
 				invoker.A_CheckIPModeOnUse();
+				return resolvestate(null);
 			}
 			UNMA A 5
 			{
@@ -3616,18 +3632,20 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
 				A_UnmakerLaser("UnmakerLaser",0.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",3.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",-3.0);
 				invoker.A_CheckIPModeOnUse();
+				return resolvestate(null);
 			}
 			UNMA A 5
 			{
@@ -3644,18 +3662,20 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
 				A_UnmakerLaser("UnmakerLaser",0.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",6.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",-6.0);
 				invoker.A_CheckIPModeOnUse();
+				return resolvestate(null);
 			}
 			UNMA A 5
 			{
@@ -3672,18 +3692,20 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
 				A_UnmakerLaser("UnmakerLaser",0.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",9.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",-9.0);
 				invoker.A_CheckIPModeOnUse();
+				return resolvestate(null);
 			}
 			UNMA A 5
 			{
@@ -3700,18 +3722,20 @@ class UnmakerEE : DinahWeapon
 			{
 				A_CheckIPState1();
 				A_ConfirmIPAttack(221,0,2,9,true);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
+				return resolvestate(null);
 			}
 			UNMA A 0 
 			{
 				A_GunFlash();
 				A_StartSound("weapons/unmaker", CHAN_WEAPON, CHANF_DEFAULT, 0.8, ATTN_NORM);
 				A_UnmakerLaser("UnmakerLaser",0.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",12.0);
-				A_UnmakerCheck();
+				if (!A_UnmakerCheck()) return resolvestate("Empty");
 				A_UnmakerLaser("UnmakerLaser",-12.0);
 				invoker.A_CheckIPModeOnUse();
+				return resolvestate(null);
 			}
 			UNMA A 5
 			{

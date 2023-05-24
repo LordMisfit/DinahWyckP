@@ -4048,27 +4048,24 @@ class DD_EventHandler : EventHandler
 						int temp2 = random(1,16);
 						if (A_CheckDDGame())
 						{
-							if (temp2 >= 1 && temp2 <= 5) user_type = random(1,9);
-							if (temp2 >= 6 && temp2 <= 16) user_type = random(1,8);
-						}
-						else
-						{
-							if (player.CountInv("SigilDD") && 
-									(player.CountInv("SigilPieces") >= 1 && 
-									 player.CountInv("SigilPieces") <= 4))
+							if (player.CountInv("IsCarnOfSouls"))
 							{
-								if (temp2 >= 1 && temp2 <= 3) user_type = random(1,16);
-								if (temp2 >= 4 && temp2 <= 7) user_type = random(1,15);
-								if (temp2 >= 8 && temp2 <= 11) user_type = random(1,14);
-								if (temp2 >= 12 && temp2 <= 16) user_type = random(1,13);
+								if (temp2 >= 1 && temp2 <= 2) user_type = random(1,10);
+								if (temp2 >= 3 && temp2 <= 5) user_type = random(1,9);
+								if (temp2 >= 6 && temp2 <= 16) user_type = random(1,8);
 							}
 							else
 							{
-								if (temp2 >= 1 && temp2 <= 3) user_type = random(1,11);
-								if (temp2 >= 4 && temp2 <= 7) user_type = random(1,10);
-								if (temp2 >= 8 && temp2 <= 11) user_type = random(1,9);
-								if (temp2 >= 12 && temp2 <= 16) user_type = random(1,8);
+								if (temp2 >= 1 && temp2 <= 5) user_type = random(1,9);
+								if (temp2 >= 6 && temp2 <= 16) user_type = random(1,8);
 							}
+						}
+						else
+						{
+							if (temp2 >= 1 && temp2 <= 3) user_type = random(1,12);
+							if (temp2 >= 4 && temp2 <= 7) user_type = random(1,10);
+							if (temp2 >= 8 && temp2 <= 11) user_type = random(1,9);
+							if (temp2 >= 12 && temp2 <= 16) user_type = random(1,8);
 						}
 						droptype = "ItemSatchel";
 						if (random(1,32) <= 1) droptype = "MegaSatchel";
@@ -4205,20 +4202,46 @@ class DD_EventHandler : EventHandler
 						if (user_type == 9)
 						{
 							droptype = "CrazyBallDD";
-						}
-						if (user_type == 10) 
-						{
-							droptype = "FosnianCandle";
-							if (player.CountInv(droptype)) droptype = "FCandleAmmo";
 							double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
 							double raredropsndvol = frandom(1.75,2.25);
 							int raredropsndchannel = randompick(191,192,222,223,264,265);
 							victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
 						}
-						if (user_type >= 11) 
+						if (user_type == 10)
+						{
+							droptype = "FosnianCandle";
+							let CandlePickup = FCandlePickup(Player.FindInventory("FCandlePickup"));
+							if (CandlePickup.Amount <= CandlePickup.MaxAmount) 
+							{
+								droptype = "FCandlePickup";
+							}
+							else
+							{
+								droptype = "ItemSatchel";
+								if (random(1,32) <= 1) droptype = "MegaSatchel";
+							}
+							double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+							double raredropsndvol = frandom(1.75,2.25);
+							int raredropsndchannel = randompick(191,192,222,223,264,265);
+							victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
+						}
+						if (user_type == 11)
 						{
 							droptype = "SigilPickup";
 							if (player.CountInv("SigilPieces") >= 5)
+							{
+								droptype = "ItemSatchel";
+								if (random(1,32) <= 1) droptype = "MegaSatchel";
+							}
+							double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+							double raredropsndvol = frandom(1.75,2.25);
+							int raredropsndchannel = randompick(191,192,222,223,264,265);
+							victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
+						}
+						if (user_type == 12) 
+						{
+							droptype = "UnmakerEE";
+							if (player.CountInv("UnmakerUpgrades") >= 3)
 							{
 								droptype = "ItemSatchel";
 								if (random(1,32) <= 1) droptype = "MegaSatchel";
@@ -5023,6 +5046,7 @@ class DD_EventHandler : EventHandler
 
 				// Diving Helm [Type 4]
 				basechance = exex_inventorydroprate4;
+				if (victim.waterlevel <= 2) basechance *= 16;
 				basechance *= skillmult;
 				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 				if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1) basechance *= 0.9;
@@ -5047,7 +5071,7 @@ class DD_EventHandler : EventHandler
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
-				if (random(1,maxchance) <= 1 && victim.waterlevel >= 3)
+				if (random(1,maxchance) <= 1)
 				{
 					double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
 					double raredropsndvol = frandom(1.75,2.25);
@@ -5114,7 +5138,7 @@ class DD_EventHandler : EventHandler
 					}
 				}
 
-				// ?? [Type 10]
+				// Hyper-Ultra Rares [Type 10]
 				basechance = exex_inventorydroprate10;
 				basechance *= skillmult;
 				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 2;
