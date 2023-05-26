@@ -1259,50 +1259,56 @@ class DDWeapon : Weapon
 		{
 			let MiscItem = PlayerStatItem(Player.mo.FindInventory("PlayerStatItem"));
 			int TruePlayerLevel = invoker.ActualLevel;
+			int PlayerSPD;
 			
 			if (MiscItem) 
 			{
-				if (A_CheckDDGame()) movespeed *= (1.0 + (TruePlayerLevel * 0.01));
-												else movespeed *= (1.0 + (TruePlayerLevel * 0.02));
+				PlayerSPD = (MiscItem.PlayerSPD + TruePlayerLevel);
+				if (A_CheckDDGame()) movespeed *= (1.0 + (PlayerSPD * 0.005));
+												else movespeed *= (1.0 + (PlayerSPD * 0.01));
 				
-				if (player.mo.CountInv("PowerEggBuff") || player.mo.CountInv("PowerEggBuff2")) 
+				if (player.mo.CountInv("PowerEggBuff") || 
+						player.mo.CountInv("PowerEggBuff2")) 
 				{
 					if (A_CheckDDGame())
+					{
+						if (MiscItem) bufffactor += (0.125 + (MiscItem.UsedEggHeal * 0.00125));
+										 else bufffactor += 0.125;
+					}
+					else
 					{
 						if (MiscItem) bufffactor += (0.25 + (MiscItem.UsedEggHeal * 0.0025));
 										 else bufffactor += 0.25;
 					}
-					else
-					{
-						if (MiscItem) bufffactor += (0.5 + (MiscItem.UsedEggHeal * 0.005));
-										 else bufffactor += 0.5;
-					}
 				}
-				if (player.mo.CountInv("PowerFruitBuff") || player.mo.CountInv("PowerFruitBuff2")) 
+				if (player.mo.CountInv("PowerFruitBuff") || 
+						player.mo.CountInv("PowerFruitBuff2")) 
 				{
-					if (A_CheckDDGame()) bufffactor += 0.1225;
-													else bufffactor += 0.25;
+					if (A_CheckDDGame()) bufffactor += 0.0625;
+													else bufffactor += 0.125;
 				}
 				if (player.mo.CountInv("PowerRoastBuff")) 
+				{
+					if (A_CheckDDGame()) bufffactor += 0.125;
+													else bufffactor += 0.25;
+				}
+				if (player.mo.CountInv("PowerMealBuff") || 
+						player.mo.CountInv("PowerMealBuff2")) 
 				{
 					if (A_CheckDDGame()) bufffactor += 0.25;
 													else bufffactor += 0.5;
 				}
-				if (player.mo.CountInv("PowerMealBuff") || player.mo.CountInv("PowerMealBuff2")) 
+				if (player.mo.CountInv("PowerMeal2Buff") || 
+						player.mo.CountInv("PowerMeal2Buff2")) 
 				{
-					if (A_CheckDDGame()) bufffactor += 0.5;
-													else bufffactor += 1.0;
-				}
-				if (player.mo.CountInv("PowerMeal2Buff") || player.mo.CountInv("PowerMeal2Buff2")) 
-				{
-					if (A_CheckDDGame()) bufffactor += 0.5;
-													else bufffactor += 1.0;
+					if (A_CheckDDGame()) bufffactor += 0.25;
+													else bufffactor += 0.5;
 				}
 				movespeed *= bufffactor;
 				
 				if (player.ReadyWeapon is "HandToHand") 
 				{
-					double temp = (0.25 + (TruePlayerLevel * 0.0125));
+					double temp = (0.25 + (PlayerSPD * 0.00625));
 					if (temp < 0.25) temp = 0.25;
 					if (temp > 1.00) temp = 1.00;
 					weaponfactor += temp;
@@ -1320,13 +1326,27 @@ class DDWeapon : Weapon
 				if (player.ReadyWeapon is "Grimophone") weaponfactor -= 0.50;
 				if (player.ReadyWeapon is "CandleWhip") weaponfactor += 0.125;
 				if (player.ReadyWeapon is "CrazyBallDD") weaponfactor -= 0.25;
-				if (player.ReadyWeapon is "SigilDD") weaponfactor -= 0.25;
+				if (player.ReadyWeapon is "SigilDD") 
+				{
+					if (player.mo.CountInv("SigilModeType") <= 1) weaponfactor -= 0.0375;
+					if (player.mo.CountInv("SigilModeType") == 2) weaponfactor -= 0.075;
+					if (player.mo.CountInv("SigilModeType") == 3) weaponfactor -= 0.09;
+					if (player.mo.CountInv("SigilModeType") == 4) weaponfactor -= 0.105;
+					if (player.mo.CountInv("SigilModeType") >= 5) weaponfactor -= 0.12;
+				}
 				if (player.ReadyWeapon is "EvilWarriorShield") weaponfactor -= (0.3125 + (MiscItem.HellWarriorShieldLevel * 0.03125));
 				if (player.ReadyWeapon is "FosnianCandle") weaponfactor += 0.25;
+				if (player.ReadyWeapon is "UnmakerEE") weaponfactor -= 0.50;
+				nm = "GutFlingerNew"; if (player.ReadyWeapon is nm) weaponfactor -= 0.125;
+				nm = "GoreBalloonNew"; if (player.ReadyWeapon is nm) weaponfactor += 0.5;
+				nm = "ClownGrenadeNew"; if (player.ReadyWeapon is nm) weaponfactor += 0.5;
+				nm = "GasRocketLauncherNew"; if (player.ReadyWeapon is nm) weaponfactor -= 0.25;
+				nm = "PopcornGunNew"; if (player.ReadyWeapon is nm) weaponfactor -= 0.25;
+				
 				nm = "ImpalerXBow";
 				if (player.ReadyWeapon is nm)  
 				{
-					double temp = (-0.25 + (TruePlayerLevel * 0.025));
+					double temp = (-0.25 + (PlayerSPD * 0.00125));
 					if (temp < -0.25) temp = -0.25;
 					if (temp > 0.25) temp = 0.25;
 					weaponfactor += temp;
@@ -1334,7 +1354,7 @@ class DDWeapon : Weapon
 				nm = "DualImpalerXBow";
 				if (player.ReadyWeapon is nm)  
 				{
-					double temp = (-0.375 + (TruePlayerLevel * 0.025));
+					double temp = (-0.375 + (PlayerSPD * 0.001875));
 					if (temp < -0.375) temp = -0.375;
 					if (temp > 0.25) temp = 0.25;
 					weaponfactor += temp;
@@ -1343,6 +1363,12 @@ class DDWeapon : Weapon
 				if (player.ReadyWeapon is nm) weaponfactor += 0.1667;
 				nm = "DualScepterOfSouls";
 				if (player.ReadyWeapon is nm) weaponfactor += 0.125;
+
+				if (player.mo.CountInv("MAManual")) 
+				{
+					if (player.ReadyWeapon is "HandToHand") weaponfactor *= 1.5;
+																						 else weaponfactor *= 1.25;
+				}
 				movespeed *= weaponfactor;
 				
 				if (player.mo.CountInv("PowerStrength") || player.mo.CountInv("PowerStrengthDD")) movespeed *= 1.5;
