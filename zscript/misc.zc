@@ -8758,6 +8758,7 @@ class PlayerDashJump : Inventory
 			double ShieldDashMul;
 			if (Owner.CountInv("HWShieldBlockHold")) ShieldDashMul = (0.60 * (1.0 - (HellWarriorShieldLevel * 0.025)));
 																					else ShieldDashMul = (0.80 * (1.0 - (HellWarriorShieldLevel * 0.0125)));
+			
 			double ShieldDashMul2 = (1.0 - ShieldDashMul);
 			if (MiscItem) ShieldDashMul += (ShieldDashMul2 * (ActualLevel * 0.01));
 			if (ShieldDashMul > (1.0 - (ShieldDashMul2 * 0.75))) ShieldDashMul = (1.0 - (ShieldDashMul2 * 0.75));
@@ -8779,6 +8780,7 @@ class PlayerDashJump : Inventory
 		{
 			DashSpdMul -= 0.125;
 		}
+		// Strange Aeons weapons
 		nm = "ImpalerXBow"; 
 		if (weapon is nm)
 		{
@@ -8795,7 +8797,7 @@ class PlayerDashJump : Inventory
 		}
 		nm = "ScepterOfSouls"; if (weapon is nm) DashSpdMul += 0.0625;
 		nm = "DualScepterOfSouls"; if (weapon is nm) DashSpdMul += 0.125;
-		
+		// Circus2 weapons
 		nm = "PopcornGunNew"; if (weapon is nm) DashSpdMul -= 0.0625;
 		nm = "GoreBalloonNew"; if (weapon is nm) DashSpdMul += 0.125;
 		nm = "ClownGrenadeNew"; if (weapon is nm) DashSpdMul += 0.0625;
@@ -8803,7 +8805,11 @@ class PlayerDashJump : Inventory
 		nm = "GasRocketLauncherNew"; if (weapon is nm) DashSpdMul -= 0.125;
 		
 		DashSpeed *= DashSpdMul;
-		if (berserked) DashSpeed *= 1.125;
+		if (berserked) 
+		{
+			if (owner.CountInv("ClassyRibbon")) DashSpeed *= 1.1875;
+																		 else DashSpeed *= 1.125;
+		}
 		if (dydudebug_dashing) Console.Printf("DashSpeed: %.8f", DashSpeed);
 		
 		DashCost = 35;
@@ -9493,6 +9499,7 @@ class PlayerDashJump : Inventory
 			DashPitch = Owner.Pitch;
 			if (BTInput & BT_FORWARD) DashPitch *= 1.0;
 			else if (BTInput & BT_BACK) DashPitch *= -1.0;
+			else DashPitch *= 0.0;
 
 			DashCharge -= DashCost;
 			if (DashCharge <= 0) 
@@ -9797,7 +9804,7 @@ class PlayerDashJump : Inventory
 				}
 			}
 			
-			if (dydudebug_dashing) Console.Printf("DashTics: %d / %d", DashTics, MaxDashTics);
+			if (dydudebug_dashing) Console.Printf("\c[orange]DashTics: %d / %d", DashTics, MaxDashTics);
 		}
 		else
 		{
@@ -9825,6 +9832,7 @@ class PlayerDashJump : Inventory
 		if (DashCharge < DashMaxCharge)
 		{
 			int basecharge = 0;
+			double basechargeint = 0.0;
 			if (!DashTics)
 			{
 				if (dydudebug_dashing) Console.Printf("(!DashTics)");
@@ -9832,19 +9840,23 @@ class PlayerDashJump : Inventory
 				{
 					if (level.time % 16 == 0)
 					{
-						basecharge += 1; 
+						basecharge += 1;
+						basechargeint += 0.0025;
 					}
 					if (level.time % 8 == 0)
 					{
 						basecharge += 1; 
+						basechargeint += 0.0025;
 					}
 					if (level.time % 4 == 0)
 					{
 						basecharge += 2; 
+						basechargeint += 0.005;
 					}
 					else
 					{
 						basecharge += 1; 
+						basechargeint += 0.0025;
 					}
 				}
 				else
@@ -9852,16 +9864,17 @@ class PlayerDashJump : Inventory
 					if (level.time % 40 == 0) 
 					{
 						basecharge += 2; 
+						basechargeint += 0.005;
 					}
 					else
 					{
 						basecharge += 1; 
+						basechargeint += 0.0025;
 					}
 				}
-				double basechargeint = 0.0025;
-				if (pushingdirection != 0) basechargeint *= 0.25;
+				if (pushingdirection != 0) basechargeint *= frandom(0.75,1.00);
 				if (owner.CountInv("DinahTrueIPState")) basecharge *= (5.0 + (TruePlayerLevel * (basechargeint * 2.5)) + (TruePlayerSPD * (basechargeint * 2.5)));
-				basecharge *= (1.0 + (TruePlayerLevel * basechargeint) + (TruePlayerSPD * basechargeint));
+																					 else basecharge *= (1.0 + (TruePlayerLevel * (basechargeint * 0.5)) + (TruePlayerSPD * (basechargeint * 0.5)));
 				if (dydudebug_dashing) Console.Printf("basecharge [dash]: %d, basechargeint: %.8f", basecharge, basechargeint);
 				// DD Trilogy NO-Rpg Bonuses
 				if (!exex_expenabled && MiscItem)
@@ -9902,6 +9915,28 @@ class PlayerDashJump : Inventory
 					}
 				}
 				if (dydudebug_dashcheat) basecharge *= 4;
+				
+				// If you fully exhaust the dash meter [it turns red while recharging], rejuvenate dash meter at 50% speed, unless...
+				if (Waiting) 
+				{
+					// ... you're in the True IP [Flower Crown] state...
+					if (!owner.CountInv("DinahTrueIPState"))
+					{
+						// ... or if you've got the Classy Ribbon, which almost entirely mitigates the penalty [and on rare occasions even gives a minute boost to rejuvenation] :V
+						if (owner.CountInv("ClassyRibbon")) 
+						{
+							basecharge *= frandompick(frandom(0.8125,0.9375),1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,frandom(1.0625,1.1875));
+							if (basecharge < 1) basecharge = 1;
+						}
+						else
+						{
+							basecharge *= 0.5;
+							if (level.time % 2 && basecharge < 1) basecharge = 1;
+						}
+					}
+				}
+				if (dydudebug_dashing) Console.Printf("basecharge [final]: %d", basecharge);
+				
 				DashCharge += basecharge;
 				if (DashCharge > DashMaxCharge) DashCharge = DashMaxCharge;
 			}
@@ -9911,7 +9946,7 @@ class PlayerDashJump : Inventory
 				Waiting = False;
 				//Owner.A_StartSound("Player/DashReady",69,CHANF_OVERLAP);
 			}
-			if (dydudebug_dashing) Console.Printf("DashCharge: %d / %d", DashCharge, DashMaxCharge);
+			if (dydudebug_dashing) Console.Printf("\c[brick]DashCharge: %d / %d", DashCharge, DashMaxCharge);
 		}
 		else
 		{
@@ -9921,7 +9956,7 @@ class PlayerDashJump : Inventory
 				Waiting = False;
 				//Owner.A_StartSound("Player/DashReady",69,CHANF_OVERLAP);
 			}
-			if (dydudebug_dashing) Console.Printf("DashCharge: %d / %d", DashCharge, DashMaxCharge);
+			if (dydudebug_dashing) Console.Printf("\c[green]DashCharge: %d / %d", DashCharge, DashMaxCharge);
 		}
 		if (dydudebug_dashing) Console.Printf("DashCost [end]: %d", DashCost);
 		
