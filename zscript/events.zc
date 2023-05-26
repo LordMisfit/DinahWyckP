@@ -5252,6 +5252,80 @@ class DD_EventHandler : EventHandler
 					}
 				}
 				
+				// Situation-Based Drops [Type 12]
+				basechance = exex_inventorydroprate12;
+				basechance *= skillmult;
+				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
+				if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1) basechance *= 0.75;
+				
+				if (A_CheckDDGame())
+				{
+					if (exex_nrpgmonsterlevels) basechance *= 8;
+																 else basechance *= 16;
+				}
+				if (A_CheckUOHYM()) basechance *= 8;
+				luckbase = 0.25 + (monsterrating * 0.0625);
+				if (IPAttack) 
+				{
+					basechance *= baseIPBaseChanceMul;
+					luckbase *= baseIPLuckMul;
+				}
+				if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
+				maxchance = basechance;
+				if (BatPuff(inflicter) || BatSpinPuff(inflicter) || BatPuffIP(inflicter) || BatSpinPuffIP(inflicter)) maxchance = (basechance * 0.5);
+				if (ApplePuff(inflicter) || ApplePuffIP(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
+				if (BlunderPuff(inflicter) || BlunderPuffIP(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
+				if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
+				if (VacPuff(inflicter) || VacPuffIP(inflicter)) maxchance = (basechance * 16);
+				else
+				{
+					nm = "CCards_Actor_BorrowedTimeBuff";
+					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
+				}
+				if (random(1,maxchance) <= 1) // Main Drop Chance
+				{
+					double rand = 1.0;
+					int int1, int2;
+					if (player.CountInv("SigilDD") && player.CountInv("UnmakerEE"))
+					{
+						if (player.CountInv("SigilDD")) int1 = -1;
+						if (player.CountInv("UnmakerEE")) int2 = 1;
+						user_type = randompick(int1,int2);
+					}
+					else
+					{
+						if (player.CountInv("SigilDD")) user_type = -1;
+						if (player.CountInv("UnmakerEE")) user_type = 1;
+					}
+					if (player.CountInv("SigilDD") && user_type == -1)
+					{
+						droptype = "SigilPickup";
+						if (player.CountInv("SigilPieces") >= 5)
+						{
+							droptype = "ItemSatchel";
+							if (random(1,32) <= 1) droptype = "MegaSatchel";
+						}
+						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+						double raredropsndvol = frandom(1.75,2.25);
+						int raredropsndchannel = randompick(191,192,222,223,264,265);
+						victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
+					}
+					if (player.CountInv("UnmakerEE") && user_type == 1)
+					{
+						droptype = "UnmakerEE";
+						if (player.CountInv("UnmakerUpgrades") >= 3)
+						{
+							droptype = "ItemSatchel";
+							if (random(1,32) <= 1) droptype = "MegaSatchel";
+						}
+						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
+						double raredropsndvol = frandom(1.75,2.25);
+						int raredropsndchannel = randompick(191,192,222,223,264,265);
+						victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
+					}
+					if (user_type != 0) victim.A_SpawnItemEx(droptype,frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
+				}
+				
 				//
 				if (vict == "KilletanteSoloist")
 				{
