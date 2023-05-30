@@ -720,6 +720,56 @@ class DD_EventHandler : EventHandler
 		return spawnee, spawnname, LevelCheck;
 	}
 	
+	bool CheckExceptions(actor checkee)
+	{
+		string nm, nn, no, np;
+		bool exception = false;
+		if (checkee)
+		{
+			string spawnname = checkee.GetClassName();
+			if (Wads.CheckNumForName("EE-EXDAY", Wads.ns_global, -1, true) != -1)
+			{
+				nm = "Toilet"; if (spawnname == nm) exception = true;
+				nm = "Shower"; if (spawnname == nm) exception = true;
+				nm = "FaucetWater"; if (spawnname == nm) exception = true;
+				nm = "WaterActivation"; if (spawnname == nm) exception = true;
+				nm = "LoveTrainSounds"; if (spawnname == nm) exception = true;
+				nm = "VaseBrown"; if (spawnname == nm) exception = true;
+				nm = "ReflectionStaticGreen"; if (spawnname == nm) exception = true;
+				nm = "PalmTreeTop"; if (spawnname == nm) exception = true;
+				nm = "PalmTreeWood1"; if (spawnname == nm) exception = true;
+				nm = "JungleTreePart"; if (spawnname == nm) exception = true;
+				nm = "SeekingThunder"; if (spawnname == nm) exception = true;
+				nm = "MeteorCaster"; if (spawnname == nm) exception = true;
+				nm = "DecorativeSkullA"; if (spawnname == nm) exception = true;
+				nm = "DecorativeSkullB"; if (spawnname == nm) exception = true;
+				nm = "DecorativeSkullC"; if (spawnname == nm) exception = true;
+				nm = "DecorativeSkullD"; if (spawnname == nm) exception = true;
+				nm = "GreenCar"; if (spawnname == nm) exception = true;
+				nm = "BlueCar"; if (spawnname == nm) exception = true;
+				nm = "RedCar"; if (spawnname == nm) exception = true;
+				nm = "GrayCar"; if (spawnname == nm) exception = true;
+				nm = "RandomCarSP"; if (spawnname == nm) exception = true;
+				nm = "FuckedUpCar"; if (spawnname == nm) exception = true;
+				nm = "CarColisionExtra"; if (spawnname == nm) exception = true;
+				nm = "EndFirstLevel"; if (spawnname == nm) exception = true;
+				nm = "ImpaledSkulls"; if (spawnname == nm) exception = true;
+				nm = "BDECRedLightWall1"; if (spawnname == nm) exception = true;
+				nm = "BDECBlueLightWall"; if (spawnname == nm) exception = true;
+				nm = "BDECBlueLightWall1"; if (spawnname == nm) exception = true;
+				nm = "BDECyellowLightWall"; if (spawnname == nm) exception = true;
+				nm = "BDECyellowLightWall1"; if (spawnname == nm) exception = true;
+				nm = "BDECwhiteLightWall"; if (spawnname == nm) exception = true;
+				nm = "BDECwhiteLightWall1"; if (spawnname == nm) exception = true;
+				nm = "BDecMap16SecretExit"; if (spawnname == nm) exception = true;
+				nm = "BDecMap20SecretExit"; if (spawnname == nm) exception = true;
+				nm = "D2MAP13SecretExit"; if (spawnname == nm) exception = true;
+				nm = "BDECSpecimenTank"; if (spawnname == nm) exception = true;
+			}
+		}
+		return exception;
+	}
+	
 	void MonsterStatsSet(actor spawnee, int basemonsterrating, bool practicetarget, bool specialenemy, bool ispeasant)
 	{
 		if (Level.MapName != "TITLEMAP")
@@ -735,12 +785,8 @@ class DD_EventHandler : EventHandler
 			double hpmulti, atkmulti, defmulti, spdmulti, massmulti;
 			double hpmulti2, atkmulti2, defmulti2, spdmulti2, massmulti2;
 			
-			bool exception = false;
-			if (Wads.CheckNumForName("EE-EXDAY", Wads.ns_global, -1, true) != -1)
-			{
-				nm = "WaterActivation"; if (spawnname == nm) exception = true;
-			}
 			// Monster "Scaling"
+			bool exception = CheckExceptions(spawnee);
 			if (spawnee.bISMONSTER && !practicetarget && !exception)
 			{
 				double baselinelevel = 0;
@@ -2074,12 +2120,7 @@ class DD_EventHandler : EventHandler
 		int TruePlayerLevel = 0;
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		
-		bool exception = false;
-		if (Wads.CheckNumForName("EE-EXDAY", Wads.ns_global, -1, true) != -1)
-		{
-			nm = "WaterActivation"; if (spawnname == nm) exception = true;
-		}
-		
+		bool exception = CheckExceptions(spawnee);
 		if (!EEBaseZSC(spawnee) && spawnee.bISMONSTER && !exception) 
 		{
 			spawnee.A_SetInventory("CompatVulnItem",1);
@@ -5502,6 +5543,7 @@ class DD_EventHandler : EventHandler
 			bool waslegendary = false;
 			EECreature EEC;
 			EEC = EECreature(victim);
+			bool exception = CheckExceptions(victim);
 			
 			bool isCCardsIllusion = false;
 			if (victim)
@@ -5631,7 +5673,6 @@ class DD_EventHandler : EventHandler
 			class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
 			string nm, nn, no, np;
 			
-			
 			if (victim && 
 					!BowlingPin(victim) && 
 					!EECustomGib(victim) && 
@@ -5643,7 +5684,8 @@ class DD_EventHandler : EventHandler
 					!Centaurion_Hedge(victim) && 
 					!Hammerduck_Hedge(victim) && 
 					!Killetante_Hedge(victim) && 
-					!isCCardsIllusion)
+					!isCCardsIllusion &&
+					!exception)
 			{
 				int specialtype;
 				nm = "CCardGhostMarker";
@@ -6131,7 +6173,10 @@ class DD_EventHandler : EventHandler
 					if (EEC && EEC.user_dontdroprandomstuff) { }
 					else
 					{
-						if (mod != 'Crush') [PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, monsterrating, playerkill, allykill] = A_KillDropTables(PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, monsterrating, playerkill, allykill);
+						if (mod != 'Crush' || mod != 'Falling' || !exception) 
+						{
+							[PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, monsterrating, playerkill, allykill] = A_KillDropTables(PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, monsterrating, playerkill, allykill);
+						}
 					}
 					
 					//*******************************
@@ -7913,7 +7958,8 @@ class DD_StaticEventHandler : StaticEventHandler
 				if (texname == "A-BRICK2" ||
 						texname == "A-BROCK1" ||
 						texname == "A-BROCK2" ||
-						texname == "A-CAMO3A") textfound = -1; 
+						texname == "A-CAMO3A" ||
+						texname == "A-DBRI1") textfound = -1; 
 				else
 				if (texname == "A-CAMO1" ||
 						texname == "A-CAMO1A" ||
