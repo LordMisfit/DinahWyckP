@@ -599,7 +599,7 @@ class DD_EventHandler : EventHandler
 				{
 					if (HellCleric(spawnee) || HellClericDVDS(spawnee) || HellClericSpectral(spawnee)) spawnee.bALWAYSFAST = true;
 					if (Demon(spawnee) || DemonNew(spawnee)) spawnee.bALWAYSFAST = true;
-					if (LostSoul(spawnee) || LostSoulNew(spawnee) || LostSoulAnnoying(spawnee)) spawnee.bALWAYSFAST = true;
+					if (LostSoul(spawnee) || LostSoulNew(spawnee) || LostSoulAnnoying(spawnee) || BetaLostSoul(spawnee)) spawnee.bALWAYSFAST = true;
 					if (HereticImp(spawnee)) spawnee.bALWAYSFAST = true;
 					if (Mummy(spawnee)) spawnee.bALWAYSFAST = true;
 					if (Clink(spawnee)) spawnee.bALWAYSFAST = true;
@@ -2120,359 +2120,361 @@ class DD_EventHandler : EventHandler
 		int TruePlayerLevel = 0;
 		if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 		
-		bool exception = CheckExceptions(spawnee);
-		if (!EEBaseZSC(spawnee) && spawnee.bISMONSTER && !exception) 
+		if (spawnee)
 		{
-			spawnee.A_SetInventory("CompatVulnItem",1);
-		}
-		
-		if (EECreature(spawnee))
-		{
-			EEC = EECreature(spawnee);
-			if (EEC && EEC.bISMONSTER) EEC.ActorRandomBits = random();
-		}
-		
-		if (HellCleric(spawnee))
-		{
-			spawnee.A_SpawnItemEx("HellClericDVDS",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,spawnee.tid);
-			spawnee.Destroy();
-		}
-		
-		if (FlyingBalrog(spawnee))
-		{
-			spawnee.A_SpawnItemEx("FlyingBalrogDVDS",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,spawnee.tid);
-			spawnee.Destroy();
-		}
-		
-		Inventory IsInv;
-		IsInv = Inventory(spawnee);
-		if (IsInv) 
-		{
-			if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1)
+			bool exception = CheckExceptions(spawnee);
+			if (!EEBaseZSC(spawnee) && spawnee.bISMONSTER && !exception) 
 			{
-				if (YellowCard(IsInv) || BlueCard(IsInv) || RedCard(IsInv)) IsInv.PickupSound = "getkeycard";
-				if (YellowSkull(IsInv) || BlueSkull(IsInv) || RedSkull(IsInv)) IsInv.PickupSound = "getskullkey";
-			}
-			string nm, nn, no, np, nq, nr;
-			nm = "KDIZDGreenKey";
-			nn = "KDIZDSilverKey";
-			no = "KDIZDOrangeKey";
-			np = "KDIZDRedKey";
-			nq = "KDIZDBlueKey";
-			nr = "KDIZDYellowKey";
-			if (IsInv.GetClassName() == nm ||
-					IsInv.GetClassName() == nn || 
-					IsInv.GetClassName() == no || 
-					IsInv.GetClassName() == np || 
-					IsInv.GetClassName() == nq || 
-					IsInv.GetClassName() == nr) IsInv.PickupSound = "getkeycard";
-		}
-		
-		if (spawnee && 
-				!BowlingPin(spawnee) && 
-				!DDMiniTank(spawnee) && 
-				!DDHoganTarget(spawnee) && 
-				!OldPipe(spawnee) && 
-				!DDAFDNPC(spawnee) && 
-				!Galgoyle_Hide(spawnee) && 
-				!Centaurion_Hedge(spawnee) && 
-				!GlobeMotherSpawner(spawnee) && 
-				!Hammerduck_Hedge(spawnee) && 
-				!Killetante_Hedge(spawnee) && 
-				!EEProp(spawnee))
-		{
-			int basemonsterrating = spawnee.CountInv("MonsterRating");
-			bool practicetarget;
-			if (PracticeTarget(spawnee) || PracticeTarget2(spawnee)) practicetarget = true;
-
-			EECreature NightmareCreature;
-			NightmareCreature = EECreature(spawnee);
-			if (NightmareCreature)
-			{
-				// Nightmare Monster Controls
-				if (NightmareCentaurion(NightmareCreature) ||
-						NightmareCentaurionSgt(NightmareCreature) ||
-						NightmareBellefish_Fly(NightmareCreature) ||
-						NightmareGalgoyle(NightmareCreature) ||
-						NightmareReelHeel(NightmareCreature) ||
-						NightmareVitriola(NightmareCreature) ||
-						NightmareCremeDeBratte(NightmareCreature) ||
-						NightmareCremeDeBratte_Torched(NightmareCreature) ||
-						NightmareNurse(NightmareCreature) ||
-						NightmareSpectre(NightmareCreature) ||
-						NightmareBloodSpectre(NightmareCreature))
-				{
-					NightmareCreature.nightmarealphatimeroffset = random(-34,34);
-					NightmareCreature.nightmarephaserand = random(0,6);
-				}
+				spawnee.A_SetInventory("CompatVulnItem",1);
 			}
 			
-			// Tags
-			double spdfactor;
-			// DD
-			if (level.GetChecksum() == 'bc4783b11a3fab06c42ced7a735e02e8' && level.levelnum == 1 && spawnname == "DinahPlayer")
+			if (EECreature(spawnee))
 			{
-				spawnee.A_SetInventory("IsDynDuchess",1);
-			}
-			// AFD
-			if (level.GetChecksum() == 'e7ece657340b2959a8de0c008c6ec868' && level.levelnum == 99 && spawnname == "DinahPlayer")
-			{
-				spawnee.A_SetInventory("IsAppetite",1);
-				if (spawnee.CountInv("IsDynDuchess")) 
-				{
-					spawnee.A_SetInventory("IsDDContinuous",1);
-					spawnee.A_SetInventory("IsDynDuchess",0);
-				}
-			}
-			// CoS
-			if (level.GetChecksum() == '269f69a0de6404c5d1c629f6ed779388' && level.levelnum == 41 && spawnname == "DinahPlayer")
-			{
-				spawnee.A_SetInventory("IsCarnOfSouls",1);
-				if (spawnee.CountInv("IsAppetite"))
-				{
-					spawnee.A_SetInventory("IsDDContinuous",1);
-					spawnee.A_SetInventory("IsAppetite",0);
-				}
+				EEC = EECreature(spawnee);
+				if (EEC && EEC.bISMONSTER) EEC.ActorRandomBits = random();
 			}
 			
-			// Hell Ground
-			if (level.GetChecksum() == 'dc9933f75206c48826563ee6ba6c069a' && spawnname == "TechPillar") spawnee.SetTag("Netherhell Imp");
-
-			// BlooM
-			if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1 && spawnname == "DinahPlayer") spawnee.A_SetInventory("PlayingBlooM",1);
-			
-			// StrangeAeons
-			if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1 && spawnname == "DinahPlayer") spawnee.A_SetInventory("PlayingStrangeAeons",1);
-
-			// SiGiL
-			if (level.GetChecksum() == '61b546375618d619ab39eafd28f03c87' ||
-					level.GetChecksum() == '0742076f6c57ed4d1174ebf8f0933b76' ||
-					level.GetChecksum() == '3417a4859c8fece797c9daa715d14d63' ||
-					level.GetChecksum() == 'aebf219bf02aaec549ba3ef8cb3f715b' ||
-					level.GetChecksum() == '4e5d482364f6f787cb8efc17bde5d64d' ||
-					level.GetChecksum() == '8e3fe80ae1440b38747853dab05dd62d' ||
-					level.GetChecksum() == '8c35efba700537035c84f5e1ad35c064' ||
-					level.GetChecksum() == '6ead80da1f30b4b3546fa294eef9f87c' ||
-					level.GetChecksum() == '2a6b4d277f526bfb3adb122609feead7')
+			if (HellCleric(spawnee))
 			{
-				if (EvilEye(spawnee)) spawnee.bSOLID = false;
-			}
-			
-			A_SetMonsterProjNameTags(spawnee);
-			
-			//
-			
-			if (EEProjectile(spawnee)) ProjSetSpeed(spawnee);
-			else if (spawnee.bMISSILE) ProjSetSpeed(spawnee);
-			
-			// Changes
-			int basehealth = spawnee.SpawnHealth();
-			double healthmulfactor = 0.01;
-			
-			nm = "Balloon_Red"; extracheck = nm;
-			nn = "Balloon_Red2"; extracheck2 = nn;
-			if (spawnname == extracheck || spawnname == extracheck2)
-			{
-				if (random(1,16) <= 1)
-				{
-					user_base = random(1,3);
-					if (user_base == 1) usertype = "Balloon_Blue";
-					if (user_base == 2) usertype = "Balloon_Green";
-					if (user_base == 3) usertype = "Balloon_Yellow";
-				}
-			}
-			nm = "Balloon"; extracheck = nm;
-			nn = "BallTarg"; extracheck2 = nn;
-			if (spawnname == extracheck || spawnname == extracheck2)
-			{
-				if (random(1,16) <= 1)
-				{
-					user_base = random(1,2);
-					if (user_base == 1) usertype = "BallGreen";
-					if (user_base == 2) usertype = "BallYel";
-				}
-			}
-
-			nm = "Balloon_Yellow"; extracheck = nm; 
-			if (spawnname == extracheck)
-			{
-				if (random(1,16) <= 1)
-				{
-					user_base = random(1,3);
-					if (user_base == 1) usertype = "Balloon_Blue";
-					if (user_base == 2) usertype = "Balloon_Green";
-					if (user_base == 3) usertype = "Balloon_Red";
-				}
-			}
-			nm = "BallYel"; extracheck = nm; 
-			if (spawnname == extracheck)
-			{
-				if (random(1,16) <= 1)
-				{
-					user_base = random(1,2);
-					if (user_base == 1) usertype = "BallGreen";
-					if (user_base == 2) usertype = "Balloon";
-				}
-			}
-
-			nm = "Balloon_Green"; extracheck = nm; 
-			if (spawnname == extracheck)
-			{
-				if (random(1,16) <= 1)
-				{
-					user_base = random(1,3);
-					if (user_base == 1) usertype = "Balloon_Blue";
-					if (user_base == 2) usertype = "Balloon_Yellow";
-					if (user_base == 3) usertype = "Balloon_Red";
-				}
-			}
-			nm = "BallGreen"; extracheck = nm; 
-			if (spawnname == extracheck)
-			{
-				if (random(1,16) <= 1)
-				{
-					user_base = random(1,2);
-					if (user_base == 1) usertype = "BallYel";
-					if (user_base == 2) usertype = "Balloon";
-				}
-			}
-
-			nm = "Balloon_Blue"; extracheck = nm; 
-			if (spawnname == extracheck)
-			{
-				if (random(1,16) <= 1)
-				{
-					user_base = random(1,3);
-					if (user_base == 1) usertype = "Balloon_Green";
-					if (user_base == 2) usertype = "Balloon_Yellow";
-					if (user_base == 3) usertype = "Balloon_Red";
-				}
-			}
-			if (user_base)
-			{
-				//Console.Printf("%s [2]", spawnname);
-				spawnee.A_SpawnItemEx(usertype,0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,spawnee.tid);
+				spawnee.A_SpawnItemEx("HellClericDVDS",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,spawnee.tid);
 				spawnee.Destroy();
 			}
 			
-			bool specialenemy = false;
-			bool ispeasant = false;
-			// Strife Peasants
-			if (Peasant(spawnee)) ispeasant = true;
-
-			// Eviternity's Archangelus Boss
-			nm = "ArchangelusA"; extracheck = nm;
-			if (spawnname == extracheck) 
+			if (FlyingBalrog(spawnee))
 			{
-				if (Skill <= 0) healthmulfactor = 0.0075;
-				if (Skill == 1) healthmulfactor = 0.00875;
-				if (Skill == 2) healthmulfactor = 0.01;
-				if (Skill == 3) healthmulfactor = 0.01125;
-				if (Skill >= 4) healthmulfactor = 0.0125;
-				basehealth *= (1.0 * (TruePlayerLevel * healthmulfactor));
-				if (Skill <= 0) basehealth *= 12;
-				if (Skill == 1) basehealth *= 14;
-				if (Skill == 2) basehealth *= 16;
-				if (Skill == 3) basehealth *= 18;
-				if (Skill >= 4) basehealth *= 20;
-				spawnee.health *= basehealth;
-			}
-			nn = "ArchangelusB"; extracheck = nm;
-			if (spawnname == extracheck) 
-			{
-				if (Skill <= 0) healthmulfactor = 0.01125;
-				if (Skill == 1) healthmulfactor = 0.013125;
-				if (Skill == 2) healthmulfactor = 0.015;
-				if (Skill == 3) healthmulfactor = 0.016875;
-				if (Skill >= 4) healthmulfactor = 0.01875;
-				basehealth *= (1.0 * (TruePlayerLevel * healthmulfactor));
-				if (Skill <= 0) basehealth *= 12;
-				if (Skill == 1) basehealth *= 14;
-				if (Skill == 2) basehealth *= 16;
-				if (Skill == 3) basehealth *= 18;
-				if (Skill >= 4) basehealth *= 20;
-				spawnee.health = basehealth;
-			}
-			// TUTNT's Source Boss
-			nm = "TheSource"; extracheck = nm;
-			if (spawnname == extracheck) 
-			{
-				if (Skill <= 0) healthmulfactor = 0.005625;
-				if (Skill == 1) healthmulfactor = 0.0065625;
-				if (Skill == 2) healthmulfactor = 0.0075;
-				if (Skill == 3) healthmulfactor = 0.0084375;
-				if (Skill >= 4) healthmulfactor = 0.009375;
-				basehealth *= (1.0 * (TruePlayerLevel * healthmulfactor));
-				if (Skill <= 0) basehealth *= 6;
-				if (Skill == 1) basehealth *= 7;
-				if (Skill == 2) basehealth *= 8;
-				if (Skill == 3) basehealth *= 9;
-				if (Skill >= 4) basehealth *= 10;
-				spawnee.health = basehealth;
-				specialenemy = true;
+				spawnee.A_SpawnItemEx("FlyingBalrogDVDS",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,spawnee.tid);
+				spawnee.Destroy();
 			}
 			
-			if (EECardSummon(spawnee)) specialenemy = true;
-			// Keeps the Romero Heads in AUGER ZENITH, which can't be attacked directly by the player, from being able to gain extra HP/Stats so they can be killed properly on MAP21
-			if (player.CountInv("PlayingAugerZenith") && (BossBrainNew(spawnee))) specialenemy = true;
-			// Keeps the Romero Heads in Hell Ground MAP07 from being too strong. :P
-			if (level.GetChecksum() == 'dc9933f75206c48826563ee6ba6c069a' && (BossBrainNew(spawnee))) specialenemy = true;
-			
-			// Going Down's MAP29 "Boss"
-			if (player.CountInv("PlayingGoingDown") && (WolfensteinSS(spawnee) || WolfensteinSSNew(spawnee)))
+			Inventory invspawnee;
+			invspawnee = Inventory(spawnee);
+			if (invspawnee) 
 			{
-				spawnee.health = 12000;
-			}
-			
-			if (Revenant(spawnee) || RevenantNew(spawnee)) spawnee.ProjectilePassHeight = 84;
-			nm = "Revenant_"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
-			nm = "GhostRevenantTerrain"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
-			nm = "GhostRevenantTerrainAlt"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
-			nm = "RevenantMoron"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
-			nm = "RevenantMoronAlt"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
-			nm = "RevenantMime"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
-			nm = "RevenantMimeAlt"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
-			nm = "RevenantMimeAlt2"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
-			nm = "HandMastermind"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 128;
-
-			if (Demon1(spawnee) || Demon2(spawnee)) spawnee.ProjectilePassHeight = 104;
-
-			if (ArchvileFire(spawnee))
-			{
-				spawnee.A_SetRenderStyle(frandom(0.625,0.875),STYLE_Add);
-			}
-
-			if (DDOrigCreature(spawnee))
-			{
-				if (ddafd_actorhealthlevel)
+				if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1)
 				{
-					if (A_CheckDDGame())
+					if (YellowCard(invspawnee) || BlueCard(invspawnee) || RedCard(invspawnee)) invspawnee.PickupSound = "getkeycard";
+					if (YellowSkull(invspawnee) || BlueSkull(invspawnee) || RedSkull(invspawnee)) invspawnee.PickupSound = "getskullkey";
+				}
+				string nm, nn, no, np, nq, nr;
+				nm = "KDIZDGreenKey";
+				nn = "KDIZDSilverKey";
+				no = "KDIZDOrangeKey";
+				np = "KDIZDRedKey";
+				nq = "KDIZDBlueKey";
+				nr = "KDIZDYellowKey";
+				if (invspawnee.GetClassName() == nm ||
+						invspawnee.GetClassName() == nn || 
+						invspawnee.GetClassName() == no || 
+						invspawnee.GetClassName() == np || 
+						invspawnee.GetClassName() == nq || 
+						invspawnee.GetClassName() == nr) invspawnee.PickupSound = "getkeycard";
+			}
+		
+			if (!BowlingPin(spawnee) && 
+					!DDMiniTank(spawnee) && 
+					!DDHoganTarget(spawnee) && 
+					!OldPipe(spawnee) && 
+					!DDAFDNPC(spawnee) && 
+					!Galgoyle_Hide(spawnee) && 
+					!Centaurion_Hedge(spawnee) && 
+					!GlobeMotherSpawner(spawnee) && 
+					!Hammerduck_Hedge(spawnee) && 
+					!Killetante_Hedge(spawnee) && 
+					!EEProp(spawnee))
+			{
+				int basemonsterrating = spawnee.CountInv("MonsterRating");
+				bool practicetarget;
+				if (PracticeTarget(spawnee) || PracticeTarget2(spawnee)) practicetarget = true;
+
+				EECreature NightmareCreature;
+				NightmareCreature = EECreature(spawnee);
+				if (NightmareCreature)
+				{
+					// Nightmare Monster Controls
+					if (NightmareCentaurion(NightmareCreature) ||
+							NightmareCentaurionSgt(NightmareCreature) ||
+							NightmareBellefish_Fly(NightmareCreature) ||
+							NightmareGalgoyle(NightmareCreature) ||
+							NightmareReelHeel(NightmareCreature) ||
+							NightmareVitriola(NightmareCreature) ||
+							NightmareCremeDeBratte(NightmareCreature) ||
+							NightmareCremeDeBratte_Torched(NightmareCreature) ||
+							NightmareNurse(NightmareCreature) ||
+							NightmareSpectre(NightmareCreature) ||
+							NightmareBloodSpectre(NightmareCreature))
 					{
-						if (skill <= 1) spawnee.health *= 0.5;
+						NightmareCreature.nightmarealphatimeroffset = random(-34,34);
+						NightmareCreature.nightmarephaserand = random(0,6);
+					}
+				}
+				
+				// Tags
+				double spdfactor;
+				// DD
+				if (level.GetChecksum() == 'bc4783b11a3fab06c42ced7a735e02e8' && level.levelnum == 1 && spawnname == "DinahPlayer")
+				{
+					spawnee.A_SetInventory("IsDynDuchess",1);
+				}
+				// AFD
+				if (level.GetChecksum() == 'e7ece657340b2959a8de0c008c6ec868' && level.levelnum == 99 && spawnname == "DinahPlayer")
+				{
+					spawnee.A_SetInventory("IsAppetite",1);
+					if (spawnee.CountInv("IsDynDuchess")) 
+					{
+						spawnee.A_SetInventory("IsDDContinuous",1);
+						spawnee.A_SetInventory("IsDynDuchess",0);
+					}
+				}
+				// CoS
+				if (level.GetChecksum() == '269f69a0de6404c5d1c629f6ed779388' && level.levelnum == 41 && spawnname == "DinahPlayer")
+				{
+					spawnee.A_SetInventory("IsCarnOfSouls",1);
+					if (spawnee.CountInv("IsAppetite"))
+					{
+						spawnee.A_SetInventory("IsDDContinuous",1);
+						spawnee.A_SetInventory("IsAppetite",0);
+					}
+				}
+				
+				// Hell Ground
+				if (level.GetChecksum() == 'dc9933f75206c48826563ee6ba6c069a' && spawnname == "TechPillar") spawnee.SetTag("Netherhell Imp");
+
+				// BlooM
+				if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1 && spawnname == "DinahPlayer") spawnee.A_SetInventory("PlayingBlooM",1);
+				
+				// StrangeAeons
+				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1 && spawnname == "DinahPlayer") spawnee.A_SetInventory("PlayingStrangeAeons",1);
+
+				// SiGiL
+				if (level.GetChecksum() == '61b546375618d619ab39eafd28f03c87' ||
+						level.GetChecksum() == '0742076f6c57ed4d1174ebf8f0933b76' ||
+						level.GetChecksum() == '3417a4859c8fece797c9daa715d14d63' ||
+						level.GetChecksum() == 'aebf219bf02aaec549ba3ef8cb3f715b' ||
+						level.GetChecksum() == '4e5d482364f6f787cb8efc17bde5d64d' ||
+						level.GetChecksum() == '8e3fe80ae1440b38747853dab05dd62d' ||
+						level.GetChecksum() == '8c35efba700537035c84f5e1ad35c064' ||
+						level.GetChecksum() == '6ead80da1f30b4b3546fa294eef9f87c' ||
+						level.GetChecksum() == '2a6b4d277f526bfb3adb122609feead7')
+				{
+					if (EvilEye(spawnee)) spawnee.bSOLID = false;
+				}
+				
+				A_SetMonsterProjNameTags(spawnee);
+				
+				//
+				
+				if (EEProjectile(spawnee)) ProjSetSpeed(spawnee);
+				else if (spawnee.bMISSILE) ProjSetSpeed(spawnee);
+				
+				// Changes
+				int basehealth = spawnee.SpawnHealth();
+				double healthmulfactor = 0.01;
+				
+				nm = "Balloon_Red"; extracheck = nm;
+				nn = "Balloon_Red2"; extracheck2 = nn;
+				if (spawnname == extracheck || spawnname == extracheck2)
+				{
+					if (random(1,16) <= 1)
+					{
+						user_base = random(1,3);
+						if (user_base == 1) usertype = "Balloon_Blue";
+						if (user_base == 2) usertype = "Balloon_Green";
+						if (user_base == 3) usertype = "Balloon_Yellow";
+					}
+				}
+				nm = "Balloon"; extracheck = nm;
+				nn = "BallTarg"; extracheck2 = nn;
+				if (spawnname == extracheck || spawnname == extracheck2)
+				{
+					if (random(1,16) <= 1)
+					{
+						user_base = random(1,2);
+						if (user_base == 1) usertype = "BallGreen";
+						if (user_base == 2) usertype = "BallYel";
 					}
 				}
 
-				if (!(DDOrigBoss(spawnee) || SugarSnake(spawnee) || MiniSugarSnake(spawnee)))
+				nm = "Balloon_Yellow"; extracheck = nm; 
+				if (spawnname == extracheck)
 				{
-					if (A_CheckDDGame()) spawnee.bLOOKALLAROUND = false;
+					if (random(1,16) <= 1)
+					{
+						user_base = random(1,3);
+						if (user_base == 1) usertype = "Balloon_Blue";
+						if (user_base == 2) usertype = "Balloon_Green";
+						if (user_base == 3) usertype = "Balloon_Red";
+					}
 				}
-			}
-			
-			// Monster "Scaling"
-			MonsterStatsSet(spawnee, basemonsterrating, practicetarget, specialenemy, ispeasant);
-			
-			if (CroquetBall(spawnee) && (spawnee.target && HammerDuck(spawnee.target)))
-			{
-				if (exex_monsterlevelenabledflags)
+				nm = "BallYel"; extracheck = nm; 
+				if (spawnname == extracheck)
 				{
-					if (spawnee.target.CountInv("MonsterLevel") > 90) spawnee.Speed *= 2.0;
-					else if (spawnee.target.CountInv("MonsterLevel") > 75) spawnee.Speed *= 1.8334;
-					else if (spawnee.target.CountInv("MonsterLevel") > 60) spawnee.Speed *= 1.6667;
-					else if (spawnee.target.CountInv("MonsterLevel") > 45) spawnee.Speed *= 1.5000;
-					else if (spawnee.target.CountInv("MonsterLevel") > 30) spawnee.Speed *= 1.3334;
-					else if (spawnee.target.CountInv("MonsterLevel") > 15) spawnee.Speed *= 1.1667;
-					
-					spawnee.Speed *= (1.0 + (spawnee.target.CountInv("MonsterRating") * 0.0625));
+					if (random(1,16) <= 1)
+					{
+						user_base = random(1,2);
+						if (user_base == 1) usertype = "BallGreen";
+						if (user_base == 2) usertype = "Balloon";
+					}
+				}
+
+				nm = "Balloon_Green"; extracheck = nm; 
+				if (spawnname == extracheck)
+				{
+					if (random(1,16) <= 1)
+					{
+						user_base = random(1,3);
+						if (user_base == 1) usertype = "Balloon_Blue";
+						if (user_base == 2) usertype = "Balloon_Yellow";
+						if (user_base == 3) usertype = "Balloon_Red";
+					}
+				}
+				nm = "BallGreen"; extracheck = nm; 
+				if (spawnname == extracheck)
+				{
+					if (random(1,16) <= 1)
+					{
+						user_base = random(1,2);
+						if (user_base == 1) usertype = "BallYel";
+						if (user_base == 2) usertype = "Balloon";
+					}
+				}
+
+				nm = "Balloon_Blue"; extracheck = nm; 
+				if (spawnname == extracheck)
+				{
+					if (random(1,16) <= 1)
+					{
+						user_base = random(1,3);
+						if (user_base == 1) usertype = "Balloon_Green";
+						if (user_base == 2) usertype = "Balloon_Yellow";
+						if (user_base == 3) usertype = "Balloon_Red";
+					}
+				}
+				if (user_base)
+				{
+					//Console.Printf("%s [2]", spawnname);
+					spawnee.A_SpawnItemEx(usertype,0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0,spawnee.tid);
+					spawnee.Destroy();
+				}
+				
+				bool specialenemy = false;
+				bool ispeasant = false;
+				// Strife Peasants
+				if (Peasant(spawnee)) ispeasant = true;
+
+				// Eviternity's Archangelus Boss
+				nm = "ArchangelusA"; extracheck = nm;
+				if (spawnname == extracheck) 
+				{
+					if (Skill <= 0) healthmulfactor = 0.0075;
+					if (Skill == 1) healthmulfactor = 0.00875;
+					if (Skill == 2) healthmulfactor = 0.01;
+					if (Skill == 3) healthmulfactor = 0.01125;
+					if (Skill >= 4) healthmulfactor = 0.0125;
+					basehealth *= (1.0 * (TruePlayerLevel * healthmulfactor));
+					if (Skill <= 0) basehealth *= 12;
+					if (Skill == 1) basehealth *= 14;
+					if (Skill == 2) basehealth *= 16;
+					if (Skill == 3) basehealth *= 18;
+					if (Skill >= 4) basehealth *= 20;
+					spawnee.health *= basehealth;
+				}
+				nn = "ArchangelusB"; extracheck = nm;
+				if (spawnname == extracheck) 
+				{
+					if (Skill <= 0) healthmulfactor = 0.01125;
+					if (Skill == 1) healthmulfactor = 0.013125;
+					if (Skill == 2) healthmulfactor = 0.015;
+					if (Skill == 3) healthmulfactor = 0.016875;
+					if (Skill >= 4) healthmulfactor = 0.01875;
+					basehealth *= (1.0 * (TruePlayerLevel * healthmulfactor));
+					if (Skill <= 0) basehealth *= 12;
+					if (Skill == 1) basehealth *= 14;
+					if (Skill == 2) basehealth *= 16;
+					if (Skill == 3) basehealth *= 18;
+					if (Skill >= 4) basehealth *= 20;
+					spawnee.health = basehealth;
+				}
+				// TUTNT's Source Boss
+				nm = "TheSource"; extracheck = nm;
+				if (spawnname == extracheck) 
+				{
+					if (Skill <= 0) healthmulfactor = 0.005625;
+					if (Skill == 1) healthmulfactor = 0.0065625;
+					if (Skill == 2) healthmulfactor = 0.0075;
+					if (Skill == 3) healthmulfactor = 0.0084375;
+					if (Skill >= 4) healthmulfactor = 0.009375;
+					basehealth *= (1.0 * (TruePlayerLevel * healthmulfactor));
+					if (Skill <= 0) basehealth *= 6;
+					if (Skill == 1) basehealth *= 7;
+					if (Skill == 2) basehealth *= 8;
+					if (Skill == 3) basehealth *= 9;
+					if (Skill >= 4) basehealth *= 10;
+					spawnee.health = basehealth;
+					specialenemy = true;
+				}
+				
+				if (EECardSummon(spawnee)) specialenemy = true;
+				// Keeps the Romero Heads in AUGER ZENITH, which can't be attacked directly by the player, from being able to gain extra HP/Stats so they can be killed properly on MAP21
+				if (player.CountInv("PlayingAugerZenith") && (BossBrainNew(spawnee))) specialenemy = true;
+				// Keeps the Romero Heads in Hell Ground MAP07 from being too strong. :P
+				if (level.GetChecksum() == 'dc9933f75206c48826563ee6ba6c069a' && (BossBrainNew(spawnee))) specialenemy = true;
+				
+				// Going Down's MAP29 "Boss"
+				if (player.CountInv("PlayingGoingDown") && (WolfensteinSS(spawnee) || WolfensteinSSNew(spawnee)))
+				{
+					spawnee.health = 12000;
+				}
+				
+				if (Revenant(spawnee) || RevenantNew(spawnee)) spawnee.ProjectilePassHeight = 84;
+				nm = "Revenant_"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
+				nm = "GhostRevenantTerrain"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
+				nm = "GhostRevenantTerrainAlt"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
+				nm = "RevenantMoron"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
+				nm = "RevenantMoronAlt"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
+				nm = "RevenantMime"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
+				nm = "RevenantMimeAlt"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
+				nm = "RevenantMimeAlt2"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 84;
+				nm = "HandMastermind"; if (spawnee.GetClassName() == nm) spawnee.ProjectilePassHeight = 128;
+
+				if (Demon1(spawnee) || Demon2(spawnee)) spawnee.ProjectilePassHeight = 104;
+
+				if (ArchvileFire(spawnee))
+				{
+					spawnee.A_SetRenderStyle(frandom(0.625,0.875),STYLE_Add);
+				}
+
+				if (DDOrigCreature(spawnee))
+				{
+					if (ddafd_actorhealthlevel)
+					{
+						if (A_CheckDDGame())
+						{
+							if (skill <= 1) spawnee.health *= 0.5;
+						}
+					}
+
+					if (!(DDOrigBoss(spawnee) || SugarSnake(spawnee) || MiniSugarSnake(spawnee)))
+					{
+						if (A_CheckDDGame()) spawnee.bLOOKALLAROUND = false;
+					}
+				}
+				
+				// Monster "Scaling"
+				MonsterStatsSet(spawnee, basemonsterrating, practicetarget, specialenemy, ispeasant);
+				
+				if (CroquetBall(spawnee) && (spawnee.target && HammerDuck(spawnee.target)))
+				{
+					if (exex_monsterlevelenabledflags)
+					{
+						if (spawnee.target.CountInv("MonsterLevel") > 90) spawnee.Speed *= 2.0;
+						else if (spawnee.target.CountInv("MonsterLevel") > 75) spawnee.Speed *= 1.8334;
+						else if (spawnee.target.CountInv("MonsterLevel") > 60) spawnee.Speed *= 1.6667;
+						else if (spawnee.target.CountInv("MonsterLevel") > 45) spawnee.Speed *= 1.5000;
+						else if (spawnee.target.CountInv("MonsterLevel") > 30) spawnee.Speed *= 1.3334;
+						else if (spawnee.target.CountInv("MonsterLevel") > 15) spawnee.Speed *= 1.1667;
+						
+						spawnee.Speed *= (1.0 + (spawnee.target.CountInv("MonsterRating") * 0.0625));
+					}
 				}
 			}
 		}
@@ -2538,16 +2540,13 @@ class DD_EventHandler : EventHandler
 					MonsterStatsSet(spawnee, 0, false, false, false);
 				}
 				
-				if (spawnee)
+				if (dydudebug_ressurrectdisplays) Console.Printf("Res: Max Health - %d (%d + %d)", (spawnee.SpawnHealth() + spawnee.Stamina), spawnee.SpawnHealth(), spawnee.Stamina); 
+				if (spawnee.bISMONSTER && spawnee.Stamina > 0)
 				{
-					if (dydudebug_ressurrectdisplays) Console.Printf("Res: Max Health - %d (%d + %d)", (spawnee.SpawnHealth() + spawnee.Stamina), spawnee.SpawnHealth(), spawnee.Stamina); 
-					if (spawnee.bISMONSTER && spawnee.Stamina > 0)
-					{
-						ForsakenResBuff ForsakenRes;
-						ForsakenRes = ForsakenResBuff(spawnee.FindInventory("ForsakenResBuff"));
-						if (ForsakenRes) spawnee.A_SetInventory("JustRevivedByForsaken",1);
-												else spawnee.A_SetInventory("JustRevived",1);
-					}
+					ForsakenResBuff ForsakenRes;
+					ForsakenRes = ForsakenResBuff(spawnee.FindInventory("ForsakenResBuff"));
+					if (ForsakenRes) spawnee.A_SetInventory("JustRevivedByForsaken",1);
+											else spawnee.A_SetInventory("JustRevived",1);
 				}
 			}
 		}
@@ -2631,27 +2630,20 @@ class DD_EventHandler : EventHandler
 				bool practicetarget;
 				
 				int specialtype;
-				nm = "CCardGhostMarker";
-				if (victim.CountInv(nm)) specialtype += 1;
-				nm = "CCardAssassinMarker";
-				if (victim.CountInv(nm)) specialtype += 2;
-				nm = "CCardRespawnedMarker";
-				if (victim.CountInv(nm)) specialtype += 4;
-				nm = "CCards_Actor_TheAncientOne";
-				if (victim.GetClassName() == nm) specialtype += 8;
+				nm = "CCardGhostMarker"; if (victim.CountInv(nm)) specialtype += 1;
+				nm = "CCardAssassinMarker"; if (victim.CountInv(nm)) specialtype += 2;
+				nm = "CCardRespawnedMarker"; if (victim.CountInv(nm)) specialtype += 4;
+				nm = "CCards_Actor_TheAncientOne"; if (victim.GetClassName() == nm) specialtype += 8;
+				nm = "CCards_Actor_Spider"; if (victim.GetClassName() == nm) specialtype += 128;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "PurpleTentacle";
-					if (victim.GetClassName() == nm) specialtype += 8;
-					nm = "Skeleton";
-					if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "Skeleton"; if (victim.GetClassName() == nm) specialtype += 8;
 				}
 				if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "Mite";
-					if (victim.GetClassName() == nm) specialtype += 16;
-					nm = "SkinStealer";
-					if (victim.GetClassName() == nm) specialtype += 32;
+					nm = "Mite"; if (victim.GetClassName() == nm) specialtype += 16;
+					nm = "SkinStealer"; if (victim.GetClassName() == nm) specialtype += 32;
 					if (victim.bISMONSTER) specialtype += 64;
 				}
 				if (dydudebug_worlddamaged) Console.Printf("[%s] SpecialType [WorldDamaged]: %d", vict, specialtype);
@@ -5688,27 +5680,20 @@ class DD_EventHandler : EventHandler
 					!exception)
 			{
 				int specialtype;
-				nm = "CCardGhostMarker";
-				if (victim.CountInv(nm)) specialtype += 1;
-				nm = "CCardAssassinMarker";
-				if (victim.CountInv(nm)) specialtype += 2;
-				nm = "CCardRespawnedMarker";
-				if (victim.CountInv(nm)) specialtype += 4;
-				nm = "CCards_Actor_TheAncientOne";
-				if (victim.GetClassName() == nm) specialtype += 8;
+				nm = "CCardGhostMarker"; if (victim.CountInv(nm)) specialtype += 1;
+				nm = "CCardAssassinMarker"; if (victim.CountInv(nm)) specialtype += 2;
+				nm = "CCardRespawnedMarker"; if (victim.CountInv(nm)) specialtype += 4;
+				nm = "CCards_Actor_TheAncientOne"; if (victim.GetClassName() == nm) specialtype += 8;
+				nm = "CCards_Actor_Spider"; if (victim.GetClassName() == nm) specialtype += 128;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "PurpleTentacle";
-					if (victim.GetClassName() == nm) specialtype += 8;
-					nm = "Skeleton";
-					if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "Skeleton"; if (victim.GetClassName() == nm) specialtype += 8;
 				}
 				if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "Mite";
-					if (victim.GetClassName() == nm) specialtype += 16;
-					nm = "SkinStealer";
-					if (victim.GetClassName() == nm) specialtype += 32;
+					nm = "Mite"; if (victim.GetClassName() == nm) specialtype += 16;
+					nm = "SkinStealer"; if (victim.GetClassName() == nm) specialtype += 32;
 					if (victim.bISMONSTER) specialtype += 64;
 				}
 				if (dydudebug_worlddied) Console.Printf("[%s] SpecialType [WorldDied]: %d", vict, specialtype);
@@ -5823,6 +5808,7 @@ class DD_EventHandler : EventHandler
 						if (specialtype & 2) ExpGain *= frandompick(1.8,2.2);
 						if (specialtype & 4) ExpGain *= frandompick(0.625,0.875);
 						if (specialtype & 8) ExpGain *= frandompick(1.75,2.5);
+						if (specialtype & 128) ExpGain *= 0.5;
 						if (victim.CountInv("MiraclesUsed") && exex_monstershavemiracles) ExpGain *= (1.0 + (victim.CountInv("MiraclesUsed") * 0.625));
 						if ((source && source.CountInv("DinahTrueIPState")) || (inflicter && inflicter.CountInv("DinahTrueIPState"))) ExpGain *= 0.2;
 						if (VacPuff(inflicter) || VacPuffIP(inflicter)) 
@@ -6024,7 +6010,7 @@ class DD_EventHandler : EventHandler
 						{
 							if (dydudebug_worlddied) Console.Printf("Voice Check");
 							bool voicecheck = false;
-							if (exex_dinahextravoices && exex_dinahoneliners) 
+							if (exex_dinahextravoices && exex_dinahoneliners && !MiscItem.OneLinerCooldown) 
 							{
 								if (MiscItem.OneLinerCooldown <= 0 || waslegendary) voicecheck = true;
 							}
