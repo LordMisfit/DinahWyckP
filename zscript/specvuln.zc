@@ -3979,6 +3979,476 @@ class CompatVulnItem : PlaceholderItem
 		}
 	}
 	
+	// Damage Tracking
+	int initdmg;
+	double, double, double A_DefenseIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool wasblastedimpact, bool bellefishzap, bool surprisehit, int angvstype)
+	{
+		string nm, nn, no, np;
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+		int TruePlayerLevel = A_GetPlayerLvl2(1);
+		int predmginr = damage;
+		// (Partial) Defense Ignoring Attacks
+		double prevDamageFactor;
+		double basedmgfactor = owner.DamageFactor;
+		double ActorDefenseIgnoreFactor = 0.00;
+		if (inflictor == null && source == null) 
+		{
+			// BLASTED Impact Damage
+			if (wasblastedimpact) ActorDefenseIgnoreFactor += (frandom(0.45,0.55) * (1.00 - ActorDefenseIgnoreFactor));
+		}
+		else
+		{
+			double IPDmgFactor = 0.50;
+			if (skill <= 0) IPDmgFactor = 1.00;
+			if (skill == 1) IPDmgFactor = 0.875;
+			if (skill == 2) IPDmgFactor = 0.75;
+			if (skill == 3) IPDmgFactor = 0.625;
+			if (skill >= 4) IPDmgFactor = 0.50;
+			double sts = 1.0;
+			if (MiscItem && MiscItem.sttabs > 0) sts = 1.0 + (MiscItem.sttabs * 0.083334);
+			if (sts >= 1.50) sts = 1.50;
+			IPDmgFactor *= sts;
+			if (IPDmgFactor > 1.00) IPDmgFactor = 1.00;
+
+			EEProjectile IPAtk;
+			if (inflictor) IPAtk = EEProjectile(inflictor);
+			else if (source) IPAtk = EEProjectile(source);
+			if (IPAtk && IPAtk.IPAttack) ActorDefenseIgnoreFactor += (IPDmgFactor * (1.00 - ActorDefenseIgnoreFactor));
+			else
+			{
+				DDPlayerPawn IPAtk2;
+				if (inflictor) IPAtk2 = DDPlayerPawn(inflictor);
+				else if (source) IPAtk2 = DDPlayerPawn(source);
+				if (IPAtk2 && IPAtk2.IPAttack) ActorDefenseIgnoreFactor += (IPDmgFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			
+			double AxeDebuffFactor = 0.00;
+			if (CountInv("BlunderHelmSplitter")) AxeDebuffFactor = 0.30;
+			if (CountInv("BlunderHelmSplitter2")) AxeDebuffFactor = 0.60;
+			if (CountInv("BlunderHelmSplitter3")) AxeDebuffFactor = 0.90;
+			double AxeAmpFactor = 1.00 + ((1 / ((1.0 - AxeDebuffFactor)) - 1.0) * frandompick(0.20,0.25,0.25,0.25,0.334,0.334,0.334,0.334,0.334,0.334,0.334,0.334,0.334,0.5,0.5,0.5,0.75));
+			damage *= AxeAmpFactor;
+			ActorDefenseIgnoreFactor += (AxeDebuffFactor * (1.00 - ActorDefenseIgnoreFactor));
+
+			double TrueIPFactor = 1.00;
+			DDPlayerPawn TrueIPPlayer;
+			if (inflictor) TrueIPPlayer = DDPlayerPawn(inflictor);
+			else if (source) TrueIPPlayer = DDPlayerPawn(source);
+			if (TrueIPPlayer && TrueIPPlayer.CountInv("DinahTrueIPState")) ActorDefenseIgnoreFactor += (TrueIPFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double PikeFactor = 0.0;
+			if (mod == 'Zap') 
+			{
+				if ((inflictor && inflictor.CountInv("SpellDiaryEE")) || 
+						(source && source.CountInv("SpellDiaryEE"))) PikeFactor += (frandom(0.25,0.334) * (1.00 - PikeFactor));   
+				if (CountInv("SpellDiaryEE")) PikeFactor -= (frandom(0.25,0.334) * (1.00 - PikeFactor));
+				ActorDefenseIgnoreFactor += (PikeFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			double PikeAOEFactor = 0.334;
+			if (mod == 'Zap') 
+			{
+				if ((inflictor && inflictor.CountInv("SpellDiaryEE")) || 
+						(source && source.CountInv("SpellDiaryEE"))) PikeAOEFactor += (frandom(0.25,0.334) * (1.00 - PikeAOEFactor));   
+				if (CountInv("SpellDiaryEE")) PikeAOEFactor -= (frandom(0.25,0.334) * (1.00 - PikeAOEFactor));
+				ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+				if (flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+				if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			if (flags & DMG_INFLICTOR_IS_PUFF && (PikePuff(inflictor) || PikePuff(source))) ActorDefenseIgnoreFactor += (PikeAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double ChopFactor = 0.000;
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("BlunderShotUpgrade") == 1) ChopFactor = 0.1667;
+				if (inflictor.CountInv("BlunderShotUpgrade") == 2) ChopFactor = 0.4;
+				if (inflictor.CountInv("BlunderShotUpgrade") >= 3) ChopFactor = 0.75;
+
+				double temp = (1.00 - ChopFactor);
+				if (inflictor.CountInv("PowerWineBuffIPMaximum")) ChopFactor += (temp * frandom(0.25,0.375));
+				else if (inflictor.CountInv("PowerWineBuffIPStrongestEven")) ChopFactor += (temp * frandom(0.1875,0.25));
+				else if (inflictor.CountInv("PowerWineBuffStrongestEven")) ChopFactor += (temp * frandom(0.1125,0.15));
+				else if (inflictor.CountInv("PowerWineBuffIPStrongest")) ChopFactor += (temp * frandom(0.125,0.1875));
+				else if (inflictor.CountInv("PowerWineBuffStrongest")) ChopFactor += (temp * frandom(0.075,0.1125));
+				else if (inflictor.CountInv("PowerWineBuffIPStrong")) ChopFactor += (temp * frandom(0.0625,0.125));
+				else if (inflictor.CountInv("PowerWineBuffStrong")) ChopFactor += (temp * frandom(0.0375,0.075));
+				else if (inflictor.CountInv("PowerWineBuffIPWeak")) ChopFactor += (temp * frandom(0.0,0.0625));
+				else if (inflictor.CountInv("PowerWineBuffWeak")) ChopFactor += (temp * frandom(0.0,0.0375));
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("BlunderShotUpgrade") == 1) ChopFactor = 0.1667;
+				if (source.CountInv("BlunderShotUpgrade") == 2) ChopFactor = 0.4;
+				if (source.CountInv("BlunderShotUpgrade") >= 3) ChopFactor = 0.75;
+
+				double temp = (1.00 - ChopFactor);
+				if (source.CountInv("PowerWineBuffIPMaximum")) ChopFactor += (temp * frandom(0.25,0.375));
+				else if (source.CountInv("PowerWineBuffIPStrongestEven")) ChopFactor += (temp * frandom(0.1875,0.25));
+				else if (source.CountInv("PowerWineBuffStrongestEven")) ChopFactor += (temp * frandom(0.1125,0.15));
+				else if (source.CountInv("PowerWineBuffIPStrongest")) ChopFactor += (temp * frandom(0.125,0.1875));
+				else if (source.CountInv("PowerWineBuffStrongest")) ChopFactor += (temp * frandom(0.075,0.1125));
+				else if (source.CountInv("PowerWineBuffIPStrong")) ChopFactor += (temp * frandom(0.0625,0.125));
+				else if (source.CountInv("PowerWineBuffStrong")) ChopFactor += (temp * frandom(0.0375,0.075));
+				else if (source.CountInv("PowerWineBuffIPWeak")) ChopFactor += (temp * frandom(0.0,0.0625));
+				else if (source.CountInv("PowerWineBuffWeak")) ChopFactor += (temp * frandom(0.0,0.0375));
+			}
+			if (mod == 'Chop') ActorDefenseIgnoreFactor += (ChopFactor * (1.00 - ActorDefenseIgnoreFactor));
+
+			double LeadFactor = 0.000;
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("BlunderShotUpgrade") == 1) LeadFactor = 0.1667;
+				if (inflictor.CountInv("BlunderShotUpgrade") == 2) LeadFactor = 0.4;
+				if (inflictor.CountInv("BlunderShotUpgrade") >= 3) LeadFactor = 0.75;
+				
+				double temp = (1.00 - LeadFactor);
+				if (inflictor.CountInv("PowerWineBuffIPMaximum")) LeadFactor += (temp * frandom(0.25,0.375));
+				else if (inflictor.CountInv("PowerWineBuffIPStrongestEven")) LeadFactor += (temp * frandom(0.1875,0.25));
+				else if (inflictor.CountInv("PowerWineBuffStrongestEven")) LeadFactor += (temp * frandom(0.1125,0.15));
+				else if (inflictor.CountInv("PowerWineBuffIPStrongest")) LeadFactor += (temp * frandom(0.125,0.1875));
+				else if (inflictor.CountInv("PowerWineBuffStrongest")) LeadFactor += (temp * frandom(0.075,0.1125));
+				else if (inflictor.CountInv("PowerWineBuffIPStrong")) LeadFactor += (temp * frandom(0.0625,0.125));
+				else if (inflictor.CountInv("PowerWineBuffStrong")) LeadFactor += (temp * frandom(0.0375,0.075));
+				else if (inflictor.CountInv("PowerWineBuffIPWeak")) LeadFactor += (temp * frandom(0.0,0.0625));
+				else if (inflictor.CountInv("PowerWineBuffWeak")) LeadFactor += (temp * frandom(0.0,0.0375));
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("BlunderShotUpgrade") == 1) LeadFactor = 0.1667;
+				if (source.CountInv("BlunderShotUpgrade") == 2) LeadFactor = 0.4;
+				if (source.CountInv("BlunderShotUpgrade") >= 3) LeadFactor = 0.75;
+				
+				double temp = (1.00 - LeadFactor);
+				if (source.CountInv("PowerWineBuffIPMaximum")) LeadFactor += (temp * frandom(0.25,0.375));
+				else if (source.CountInv("PowerWineBuffIPStrongestEven")) LeadFactor += (temp * frandom(0.1875,0.25));
+				else if (source.CountInv("PowerWineBuffStrongestEven")) LeadFactor += (temp * frandom(0.1125,0.15));
+				else if (source.CountInv("PowerWineBuffIPStrongest")) LeadFactor += (temp * frandom(0.125,0.1875));
+				else if (source.CountInv("PowerWineBuffStrongest")) LeadFactor += (temp * frandom(0.075,0.1125));
+				else if (source.CountInv("PowerWineBuffIPStrong")) LeadFactor += (temp * frandom(0.0625,0.125));
+				else if (source.CountInv("PowerWineBuffStrong")) LeadFactor += (temp * frandom(0.0375,0.075));
+				else if (source.CountInv("PowerWineBuffIPWeak")) LeadFactor += (temp * frandom(0.0,0.0625));
+				else if (source.CountInv("PowerWineBuffWeak")) LeadFactor += (temp * frandom(0.0,0.0375));
+			}
+			if (mod == 'Lead') ActorDefenseIgnoreFactor += (LeadFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double CBombFactor = 0.125;
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("CBombUpgrade") == 1) CBombFactor = 0.25;
+				if (inflictor.CountInv("CBombUpgrade") == 2) CBombFactor = 0.425;
+				if (inflictor.CountInv("CBombUpgrade") >= 3) CBombFactor = 0.6125;
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("CBombUpgrade") == 1) CBombFactor = 0.25;
+				if (source.CountInv("CBombUpgrade") == 2) CBombFactor = 0.525;
+				if (source.CountInv("CBombUpgrade") >= 3) CBombFactor = 0.6125;
+			}
+			if (mod == 'CherryBomb') ActorDefenseIgnoreFactor += (CBombFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double SpinnerFactor = 0.25;
+			if (mod == 'Spinner') ActorDefenseIgnoreFactor += (SpinnerFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double BRocketFactor = 0.5;
+			if (mod == 'BRocket') ActorDefenseIgnoreFactor += (BRocketFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double PopperFactor = frandompick(0.125,0.25,0.5);
+			if (mod == 'Popper') ActorDefenseIgnoreFactor += (PopperFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("GrimophoneUpgrade") == 1) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.75);
+				if (inflictor.CountInv("GrimophoneUpgrade") == 2) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.125);
+				if (inflictor.CountInv("GrimophoneUpgrade") >= 3) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.625);
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("GrimophoneUpgrade") == 1) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.75);
+				if (source.CountInv("GrimophoneUpgrade") == 2) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.125);
+				if (source.CountInv("GrimophoneUpgrade") >= 3) BeatsFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.625);
+			}
+			if (BeatsFactor > 1.00) BeatsFactor = 1.00;
+			if (mod == 'Beats') ActorDefenseIgnoreFactor += (BeatsFactor * (1.00 - ActorDefenseIgnoreFactor));
+			double BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.5);
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("GrimophoneUpgrade") == 1) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.75);
+				if (inflictor.CountInv("GrimophoneUpgrade") == 2) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.125);
+				if (inflictor.CountInv("GrimophoneUpgrade") >= 3) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.625);
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("GrimophoneUpgrade") == 1) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 0.75);
+				if (source.CountInv("GrimophoneUpgrade") == 2) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.125);
+				if (source.CountInv("GrimophoneUpgrade") >= 3) BeatsAOEFactor = (frandompick(0.25,0.334,0.334,0.334,0.334,0.334,0.5) * 1.625);
+			}
+			if (BeatsAOEFactor > 1.00) BeatsAOEFactor = 1.00;
+			if (mod == 'Beats' && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double WhistleFactor = 0.75;
+			if (inflictor && PlayerWhistle(inflictor) || source && PlayerWhistle(source)) ActorDefenseIgnoreFactor += (WhistleFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double BarrelFactor = 0.50;
+			if (skill <= 0) BarrelFactor = 1.0;
+			if (skill == 1) BarrelFactor = 0.75;
+			if (skill == 2) BarrelFactor = 0.5;
+			if (skill == 3) BarrelFactor = 0.25;
+			if (skill >= 4) BarrelFactor = 0.0;
+			if ((ExplosiveBarrel(inflictor) || 
+					 ExplosiveBarrel(source) || 
+					 ExplosiveBarrel2(inflictor) || 
+					 ExplosiveBarrel2(source) || 
+					 Pod(inflictor) || 
+					 Pod(source)) && 
+					 flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BarrelFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double CandleFactor = 0.00;
+			if (MiscItem)
+			{
+				if (TruePlayerLevel >= 120) CandleFactor = ((random(5,15) * 0.025) + (TruePlayerLevel * (random(14,16) * 0.0035)));
+				else if (TruePlayerLevel >= 45) CandleFactor = ((random(1,10) * 0.02) + (TruePlayerLevel * (random(9,11) * 0.003)));
+				else CandleFactor = ((random(1,5) * 0.01) + (TruePlayerLevel * (random(3,5) * 0.0025)));
+				if (CandleFactor > 1.00) CandleFactor = 1.00;
+			}
+			if (CandlePuff(inflictor) || CandlePuff(source) || WhipPuff(inflictor) || WhipPuff(source)) ActorDefenseIgnoreFactor += (CandleFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double FCandleFactor = 0.00;
+			if (MiscItem)
+			{
+				if (TruePlayerLevel >= 120) FCandleFactor = ((random(5,15) * 0.125) + (TruePlayerLevel * (random(14,16) * 0.0175)));
+				else if (TruePlayerLevel >= 45) FCandleFactor = ((random(1,10) * 0.1) + (TruePlayerLevel * (random(9,11) * 0.015)));
+				else FCandleFactor = ((random(1,5) * 0.05) + (TruePlayerLevel * (random(3,5) * 0.0125)));
+				if (FCandleFactor > 1.00) FCandleFactor = 1.00;
+			}
+			if (CandleShot(inflictor) ||
+					CandleShotIP(inflictor) ||
+					CandleShotIcy(inflictor) ||
+					CandleShotIcyIP(inflictor) ||
+					CandleTrail(inflictor) ||
+					CandleTrailIP(inflictor) ||
+					CandleTrailIcy(inflictor) ||
+					CandleTrailIcyIP(inflictor)) ActorDefenseIgnoreFactor += (FCandleFactor * (1.00 - ActorDefenseIgnoreFactor));
+
+			double SuckFactor = 0.75;
+			if (HadesElemental(self) ||
+					HadesOverlord(self) ||
+					HadesSphere(self) ||
+					HSOverlord(self))
+			{
+				SuckFactor = 0.9375;
+				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.9375 + (TruePlayerLevel * 0.0046875);
+				else if (source && DDPlayerPawn(source)) SuckFactor = 0.9375 + (TruePlayerLevel * 0.0046875);
+			}
+			else
+			if (CacoDemon(self) ||
+					CacoDemonNew(self) ||
+					Cacolantern(self) ||
+					Abaddon(self))
+			{
+				SuckFactor = 0.375;
+				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.375 + (TruePlayerLevel * 0.00125);
+				else if (source && DDPlayerPawn(source)) SuckFactor = 0.375 + (TruePlayerLevel * 0.00125);
+			}
+			else
+			if (bBOSS) 
+			{
+				SuckFactor = 0.334;
+				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.334 + (TruePlayerLevel * 0.001112);
+				else if (source && DDPlayerPawn(source)) SuckFactor = 0.334 + (TruePlayerLevel * 0.001112);
+			}
+			else
+			{
+				SuckFactor = 0.75;
+				if (inflictor && DDPlayerPawn(inflictor)) SuckFactor = 0.75 + (TruePlayerLevel * 0.0025);
+				else if (source && DDPlayerPawn(source)) SuckFactor = 0.75 + (TruePlayerLevel * 0.0025);
+			}
+			if (inflictor && DDPlayerPawn(inflictor))
+			{
+				if (inflictor.CountInv("SuperVacUpgrade") == 1) SuckFactor *= 1.125;
+				if (inflictor.CountInv("SuperVacUpgrade") == 2) SuckFactor *= 1.25;
+				if (inflictor.CountInv("SuperVacUpgrade") >= 3) SuckFactor *= 1.375;
+				if (SuckFactor > 1.00) SuckFactor = 1.00;
+			}
+			else
+			if (source && DDPlayerPawn(source))
+			{
+				if (source.CountInv("SuperVacUpgrade") == 1) SuckFactor *= 1.125;
+				if (source.CountInv("SuperVacUpgrade") == 2) SuckFactor *= 1.25;
+				if (source.CountInv("SuperVacUpgrade") >= 3) SuckFactor *= 1.375;
+				if (SuckFactor > 1.00) SuckFactor = 1.00;
+			}
+			if (mod == 'Suck') 
+			{
+				if (CountInv("LDLegendaryMonsterTransformed")) SuckFactor = 1.00;
+				ActorDefenseIgnoreFactor += (SuckFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			
+			double PuddingFactor = 0.667;
+			if (PuddingDog(inflictor) || PuddingPup(inflictor) || PupGrenade(inflictor) || PuddingDog(source) || PuddingPup(source) || PupGrenade(source)) ActorDefenseIgnoreFactor += (PuddingFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double RailFactor = frandom(0.3,0.334);
+			if (mod == 'Railgun') ActorDefenseIgnoreFactor += (RailFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double AngelFactor = 0.00;
+			if ((source && PushyArchAngel(source)) || (inflictor && PushyArchAngel(inflictor)))
+			{
+				if (angvstype == 0) ActorDefenseIgnoreFactor += (frandom(0.000,0.250) * (1.00 - ActorDefenseIgnoreFactor));
+				if (angvstype == 1) ActorDefenseIgnoreFactor += (1.000 * (1.00 - ActorDefenseIgnoreFactor));
+				if (angvstype == 2) ActorDefenseIgnoreFactor += (0.500 * (1.00 - ActorDefenseIgnoreFactor));
+				if (angvstype == 3) ActorDefenseIgnoreFactor += (0.250 * (1.00 - ActorDefenseIgnoreFactor));
+				if (angvstype == 4) ActorDefenseIgnoreFactor += (0.750 * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			
+			if (bellefishzap)
+			{
+				if (CountInv("PowerNoDrown"))
+				{
+					if (waterlevel >= 2) ActorDefenseIgnoreFactor += (0.025 * (1.00 - ActorDefenseIgnoreFactor));
+													else ActorDefenseIgnoreFactor += (0.450 * (1.00 - ActorDefenseIgnoreFactor));
+				}
+				else ActorDefenseIgnoreFactor += (0.5 * (1.00 - ActorDefenseIgnoreFactor));
+			}
+				
+			if (BarrierBeam(inflictor) || BarrierBeam(source)) ActorDefenseIgnoreFactor += (frandom(0.9,1.0) * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double CricketFactor = 0.00;
+			if ((inflictor && DDPlayerPawn(inflictor)) ||
+					(source && DDPlayerPawn(source)))
+			{
+				double temp = (TruePlayerLevel * 0.005);
+				if (temp > 1.00) temp = 1.00;
+				CricketFactor += (temp * (1.00 - CricketFactor));
+			}
+			else
+			if ((inflictor && Hammerduck(inflictor)) ||
+					(source && Hammerduck(source)))
+			{
+				double temp = (CountInv("MonsterLevel") * 0.0025);
+				if (temp > 0.50) temp = 0.50;
+				CricketFactor += (temp * (1.00 - CricketFactor));
+			}
+			if (IPAtk && IPAtk.IPAttack) CricketFactor += (0.875 * (1.00 - CricketFactor));
+			ActorDefenseIgnoreFactor += (CricketFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			if (inflictor && 
+					(inflictor.GetClassName() == "SoulScepterPuff" ||
+					 inflictor.GetClassName() == "DualSoulScepterPuff" ||
+					 inflictor.GetClassName() == "SoulScepterPuff2" ||
+					 inflictor.GetClassName() == "SoulScepterPowerPuff" ||
+					 inflictor.GetClassName() == "DualSoulScepterPowerPuff"))
+			{
+				ActorDefenseIgnoreFactor += (0.50 * (1.00 - ActorDefenseIgnoreFactor));
+			}
+
+			double SpinAtkFactor = 0.8;
+			if (BatSpinPuff(inflictor) || BatSpinPuff(source) ||
+					BatSpinPuffIP(inflictor) || BatSpinPuffIP(source) ||
+					BatSpinPuffNoSound(inflictor) || BatSpinPuffNoSound(source) ||
+					BatSpinPuffNoSoundIP(inflictor) || BatSpinPuffNoSoundIP(source)) ActorDefenseIgnoreFactor += (SpinAtkFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double HWShieldFactor = 0.125;
+			if (EvilWarriorShieldBall(inflictor) || EvilWarriorShieldBall(source) ||
+					HellWarriorBall2(inflictor) || HellWarriorBall2(source)) ActorDefenseIgnoreFactor += (HWShieldFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			DDPlayerPawn FoundPlayer;
+			if (source) FoundPlayer = DDPlayerPawn(source);
+			if (!FoundPlayer && inflictor) FoundPlayer = DDPlayerPawn(inflictor);
+			if (FoundPlayer)
+			{
+				double EggFactor = 0.00;
+				if ((EggShot(inflictor) || EggShot(source))) EggFactor = 0.125;
+				if ((EggGrenade(inflictor) || EggGrenade(source))) EggFactor = 0.334;
+				if ((EggMini(inflictor) || EggMini(source))) EggFactor = 0.75;
+				if (EggFactor > 0.00) ActorDefenseIgnoreFactor += (EggFactor * (1.00 - ActorDefenseIgnoreFactor));
+				
+				double FoodFactor = 0.00;
+				IF (FoundPlayer.CountInv("PowerRoastBuff")) FoodFactor += 0.0625; // Pig Roast
+				IF (FoundPlayer.CountInv("PowerMealBuff")) FoodFactor += 0.25; // Gourmet Meal
+				IF (FoundPlayer.CountInv("PowerMeal2Buff")) FoodFactor += 0.0625; // Turkey Dinner
+				if (FoodFactor > 0.00) ActorDefenseIgnoreFactor += (FoodFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			else
+			{
+				EECreature OtherA;
+				OtherA = EECreature(source);
+				if (!OtherA) OtherA = EECreature(inflictor);
+				if (OtherA)
+				{
+					double EggFactor = 0.00;
+					if (!(EvilDinah(self) || EvilDinahEE(self)))
+					{
+						if ((EvilEggShot(inflictor) || EvilEggShot(source))) EggFactor = 0.125;
+						if ((EvilEggGrenade(inflictor) || EvilEggGrenade(source))) EggFactor = 0.334;
+						if ((EvilEggMini(inflictor) || EvilEggMini(source))) EggFactor = 0.75;
+					}
+					if (!(FractalChick(self) || FractalChicken(self) || FractalHen(self) ||
+								SpectralFractalChick(self) || SpectralFractalChicken(self) || SpectralFractalHen(self)))
+					{
+						if ((ChookEggShot(inflictor) || ChookEggShot(source))) EggFactor = 0.125;
+						if ((BigChookGrenade(inflictor) || BigChookGrenade(source))) EggFactor = 0.125;
+						if ((ChookEggGrenade(inflictor) || ChookEggGrenade(source))) EggFactor = 0.334;
+						if ((ChookGrenade(inflictor) || ChookGrenade(source))) EggFactor = 0.334;
+						if ((ChookEggMini(inflictor) || ChookEggMini(source))) EggFactor = 0.75;
+					}
+					if (EggFactor > 0.00) ActorDefenseIgnoreFactor += (EggFactor * (1.00 - ActorDefenseIgnoreFactor));
+				}
+			}
+			
+			if (source) FoundPlayer = DDPlayerPawn(source);
+			if (!FoundPlayer && inflictor) FoundPlayer = DDPlayerPawn(inflictor);
+			if (FoundPlayer)
+			{
+				if ((mod == 'Fist' || mod == 'Kick'))
+				{
+					if (player.CountInv("MAManual")) ActorDefenseIgnoreFactor += (frandom(0.20,0.80) * (1.00 - ActorDefenseIgnoreFactor));
+					if (player.CountInv("ClassyRibbon")) ActorDefenseIgnoreFactor += (frandom(0.04,0.20) * (1.00 - ActorDefenseIgnoreFactor));
+					if (player.CountInv("ExpeditionHat")) ActorDefenseIgnoreFactor += (frandom(0.01,0.05) * (1.00 - ActorDefenseIgnoreFactor));
+					ActorDefenseIgnoreFactor += (frandom(0.001,0.100) * (1.00 - ActorDefenseIgnoreFactor));
+				}
+				if (mod == 'Dashing') 
+				{
+					if (player.CountInv("ClassyRibbon")) ActorDefenseIgnoreFactor += (0.5 * (1.00 - ActorDefenseIgnoreFactor));
+																					else ActorDefenseIgnoreFactor += (0.2 * (1.00 - ActorDefenseIgnoreFactor));
+				}
+				if (mod == 'DashingBG')
+				{
+					if (player.CountInv("ClassyRibbon")) ActorDefenseIgnoreFactor += (0.9375 * (1.00 - ActorDefenseIgnoreFactor));
+																					else ActorDefenseIgnoreFactor += (0.375 * (1.00 - ActorDefenseIgnoreFactor));
+				}
+				if (mod == 'DashingSD') 
+				{
+					if (player.CountInv("ClassyRibbon")) ActorDefenseIgnoreFactor += (0.9375 * (1.00 - ActorDefenseIgnoreFactor));
+																					else ActorDefenseIgnoreFactor += (0.375 * (1.00 - ActorDefenseIgnoreFactor));
+				}
+			}
+			
+			if (mod == 'Massacre') ActorDefenseIgnoreFactor += (1.00 * (1.00 - ActorDefenseIgnoreFactor));
+			
+			if (surprisehit) 
+			{
+				nm = "SonicNail";
+				if (inflictor && inflictor.GetClassName() == nm)
+				{
+					ActorDefenseIgnoreFactor += ((random(30,32) * 0.03125) * (1.00 - ActorDefenseIgnoreFactor));
+				}
+				else
+				{
+					ActorDefenseIgnoreFactor += ((random(6,8) * 0.125) * (1.00 - ActorDefenseIgnoreFactor));
+				}
+			}
+			
+			if (CountInv("PWDefenseBuff") > 0) ActorDefenseIgnoreFactor *= 0.25;
+		}
+
+		return prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor;
+	}
+	
 	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
 	{
 		let globalvars = DDGlobalVariables.Get();
@@ -3994,6 +4464,11 @@ class CompatVulnItem : PlaceholderItem
 			ownername = owner.GetClassName();
 			if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 			{
+				int angvstype;
+				bool surprisehit;
+				bool wasblastedimpact;
+				bool bellefishzap;
+
 				DDPlayerPawn FoundPlayer;
 				FoundPlayer = DDPlayerPawn(source);
 
@@ -4193,7 +4668,7 @@ class CompatVulnItem : PlaceholderItem
 					if (damageType == 'DashingSD' && newdamage > 0) owner.A_SetInventory("JustShieldDashed",1);
 				}
 				//
-				bool wasblastedimpact = false;
+				wasblastedimpact = false;
 				if (inflictor == null && source == null && damageType == 'Melee') 
 				{
 					wasblastedimpact = true;
@@ -4209,6 +4684,38 @@ class CompatVulnItem : PlaceholderItem
 					if (owner.vel.x != 0.0) owner.vel.x *= 0.1;
 					if (owner.vel.y != 0.0) owner.vel.y *= 0.1;
 					if (dydudebug_actordmgdisplays && wasblastedimpact) Console.Printf("(\c[green]%s\c-) (\czwasblastedimpact?: %d", owner.GetClassName(), wasblastedimpact);
+				}
+				
+				int predmginr = newdamage;
+				// (Partial) Defense Ignoring Attacks
+				double prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor;
+				[prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor] = A_DefenseIgnoreFactor(inflictor, source, damage, damagetype, flags, angle, wasblastedimpact, bellefishzap, surprisehit, angvstype);
+				if (kcdebug_actordmgdisplays) Console.Printf("ActorDefenseIgnoreFactor: %.8f", ActorDefenseIgnoreFactor);
+
+				// Defense Checks
+
+				//******************************
+				//*This ignores damage factors *
+				//******************************
+				if (ActorDefenseIgnoreFactor > 1.00) ActorDefenseIgnoreFactor = 1.00;
+				prevDamageFactor = owner.DamageFactor;
+				if (owner.DamageFactor < 1.00) 
+				{
+					if (criticalhit) ActorDefenseIgnoreFactor = 1.00;
+					if (ActorDefenseIgnoreFactor > 0.00)
+					{
+						int predmg = newdamage;
+						double newdmgfct = (prevDamageFactor + ((1.00 - prevDamageFactor) * ActorDefenseIgnoreFactor));
+						double dmgmul = double(newdmgfct / prevDamageFactor);
+						newdamage *= dmgmul;
+						//owner.DamageFactor += ((1.00 - owner.DamageFactor) * ActorDefenseIgnoreFactor); 
+						if (dydudebug_actordmgdisplays && damage > 0)
+						{
+							Console.Printf("newdmgfct: %.8f, prevDamageFactor: %.8f, dmgmul: %.8f (predmg: %d vs damage: %d)", newdmgfct, prevDamageFactor, dmgmul, predmg, damage);
+							if (ActorDefenseIgnoreFactor > 0.00) Console.Printf("    (\czActor Defensive Input [Def Ignoring]\c-: \caDefenseIgnoreFactor = %.8f\c-, \cadmgfactor = %.8f\c-, \caprevdmgfactor = %.8f\c-, \cypredmg = %d\c-, \cydmg = %d\c- (Monster Actor))", ActorDefenseIgnoreFactor, owner.DamageFactor, prevDamageFactor, predmg, newdamage);
+																							else Console.Printf("    (\czActor Defensive Input [Def Ignoring]\c-: \caSKIPPED\c-, \cydmg = %d\c-)", predmg);
+						}
+					}
 				}
 			}
 		}
