@@ -2194,7 +2194,7 @@ class Beastball2 : BeastBallNew
 	}
 }
 
-class MummyNew : EECreature replaces Mummy
+class MummyNew : EECreature // replaces Mummy
 {
 	default
 	{
@@ -2319,7 +2319,7 @@ class MummyNew : EECreature replaces Mummy
 			Goto See;
 	}
 }
-class MummyGhostNew : MummyNew replaces MummyGhost
+class MummyGhostNew : MummyNew // replaces MummyGhost
 {
 	default
 	{
@@ -2360,7 +2360,7 @@ class MummyGhostNew : MummyNew replaces MummyGhost
 		Painchance "Beats", 128;
 	}
 }
-class MummyLeaderNew : EECreature replaces MummyLeader
+class MummyLeaderNew : EECreature // replaces MummyLeader
 {
 	default
 	{
@@ -2529,7 +2529,7 @@ class MummyLeaderNew : EECreature replaces MummyLeader
 			Goto See;
 	}
 }
-class MummyLeaderGhostNew : MummyLeaderNew replaces MummyLeaderGhost
+class MummyLeaderGhostNew : MummyLeaderNew // replaces MummyLeaderGhost
 {
 	default
 	{
@@ -2601,6 +2601,592 @@ class MummyFX1New : EEProjectile replaces MummyFX1
 			Stop;
 	}
 }
+
+// Ice Golem
+class IceGolem : EECreature
+{
+	int user_HalfMaxHP;
+	int user_regenchance;
+	int user_regenchanceextra;
+	default
+	{
+		Tag "Ice Golem";
+		Health 450;
+		Radius 26; // 22;
+		Height 75; // 62;
+		Mass 900;
+		Speed 16;
+		Painchance 32;
+		Painchance "Fire", 56; // Fire attacks have a +80% chance of stunning an enemy
+		Painchance "Ice", 0; // Ice can't stun Ice Golems
+		Painchance "Fist", 48; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 80; // Kick attacks have a +150% chance of stunning an enemy
+		Painchance "Gauntlets", 48; // Fist attacks have a +50% chance of stunning an enemy
+		DamageFactor 0.925;
+		RadiusDamageFactor 0.578125;
+		DamageFactor "Explosion", 0.578125;
+		DamageFactor "Crush", 0.7;
+		DamageFactor "Fire", 1.8;
+		DamageFactor "Ice", 0.0;
+		Monster;
+		+FLOORCLIP;
+		+NOBLOOD;
+		+DONTHARMSPECIES;
+		RenderStyle "Translucent";
+		Alpha 0.8;
+		Scale 1.2;
+		SeeSound "mummy/sight";
+		AttackSound "mummy/attack1";
+		PainSound "mummy/pain";
+		ActiveSound "mummy/active";
+		HitObituary "%o was bludgeoned by an ice golem";
+		Species "Golem";
+	}
+	
+	States
+	{
+		Spawn:
+			IGLM A 0 NoDelay;
+			IGLM AB 10 A_Look();
+			goto Spawn+1;
+		See:
+			TNT1 A 0;
+			IGLM ABCD 5
+			{
+				user_HalfMaxHP = user_MaxHP / 2;
+				if (health <= user_HPCritRange) { user_regenchance = 32; }
+				else if (health <= user_HPLowRange) { user_regenchance = 8; }
+				else if (health <= user_HalfMaxHP) { user_regenchance = 4; }
+				else if (health <= user_MaxHP) { user_regenchance = 2; }
+				if (exex_monsterlevelenabledflags)
+				{
+					user_regenchanceextra = user_regenchance / 4;
+					user_regenchanceextra = (user_regenchanceextra * CountInv("MonsterLevel")) / 22.5;
+
+					user_regenchance += user_regenchanceextra;
+					//A_LogInt(user_regenchance);
+					//A_LogInt(user_regenchanceextra);
+				}
+
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { bAVOIDMELEE = true; }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(22,23)) { A_SetTics(4); }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+				
+
+				if (random(1,256) <= user_regenchance && health < user_MaxHP) { return resolvestate("RegenerateStart"); }
+				return resolvestate(null);
+			}
+			Loop;
+		Melee:
+			IGLM E 0 A_DynamicMusic();
+			IGLM E 0 A_Jump(128, "Melee2");
+			IGLM E 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			IGLM F 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(Random(15,27)*3, "mummy/attack2", "mummy/attack");
+			}
+			IGLM G 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			Goto See;
+		Melee2:
+			IGLM E 0 A_DynamicMusic();
+			IGLM H 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			IGLM I 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(Random(15,27)*3, "mummy/attack2", "mummy/attack");
+			}
+			IGLM J 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			Goto See;
+		RegenerateStart:
+			IGLM K 10
+			{
+				user_regencyclemax = 10;
+				A_StartSound("misc/freeze",CHAN_WEAPON);
+				bCANTSEEK = true;
+				bNOPAIN = true;
+				bDONTTHRUST = true;
+				A_GiveInventory("IceGolemArmor",1);
+			}
+		Regenerate:
+			IGLM K 0 
+			{ 
+				if (health < user_MaxHP) 
+				{ 
+					A_EEHealThing((user_MaxHP/random(18,22)),user_MaxHP);
+					//A_Print("23r2");
+					user_regencycles += 1; 
+				} 
+				else 
+				{ 
+					return resolvestate("RegenerateEnd"); 
+				} 
+				return resolvestate(null); 
+			}
+			IGLM KKKKKKKKKK 1 A_SpawnItemEx("IceGolemParticleA", Random(24, 32), 0, 4, 0, 0, (Random(20, 35)*0.1), Random(0, 360), 128);
+		RegenerateCheck:
+			IGLM K 0
+			{
+				if (user_regencycles < user_regencyclemax) { return resolvestate("Regenerate"); }
+				if (health < user_MaxHP)
+				{
+					if (random(1,8) == 1) { user_regencycles = 0; return resolvestate("Regenerate"); }
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+		RegenerateEnd:
+			IGLM K 0
+			{
+				user_regencycles = 0;
+				user_regencyclemax = 0;
+				bCANTSEEK = false;
+				bNOPAIN = false;
+				bDONTTHRUST = false;
+				A_SetInventory("IceGolemArmor",0);
+			}
+			Goto See;
+		Pain:
+			IGLM L 4;
+			IGLM L 4 A_EEPain();
+			Goto See;
+		Pain.Fist:
+			IGLM L 4;
+			IGLM L 4 A_EEPain();
+			IGLM LL 4;
+			Goto See;
+		Pain.Kick:
+			IGLM L 4;
+			IGLM L 4 A_EEPain();
+			IGLM LLLL 4;
+			Goto See;
+		Pain.Fire:
+			IGLM L 4;
+			IGLM L 4 A_EEPain();
+			IGLM L 4;
+			Goto See;
+		Death:
+			IGLM L 12;
+			IGLM L 0 A_SetTranslucent(1.0, 0);
+			IGLM L 1 A_IceGuyDie();
+			Stop;
+	}
+}
+class IceGolemGhost : IceGolem
+{
+	default
+	{
+		Tag "Ice Golem (Ghost)";
+		+SHADOW;
+		+GHOST;
+		RenderStyle "Translucent";
+		Alpha 0.32;
+		DamageFactor "Eldritch", 0.4;
+	}
+}
+
+// Frost Golem [ranged Ice Golem]
+class FrostGolem : IceGolem
+{
+	int user_randvar1;
+	default
+	{
+		Tag "Frost Golem";
+		Health 540;
+		Radius 26; // 22;
+		Height 75; // 62;
+		Mass 900;
+		Speed 16;
+		Painchance 32;
+		Painchance "Fire", 44; // Fire attacks have a +80% chance of stunning an enemy
+		Painchance "Ice", 0; // Ice can't stun Ice Golems
+		Painchance "Fist", 48; // Fist attacks have a +50% chance of stunning an enemy
+		Painchance "Kick", 80; // Kick attacks have a +150% chance of stunning an enemy
+		Painchance "Gauntlets", 48; // Fist attacks have a +50% chance of stunning an enemy
+
+		DamageFactor 0.85;
+		DamageFactor "Explosive", 0.53125;
+		RadiusDamageFactor 0.53125;
+		DamageFactor "Crush", 0.7;
+		DamageFactor "Fire", 1.4;
+		DamageFactor "Ice", 0.0;
+		Monster;
+		+FLOORCLIP;
+		+NOBLOOD;
+		+DONTHARMSPECIES;
+		RenderStyle "Translucent";
+		Alpha 0.8;
+		Scale 1.2;
+		SeeSound "mummy/sight";
+		AttackSound "mummy/attack1";
+		PainSound "mummy/pain";
+		ActiveSound "mummy/active";
+		Obituary "%o was iced over by an frost golem";
+		HitObituary "%o was bludgeoned by an frost golem";
+		Species "Golem";
+	}
+	
+	States
+	{
+		Spawn:
+			IGLM A 0 NoDelay;
+			IGLM AB 10 A_Look();
+			goto Spawn+1;
+		See:
+			TNT1 A 0;
+			IGLM ABCD 5
+			{
+				user_HalfMaxHP = user_MaxHP / 2;
+				if (health <= user_HPCritRange) { user_regenchance = 40; }
+				else if (health <= user_HPLowRange) { user_regenchance = 10; }
+				else if (health <= user_HalfMaxHP) { user_regenchance = 5; }
+				else if (health <= user_MaxHP) { user_regenchance = random(2,3); }
+				if (exex_monsterlevelenabledflags)
+				{
+					user_regenchanceextra = user_regenchance * 6 / 20;
+					user_regenchanceextra = (user_regenchanceextra * CountInv("MonsterLevel")) / 18;
+
+					user_regenchance += user_regenchanceextra;
+					//A_LogInt(user_regenchance);
+					//A_LogInt(user_regenchanceextra);
+				}
+
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { bAVOIDMELEE = true; }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(22,23)) { A_SetTics(4); }
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+				A_EEChase("Melee","Missile",0,1,3,1,1);
+				
+
+				if (random(1,256) <= user_regenchance && health < user_MaxHP) { return resolvestate("RegenerateStart");  }
+				return resolvestate(null);
+			}
+			Loop;
+		Melee:
+			IGLM E 0 A_DynamicMusic();
+			IGLM E 0 A_Jump(128, "Melee2");
+			IGLM E 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			IGLM F 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(Random(15,27)*3, "mummy/attack2", "mummy/attack");
+			}
+			IGLM G 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			Goto See;
+		Melee2:
+			IGLM E 0 A_DynamicMusic();
+			IGLM H 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			IGLM I 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+				
+				A_CustomMeleeAttack(Random(15,27)*3, "mummy/attack2", "mummy/attack");
+			}
+			IGLM J 6
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 75) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > random(37,38)) { A_SetTics(5); }
+				A_FaceTarget();
+			}
+			Goto See;
+		Missile:
+			IGLM E 0 A_DynamicMusic();
+			IGLM K 3
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(1); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(2); }
+				A_FaceTarget();
+			}
+			IGLM K 8
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SetTics(4); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(5); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SetTics(6); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 30) { A_SetTics(7); }
+
+				user_randvar1 = random(3,9) * 2;
+				A_StartSound("IceGuyAttack");
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SpawnProjectile("IceGuyFX3New", 48, ((user_randvar1*4)/2), 0, 1); }
+				A_SpawnProjectile("IceGuyFX3New", 48, user_randvar1, 0, 1);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 60) { A_SpawnProjectile("IceGuyFX3New", 48, 0, 0, 1); }
+				A_SpawnProjectile("IceGuyFX3New", 48, -user_randvar1, 0, 1);
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 120) { A_SpawnProjectile("IceGuyFX3New", 48, ((-user_randvar1*4)/2), 0, 1); }
+			}
+			IGLM K 4
+			{
+				if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 90) { A_SetTics(2); }
+				else if (exex_monsterlevelenabledflags && CountInv("MonsterLevel") > 45) { A_SetTics(3); }
+				A_FaceTarget();
+			}
+			Goto See;
+		RegenerateStart:
+			IGLM K 10
+			{
+				user_regencyclemax = 10;
+				A_StartSound("misc/freeze",CHAN_WEAPON);
+				bCANTSEEK = true;
+				bNOPAIN = true;
+				bDONTTHRUST = true;
+				A_GiveInventory("IceGolemArmor",1);
+			}
+		Regenerate:
+			IGLM K 0 
+			{ 
+				if (health < user_MaxHP) 
+				{ 
+					A_EEHealThing((user_MaxHP/random(18,22)),user_MaxHP);
+					//A_Print("23r2");
+					user_regencycles += 1; 
+				} 
+				else 
+				{ 
+					return resolvestate("RegenerateEnd"); 
+				} 
+				return resolvestate(null); 
+			}
+			IGLM KKKKKKKKKK 1 A_SpawnItemEx("IceGolemParticleA", Random(24, 32), 0, 4, 0, 0, (Random(20, 35)*0.1), Random(0, 360), 128);
+		RegenerateCheck:
+			IGLM K 0
+			{
+				if (user_regencycles < user_regencyclemax) { return resolvestate("Regenerate"); }
+				if (health < user_MaxHP)
+				{
+					if (random(1,8) == 1) { user_regencycles = 0; return resolvestate("Regenerate"); }
+					return resolvestate(null);
+				}
+				return resolvestate(null);
+			}
+		RegenerateEnd:
+			IGLM K 0
+			{
+				user_regencycles = 0;
+				user_regencyclemax = 0;
+				bCANTSEEK = false;
+				bNOPAIN = false;
+				bDONTTHRUST = false;
+				A_SetInventory("IceGolemArmor",0);
+			}
+			Goto See;
+		Pain:
+			IGLM L 4;
+			IGLM L 4 A_EEPain();
+			Goto See;
+		Pain.Fist:
+			IGLM L 4;
+			IGLM L 4 A_EEPain();
+			IGLM LL 4;
+			Goto See;
+		Pain.Kick:
+			IGLM L 4;
+			IGLM L 4 A_EEPain();
+			IGLM LLLL 4;
+			Goto See;
+		Pain.Fire:
+			IGLM L 4;
+			IGLM L 4 A_EEPain();
+			IGLM L 4;
+			Goto See;
+		Death:
+			IGLM L 12;
+			IGLM L 0 A_SetTranslucent(1.0, 0);
+			IGLM L 1 A_IceGuyDie();
+			Stop;
+	}
+}
+class FrostGolemGhost : FrostGolem
+{
+	default
+	{
+		Tag "Frost Golem (Ghost)";
+		+SHADOW;
+		+GHOST;
+		RenderStyle "Translucent";
+		Alpha 0.32;
+		DamageFactor "Eldritch", 0.4;
+	}
+}
+
+// Various Raven Enemies
+class IceGuyFX3New : EEEffectProjectile
+{
+	default
+	{
+		Tag "Spiked Ice Ball";
+		DamageFunction (3 * random(1,8));
+		Speed 14;
+		Radius 8;
+		Height 10;
+		DamageType "Ice";
+		Projectile;
+		-ACTIVATEIMPACT;
+		-ACTIVATEPCROSS;
+		DeathSound "IceGuyMissileExplode";
+	}
+
+	States
+	{
+		Spawn:
+			ICPR ABC 3 Bright 
+			{
+				A_SpawnItemEx("IceFXPuff", 0, 0, 2);
+			}
+			Loop;
+		Death:
+			TNT1 A 0 Bright
+			{
+				actor player = players[0].mo;
+				if (master == player) 
+				{
+					A_StatusEffectChecker(16);
+					if (random(1,user_ailmentmaxchance) <= 3 && user_canafflict)
+					{
+						A_InflictSlow(random(70,105),401);
+					}
+				}
+			}
+		Death2:
+			ICPR D 4 Bright;
+			ICPR E 4 Bright A_IceGuyMissileExplode("IceGuyFX4New",16,-0.15);
+			ICPR FG 4 Bright;
+			ICPR H 3 Bright;
+			Stop;
+	}
+}
+class IceGuyFX4New : EEEffectProjectile
+{
+	default
+	{
+		Tag "Spiked Ice Shard";
+		DamageFunction (random(2,3) * random(1,8));
+		Speed 10;
+		Radius 4;
+		Height 4;
+		DamageType "Ice";
+		Gravity 0.125;
+		+NOBLOCKMAP;
+		+DROPOFF;
+		+MISSILE;
+		+NOTELEPORT;
+		+STRIFEDAMAGE;
+	}
+	
+	States
+	{
+		Spawn:
+			ICPR NOP 3 Bright
+			{
+			}
+			Loop;
+		Death:
+			TNT1 A 0 Bright
+			{
+				actor player = players[0].mo;
+				if (master == player) 
+				{
+					A_StatusEffectChecker(32);
+					if (random(1,user_ailmentmaxchance) <= 3 && user_canafflict)
+					{
+						A_InflictSlow(random(35,52),401);
+					}
+				}
+			}
+		Death2:
+			TNT1 A 0 Bright;
+			Stop;
+	}
+}
+
+class IceGolemArmor : PowerProtection
+{
+	default
+	{
+		damageFactor "normal", 0.01;
+		inventory.icon "";
+		Powerup.Duration 2147483646;
+	}
+}
+
+class IceGolemParticleA : EEBaseZSC
+{
+	default
+	{
+		Height 0;
+		Radius 0;
+		Mass 0;
+		+Missile;
+		+NoBlockMap;
+		+NoGravity;
+		+DontSplash;
+		+NoClip;
+		RenderStyle "Add";
+		Scale 0.0275;
+	}
+	
+	States
+	{
+		Spawn:
+			IGLP A 0 A_SpawnItemEx("IceGolemParticleTrail", -(Vel.X*1.2), -(Vel.Y*1.2), (Vel.Z*-1.2), (Vel.X*0.8), (Vel.Y*0.8), (Vel.Z*0.8), -Angle, 138);
+			IGLP A 1 A_FadeOut(0.065);
+			Loop;
+	}
+}
+
+class IceGolemParticleTrail : IceGolemParticleA
+{
+	States
+	{
+		Spawn:
+			IGLP A 1 A_FadeOut(0.075);
+			Loop;
+	}
+}
+
 
 class KnightNew : EECreature replaces Knight
 {
