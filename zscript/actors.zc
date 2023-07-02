@@ -7650,6 +7650,109 @@ class EECreature : EEBaseZSC abstract
 		A_Explode(expdmg, exprad, expflags, damagetype: type);
 	}	
 	
+	// Inquisitor
+	void A_InquisitorWalk(statelabel melee = '_a_chase_default', statelabel missile = '_a_chase_default', int flags = 0, int type = 0, int value1 = 0, int value2 = 0, int value3 = 0, int value4 = 0, int value5 = 0, int value6 = 0)
+	{
+		A_StartSound("inquisitor/walk", CHAN_BODY);
+		A_Chase(melee,missile,flags);
+	}
+
+	private bool InquisitorCheckDistance ()
+	{
+		if (reactiontime == 0 && CheckSight (target))
+		{
+			return Distance2D (target) < 264.;
+		}
+		return false;
+	}
+
+	void A_InquisitorDecide ()
+	{
+		if (target == null)
+			return;
+
+		A_FaceTarget ();
+		if (!InquisitorCheckDistance ())
+		{
+			SetStateLabel("Grenade");
+		}
+		if (target.pos.z != pos.z)
+		{
+			if (pos.z + height + 54 < ceilingz)
+			{
+				SetStateLabel("Jump");
+			}
+		}
+	}
+
+	void A_InquisitorAttack (string missiletype = "InquisitorShot")
+	{
+		string atktype = missiletype;
+		if (target == null)
+			return;
+
+		A_FaceTarget ();
+
+		AddZ(32);
+		angle -= 45./32;
+		Actor proj = SpawnMissileZAimed (pos.z, target, atktype);
+		if (proj != null)
+		{
+			proj.Vel.Z += 9;
+		}
+		angle += 45./16;
+		proj = SpawnMissileZAimed (pos.z, target, atktype);
+		if (proj != null)
+		{
+			proj.Vel.Z += 16;
+		}
+		AddZ(-32);
+	}
+
+	void A_InquisitorJump ()
+	{
+		if (target == null)
+			return;
+
+		A_StartSound ("inquisitor/jump", CHAN_ITEM, 1, true);
+		AddZ(64);
+		A_FaceTarget ();
+		let localspeed = Speed * (2./3);
+		VelFromAngle(localspeed);
+		double dist = DistanceBySpeed(target, localspeed);
+		Vel.Z = (target.pos.z - pos.z) / dist;
+		reactiontime = 60;
+		bNoGravity = true;
+	}
+
+	void A_InquisitorCheckLand ()
+	{
+		reactiontime--;
+		if (reactiontime < 0 ||
+			Vel.X == 0 ||
+			Vel.Y == 0 ||
+			pos.z <= floorz)
+		{
+			SetState (SeeState);
+			reactiontime = 0;
+			bNoGravity = false;
+			A_StopSound (CHAN_ITEM);
+			return;
+		}
+		A_StartSound ("inquisitor/jump", CHAN_ITEM, 1, true);
+	}
+
+	void A_TossArm()
+	{
+		Actor foo = Spawn("InquisitorArm", Pos + (0,0,24), ALLOW_REPLACE);
+		if (foo != null)
+		{
+			foo.angle = angle - 90. + Random2[Inquisitor]() * (360./1024.);
+			foo.VelFromAngle(foo.Speed / 8);
+			foo.Vel.Z = random[Inquisitor]() / 64.;
+		}
+	}
+	
 	void A_GiveGold(int basegold)
 	{
 		actor player = players[0].mo;
