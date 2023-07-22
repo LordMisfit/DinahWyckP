@@ -13,6 +13,7 @@ class DDMonsterSpawner : RandomSpawner2 abstract
 	PlayerStatItem MiscItem;
 	DDGlobalVariables globalvars;
 	int MapsFinished;
+	bool gotd1;
 
 	// This function is needed for handling boss replacers 
 	// [also this is to try to fix the problem of INSTANT effects on the death of spawned "boss" monsters in maps like E2M8/E3M8 so you can try to pick up the bosses' drops before the level ends]
@@ -149,6 +150,23 @@ class DDMonsterSpawner : RandomSpawner2 abstract
 		bool UOHYM = false;
 		if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1) UOHYM = true;
 		return UOHYM;
+	}
+	
+	bool IsDoom1()
+	{
+		bool Doom1 = false;
+		if (Wads.CheckNumForName("EE-DOOM1", Wads.ns_global, -1, true) != -1) Doom1 = true;
+		if (dydudebug_monsterspawns) Console.Printf("Doom1: %d", Doom1);
+		return Doom1;
+	}
+	
+	protected void A_DebugPrintOut(string classname, bool Doom1)
+	{
+		if (dydudebug_monsterspawns) 
+		{
+			if (Doom1) Console.Printf("(Doom1 Mode) \c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+						else Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		}
 	}
 	
 	// Tries to filter the DD monsters based on their origin game, if the filters are set specifically. V:
@@ -361,145 +379,209 @@ class ZombiemanSpawner : DDMonsterSpawner replaces Zombieman
 		if (CheckUOHYM()) return result;
 		bool spawndoomtype;
 		
-		if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom && exex_ddmonstertypes > 0)
+		if (IsDoom1())
 		{
 			spawndoomtype = false;
 			bool success;
 			bool success2;
 			int numtimes;
 			
-			while(!success && !success2)
+			if (random(1,4096) <= 1) 
 			{
-				if (random(1,1024) <= 1) 
+				classname = "ArchvileSpawner";
+				if (CanFitHere(classname)) 
 				{
-					classname = "EvilDinahEE";
+					result = classname;
+					gotd1 = true;
 				}
-				else
-				if (random(1,256) <= 1) 
+			}
+			else
+			if (random(1,1024) <= 1) 
+			{
+				int randvar = random(1,3);
+				if (randvar <= 1) classname = "MancubusSpawner";
+				if (randvar == 2) classname = "HellKnightSpawner";
+				if (randvar >= 3) classname = "ArachnotronSpawner";
+				if (CanFitHere(classname)) 
 				{
-					if (random(1,256) <= 1) classname = "PushyArchAngel";
-														 else classname = "PushyAngel";
-				}
-				else
-				if (random(1,32) <= 1) 
-				{
-					if (random(1,8) <= 1) classname = "ManchineelEE_Ceiling";
-													 else classname = "ManchineelEE";
-				}
-				else
-				if (random(1,32) <= 1) 
-				{
-					if (random(1,8) <= 1) classname = "FractalChicken";
-													else classname = "FractalChick";
-				}
-				else
-				if (random(1,48) <= 1) 
-				{
-					if (random(1,16) <= 1) classname = "CremeDeBratte_Torched";
-														else classname = "CremeDeBratte";
-				}
-				else
-				if (random(1,64) <= 1) 
-				{
-					classname = "Forsaken";
+					result = classname;
+					gotd1 = true;
 				}
 				else
 				{
-					if (random(1,8) <= 7) classname = "Hammerduck";
+					// Defaults to a Hell Knight due to it being the most likely thing to fit in the same space
+					classname = "HellKnightSpawner";
+					if (CanFitHere(classname)) 
+					{
+						result = classname;
+						gotd1 = true;
+					}
+				}
+			}
+			else
+			if (random(1,256) <= 1) 
+			{
+				classname = "RevenantSpawner";
+				if (CanFitHere(classname)) 
+				{
+					result = classname;
+					gotd1 = true;
+				}
+			}
+			else
+			if (random(1,32) <= 1) 
+			{
+				classname = "ChaingunGuySpawner";
+				if (CanFitHere(classname)) 
+				{
+					result = classname;
+					gotd1 = true;
+				}
+			}
+		}
+		
+		if (!gotd1)
+		{
+			if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom && exex_ddmonstertypes > 0)
+			{
+				spawndoomtype = false;
+				bool success;
+				bool success2;
+				int numtimes;
+				
+				while(!success && !success2)
+				{
+					if (random(1,1024) <= 1) 
+					{
+						classname = "EvilDinahEE";
+					}
+					else
+					if (random(1,256) <= 1) 
+					{
+						if (random(1,256) <= 1) classname = "PushyArchAngel";
+															 else classname = "PushyAngel";
+					}
+					else
+					if (random(1,32) <= 1) 
+					{
+						if (random(1,8) <= 1) classname = "ManchineelEE_Ceiling";
+														 else classname = "ManchineelEE";
+					}
+					else
+					if (random(1,32) <= 1) 
+					{
+						if (random(1,8) <= 1) classname = "FractalChicken";
+														else classname = "FractalChick";
+					}
+					else
+					if (random(1,48) <= 1) 
+					{
+						if (random(1,16) <= 1) classname = "CremeDeBratte_Torched";
+															else classname = "CremeDeBratte";
+					}
+					else
+					if (random(1,64) <= 1) 
+					{
+						classname = "Forsaken";
+					}
 					else
 					{
-						if (random(1,8) <= 2) classname = "Reaper";
+						if (random(1,8) <= 7) classname = "Hammerduck";
 						else
 						{
-							classname = "PlanterBird";
-							if (random(1,4) == 1) classname = "Planter";
+							if (random(1,8) <= 2) classname = "Reaper";
+							else
+							{
+								classname = "PlanterBird";
+								if (random(1,4) == 1) classname = "Planter";
+							}
+						}
+					}
+					success = CheckDDActorType(classname,numtimes);
+					if (success)
+					{
+						if (CanFitHereDD(classname)) 
+						{
+							result = classname;
+							success2 = true;
+							if (dydudebug_monsterspawns) Console.Printf("\c[sapphire]classname %s fits [attempt #%d]", classname, numtimes);
+						}
+					}
+					if (dydudebug_monsterspawns) Console.Printf("[%s], success: %d, success2: %d", classname, success, success2);
+					numtimes++;
+					if (numtimes >= 64)
+					{
+						if (exex_ddafdmonsterschance >= 512)
+						{
+							if (dydudebug_monsterspawns) Console.Printf("\c[red]Forced a DD Spawn that might not fit due to DD chance being 512+");
+							result = classname;
+							spawndoomtype = false;
+							break;
+						}
+						else
+						{
+							if (dydudebug_monsterspawns) Console.Printf("\c[red]Could Not Spawn DD-Type Enemy after 64 attempts, breaking script to not lock up the game. V:");
+							spawndoomtype = true;
+							break;
 						}
 					}
 				}
-				success = CheckDDActorType(classname,numtimes);
-				if (success)
+			}
+			else spawndoomtype = true;
+			
+			evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
+			if (exex_monsterevolutions && spawndoomtype)
+			{
+				if (random(1,256) <= 4)
 				{
-					if (CanFitHereDD(classname)) 
-					{
-						result = classname;
-						success2 = true;
-						if (dydudebug_monsterspawns) Console.Printf("\c[sapphire]classname %s fits [attempt #%d]", classname, numtimes);
-					}
+					classname = "ShotgunGuySpawner";
+					if (CanFitHere(classname)) result = classname;
 				}
-				if (dydudebug_monsterspawns) Console.Printf("[%s], success: %d, success2: %d", classname, success, success2);
-				numtimes++;
-				if (numtimes >= 64)
+				else
+				if (random(1,256) <= 8)
 				{
-					if (exex_ddafdmonsterschance >= 512)
-					{
-						if (dydudebug_monsterspawns) Console.Printf("\c[red]Forced a DD Spawn that might not fit due to DD chance being 512+");
-						result = classname;
-						spawndoomtype = false;
-						break;
-					}
+					classname = "SuicideBomber";
+					if (CanFitHere(classname)) result = classname;
+				}
+				else 
+				if (random(1,256) <= 8)
+				{
+					classname = "HellClericDVDS";
+					if (CanFitHere(classname)) result = classname;
+				}
+				else
+				if (random(1,256) <= evolvechance)
+				{
+					if (random(1,2) <= 1) classname = "RocketLauncherGuy";
 					else
 					{
-						if (dydudebug_monsterspawns) Console.Printf("\c[red]Could Not Spawn DD-Type Enemy after 64 attempts, breaking script to not lock up the game. V:");
-						spawndoomtype = true;
-						break;
+						evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
+						if (random(1,320) <= evolveChance)
+						{
+							if (random(1,2) <= 1) classname = "RepeaterZombie";
+															 else classname = "KarasawaGuy";
+							if (CanFitHere(classname)) result = classname;
+						}
+						else
+						{
+							classname = "PlasmaGuy";
+							if (CanFitHere(classname)) result = classname;
+						}
 					}
 				}
-			}
-		}
-		else spawndoomtype = true;
-		
-		evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-		if (exex_monsterevolutions && spawndoomtype)
-		{
-			if (random(1,256) <= 4)
-			{
-				classname = "ZombiemanSpawner";
-				if (CanFitHere(classname)) result = classname;
-			}
-			else
-			if (random(1,256) <= 8)
-			{
-				classname = "SuicideBomber";
-				if (CanFitHere(classname)) result = classname;
-			}
-			else 
-			if (random(1,256) <= 8)
-			{
-				classname = "HellClericDVDS";
-				if (CanFitHere(classname)) result = classname;
-			}
-			else
-			if (random(1,256) <= evolvechance)
-			{
-				if (random(1,2) <= 1) classname = "RocketLauncherGuy";
 				else
 				{
-					evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-					if (random(1,320) <= evolveChance)
-					{
-						if (random(1,2) <= 1) classname = "RepeaterZombie";
-														 else classname = "KarasawaGuy";
-						if (CanFitHere(classname)) result = classname;
-					}
-					else
-					{
-						classname = "PlasmaGuy";
-						if (CanFitHere(classname)) result = classname;
-					}
+					classname = "ZombiemanNew";
+					if (CanFitHere(classname)) result = classname;
 				}
-			}
-			else
-			{
-				classname = "ZombiemanNew";
-				if (CanFitHere(classname)) result = classname;
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
-		
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
+
 class StealthZombiemanSpawner : ZombiemanSpawner replaces StealthZombieman { }
 
 // Shotgun Guy
@@ -518,131 +600,182 @@ class ShotgunGuySpawner : DDMonsterSpawner replaces ShotgunGuy
 		string result = classname;
 		if (CheckUOHYM()) return result;
 		bool spawndoomtype;
-
-		if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom && exex_ddmonstertypes > 0)
+		
+		if (IsDoom1())
 		{
 			spawndoomtype = false;
 			bool success;
 			bool success2;
 			int numtimes;
 			
-			while(!success && !success2)
+			if (random(1,2048) <= 1) 
 			{
-				if (random(1,1024) <= 1) 
+				classname = "ArchvileSpawner";
+				if (CanFitHere(classname)) 
 				{
-					classname = "EvilDinahEE";
+					result = classname;
+					gotd1 = true;
 				}
-				else
-				if (random(1,256) <= 1) 
+			}
+			else
+			if (random(1,512) <= 1) 
+			{
+				classname = "HellKnightSpawner";
+				if (CanFitHere(classname)) 
 				{
-					if (random(1,256) <= 1) classname = "PushyArchAngel";
-														 else classname = "PushyAngel";
+					result = classname;
+					gotd1 = true;
 				}
-				else
-				if (random(1,32) <= 1) 
+			}
+			else
+			if (random(1,128) <= 1) 
+			{
+				classname = "RevenantSpawner";
+				if (CanFitHere(classname)) 
 				{
-					if (random(1,8) <= 1) classname = "ManchineelEE_Ceiling";
-													 else classname = "ManchineelEE";
+					result = classname;
+					gotd1 = true;
 				}
-				else
-				if (random(1,32) <= 1) 
+			}
+			else
+			if (random(1,16) <= 1) 
+			{
+				classname = "ChaingunGuySpawner";
+				if (CanFitHere(classname)) 
 				{
-					if (random(1,8) <= 1) classname = "FractalChicken";
-					else classname = "FractalChick";
+					result = classname;
+					gotd1 = true;
 				}
-				else
-				if (random(1,48) <= 1) 
+			}
+		}
+		
+		if (!gotd1)
+		{
+			if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom && exex_ddmonstertypes > 0)
+			{
+				spawndoomtype = false;
+				bool success;
+				bool success2;
+				int numtimes;
+				
+				while(!success && !success2)
 				{
-					if (random(1,16) <= 1) classname = "CremeDeBratte_Torched";
-														else classname = "CremeDeBratte";
-				}
-				else
-				if (random(1,64) <= 1) 
-				{
-					classname = "Forsaken";
-				}
-				else
-				{
-					if (random(1,8) <= 7) classname = "Hammerduck";
+					if (random(1,1024) <= 1) 
+					{
+						classname = "EvilDinahEE";
+					}
+					else
+					if (random(1,256) <= 1) 
+					{
+						if (random(1,256) <= 1) classname = "PushyArchAngel";
+															 else classname = "PushyAngel";
+					}
+					else
+					if (random(1,32) <= 1) 
+					{
+						if (random(1,8) <= 1) classname = "ManchineelEE_Ceiling";
+														 else classname = "ManchineelEE";
+					}
+					else
+					if (random(1,32) <= 1) 
+					{
+						if (random(1,8) <= 1) classname = "FractalChicken";
+						else classname = "FractalChick";
+					}
+					else
+					if (random(1,48) <= 1) 
+					{
+						if (random(1,16) <= 1) classname = "CremeDeBratte_Torched";
+															else classname = "CremeDeBratte";
+					}
+					else
+					if (random(1,64) <= 1) 
+					{
+						classname = "Forsaken";
+					}
 					else
 					{
-						if (random(1,8) <= 2) classname = "Reaper";
+						if (random(1,8) <= 7) classname = "Hammerduck";
 						else
 						{
-							classname = "PlanterBird";
-							if (random(1,4) == 1) classname = "Planter";
+							if (random(1,8) <= 2) classname = "Reaper";
+							else
+							{
+								classname = "PlanterBird";
+								if (random(1,4) == 1) classname = "Planter";
+							}
+						}
+					}
+					
+					success = CheckDDActorType(classname,numtimes);
+					if (success)
+					{
+						if (CanFitHereDD(classname)) 
+						{
+							result = classname;
+							success2 = true;
+							if (dydudebug_monsterspawns) Console.Printf("\c[sapphire]classname %s fits [attempt #%d]", classname, numtimes);
+						}
+					}
+					if (dydudebug_monsterspawns) Console.Printf("[%s], success: %d, success2: %d", classname, success, success2);
+					numtimes++;
+					if (numtimes >= 64)
+					{
+						if (exex_ddafdmonsterschance >= 512)
+						{
+							if (dydudebug_monsterspawns) Console.Printf("\c[red]Forced a DD Spawn that might not fit due to DD chance being 512+");
+							result = classname;
+							spawndoomtype = false;
+							break;
+						}
+						else
+						{
+							if (dydudebug_monsterspawns) Console.Printf("\c[red]Could Not Spawn DD-Type Enemy after 64 attempts, breaking script to not lock up the game. V:");
+							spawndoomtype = true;
+							break;
 						}
 					}
 				}
-				
-				success = CheckDDActorType(classname,numtimes);
-				if (success)
+			}
+			else spawndoomtype = true;
+			
+			evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
+			if (exex_monsterevolutions && spawndoomtype)
+			{
+				if (random(1,256) <= 4)
 				{
-					if (CanFitHereDD(classname)) 
-					{
-						result = classname;
-						success2 = true;
-						if (dydudebug_monsterspawns) Console.Printf("\c[sapphire]classname %s fits [attempt #%d]", classname, numtimes);
-					}
+					classname = "ZombiemanSpawner";
+					if (CanFitHere(classname)) result = classname;
 				}
-				if (dydudebug_monsterspawns) Console.Printf("[%s], success: %d, success2: %d", classname, success, success2);
-				numtimes++;
-				if (numtimes >= 64)
+				else
+				if (random(1,256) <= 8)
 				{
-					if (exex_ddafdmonsterschance >= 512)
-					{
-						if (dydudebug_monsterspawns) Console.Printf("\c[red]Forced a DD Spawn that might not fit due to DD chance being 512+");
-						result = classname;
-						spawndoomtype = false;
-						break;
-					}
-					else
-					{
-						if (dydudebug_monsterspawns) Console.Printf("\c[red]Could Not Spawn DD-Type Enemy after 64 attempts, breaking script to not lock up the game. V:");
-						spawndoomtype = true;
-						break;
-					}
+					classname = "SuicideBomber";
+					if (CanFitHere(classname)) result = classname;
+				}
+				else
+				if (random(1,256) <= 8)
+				{
+					classname = "HellClericDVDS";
+					if (CanFitHere(classname)) result = classname;
+				}
+				else
+				if (random(1,256) <= evolvechance)
+				{
+					evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
+					if (random(1,256) <= evolvechance) classname = "FemaleRailZombie";
+																				else classname = "SuperShotgunGuy";
+					if (CanFitHere(classname)) result = classname;
+				}
+				else
+				{
+					classname = "ShotgunGuyNew";
+					if (CanFitHere(classname)) result = classname;
 				}
 			}
 		}
-		else spawndoomtype = true;
 		
-		evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-		if (exex_monsterevolutions && spawndoomtype)
-		{
-			if (random(1,256) <= 4)
-			{
-				classname = "ZombiemanSpawner";
-				if (CanFitHere(classname)) result = classname;
-			}
-			else
-			if (random(1,256) <= 8)
-			{
-				classname = "SuicideBomber";
-				if (CanFitHere(classname)) result = classname;
-			}
-			else
-			if (random(1,256) <= 8)
-			{
-				classname = "HellClericDVDS";
-				if (CanFitHere(classname)) result = classname;
-			}
-			else
-			if (random(1,256) <= evolvechance)
-			{
-				evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-				if (random(1,256) <= evolvechance) classname = "FemaleRailZombie";
-																			else classname = "SuperShotgunGuy";
-				if (CanFitHere(classname)) result = classname;
-			}
-			else
-			{
-				classname = "ShotgunGuyNew";
-				if (CanFitHere(classname)) result = classname;
-			}
-		}
-		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -756,12 +889,13 @@ class ChaingunGuySpawner : DDMonsterSpawner replaces ChaingunGuy
 		evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
 		if (exex_monsterevolutions && spawndoomtype)
 		{
-			if (random(1,256) <= 4) 
+			if (random(1,256) <= 4 && !IsDoom1()) 
 			{
+				// Gives an VERY-RARE chance for a ChaingunGuy to use Zombieman or ShotgunGuy spawns instead. :V
 				if (random(1,2) == 1) classname = "ShotgunGuySpawner"; 
 												 else classname = "ZombiemanSpawner";
 				if (CanFitHere(classname)) result = classname;
-			} // Gives an VERY-RARE chance for a ChaingunGuy to use Zombieman or ShotgunGuy spawns instead. :V
+			} 
 			else
 			if (random(1,256) <= 8)
 			{
@@ -788,7 +922,7 @@ class ChaingunGuySpawner : DDMonsterSpawner replaces ChaingunGuy
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -899,7 +1033,7 @@ class WolfensteinSSSpawner : DDMonsterSpawner replaces WolfensteinSS
 		}
 		else spawndoomtype = true;
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -919,110 +1053,182 @@ class DoomImpSpawner : DDMonsterSpawner replaces DoomImp
 		string result = classname;
 		if (CheckUOHYM()) return result;
 		bool spawndoomtype;
-
-		if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom)
+		
+		if (IsDoom1())
 		{
 			spawndoomtype = false;
 			bool success;
 			bool success2;
 			int numtimes;
 			
-			while(!success && !success2)
+			if (random(1,384) <= 1) 
 			{
-				if (random(1,1024) <= 1)
+				classname = "ArchVileSpawner";
+				if (CanFitHere(classname)) 
 				{
-					classname = "EvilDinahEE";
+					result = classname;
+					gotd1 = true;
+				}
+			}
+			else
+			if (random(1,96) <= 1) 
+			{
+				int randvar = random(1,3);
+				if (randvar <= 1) classname = "MancubusSpawner";
+				if (randvar == 2) classname = "HellKnightSpawner";
+				if (randvar >= 3) classname = "ArachnotronSpawner";
+				if (CanFitHere(classname)) 
+				{
+					result = classname;
+					gotd1 = true;
 				}
 				else
-				if (random(1,16) <= 1) 
 				{
-					if (random(1,8) <= 1) classname = "ManchineelEE_Ceiling";
-													 else classname = "ManchineelEE";
-				}
-				else
-				if (random(1,20) <= 1) 
-				{
-					if (random(1,6) <= 1) classname = "Vitriola";
-													 else classname = "Galgoyle";
-				}
-				else
-				if (random(1,24) <= 1) 
-				{
-					if (random(1,8) <= 1) classname = "FractalChicken";
-					else classname = "FractalChick";
-				}
-				else
-				if (random(1,36) <= 1) 
-				{
-					if (random(1,16) <= 1) classname = "CremeDeBratte_Torched";
-														else classname = "CremeDeBratte";
-				}
-				else
-				if (random(1,36) <= 1) classname = "Forsaken";
-				else
-				{
-					if (random(1,8) <= 7)
-					{
-						if (random(1,8) <= random(3,5)) classname = "Reaper";
-						else
-						{
-							classname = "PlanterBird";
-							if (random(1,8) <= 2) classname = "Planter";
-						}
-					}
-					else classname = "Hammerduck";
-				}
-				
-				success = CheckDDActorType(classname,numtimes);
-				if (success)
-				{
-					if (CanFitHereDD(classname)) 
+					// Defaults to a Hell Knight due to it being the most likely thing to fit in the same space
+					classname = "HellKnightSpawner";
+					if (CanFitHere(classname)) 
 					{
 						result = classname;
-						success2 = true;
-						if (dydudebug_monsterspawns) Console.Printf("\c[sapphire]classname %s fits [attempt #%d]", classname, numtimes);
+						gotd1 = true;
 					}
 				}
-				if (dydudebug_monsterspawns) Console.Printf("[%s], success: %d, success2: %d", classname, success, success2);
-				numtimes++;
-				if (numtimes >= 64)
+			}
+			else
+			if (random(1,48) <= 1) 
+			{
+				classname = "RevenantSpawner";
+				if (CanFitHere(classname)) 
 				{
-					if (exex_ddafdmonsterschance >= 512)
-					{
-						if (dydudebug_monsterspawns) Console.Printf("\c[red]Forced a DD Spawn that might not fit due to DD chance being 512+");
-						result = classname;
-						spawndoomtype = false;
-						break;
-					}
-					else
-					{
-						if (dydudebug_monsterspawns) Console.Printf("\c[red]Could Not Spawn DD-Type Enemy after 64 attempts, breaking script to not lock up the game. V:");
-						spawndoomtype = true;
-						break;
-					}
+					result = classname;
+					gotd1 = true;
+				}
+			}
+			else
+			if (random(1,16) <= 1)
+			{
+				classname = "ChaingunGuySpawner";
+				if (CanFitHere(classname)) 
+				{
+					result = classname;
+					gotd1 = true;
 				}
 			}
 		}
-		else spawndoomtype = true;
 		
-		if (exex_monsterevolutions && spawndoomtype)
+		if (!gotd1)
 		{
-			evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-			if (random(1,256) <= 8)
+			if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom)
 			{
-				classname = "HellClericDVDS";
-				if (CanFitHere(classname)) result = classname;
+				spawndoomtype = false;
+				bool success;
+				bool success2;
+				int numtimes;
+				
+				while(!success && !success2)
+				{
+					if (random(1,1024) <= 1)
+					{
+						classname = "EvilDinahEE";
+					}
+					else
+					if (random(1,16) <= 1) 
+					{
+						if (random(1,8) <= 1) classname = "ManchineelEE_Ceiling";
+														 else classname = "ManchineelEE";
+					}
+					else
+					if (random(1,20) <= 1) 
+					{
+						if (random(1,6) <= 1) classname = "Vitriola";
+														 else classname = "Galgoyle";
+					}
+					else
+					if (random(1,24) <= 1) 
+					{
+						if (random(1,8) <= 1) classname = "FractalChicken";
+						else classname = "FractalChick";
+					}
+					else
+					if (random(1,36) <= 1) 
+					{
+						if (random(1,16) <= 1) classname = "CremeDeBratte_Torched";
+															else classname = "CremeDeBratte";
+					}
+					else
+					if (random(1,36) <= 1) classname = "Forsaken";
+					else
+					{
+						if (random(1,8) <= 7)
+						{
+							if (random(1,8) <= random(3,5)) classname = "Reaper";
+							else
+							{
+								classname = "PlanterBird";
+								if (random(1,8) <= 2) classname = "Planter";
+							}
+						}
+						else classname = "Hammerduck";
+					}
+					
+					success = CheckDDActorType(classname,numtimes);
+					if (success)
+					{
+						if (CanFitHereDD(classname)) 
+						{
+							result = classname;
+							success2 = true;
+							if (dydudebug_monsterspawns) Console.Printf("\c[sapphire]classname %s fits [attempt #%d]", classname, numtimes);
+						}
+					}
+					if (dydudebug_monsterspawns) Console.Printf("[%s], success: %d, success2: %d", classname, success, success2);
+					numtimes++;
+					if (numtimes >= 64)
+					{
+						if (exex_ddafdmonsterschance >= 512)
+						{
+							if (dydudebug_monsterspawns) Console.Printf("\c[red]Forced a DD Spawn that might not fit due to DD chance being 512+");
+							result = classname;
+							spawndoomtype = false;
+							break;
+						}
+						else
+						{
+							if (dydudebug_monsterspawns) Console.Printf("\c[red]Could Not Spawn DD-Type Enemy after 64 attempts, breaking script to not lock up the game. V:");
+							spawndoomtype = true;
+							break;
+						}
+					}
+				}
 			}
-			else
+			else spawndoomtype = true;
+			
+			if (exex_monsterevolutions && spawndoomtype)
 			{
 				evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-				if (random(1,256) <= evolveChance)
+				if (random(1,256) <= 8)
+				{
+					classname = "HellClericDVDS";
+					if (CanFitHere(classname)) result = classname;
+				}
+				else
 				{
 					evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-					if (random(1,320) <= evolveChance)
+					if (random(1,256) <= evolveChance)
 					{
-						classname = "NetherDarkImp";
-						if (CanFitHere(classname)) result = classname;
+						evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
+						if (random(1,320) <= evolveChance)
+						{
+							classname = "NetherDarkImp";
+							if (CanFitHere(classname)) result = classname;
+							else
+							{
+								int type = random(1,3);
+								if (type <= 1) classname = "STDarkImp";
+								if (type == 2) classname = "DarkImp";
+								if (type >= 3) classname = "VoidDarkImp";
+								if (CanFitHere(classname)) result = classname;
+							}
+						}
 						else
 						{
 							int type = random(1,3);
@@ -1034,22 +1240,14 @@ class DoomImpSpawner : DDMonsterSpawner replaces DoomImp
 					}
 					else
 					{
-						int type = random(1,3);
-						if (type <= 1) classname = "STDarkImp";
-						if (type == 2) classname = "DarkImp";
-						if (type >= 3) classname = "VoidDarkImp";
+						classname = "DoomImpNew";
 						if (CanFitHere(classname)) result = classname;
 					}
-				}
-				else
-				{
-					classname = "DoomImpNew";
-					if (CanFitHere(classname)) result = classname;
 				}
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -1071,182 +1269,236 @@ class DemonSpawner : DDMonsterSpawner replaces Demon
 		string result = classname;
 		if (CheckUOHYM()) return result;
 		bool spawndoomtype;
-
-		if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom)
+		
+		if (IsDoom1())
 		{
 			spawndoomtype = false;
 			bool success;
 			bool success2;
 			int numtimes;
 			
-			while(!success && !success2)
+			if (random(1,1024) <= 1) 
 			{
-				if (random(1,1024) <= 1)
+				classname = "ArchvileSpawner";
+				if (CanFitHere(classname)) 
 				{
-					classname = "EvilDinahEE";
+					result = classname;
+					gotd1 = true;
 				}
-				else
-				if (random(1,16) <= 1)
+			}
+			else
+			if (random(1,128) <= 1) 
+			{
+				int randvar = random(1,3);
+				if (randvar <= 1) classname = "MancubusSpawner";
+				if (randvar == 2) classname = "HellKnightSpawner";
+				if (randvar >= 3) classname = "ArachnotronSpawner";
+				if (CanFitHere(classname)) 
 				{
-					if (random(1,3) <= 1) classname = "Vitriola";
-													 else classname = "Galgoyle";
-				}
-				else
-				if (random(1,16) <= 1) 
-				{
-					if (random(1,4) <= 1) classname = "FractalChicken";
-													else classname = "FractalChick";
-				}
-				else
-				if (random(1,random(9,11)) <= random(1,3)) 
-				{
-					if (random(1,16) <= 1)
-					{
-						if (random(1,2) <= 1) classname = "Forsaken_Quisling";
-														else classname = "Forsaken_Jorgensen";
-					}
-					else
-					{
-						classname = "Forsaken";
-					}
+					result = classname;
+					gotd1 = true;
 				}
 				else
 				{
-					if (random(1,8) <= random(5,6))
-					{
-						if (random(1,2) == 1)
-						{
-							if (random(1,8) <= (random(2,3) + (Skill * 0.5))) classname = "CentaurionSgt";
-																													else classname = "Centaurion";
-						}
-						else
-						{
-							if (random(1,2) <= 1)
-							{
-								if (random(1,16) <= 1) 
-								{
-									if (random(1,8) <= 1) classname = "Shillfish_Fly";
-									else classname = "Shillfish";
-								}
-								else classname = "Bellefish_Fly";
-							}
-							else
-							{
-								if (random(1,16) <= (1 + (Skill * 0.75))) classname = "CremeDeBratte_Torched";
-																										 else classname = "CremeDeBratte";
-							}
-						}
-					}
-					else
-					{
-						if (random(1,2) <= 1) classname = "ReelHeelNew";
-														 else classname = "Nurse";
-					}
-				}
-				
-				success = CheckDDActorType(classname,numtimes);
-				if (success)
-				{
-					if (CanFitHereDD(classname)) 
+					// Defaults to a Hell Knight due to it being the most likely thing to fit in the same space
+					classname = "HellKnightSpawner";
+					if (CanFitHere(classname)) 
 					{
 						result = classname;
-						success2 = true;
-						if (dydudebug_monsterspawns) Console.Printf("\c[sapphire]classname %s fits [attempt #%d]", classname, numtimes);
+						gotd1 = true;
 					}
 				}
-				if (dydudebug_monsterspawns) Console.Printf("[%s], success: %d, success2: %d", classname, success, success2);
-				numtimes++;
-				if (numtimes >= 64)
+			}
+			else
+			if (random(1,16) <= 1) 
+			{
+				classname = "RevenantSpawner";
+				if (CanFitHere(classname)) 
 				{
-					if (exex_ddafdmonsterschance >= 512)
-					{
-						if (dydudebug_monsterspawns) Console.Printf("\c[red]Forced a DD Spawn that might not fit due to DD chance being 512+");
-						result = classname;
-						spawndoomtype = false;
-						break;
-					}
-					else
-					{
-						if (dydudebug_monsterspawns) Console.Printf("\c[red]Could Not Spawn DD-Type Enemy after 64 attempts, breaking script to not lock up the game. V:");
-						spawndoomtype = true;
-						break;
-					}
+					result = classname;
+					gotd1 = true;
 				}
 			}
 		}
-		else spawndoomtype = true;
-		
-		evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-		if (exex_monsterevolutions && spawndoomtype)
+
+		if (!gotd1)
 		{
-			if (random(1,256) <= 16)
+			if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom)
 			{
-				classname = "HellClericDVDS";
-				if (CanFitHere(classname)) result = classname;
-			}
-			else
-			if (random(1,256) <= evolveChance)
-			{
-				evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-				if (random(1,256) <= evolveChance)
+				spawndoomtype = false;
+				bool success;
+				bool success2;
+				int numtimes;
+				
+				while(!success && !success2)
 				{
-					evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-					if (random(1,512) <= evolveChance)
+					if (random(1,1024) <= 1)
 					{
-						classname = "ChaingunSpectre";
-						if (CanFitHere(classname)) result = classname;
+						classname = "EvilDinahEE";
+					}
+					else
+					if (random(1,16) <= 1)
+					{
+						if (random(1,3) <= 1) classname = "Vitriola";
+														 else classname = "Galgoyle";
+					}
+					else
+					if (random(1,16) <= 1) 
+					{
+						if (random(1,4) <= 1) classname = "FractalChicken";
+														else classname = "FractalChick";
+					}
+					else
+					if (random(1,random(9,11)) <= random(1,3)) 
+					{
+						if (random(1,16) <= 1)
+						{
+							if (random(1,2) <= 1) classname = "Forsaken_Quisling";
+															else classname = "Forsaken_Jorgensen";
+						}
+						else
+						{
+							classname = "Forsaken";
+						}
 					}
 					else
 					{
-						if (random(1,16) <= 1)
+						if (random(1,8) <= random(5,6))
+						{
+							if (random(1,2) == 1)
+							{
+								if (random(1,8) <= (random(2,3) + (Skill * 0.5))) classname = "CentaurionSgt";
+																														else classname = "Centaurion";
+							}
+							else
+							{
+								if (random(1,2) <= 1)
+								{
+									if (random(1,16) <= 1) 
+									{
+										if (random(1,8) <= 1) classname = "Shillfish_Fly";
+										else classname = "Shillfish";
+									}
+									else classname = "Bellefish_Fly";
+								}
+								else
+								{
+									if (random(1,16) <= (1 + (Skill * 0.75))) classname = "CremeDeBratte_Torched";
+																											 else classname = "CremeDeBratte";
+								}
+							}
+						}
+						else
+						{
+							if (random(1,2) <= 1) classname = "ReelHeelNew";
+															 else classname = "Nurse";
+						}
+					}
+					
+					success = CheckDDActorType(classname,numtimes);
+					if (success)
+					{
+						if (CanFitHereDD(classname)) 
+						{
+							result = classname;
+							success2 = true;
+							if (dydudebug_monsterspawns) Console.Printf("\c[sapphire]classname %s fits [attempt #%d]", classname, numtimes);
+						}
+					}
+					if (dydudebug_monsterspawns) Console.Printf("[%s], success: %d, success2: %d", classname, success, success2);
+					numtimes++;
+					if (numtimes >= 64)
+					{
+						if (exex_ddafdmonsterschance >= 512)
+						{
+							if (dydudebug_monsterspawns) Console.Printf("\c[red]Forced a DD Spawn that might not fit due to DD chance being 512+");
+							result = classname;
+							spawndoomtype = false;
+							break;
+						}
+						else
+						{
+							if (dydudebug_monsterspawns) Console.Printf("\c[red]Could Not Spawn DD-Type Enemy after 64 attempts, breaking script to not lock up the game. V:");
+							spawndoomtype = true;
+							break;
+						}
+					}
+				}
+			}
+			else spawndoomtype = true;
+			
+			evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
+			if (exex_monsterevolutions && spawndoomtype)
+			{
+				if (random(1,256) <= 16)
+				{
+					classname = "HellClericDVDS";
+					if (CanFitHere(classname)) result = classname;
+				}
+				else
+				if (random(1,256) <= evolveChance)
+				{
+					evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
+					if (random(1,256) <= evolveChance)
+					{
+						evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
+						if (random(1,512) <= evolveChance)
 						{
 							classname = "ChaingunSpectre";
 							if (CanFitHere(classname)) result = classname;
 						}
 						else
 						{
-							classname = "BloodSpectre";
-							if (CanFitHere(classname)) result = classname;
+							if (random(1,16) <= 1)
+							{
+								classname = "ChaingunSpectre";
+								if (CanFitHere(classname)) result = classname;
+							}
+							else
+							{
+								classname = "BloodSpectre";
+								if (CanFitHere(classname)) result = classname;
+							}
 						}
+					}
+					else
+					{
+						classname = "SpectreNew";
+						if (CanFitHere(classname)) result = classname;
 					}
 				}
 				else
+				if (random(1,256) <= evolveChance)
 				{
-					classname = "SpectreNew";
-					if (CanFitHere(classname)) result = classname;
-				}
-			}
-			else
-			if (random(1,256) <= evolveChance)
-			{
-				evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
-				if (random(1,512) <= evolveChance)
-				{
-					classname = "ChaingunDemon";
-					if (CanFitHere(classname)) result = classname;
-				}
-				else
-				{
-					if (random(1,16) <= 1)
+					evolveChance = A_GetEvolveChance(player,MiscItem,MapsFinished);
+					if (random(1,512) <= evolveChance)
 					{
 						classname = "ChaingunDemon";
 						if (CanFitHere(classname)) result = classname;
 					}
 					else
 					{
-						classname = "BloodDemon";
-						if (CanFitHere(classname)) result = classname;
+						if (random(1,16) <= 1)
+						{
+							classname = "ChaingunDemon";
+							if (CanFitHere(classname)) result = classname;
+						}
+						else
+						{
+							classname = "BloodDemon";
+							if (CanFitHere(classname)) result = classname;
+						}
 					}
 				}
-			}
-			else
-			{
-				classname = "DemonNew";
-				if (CanFitHere(classname)) result = classname;
+				else
+				{
+					classname = "DemonNew";
+					if (CanFitHere(classname)) result = classname;
+				}
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -1409,7 +1661,7 @@ class SpectreSpawner : DDMonsterSpawner replaces Spectre
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -1534,7 +1786,7 @@ class RevenantSpawner : DDMonsterSpawner replaces Revenant
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -1555,7 +1807,35 @@ class CacodemonSpawner : DDMonsterSpawner replaces Cacodemon
 		string result = classname;
 		if (CheckUOHYM()) return result;
 		bool spawndoomtype;
-
+		
+		if (IsDoom1())
+		{
+			spawndoomtype = false;
+			bool success;
+			bool success2;
+			int numtimes;
+			
+			if (random(1,128) <= 1) 
+			{
+				classname = "LostSoulSpawner";
+				if (CanFitHere(classname)) 
+				{
+					result = classname;
+					gotd1 = true;
+				}
+			}
+			else
+			if (random(1,16) <= 1) 
+			{
+				classname = "PainElementalSpawner";
+				if (CanFitHere(classname)) 
+				{
+					result = classname;
+					gotd1 = true;
+				}
+			}
+		}
+		
 		if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom)
 		{
 			spawndoomtype = false;
@@ -1741,7 +2021,7 @@ class CacodemonSpawner : DDMonsterSpawner replaces Cacodemon
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -1858,7 +2138,7 @@ class PainElementalSpawner : DDMonsterSpawner replaces PainElemental
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -1879,7 +2159,26 @@ class LostSoulSpawner : DDMonsterSpawner replaces LostSoul
 		string result = classname;
 		if (CheckUOHYM()) return result;
 		bool spawndoomtype;
-
+		
+		if (IsDoom1())
+		{
+			spawndoomtype = false;
+			bool success;
+			bool success2;
+			int numtimes;
+			
+			// >_>;
+			if (random(1,32) <= 1) 
+			{
+				classname = "PainElementalSpawner";
+				if (CanFitHere(classname))
+				{
+					result = classname;
+					gotd1 = true;
+				}
+			}
+		}
+		
 		if (exex_ddafdmonstersrandom && exex_ddafdmonsterschance >= 512)
 		{
 			spawndoomtype = false;
@@ -1982,7 +2281,7 @@ class LostSoulSpawner : DDMonsterSpawner replaces LostSoul
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -2081,7 +2380,7 @@ class ArachnotronSpawner : DDMonsterSpawner replaces Arachnotron
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -2256,7 +2555,7 @@ class HellKnightSpawner : DDMonsterSpawner replaces HellKnight
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -2372,7 +2671,7 @@ class MancubusSpawner : DDMonsterSpawner replaces Fatso
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -2479,7 +2778,7 @@ class ArchvileSpawner : DDMonsterSpawner replaces Archvile
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -2502,6 +2801,49 @@ class BaronofHellSpawner : DDMonsterSpawner replaces BaronofHell
 		if (CheckUOHYM()) return result;
 		bool spawndoomtype;
 
+		// Barons in E1M8 of Doom1 mode can't/shouldn't be able to become a different species 
+		// type at all to mitigate tag 666 problems :V
+		if (IsDoom1() && level.mapname != "E1M8")
+		{
+			spawndoomtype = false;
+			bool success;
+			bool success2;
+			int numtimes;
+			
+			if (random(1,128) <= 1) 
+			{
+				int randvar = random(1,3);
+				if (randvar <= 1) classname = "MancubusSpawner";
+				if (randvar == 2) classname = "HellKnightSpawner";
+				if (randvar >= 3) classname = "ArachnotronSpawner";
+				if (CanFitHere(classname)) 
+				{
+					result = classname;
+					gotd1 = true;
+				}
+				else
+				{
+					// Defaults to a Hell Knight due to it being the most likely thing to fit in the same space
+					classname = "HellKnightSpawner";
+					if (CanFitHere(classname)) 
+					{
+						result = classname;
+						gotd1 = true;
+					}
+				}
+			}
+			else
+			if (random(1,32) <= 1) 
+			{
+				classname = "ArchvileSpawner";
+				if (CanFitHere(classname)) 
+				{
+					result = classname;
+					gotd1 = true;
+				}
+			}
+		}
+		
 		if (random(1,256) <= exex_ddafdmonsterschance && exex_ddafdmonstersrandom)
 		{
 			spawndoomtype = false;
@@ -2511,7 +2853,6 @@ class BaronofHellSpawner : DDMonsterSpawner replaces BaronofHell
 			
 			while(!success && !success2)
 			{
-				
 				int cchance = (randompick(45,48,51) - (skill * 3));
 				if (dydudebug_monsterspawns) Console.Printf("cchance: %d", cchance);
 				if (random(1,cchance) <= 1)
@@ -2661,7 +3002,7 @@ class BaronofHellSpawner : DDMonsterSpawner replaces BaronofHell
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -2792,7 +3133,7 @@ class SpiderMastermindSpawner : DDMonsterSpawner replaces SpiderMastermind
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
@@ -2919,7 +3260,7 @@ class CyberdemonSpawner : DDMonsterSpawner replaces Cyberdemon
 			}
 		}
 		
-		if (dydudebug_monsterspawns) Console.Printf("\c[green]classname [%s]: \c[yellow]%s", GetClassName(), classname);
+		A_DebugPrintOut(classname, gotd1);
 		return result;
 	}
 }
