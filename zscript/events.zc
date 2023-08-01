@@ -2646,26 +2646,28 @@ class DD_EventHandler : EventHandler
 				bool showdmglog;
 				bool practicetarget;
 				
-				int specialtype;
+				int specialtype, specialtype2;
 				nm = "CCardGhostMarker"; if (victim.CountInv(nm)) specialtype += 1;
 				nm = "CCardAssassinMarker"; if (victim.CountInv(nm)) specialtype += 2;
 				nm = "CCardRespawnedMarker"; if (victim.CountInv(nm)) specialtype += 4;
 				nm = "CCards_Actor_TheAncientOne"; if (victim.GetClassName() == nm) specialtype += 8;
 				nm = "CCards_Actor_Spider"; if (victim.GetClassName() == nm) specialtype += 128;
+				nm = "CCards_SpookySkeleton"; if (victim.GetClassName() == nm) specialtype += 256;
+				nm = "CCards_Boss_Romero"; if (victim.GetClassName() == nm) specialtype += 512;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype += 8;
-					nm = "Skeleton"; if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype2 += 4;
+					nm = "Skeleton"; if (victim.GetClassName() == nm) specialtype2 += 8;
 				}
 				if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "Mite"; if (victim.GetClassName() == nm) specialtype += 16;
-					nm = "SkinStealer"; if (victim.GetClassName() == nm) specialtype += 32;
-					if (victim.bISMONSTER) specialtype += 64;
+					nm = "Mite"; if (victim.GetClassName() == nm) specialtype2 += 16;
+					nm = "SkinStealer"; if (victim.GetClassName() == nm) specialtype2 += 32;
+					if (victim.bISMONSTER) specialtype2 += 64;
 				}
-				if (dydudebug_worlddamaged) Console.Printf("[%s] SpecialType [WorldDamaged]: %d", vict, specialtype);
+				if (dydudebug_worlddamaged) Console.Printf("[%s] SpecialType [WorldDamaged]: %d, %d", vict, specialtype, specialtype2);
 				
-				if (victim.bCOUNTKILL || specialtype) showdmglog = true;
+				if (victim.bCOUNTKILL || specialtype || specialtype2) showdmglog = true;
 				if (PracticeTarget(victim) || PracticeTarget2(victim)) 
 				{
 					practicetarget = true;
@@ -3012,7 +3014,7 @@ class DD_EventHandler : EventHandler
 				string comblog = "";
 				comblog.AppendFormat("\c[red]*\c- ");
 				showdmglog = false;
-				if (victim.bCOUNTKILL || specialtype || DDAFDNPC(victim)) showdmglog = true;
+				if (victim.bCOUNTKILL || specialtype || specialtype2 || DDAFDNPC(victim)) showdmglog = true;
 				if (PracticeTarget(victim) || PracticeTarget2(victim)) showdmglog = true;
 				if (BossBrainNew(victim)) showdmglog = true;
 				if (EEProp(victim)) showdmglog = false;
@@ -3195,7 +3197,7 @@ class DD_EventHandler : EventHandler
 				
 				if (playdthsounds)
 				{
-					if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype || DDAFDNPC(victim)))
+					if (victim.health <= 0 && exex_q3aqckillsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype || specialtype2 || DDAFDNPC(victim)))
 					{
 						if (source || inflicter)
 						{
@@ -3309,7 +3311,7 @@ class DD_EventHandler : EventHandler
 				
 				if (playdmgsounds)
 				{
-					if (exex_q3aqchitsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype || DDAFDNPC(victim) || BossBrainNew(victim)) && victim.CountInv("TempNoHitSound") <= 0)
+					if (exex_q3aqchitsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype || specialtype2 || DDAFDNPC(victim) || BossBrainNew(victim)) && victim.CountInv("TempNoHitSound") <= 0)
 					{
 						victim.A_SetInventory("TempNoHitSound",1);
 						
@@ -3418,7 +3420,7 @@ class DD_EventHandler : EventHandler
 		return droptimes;
 	}
 	
-	int, int, actor, actor, actor, actor, actor, int, int, bool, bool A_KillDropTables(int PLuck, int TrueLuck, actor victim, actor inflicter, actor source, actor mastor, actor IPAttack, int specialtype, int monsterrating, bool playerkill, bool allykill)
+	int, int, actor, actor, actor, actor, actor, int, int, int, bool, bool A_KillDropTables(int PLuck, int TrueLuck, actor victim, actor inflicter, actor source, actor mastor, actor IPAttack, int specialtype, int specialtype2, int monsterrating, bool playerkill, bool allykill)
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -3496,15 +3498,22 @@ class DD_EventHandler : EventHandler
 		int scraprolls;
 		int tearolls;
 		int bossdropmulti = randompick(randompick(1,2,2),3,3,3,3,3,3,3,3,randompick(4,4,5));
-		if (specialtype & 8) // CCards' Ancient One Boss V:
+		if (specialtype & 8 || // CCards' Ancient One Boss V:
+				specialtype & 256 || // CCards' Agitated Revenant V:
+				specialtype & 512) // CCards' ROM3R-0.666
 		{
 			bossdropmulti *= 4;
 			skillmult *= 0.25;
 		}
+		if (specialtype & 128) // CCards Exploding Spooder
+		{
+			bossdropmulti *= 0.25;
+			skillmult *= 4;
+		}
 		if (waslegendary) skillmult *= frandom(0.334,0.4585);
 		bool candropitems = false;
-		if (specialtype) candropitems = true;
-		if (!victim.bFRIENDLY && (victim.bCOUNTKILL || specialtype)) candropitems = true;
+		if (specialtype || specialtype2) candropitems = true;
+		if (!victim.bFRIENDLY && (victim.bCOUNTKILL || specialtype|| specialtype2)) candropitems = true;
 		if (PracticeTarget(victim) || 
 				PracticeTarget2(victim) || 
 				DDAFDNPC(victim) || 
@@ -5493,7 +5502,7 @@ class DD_EventHandler : EventHandler
 		{
 		}
 		
-		return PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, monsterrating, playerkill, allykill;
+		return PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill;
 	}
 	
 	override void WorldThingDied(WorldEvent e)
@@ -5696,33 +5705,35 @@ class DD_EventHandler : EventHandler
 					!isCCardsIllusion &&
 					!exception)
 			{
-				int specialtype;
+				int specialtype, specialtype2;
 				nm = "CCardGhostMarker"; if (victim.CountInv(nm)) specialtype += 1;
 				nm = "CCardAssassinMarker"; if (victim.CountInv(nm)) specialtype += 2;
 				nm = "CCardRespawnedMarker"; if (victim.CountInv(nm)) specialtype += 4;
 				nm = "CCards_Actor_TheAncientOne"; if (victim.GetClassName() == nm) specialtype += 8;
 				nm = "CCards_Actor_Spider"; if (victim.GetClassName() == nm) specialtype += 128;
+				nm = "CCards_SpookySkeleton"; if (victim.GetClassName() == nm) specialtype += 256;
+				nm = "CCards_Boss_Romero"; if (victim.GetClassName() == nm) specialtype += 512;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype += 8;
-					nm = "Skeleton"; if (victim.GetClassName() == nm) specialtype += 8;
+					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype2 += 4;
+					nm = "Skeleton"; if (victim.GetClassName() == nm) specialtype2 += 8;
 				}
 				if (Wads.CheckNumForName("EE-UOHYM", Wads.ns_global, -1, true) != -1)
 				{
-					nm = "Mite"; if (victim.GetClassName() == nm) specialtype += 16;
-					nm = "SkinStealer"; if (victim.GetClassName() == nm) specialtype += 32;
-					if (victim.bISMONSTER) specialtype += 64;
+					nm = "Mite"; if (victim.GetClassName() == nm) specialtype2 += 16;
+					nm = "SkinStealer"; if (victim.GetClassName() == nm) specialtype2 += 32;
+					if (victim.bISMONSTER) specialtype2 += 64;
 				}
-				if (dydudebug_worlddied) Console.Printf("[%s] SpecialType [WorldDied]: %d", vict, specialtype);
+				if (dydudebug_worlddied) Console.Printf("[%s] SpecialType [WorldDied]: %d, %d", vict, specialtype, specialtype2);
 
 				actor IPAttack;
-				if (!(DDPlayerPawn(victim)) || (victim.bCOUNTKILL || specialtype))
+				if (!(DDPlayerPawn(victim)) || (victim.bCOUNTKILL || specialtype || specialtype2))
 				{
 					int monsterrating = victim.CountInv("MonsterRating");
 					if (!victim.CountInv("DedMonsterFlag") && !sv_monsterrespawn) victim.A_SetInventory("DedMonsterFlag",1);
 					
 					if (dydudebug_worlddied) Console.Printf("\c[purple]Attack: %s, \c[brick]Attacker: %s", infl, sour);
-					if ((victim.bCOUNTKILL || specialtype) && !victim.bFRIENDLY && (inflicter || source))
+					if ((victim.bCOUNTKILL || specialtype || specialtype2) && !victim.bFRIENDLY && (inflicter || source))
 					{
 						if (inflicter) 
 						{
@@ -5821,11 +5832,13 @@ class DD_EventHandler : EventHandler
 								if (monsterrating >= 8) ExpGain *= 2.6;
 							}
 						}
-						if (specialtype & 1) ExpGain *= 0.5;
-						if (specialtype & 2) ExpGain *= frandompick(1.8,2.2);
-						if (specialtype & 4) ExpGain *= frandompick(0.625,0.875);
-						if (specialtype & 8) ExpGain *= frandompick(1.75,2.5);
-						if (specialtype & 128) ExpGain *= 0.5;
+						if (specialtype & 1) ExpGain *= 0.5; // CCardGhostMarker
+						if (specialtype & 2) ExpGain *= frandompick(1.8,2.2); // CCardAssassinMarker
+						if (specialtype & 4) ExpGain *= frandompick(0.625,0.875); // CCardRespawnedMarker
+						if (specialtype & 8) ExpGain *= frandompick(1.75,2.5); // CCards_Actor_TheAncientOne
+						if (specialtype & 128) ExpGain *= 0.5; // CCards_Actor_Spider
+						if (specialtype & 256) ExpGain *= 0.5; // CCards_SpookySkeleton
+						if (specialtype & 512) ExpGain *= 0.5; // CCards_Boss_Romero
 						if (victim.CountInv("MiraclesUsed") && exex_monstershavemiracles) ExpGain *= (1.0 + (victim.CountInv("MiraclesUsed") * 0.625));
 						if ((source && source.CountInv("DinahTrueIPState")) || (inflicter && inflicter.CountInv("DinahTrueIPState"))) ExpGain *= 0.2;
 						if (VacPuff(inflicter) || VacPuffIP(inflicter)) 
@@ -6178,7 +6191,7 @@ class DD_EventHandler : EventHandler
 					{
 						if (mod != 'Crush' || mod != 'Falling' || !exception) 
 						{
-							[PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, monsterrating, playerkill, allykill] = A_KillDropTables(PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, monsterrating, playerkill, allykill);
+							[PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill] = A_KillDropTables(PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill);
 						}
 					}
 					
@@ -6187,7 +6200,7 @@ class DD_EventHandler : EventHandler
 					//*******************************
 					if (source && 
 							(DDPlayerPawn(source) || source.GetClassName() == "DinahPlayer") && 
-							(victim.bCOUNTKILL || specialtype || EEVaccableObject(victim)))
+							(victim.bCOUNTKILL || specialtype || specialtype2 || EEVaccableObject(victim)))
 					{
 						// SuperVac
 						bool vackill = false;

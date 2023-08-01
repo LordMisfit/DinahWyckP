@@ -25,6 +25,15 @@ class CustomInventoryExt : CustomInventory
 	property PickUpVoice2: PickupUseVoice2;
 	property PickupSound2: PickupSnd2;
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	bool A_CheckUOHYM()
 	{
 		bool UOHYM = false;
@@ -783,6 +792,51 @@ class PlaceholderItemMax : PlaceholderItem
 	}
 }
 
+class PowerDamageTimeCheck : PowerDamage
+{
+	default
+	{
+		Inventory.Icon "";
+		Powerup.Duration 2147483646; // 8
+		Powerup.Color "00 00 00", 0.00;
+	}
+	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
+	bool A_CheckDDGame()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	int A_GetPlayerLvl()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		if (dydudebug_playerlevelchecks) Console.Printf("\c[green](%s) \c[gold](A_GetPlayerLvl - TempDefenseBuff)\c- PlayerLevel: %d [%d]", GetClassName(), level, gametic);
+		return Level;
+	}
+}
+
 class TempAttackBuff : PowerDamage
 {
 	default
@@ -826,6 +880,60 @@ class TempDefenseBuff : PowerProtection
 		Inventory.Icon "";
 		Powerup.Duration 2147483646; // 8
 		Powerup.Color "00 00 00", 0.00;
+	}
+	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
+	bool A_CheckDDGame()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		if (player.CountInv("IsDynDuchess") || player.CountInv("IsAppetite") || player.CountInv("IsCarnOfSouls") || player.CountInv("IsWeddingCake")) return true;
+		return false;
+	}
+	
+	int A_GetPlayerLvl()
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
+		{
+			if (exex_expenabled) Level = MiscItem.PlayerLevel;
+			else
+			{
+				if (A_CheckDDGame()) Level = MiscItem.TotalNRPGLvlPts;
+			}
+		}
+		if (dydudebug_playerlevelchecks) Console.Printf("\c[green](%s) \c[gold](A_GetPlayerLvl - TempDefenseBuff)\c- PlayerLevel: %d [%d]", GetClassName(), level, gametic);
+		return Level;
+	}
+}
+
+class PowerProtectionTimeCheck : PowerProtection
+{
+	default
+	{
+		Inventory.Icon "";
+		Powerup.Duration 2147483646; // 8
+		Powerup.Color "00 00 00", 0.00;
+	}
+	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
 	}
 	
 	bool A_CheckDDGame()
@@ -1652,7 +1760,7 @@ class PowerWine : TempDefenseBuff
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -1983,7 +2091,7 @@ class PowerWineBuffIPMaximum : PowerWine
 	}
 }
 
-class PowerFoodATK : PowerDamage
+class PowerFoodATK : PowerDamageTimeCheck
 {
 	double ticpiece;
 	default
@@ -1993,13 +2101,22 @@ class PowerFoodATK : PowerDamage
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick ()
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -2026,7 +2143,7 @@ class PowerFoodATK : PowerDamage
 	}
 }
 
-class PowerFoodDEF : PowerProtection
+class PowerFoodDEF : PowerProtectionTimeCheck
 {
 	double ticpiece;
 	default
@@ -2036,13 +2153,22 @@ class PowerFoodDEF : PowerProtection
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick ()
 	{
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -2565,7 +2691,7 @@ class PlayerIsDead : PlaceholderItem
 }
 class PlayerDeathFadeOut : PlaceHolderItem { }
 
-class PowerDouble : PowerDamage
+class PowerDouble : PowerDamageTimeCheck
 {
 	int timer;
 	int fadeouttic;
@@ -2579,6 +2705,15 @@ class PowerDouble : PowerDamage
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
+	}
+	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
 	}
 	
 	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
@@ -2605,7 +2740,7 @@ class PowerDouble : PowerDamage
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -2633,7 +2768,7 @@ class PowerDouble : PowerDamage
 	}
 }
 
-class PowerHalve : PowerDamage
+class PowerHalve : PowerDamageTimeCheck
 {
 	int timer;
 	int fadeouttic;
@@ -2647,6 +2782,15 @@ class PowerHalve : PowerDamage
 		+INVENTORY.PERSISTENTPOWER;
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
+	}
+	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
 	}
 	
 	override void ModifyDamage(int damage, Name damageType, out int newdamage, bool passive, Actor inflictor, Actor source, int flags)
@@ -2673,7 +2817,7 @@ class PowerHalve : PowerDamage
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -2702,7 +2846,7 @@ class PowerHalve : PowerDamage
 }
 
 
-class PowerGuard : PowerProtection
+class PowerGuard : PowerProtectionTimeCheck
 {
 	int timer;
 	int fadeouttic;
@@ -2748,7 +2892,7 @@ class PowerGuard : PowerProtection
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -2776,7 +2920,7 @@ class PowerGuard : PowerProtection
 	}
 }
 
-class PowerWeaken : PowerProtection
+class PowerWeaken : PowerProtectionTimeCheck
 {
 	int timer;
 	int fadeouttic;
@@ -2822,7 +2966,7 @@ class PowerWeaken : PowerProtection
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -2850,7 +2994,7 @@ class PowerWeaken : PowerProtection
 	}
 }
 
-class IsPoisoned : PowerDamage
+class IsPoisoned : PowerDamageTimeCheck
 {
 	int timer;
 	int fadeouttic;
@@ -2889,7 +3033,19 @@ class IsPoisoned : PowerDamage
 	}
 }
 
-class PowerHaste : PowerSpeed
+class PowerSpeedTimeCheck : PowerSpeed
+{
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+}
+
+class PowerHaste : PowerSpeedTimeCheck
 {
 	int timer;
 	int fadeouttic;
@@ -2918,7 +3074,7 @@ class PowerHaste : PowerSpeed
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -2946,7 +3102,7 @@ class PowerHaste : PowerSpeed
 	}
 }
 
-class PowerSlow : PowerSpeed
+class PowerSlow : PowerSpeedTimeCheck
 {
 	int timer;
 	int fadeouttic;
@@ -2975,7 +3131,7 @@ class PowerSlow : PowerSpeed
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -3018,7 +3174,16 @@ class PowerTerror : PowerFrightener
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
 	}
-
+	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick ()
 	{
 		timer++;
@@ -3033,7 +3198,7 @@ class PowerTerror : PowerFrightener
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -3077,7 +3242,16 @@ class PowerInvulnDD : PowerInvulnerable
 		+INVENTORY.HUBPOWER;
 		+INVENTORY.ADDITIVETIME;
 	}
-
+	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick ()
 	{
 		timer++;
@@ -3098,7 +3272,7 @@ class PowerInvulnDD : PowerInvulnerable
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -3138,7 +3312,16 @@ class PowerStrengthDD : PowerStrength
 		+INVENTORY.ADDITIVETIME;
 	}
 	double fadeintensity;
-
+	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 /*
 	override bool HandlePickup (Inventory item)
 	{
@@ -3215,7 +3398,7 @@ class PowerStrengthDD : PowerStrength
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -3271,7 +3454,7 @@ class PowerStrengthDD : PowerStrength
 
 // Dash Trails
 
-class PlayerDashing : PowerSpeed // Used to create trails behind the player for dashing
+class PlayerDashing : PowerSpeedTimeCheck // Used to create trails behind the player for dashing
 {
 	default
 	{
@@ -3281,7 +3464,7 @@ class PlayerDashing : PowerSpeed // Used to create trails behind the player for 
 	}
 }
 
-class PlayerBatDashing : PowerSpeed // Used to create trails behind the player for dashing
+class PlayerBatDashing : PowerSpeedTimeCheck // Used to create trails behind the player for dashing
 {
 	default
 	{
@@ -3500,7 +3683,7 @@ class GrimophoneDEFDown4 : GrimophoneDEFDown
 	}
 }
 
-class DefDownDebuff : PowerProtection
+class DefDownDebuff : PowerProtectionTimeCheck
 {
 	bool firsttic;
 	string victimname;
@@ -3681,7 +3864,7 @@ class BlunderHelmSplitter3 : DefDownDebuff
 }
 
 // Scrambler Confusion/Fear Debuff Item
-class ScramblerConfusion : PowerProtection
+class ScramblerConfusion : PowerProtectionTimeCheck
 {
 	bool firsttic;
 	int debufftimer;
@@ -3858,6 +4041,15 @@ class PowerIronFeet2 : PowerIronFeet
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor, Actor source, int flags)
 	{
 		if (damageType == 'Magma' || damageType == 'Lava') newdamage = damage * frandom(0.00,0.05);
@@ -3977,7 +4169,7 @@ class PowerIronFeet2 : PowerIronFeet
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -4019,6 +4211,16 @@ class PowerInfiniteAmmo2 : PowerInfiniteAmmo
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
+	
 	override void Tick()
 	{
 		timer++;
@@ -4036,7 +4238,7 @@ class PowerInfiniteAmmo2 : PowerInfiniteAmmo
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -4078,6 +4280,15 @@ class PowerDoubleFiringSpeed2 : PowerDoubleFiringSpeed
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick()
 	{
 		timer++;
@@ -4097,7 +4308,7 @@ class PowerDoubleFiringSpeed2 : PowerDoubleFiringSpeed
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -4142,6 +4353,15 @@ class PowerInvisibility2 : PowerInvisibility
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick()
 	{
 		timer++;
@@ -4163,7 +4383,7 @@ class PowerInvisibility2 : PowerInvisibility
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -4207,6 +4427,15 @@ class PowerGhost2 : PowerGhost
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick()
 	{
 		timer++;
@@ -4226,7 +4455,7 @@ class PowerGhost2 : PowerGhost
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -4254,7 +4483,7 @@ class PowerGhost2 : PowerGhost
 	}
 }
 
-class FuryBuff : PowerDamage
+class FuryBuff : PowerDamageTimeCheck
 {
 	bool firsttic;
 	default
@@ -4285,7 +4514,7 @@ class FuryBuff : PowerDamage
 	}
 }
 
-class FuryBuffIP : PowerDamage
+class FuryBuffIP : PowerDamageTimeCheck
 {
 	bool firsttic;
 	default
@@ -4317,7 +4546,7 @@ class FuryBuffIP : PowerDamage
 }
 
 //Diving Helmet
-class PowerNoDrown : PowerProtection
+class PowerNoDrown : PowerProtectionTimeCheck
 {
 	double ticpiece;
 	default
@@ -4400,7 +4629,7 @@ class PowerNoDrown : PowerProtection
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (ddafd_underwatercompat && (owner.CountInv("IsDynDuchess") || owner.CountInv("IsAppetite") || owner.CountInv("IsCarnOfSouls")))
 				{
@@ -4544,6 +4773,15 @@ class PowerRatMorph : PowerMorph
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick()
 	{
 		timer++;
@@ -4561,7 +4799,7 @@ class PowerRatMorph : PowerMorph
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -4702,7 +4940,7 @@ class PowerRavenInvisibility : PowerInvisibility2
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -4787,6 +5025,15 @@ class PowerRavenFlight : PowerFlight
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick()
 	{
 		timer++;
@@ -4810,7 +5057,7 @@ class PowerRavenFlight : PowerFlight
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -4853,6 +5100,15 @@ class PowerLightAmp2 : PowerLightAmp
 		+INVENTORY.ADDITIVETIME;
 	}
 	
+	bool A_CheckNoTimer()
+	{
+		bool notimer;
+		actor player = players[0].mo;
+		if (player.CountInv("INTERMAPChecker") || 
+				player.CountInv("CCards_ChoiceInvulnerability")) notimer = true;
+		return notimer;
+	}
+	
 	override void Tick()
 	{
 		timer++;
@@ -4868,7 +5124,7 @@ class PowerLightAmp2 : PowerLightAmp
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -4988,7 +5244,7 @@ class DoingSpinAttack : PlaceHolderItem
 	}
 }
 
-class DMGWeakness20Percent : PowerProtection 
+class DMGWeakness20Percent : PowerProtectionTimeCheck 
 {
 	default 
 	{
@@ -5010,7 +5266,7 @@ class DMGWeakness20Percent : PowerProtection
 	}
 }
 
-class DMGWeakness50Percent : PowerProtection 
+class DMGWeakness50Percent : PowerProtectionTimeCheck 
 {
 	default 
 	{
@@ -5032,7 +5288,7 @@ class DMGWeakness50Percent : PowerProtection
 	}
 }
 
-class DMGWeakness75Percent : PowerProtection 
+class DMGWeakness75Percent : PowerProtectionTimeCheck 
 {
 	default 
 	{
@@ -5054,7 +5310,7 @@ class DMGWeakness75Percent : PowerProtection
 	}
 }
 
-class DMGWeakness100Percent : PowerProtection 
+class DMGWeakness100Percent : PowerProtectionTimeCheck 
 {
 	default 
 	{
@@ -5076,7 +5332,7 @@ class DMGWeakness100Percent : PowerProtection
 	}
 }
 
-class DMGBonus30Percent : PowerDamage 
+class DMGBonus30Percent : PowerDamageTimeCheck 
 {
 	default
 	{
@@ -5096,7 +5352,7 @@ class DMGBonus30Percent : PowerDamage
 		}
 	}
 }
-class DMGBonus75Percent : PowerDamage
+class DMGBonus75Percent : PowerDamageTimeCheck
 {
 	default
 	{
@@ -5117,7 +5373,7 @@ class DMGBonus75Percent : PowerDamage
 	}
 }
 
-class DMGReduction25Percent : PowerProtection
+class DMGReduction25Percent : PowerProtectionTimeCheck
 {
 	default
 	{
@@ -5139,7 +5395,7 @@ class DMGReduction25Percent : PowerProtection
 	}
 }
 
-class DMGReduction30Percent : PowerProtection
+class DMGReduction30Percent : PowerProtectionTimeCheck
 {
 	default
 	{
@@ -5160,7 +5416,7 @@ class DMGReduction30Percent : PowerProtection
 		}
 	}
 }
-class DMGReduction62_5Percent : PowerProtection
+class DMGReduction62_5Percent : PowerProtectionTimeCheck
 {
 	default
 	{
@@ -5181,7 +5437,7 @@ class DMGReduction62_5Percent : PowerProtection
 		}
 	}
 }
-class DMGReduction75Percent : PowerProtection 
+class DMGReduction75Percent : PowerProtectionTimeCheck 
 {
 	default
 	{
@@ -5296,7 +5552,7 @@ class SigilDrain : PlaceHolderItem { default { Inventory.MaxAmount 1; } }
 class SigilModeType : PlaceHolderItem { default { Inventory.MaxAmount 6; } } 
 class SigilPieces : PlaceHolderItem { default { Inventory.MaxAmount 5; } }
 
-class SnakeIPBuffAtk : PowerDamage
+class SnakeIPBuffAtk : PowerDamageTimeCheck
 {
 	default
 	{
@@ -6052,7 +6308,7 @@ class KnightGown4IPItem : ArmorIPItem
 	}
 }
 
-class KnightGownIPBuff : PowerProtection
+class KnightGownIPBuff : PowerProtectionTimeCheck
 {
 	string texname;
 	int timer;
@@ -6072,7 +6328,7 @@ class KnightGownIPBuff : PowerProtection
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -6389,7 +6645,7 @@ class DinahTrueIPState : TempDefenseBuff
 			if (EffectTics2 <= Point1) Dire = 1;
 		}
 		
-		if (!owner.CountInv("INTERMAPChecker"))
+		if (!A_CheckNoTimer())
 		{
 			int fadeouttic = 36;
 			if (EffectTics > fadeouttic && owner) owner.A_StopSound(206);
@@ -6510,7 +6766,7 @@ class PowerScannerDD : PowerScanner
 	}
 }
 
-class EvadeAnAttack : PowerProtection 
+class EvadeAnAttack : PowerProtectionTimeCheck 
 {
 	default
 	{
@@ -6571,7 +6827,7 @@ class VokterShieldGlitter2 : VokterShieldGlitterBase
 	}
 }
 
-class CentaurionShieldMode : PowerProtection
+class CentaurionShieldMode : PowerProtectionTimeCheck
 {
 	int timer;
 	int timerint;
@@ -6604,7 +6860,7 @@ class CentaurionShieldMode : PowerProtection
 	}
 }
 
-class VokterCloneShield : PowerProtection
+class VokterCloneShield : PowerProtectionTimeCheck
 {
 	int timer;
 	int timerint;
@@ -6662,7 +6918,7 @@ class VokterCloneShield : PowerProtection
 	}
 }
 
-class VokterCloneShield2 : PowerProtection
+class VokterCloneShield2 : PowerProtectionTimeCheck
 {
 	int timer;
 	int timerint;
@@ -6720,7 +6976,7 @@ class VokterCloneShield2 : PowerProtection
 	}
 }
 
-class VokterCloneStun : PowerProtection
+class VokterCloneStun : PowerProtectionTimeCheck
 {
 	default
 	{
@@ -7812,7 +8068,7 @@ class AirBubble2 : AirBubble1
 	}
 }
 
-class BasePercentSpeedBonus : PowerSpeed 
+class BasePercentSpeedBonus : PowerSpeedTimeCheck 
 {
 	default 
 	{
@@ -8119,7 +8375,7 @@ class DealCriticalHit : PlaceholderItemDepletable { default { Inventory.MaxAmoun
 class IsStepping : PlaceholderItemDepletable { default { Inventory.MaxAmount 999999; } }
 
 class PWDefenseBuff : PlaceholderItem { }
-class PWSpeedBalloonBuff : PowerSpeed
+class PWSpeedBalloonBuff : PowerSpeedTimeCheck
 {
 	default
 	{
@@ -8128,7 +8384,7 @@ class PWSpeedBalloonBuff : PowerSpeed
 		Powerup.Duration 2147483646;
 	}
 }
-class PWATKBalloonBuff : PowerDamage
+class PWATKBalloonBuff : PowerDamageTimeCheck
 {
 	default
 	{
@@ -8137,7 +8393,7 @@ class PWATKBalloonBuff : PowerDamage
 		Powerup.Duration 2147483646;
 	}
 }
-class PWAttackBuff : PowerDamage
+class PWAttackBuff : PowerDamageTimeCheck
 {
 	default
 	{
@@ -8421,7 +8677,7 @@ class OhaiTharDinah : TempDefenseBuff
 
 class Chase_Fly : PlaceholderItemDepletable { default { Inventory.MaxAmount 1; } }
 
-class D_NoUCard : PowerProtection 
+class D_NoUCard : PowerProtectionTimeCheck 
 {
 	default
 	{
@@ -8746,7 +9002,7 @@ class HarmonicAnger : TempDefenseBuff
 		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 		if (owner)
 		{
-			if (!owner.CountInv("INTERMAPChecker"))
+			if (!A_CheckNoTimer())
 			{
 				if (owner.CountInv("TimePotionTimeFreezer"))
 				{
@@ -9009,7 +9265,7 @@ class SMAAAASH : EEBaseZSC
 	}
 }
 
-class LevelUpAttack : PowerDamage
+class LevelUpAttack : PowerDamageTimeCheck
 {
 	default
 	{
@@ -9021,7 +9277,7 @@ class LevelUpAttack : PowerDamage
 	}
 }
 
-class LevelUpDefense : PowerProtection
+class LevelUpDefense : PowerProtectionTimeCheck
 {
 	default
 	{
@@ -9037,7 +9293,7 @@ class CharmMonsterAttack : LevelUpAttack { default { Inventory.MaxAmount 1; -Inv
 class CharmMonsterDefense : LevelUpDefense { default { Inventory.MaxAmount 1; -Inventory.UNDROPPABLE; damagefactor "normal", 0.3333; radiusdamagefactor 0.3333; } }
 class CharmMonsterSpeed : BasePercentSpeedBonus { default { Inventory.MaxAmount 1; -Inventory.UNDROPPABLE; Speed 1.5; } }
 
-class AfasDropCooldown : PowerProtection 
+class AfasDropCooldown : PowerProtectionTimeCheck 
 {
 	default
 	{
