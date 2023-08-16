@@ -1822,7 +1822,7 @@ class DinahWeapon : DDWeapon
 	action void A_ForcePlayState2(statelabel fstate = "BatGuard")
 	{
 		actor player = players[0].mo;
-		if (!player.CountInv("PKicking"))
+		if (!(player.CountInv("PKicking") || player.CountInv("PPunching")))
 		{
 			state meleestate = player.FindState(fstate);
 			if (meleestate != null) player.SetState(meleestate);
@@ -1833,7 +1833,7 @@ class DinahWeapon : DDWeapon
 	action void A_ForcePlayState3(statelabel fstate = "SpinAttackBat")
 	{
 		actor player = players[0].mo;
-		if (!player.CountInv("PKicking"))
+		if (!(player.CountInv("PKicking") || player.CountInv("PPunching")))
 		{
 			state meleestate = player.FindState(fstate);
 			if (meleestate != null) player.SetState(meleestate);
@@ -1844,7 +1844,7 @@ class DinahWeapon : DDWeapon
 	action void A_ForcePlayState4(statelabel fstate = "ShieldGuard")
 	{
 		actor player = players[0].mo;
-		if (!player.CountInv("PKicking"))
+		if (!(player.CountInv("PKicking") || player.CountInv("PPunching")))
 		{
 			state meleestate = player.FindState(fstate);
 			if (meleestate != null) player.SetState(meleestate);
@@ -1852,10 +1852,19 @@ class DinahWeapon : DDWeapon
 	}
 	
 	//
+	action void A_ForcePlayState5(statelabel fstate = "Punch1")
+	{
+		actor player = players[0].mo;
+		state meleestate = player.FindState(fstate);
+		if (meleestate != null) player.SetState(meleestate);
+		player.A_SetInventory("PPunching",1);
+	}
+	
+	//
 	action void A_ForcePlayStateMelee(statelabel fstate = "Melee")
 	{
 		actor player = players[0].mo;
-		if (!player.CountInv("PKicking"))
+		if (!(player.CountInv("PKicking") || player.CountInv("PPunching")))
 		{
 			state meleestate = player.FindState(fstate);
 			if (meleestate != null) player.SetState(meleestate);
@@ -2962,7 +2971,7 @@ class HandToHand : DinahWeapon replaces Fist
 			}
 			TNT1 A 0
 			{
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PrePunch");
 				actor player = players[0].mo;
 				let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
 				int basechance = 31;
@@ -3006,6 +3015,7 @@ class HandToHand : DinahWeapon replaces Fist
 				return resolvestate(null);
 			}
 		PunchStartL:
+			DHND B 0 A_ForcePlayState5("PrePunch");
 			DHND B 3 // 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
@@ -3020,6 +3030,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 1: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch1");
 				player.mo.A_SetInventory("IsPunching",1);
 			}
 			DPUN A 3 // 2
@@ -3036,6 +3047,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 2 [shields/hit]: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch2");
 				A_DinahPunch(0);
 			}
 			DPUN B 4 // 3
@@ -3052,6 +3064,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 3: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch3");
 				player.mo.A_SetInventory("IsPunching",1);
 			}
 			DPUN A 3 // 4
@@ -3068,6 +3081,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 4: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch4");
 				player.mo.A_SetInventory("IsPunching",1);
 			}
 			DHND B 4 // 5
@@ -3084,12 +3098,14 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartL 5: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch5");
 				player.mo.A_SetInventory("IsPunching",1);
 				
 				A_ReFire();
 			}
 			goto Ready;
 		PunchStartR:
+			DHND C 0 A_ForcePlayState5("PrePunch");
 			DHND C 3 // 1
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
@@ -3105,6 +3121,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 1: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch1");
 				player.mo.A_SetInventory("IsPunching",1);
 			}
 			DPUN C 3 // 2
@@ -3121,6 +3138,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 2 [shields/hit]: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch2");
 				A_DinahPunch(0);
 			}
 			DPUN D 4 // 3
@@ -3137,6 +3155,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 3: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch3");
 				player.mo.A_SetInventory("IsPunching",1);
 			}
 			DPUN C 3 // 4
@@ -3153,6 +3172,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 4: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch4");
 				player.mo.A_SetInventory("IsPunching",1);
 			}
 			DHND B 4 // 5
@@ -3169,6 +3189,7 @@ class HandToHand : DinahWeapon replaces Fist
 				if (dydudebug_weaponstatdisplays) Console.Printf("PunchStartR 5: %d", tic);
 				A_SetTics(tic);
 				
+				A_ForcePlayState5("Punch5");
 				player.mo.A_SetInventory("IsPunching",1);
 				
 				A_ReFire();
@@ -3176,12 +3197,13 @@ class HandToHand : DinahWeapon replaces Fist
 			goto Ready;
 		
 		OraRush:
+			DPNR B 0 A_ForcePlayState5("PrePunch");
 			DPNR B 2
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PunchOra1");
 				player.mo.A_SetInventory("IsPunching",1);
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 12) && A_WeaponCheckDoubleFireRate()) { A_SetTics(1); }
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) { A_SetTics(1); }
@@ -3192,7 +3214,7 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PunchOra2");
 				player.mo.A_SetInventory("IsPunching",1);
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 12) && A_WeaponCheckDoubleFireRate()) { A_SetTics(1); }
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) { A_SetTics(1); }
@@ -3204,7 +3226,7 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PunchOra1");
 				player.mo.A_SetInventory("IsPunching",1);
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 12) && A_WeaponCheckDoubleFireRate()) { A_SetTics(1); }
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) { A_SetTics(1); }
@@ -3215,7 +3237,7 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PunchOra2");
 				player.mo.A_SetInventory("IsPunching",1);
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 12) && A_WeaponCheckDoubleFireRate()) { A_SetTics(1); }
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) { A_SetTics(1); }
@@ -3226,18 +3248,20 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PrePunch");
 				player.mo.A_SetInventory("IsPunching",1);
 				A_Refire("OraRush2");
 			}
+			DPNR B 0 A_ForcePlayState5("PrePunch");
 			goto Ready2;
 		OraRush2:
+			DPNR F 0 A_ForcePlayState5("PrePunch");
 			DPNR F 2
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PunchOra2");
 				player.mo.A_SetInventory("IsPunching",1);
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 12) && A_WeaponCheckDoubleFireRate()) { A_SetTics(1); }
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) { A_SetTics(1); }
@@ -3248,7 +3272,7 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PunchOra1");
 				player.mo.A_SetInventory("IsPunching",1);
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 12) && A_WeaponCheckDoubleFireRate()) { A_SetTics(1); }
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) { A_SetTics(1); }
@@ -3260,6 +3284,7 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
+				if (random(1,2) <= 1) A_ForcePlayState5("PunchOra1"); else A_ForcePlayState5("PunchOra2");
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 12) && A_WeaponCheckDoubleFireRate()) { A_SetTics(1); }
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) { A_SetTics(1); }
 			}
@@ -3268,17 +3293,20 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PrePunch");
 				player.mo.A_SetInventory("IsPunching",1);
 				A_Refire("OraRush3");
 			}
+			DPNR F 0 A_ForcePlayState5("PrePunch");
+			goto Ready2;
 		OraRush3:
+			DPNR I 0 A_ForcePlayState5("PrePunch");
 			DPNR I 2
 			{
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PunchOra1");
 				player.mo.A_SetInventory("IsPunching",1);
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 12) && A_WeaponCheckDoubleFireRate()) { A_SetTics(1); }
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) { A_SetTics(1); }
@@ -3290,7 +3318,7 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PunchOra2");
 				player.mo.A_SetInventory("IsPunching",1);
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 12) && A_WeaponCheckDoubleFireRate()) { A_SetTics(1); }
 				if (TruePlayerLevel >= (A_GetHandToHandSpd(0) * 15)) { A_SetTics(1); }
@@ -3301,10 +3329,11 @@ class HandToHand : DinahWeapon replaces Fist
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
 				int TruePlayerLevel = invoker.ActualLevel;
 				
-				A_ForcePlayStateMelee("Melee");
+				A_ForcePlayState5("PrePunch");
 				player.mo.A_SetInventory("IsPunching",1);
 				A_Refire("OraRush");
 			}
+			DPNR I 0 A_ForcePlayState5("PrePunch");
 			goto Ready2;
 
 		AltFire:
