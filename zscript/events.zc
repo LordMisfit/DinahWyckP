@@ -893,6 +893,31 @@ class DD_EventHandler : EventHandler
 						}
 					}
 				}
+				int d = Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true);
+				if (d != -1)
+				{
+					nm = "CCards_Actor_9LivesCounter";
+					if (spawnee.CountInv(nm))
+					{
+						int lives = spawnee.CountInv(nm);
+						baselinelevel += (lives * randompick(1,1,1,1,1,1,1,1,1,1,1,2,2,2,3));
+						if (random(1,16) <= 1)
+						{
+							if (random(1,16) <= 1)
+							{
+								baselinelevel *= (1.00 + (lives * frandom(0.125,0.16667)));
+							}
+							else
+							{
+								baselinelevel *= (1.00 + (lives * frandom(0.0625,0.083334)));
+							}
+						}
+						else
+						{
+							baselinelevel *= (1.00 + (lives * frandom(0.03125,0.041667)));
+						}
+					}
+				}
 				
 				
 				if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet], tic: %d, actor: %p [%s]\c-", gametic, spawnee, spawnname);
@@ -933,7 +958,52 @@ class DD_EventHandler : EventHandler
 					if (skill == 2) basedivfactor = 16;
 					if (skill == 3) basedivfactor = 11;
 					if (skill >= 4) basedivfactor = 6;
-
+					int d = Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true);
+					if (d != -1)
+					{
+						nm = "CCards_Actor_9LivesCounter";
+						if (spawnee.CountInv(nm))
+						{
+							int basediv = 16;
+							int lives = spawnee.CountInv(nm);
+							if (lives >= 9)
+							{
+								basediv = random(2,4);
+							}
+							else
+							if (lives >= 6 && lives <= 8)
+							{
+								basediv = random(5,7);
+							}
+							else
+							if (lives >= 3 && lives <= 5)
+							{
+								basediv = random(8,10);
+							}
+							else
+							if (lives >= 1 && lives <= 2)
+							{
+								basediv = random(12,14);
+							}
+							
+							if (random(1,basediv) <= 1)
+							{
+								if (random(1,basediv) <= 1)
+								{
+									basedivfactor *= (1.00 - (lives * frandom(0.125,0.1667)));
+								}
+								else
+								{
+									basedivfactor *= (1.00 - (lives * frandom(0.0625,0.083334)));
+								}
+							}
+							else
+							{
+								basedivfactor *= (1.00 - (lives * frandom(0.03125,0.041667)));
+							}
+						}
+					}
+					
 					if (random(1,basedivfactor) <= 8)
 					{
 						if (random(1,basedivfactor) <= 4)
@@ -2654,10 +2724,12 @@ class DD_EventHandler : EventHandler
 				nm = "CCardAssassinMarker"; if (victim.CountInv(nm)) specialtype += 2;
 				nm = "CCardRespawnedMarker"; if (victim.CountInv(nm)) specialtype += 4;
 				nm = "CCards_Actor_TheAncientOne"; if (victim.GetClassName() == nm) specialtype += 8;
+				nm = "CCards_Actor_9LivesCurse"; if (victim.CountInv(nm)) specialtype += 16;
 				nm = "CCards_Actor_Spider"; if (victim.GetClassName() == nm) specialtype += 128;
 				nm = "CCards_SpookySkeleton"; if (victim.GetClassName() == nm) specialtype += 256;
 				nm = "CCards_Boss_Romero"; if (victim.GetClassName() == nm) specialtype += 512;
 				nm = "CCards_Actor_Bane"; if (victim.GetClassName() == nm) specialtype += 1024;
+				nm = "CCards_Actor_Maestro"; if (victim.GetClassName() == nm) specialtype += 2048;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
 					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype2 += 4;
@@ -5136,7 +5208,7 @@ class DD_EventHandler : EventHandler
 				// Diving Helm [Type 4]
 				basechance = exex_inventorydroprate4;
 				basechance *= exex_inventorydropratemulti;
-				if (victim.waterlevel <= 2) basechance *= 16;
+				if (victim.waterlevel <= 2) basechance *= 128;
 				basechance *= skillmult;
 				if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 				if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1) basechance *= 0.9;
@@ -5725,10 +5797,12 @@ class DD_EventHandler : EventHandler
 				nm = "CCardAssassinMarker"; if (victim.CountInv(nm)) specialtype += 2;
 				nm = "CCardRespawnedMarker"; if (victim.CountInv(nm)) specialtype += 4;
 				nm = "CCards_Actor_TheAncientOne"; if (victim.GetClassName() == nm) specialtype += 8;
+				nm = "CCards_Actor_9LivesCurse"; if (victim.CountInv(nm)) specialtype += 16;
 				nm = "CCards_Actor_Spider"; if (victim.GetClassName() == nm) specialtype += 128;
 				nm = "CCards_SpookySkeleton"; if (victim.GetClassName() == nm) specialtype += 256;
 				nm = "CCards_Boss_Romero"; if (victim.GetClassName() == nm) specialtype += 512;
 				nm = "CCards_Actor_Bane"; if (victim.GetClassName() == nm) specialtype += 1024;
+				nm = "CCards_Actor_Maestro"; if (victim.GetClassName() == nm) specialtype += 2048;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
 					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype2 += 4;
@@ -5852,10 +5926,33 @@ class DD_EventHandler : EventHandler
 						if (specialtype & 2) ExpGain *= frandompick(1.8,2.2); // CCardAssassinMarker
 						if (specialtype & 4) ExpGain *= frandompick(0.625,0.875); // CCardRespawnedMarker
 						if (specialtype & 8) ExpGain *= frandompick(7.5,12.5); // CCards_Actor_TheAncientOne
+						if (specialtype & 16) 
+						{
+							ExpGain *= frandompick(0.75,1.25); // CCards_Actor_9LivesCurse
+							nm = "CCards_Actor_9LivesCounter";
+							if (victim.CountInv(nm))
+							{
+								int lives = victim.CountInv(nm);
+								if (lives >= 9)
+								{
+									ExpGain *= (1.00 + (lives * frandom(0.5,0.667)));
+								}
+								else
+								if (lives >= 4 && lives <= 8)
+								{
+									ExpGain *= (1.00 + (lives * frandom(0.25,0.334)));
+								}
+								else
+								{
+									ExpGain *= (1.00 + (lives * frandom(0.125,0.167)));
+								}
+							}
+						}
 						if (specialtype & 128) ExpGain *= 0.5; // CCards_Actor_Spider
 						if (specialtype & 256) ExpGain *= 0.5; // CCards_SpookySkeleton
 						if (specialtype & 512) ExpGain *= 0.5; // CCards_Boss_Romero
 						if (specialtype & 1024) ExpGain *= frandompick(7.5,12.5); // CCards_Actor_Bane
+						if (specialtype & 2048) ExpGain *= frandompick(7.5,12.5); // CCards_Actor_Maestro
 						if (victim.CountInv("MiraclesUsed") && exex_monstershavemiracles) ExpGain *= (1.0 + (victim.CountInv("MiraclesUsed") * 0.625));
 						if ((source && source.CountInv("DinahTrueIPState")) || (inflicter && inflicter.CountInv("DinahTrueIPState"))) ExpGain *= 0.2;
 						if (VacPuff(inflicter) || VacPuffIP(inflicter)) 
