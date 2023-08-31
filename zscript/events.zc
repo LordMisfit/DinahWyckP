@@ -2235,6 +2235,7 @@ class DD_EventHandler : EventHandler
 			if (PlasmaBall1(spawnee) ||
 					PlasmaBall2(spawnee)) spawnee.DamageType = 'BFG';
 			if (ExplosiveBarrel(spawnee)) spawnee.DamageType = 'Explosive';
+			nm = "CCards_Actor_CardExplosiveBarrel"; if (spawnname == nm) spawnee.DamageType = 'Explosive';
 			nm = "CCards_Actor_MaestroBuster"; if (spawnname == nm) spawnee.DamageType = 'Plasma';
 			nm = "CCards_Actor_PilotedMechPlasma"; if (spawnname == nm) spawnee.DamageType = 'Plasma';
 			
@@ -4191,12 +4192,15 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
+				nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(4,8);
 				if (random(1,maxchance) <= 1) // Main Drop Chance
 				{
 					int temp = 1;
 					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem) temp = (1 + (TrueLuck * 0.08334));
-					if (random(1,16) <= temp) // Weapons
+					int randroll = random(1,16);
+					nm = "CCards_Actor_Maestro"; if (vict == nm) randroll = random(1,4);
+					if (randroll <= temp) // Weapons
 					{
 						double rand = 1.0;
 						user_type = random(1,8);
@@ -4424,31 +4428,44 @@ class DD_EventHandler : EventHandler
 						int temp = 48;
 						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem) temp = (48 + (TrueLuck * 0.25));
-						if (random(1,256) <= temp) 
+						int randroll2 = random(1,256);
+						int ammodrops = randompick(1,1,1,1,1,1,1,2,2,3);
+						if (MiscItem) ammodrops += (TrueLuck * frandompick(0,0,0,0,0,0,0,0.0125,0.0125,0.025));
+						nm = "CCards_Actor_Maestro"; 
+						if (vict == nm) 
 						{
-							user_type = random(1,8);
-							if (user_type == 1) droptype = "MalletAmmoBig";
-							if (user_type == 2) droptype = "JackAmmoBig";
-							if (user_type == 3) droptype = "BlunderAmmoBig";
-							if (user_type == 4) droptype = "CandleAmmoBig";
-							if (user_type == 5) droptype = "EggAmmoBig";
-							if (user_type == 6) droptype = "PikeAmmoBig";
-							if (user_type == 7) droptype = "MusicAmmoBig";
-							if (user_type == 8) droptype = "VacAmmoBig";
+							temp *= random(2,3);
+							ammodrops *= random(2,4);
+							if (random(1,4) <= 1) randroll2 = random(1,128);
 						}
-						else
+						for (int i2; i2 < ammodrops; i2++)
 						{
-							user_type = random(1,8);
-							if (user_type == 1) droptype = "MalletAmmo";
-							if (user_type == 2) droptype = "JackAmmo";
-							if (user_type == 3) droptype = "BlunderAmmo";
-							if (user_type == 4) droptype = "CandleAmmo";
-							if (user_type == 5) droptype = "EggAmmo";
-							if (user_type == 6) droptype = "PikeAmmo";
-							if (user_type == 7) droptype = "MusicAmmo";
-							if (user_type == 8) droptype = "VacAmmo";
+							if (randroll2 <= temp) 
+							{
+								user_type = random(1,8);
+								if (user_type == 1) droptype = "MalletAmmoBig";
+								if (user_type == 2) droptype = "JackAmmoBig";
+								if (user_type == 3) droptype = "BlunderAmmoBig";
+								if (user_type == 4) droptype = "CandleAmmoBig";
+								if (user_type == 5) droptype = "EggAmmoBig";
+								if (user_type == 6) droptype = "PikeAmmoBig";
+								if (user_type == 7) droptype = "MusicAmmoBig";
+								if (user_type == 8) droptype = "VacAmmoBig";
+							}
+							else
+							{
+								user_type = random(1,8);
+								if (user_type == 1) droptype = "MalletAmmo";
+								if (user_type == 2) droptype = "JackAmmo";
+								if (user_type == 3) droptype = "BlunderAmmo";
+								if (user_type == 4) droptype = "CandleAmmo";
+								if (user_type == 5) droptype = "EggAmmo";
+								if (user_type == 6) droptype = "PikeAmmo";
+								if (user_type == 7) droptype = "MusicAmmo";
+								if (user_type == 8) droptype = "VacAmmo";
+							}
+							victim.A_SpawnItemEx(droptype,frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
 						}
-						victim.A_SpawnItemEx(droptype,frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
 					}
 				}
 			}
@@ -4659,10 +4676,10 @@ class DD_EventHandler : EventHandler
 				}
 				if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx("GalaApple",frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
 				if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx("FoodPlateFruit",frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
-				if (random(1,(maxchance*2)) == 1) victim.A_SpawnItemEx("AppleWine",frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
-				if (random(1,(maxchance*4)) == 1) victim.A_SpawnItemEx("TurkeyDinner",frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
-				if (random(1,(maxchance*4)) == 1) victim.A_SpawnItemEx("PigRoastDishExtra",frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
-				if (random(1,(maxchance*4)) == 1) 
+				if (random(1,(maxchance*3)) == 1) victim.A_SpawnItemEx("AppleWine",frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
+				if (random(1,(maxchance*9)) == 1) victim.A_SpawnItemEx("TurkeyDinner",frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
+				if (random(1,(maxchance*9)) == 1) victim.A_SpawnItemEx("PigRoastDishExtra",frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
+				if (random(1,(maxchance*9)) == 1) 
 				{
 					string bname = "BerserkNew";
 					if (A_CheckDDGame()) bname = "BerserkSphere";
