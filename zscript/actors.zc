@@ -1039,12 +1039,12 @@ class EEProjectile : EEBaseZSC abstract
 				// Pass through different species of select types or players
 				if (other.bFRIENDLY == 1 || playpawn2)
 				{
-					if (A_CheckFriendCollisionProjTypeFriendlyDoom()) return false;
-					else if (A_CheckFriendCollisionProjTypeFriendlyHeretic()) return false;
-					else if (A_CheckFriendCollisionProjTypeFriendlyHexen()) return false;
-					else if (A_CheckFriendCollisionProjTypeFriendlyStrife()) return false;
-					else if (A_CheckFriendCollisionProjTypeFriendlyOthers()) return false;
-					else if (A_CheckFriendCollisionProjTypeFriendly1()) return false;
+					if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
 				}
 			}
 			else 
@@ -3348,6 +3348,68 @@ class EEBulletTracer : EEFastProjectile
 		A_ScaleVelocity(exex_tracervelmulti);
 		
 		if (finaldamagedealt <= 0) finaldamagedealt = (5 * random(1,3));
+	}
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		DDPlayerPawn playpawn;
+		DDPlayerPawn playpawn2;
+		Actor DDActor;
+		Actor DDActor2;
+		playpawn = DDPlayerPawn(target);
+		playpawn2 = DDPlayerPawn(other);
+		DDActor = Actor(target);
+		DDActor2 = Actor(other);
+
+		// Non-passive means the one moving into the other is performing the checks.
+		if (!passive)
+		{
+			//Console.Printf("!passive");
+			// if fired by a player actor, check for friendliness from the passive actor
+			if (playpawn) 
+			{
+				//Console.Printf("playpawn");
+				// Pass through different species of select types.
+				if (other.bFRIENDLY == 1)
+				{
+					if (A_CheckFriendCollisionProjTypePlayer(self)) return false;
+					if (A_CheckFriendCollisionProjTypePlayer2(self)) return false;
+				}
+				else
+				{
+					if (DDActor2 && A_CheckPropCollisionTracers(DDActor2) > 0) return false;
+				}
+			}
+			else
+			if (DDActor && DDActor.bFRIENDLY)
+			{
+				//Console.Printf("DDActor.bFRIENDLY");
+				// Pass through different species of select types or players
+				if (other.bFRIENDLY == 1 || playpawn2)
+				{
+					if (A_CheckFriendCollisionProjTypeFriendlyDoom() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHeretic() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyHexen() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyStrife() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendlyOthers() > 0) return false;
+					else if (A_CheckFriendCollisionProjTypeFriendly1() > 0) return false;
+				}
+				else
+				{
+					if (DDActor2 && A_CheckPropCollisionTracers(DDActor2) > 0) return false;
+				}
+			}
+			else
+			{
+				if (DDActor2 && A_CheckPropCollisionTracers(DDActor2) > 0) return false;
+			}
+		}
+		else
+		{
+			//Console.Printf("passive");
+		}
+		// We don't really care about others making the check.
+		
+		return true;
 	}
 	
 	action void A_SpawnTracerTrail(string name = "EEBulletTracerTrail", int extranum = 6, double spread = -2.5)
