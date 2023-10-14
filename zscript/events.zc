@@ -2234,8 +2234,17 @@ class DD_EventHandler : EventHandler
 			if (Rocket(spawnee)) spawnee.DamageType = 'Explosive';
 			if (PlasmaBall1(spawnee) ||
 					PlasmaBall2(spawnee)) spawnee.DamageType = 'BFG';
-			if (ExplosiveBarrel(spawnee)) spawnee.DamageType = 'Explosive';
-			nm = "CCards_Actor_CardExplosiveBarrel"; if (spawnname == nm) spawnee.DamageType = 'Explosive';
+			if (ExplosiveBarrel(spawnee)) 
+			{
+				spawnee.DamageType = 'Explosive';
+				spawnee.ProjectilePassHeight = 32;
+			}
+			nm = "CCards_Actor_CardExplosiveBarrel"; 
+			if (spawnname == nm) 
+			{
+				spawnee.DamageType = 'Explosive';
+				spawnee.ProjectilePassHeight = 32;
+			}
 			nm = "CCards_Actor_MaestroBuster"; if (spawnname == nm) spawnee.DamageType = 'Plasma';
 			nm = "CCards_Actor_PilotedMechPlasma"; if (spawnname == nm) spawnee.DamageType = 'Plasma';
 			
@@ -6158,10 +6167,8 @@ class DD_EventHandler : EventHandler
 							
 							int tutlevelmin = 1801;
 							int tutlevelmax = 1804;
-							if (level.levelnum >= tutlevelmin && level.levelnum <= tutlevelmax) 
-							{
-								expgain = 0;
-							}
+							if (level.levelnum >= tutlevelmin && level.levelnum <= tutlevelmax) expgain = 0;
+							if (mod == 'GrowingPains') expgain = 0;
 
 							Actor player = players[0].mo;
 							if (player.health > 0 || !player.CountInv("PlayerIsDead"))
@@ -6177,9 +6184,9 @@ class DD_EventHandler : EventHandler
 								int ExpNew = Player.CountInv("ExpPts");
 								int ExpNeeded = Player.CountInv("ExpPtsNeeded");
 								int PlayerLevel = Player.CountInv("PlayerLevel");
-								if (exex_showexpgains) Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
-								if (exex_showexpgains)
+								if (exex_showexpgains && ExpGain) 
 								{
+									Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
 									MiscItem.KillComboCount += 1;
 									MiscItem.EXPGainHUDAmt += ExpGain;
 									if (MiscItem.EXPGainHUDTimer <= 0) MiscItem.EXPGainHUDTimer = 105;
@@ -6219,7 +6226,8 @@ class DD_EventHandler : EventHandler
 								Centaurion_Hedge(victim) || 
 								Hammerduck_Hedge(victim) || 
 								Killetante_Hedge(victim) || 
-								OldPipe(victim)) playoneliner = false;
+								OldPipe(victim) ||
+								mod == 'GrowingPains') playoneliner = false;
 						nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playoneliner = false;
 						
 						if (playoneliner && player.GetClassName() == "DinahPlayer" && MiscItem)
@@ -6373,12 +6381,13 @@ class DD_EventHandler : EventHandler
 					
 					// Item Drop Action
 					if (EEC && EEC.user_dontdroprandomstuff) { }
+					else if (mod == 'Crush') { }
+					else if (mod == 'Falling') { }
+					else if (mod == 'GrowingPains') { }
+					else if (exception) { }
 					else
 					{
-						if (mod != 'Crush' || mod != 'Falling' || !exception) 
-						{
-							[PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill] = A_KillDropTables(PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill);
-						}
+						[PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill] = A_KillDropTables(PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill);
 					}
 					
 					//*******************************
