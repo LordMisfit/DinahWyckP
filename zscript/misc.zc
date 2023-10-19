@@ -17,6 +17,12 @@ class PlayerStatItem : Inventory
 	double ArmorML;
 	double ArmorM;
 	
+	int AngerLevelEvent;
+	int AngerLevelEventN;
+	int AngerLevelEventNMin;
+	int AngerLevelEventNTimer;
+	int AngerLevelEventNTimerMax;
+	
 	double MercyFlickerAlpha;
 	int InvisPulseTimer;
 	int DashTics;
@@ -42,7 +48,6 @@ class PlayerStatItem : Inventory
 	int DDChapter;
 	int CoSHealPoolInt;
 	int UsedEggHeal;
-	int AngerLevelEventNTimer;
 	int prevarmordifficulty;
 	int ArmorItemGive0, ArmorItemGive1, ArmorItemGive2, ArmorItemGive3, ArmorItemGive4;
 	int ArmorItemMax0, ArmorItemMax1, ArmorItemMax2, ArmorItemMax3, ArmorItemMax4;
@@ -334,7 +339,11 @@ class PlayerStatItem : Inventory
 		if (playeractor) // Otherwise, Keep
 		{
 			if (A_CheckUOHYM()) owner.ChangeTID(1001);
-			if (Wads.CheckNumForName("EE-EXDAY", Wads.ns_global, -1, true) != -1) owner.ChangeTID(1001);
+			else if (Wads.CheckNumForName("EE-EXDAY", Wads.ns_global, -1, true) != -1) owner.ChangeTID(1001);
+			
+			AngerLevelEvent = owner.CountInv("AngerLevelEvent");
+			AngerLevelEventN = owner.CountInv("AngerLevelEventN");
+			AngerLevelEventNMin = owner.CountInv("AngerLevelEventNMin");
 			
 			cricketspinlvlrequirement = exex_cricketspinlvlrequirement;
 			axecombolvlrequirement = exex_axecombolvlrequirement;
@@ -1861,10 +1870,12 @@ class PlayerStatItem : Inventory
 				if (base <= 0.01) base = 0.01;
 				if (basef <= 0.01) basef = 0.01;
 				
-				if (owner.CountInv("AngerLevelEvent") || 
-						owner.CountInv("AngerLevelEventN")) 
+				if (AngerLevelEvent > 0 || 
+						AngerLevelEventN > 0) 
 				{
-					base *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+					base *= (1.0 + 
+									 (AngerLevelEvent * 0.0005) + 
+									 (AngerLevelEventN * 0.00005));
 				}
 				
 				if (base)
@@ -4452,22 +4463,21 @@ class PlayerStatItem : Inventory
 				}
 			}
 			
-			int NTimerMax = 31500;
-			int NMin = owner.CountInv("AngerLevelEventNMin");
-			if (TrueGameSkill <= SKILL_VERY_EASY) NMin *= 0.75;
-			if (TrueGameSkill == SKILL_EASY) NMin *= 0.625;
-			if (TrueGameSkill == SKILL_NORMAL) NMin *= 0.5;
-			if (TrueGameSkill == SKILL_HARD) NMin *= 0.375;
-			if (TrueGameSkill >= SKILL_VERY_HARD) NMin *= 0.25;
+			AngerLevelEventNTimerMax = 31500; // 15min
+			if (TrueGameSkill <= SKILL_VERY_EASY) AngerLevelEventNMin *= 0.75;
+			if (TrueGameSkill == SKILL_EASY) AngerLevelEventNMin *= 0.625;
+			if (TrueGameSkill == SKILL_NORMAL) AngerLevelEventNMin *= 0.5;
+			if (TrueGameSkill == SKILL_HARD) AngerLevelEventNMin *= 0.375;
+			if (TrueGameSkill >= SKILL_VERY_HARD) AngerLevelEventNMin *= 0.25;
 			if (!A_CheckNoTimer())
 			{
 				if (!owner.CountInv("IsUnconscious"))
 				{
-					if (owner.CountInv("AngerLevelEventN") > NMin)
+					if (AngerLevelEventN > AngerLevelEventNMin)
 					{
 						if (AngerLevelEventNTimer <= 0)
 						{
-							AngerLevelEventNTimer = NTimerMax;
+							AngerLevelEventNTimer = AngerLevelEventNTimerMax;
 						}
 						else
 						if (AngerLevelEventNTimer > 0)
@@ -4476,15 +4486,15 @@ class PlayerStatItem : Inventory
 							if (AngerLevelEventNTimer <= 0)
 							{
 								owner.A_TakeInventory("AngerLevelEventN",1);
-								if (owner.CountInv("AngerLevelEventN") <= NMin) 
+								if (AngerLevelEventN <= AngerLevelEventNMin) 
 								{
-									owner.A_SetInventory("AngerLevelEventN",NMin);
+									owner.A_SetInventory("AngerLevelEventN",AngerLevelEventNMin);
 									AngerLevelEventNTimer = 0;
 								}
-								else AngerLevelEventNTimer += NTimerMax;
+								else AngerLevelEventNTimer += AngerLevelEventNTimerMax;
 							}
 						}
-						if (dydudebug_ipdisplays2) Console.Printf("\c[orange]AngerLevelEventN: %d / %d, \c[green]AngerLevelEventNTimer: %d / %d", owner.CountInv("AngerLevelEventN"), NMin, AngerLevelEventNTimer, NTimerMax);
+						if (dydudebug_ipdisplays2) Console.Printf("\c[orange]AngerLevelEventN: %d / %d, \c[green]AngerLevelEventNTimer: %d / %d", AngerLevelEventN, AngerLevelEventNMin, AngerLevelEventNTimer, AngerLevelEventNTimerMax);
 					}
 					else AngerLevelEventNTimer = 0;
 				}
@@ -4546,7 +4556,13 @@ class PlayerStatItem : Inventory
 							sttabIPGain *= sttabIPMulti;
 
 							sttabIPGain *= (1.0 + (ActualLevel * 0.0025));
-							if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) sttabIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.00025) + (owner.CountInv("AngerLevelEventN") * 0.000025));
+							if (AngerLevelEvent > 0 || 
+									AngerLevelEventN > 0) 
+							{
+								sttabIPGain *= (1.0 + 
+																(AngerLevelEvent * 0.00025) + 
+																(AngerLevelEventN * 0.000025));
+							}
 							sttabIPGain /= 12;
 							sttabIPGain *= (sttabs * 6);
 							if (dydudebug_ipdisplays2) Console.Printf("\c[red]sttabIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]sttabIPMulti: %.8f", sttabIPGain, IPDissipateTimer, IPTimerInc, sttabIPMulti);
@@ -4671,7 +4687,13 @@ class PlayerStatItem : Inventory
 							IPTimerIncMod += 10;
 						}
 						berserkIPGain *= (1.0 + (ActualLevel * 0.0025));
-						if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) berserkIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+						if (AngerLevelEvent > 0 || 
+								AngerLevelEventN > 0) 
+						{
+							berserkIPGain *= (1.0 + 
+																(AngerLevelEvent * 0.0005) + 
+																(AngerLevelEventN * 0.00005));
+						}
 						if (dydudebug_ipdisplays2) Console.Printf("\c[red]berserkIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerInc: %d tics, \c[purple]BerIPMulti: %.8f", berserkIPGain, IPDissipateTimer, IPTimerInc, BerIPMulti);
 						
 						double ipbufffactor = 1.0;
@@ -4802,7 +4824,13 @@ class PlayerStatItem : Inventory
 							IPTimerIncMod += 25;
 						}
 						ArmorIPGain *= (1.0 + (ActualLevel * 0.0025));
-						if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) ArmorIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+						if (AngerLevelEvent > 0 || 
+								AngerLevelEventN > 0) 
+						{
+							ArmorIPGain *= (1.0 + 
+															(AngerLevelEvent * 0.0005) + 
+															(AngerLevelEventN * 0.00005));
+						}
 						if (dydudebug_ipdisplays2) Console.Printf("\c[red]ArmorIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics, \c[purple]ArmorIPMulti: %.8f", ArmorIPGain, IPDissipateTimer, IPTimerIncMod, ArmorIPMulti);
 						
 						double ipbufffactor = 1.0;
@@ -4914,7 +4942,13 @@ class PlayerStatItem : Inventory
 							IPTimerIncMod += 25;
 						}
 						MorphIPGain *= (1.0 + (ActualLevel * 0.0075));
-						if (owner.CountInv("AngerLevelEvent") || owner.CountInv("AngerLevelEventN")) MorphIPGain *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.0005) + (owner.CountInv("AngerLevelEventN") * 0.00005));
+						if (AngerLevelEvent > 0 || 
+								AngerLevelEventN > 0) 
+						{
+							MorphIPGain *= (1.0 + 
+															(AngerLevelEvent * 0.0005) + 
+															(AngerLevelEventN * 0.00005));
+						}
 						if (dydudebug_ipdisplays2) Console.Printf("\c[red]MorphIPGain: %.8f, \c[green]IPDissipateTimer: %d / 2100, \c[yellow]IPTimerIncMod: %d tics", MorphIPGain, IPDissipateTimer, IPTimerIncMod);
 						
 						double ipbufffactor = 1.0;
@@ -4985,7 +5019,9 @@ class PlayerStatItem : Inventory
 					}
 					
 					// Unique "Event" IP Related Gains
-					if ((owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) && !owner.CountInv("IsUnconscious"))
+					if ((AngerLevelEvent > 0 || 
+							 AngerLevelEventN > 0) && 
+							!owner.CountInv("IsUnconscious"))
 					{
 						double AngerEventIPGain;
 						AngerEventIPGain = 0.00125;
@@ -5011,8 +5047,8 @@ class PlayerStatItem : Inventory
 								AngerEventIPGain += 0.00390625;
 							}
 						}
-						AngerEventIPGain *= (owner.CountInv("AngerLevelEvent") * 0.125) + (owner.CountInv("AngerLevelEventN") * 0.0125);
-						IPTimerIncMod += (owner.CountInv("AngerLevelEvent") * 2.5) + (owner.CountInv("AngerLevelEventN") * 0.25);
+						AngerEventIPGain *= (AngerLevelEvent * 0.125) + (AngerLevelEventN * 0.0125);
+						IPTimerIncMod += (AngerLevelEvent * 2.5) + (AngerLevelEventN * 0.25);
 						
 						double ipbufffactor = 1.0;
 						if (owner.CountInv("PowerWineBuffWeak")) ipbufffactor -= 0.05;
@@ -5418,7 +5454,13 @@ class PlayerStatItem : Inventory
 								inc *= 0.4;
 							}
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Regen]: %d", HPRegenBoostTimer);
-							if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) inc *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.005) + (owner.CountInv("AngerLevelEventN") * 0.0005));
+							if (AngerLevelEvent > 0 || 
+									AngerLevelEventN > 0) 
+							{
+								inc *= (1.0 + 
+												(AngerLevelEvent * 0.005) + 
+												(AngerLevelEventN * 0.0005));
+							}
 							
 							double ssa = 1.00;
 							if (owner.CountInv("ClassyRibbon")) ssa += 0.025;
@@ -5648,7 +5690,13 @@ class PlayerStatItem : Inventory
 								else inc *= 2.5;
 							}
 							if (dydudebug_hpregen) Console.Printf("HPRegenBoostTimer [Degen]: %d", HPRegenBoostTimer);
-							if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) inc *= (1.0 - (owner.CountInv("AngerLevelEvent") * 0.003334) - (owner.CountInv("AngerLevelEventN") * 0.0003334));
+							if (AngerLevelEvent > 0 || 
+									AngerLevelEventN > 0) 
+							{
+								inc *= (1.0 - 
+												(AngerLevelEvent * 0.003334) - 
+												(AngerLevelEventN * 0.0003334));
+							}
 							
 							double ssa = 1.00;
 							if (owner.CountInv("ClassyRibbon")) ssa -= 0.125;
@@ -7732,7 +7780,13 @@ class PlayerStatItem : Inventory
 			if (dydudebug_attackcalcs || dydudebug_actordmgdisplays) Console.Printf("Damage (!passive - atkfct): %.8f", atkfct);
 			
 			double EventFactor = 1.0;
-			if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) EventFactor *= (1.0 + (owner.CountInv("AngerLevelEvent") * 0.01) + (owner.CountInv("AngerLevelEventN") * 0.001));
+			if (AngerLevelEvent > 0 || 
+					AngerLevelEventN > 0) 
+			{
+				EventFactor *= (1.0 + 
+												(AngerLevelEvent * 0.01) + 
+												(AngerLevelEventN * 0.001));
+			}
 
 			double tempfactor = 1.0;
 
@@ -8064,7 +8118,13 @@ class PlayerStatItem : Inventory
 			if (dydudebug_defensecalcs || dydudebug_playerdamagemobj) Console.Printf("Damage (passive - deffct): %.8f", deffct);
 			
 			double EventFactor = 1.0;
-			if (owner.CountInv("AngerLevelEvent") > 0 || owner.CountInv("AngerLevelEventN") > 0) EventFactor *= (1.0 - (owner.CountInv("AngerLevelEvent") * 0.005) - (owner.CountInv("AngerLevelEvent") * 0.0005));
+			if (AngerLevelEvent > 0 || 
+					AngerLevelEventN > 0) 
+			{
+				EventFactor *= (1.0 - 
+												(AngerLevelEvent * 0.005) - 
+												(AngerLevelEventN * 0.0005));
+			}
 
 			double tempfactor = 1.0;
 			if (ddafd_damageskilllevel && (A_CheckDDGame()))
