@@ -8155,6 +8155,7 @@ class DD_StaticEventHandler : StaticEventHandler
 			int idx;
 			int textfound = 0;
 			string texname;
+			string texname_c;
 			/*
 			Console.Printf("centfloor [%d]: %.4f", i, level.Sectors[i].CenterFloor());
 			Console.Printf("centceiling [%d]: %.4f", i, level.Sectors[i].CenterCeiling());
@@ -8172,6 +8173,7 @@ class DD_StaticEventHandler : StaticEventHandler
 			*/
 			
 			texname = texman.GetName(level.Sectors[i].GetTexture(sector.floor));
+			texname_c = texman.GetName(level.Sectors[i].GetTexture(sector.ceiling));
 			idx = fs_textures.Find(int(level.Sectors[i].GetTexture(sector.floor)));
 			if (idx != fs_textures.Size()) textfound = 1;
 			else 
@@ -8204,22 +8206,37 @@ class DD_StaticEventHandler : StaticEventHandler
 				else nofsttxts++;
 			}
 			
-			if (level.Sectors[i].damagetype == 'Fire' || 
-					level.Sectors[i].damagetype == 'Flames' ||
-					level.Sectors[i].damagetype == 'CCardsEyeFire' ||
-					level.Sectors[i].damagetype == 'Burn' ||
-					level.Sectors[i].damagetype == 'Inferno' ||
-					level.Sectors[i].damagetype == 'Solar' ||
-					level.Sectors[i].damagetype == 'SpecialFire' ||
-					level.Sectors[i].damagetype == 'Lava') level.Sectors[i].damagetype = 'Magma';
-			if (level.Sectors[i].damagetype == 'Ice') level.Sectors[i].damagetype = 'IceWater';
-			if (dydudebug_worldloaded) Console.Printf("    \czFireFloorAdjuster\c-: %d / %d", i, l);
-			
 			int damageamt = level.Sectors[i].damageamount;
 			int damageint = level.Sectors[i].damageinterval;
 			int leakdam = level.Sectors[i].leakydamage;
 			string damagetyp = level.Sectors[i].damagetype;
+			string initdamagetyp = level.Sectors[i].damagetype;
 			double sectgrav = level.Sectors[i].gravity;
+			if (damagetyp == 'Fire' || 
+					damagetyp == 'CCFire' || 
+					damagetyp == 'Flames' || 
+					damagetyp == 'CCardsEyeFire' ||
+					damagetyp == 'SpecialFire' ||
+					damagetyp == 'Burn' ||
+					damagetyp == 'Inferno' ||
+					damagetyp == 'Lava') damagetyp = 'Magma';
+			if (damagetyp == 'Slime')
+			{
+				if (damageamt > 0)
+				{
+					if (texname == "LAVA1" ||
+							texname == "LAVA2" ||
+							texname == "LAVA3" ||
+							texname == "LAVA4" ||
+							texname == "FLOOR6_1") damagetyp = 'Magma';
+					if (texname == "FLAT22" ||
+							texname_c == "FLAT22") damagetyp = 'Shock';
+				}
+			}
+			if (damagetyp == 'Ice') damagetyp = 'IceWater';
+			if (damagetyp == 'Shock') damagetyp = 'ShockFloor';
+			if (initdamagetyp != damagetyp) level.Sectors[i].damagetype = damagetyp;
+			if (dydudebug_worldloaded) Console.Printf("    \czFireFloorAdjuster\c-: %d / %d (%s to %s)", i, l, initdamagetyp, damagetyp);
 			
 			if (dydudebug_footsteps || dydudebug_footsteps2)
 			{
