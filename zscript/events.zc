@@ -8373,7 +8373,8 @@ class EEWaterHandler : StaticEventHandler
 		if (p.cheats & CF_CHASECAM) chasecam = true;
 		if (!chasecam)
 		{
-			if ((playbloom == -1 && p.mo.waterlevel >= 3) || (MiscItem && MiscItem.WineDefTier != 0))
+			if ((playbloom == -1 && p.mo.waterlevel >= 3) || 
+					(MiscItem && MiscItem.WineDefTier != 0))
 			{
 				if (dydudebug_shader)
 				{
@@ -8399,54 +8400,47 @@ class EEWaterHandler : StaticEventHandler
 						if (MiscItem.WineDefTier == 5) maxwinetics = 20;
 						if (MiscItem.WineDefTier == -5) maxwinetics = 40;
 						maxwinetics *= 17.5;
-						/*
-						let iitem = p.mo.Inv;
-						let item = PowerWine(iitem);
-						if (item != null) 
-						{
-							winetics = item.EffectTics;
-							winefactor = double((winetics * 1.0) / (maxwinetics * 1.0));
-							if (winefactor > 1.00) winefactor = 1.00;
-							Console.Printf("winetics: %d, maxwinetics: %d, winefactor: %.4f [tic: %d]", winetics, maxwinetics, winefactor, gametic);
-						}
-						*/
 						
-						double tempeffectsize = 1.0;
+						double tempeffectsize = 1.5;
 						if (MiscItem.isDDTrilogy)
 						{
 							if (MiscItem.DDChapter == 1) // 10-11y
 							{
-								if (MiscItem.WineDefTier > 0) tempeffectsize = (MiscItem.WineDefTier * 0.9);
-								else if (MiscItem.WineDefTier < 0) tempeffectsize = (MiscItem.WineDefTier * -0.45);
+								if (MiscItem.WineDefTier > 0) tempeffectsize *= (MiscItem.WineDefTier * 0.9);
+								else if (MiscItem.WineDefTier < 0) tempeffectsize *= (MiscItem.WineDefTier * -0.45);
 							}
 							else
 							if (MiscItem.DDChapter == 2) // 11-13y
 							{
-								if (MiscItem.WineDefTier > 0) tempeffectsize = (MiscItem.WineDefTier * 0.72);
-								else if (MiscItem.WineDefTier < 0) tempeffectsize = (MiscItem.WineDefTier * -0.36);
+								if (MiscItem.WineDefTier > 0) tempeffectsize *= (MiscItem.WineDefTier * 0.72);
+								else if (MiscItem.WineDefTier < 0) tempeffectsize *= (MiscItem.WineDefTier * -0.36);
 							}
 							else
 							if (MiscItem.DDChapter == 3) // 16y
 							{
-								if (MiscItem.WineDefTier > 0) tempeffectsize = (MiscItem.WineDefTier * 0.42);
-								else if (MiscItem.WineDefTier < 0) tempeffectsize = (MiscItem.WineDefTier * -0.21);
+								if (MiscItem.WineDefTier > 0) tempeffectsize *= (MiscItem.WineDefTier * 0.42);
+								else if (MiscItem.WineDefTier < 0) tempeffectsize *= (MiscItem.WineDefTier * -0.21);
 							}
 						}
 						else
 						{
-							if (MiscItem.WineDefTier > 0) tempeffectsize = (MiscItem.WineDefTier * 0.5);
-							else if (MiscItem.WineDefTier < 0) tempeffectsize = (MiscItem.WineDefTier * -0.25);
+							if (MiscItem.WineDefTier > 0) tempeffectsize *= (MiscItem.WineDefTier * 0.5);
+							else if (MiscItem.WineDefTier < 0) tempeffectsize *= (MiscItem.WineDefTier * -0.25);
 						}
 						
 						if (MiscItem.WineDefTier != 0)
 						{
+							double LevelFactor = 0.04;
 							if (MiscItem.isDDTrilogy) 
 							{
-								if (MiscItem.DDChapter == 1) tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * 0.022));
-								else if (MiscItem.DDChapter == 2) tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * 0.0275));
-								else if (MiscItem.DDChapter == 3) tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * 0.048));
+								if (MiscItem.DDChapter <= 1) LevelFactor = 0.022;			// 10-11y [DD]
+								if (MiscItem.DDChapter == 2) LevelFactor = 0.0275;		// 11-13y [AFD]
+								if (MiscItem.DDChapter >= 3) LevelFactor = 0.048;			// 16y [CoS]
 							}
-							else tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * 0.04));
+							else LevelFactor = 0.04; // 14-15y [EE]
+							LevelFactor *= 0.5;
+							
+							tempeffectsize *= (1.0 - (MiscItem.TruePlayerLevel * LevelFactor));
 							//tempeffectsize *= winefactor;
 							if (tempeffectsize <= 0.0) tempeffectsize = 0.0;
 						}
