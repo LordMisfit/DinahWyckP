@@ -2168,7 +2168,7 @@ class CherryBombPickup : ExExInvBarItem
 		if (player.CountInv("CBombUpgrade") == 1) tagg.AppendFormat(" [L1]");
 		if (player.CountInv("CBombUpgrade") == 2) tagg.AppendFormat(" [L2]");
 		if (player.CountInv("CBombUpgrade") >= 3) tagg.AppendFormat(" [L3]");
-		tagg.AppendFormat(": Thrown at Enemies and explodes. Berserk effects its' arc/distance and impact damage. Can deal self-damage via AOE.");
+		tagg.AppendFormat(": Thrown at Enemies and explodes. Berserk effects its' arc/distance and impact damage. Dashing can also affect arc/distance \c[orange](forward dash = more distance, backwards dash = less distance)\c-. Can deal self-damage via AOE.");
 		SetTag(tagg);
 		super.Tick();
 	}
@@ -2199,7 +2199,7 @@ class CherryBombPickup : ExExInvBarItem
 				int DashCooldown, MaxDashCooldown;
 				if (DashItem) 
 				{
-					DashDir = DashItem.PrevDashDir;
+					DashDir = (DashItem.DashDir2 % 360);
 					dashtype = DashItem.dashtype;
 					DashCooldown = DashItem.DashCooldown;
 					MaxDashCooldown = DashItem.MaxDashCooldown;
@@ -2227,42 +2227,76 @@ class CherryBombPickup : ExExInvBarItem
 						(dashtype == -1 && 
 						 (DashCooldown >= (MaxDashCooldown / 2))))
 				{
-					if (dydudebug_attackstuff) Console.Printf("Dash-boosted Throw");
+					if (dydudebug_attackstuff) Console.Printf("Dash-boosted Throw: DashDir: %.8f", DashDir);
+					double forwardxymul1 = frandom(1.0,2.0);
+					double forwardzmul1 = frandom(0.25,0.5);
+					double forwardxymul2 = frandom(0.5,1.0);
+					double forwardzmul2 = frandom(0.125,0.25);
+					double anglemul1 = -0.84;
+					double anglemul2 = -0.6;
+					if (player.mo.CountInv("IsDynDuchess") || 
+							player.mo.CountInv("IsAppetite") || 
+							player.mo.CountInv("IsCarnOfSouls") || 
+							player.mo.CountInv("IsWeddingCake"))
+					{
+						forwardxymul1 *= 0.5;
+						forwardzmul1 *= 0.5;
+						forwardxymul2 *= 0.5;
+						forwardzmul2 *= 0.5;
+						anglemul1 *= 0.5;
+						anglemul2 *= 0.5;
+					}
+					forwardxymul1 += 1.0;
+					forwardzmul1 += 1.0;
+					forwardxymul2 += 1.0;
+					forwardzmul2 += 1.0;
+					anglemul1 *= 1.0;
+					anglemul2 *= 1.0;
 					if (DashDir == 0)
 					{
-						throwpowerxy *= frandom(2.0,3.0);
-						throwpowerz *= frandom(1.25,1.5);
-						throwminangle *= 0.16;
-						throwmaxangle *= 0.16;
+						throwpowerxy *= forwardxymul1;
+						throwpowerz *= forwardzmul1;
+						throwminangle *= anglemul1;
+						throwmaxangle *= anglemul1;
 					}
 					if (DashDir == 45 || 
 							DashDir == 315)
 					{
-						throwpowerxy *= frandom(1.5,2.0);
-						throwpowerz *= frandom(1.125,1.25);
-						throwminangle *= 0.4;
-						throwmaxangle *= 0.4;
+						throwpowerxy *= forwardxymul2;
+						throwpowerz *= forwardzmul2;
+						throwminangle *= anglemul2;
+						throwmaxangle *= anglemul2;
 					}
-					if (DashDir == 90.0 || 
+					if (DashDir == 90 || 
 							DashDir == 270)
 					{
-						throwminangle *= 1.0;
-						throwmaxangle *= 1.0;
+						double anglemult3 = frandompick(1.5,1.625,1.625,1.625,1.75,1.75,1.75,1.75,1.75,1.75,1.75,1.875,1.875,1.875,2.0);
+						if (DashDir == 90)
+						{
+							throwminangle *= (1.0 * anglemult3);
+							throwmaxangle *= (1.0 / anglemult3);
+						}
+						else
+						if (DashDir == 270)
+						{
+							throwminangle *= (1.0 / anglemult3);
+							throwmaxangle *= (1.0 * anglemult3);
+						}
 					}
-					if (DashDir == 135.0 || 
+					if (DashDir == 135 || 
 							DashDir == 225)
 					{
-						throwpowerxy *= (1.0 / frandom(1.5,2.0));
-						throwpowerz *= (1.0 / frandom(1.125,1.25));
-						throwminangle *= 0.4;
-						throwmaxangle *= 0.4;
+						throwpowerxy *= (1.0 / forwardxymul2);
+						throwpowerz *= (1.0 / forwardzmul2);
+						throwminangle *= anglemul2;
+						throwmaxangle *= anglemul2;
 					}
-					if (DashDir == 180.0)
+					if (DashDir == 180)
 					{
-						throwpowerxy *= (1.0 / frandom(2.0,3.0));
-						throwpowerz *= (1.0 / frandom(1.25,1.5));
-						throwminangle *= 0.16;
-						throwmaxangle *= 0.16;
+						throwpowerxy *= (1.0 / forwardxymul1);
+						throwpowerz *= (1.0 / forwardzmul1);
+						throwminangle *= anglemul1;
+						throwmaxangle *= anglemul1;
 					}
 					if (player.ReadyWeapon is "HandToHand")
 					{
