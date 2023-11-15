@@ -2193,6 +2193,25 @@ class CherryBombPickup : ExExInvBarItem
 			{
 				int buttons = GetPlayerInput(INPUT_BUTTONS);
 				let MiscItem = PlayerStatItem(player.mo.FindInventory("PlayerStatItem"));
+				let DashItem = PlayerDashJump(player.mo.FindInventory("PlayerDashJump"));
+				double DashDir;
+				int dashtype;
+				int DashCooldown, MaxDashCooldown;
+				if (DashItem) 
+				{
+					DashDir = DashItem.PrevDashDir;
+					dashtype = DashItem.dashtype;
+					DashCooldown = DashItem.DashCooldown;
+					MaxDashCooldown = DashItem.MaxDashCooldown;
+				}
+				// 0 - Forward
+				// 45 - Forward-West
+				// 90 - West
+				// 135 - Backward-West
+				// 180 - Backward
+				// 225 - Backward-East
+				// 270 - East
+				// 315 - Forward-East
 				int TruePlayerATK = 0;
 				int TruePlayerLevel = A_GetPlayerLvl();
 				if (exex_expenabled && MiscItem) TruePlayerATK = MiscItem.TruePlayerATK;
@@ -2203,23 +2222,66 @@ class CherryBombPickup : ExExInvBarItem
 				double throwheightz = -2;
 				double throwminangle = -3.5;
 				double throwmaxangle = 3.5;
-				if (player.ReadyWeapon is "HandToHand")
+				if (dydudebug_attackstuff) Console.Printf("dashtype : %d, DashCooldown: %d / %d", dashtype, DashCooldown, MaxDashCooldown);
+				if (dashtype != -1 ||
+						(dashtype == -1 && 
+						 (DashCooldown >= (MaxDashCooldown / 2))))
 				{
-					if (player.mo.CountInv("FistPlayerBlockItem"))
+					if (dydudebug_attackstuff) Console.Printf("Dash-boosted Throw");
+					if (DashDir == 0)
 					{
-						throwpowerxy *= frandom(0.325,0.55);
-						throwpowerz *= frandom(0.375,0.5);
-						throwmulvelext = frandom(1.00,1.03125);
-						throwminangle *= 0.25;
-						throwmaxangle *= 0.25;
+						throwpowerxy *= frandom(2.0,3.0);
+						throwpowerz *= frandom(1.25,1.5);
+						throwminangle *= 0.16;
+						throwmaxangle *= 0.16;
 					}
-					else
+					if (DashDir == 45 || 
+							DashDir == 315)
 					{
-						throwpowerxy *= frandom(1.0,1.25);
-						throwpowerz *= frandom(0.875,1.125);
-						throwmulvelext = frandom(1.00,1.00);
-						throwminangle *= 0.1667;
-						throwmaxangle *= 0.1667;
+						throwpowerxy *= frandom(1.5,2.0);
+						throwpowerz *= frandom(1.125,1.25);
+						throwminangle *= 0.4;
+						throwmaxangle *= 0.4;
+					}
+					if (DashDir == 90.0 || 
+							DashDir == 270)
+					{
+						throwminangle *= 1.0;
+						throwmaxangle *= 1.0;
+					}
+					if (DashDir == 135.0 || 
+							DashDir == 225)
+					{
+						throwpowerxy *= (1.0 / frandom(1.5,2.0));
+						throwpowerz *= (1.0 / frandom(1.125,1.25));
+						throwminangle *= 0.4;
+						throwmaxangle *= 0.4;
+					}
+					if (DashDir == 180.0)
+					{
+						throwpowerxy *= (1.0 / frandom(2.0,3.0));
+						throwpowerz *= (1.0 / frandom(1.25,1.5));
+						throwminangle *= 0.16;
+						throwmaxangle *= 0.16;
+					}
+					if (player.ReadyWeapon is "HandToHand")
+					{
+						if (player.mo.CountInv("FistPlayerBlockItem"))
+						{
+							throwpowerxy *= frandom(0.325,0.55);
+							throwpowerz *= frandom(0.375,0.5);
+							throwmulvelext = frandom(1.00,1.03125);
+							throwminangle *= 0.25;
+							throwmaxangle *= 0.25;
+						}
+						else
+						{
+							throwpowerxy *= frandom(1.0,1.25);
+							throwpowerz *= frandom(0.875,1.125);
+							throwmulvelext = frandom(1.00,1.00);
+							throwminangle *= 0.1667;
+							throwmaxangle *= 0.1667;
+						}
 					}
 				}
 				if (player.ReadyWeapon is "CricketBat")
