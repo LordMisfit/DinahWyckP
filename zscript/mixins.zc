@@ -5996,6 +5996,88 @@ mixin class InvWeaponShare
 	}
 }
 
+
+mixin class ActorStateReplace
+{
+	void A_EEAlertMonsters(double maxdist = 0, int flags = 0)
+	{
+		Actor target = null;
+		Actor emitter = self;
+		
+		actor playera = players[0].mo;
+		let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
+		if (!(playera.CountInv("TimePotionTimeFreezer")))
+		{
+			if (player != null || (Flags & AMF_TARGETEMITTER))
+			{
+				target = self;
+			}
+			else if (self.target != null && (self.target.player != null || (Flags & AMF_TARGETNONPLAYER)))
+			{
+				target = self.target;
+			}
+
+			if (Flags & AMF_EMITFROMTARGET) emitter = target;
+
+			if (target != null && emitter != null)
+			{
+				emitter.SoundAlert(target, false, maxdist);
+			}
+		}
+	}
+	
+	int A_EEExplode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none")
+	{
+		if (damage < 0)	// get parameters from metadata
+		{
+			damage = ExplosionDamage;
+			distance = ExplosionRadius;
+			flags = !DontHurtShooter;
+			alert = false;
+		}
+		if (distance <= 0) distance = damage;
+
+		// NailBomb effect, from SMMU but not from its source code: instead it was implemented and
+		// generalized from the documentation at http://www.doomworld.com/eternity/engine/codeptrs.html
+
+		if (nails)
+		{
+			double ang;
+			for (int i = 0; i < nails; i++)
+			{
+				ang = i*360./nails;
+				// Comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
+				LineAttack(ang, MISSILERANGE, 0.,
+					//P_AimLineAttack (self, ang, MISSILERANGE), 
+					naildamage, 'Hitscan', pufftype, bMissile ? LAF_TARGETISSOURCE : 0);
+			}
+		}
+
+		if (!(flags & XF_EXPLICITDAMAGETYPE) && damagetype == 'None')
+		{
+			damagetype = self.DamageType;
+		}
+
+		int pflags = 0;
+		if (flags & XF_HURTSOURCE)	pflags |= RADF_HURTSOURCE;
+		if (flags & XF_NOTMISSILE)	pflags |= RADF_SOURCEISSPOT;
+		if (flags & XF_THRUSTZ)	pflags |= RADF_THRUSTZ;
+
+		int count = RadiusAttack (target, damage, distance, damagetype, pflags, fulldamagedistance);
+		if (!(flags & XF_NOSPLASH)) CheckSplash(distance);
+		if (alert && target != NULL && target.player != NULL)
+		{
+			actor playera = players[0].mo;
+			let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
+			if (!(playera.CountInv("TimePotionTimeFreezer")))
+			{
+				SoundAlert(target);
+			}
+		}
+		return count;
+	}
+}
+
 /*
 	Enum ESpawnItemExtendedFlags
 	{
