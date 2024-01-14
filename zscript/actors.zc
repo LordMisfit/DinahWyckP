@@ -850,10 +850,11 @@ class EEPowerup : Powerup
 // Base Projectile Class
 class EEProjectile : EEBaseZSC abstract
 {
-	bool isillusionaryproj;
 	int willbevacced;
 	int vacgiveamt;
 	bool gavevac;
+	
+	bool isillusionaryproj;
 	int user_projtimer;
 	float user_ignoreaoeimmunity;
 	int saveddmg; // Save damage from things like A_CustomPunch for puffs
@@ -865,7 +866,8 @@ class EEProjectile : EEBaseZSC abstract
 	int user_hitsparkrand;
 	int user_sparksizelevel;
 	double user_sparkscalemulti;
-	int user_noseektimer;
+	int user_noseektimer, user_seektimer;
+	int projtouchedshieldactor;
 	
 	actor OriginalActor;
 	string OriginalActorType;
@@ -914,6 +916,10 @@ class EEProjectile : EEBaseZSC abstract
 	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
+		
+		
+		
+		
 		if (bonusmultiplier <= 0.0) bonusmultiplier = 1.0;
 
 		if (target) 
@@ -953,7 +959,7 @@ class EEProjectile : EEBaseZSC abstract
 		nm = "JustShieldDashed"; if (CountInv(nm) > 0) A_SetInventory(nm,0);
 	}
 	
-	override void Tick()
+	void TimeFreezeProjectileCheck()
 	{
 		if (target)
 		{
@@ -973,7 +979,15 @@ class EEProjectile : EEBaseZSC abstract
 					}
 					else
 					{
-						if (!bNOTIMEFREEZE) bNOTIMEFREEZE = true;
+						if (target.CountInv("TimePotionTimeFreezer"))
+						{
+							bool spawned;
+							if (!bNOTIMEFREEZE) bNOTIMEFREEZE = true;
+						}
+						else
+						{
+							if (!bNOTIMEFREEZE) bNOTIMEFREEZE = true;
+						}
 					}
 				}
 				else
@@ -993,6 +1007,11 @@ class EEProjectile : EEBaseZSC abstract
 				}
 			}
 		}
+	}
+	
+	override void Tick()
+	{
+		TimeFreezeProjectileCheck();
 		
 		if (OriginalActor != null) 
 		{ 
@@ -2920,44 +2939,8 @@ class EEFastProjectile : EEProjectile abstract
 
 	override void Tick ()
 	{
-		if (target)
-		{
-			if (DDPlayerPawn(target))
-			{
-				if (target.CountInv("PowerTimeFreezer") ||
-						target.CountInv("DDMiscTimeFreezer") ||
-						target.CountInv("DebugTimeFreezer") ||
-						target.CountInv("TimePotionTimeFreezer") ||
-						target.CountInv("DashTimeFreezer") ||
-						!target.player.timefreezer)
-				{
-					if (target.CountInv("DebugTimeFreezer"))
-					{
-						if (!dydudebug_timefreezedebugaffectproj && !bNOTIMEFREEZE) bNOTIMEFREEZE = true;
-					}
-					else
-					{
-						if (!bNOTIMEFREEZE) bNOTIMEFREEZE = true;
-					}
-				}
-				else
-				{
-					if (bNOTIMEFREEZE) bNOTIMEFREEZE = false;
-				}
-			}
-			else
-			{
-				if (!bNOTIMEFREEZE)
-				{
-					if (target && target.bNOTIMEFREEZE) bNOTIMEFREEZE = true;
-				}
-				else
-				{
-					if (target && !target.bNOTIMEFREEZE) bNOTIMEFREEZE = false;
-				}
-			}
-		}
-		
+		TimeFreezeProjectileCheck();
+
 		ClearInterpolation();
 		double oldz = pos.Z;
 
@@ -3780,43 +3763,7 @@ class EEPuff : EEProjectile abstract
 	
 	override void Tick()
 	{
-		if (target)
-		{
-			if (DDPlayerPawn(target))
-			{
-				if (target.CountInv("PowerTimeFreezer") ||
-						target.CountInv("DDMiscTimeFreezer") ||
-						target.CountInv("DebugTimeFreezer") ||
-						target.CountInv("TimePotionTimeFreezer") ||
-						target.CountInv("DashTimeFreezer") ||
-						!target.player.timefreezer)
-				{
-					if (target.CountInv("DebugTimeFreezer"))
-					{
-						if (!dydudebug_timefreezedebugaffectproj && !bNOTIMEFREEZE) bNOTIMEFREEZE = true;
-					}
-					else
-					{
-						if (!bNOTIMEFREEZE) bNOTIMEFREEZE = true;
-					}
-				}
-				else
-				{
-					if (bNOTIMEFREEZE) bNOTIMEFREEZE = false;
-				}
-			}
-			else
-			{
-				if (!bNOTIMEFREEZE)
-				{
-					if (target && target.bNOTIMEFREEZE) bNOTIMEFREEZE = true;
-				}
-				else
-				{
-					if (target && !target.bNOTIMEFREEZE) bNOTIMEFREEZE = false;
-				}
-			}
-		}
+		TimeFreezeProjectileCheck();
 		Super.Tick();
 	}
 	
@@ -6267,13 +6214,13 @@ class EECreature : EEBaseZSC abstract
 	{
 		if (mo)
 		{
-			if (dydudebug_showvisibleshieldparts >= 2) Console.Printf("[mo]: %s", mo.GetClassName());
+			if (dydudebug_showvisibleshieldparts >= 2) Console.Printf("[\cyA_MeleeSetUpAttach\c- - mo]: %s", mo.GetClassName());
 			ShieldPartBase SHmo;
 			SHmo = ShieldPartBase(mo);
 			if (SHmo)
 			{
 				actor playera = players[0].mo;
-				if (dydudebug_showvisibleshieldparts >= 2) Console.Printf("[SHmo]: %s", SHmo.GetClassName());
+				if (dydudebug_showvisibleshieldparts >= 2) Console.Printf("[\cyA_MeleeSetUpAttach\c- - SHmo]: %s", SHmo.GetClassName());
 				SHmo.attachx = xpos;
 				SHmo.attachy = ypos;
 				SHmo.attachz = zpos;
@@ -6281,7 +6228,7 @@ class EECreature : EEBaseZSC abstract
 				SHmo.attachptc = ptc;
 				SHmo.shieldee = self;
 				SHmo.target = self;
-				if (dydudebug_showvisibleshieldparts >= 2) Console.Printf("attachx: %.2f, attachy: %.2f, attachz: %.2f, shieldee: %s", SHmo.attachx, SHmo.attachy, SHmo.attachz, SHmo.shieldee.GetClassName());
+				if (dydudebug_showvisibleshieldparts >= 2) Console.Printf("\cyA_MeleeSetUpAttach\c- - attachx: %.2f, attachy: %.2f, attachz: %.2f, shieldee: %s", SHmo.attachx, SHmo.attachy, SHmo.attachz, SHmo.shieldee.GetClassName());
 			}
 		}
 	}
@@ -8679,14 +8626,6 @@ class ShieldPartBase : EEBaseZSC
 		+NOSPRITESHADOW;
 		+DONTSPLASH;
 	}
-
-/*
-	override void PostBeginPlay()
-	{
-		
-		Super.PostBeginPlay();
-	}
-*/
 	
 	override void Tick()
 	{
@@ -8748,12 +8687,13 @@ class ShieldPartBase : EEBaseZSC
 		if (dydudebug_shieldcollision & 1) Console.Printf("\cyShieldPartBase [%s] (gametic %d):\c- \c[brick]other: %s\c-", GetClassName(), gametic, other.GetClassName());
 		if (passive)
 		{
+			if (dydudebug_shieldcollision & 1) Console.Printf("\cyShieldPartBase (gametic %d):\c- passive: %s", gametic, GetClassName());
 			if (A_CheckCollisionProjShieldExemption(other)) return false; //ShieldPartBase
 
-			if (dydudebug_shieldcollision & 1) Console.Printf("\cyShieldPartBase (gametic %d):\c- passive: %s", gametic, GetClassName());
 			// Pass through different species of select types.
 			if (EvilWarriorShieldBall(other) || EvilWarriorShieldBall(other)) return false;
 			if (playpawn) return false; // Player Checking
+			if (dydudebug_shieldcollision & 1) Console.Printf("\cyShieldPartBase (gametic %d):\c- \c[green]passive (post playpawn check): %s\c-", gametic, GetClassName());
 
 			// Projectile Checking
 			if (UniqueProjectile)
@@ -8762,7 +8702,7 @@ class ShieldPartBase : EEBaseZSC
 				playpawn = PlayerPawn(other.target);
 				playpawn2 = PlayerPawn(master);
 				if (playpawn && playpawn2) return false;
-
+				
 				//Console.Printf("BFGShot (%d)", passive);
 				if (JackShotShieldPart(self) || JackShotShieldPartFoe(self))
 				{
@@ -8779,6 +8719,7 @@ class ShieldPartBase : EEBaseZSC
 					}
 				}
 			}
+			if (dydudebug_shieldcollision & 1) Console.Printf("\cyShieldPartBase (gametic %d):\c- \c[green]passive (post UniqueProjectile check): %s\c-", gametic, GetClassName());
 			// Fast Projectile Checking
 			if (UniqueProjectileFast)
 			{
@@ -8787,10 +8728,11 @@ class ShieldPartBase : EEBaseZSC
 				playpawn2 = PlayerPawn(master);
 				if (playpawn && playpawn2) return false;
 			}
+			if (dydudebug_shieldcollision & 1) Console.Printf("\cyShieldPartBase (gametic %d):\c- \c[green]passive (post UniqueProjectileFast check): %s\c-", gametic, GetClassName());
 
 			if (other)
 			{
-				if (dydudebug_shieldcollision & 1) Console.Printf("\cyShieldPartBase (gametic %d):\c- \c[gold]KCPuff: %s\c-", gametic, other.GetClassName());
+				if (dydudebug_shieldcollision & 1) Console.Printf("\cyShieldPartBase (gametic %d):\c- \c[gold]EEPuff: %s\c-", gametic, other.GetClassName());
 				if (HealBall(other) || HealBallEE(other)) return false;
 				if (PopperPuff1(other) && playpawn) return false;
 				if (PopperPuff2(other) && playpawn) return false;
@@ -8885,6 +8827,136 @@ class ShieldPartBase : EEBaseZSC
 
 		// We don't really care about others making the check.
 		return true;
+	}
+}
+
+// Shield Parts [Melee]
+class ShieldPartMeleeNoReflect : ShieldPartBase
+{
+	States
+	{
+		Spawn:
+			HEXA C 0 bright NoDelay;
+			HEXA C 1 bright;
+			stop;
+		Pain:
+			TNT1 A 0 bright
+			{
+				if (target)
+				{
+					if (target.CountInv("PowerStrength") || target.CountInv("PowerStrengthDD")) 
+					{
+						A_StartSound("fisthitberserkwall", 57);
+					} else { A_StartSound("FistHitWall", 57); }
+				}
+			}
+			stop;
+	}
+}
+
+class ShieldPartMeleeReflect : ShieldPartMeleeNoReflect
+{
+	default
+	{
+		+REFLECTIVE 
+		+AIMREFLECT
+	}
+}
+
+class KickShieldNoReflect : ShieldPartMeleeNoReflect
+{
+	override bool CanCollideWith(Actor other, bool passive)
+	{
+		PlayerPawn playpawn;
+		PlayerPawn playpawn2;
+		playpawn = PlayerPawn(other);
+
+		if (dydudebug_shieldcollision & 8) Console.Printf("\cyKickShield [%s] (gametic %d):\c- \c[brick]other: %s\c-", GetClassName(), gametic, other.GetClassName());
+		if (passive)
+		{
+			if (dydudebug_shieldcollision & 8) Console.Printf("\cyKickShield (gametic %d):\c- passive: %s", gametic, GetClassName());
+			if (A_CheckCollisionProjShieldExemption(other)) return false; //KickShield
+
+			// Pass through different species of select types.
+			if (playpawn) return false; // Player Checking
+
+			if (other)
+			{
+				if (other.bISMONSTER)
+				{
+					if (!other.bFRIENDLY)
+					{
+						if (other.CountInv("JustKicked") > 0)
+						{
+							if (dydudebug_shieldcollision & 8) Console.Printf("[KickShield] JustKicked (%s) [passive side]", other.GetClassName());
+							return false;
+						}
+						if (other.CountInv("JustPunched") > 0)
+						{
+							if (dydudebug_shieldcollision & 8) Console.Printf("[KickShield] JustPunched (%s) [passive side]", other.GetClassName());
+							return false;
+						}
+						if (other.CountInv("JustUppercutted") > 0)
+						{
+							if (dydudebug_shieldcollision & 8) Console.Printf("[KickShield] JustUppercutted (%s) [passive side]", other.GetClassName());
+							return false;
+						}
+					}
+					if (other.bFRIENDLY) return false;
+					if (other.health <= 0) return false;
+					let ShieldPiece = KickShieldNoReflect(other); if (ShieldPiece) return false;
+					let ShieldPiece2 = KickShieldReflect(other); if (ShieldPiece2) return false;
+					return true;
+				}
+			}
+
+			playpawn = PlayerPawn(other.target);
+			playpawn2 = PlayerPawn(master);
+			if (playpawn && playpawn2) return false;
+
+			return true;
+		}
+		else // Non-passive means the one moving into the other is performing the checks.
+		{
+			if (dydudebug_shieldcollision & 8) Console.Printf("\cyKickShield (gametic %d):\c- non-passive: %s", gametic, GetClassName());
+			playpawn = PlayerPawn(other.target);
+			playpawn2 = PlayerPawn(master);
+			if (playpawn && playpawn2) return false;
+
+			return true;
+		}
+
+		// We don't really care about others making the check.
+		return true;
+	}
+	
+	States
+	{
+		Spawn:
+			HEXA C 0 bright NoDelay;
+			HEXA C 1 bright;
+			stop;
+		Pain:
+			TNT1 A 0 bright
+			{
+				if (target)
+				{
+					if (target.CountInv("PowerStrength") || target.CountInv("PowerStrengthDD")) 
+					{
+						A_StartSound("fisthitberserkwall", 57);
+					} else { A_StartSound("FistHitWall", 57); }
+				}
+			}
+			stop;
+	}
+}
+
+class KickShieldReflect : KickShieldNoReflect
+{
+	default
+	{
+		+REFLECTIVE 
+		+AIMREFLECT
 	}
 }
 
@@ -9079,9 +9151,9 @@ class SwingShieldPart : ShieldPart // For swinging based shields [used as a gene
 		if (dydudebug_shieldcollision & 2) Console.Printf("\cySwingShieldPart [%s] (gametic %d):\c- other: %s", GetClassName(), gametic, other.GetClassName());
 		if (passive)
 		{
+			if (dydudebug_shieldcollision & 2) Console.Printf("\cySwingShieldPart (gametic %d):\c- passive: %s", gametic, GetClassName());
 			if (A_CheckCollisionProjShieldExemption(other)) return false; //SwingShieldPart
 
-			if (dydudebug_shieldcollision & 2) Console.Printf("\cySwingShieldPart (gametic %d):\c- passive: %s", gametic, GetClassName());
 			// Pass through different species of select types.
 			if (playpawn) return false; // Player Checking
 			
@@ -9161,9 +9233,9 @@ class SwingShieldPartNoReflect : ShieldPartNoReflect // For swinging based shiel
 		if (dydudebug_shieldcollision & 4) Console.Printf("\cySwingShieldPartNoReflect [%s] (gametic %d):\c- other: %s", GetClassName(), gametic, other.GetClassName());
 		if (passive)
 		{
+			if (dydudebug_shieldcollision & 4) Console.Printf("\cySwingShieldPartNoReflect (gametic %d):\c- passive: %s", gametic, GetClassName());
 			if (A_CheckCollisionProjShieldExemption(other)) return false; //SwingShieldPartNoReflect
 
-			if (dydudebug_shieldcollision & 4) Console.Printf("\cySwingShieldPartNoReflect (gametic %d):\c- passive: %s", gametic, GetClassName());
 			// Pass through different species of select types.
 			if (playpawn) return false; // Player Checking
 			
