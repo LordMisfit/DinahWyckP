@@ -10,6 +10,15 @@ class DD_EventHandler : EventHandler
 	const SKILL_IMPOSSIBLE = 7;
 	const SKILL_OMEGA = 8;
 	
+	
+	bool A_CheckEETimeFreeze()
+	{
+		bool freeze = false;
+		actor playera = players[0].mo;
+		if ((playera.CountInv("TimePotionTimeFreezer"))) freeze = true;
+		return freeze;
+	}
+
 	bool A_CheckUOHYM()
 	{
 		bool UOHYM = false;
@@ -71,26 +80,129 @@ class DD_EventHandler : EventHandler
 		}
 		
 		// CCards
-		if ((level.time >= 3 && level.time <= 35) ||
-				(((level.time - 35) % 175) == 0))
+		int d = Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true);
+		if (d != -1)
 		{
-			int d = Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true);
-			if (dydudebug_worldtick) Console.Printf("d: %d [time: %d]", d, level.time);
-			if (d != -1)
+			if (kcdebug_worldtick) Console.Printf("[CCards lump found] d: %d [time: %d]", d, level.time);
+			let globalvars = DDGlobalVariables.Get();
+			globalvars.PlayingCCards = true;
+			actor player = players[0].mo;
+			if (player && !player.CountInv("PlayingCCards")) player.A_SetInventory("PlayingCCards",1);
+			
+			Actor mo;
+			string nm;
+			ThinkerIterator it;
+			
+			if (A_CheckEETimeFreeze())
 			{
-				let globalvars = DDGlobalVariables.Get();
-				globalvars.PlayingCCards = true;
-				actor player = players[0].mo;
-				player.A_SetInventory("PlayingCCards",1);
-				Actor mo;
+				nm = "CCards_Actor_AttentionDebuff";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo) 
+					{
+						if (mo.target) mo.target == null;
+						if (mo.tracer) mo.tracer == null;
+						for (int i = 0; i < 12; i++)
+						{
+							mo.A_StopSound(i);
+						}
+						mo.Destroy();
+					}
+				}
 				
-				string nm = "CCards_Actor_MonsterDisguise";
+				nm = "CCards_Actor_Confetti";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE == false;
+				}
+				
+				nm = "CCards_Actor_AttentionNoise";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo)
+					{
+						if (mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE == false;
+						mo.A_StopSound(7);
+					}
+				}
+			}
+			else
+			{
+				nm = "CCards_Actor_AttentionNoise";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo)
+					{
+						if (!mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE == true;
+						mo.A_StartSound("corruptioncards/parade", CHAN_7, CHANF_LOOPING, 0.2, 0.7);
+					}
+				}
+			}
+			
+			if ((level.time >= 3 && level.time <= 35) ||
+					(((level.time - 35) % 70) == 0))
+			{
+				nm = "CCards_Actor_PlushWeapon1";
+				if (player.CountInv(nm))
+				{
+					player.A_SetInventory("CCards_Actor_PlushWeaponEx1",1);
+					player.A_SetInventory(nm,0);
+				}
+				nm = "CCards_Actor_PlushWeapon2";
+				if (player.CountInv(nm))
+				{
+					player.A_SetInventory("CCards_Actor_PlushWeaponEx2",1);
+					player.A_SetInventory(nm,0);
+				}
+				nm = "CCards_Actor_PlushWeapon3";
+				if (player.CountInv(nm))
+				{
+					player.A_SetInventory("CCards_Actor_PlushWeaponEx3",1);
+					player.A_SetInventory(nm,0);
+				}
+				nm = "CCards_Actor_PlushWeapon4";
+				if (player.CountInv(nm))
+				{
+					player.A_SetInventory("CCards_Actor_PlushWeaponEx4",1);
+					player.A_SetInventory(nm,0);
+				}
+				nm = "CCards_Actor_PlushWeapon5";
+				if (player.CountInv(nm))
+				{
+					player.A_SetInventory("CCards_Actor_PlushWeaponEx5",1);
+					player.A_SetInventory(nm,0);
+				}
+				nm = "CCards_Actor_PlushWeapon6";
+				if (player.CountInv(nm))
+				{
+					player.A_SetInventory("CCards_Actor_PlushWeaponEx6",1);
+					player.A_SetInventory(nm,0);
+				}
+				nm = "CCards_Actor_PlushWeapon7";
+				if (player.CountInv(nm))
+				{
+					player.A_SetInventory("CCards_Actor_PlushWeaponEx7",1);
+					player.A_SetInventory(nm,0);
+				}
+			}
+
+			if ((level.time >= 3 && level.time <= 35) ||
+					(((level.time - 35) % 175) == 0))
+			{
+				nm = "CCards_Actor_BigStomach";
+				nm = "CCards_Actor_SwapCurse";
+				//
+				nm = "CCards_Actor_MonsterDisguise";
 				ThinkerIterator it = ThinkerIterator.Create(nm);
 				while (mo = Actor(it.Next()))
 				{
 					if (mo.bNORADIUSDMG) mo.bNORADIUSDMG = false; // hahahaha V:<
 					if (!mo.bISMONSTER) mo.bISMONSTER = true; // hehehehe >:V
-					if (dydudebug_worldtick) Console.Printf("LOLE [%p, %s]", mo, mo.GetClassName());
+					if (kcdebug_worldtick) Console.Printf("LOLE [%p, %s]", mo, mo.GetClassName());
 				}
 			}
 		}
@@ -2255,6 +2367,23 @@ class DD_EventHandler : EventHandler
 			}
 			nm = "CCards_Actor_MaestroBuster"; if (spawnname == nm) spawnee.DamageType = 'Plasma';
 			nm = "CCards_Actor_PilotedMechPlasma"; if (spawnname == nm) spawnee.DamageType = 'Plasma';
+
+			if (A_CheckEETimeFreeze())
+			{
+				nm = "CCards_Actor_AttentionDebuff";
+				if (spawnname == nm) 
+				{
+					if (spawnee.target) spawnee.target == null;
+					if (spawnee.tracer) spawnee.tracer == null;
+					for (int i = 0; i < 12; i++)
+					{
+						spawnee.A_StopSound(i);
+					}
+					spawnee.Destroy();
+				}
+				nm = "CCards_Actor_Confetti";
+				if (spawnname == nm) spawnee.Destroy();
+			}
 			
 			Inventory invspawnee;
 			invspawnee = Inventory(spawnee);
