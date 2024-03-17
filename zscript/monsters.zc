@@ -916,6 +916,7 @@ class BossEyeNew : BossEye replaces BossEye
 {
 	mixin MonsterCollider;
 	int user_bosseyetype;
+	double bosseyetimefactor;
 	default
 	{
 		Height 32;
@@ -933,14 +934,8 @@ class BossEyeNew : BossEye replaces BossEye
 			SSWV A 181 
 			{
 				A_BrainAwake();
-				if (user_bosseyetype > 0) 
-				{
-					A_SetTics(tics*frandom(0.45,0.55));
-				}
-				else
-				{
-					A_SetTics(tics*frandom(0.9,1.1));
-				}
+				if (user_bosseyetype > 0) A_SetTics(tics*frandom(0.45,0.55)*bosseyetimefactor);
+														 else A_SetTics(tics*frandom(0.9,1.1)*bosseyetimefactor);
 			}
 		Shoot:
 			SSWV A 150 
@@ -958,17 +953,25 @@ class BossEyeNew : BossEye replaces BossEye
 						if (master.health <= ((master.SpawnHealth() + master.Stamina) * 0.05)) timefactor = frandom(0.1,0.125);
 						if (master.health <= ((master.SpawnHealth() + master.Stamina) * 0.005)) timefactor = frandom(0.025,0.0375);
 					}
-					A_SetTics(tics*(frandom(0.675,0.825) * timefactor));
+					A_SetTics(tics*(frandom(0.675,0.825) * timefactor)*bosseyetimefactor);
 				}
-				else { A_SetTics(tics*frandom(0.9,1.1)); }
+				else 
+				{
+					A_SetTics(tics*frandom(0.9,1.1)*bosseyetimefactor); 
+				}
 				
 				if (master) 
 				{
-					if (master.health >= 1) A_BrainSpit("SpawnShotNew");
+					if (master.health >= 1) 
+					{
+						A_BrainSpit("SpawnShotNew");
+						A_StartSound("brain/spit", 16, CHANF_DEFAULT, 1., ATTN_NONE);
+					}
 				}
 				else
 				{
 					A_BrainSpit("SpawnShotNew");
+					A_StartSound("brain/spit", 16, CHANF_DEFAULT, 1., ATTN_NONE);
 				}
 			}
 			loop;
