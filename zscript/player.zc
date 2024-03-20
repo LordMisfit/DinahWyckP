@@ -2735,71 +2735,74 @@ class DDPlayerPawn : PlayerPawn
 		//****************************************************
 		//*Flicker the Player when they survive a mortal hit *
 		//****************************************************
-		if (self.health == 1 && 
-				(player.cheats & CF_BUDDHA || player.cheats & CF_BUDDHA2) 
-				&& lasthealth > 1 &&
-				!self.cursector.Flags & 512)
+		if (self.cursector.Flags & 512) { } // E1M8-Style End Level Sector Special Won't Try to trigger Buddha effects
+		else
 		{
-			let SurviveItem = GiveTempMortalSurvive(FindInventory("GiveTempMortalSurvive"));
-			if (SurviveItem) 
+			if (self.health == 1 && 
+					(player.cheats & CF_BUDDHA || player.cheats & CF_BUDDHA2) 
+					&& lasthealth > 1)
 			{
-				SurviveItem.times++;
-				//Console.Printf("%d", SurviveItem.times);
-			}
-			let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
-			if (MiscItem)
-			{
-				MiscItem.MercyInvulnOn = true;
-				MiscItem.MercyInvulnTimer = 1210; // 1.5 Seconds
-				MiscItem.MercyInvulnTimer += int(ActualLevel * 18.25);
-				
-				int AngerLevelNInc = randompick(1,1,2,2,2,3,3,3,4,4,5);
-				A_GiveInventory("AngerLevelEventN",AngerLevelNInc);
-				A_GiveInventory("AngerLevelEventNMin",AngerLevelNInc);
-				if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1) A_GiveInventory("AngerLevelEvent",randompick(1,1,1,2,2,3));
-				
-				// IP Cost Reduction Bonuses do NOT occur for having Ultimate Buddha Mode [i.e. CF_BUDDHA2 flag] on by itself
-				if (player.cheats & CF_BUDDHA)
+				let SurviveItem = GiveTempMortalSurvive(FindInventory("GiveTempMortalSurvive"));
+				if (SurviveItem) 
 				{
-					if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 5))
-					{
-						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer = 0;
-						MiscItem.IPMortalBlowReduceTimer += 525;
-						MiscItem.MortalBlowCritBoostTimer += 700; // 20s
-					}
-					else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 4))
-					{
-						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.2;
-						MiscItem.IPMortalBlowReduceTimer += random(437,438);
-						MiscItem.MortalBlowCritBoostTimer += 525; // 15s
-					}
-					else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 3))
-					{
-						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.4;
-						MiscItem.IPMortalBlowReduceTimer += 350;
-						MiscItem.MortalBlowCritBoostTimer += 385; // 11s
-					}
-					else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 2))
-					{
-						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.6;
-						MiscItem.IPMortalBlowReduceTimer += random(262,263);
-						MiscItem.MortalBlowCritBoostTimer += 280; // 8s
-					}
-					else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement))
-					{
-						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.8;
-						MiscItem.IPMortalBlowReduceTimer += 175;
-						MiscItem.MortalBlowCritBoostTimer += 210; // 6s
-					}
-					else
-					{
-						if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.98;
-						MiscItem.IPMortalBlowReduceTimer += random(37,38);
-						MiscItem.MortalBlowCritBoostTimer += 175; // 5s
-					}
+					SurviveItem.times++;
+					//Console.Printf("%d", SurviveItem.times);
 				}
-				
-				player.health = player.mo.health = 1;
+				let MiscItem = PlayerStatItem(FindInventory("PlayerStatItem"));
+				if (MiscItem)
+				{
+					MiscItem.MercyInvulnOn = true;
+					MiscItem.MercyInvulnTimer = 1210; // 1.5 Seconds
+					MiscItem.MercyInvulnTimer += int(ActualLevel * 18.25);
+					
+					int AngerLevelNInc = randompick(1,1,2,2,2,3,3,3,4,4,5);
+					A_GiveInventory("AngerLevelEventN",AngerLevelNInc);
+					A_GiveInventory("AngerLevelEventNMin",AngerLevelNInc);
+					if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1) A_GiveInventory("AngerLevelEvent",randompick(1,1,1,2,2,3));
+					
+					// IP Cost Reduction Bonuses do NOT occur for having Ultimate Buddha Mode [i.e. CF_BUDDHA2 flag] on by itself
+					if (player.cheats & CF_BUDDHA)
+					{
+						if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 5))
+						{
+							if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer = 0;
+							MiscItem.IPMortalBlowReduceTimer += 525;
+							MiscItem.MortalBlowCritBoostTimer += 700; // 20s
+						}
+						else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 4))
+						{
+							if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.2;
+							MiscItem.IPMortalBlowReduceTimer += random(437,438);
+							MiscItem.MortalBlowCritBoostTimer += 525; // 15s
+						}
+						else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 3))
+						{
+							if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.4;
+							MiscItem.IPMortalBlowReduceTimer += 350;
+							MiscItem.MortalBlowCritBoostTimer += 385; // 11s
+						}
+						else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement * 2))
+						{
+							if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.6;
+							MiscItem.IPMortalBlowReduceTimer += random(262,263);
+							MiscItem.MortalBlowCritBoostTimer += 280; // 8s
+						}
+						else if (ActualLevel >= (exex_mortalblowipcostlvlrequirement))
+						{
+							if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.8;
+							MiscItem.IPMortalBlowReduceTimer += 175;
+							MiscItem.MortalBlowCritBoostTimer += 210; // 6s
+						}
+						else
+						{
+							if (MiscItem.IPNoGainTimer) MiscItem.IPNoGainTimer *= 0.98;
+							MiscItem.IPMortalBlowReduceTimer += random(37,38);
+							MiscItem.MortalBlowCritBoostTimer += 175; // 5s
+						}
+					}
+					
+					player.health = player.mo.health = 1;
+				}
 			}
 		}
 		
