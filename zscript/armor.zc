@@ -81,6 +81,8 @@ class KGArmor : BasicArmor
 				}
 			}
 			
+			int firstsaved = saved;
+			
 			int oldsaved = saved;
 			double savebase;
 			// IP Buffs for Armor also reduce the amount of armor actually LOST :V
@@ -112,6 +114,7 @@ class KGArmor : BasicArmor
 			
 			if (MiscItem)
 			{
+				oldsaved = saved;
 				savebase = 0.00;
 				if (MiscItem.WineDefTier == 1) savebase = 0.0025;
 				else if (MiscItem.WineDefTier == 2) savebase = 0.0075;
@@ -133,12 +136,33 @@ class KGArmor : BasicArmor
 				saved *= (1.0 - savebase);
 				if (dydudebug_playerdamagemobj) Console.Printf("\c[darkgreen]armor - saved [post Wine]:\c- \c[brick]%d\c- \c[gold][%d]\c", saved, oldsaved);
 			}
+			
+			if (PlayPawn)
+			{
+				oldsaved = saved;
+				if (damageType == 'Melee')
+				{
+					if (PlayPawn.armortier <= 1) savebase = 0.2;
+					if (PlayPawn.armortier == 2) savebase = 0.4;
+					if (PlayPawn.armortier == 3) savebase = 0.6;
+					if (PlayPawn.armortier >= 4) savebase = 0.8;
+				}
+				if (damageType == 'Zap')
+				{
+					if (PlayPawn.armortier <= 1) savebase = 0.1;
+					if (PlayPawn.armortier == 2) savebase = 0.2;
+					if (PlayPawn.armortier == 3) savebase = 0.3;
+					if (PlayPawn.armortier >= 4) savebase = 0.4;
+				}
+				saved *= (1.0 - savebase);
+				if (dydudebug_playerdamagemobj) Console.Printf("\c[darkgreen]armor - saved [post DmgType]:\c- \c[brick]%d\c- \c[gold][%d]\c", saved, oldsaved);
+			}
 
 			if (Amount < saved)
 			{
 				saved = Amount;
 			}
-			newdamage -= saved;
+			newdamage -= firstsaved;
 			Amount -= saved;
 			AbsorbCount += saved;
 			if (Amount == 0)
