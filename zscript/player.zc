@@ -25,6 +25,7 @@ class DDPlayerPawn : PlayerPawn
 	int mobjdmg;
 	int playoutputdmg;
 	int playtookdamage;
+	int playtooktsadamage, playabsorbtsadamage;
 	
 	bool wasongroundprevtic, wasongroundcurrtic;
 	double PlayerDefenseIgnoreFactor, PlayerArmorIgnoreFactor, PlayerArmorIgnoreFactorGeneral;
@@ -3774,6 +3775,15 @@ class DDPlayerPawn : PlayerPawn
 							Console.Printf(combatlogmsg);
 						}
 						if (dydudebug_playerdamagemobj) Console.Printf("Evasion - no damage");
+						
+						int dmgindtype = -1;
+						let DMGIND = EEDHIMonitor(FindInventory("EEDHIMonitor"));
+						if (DMGIND)
+						{
+							dmgindtype = 5;
+							if (dydudebug_playerdmgindicators) Console.Printf("dmgindtype: %d", dmgindtype);
+							if (dmgindtype >= 0) DMGIND.DmgIndTrigger(1, inflictor, source, dmgindtype);
+						}
 						return 0;
 					}
 					else
@@ -5175,6 +5185,40 @@ class DDPlayerPawn : PlayerPawn
 		
 		PlayerArmorIgnoreFactor = 0.00;
 		PlayerDefenseIgnoreFactor = 0.00;
+		
+		
+		int dmgindtype = -1;
+		let DMGIND = EEDHIMonitor(FindInventory("EEDHIMonitor"));
+		if (DMGIND)
+		{
+			if (CountInv("EvadeAnAttack")) dmgindtype = 5;
+			else
+			if (playtooktsadamage) 
+			{
+				dmgindtype = 1;
+				playtooktsadamage = 0;
+			}
+			else
+			if (playabsorbtsadamage) 
+			{
+				dmgindtype = 4;
+				playabsorbtsadamage = 0;
+			}
+			else if (ret <= 0)
+			{
+				if (armdmg) dmgindtype = 3;
+							 else dmgindtype = 2;
+			}
+			else dmgindtype = 0;
+			if (dydudebug_playerdmgindicators) Console.Printf("dmgindtype: %d", dmgindtype);
+			
+			if (dmgindtype >= 0) DMGIND.DmgIndTrigger(1, inflictor, source, dmgindtype);
+		}
+		else
+		{
+			if (playtooktsadamage) playtooktsadamage = 0;
+			if (playabsorbtsadamage) playabsorbtsadamage = 0;
+		}
 		return ret;
 	}
 
