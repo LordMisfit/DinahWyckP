@@ -129,17 +129,49 @@ class EEBaseZSC : Actor abstract
 		return false;
 	}
 	
+	double A_GetMonsterRatingRatio(double user_monsterrating, int type)
+	{
+		double mult = 0.0;
+		if (user_monsterrating >= 0) mult += 0.00; // [-]
+		if (user_monsterrating >= 1) mult += 0.0125; // [E]
+		if (user_monsterrating >= 2) mult += 0.0125; // [D]
+		if (user_monsterrating >= 3) mult += 0.01875; // [C]
+		if (user_monsterrating >= 4) mult += 0.025; // [B]
+		if (user_monsterrating >= 5) mult += 0.025; // [A]
+		if (user_monsterrating >= 6) mult += 0.03125; // [S]
+		if (user_monsterrating >= 7) mult += 0.0375; // <SS>
+		if (user_monsterrating >= 8) mult += 0.0375; // <SSS>
+		if (type <= -1) mult *= 1.5;
+		if (type >= 1) mult *= 0.67;
+		mult += 1.0;
+		//Console.Printf("[A_GetMonsterRatingRatio] - mult: %.8f, type: %d", mult, type);
+		return mult;
+	}
+	
 	double A_CheckMonsterLevelDiv(double basecheck = 0, bool userating = true, actor act = null)
 	{
 		if (!act) act = self;
+		double user_monsterlevel = CountInv("MonsterLevel");
+		if (act) user_monsterlevel = act.CountInv("MonsterLevel");
+		double user_monsterrating = CountInv("MonsterRating");
+		if (act) user_monsterrating = act.CountInv("MonsterRating");
 		double newcheck = basecheck;
+		newcheck *= (1.0 / A_GetMonsterRatingRatio(user_monsterrating,0));
+		//Console.Printf("[A_CheckMonsterLevelDiv] - basecheck: %d, newcheck: %d", basecheck, newcheck);
 		return newcheck;
 	}
 	
 	double A_CheckMonsterLevelMult(double basecheck = 0, bool userating = true, actor act = null)
 	{
 		if (!act) act = self;
+		double user_monsterlevel = CountInv("MonsterLevel");
+		if (act) user_monsterlevel = act.CountInv("MonsterLevel");
+		double user_monsterrating = CountInv("MonsterRating");
+		if (act) user_monsterrating = act.CountInv("MonsterRating");
 		double newcheck = basecheck;
+		newcheck *= A_GetMonsterRatingRatio(user_monsterrating,0);
+		//Console.Printf("[A_CheckMonsterLevelMult] - basecheck: %d, newcheck: %d", basecheck, newcheck);
+
 		return newcheck;
 	}
 	
@@ -151,6 +183,10 @@ class EEBaseZSC : Actor abstract
 		double user_monsterrating = CountInv("MonsterRating");
 		if (act) user_monsterrating = act.CountInv("MonsterRating");
 		double newcheck = basecheck;
+		newcheck *= (1.0 / A_GetMonsterRatingRatio(user_monsterrating,-1));
+		newcheck = int(newcheck);
+		//Console.Printf("[A_CheckMonsterLevel] - basecheck: %d, newcheck: %d", basecheck, newcheck);
+		
 		bool check = false;
 		if (checktype == 10)
 		{
