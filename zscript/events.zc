@@ -59,6 +59,61 @@ class DD_EventHandler : EventHandler
 		return Level;
 	}
 	
+	void A_TmFrzCCardWTick_TF(string nm, string nn)
+	{
+		Actor mo;
+		ThinkerIterator it;
+		it = ThinkerIterator.Create("Actor");
+		while (mo = Actor(it.Next()))
+		{
+			if (mo && 
+					mo.bISMONSTER && 
+					mo.health > 0 &&
+					mo.CountInv(nm) &&
+					mo.CountInv(nn)) 
+			{
+				mo.SetInventory(nm,0);
+			}
+		}
+	}
+
+	void A_TmFrzCCardWTick_NTF(string nm, string nn)
+	{
+		Actor mo;
+		ThinkerIterator it;
+		it = ThinkerIterator.Create("Actor");
+		while (mo = Actor(it.Next()))
+		{
+			if (mo && 
+					mo.bISMONSTER && 
+					mo.health > 0 &&
+					mo.CountInv(nn)) 
+			{
+				if (mo.CountInv(nm) <= 0)
+				{
+					mo.SetInventory(nm,1);
+				}
+			}
+		}
+	}
+	
+	void A_TmFrzCCardWTick_Giver(string nm, string nn)
+	{
+		Actor mo;
+		ThinkerIterator it;
+		it = ThinkerIterator.Create("Actor");
+		while (mo = Actor(it.Next()))
+		{
+			if (mo && 
+					mo.bISMONSTER && 
+					mo.health > 0 &&
+					mo.CountInv(nm)) 
+			{
+				mo.SetInventory(nn,mo.CountInv(nm));
+			}
+		}
+	}
+	
 	override void WorldTick()
 	{
 		// LDL
@@ -95,6 +150,31 @@ class DD_EventHandler : EventHandler
 			
 			if (A_CheckEETimeFreeze())
 			{
+				A_TmFrzCCardWTick_TF("CCards_Actor_Cannibalism","EE_CCards_Actor_Cannibalism");
+				A_TmFrzCCardWTick_TF("CCards_Actor_FrankensteinTools","EE_CCards_Actor_FrankensteinTools");
+				A_TmFrzCCardWTick_TF("CCards_Actor_EnlightenmentThrower","EE_CCards_Actor_EnlightenmentThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_GrenadeThrower","EE_CCards_Actor_GrenadeThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_SurgeBombThrower","EE_CCards_Actor_SurgeBombThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_EggThrower","EE_CCards_Actor_EggThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_UnholyWaterThrower","EE_CCards_Actor_UnholyWaterThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_SmokeBombThrower","EE_CCards_Actor_SmokeBombThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_BlastBombThrower","EE_CCards_Actor_BlastBombThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_NoxiousBombThrower","EE_CCards_Actor_NoxiousBombThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_PumpkinBombThrower","EE_CCards_Actor_PumpkinBombThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_MoldingClayThrower","EE_CCards_Actor_MoldingClayThrower");
+				A_TmFrzCCardWTick_TF("CCards_Actor_BarrelToss","EE_CCards_Actor_BarrelToss");
+				A_TmFrzCCardWTick_TF("CCards_Actor_WebBombThrower","EE_CCards_Actor_WebBombThrower");
+				
+				nm = "CCards_Actor_Shockwave";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo) 
+					{
+						if (mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+				}
+				
 				nm = "CCards_Actor_AttentionDebuff";
 				it = ThinkerIterator.Create(nm);
 				while (mo = Actor(it.Next()))
@@ -108,6 +188,51 @@ class DD_EventHandler : EventHandler
 							mo.A_StopSound(i);
 						}
 						mo.Destroy();
+					}
+				}
+				
+				nm = "CCards_Actor_RainDamager";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo) 
+					{
+						if (mo.target) mo.target == null;
+						if (mo.tracer) mo.tracer == null;
+						for (int i = 0; i < 12; i++)
+						{
+							mo.A_StopSound(i);
+						}
+						mo.Destroy();
+					}
+				}
+				
+				nm = "CCards_Actor_BladeTrap";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo)
+					{
+						if (mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+						if (mo.CountInv("EE_CCards_Actor_BladeTrap") <= 0)
+						{
+							mo.A_StopSound(6);
+							mo.A_SetInventory("EE_CCards_Actor_BladeTrap",1);
+						}
+					}
+				}
+				nm = "EE_CCards_Actor_BladeTrap2";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo)
+					{
+						if (mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+						if (mo.CountInv("EE_CCards_Actor_BladeTrap") <= 0)
+						{
+							mo.A_StopSound(6);
+							mo.A_SetInventory("EE_CCards_Actor_BladeTrap",1);
+						}
 					}
 				}
 				
@@ -125,20 +250,73 @@ class DD_EventHandler : EventHandler
 					if (mo)
 					{
 						if (mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE == false;
-						mo.A_StopSound(7);
+						if (mo.CountInv("EE_CCards_Actor_AttentionNoise") <= 0)
+						{
+							mo.A_StopSound(7);
+							mo.A_SetInventory("EE_CCards_Actor_AttentionNoise",1);
+						}
 					}
 				}
 			}
 			else
 			{
+				A_TmFrzCCardWTick_NTF("CCards_Actor_Cannibalism","EE_CCards_Actor_Cannibalism");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_FrankensteinTools","EE_CCards_Actor_FrankensteinTools");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_EnlightenmentThrower","EE_CCards_Actor_EnlightenmentThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_GrenadeThrower","EE_CCards_Actor_GrenadeThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_SurgeBombThrower","EE_CCards_Actor_SurgeBombThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_EggThrower","EE_CCards_Actor_EggThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_UnholyWaterThrower","EE_CCards_Actor_UnholyWaterThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_SmokeBombThrower","EE_CCards_Actor_SmokeBombThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_BlastBombThrower","EE_CCards_Actor_BlastBombThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_NoxiousBombThrower","EE_CCards_Actor_NoxiousBombThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_PumpkinBombThrower","EE_CCards_Actor_PumpkinBombThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_MoldingClayThrower","EE_CCards_Actor_MoldingClayThrower");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_BarrelToss","EE_CCards_Actor_BarrelToss");
+				A_TmFrzCCardWTick_NTF("CCards_Actor_WebBombThrower","EE_CCards_Actor_WebBombThrower");
+				
 				nm = "CCards_Actor_AttentionNoise";
 				it = ThinkerIterator.Create(nm);
 				while (mo = Actor(it.Next()))
 				{
 					if (mo)
 					{
-						if (!mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE == true;
-						mo.A_StartSound("corruptioncards/parade", CHAN_7, CHANF_LOOPING, 0.2, 0.7);
+						if (!mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = true;
+						if (mo.CountInv("EE_CCards_Actor_AttentionNoise"))
+						{
+							mo.A_StartSound("corruptioncards/parade", CHAN_7, CHANF_LOOPING, 0.2, 0.7);
+							mo.A_SetInventory("EE_CCards_Actor_AttentionNoise",0);
+						}
+					}
+				}
+				
+				nm = "CCards_Actor_BladeTrap";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo)
+					{
+						if (!mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = true;
+						if (mo.CountInv("EE_CCards_Actor_BladeTrap"))
+						{
+							mo.A_StartSound("corruptioncards/bladetrap", slot:CHAN_6, flags:CHANF_LOOP, volume:0.5);
+							mo.A_SetInventory("EE_CCards_Actor_BladeTrap",0);
+						}
+					}
+				}
+
+				nm = "EE_CCards_Actor_BladeTrap2";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo)
+					{
+						if (!mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = true;
+						if (mo.CountInv("EE_CCards_Actor_BladeTrap"))
+						{
+							mo.A_StartSound("corruptioncards/bladetrap", slot:CHAN_6, flags:CHANF_LOOP, volume:0.5);
+							mo.A_SetInventory("EE_CCards_Actor_BladeTrap",0);
+						}
 					}
 				}
 			}
@@ -151,6 +329,82 @@ class DD_EventHandler : EventHandler
 				// 1 Sec TimeFreeze Checks
 				if ((((level.time - 35) % 35) == 0))
 				{
+					nm = "CCards_Actor_GasPod";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_NoxiousBurst";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_SafeSpawner";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_HotStartSpawner";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_AnnoyingDevil";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_HauntedGround";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_SpawnPod";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_Confetti";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_FairyLight";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_AngelWings";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+					
+					nm = "CCards_Actor_MiasmaEffect";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo && mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
 				}
 				
 				// 2 Second Checks
@@ -206,33 +460,58 @@ class DD_EventHandler : EventHandler
 				if ((((level.time - 35) % 175) == 0))
 				{
 					CardsPlaceHolderCheck = true;
+					
+					nm = "CCards_Actor_BigStomach";
+					nm = "CCards_Actor_SwapCurse";
+					//
+					/*
+					nm = "CCards_Actor_PriestPorridge";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						mo.A_SpawnItemEx("EE_CCards_Actor_PriestPorridge",flags:SXF_NOCHECKPOSITION,tid:mo.tid);
+						mo.Destroy();
+					}
+					nm = "CCards_Actor_HotPriestPorridge";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						mo.A_SpawnItemEx("EE_CCards_Actor_HotPriestPorridge",flags:SXF_NOCHECKPOSITION,tid:mo.tid);
+						mo.Destroy();
+					}
+					*/
+
+					nm = "CCards_Actor_MonsterDisguise";
+					it = ThinkerIterator.Create(nm);
+					while (mo = Actor(it.Next()))
+					{
+						if (mo.bNORADIUSDMG) mo.bNORADIUSDMG = false; // hahahaha V:<
+						if (!mo.bISMONSTER) mo.bISMONSTER = true; // hehehehe >:V
+						if (kcdebug_worldtick) Console.Printf("LOLE [%p, %s]", mo, mo.GetClassName());
+					}
 				}
 				
 				if (CardsPlaceHolderCheck)
 				{
+					A_TmFrzCCardWTick_Giver("CCards_Actor_9LivesCurse","EE_CCards_Actor_9LivesCurse");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_9LivesCounter","EE_CCards_Actor_9LivesCounter");
+					
+					A_TmFrzCCardWTick_Giver("CCards_Actor_Cannibalism","EE_CCards_Actor_Cannibalism");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_FrankensteinTools","EE_CCards_Actor_FrankensteinTools");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_EnlightenmentThrower","EE_CCards_Actor_EnlightenmentThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_UnholyWaterThrower","EE_CCards_Actor_UnholyWaterThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_GrenadeThrower","EE_CCards_Actor_GrenadeThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_SurgeBombThrower","EE_CCards_Actor_SurgeBombThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_EggThrower","EE_CCards_Actor_EggThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_SmokeBombThrower","EE_CCards_Actor_SmokeBombThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_BlastBombThrower","EE_CCards_Actor_BlastBombThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_NoxiousBombThrower","EE_CCards_Actor_NoxiousBombThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_PumpkinBombThrower","EE_CCards_Actor_PumpkinBombThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_MoldingClayThrower","EE_CCards_Actor_MoldingClayThrower");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_BarrelToss","EE_CCards_Actor_BarrelToss");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_WebBombThrower","EE_CCards_Actor_WebBombThrower");
 				}
 				
-			}
-			
-			if ((level.time >= 3 && level.time <= 35) ||
-					(((level.time - 35) % 70) == 0))
-			{
-			}
-
-			if ((level.time >= 3 && level.time <= 35) ||
-					(((level.time - 35) % 175) == 0))
-			{
-				nm = "CCards_Actor_BigStomach";
-				nm = "CCards_Actor_SwapCurse";
-				//
-				nm = "CCards_Actor_MonsterDisguise";
-				ThinkerIterator it = ThinkerIterator.Create(nm);
-				while (mo = Actor(it.Next()))
-				{
-					if (mo.bNORADIUSDMG) mo.bNORADIUSDMG = false; // hahahaha V:<
-					if (!mo.bISMONSTER) mo.bISMONSTER = true; // hehehehe >:V
-					if (dydudebug_worldtick) Console.Printf("LOLE [%p, %s]", mo, mo.GetClassName());
-				}
 			}
 		}
 	}
