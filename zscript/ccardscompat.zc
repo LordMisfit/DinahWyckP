@@ -1,0 +1,603 @@
+//***********************************************************
+//* Base "Replacement FX Actor", you know, just in case >.> *
+//***********************************************************
+class EE_CCards_Actor_FX : EEBaseZSC
+{
+	Default
+	{
+		+NOINTERACTION;
+		+NOTIMEFREEZE; // OHAI THAR MR NOTIMEFREEZE FLAG, I'M WATCHING YOU LUL :V
+		+NOTELEPORT;
+		-FLOORCLIP;
+		-SOLID
+	}
+}
+
+//***********
+//* Effects *
+//***********
+// Altered Escape Portal Effect because I cannot condone CCards stealing the opportunity to
+// get 100% kills on a map if I can do something about it. Apologies to Mike about that, but
+// I -HATE- when things like that rob me of 100% completion. This actor just adds a thing to
+// deduct the monster that escapes from the kill-count. I don't know if the normal behavior
+// is intentional or a bug, but in the off-case it IS intentional, I figure I'd just have my
+// own version with the tweak.
+class EE_CCards_Actor_EscapePortal : EE_CCards_Actor_FX
+{
+	Default
+	{
+		+MISSILE;
+	}
+	states
+	{
+		Spawn:
+			TNT1 A 0;
+			TNT1 A 0
+			{
+				string nm;
+				A_StartSound("corruptioncards/lastbreath");
+				if (target)
+				{
+					nm = "CCards_Actor_EscapePortalFX";
+					target.A_SpawnItemEx(nm, 12, flags:SXF_NOCHECKPOSITION|SXF_TRANSFERSPRITEFRAME|SXF_TRANSFERSCALE|SXF_TRANSFERTRANSLATION);
+					if (target.bCOUNTKILL) level.total_monsters -= 1; // The only change from the base CCards effect is this :V
+					target.A_Remove(AAPTR_DEFAULT);
+				}
+			}
+			TNT1 AAAAAAAAAAAAAAAAAAA 3
+			{
+				string nm;
+				nm = "CCards_Actor_VoidStepFX";
+				let v = Spawn(nm, pos + (0,0,48));
+				if (v)
+				{
+					v.A_SetTranslation("CCards_Shield");
+					v.reactiontime = 10;
+				}
+			}
+			stop;
+	}
+}
+
+class EE_CCards_Actor_Smoke : EE_CCards_Actor_FX
+{
+	Default
+	{
+		-NOTIMEFREEZE;
+		//translation "CCards_Shield";
+		renderstyle "STYLE_Add";
+		alpha 1.0;
+		+ROLLSPRITE;
+		scale 0.4;
+	}
+
+	bool dir;
+
+	states
+	{
+		Spawn:
+			TNT1 A 0;
+			TNT1 A 0
+			{
+				if (random(0,1) == 0)
+				{
+					dir = true;
+				}
+				roll = random(0, 359.0);
+			}
+			Goto Fade;
+		Fade:
+			C_F2 A 1
+			{
+				A_FadeOut(0.05);
+				A_SetScale(scale.x + 0.01, scale.y + 0.01);
+				A_ScaleVelocity(0.9);
+			}
+			loop;
+	}
+
+	override void Tick()
+	{
+		A_SetRoll(dir ? roll + 2.7 : roll - 2.7);
+		Super.Tick();
+	}
+}
+
+
+//*********
+//* Items *
+//*********
+//CCards_Actor_PriestPorridge
+/*
+class EE_CCards_Actor_PriestPorridge : CustomInventoryExt // Health
+{
+	Default
+	{
+		Inventory.Amount 5;
+		Inventory.PickupMessage "You ate some \cpPriest Porridge\c-.";
+		+SHOOTABLE;
+		+DONTTHRUST;
+		mass 999999;
+		height 4;
+		bloodtype "";
+		+NOTARGET;
+		+NOTAUTOAIMED;
+		health 100;
+		tag "Priest Porridge";
+		scale 0.5;
+	}
+	
+	override String PickupMessage()
+	{
+		string msg = PickupMsg;
+		return msg;
+	}
+
+	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
+	{
+		String s = mod;
+		if (s.IndexOf("Fire") > -1 || ((flags & DMG_EXPLOSION) && damage > 45))
+		{
+			Spawn("EE_CCards_Actor_HotPriestPorridge", pos);
+			Destroy();
+		}
+
+		return 0;
+	}
+
+	States
+	{
+		Spawn:
+			C_F6 W 0;
+			C_F6 W 0
+			{
+				if (cursector.DamageAmount > 0 && 
+						(cursector.damagetype == 'Magma' ||
+						cursector.damagetype == 'Lava' ||
+						cursector.damagetype == 'Fire' ||
+						cursector.damagetype == 'SpecialFire' ||
+						cursector.damagetype == 'CCardsEyeFire' ||
+						cursector.damagetype == 'Flames' ||
+						cursector.damagetype == 'CCardsFire' ||
+						cursector.damagetype == 'Fire' ||
+						cursector.damagetype == 'Inferno' ||
+						cursector.damagetype == 'Burn'))
+				{
+					Spawn("EE_CCards_Actor_HotPriestPorridge", pos);
+					Destroy();
+				}
+			}
+			C_F6 W -1;
+			stop;
+			
+		Success:
+			TNT1 A 0
+			{
+				actor playera = players[0].mo;
+				let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
+				A_PickupMedicalItem(0.05,1.00);
+			}
+			Stop;
+		Pickup:
+			TNT1 A 0 
+			{
+				if (A_CheckHealthLevels(1.0)) return resolvestate("Success");
+				return resolvestate(null); 
+			}
+			Fail;
+	}
+
+}
+
+class EE_CCards_Actor_HotPriestPorridge : EE_CCards_Actor_PriestPorridge
+{
+	Default
+	{
+		+BRIGHT;
+		Inventory.Amount 30;
+		Inventory.PickupMessage "You ate some \c[fire]Priest Porridge\c- Hot.";
+		-SHOOTABLE;
+		+DONTTHRUST;
+	}
+	
+	override String PickupMessage()
+	{
+		string msg = PickupMsg;
+		return msg;
+	}
+
+	States
+	{
+		Spawn:
+			C_F6 W 0;
+			C_F6 WWWWWW 8
+			{
+				Actor smok = Spawn("EE_CCards_Actor_Smoke", pos + (0, 0, 10));
+				if (smok)
+				{
+					smok.A_SetScale(0.15);
+					smok.A_ChangeVelocity(0, 0, 4);
+				}
+			}
+			C_F6 W -1;
+			stop;
+			
+		Success:
+			TNT1 A 0
+			{
+				actor playera = players[0].mo;
+				let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
+				A_PickupMedicalItem(0.30,1.00);
+			}
+			Stop;
+		Pickup:
+			TNT1 A 0 
+			{
+				if (A_CheckHealthLevels(1.0)) return resolvestate("Success");
+				return resolvestate(null); 
+			}
+			Fail;
+	}
+}
+*/
+//*************
+//* "Weapons" *
+//*************
+// "Mehmehmeh!!" - Cherry, JohnSuitePee's Cacodemon Plushy V:
+class CCards_Actor_PlushWeaponEx1 : DinahWeapon
+{
+	Default
+	{
+		+WEAPON.NOAUTOFIRE;
+		+WEAPON.CHEATNOTWEAPON;
+		+WEAPON.NO_AUTO_SWITCH;
+		+WEAPON.AMMO_OPTIONAL;
+		+WEAPON.NOALERT;
+		weapon.slotnumber 1;
+		Weapon.SelectionOrder 1;
+		inventory.pickupsound "";
+		inventory.pickupmessage "Picked up a... ?";
+		obituary "%o was bopped by a Cacodemon Plushie.";
+		Tag "???";
+		scale 0.4;
+	}
+
+	uint offs;
+
+	States
+	{
+		Ready:
+			CC_P A 10;
+			CC_P B 6
+			{
+				A_AlertMonsters();
+				A_StartSound("corruptioncards/squeakytoy", CHAN_WEAPON);
+			}
+			CC_P A 16;
+		ReadyLoop:
+			CC_P A 1 A_WeaponReady();
+			Loop;
+		Deselect:
+			CC_P A 1 A_Lower(12);
+			Loop;
+		Select:
+			CC_P AAAAA 1 A_WeaponOffset(0, -12, WOF_ADD);
+			CC_P AAAAAAAA 1 A_WeaponOffset(0, -6, WOF_ADD);//A_Raise;
+			Goto Ready;
+		Fire:
+			CC_P BBBBBBBBBBBBBBBBBBBAAAA 1
+			{
+				A_WeaponOffset(Max(0, 4 - invoker.offs),Max(1, 7 - invoker.offs),WOF_ADD);
+				invoker.offs++;
+			}
+			CC_P A 0 
+			{
+				if (A_CheckBerserk()) A_FireProjectile("CCards_Actor_ThrownPlushExB", 0, 0, 0, 0, FPF_NOAUTOAIM);
+				else A_FireProjectile("CCards_Actor_ThrownPlushEx", 0, 0, 0, 0, FPF_NOAUTOAIM);
+				
+				invoker.Destroy();
+			}
+			stop;
+		Spawn:
+			CC_P C -1;
+			Stop;
+	}
+}
+
+class CCards_Actor_ThrownPlushEx : EEFastProjectile
+{
+	int dmg;
+	Default
+	{
+		PROJECTILE;
+		damagefunction (dmg);
+		speed 50;
+		-NOGRAVITY;
+		scale 0.4;
+		+ROLLSPRITE;
+		+ROLLCENTER;
+		+FORCEXYBILLBOARD;
+		radius 8;
+	}
+	
+	override void PostBeginPlay()
+	{
+		actor playera = players[0].mo;
+		let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
+		dmg = 1;
+		if (MiscItem) dmg *= MiscItem.PlayerLevel;
+		dmg *= random(1,8);
+		super.PostBeginPlay();
+	}
+	
+	states
+	{
+		Spawn:
+		CC_P C 1
+		{
+			roll += 22;
+		}
+		loop;
+		Death:
+		TNT1 A 0;
+		CC_P C 0
+		{
+			string nm = "CCards_Actor_ThrownPlushFX";
+			A_StopSound(CHAN_6);
+			A_StartSound("corruptioncards/illusionbreak", CHAN_6);
+
+			for(int i; i < 32; i++)
+			{
+				A_SpawnItemEx(nm, 0, 0, 0, frandom(2, 12), 0, frandom(-8, 8), random(0,360), SXF_NOCHECKPOSITION);
+			}
+			A_SetTranslation("CCards_Mist");
+			bNOGRAVITY = true;
+		}
+		C_F0 GHI 3;
+		stop;
+	}
+
+	override void BeginPlay()
+	{
+		A_StartSound("corruptioncards/squeakytoy", CHAN_6);
+	}
+}
+
+class CCards_Actor_ThrownPlushExB : CCards_Actor_ThrownPlushEx
+{
+	Default
+	{
+		PROJECTILE;
+		damagefunction (dmg);
+		speed 250;
+		-NOGRAVITY;
+		scale 0.4;
+		+ROLLSPRITE;
+		+ROLLCENTER;
+		+FORCEXYBILLBOARD;
+		radius 8;
+	}
+	
+	override void PostBeginPlay()
+	{
+		actor playera = players[0].mo;
+		let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
+		dmg = 10;
+		if (MiscItem) dmg *= MiscItem.PlayerLevel;
+		dmg *= random(4,8);
+		super.PostBeginPlay();
+	}
+	
+	states
+	{
+		Spawn:
+			CC_P C 1
+			{
+				roll += 110;
+			}
+			loop;
+		Death:
+			TNT1 A 0;
+			CC_P C 0
+			{
+				string nm = "CCards_Actor_ThrownPlushFX";
+				A_StopSound(CHAN_6);
+				A_StartSound("corruptioncards/illusionbreak", CHAN_6);
+				A_StopSound(CHAN_7);
+				A_StartSound("corruptioncards/illusionbreak", CHAN_7);
+	
+				for(int i; i < 64; i++)
+				{
+					A_SpawnItemEx(nm, 0, 0, 0, frandom(2, 12), 0, frandom(-8, 8), random(0,360), SXF_NOCHECKPOSITION);
+				}
+				A_SetTranslation("CCards_Mist");
+				bNOGRAVITY = true;
+			}
+			C_F0 GHI 3;
+		stop;
+	}
+
+	override void BeginPlay()
+	{
+		A_StartSound("corruptioncards/squeakytoy", CHAN_6);
+	}
+}
+
+class CCards_Actor_PlushWeaponEx2 : CCards_Actor_PlushWeaponEx1 { Default { weapon.slotnumber 2; } }
+class CCards_Actor_PlushWeaponEx3 : CCards_Actor_PlushWeaponEx1 { Default { weapon.slotnumber 3; } }
+class CCards_Actor_PlushWeaponEx4 : CCards_Actor_PlushWeaponEx1 { Default { weapon.slotnumber 4; } }
+class CCards_Actor_PlushWeaponEx5 : CCards_Actor_PlushWeaponEx1 { Default { weapon.slotnumber 5; } }
+class CCards_Actor_PlushWeaponEx6 : CCards_Actor_PlushWeaponEx1 { Default { weapon.slotnumber 6; } }
+class CCards_Actor_PlushWeaponEx7 : CCards_Actor_PlushWeaponEx1 { Default { weapon.slotnumber 7; } }
+class CCards_Actor_PlushWeaponEx8 : CCards_Actor_PlushWeaponEx1 { Default { weapon.slotnumber 8; } }
+class CCards_Actor_PlushWeaponEx9 : CCards_Actor_PlushWeaponEx1 { Default { weapon.slotnumber 9; } }
+class CCards_Actor_PlushWeaponEx0 : CCards_Actor_PlushWeaponEx1 { Default { weapon.slotnumber 0; } }
+
+class EE_CCards_Actor_EatenCorpses : PlaceHolderItem
+{
+	Default
+	{
+		inventory.maxamount 10;
+	}
+}
+
+class EE_CCards_TimeFreezeCheckItem : PlaceHolderItem
+{
+	Default
+	{
+		inventory.maxamount 1;
+	}
+}
+
+class EE_CCards_MiscCheckItem : PlaceHolderItem
+{
+	Default
+	{
+		inventory.maxamount 1;
+	}
+}
+
+class EE_CCards_Actor_9LivesCurse : EE_CCards_MiscCheckItem { }
+class EE_CCards_Actor_9LivesCounter : EE_CCards_MiscCheckItem
+{
+	Default
+	{
+		inventory.maxamount 9;
+	}
+}
+
+class EE_CCards_Actor_Cannibalism : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_FrankensteinTools : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_EnlightenmentThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_UnholyWaterThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_GrenadeThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_EggThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_SurgeBombThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_SmokeBombThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_BlastBombThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_NoxiousBombThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_PumpkinBombThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_MoldingClayThrower : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_BarrelToss : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_WebBombThrower : EE_CCards_TimeFreezeCheckItem { }
+//
+class EE_CCards_Actor_AttentionNoise : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_BladeTrap : EE_CCards_TimeFreezeCheckItem { }
+class EE_CCards_Actor_BladeTrap2 : EEBaseZSC
+{
+	Default
+	{
+		-SOLID;
+		-NOBLOCKMONST;
+		+NOTARGET;
+		+EXTREMEDEATH;
+		+NOTELEPORT;
+		scale 0.57;
+		speed 6;
+		radius 28;
+		height 64;
+		gravity 3.0;
+		obituary "%o was sliced to pieces by a spinning blade trap.";
+	}
+
+	uint pausetimer;
+	bool hasseen;
+
+	states
+	{
+		Spawn:
+			C_F6 NOPQRSTUV 2;
+			loop;
+	}
+
+	override void PostBeginPlay()
+	{
+		A_StartSound("corruptioncards/bladetrap", slot:CHAN_6, flags:CHANF_LOOP, volume:0.5);
+	}
+
+	override void Tick()
+	{
+		// Main difference in KC's version allows Heiwa's Time Freeze to completely shut down 
+		// the Tick() function of the blade traps, thus they stop moving AND damaging you while
+		// time is frozen :V
+		if (A_CheckEETimeFreeze())
+		{
+			Super.Tick();
+			return;
+		}
+		
+		if (Level.Time % 15 == 0 && !hasseen)
+		{
+			if (!CheckIfSeen())
+			{
+				hasseen = true;
+			}
+		}
+		if (Level.Time % 5 == 0)
+		{
+			if (!CheckSightOrRange(512, true))
+			{
+				BlockThingsIterator bti = BlockThingsIterator.Create(self, 5);
+		
+				while (bti.Next())
+				{
+					let next = bti.Thing;
+
+					if (Distance3D(next) < 63 && next.health > 0 && next.bSHOOTABLE)
+					{
+						if (next.player)
+						{
+							A_StartSound("corruptioncards/bladetraphit", slot:CHAN_7, volume:0.7);
+							next.DamageMobj(self, self, 3 * random(1, 3), "Melee", 0);
+							next.A_ScaleVelocity(0.5);
+							next.A_ChangeVelocity(random(-5, 5), random(-5, 5), 0, CVF_RELATIVE);
+							next.BloodSplatter(next.pos + (random(-next.radius, next.radius), random(-next.radius, next.radius), random(0, next.height)) , angle);
+						}
+						else
+						{
+							if (!hasseen)
+							{
+								continue;
+							}
+							A_StartSound("corruptioncards/bladetraphit", slot:CHAN_7, volume:0.3);
+							uint f = 0;
+							if (random(0, 5) > 0)
+							{
+								f = DMG_NO_PAIN;
+							}
+							next.DamageMobj(self, self, 3 * random(1, 3), "Melee", f);
+							next.BloodSplatter(next.pos + (random(-next.radius, next.radius), random(-next.radius, next.radius), random(0, next.height)) , angle);
+						}
+					}
+				}
+			}
+
+			if (CheckProximity("TeleportDest", 64))
+			{
+				Destroy();
+				return;
+			}
+		}
+
+		if (pausetimer > 0)
+		{
+			pausetimer--;
+			Super.Tick();
+			return;
+		}
+
+		Vector2 newpos = Vec2Angle(9, angle);
+
+		if (TryMove(newpos, PCM_NOACTORS))
+		{
+			SetOrigin((newpos.x, newpos.y, pos.z), true);
+		}
+		else
+		{
+			angle += 180;
+			pausetimer = 40;
+		}
+
+		Super.Tick();
+	}
+}
