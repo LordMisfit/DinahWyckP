@@ -5347,15 +5347,30 @@ class CompatVulnItem : PlaceholderItem
 						owner.A_SetInventory("JustSurprised",1);
 						if (exex_hitweaksounds) owner.A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
 						nm = "SonicNail";
-						if (inflictor && inflictor.GetClassName() == nm) newdamage *= frandompick(2.0000,2.50);
-																												else newdamage *= frandompick(1.3334,1.50);
+						nm = "SonicNail";
+						if (inflictor && 
+								(inflictor.GetClassName() == nm ||
+								inflictor.GetClassName() == "ImpalerMissile" ||
+								inflictor.GetClassName() == "ImpalerMissile2" ||
+								inflictor.GetClassName() == "ImpalerMissile3"))
+						{
+							newdamage *= frandompick(2.0000,2.50);
+						}
+						else newdamage *= frandompick(1.3334,1.50);
 					}
 					else
 					{
 						if (exex_hitweaksounds) owner.A_StartSound("Misc/WeaknessHit", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
 						nm = "SonicNail";
-						if (inflictor && inflictor.GetClassName() == nm) newdamage *= frandompick(1.5000,1.75);
-																												else newdamage *= frandompick(1.1667,1.25);
+						if (inflictor && 
+								(inflictor.GetClassName() == nm ||
+								inflictor.GetClassName() == "ImpalerMissile" ||
+								inflictor.GetClassName() == "ImpalerMissile2" ||
+								inflictor.GetClassName() == "ImpalerMissile3"))
+						{
+							newdamage *= frandompick(1.5000,1.75);
+						}
+						else newdamage *= frandompick(1.1667,1.25);
 					}
 					if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("(\c[green]%s\c-) surprisehit: damage: %d (initdmg: %d)", GetClassName(), newdamage, initdmg);
 				}
@@ -5363,16 +5378,15 @@ class CompatVulnItem : PlaceholderItem
 				bool criticalhit = false;
 				int CritRoll;
 				int TruePlayerLevel;
-				if (MiscItem)
-				{
-					if (exex_expenabled) TruePlayerLevel = MiscItem.PlayerLevel;
-				}
+				if (MiscItem && exex_expenabled) TruePlayerLevel = MiscItem.PlayerLevel;
 				if (FoundPlayer) 
 				{
+					int bosscritres = 75;
+					
 					if (FoundPlayer.CountInv("DealCriticalHit")) 
 					{
 						criticalhit = true;
-						if (owner.bBOSS && random(1,4) >= 2) 
+						if (owner.bBOSS && random(1,100) <= bosscritres) 
 						{
 							criticalhit = false;
 							if (source == FoundPlayer || inflictor == FoundPlayer)
@@ -5392,7 +5406,7 @@ class CompatVulnItem : PlaceholderItem
 							if (MiscItem.CritRoll <= 1) 
 							{
 								criticalhit = true;
-								if (owner.bBOSS && random(1,4) >= 2) 
+								if (owner.bBOSS && random(1,100) <= bosscritres) 
 								{
 									criticalhit = false;
 									if (source == FoundPlayer || inflictor == FoundPlayer)
@@ -5418,7 +5432,7 @@ class CompatVulnItem : PlaceholderItem
 					int crittype = 1;
 					if (!(ExplosiveBarrel(owner) ||
 								ExplosiveBarrel2(owner) ||
-								//ExplosiveBarrelNew(owner) ||
+								ExplosiveBarrelNew(owner) ||
 								Pod(self)))
 					{
 						owner.A_SetInventory("TookCriticalHit",1);
@@ -5454,7 +5468,7 @@ class CompatVulnItem : PlaceholderItem
 						double heightmult = frandompick(0.9375,1.0,1.0625,1.125,1.125,1.25,1.25,1.25,1.25,1.25);
 						actor SMASH;
 						bool success;
-						[success, SMASH] = owner.A_SpawnItemEx("SMAAAASH",0.0,0.0,(owner.height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
+						[success, SMASH] = owner.A_SpawnItemEx("SMAAAASH",0.0,0.0,(owner.default.height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
 						if (success && SMASH)
 						{
 							SMAAAASH SMASH2;
@@ -5466,8 +5480,8 @@ class CompatVulnItem : PlaceholderItem
 								SMASH2.scale.x = (scalebase * owner.scale.x);
 								SMASH2.scale.y = (scalebase * owner.scale.y);
 								if (SMASH2.target != owner) SMASH2.target = owner;
-								if (SMASH2.height < (owner.height * heightmult)) SMASH2.height = (owner.height * heightmult);
-								SMASH2.initheight = (owner.height * heightmult);
+								if (SMASH2.height < (owner.default.height * heightmult)) SMASH2.height = (owner.default.height * heightmult);
+								SMASH2.initheight = (owner.default.height * heightmult);
 							}
 						}
 					}
@@ -5507,7 +5521,28 @@ class CompatVulnItem : PlaceholderItem
 				if (dydudebug_actordmgdisplays) Console.Printf("ActorDefenseIgnoreFactor: %.8f", ActorDefenseIgnoreFactor);
 
 				// Defense Checks
-
+				if (damageType == 'Crush' && !inflictor && !source)
+				{
+					double basecrushdmgfact;
+					if (PowerStrength(owner.FindInventory("PowerStrength")) || PowerStrengthDD(owner.FindInventory("PowerStrengthDD")))
+					{
+						basecrushdmgfact = frandompick(25,33.4,33.4,50,50,50,50,50,50,66.7,66.7,75);
+					}
+					else
+					{
+						basecrushdmgfact = frandompick(75,87.5,87.5,100,100,100,100,100,100,112.5,112.5,125);
+					}
+					newdamage *= double(basecrushdmgfact / (owner.mass * frandompick(0.25,0.334,0.334,0.5,0.5,0.5,0.5,0.5,0.667,0.667,0.75)));
+					newdamage *= (basecrushdmgfact * 0.01);
+					if (newdamage <= (predmginr * 0.334)) newdamage = (predmginr * 0.334);
+					if (newdamage >= (predmginr * 3)) newdamage = (predmginr * 3);
+					
+					if (kcdebug_actordmgdisplays && newdamage > 0)
+					{
+						Console.Printf("    (\czActor Defensive Input [Crush]\c-: \cydmg = %d\c, prevdmg: %d, basecrushdmgfact: %.8f, mass: %d)", newdamage, predmginr, basecrushdmgfact, owner.mass);
+					}
+				}
+				
 				//******************************
 				//*This ignores damage factors *
 				//******************************
@@ -5515,7 +5550,10 @@ class CompatVulnItem : PlaceholderItem
 				prevDamageFactor = owner.DamageFactor;
 				if (owner.DamageFactor < 1.00) 
 				{
-					if (criticalhit) ActorDefenseIgnoreFactor = 1.00;
+					if (criticalhit) 
+					{
+						ActorDefenseIgnoreFactor = 1.00;
+					}
 					if (ActorDefenseIgnoreFactor > 0.00)
 					{
 						int predmg = newdamage;
@@ -5528,6 +5566,54 @@ class CompatVulnItem : PlaceholderItem
 							Console.Printf("newdmgfct: %.8f, prevDamageFactor: %.8f, dmgmul: %.8f (predmg: %d vs damage: %d)", newdmgfct, prevDamageFactor, dmgmul, predmg, damage);
 							if (ActorDefenseIgnoreFactor > 0.00) Console.Printf("    (\czActor Defensive Input [Def Ignoring]\c-: \caDefenseIgnoreFactor = %.8f\c-, \cadmgfactor = %.8f\c-, \caprevdmgfactor = %.8f\c-, \cypredmg = %d\c-, \cydmg = %d\c- (Monster Actor))", ActorDefenseIgnoreFactor, owner.DamageFactor, prevDamageFactor, predmg, newdamage);
 																							else Console.Printf("    (\czActor Defensive Input [Def Ignoring]\c-: \caSKIPPED\c-, \cydmg = %d\c-)", predmg);
+						}
+					}
+				}
+				
+				
+				// Healing from Punching/Kicking Practice Targets ala SW
+				if (PracticeTarget(owner) || PracticeTarget2(owner))
+				{
+					if ((damageType == 'Fist' || damageType == 'Kick'))
+					{
+						if (!(flags & DMG_EXPLOSION))
+						{
+							double multfactorHP = 1.0;
+							int randbonusincreaseHP = randompick(3,3,4) * frandom(3.75,5.25) * frandom(0.5,1.5);
+							if (damageType == 'Fist' && damageType == "UppercutPuff") multfactorHP *= frandompick(1.125,1.1875);
+							if (damageType == 'Kick') multfactorHP *= frandompick(1.0834,1.1667);
+							randbonusincreaseHP *= multfactorHP;
+							if (criticalhit) randbonusincreaseHP *= critdmgmulti;
+							if (kcdebug_regenpenaltydisplay) Console.Printf("HPBonusTimeAdd: %d", randbonusincreaseHP);
+							if (MiscItem) 
+							{
+								int HPRegenBoostTimeAmt = randbonusincreaseHP;
+								MiscItem.HPRegenBoostTimer += HPRegenBoostTimeAmt;
+							}
+							
+							DDPlayerPawn playpawn;
+							playpawn = FoundPlayer;
+							if (playpawn)
+							{
+								int prehealth = playpawn.player.mo.health;
+								int phealmax;
+								if (MiscItem) 
+								{
+									phealmax = MiscItem.MaxHealthTrue;
+									phealmax *= (1.0 + (TruePlayerLevel * 0.005));
+									if (phealmax > MiscItem.MaxHealthTrue * 2.0) phealmax = (MiscItem.MaxHealthTrue * 2.0);
+								}
+								if ((prehealth < phealmax) && random(1,16) <= random(7,9))
+								{
+									int targhealamt = (randompick(1,1,1,1,1,1,1,1,1,1,1,2) * critdmgmulti * multfactorHP);
+									prehealth += targhealamt;
+									A_RecoverHUD(targhealamt, 0, true);
+									//if ((dvds_showdamagemessages & 1) && targhealamt > 0) A_PrintHealingMessage(playpawn, targhealamt);
+									//Console.Printf("prehealth: %d, phealmax: %d, targhealamt: %d", prehealth, phealmax, targhealamt);
+									if (prehealth > phealmax) prehealth = phealmax;
+									playpawn.player.mo.health = playpawn.player.health = prehealth;
+								}
+							}
 						}
 					}
 				}
