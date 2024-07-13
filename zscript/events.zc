@@ -6544,11 +6544,21 @@ class DD_EventHandler : EventHandler
 		return PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill;
 	}
 	
-	double A_GetExpLowCap()
+	double A_GetExpLowCap(double BaseExpMultiBonus)
 	{
-		int ExpLowcap = 1;
-		ExpLowcap *= exex_expmultiplier;
-		return ExpLowCap;
+		double BaseExpLowcap = 1;
+		BaseExpLowCap *= BaseExpMultiBonus;
+		BaseExpLowcap *= exex_expmultiplier;
+		double xx1 = int(BaseExpLowcap / 1);
+		double xx2 = BaseExpLowcap % 1.0;
+		xx2 = int(xx2 * 10000);
+		if (random(1,10000) <= xx2) xx1 += 1;
+		
+		int ExpLowcap = xx1;
+		if (ExpLowcap < 1) ExpLowcap = 1;
+		//Console.Printf("BaseExpLowCap: %.8f, xx1: %.8f, xx2: %.8f, ExpLowCap: %d", BaseExpLowCap, xx1, xx2, ExpLowcap);
+		
+		return BaseExpLowcap;
 	}
 	
 	override void WorldThingDied(WorldEvent e)
@@ -6556,8 +6566,8 @@ class DD_EventHandler : EventHandler
 		int TrueGameSkill = skill;
 		if (Level.MapName != "TITLEMAP")
 		{
-			actor player = players[0].mo;
-			let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+			actor playera = players[0].mo;
+			let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
 			actor victim = e.Thing;
 			actor inflicter = e.inflictor;
 			string mod = "NONE";
@@ -6788,7 +6798,8 @@ class DD_EventHandler : EventHandler
 				if (dydudebug_worlddied) Console.Printf("[%s] SpecialType [WorldDied]: %d, %d", vict, specialtype, specialtype2);
 
 				actor IPAttack;
-				if (!(DDPlayerPawn(victim)) || (victim.bCOUNTKILL || specialtype || specialtype2))
+				if (!(DDPlayerPawn(victim)) || 
+						 (victim.bCOUNTKILL || specialtype || specialtype2))
 				{
 					int monsterrating = victim.CountInv("MonsterRating");
 					if (!victim.CountInv("DedMonsterFlag") && !sv_monsterrespawn) victim.A_SetInventory("DedMonsterFlag",1);
@@ -6799,7 +6810,7 @@ class DD_EventHandler : EventHandler
 						if (inflicter) 
 						{
 							if (PlayerPawn(inflicter)) playerkill = true;
-							if (inflicter.bFRIENDLY) allykill = true;
+							else if (inflicter.bFRIENDLY) allykill = true;
 							if (inflicter.bFRIENDLY || DDPlayerPawn(inflicter))
 							{
 								if (IPAttack == null) IPAttack = EEProjectile(inflicter);
@@ -6811,7 +6822,7 @@ class DD_EventHandler : EventHandler
 						if (source) 
 						{
 							if (PlayerPawn(source)) playerkill = true;
-							if (source.bFRIENDLY) allykill = true;
+							else if (source.bFRIENDLY) allykill = true;
 							if (source.bFRIENDLY || DDPlayerPawn(source)) 
 							{
 								if (IPAttack == null) IPAttack = EEProjectile(source);
@@ -6822,7 +6833,7 @@ class DD_EventHandler : EventHandler
 						if (mastor) 
 						{
 							if (PlayerPawn(mastor)) playerkill = true;
-							if (mastor.bFRIENDLY) allykill = true;
+							else if (mastor.bFRIENDLY) allykill = true;
 							if (IPAttack == null) IPAttack = EEProjectile(mastor);
 							if (mastor.bFRIENDLY || DDPlayerPawn(mastor)) giveexp = true;
 							if (dydudebug_worlddied) Console.Printf("mastor: %s [%d]", mast, mastor.bFRIENDLY);
@@ -6854,7 +6865,9 @@ class DD_EventHandler : EventHandler
 						}
 						
 						int ExpGain = (victim.SpawnHealth() + victim.Stamina);
-						if (waslegendary) ExpGain *= 1.25;
+						nm = "CCards_Actor_AssassinBuff";
+						if (waslegendary ||
+								victim.CountInv(nm)) ExpGain *= 1.25;
 						if (A_CheckUOHYM()) 
 						{
 									 if (specialtype & 32) ExpGain *= (frandom(3.2,4.8) * frandompick(0.875,1.0,1.0,1.0,1.125));
@@ -6870,7 +6883,8 @@ class DD_EventHandler : EventHandler
 						
 						if (monsterrating)
 						{
-							if (waslegendary)
+							if (waslegendary ||
+									victim.CountInv(nm))
 							{
 								if (monsterrating == 1) ExpGain *= 1.05;
 								if (monsterrating == 2) ExpGain *= 1.1;
@@ -6932,7 +6946,7 @@ class DD_EventHandler : EventHandler
 						if ((source && source.CountInv("DinahTrueIPState")) || (inflicter && inflicter.CountInv("DinahTrueIPState"))) ExpGain *= 0.2;
 						if (VacPuff(inflicter) || VacPuffIP(inflicter)) 
 						{
-							if (waslegendary) ExpGain *= frandom(1.0625,1.25);
+							if (waslegendary || victim.CountInv(nm)) ExpGain *= frandom(1.0625,1.25);
 							ExpGain *= frandompick(0.125,0.1667,0.1667,0.2,0.2,0.2,0.25,0.25,0.25,0.25,0.3,0.3,0.3,0.3334,0.3334,0.375);
 						}
 						else
@@ -6940,7 +6954,7 @@ class DD_EventHandler : EventHandler
 							nm = "CCards_Actor_BorrowedTimeBuff";
 							if (victim.CountInv(nm) && mod == 'Suck') 
 							{
-								if (waslegendary) ExpGain *= frandom(1.0625,1.25);
+								if (waslegendary || victim.CountInv(nm)) ExpGain *= frandom(1.0625,1.25);
 								ExpGain *= frandompick(0.125,0.1667,0.1667,0.2,0.2,0.2,0.25,0.25,0.25,0.25,0.3,0.3,0.3,0.3334,0.3334,0.375);
 							}
 						}
@@ -6949,13 +6963,13 @@ class DD_EventHandler : EventHandler
 						
 						if (EvilDinah(victim))
 						{
-							if (waslegendary) ExpGain *= frandom(1.75,2.5);
+							if (waslegendary || victim.CountInv(nm)) ExpGain *= frandom(1.75,2.5);
 							if (IPAttack) ExpGain *= frandom(0.25,0.5);
 											 else ExpGain *= frandom(0.125,0.25);
 						}
 						else
 						{
-							if (waslegendary) ExpGain *= frandom(1.0925,1.185);
+							if (waslegendary || victim.CountInv(nm)) ExpGain *= frandom(1.0925,1.185);
 							if (IPAttack) ExpGain *= frandom(0.125,0.25);
 											 else ExpGain *= frandom(0.05,0.125);
 						}
@@ -6996,13 +7010,22 @@ class DD_EventHandler : EventHandler
 						
 						If (PLuck)
 						{
-							int PLevel = Player.CountInv("PlayerLevel");
+							int PLevel = playera.CountInv("PlayerLevel");
 									 if (PLevel <= 11) ExpGain *= (1.00 + (TrueLuck * frandompick(0,0.00125,0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02)));
 							else if (PLevel <= 26) ExpGain *= (1.00 + (TrueLuck * frandompick(0.00125,0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.01,0.02,0.02)));
 							else if (PLevel <= 66) ExpGain *= (1.00 + (TrueLuck * frandompick(0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.04)));
 							else if (PLevel <= 101) ExpGain *= (1.00 + (TrueLuck * frandompick(0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.04,0.04)));
 							else if (PLevel <= 201) ExpGain *= (1.00 + (TrueLuck * frandompick(0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.04,0.04,0.04)));
+							else if (PLevel <= 401) ExpGain *= (1.00 + (TrueLuck * frandompick(0.0025,0.005,0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.04,0.04,0.04,0.04)));
+							else if (PLevel <= 701) ExpGain *= (1.00 + (TrueLuck * frandompick(0.005,0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.04,0.04,0.04,0.04,0.08)));
+							else if (PLevel <= 1001) ExpGain *= (1.00 + (TrueLuck * frandompick(0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.04,0.04,0.04,0.04,0.08,0.08)));
 						}
+						double BaseExpMultiBonus = 1.0;
+						if (playera) 
+						{
+							//
+						}
+						ExpGain *= BaseExpMultiBonus;
 						if (MiscItem)
 						{
 							int OExpGain = ExpGain;
@@ -7039,7 +7062,8 @@ class DD_EventHandler : EventHandler
 						{
 							int OExpGain = ExpGain;
 							ExpGain *= (EEC.expshare * frandom(0.667,1.000));
-							if (ExpGain < 1) ExpGain = 1;
+							int ExpLowCap = A_GetExpLowCap(BaseExpMultiBonus);
+							if (ExpGain < ExpLowCap) ExpGain = ExpLowCap;
 							
 							if (dydudebug_worlddied && ExpGain) Console.Printf("[EEC.expshare] x%.4f, ExpGain: %d [%d]", EEC.expshare, ExpGain, OExpGain);
 						}
@@ -7047,9 +7071,10 @@ class DD_EventHandler : EventHandler
 	
 						if (giveexp && exex_expenabled && Level.MapName != "TITLEMAP")
 						{
-							if (ExpGain < 1) ExpGain = 1;
-
-							let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+							int ExpLowCap = A_GetExpLowCap(BaseExpMultiBonus);
+							if (ExpGain < ExpLowCap) ExpGain = ExpLowCap;
+							
+							let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
 							if (MiscItem && MiscItem.NumOfAfasDrops) 
 							{
 								ExpGain *= (1.0 + (MiscItem.NumOfAfasDrops * 0.0625));
@@ -7068,20 +7093,20 @@ class DD_EventHandler : EventHandler
 							if (level.levelnum >= tutlevelmin && level.levelnum <= tutlevelmax) expgain = 0;
 							if (mod == 'GrowingPains') expgain = 0;
 
-							Actor player = players[0].mo;
-							if (player.health > 0 || !player.CountInv("PlayerIsDead"))
+							Actor playera = players[0].mo;
+							if (playera.health > 0 || !playera.CountInv("PlayerIsDead"))
 							{
 								int EXPPrevReq = 0;
 								if (MiscItem.PlayerLevel > 0) EXPPrevReq = MiscItem.LevelExpRequirement[(MiscItem.PlayerLevel-1)];
 								int EXPCurrReq = MiscItem.LevelExpRequirement[(MiscItem.PlayerLevel)];
 								int EXPFullReq = (EXPCurrReq-EXPPrevReq);
 								//Console.Printf("%d / %d (%d)", EXPPrevReq, EXPCurrReq, EXPFullReq);
-								Player.A_GiveInventory("KillsCount",1);
-								Player.A_GiveInventory("ExpPts",ExpGain);
-								int Kills = Player.CountInv("KillsCount");
-								int ExpNew = Player.CountInv("ExpPts");
-								int ExpNeeded = Player.CountInv("ExpPtsNeeded");
-								int PlayerLevel = Player.CountInv("PlayerLevel");
+								playera.A_GiveInventory("KillsCount",1);
+								playera.A_GiveInventory("ExpPts",ExpGain);
+								int Kills = playera.CountInv("KillsCount");
+								int ExpNew = playera.CountInv("ExpPts");
+								int ExpNeeded = playera.CountInv("ExpPtsNeeded");
+								int PlayerLevel = playera.CountInv("PlayerLevel");
 								if (exex_showexpgains && ExpGain) 
 								{
 									Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
@@ -7101,17 +7126,17 @@ class DD_EventHandler : EventHandler
 						}
 						else
 						{
-							Actor player = players[0].mo;
-							if (player.health > 0 || !player.CountInv("PlayerIsDead"))
+							Actor playera = players[0].mo;
+							if (playera.health > 0 || !playera.CountInv("PlayerIsDead"))
 							{
-								Player.A_GiveInventory("KillsCount",1);
-								int Kills = Player.CountInv("KillsCount");
+								playera.A_GiveInventory("KillsCount",1);
+								int Kills = playera.CountInv("KillsCount");
 							}
 						}
 						
 						// BUILD-style oneliner for kills [optional]
 						bool playoneliner = false;
-						if (inflicter == player || source == player || mastor == player) playoneliner = true;
+						if (inflicter == playera || source == playera || mastor == playera) playoneliner = true;
 						if (PracticeTarget(victim) || 
 								PracticeTarget2(victim) || 
 								BowlingPin(victim) || 
@@ -7129,16 +7154,23 @@ class DD_EventHandler : EventHandler
 						nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) playoneliner = false;
 						if (!playerkill) playoneliner = false;
 						
+						if (dydudebug_worlddied) Console.Printf("playoneliner: %d", playoneliner);
 						if (playoneliner && 
-								player.GetClassName() == "DinahPlayer" && 
+								playera.GetClassName() == "DinahPlayer" && 
 								MiscItem && 
-								player.health > 0)
+								(playera.health > 0 || 
+								 !playera.CountInv("PlayerIsDead")))
 						{
 							if (dydudebug_worlddied) Console.Printf("Voice Check");
 							bool voicecheck = false;
 							if (exex_dinahextravoices && exex_dinahoneliners && !MiscItem.OneLinerCooldown) 
 							{
-								if (MiscItem.OneLinerCooldown <= 0 || waslegendary) voicecheck = true;
+								if (MiscItem.OneLinerCooldown <= 0 || 
+										waslegendary ||
+										victim.CountInv(nm)) 
+								{
+									voicecheck = true;
+								}
 							}
 							if (voicecheck)
 							{
@@ -7148,10 +7180,10 @@ class DD_EventHandler : EventHandler
 								{
 									if (MiscItem) basechance += (MiscItem.ItemPoints * (basechance * 0.01));
 									if (IPAttack) basechance *= frandompick(1.125,1.167,1.25,1.334);
-									if (player.CountInv("DecentHealth")) basechance *= 1.25;
-									if (player.CountInv("LowHealth")) basechance *= 1.5;
-									if (player.CountInv("CriticalHealth")) basechance *= 1.875;
-									if (waslegendary) basechance *= 5;
+									if (playera.CountInv("DecentHealth")) basechance *= 1.25;
+									if (playera.CountInv("LowHealth")) basechance *= 1.5;
+									if (playera.CountInv("CriticalHealth")) basechance *= 1.875;
+									if (waslegendary || victim.CountInv(nm)) basechance *= 5;
 									if (MiscItem)
 									{
 										if (MiscItem.WineDefTier == 1 || MiscItem.WineDefTier == -1) basechance *= 1.125;
@@ -7172,17 +7204,17 @@ class DD_EventHandler : EventHandler
 										if (victim.CountInv(nm) && mod == 'Suck') basechance *= frandompick(1.125,1.25,1.375);
 									}
 									if (victim.bBOSS) basechance *= 8;
-									if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) basechance *= frandompick(1.25,1.25,1.25,1.5,1.5,2);
+									if (playera.CountInv("PowerStrength") || playera.CountInv("PowerStrengthDD")) basechance *= frandompick(1.25,1.25,1.25,1.5,1.5,2);
 									int maxchance = 256;
-									if (waslegendary) maxchance *= 0.25;
+									if (waslegendary || victim.CountInv(nm)) maxchance *= 0.25;
 									if (dydudebug_worlddied) Console.Printf("%d / %d", basechance, maxchance);
 									if (random(1,maxchance) <= basechance && (MiscItem && MiscItem.CanTalkUnderwater))
 									{
 										double maskpitch = 1.00;
-										if (player.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
+										if (playera.waterlevel >= 3 && MiscItem.CanTalkUnderwater >= 2) maskpitch *= 1.259921885;
 										string voicenm;
 										double voicevol = frandom(1.25,1.75);
-										if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) voicevol *= frandompick(1.125,1.125,1.125,1.25,1.25,1.5);
+										if (playera.CountInv("PowerStrength") || playera.CountInv("PowerStrengthDD")) voicevol *= frandompick(1.125,1.125,1.125,1.25,1.25,1.5);
 										int randvoice = random(1,17);
 										if (randvoice == 1) 
 										{
@@ -7271,8 +7303,8 @@ class DD_EventHandler : EventHandler
 										}
 										if (randvoice > 0)
 										{
-											player.A_StopSound(CHAN_VOICE);
-											player.A_StartSound(voicenm,CHAN_VOICE,CHANF_DEFAULT,voicevol,ATTN_NORM,maskpitch); 
+											playera.A_StopSound(CHAN_VOICE);
+											playera.A_StartSound(voicenm,CHAN_VOICE,CHANF_DEFAULT,voicevol,ATTN_NORM,maskpitch); 
 											MiscItem.OneLinerCooldown += (frandom(1.75,3.0) * TICRATE);
 										}
 									}
@@ -7456,7 +7488,7 @@ class DD_EventHandler : EventHandler
 										victim.A_SpawnItemEx("GhostCloudSpawner", 0, 0, 30, 0, 0, 0, 0, 128);
 										victim.A_SpawnItemEx("GhostCloudSpawner", 0, 0, 30, 0, 0, 0, 0, 128);
 										victim.A_SpawnItemEx("GhostCloudSpawner", 0, 0, 30, 0, 0, 0, 0, 128);
-										if (player.CountInv("IsCarnOfSouls"))
+										if (playera.CountInv("IsCarnOfSouls"))
 										{
 											EEBaseZSC check;
 											check = EEBaseZSC(victim);
@@ -7470,7 +7502,7 @@ class DD_EventHandler : EventHandler
 									if (Dragon_Chatty(victim))
 									{
 										vacgive = 12;
-										if (player.CountInv("IsCarnOfSouls"))
+										if (playera.CountInv("IsCarnOfSouls"))
 										{
 											EEBaseZSC check;
 											check = EEBaseZSC(victim);
@@ -7515,7 +7547,7 @@ class DD_EventHandler : EventHandler
 									vacgive = (victim.spawnhealth() + victim.Stamina);
 									if (random(1,random(8,16)) <= randompick(1,1,1,2,2,3)) vacgive *= frandompick(3.25,3.375,3.5,3.625,3.625,3.75,3.75,3.75,3.875,3.875,3.875,3.875,4.0,4.0,4.0,4.0,4.0,4.125,4.125,4.125,4.125,4.25,4.25,4.25,4.375,4.375,4.5,4.625,4.75);
 																																		else vacgive *= frandompick(3.75,3.875,3.875,4.0,4.0,4.0,4.125,4.125,4.25);
-									vacgive *= (0.5 + (player.CountInv("SuperVacUpgrade") * 0.1667));
+									vacgive *= (0.5 + (playera.CountInv("SuperVacUpgrade") * 0.1667));
 									if (Shillfish(victim)) vacgive *= 4;
 									vacgive *= frandompick(0.6667,0.8334,1.000,1.1667,1.3334);
 									if (IPPuff) vacgive *= frandompick(0.75,0.75,0.75,0.75,0.875); 
