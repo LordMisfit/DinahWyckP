@@ -1209,15 +1209,61 @@ class DD_EventHandler : EventHandler
 			if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 			string spawnname = spawnee.GetClassName();
 			string nm, nn, no, np;
+			bool isCCardsMini = false;
+			bool isCCardsMiniAv = false;
+			nm = "CCards_Actor_MiniMonsterPowerup";
+			nn = "CCards_Token_MiniAvenger";
+			if (spawnee.CountInv(nm)) isCCardsMini = true;
+			if (spawnee.CountInv(nn)) isCCardsMiniAv = true;
+			bool ninelivescurse;
+			int nineliveslifecount;
+			nm = "CCards_Actor_9LivesCurse"; 
+			nn = "CCards_Actor_9LivesCounter"; 
+			if (spawnee.CountInv(nm)) ninelivescurse = true;
+			if (ninelivescurse && spawnee.CountInv(nn)) nineliveslifecount = (spawnee.CountInv(nn) + 1);
 			
 			double hpmulti, atkmulti, defmulti, spdmulti, massmulti;
 			double hpmulti2, atkmulti2, defmulti2, spdmulti2, massmulti2;
 			
 			// Monster "Scaling"
+			bool e1m8exitroommon = false;
+			bool e1m8baron = false;
+			bool e2m8cyber = false;
+			bool e34m8spider = false;
 			bool exception = CheckExceptions(spawnee);
 			if (spawnee.bISMONSTER && !practicetarget && !exception)
 			{
 				double baselinelevel = 0;
+				if (spawnee.CountInv("E1M8ExitRoomMonster") && 
+						level.mapname == "E1M8" &&
+						level.GetChecksum() == '058fb092ea1b70da1e3cbf501c4a91a1') e1m8exitroommon = true;
+				if (level.mapname == "E1M8" &&
+						level.GetChecksum() == '058fb092ea1b70da1e3cbf501c4a91a1' && 
+						(spawnname ~== "BaronOfHell" ||
+						 spawnname ~== "BaronOfHellNew" ||
+						 spawnname ~== "BaronOfHellClassic" ||
+						 spawnname ~== "Belphegor" ||
+						 spawnname ~== "BruiserDemon" ||
+						 spawnname ~== "CyBruiser" ||
+						 spawnname ~== "ArchonOfHell" ||
+						 spawnname ~== "PyroDemon" ||
+						 spawnname ~== "FlyingBalrogDVDS" ||
+						 spawnname ~== "Hierophant")) e1m8baron = true;
+				if (level.mapname == "E2M8" &&
+						level.GetChecksum() == 'effe91df41ad41f6973c06f0ad67ddb9' && 
+						(spawnname ~== "Cyberdemon" || 
+						 spawnname ~== "CyberdemonNew" || 
+						 spawnname ~== "CyberdemonClassic" || 
+						 spawnname ~== "Annihilator")) e2m8cyber = true;
+				if ((level.GetChecksum() == 'ef128313112110ed6c1549af96af26c9' ||
+						 level.GetChecksum() == '2DC939E508AB8EB68AF79D5B60568711') &&
+						 (level.mapname == "E3M8" ||
+							level.mapname == "E4M8") &&
+						(spawnname ~== "SpiderMastermind" || 
+						 spawnname ~== "SpiderMastermindNew" || 
+						 spawnname ~== "SpiderMastermindClassic" || 
+						 spawnname ~== "Demolisher")) e34m8spider = true;
+				
 				if (dydudebug_monsterscaling && player) Console.Printf("A_CheckDDGame(): %d, exex_nrpgmonsterlevels: %d, ContinousMode: %d", A_CheckDDGame(), exex_nrpgmonsterlevels, player.CountInv("IsDDContinuous"));
 				if (A_CheckDDGame() && exex_nrpgmonsterlevels && (DDOrigCreature(spawnee) || CoSForsaken(spawnee) || DDOrigBoss(spawnee)))
 				{
@@ -1318,33 +1364,17 @@ class DD_EventHandler : EventHandler
 						}
 					}
 				}
-				int d = Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true);
-				if (d != -1)
-				{
-					nm = "CCards_Actor_9LivesCounter";
-					if (spawnee.CountInv(nm))
-					{
-						int lives = spawnee.CountInv(nm);
-						baselinelevel += (lives * randompick(1,1,1,1,1,1,1,1,1,1,1,2,2,2,3));
-						if (random(1,16) <= 1)
-						{
-							if (random(1,16) <= 1)
-							{
-								baselinelevel *= (1.00 + (lives * frandom(0.125,0.16667)));
-							}
-							else
-							{
-								baselinelevel *= (1.00 + (lives * frandom(0.0625,0.083334)));
-							}
-						}
-						else
-						{
-							baselinelevel *= (1.00 + (lives * frandom(0.03125,0.041667)));
-						}
-					}
-				}
+				nm = "ArchangelusA"; if (spawnname == nm) baselinelevel += random(random(7,8),random(12,13));
+				nm = "ArchangelusB"; if (spawnname == nm) baselinelevel += random(random(7,8),random(12,13));
+				nm = "EviternatusAnta"; if (spawnname == nm) baselinelevel += random(random(7,8),random(12,13));
+				nm = "EviternatusBete"; if (spawnname == nm) baselinelevel += random(random(7,8),random(12,13));
+				nm = "EviternatusCeph"; if (spawnname == nm) baselinelevel += random(random(7,8),random(12,13));
+				nm = "IconOfSinBoss"; if (spawnname == nm) baselinelevel += random(15,25);
+				if (e1m8exitroommon) baselinelevel += random(5,random(7,8));
+				if (e1m8baron) baselinelevel += random(10,15);
+				if (e2m8cyber || e34m8spider) baselinelevel += random(20,25);
 				
-				
+				if (dydudebug_monsterscaling) Console.Printf("ninelivescurse: %d, nineliveslifecount: %d", ninelivescurse, nineliveslifecount);
 				if (dydudebug_monsterscaling) Console.Printf("\c[gold][MonsterStatsSet], tic: %d, actor: %p [%s]\c-", gametic, spawnee, spawnname);
 				int LevelErrorRange;
 				int LevelCheck;
@@ -1383,49 +1413,24 @@ class DD_EventHandler : EventHandler
 					if (TrueGameSkill == SKILL_NORMAL)		basedivfactor = 16;
 					if (TrueGameSkill == SKILL_HARD)			basedivfactor = 11;
 					if (TrueGameSkill >= SKILL_VERY_HARD)	basedivfactor = 6;
-					int d = Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true);
-					if (d != -1)
+					if (e1m8exitroommon) basedivfactor *= 0.667;
+					if (e1m8baron) basedivfactor *= 0.667;
+					if (e2m8cyber || e34m8spider) basedivfactor *= 0.334;
+					
+					if (ninelivescurse)
 					{
-						nm = "CCards_Actor_9LivesCounter";
-						if (spawnee.CountInv(nm))
+						if (nineliveslifecount >= 9)
 						{
-							int basediv = 16;
-							int lives = spawnee.CountInv(nm);
-							if (lives >= 9)
-							{
-								basediv = random(2,4);
-							}
-							else
-							if (lives >= 6 && lives <= 8)
-							{
-								basediv = random(5,7);
-							}
-							else
-							if (lives >= 3 && lives <= 5)
-							{
-								basediv = random(8,10);
-							}
-							else
-							if (lives >= 1 && lives <= 2)
-							{
-								basediv = random(12,14);
-							}
-							
-							if (random(1,basediv) <= 1)
-							{
-								if (random(1,basediv) <= 1)
-								{
-									basedivfactor *= (1.00 - (lives * frandom(0.125,0.1667)));
-								}
-								else
-								{
-									basedivfactor *= (1.00 - (lives * frandom(0.0625,0.083334)));
-								}
-							}
-							else
-							{
-								basedivfactor *= (1.00 - (lives * frandom(0.03125,0.041667)));
-							}
+							basedivfactor *= (1.00 - (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.0625,0.08334)));
+						}
+						else
+						if (nineliveslifecount >= 4 && nineliveslifecount <= 8)
+						{
+							basedivfactor *= (1.00 - (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.03125,0.04167)));
+						}
+						else
+						{
+							basedivfactor *= (1.00 - (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.015625,0.020834)));
 						}
 					}
 					
@@ -1473,6 +1478,10 @@ class DD_EventHandler : EventHandler
 					if (A_CheckDDGame()) baseadd *= frandompick(0.875,1.0,1.0,1.0,1.0,1.0,1.0,1.125);
 													else baseadd *= frandompick(0.4375,0.5,0.5,0.5,0.5,0.5,0.5,0.5625);
 					multbase += baseadd;
+					if (e1m8exitroommon) multbase *= 1.75;
+					if (e1m8baron) basedivfactor *= 2.125;
+					if (e2m8cyber || e34m8spider) basedivfactor *= 2.5;
+					
 					if (dydudebug_monsterscaling) Console.Printf("multbase: %.8f, monsterrating: %d", multbase, monsterrating);
 					
 					// Gives the DD Trilogy Enemies bigger stat gains per level than the gamemode's default monsters if the option is enabled
@@ -1592,7 +1601,9 @@ class DD_EventHandler : EventHandler
 							if (MageBoss(spawnee)) LevelCheck += random(9,18);
 							// Tier 2 Boss
 							if (Sorcerer2(spawnee) || DSparilUnmountedNew(spawnee)) LevelCheck += random(15,30);
+							//if (DSparilUnmountedNew(spawnee)) LevelCheck += random(15,30);
 							if (Korax(spawnee) || KoraxNew(spawnee)) LevelCheck += random(15,30);
+							//if (KoraxNew(spawnee)) LevelCheck += random(15,30);
 							if (spawnname == "ThamuzNew" || spawnname == "TchernobogNew") LevelCheck += random(15,30);
 							// Tier 3 Boss
 							if (spawnname == "PennywiseBoss") LevelCheck += random(23,45);
@@ -1737,6 +1748,11 @@ class DD_EventHandler : EventHandler
 						mult *= 0.9;
 						mult *= (1.0 + (0.125 * monsterrating));
 						mult *= truemultbase;
+						if (isCCardsMini) 
+						{
+							if (isCCardsMiniAv) mult *= 0.875;
+														 else mult *= 0.5;
+						}
 						if (dydudebug_monsterscaling) Console.Printf("\c[red]mult [pre-attack]: %.8f\c-, FRIENDLY?: %d, monsterrating: %d", mult, spawnee.bFRIENDLY, monsterrating);
 
 						// Attack
@@ -1752,6 +1768,23 @@ class DD_EventHandler : EventHandler
 						if (LevelCheck >= 161 && LevelCheck <= 180) baseatkmulti *= frandom(1.1125,1.225);
 						if (LevelCheck >= 181 && LevelCheck <= 199) baseatkmulti *= frandom(1.1375,1.275);
 						if (LevelCheck >= 200) baseatkmulti *= frandom(1.165,1.33);
+						
+						if (ninelivescurse)
+						{
+							if (nineliveslifecount >= 9)
+							{
+								baseatkmulti *= (1.00 + (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.125,0.1667)));
+							}
+							else
+							if (nineliveslifecount >= 4 && nineliveslifecount <= 8)
+							{
+								baseatkmulti *= (1.00 + (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.0625,0.08334)));
+							}
+							else
+							{
+								baseatkmulti *= (1.00 + (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.03125,0.041667)));
+							}
+						}
 						atkmulti = baseatkmulti;
 						//
 						if (KilletanteSoloist(spawnee)) atkmulti *= 1.25;
@@ -1831,6 +1864,11 @@ class DD_EventHandler : EventHandler
 						mult2 *= (random(2,4) * 0.9);
 						mult2 *= (1.0 + ((random(5,10) * 0.0125) * monsterrating));
 						mult2 *= truemultbase;
+						if (isCCardsMini) 
+						{
+							if (isCCardsMiniAv) mult2 *= 0.875;
+														 else mult2 *= 0.5;
+						}
 						
 						MapCheck = globalvars.MapsFinished;
 						
@@ -1858,6 +1896,23 @@ class DD_EventHandler : EventHandler
 						if (MapCheck >= 151 && MapCheck <= 175) baseatkmulti2 *= 1.75;
 						if (MapCheck >= 176 && MapCheck <= 200) baseatkmulti2 *= 1.875;
 						if (MapCheck >= 201) baseatkmulti2 *= 2.0;
+						
+						if (ninelivescurse)
+						{
+							if (nineliveslifecount >= 9)
+							{
+								baseatkmulti2 *= (1.00 + (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.125,0.1667)));
+							}
+							else
+							if (nineliveslifecount >= 4 && nineliveslifecount <= 8)
+							{
+								baseatkmulti2 *= (1.00 + (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.0625,0.08334)));
+							}
+							else
+							{
+								baseatkmulti2 *= (1.00 + (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.03125,0.041667)));
+							}
+						}
 						atkmulti2 = baseatkmulti2;
 						//
 						if (KilletanteSoloist(spawnee)) atkmulti2 *= 1.25;
@@ -3328,7 +3383,7 @@ class DD_EventHandler : EventHandler
 				nm = "CCardAssassinMarker"; if (victim.CountInv(nm)) specialtype += 2;
 				nm = "CCardRespawnedMarker"; if (victim.CountInv(nm)) specialtype += 4;
 				nm = "CCards_Actor_TheAncientOne"; if (victim.GetClassName() == nm) specialtype += 8;
-				nm = "CCards_Actor_9LivesCurse"; if (victim.CountInv(nm)) specialtype += 16;
+				nm = "EE_CCards_Actor_9LivesCurse"; if (victim.CountInv(nm)) specialtype += 16;
 				nm = "CCards_Actor_PilotedMech"; if (victim.CountInv(nm)) specialtype += 32;
 				nm = "CCards_Actor_Spider"; if (victim.GetClassName() == nm) specialtype += 128;
 				nm = "CCards_SpookySkeleton"; if (victim.GetClassName() == nm) specialtype += 256;
@@ -4135,6 +4190,9 @@ class DD_EventHandler : EventHandler
 	
 	int, int, actor, actor, actor, actor, actor, int, int, int, bool, bool A_KillDropTables(int PLuck, int TrueLuck, actor victim, actor inflicter, actor source, actor mastor, actor IPAttack, int specialtype, int specialtype2, int monsterrating, bool playerkill, bool allykill)
 	{
+		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
+		string nm, nn, no, np;
+		
 		int TrueGameSkill = skill;
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
@@ -4191,8 +4249,16 @@ class DD_EventHandler : EventHandler
 			EECVict = EECreature(victim);
 		}
 		
-		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
-		string nm, nn, no, np;
+		bool ninelivescurse;
+		int nineliveslifecount;
+		nm = "EE_CCards_Actor_9LivesCurse"; 
+		nn = "EE_CCards_Actor_9LivesCounter"; 
+		if (victim)
+		{
+			if (victim.CountInv(nm)) ninelivescurse = true;
+			if (ninelivescurse && victim.CountInv(nn)) nineliveslifecount = (victim.CountInv(nn) + 1);
+			if (dydudebug_worlddied) Console.Printf("\c[brick]ninelivescurse:\c- %d, \c[blue]nineliveslifecount:\c- %d", ninelivescurse, nineliveslifecount);
+		}
 		
 		int Kills = Player.CountInv("KillsCount");
 		// Drop Tables
@@ -4241,6 +4307,44 @@ class DD_EventHandler : EventHandler
 			bossdropmulti *= 8;
 			skillmult *= 0.125;
 		}
+
+		if (ninelivescurse)
+		{
+			double base9livesmult = 1.00;
+			if (nineliveslifecount >= 9)
+			{
+				base9livesmult = 1.00 + (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.25,0.3334));
+			}
+			else
+			if (nineliveslifecount >= 4 && nineliveslifecount <= 8)
+			{
+				base9livesmult = 1.00 + (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.125,0.1667));
+			}
+			else
+			{
+				base9livesmult = 1.00 + (random(nineliveslifecount/2,nineliveslifecount) * frandom(0.0625,0.0834));
+			}
+			bossdropmulti *= (base9livesmult / 1.00);
+			skillmult *= (1.00 / base9livesmult);
+			if (kcdebug_worlddiedmonsterdrops) 
+			{
+				Console.Printf("\c[brick]base9livesmult:\c- %.8f", base9livesmult);
+			}
+		}
+		
+		nm = "CCards_Actor_AssassinBuff";
+		if (waslegendary || 
+				victim.CountInv(nm)) 
+		{
+			bossdropmulti *= frandom(2.5,3.25);
+			skillmult *= frandom(0.3076923076923077,0.4);
+		}
+		if (dydudebug_worlddied) 
+		{
+			Console.Printf("\c[brick]bossdropmulti:\c- %.8f", bossdropmulti);
+			Console.Printf("\c[brick]skillmult:\c- %.8f", skillmult);
+		}
+			
 		if (waslegendary) skillmult *= frandom(0.334,0.4585);
 		bool candropitems = false;
 		if (specialtype || specialtype2) candropitems = true;
@@ -4292,6 +4396,12 @@ class DD_EventHandler : EventHandler
 		int tutlevelmax = 1804;
 		if (level.levelnum >= tutlevelmin && level.levelnum <= tutlevelmax) candropitems = false;
 		if (A_CheckUOHYM() && random(1,6) <= 1) candropitems = false;
+		
+		double minmultlevel = 0.25;
+		if (A_CheckUOHYM()) minmultlevel *= 2;
+		if (victim.bBOSS) minmultlevel /= bossdropmulti;
+		if (waslegendary) minmultlevel *= frandompick(0.334,0.5,0.5,0.5,0.5,0.5,0.5,0.667);
+		if (minmultlevel <= 0.0125) minmultlevel = 0.0125;
 		
 		if (candropitems)
 		{
@@ -4833,15 +4943,19 @@ class DD_EventHandler : EventHandler
 				if (ApplePuff(inflicter) || ApplePuffIP(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
 				if (BlunderPuff(inflicter) || BlunderPuffIP(inflicter)) maxchance = randompick((basechance * 0.75),(basechance * 0.875),(basechance),(basechance * 1.125),(basechance * 1.25));
 				if (RecordShot(inflicter)) maxchance = randompick((basechance * 1.5),(basechance * 1.75),(basechance * 2),(basechance * 2.25),(basechance * 2.5));
-				if (VacPuff(inflicter) || VacPuffIP(inflicter)) maxchance = (basechance * 16);
+				if (VacPuff(inflicter) || VacPuffIP(inflicter)) 
+				{
+					maxchance = (basechance * 16);
+				}
 				else
 				{
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
 				nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(4,8);
+				nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
 				nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
-				if (maxchance < (exex_inventorydroprate6 * 0.25)) maxchance = (exex_inventorydroprate6 * 0.25);
+				if (maxchance < (exex_inventorydroprate6 * minmultlevel)) maxchance = (exex_inventorydroprate6 * minmultlevel);
 
 				if (random(1,maxchance) <= 1) // Main Drop Chance
 				{
@@ -4850,6 +4964,7 @@ class DD_EventHandler : EventHandler
 					if (MiscItem) temp = (1 + (TrueLuck * 0.08334));
 					int randrollmax = 16;
 					nm = "CCards_Actor_Maestro"; if (vict == nm) randrollmax /= 8;
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= 4;
 					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) randrollmax *= 4;
 					int randroll = random(1,randrollmax);
 					if (randroll <= temp) // Weapons
@@ -5154,6 +5269,20 @@ class DD_EventHandler : EventHandler
 							ammodrops *= random(2,4);
 							if (random(1,4) <= 1) randroll2 = random(1,128);
 						}
+						nm = "CCards_Actor_Horror"; 
+						if (vict == nm) 
+						{
+							temp *= randompick(2,2,2,3);
+							ammodrops *= random(1,2);
+							if (random(1,4) <= 1) randroll2 = random(1,128);
+						}
+						nm = "CCards_Actor_MiniMonsterPowerup"; 
+						if (victim.CountInv(nm)) 
+						{
+							temp /= random(2,3);
+							ammodrops /= random(2,4);
+							if (random(1,4) <= 1) randroll2 = random(1,128);
+						}
 						for (int i2; i2 < ammodrops; i2++)
 						{
 							if (randroll2 <= temp) 
@@ -5250,7 +5379,7 @@ class DD_EventHandler : EventHandler
 					string cointype = "ArcadeChip";
 					if (player.CountInv("IsDynDuchess")) cointype = "ArcadeChip";
 					if (player.CountInv("IsCarnOfSouls")) cointype = "Money_Ducat";
-					if (maxchance < (exex_inventorydroprate11 * 0.25)) maxchance = (exex_inventorydroprate11 * 0.25);
+					if (maxchance < (exex_inventorydroprate11 * minmultlevel)) maxchance = (exex_inventorydroprate11 * minmultlevel);
 					
 					if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx(cointype,frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
 					if (random(1,(maxchance*4)) == 1) victim.A_SpawnItemEx(cointype,frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
@@ -5322,7 +5451,7 @@ class DD_EventHandler : EventHandler
 						nm = "CCards_Actor_BorrowedTimeBuff";
 						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 					}
-					if (maxchance < (exex_inventorydroprate9 * 0.25)) maxchance = (exex_inventorydroprate9 * 0.25);
+					if (maxchance < (exex_inventorydroprate9 * minmultlevel)) maxchance = (exex_inventorydroprate9 * minmultlevel);
 					
 					if (random(1,(maxchance)) == 1) 
 					{
@@ -5424,7 +5553,7 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
-				if (maxchance < (exex_inventorydroprate7 * 0.25)) maxchance = (exex_inventorydroprate7 * 0.25);
+				if (maxchance < (exex_inventorydroprate7 * minmultlevel)) maxchance = (exex_inventorydroprate7 * minmultlevel);
 				
 				if (random(1,(maxchance)) == 1) 
 				{
@@ -5514,7 +5643,7 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 8);
 				}
-				if (maxchance < (exex_inventorydroprate8 * 0.25)) maxchance = (exex_inventorydroprate8 * 0.25);
+				if (maxchance < (exex_inventorydroprate8 * minmultlevel)) maxchance = (exex_inventorydroprate8 * minmultlevel);
 				if (i > 0) maxchance *= 5;
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [armor]: %d (%d)", maxchance, basechance);
 				if (random(1,maxchance) <= 1)
@@ -5805,7 +5934,7 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
-				if (maxchance < (exex_inventorydroprate1 * 0.25)) maxchance = (exex_inventorydroprate1 * 0.25);
+				if (maxchance < (exex_inventorydroprate1 * minmultlevel)) maxchance = (exex_inventorydroprate1 * minmultlevel);
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [primaryinv]: %d (%d)", maxchance, basechance);
 
 				if (random(1,maxchance) <= 1)
@@ -5876,7 +6005,7 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
-				if (maxchance < (exex_inventorydroprate2 * 0.25)) maxchance = (exex_inventorydroprate2 * 0.25);
+				if (maxchance < (exex_inventorydroprate2 * minmultlevel)) maxchance = (exex_inventorydroprate2 * minmultlevel);
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 
 				if (random(1,maxchance) <= 1)
@@ -5982,7 +6111,7 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
-				if (maxchance < (exex_inventorydroprate3 * 0.25)) maxchance = (exex_inventorydroprate3 * 0.25);
+				if (maxchance < (exex_inventorydroprate3 * minmultlevel)) maxchance = (exex_inventorydroprate3 * minmultlevel);
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 				if (random(1,maxchance) <= 1)
 				{
@@ -6048,7 +6177,7 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
-				if (maxchance < (exex_inventorydroprate4 * 0.25)) maxchance = (exex_inventorydroprate4 * 0.25);
+				if (maxchance < (exex_inventorydroprate4 * minmultlevel)) maxchance = (exex_inventorydroprate4 * minmultlevel);
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 				
 				if (random(1,maxchance) <= 1)
@@ -6087,7 +6216,7 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
-				if (maxchance < (exex_inventorydroprate5 * 0.25)) maxchance = (exex_inventorydroprate5 * 0.25);
+				if (maxchance < (exex_inventorydroprate5 * minmultlevel)) maxchance = (exex_inventorydroprate5 * minmultlevel);
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [extremerare]: %d (%d)", maxchance, basechance);
 
 				if (random(1,maxchance) <= 1)
@@ -6131,7 +6260,7 @@ class DD_EventHandler : EventHandler
 				// Weapons and IP Attacks do not effect drop rates here V:
 				if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 				maxchance = basechance;
-				if (maxchance < (exex_inventorydroprate10 * 0.25)) maxchance = (exex_inventorydroprate10 * 0.25);
+				if (maxchance < (exex_inventorydroprate10 * minmultlevel)) maxchance = (exex_inventorydroprate10 * minmultlevel);
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [ultimarare]: %d (%d)", maxchance, basechance);
 
 				if (random(1,maxchance) <= 1)
@@ -6269,7 +6398,7 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_BorrowedTimeBuff";
 					if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 				}
-				if (maxchance < (exex_inventorydroprate12 * 0.25)) maxchance = (exex_inventorydroprate12 * 0.25);
+				if (maxchance < (exex_inventorydroprate12 * minmultlevel)) maxchance = (exex_inventorydroprate12 * 0.25);
 				if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [situational]: %d (%d)", maxchance, basechance);
 				if (random(1,maxchance) <= 1) // Main Drop Chance
 				{
@@ -6632,7 +6761,7 @@ class DD_EventHandler : EventHandler
 				nm = "CCardAssassinMarker"; if (victim.CountInv(nm)) specialtype += 2;
 				nm = "CCardRespawnedMarker"; if (victim.CountInv(nm)) specialtype += 4;
 				nm = "CCards_Actor_TheAncientOne"; if (victim.GetClassName() == nm) specialtype += 8;
-				nm = "CCards_Actor_9LivesCurse"; if (victim.CountInv(nm)) specialtype += 16;
+				nm = "EE_CCards_Actor_9LivesCurse"; if (victim.CountInv(nm)) specialtype += 16;
 				nm = "CCards_Actor_PilotedMech"; if (victim.CountInv(nm)) specialtype += 32;
 				nm = "CCards_Actor_Spider"; if (victim.GetClassName() == nm) specialtype += 128;
 				nm = "CCards_SpookySkeleton"; if (victim.GetClassName() == nm) specialtype += 256;
@@ -6770,8 +6899,8 @@ class DD_EventHandler : EventHandler
 						if (specialtype & 8) ExpGain *= frandompick(7.5,12.5); // CCards_Actor_TheAncientOne
 						if (specialtype & 16) 
 						{
-							ExpGain *= frandompick(0.75,1.25); // CCards_Actor_9LivesCurse
-							nm = "CCards_Actor_9LivesCounter";
+							ExpGain *= frandompick(0.75,1.25); // EE_CCards_Actor_9LivesCurse
+							nm = "EE_CCards_Actor_9LivesCounter";
 							if (victim.CountInv(nm))
 							{
 								int lives = victim.CountInv(nm);
@@ -6797,6 +6926,8 @@ class DD_EventHandler : EventHandler
 						if (specialtype & 1024) ExpGain *= frandompick(7.5,12.5); // CCards_Actor_Bane
 						if (specialtype & 2048) ExpGain *= frandompick(7.5,12.5); // CCards_Actor_Maestro
 						if (specialtype & 4096) ExpGain *= frandompick(0.125,0.25); // CCards_Actor_MiniMonsterPowerup
+						if (specialtype & 8192) ExpGain *= frandompick(0.375,0.625); // CCards_Actor_HasRespawned
+						if (specialtype & 32768) ExpGain *= frandompick(2.5,3.125); // CCards_Actor_Horror
 						if (victim.CountInv("MiraclesUsed") && exex_monstershavemiracles) ExpGain *= (1.0 + (victim.CountInv("MiraclesUsed") * 0.625));
 						if ((source && source.CountInv("DinahTrueIPState")) || (inflicter && inflicter.CountInv("DinahTrueIPState"))) ExpGain *= 0.2;
 						if (VacPuff(inflicter) || VacPuffIP(inflicter)) 
@@ -6813,8 +6944,8 @@ class DD_EventHandler : EventHandler
 								ExpGain *= frandompick(0.125,0.1667,0.1667,0.2,0.2,0.2,0.25,0.25,0.25,0.25,0.3,0.3,0.3,0.3334,0.3334,0.375);
 							}
 						}
-						nm = "CCards_Actor_Cursed"; if (victim.CountInv(nm)) ExpGain *= frandom(1.25,1.5);
-						nm = "CCards_Actor_FleaCurse"; if (victim.CountInv(nm)) ExpGain *= frandom(9.0,10.0);
+						if (specialtype & 65536) if (victim.CountInv(nm)) ExpGain *= frandom(1.25,1.5); // CCards_Actor_Cursed
+						if (specialtype & 131072) if (victim.CountInv(nm)) ExpGain *= frandom(9.0,10.0); // CCards_Actor_FleaCurse
 						
 						if (EvilDinah(victim))
 						{
