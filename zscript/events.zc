@@ -123,6 +123,8 @@ class DD_EventHandler : EventHandler
 	
 	override void WorldTick()
 	{
+		actor player = players[0].mo;
+		
 		// LDL
 		ThinkerIterator ldlit = ThinkerIterator.Create("Actor");
 		Actor ldlmo;
@@ -137,6 +139,38 @@ class DD_EventHandler : EventHandler
 						ldlmo.A_GiveInventory("LDLegendaryMonsterVisualEffectMaker",1);
 					}
 					if (dydudebug_worldtick) Console.Printf("LDL Check [%p, %s]", ldlmo, ldlmo.GetClassName());
+				}
+			}
+		}
+
+		// TimeFreezeTargetChecker
+		ThinkerIterator tftit = ThinkerIterator.Create("Actor");
+		Actor tftmo;
+		while (tftmo = Actor(tftit.Next()))
+		{
+			if (tftmo.bISMONSTER && tftmo.health > 0)
+			{
+				if (A_CheckEETimeFreeze())
+				{
+				}
+				else
+				{
+					if (tftmo.target)
+					{
+						if (tftmo.CountInv("TimeFreezeHasNoTarget") > 0) tftmo.A_SetInventory("TimeFreezeHasNoTarget",0);
+						if (tftmo.target != player)
+						{
+							tftmo.A_SetInventory("TimeFreezeHasATarget",1);
+						}
+						else
+						{
+							if (tftmo.CountInv("TimeFreezeHasATarget") > 0) tftmo.A_SetInventory("TimeFreezeHasATarget",0);
+						}
+					}
+					else
+					{
+						tftmo.A_SetInventory("TimeFreezeHasNoTarget",1);
+					}
 				}
 			}
 		}

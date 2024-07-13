@@ -5243,13 +5243,18 @@ class CompatVulnItem : PlaceholderItem
 		let globalvars = DDGlobalVariables.Get();
 		actor playera = players[0].mo;
 		let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
+		double firstdmgfactor;
 		string nm, nn, no, np;
 		
 		bool surprisehit;
 		if (owner)
 		{
-			if (!owner.bISMONSTER) Destroy();
+			if (!(owner.bISMONSTER || 
+						owner.bSHOOTABLE) ||
+						ShieldPartBase(owner) ||
+						PlayerPawn(owner)) Destroy();
 			
+			firstdmgfactor = owner.DamageFactor;
 			ownername = owner.GetClassName();
 			if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 			{
@@ -5276,13 +5281,13 @@ class CompatVulnItem : PlaceholderItem
 				newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
 				lastTOTALFactor = TOTALFactor;
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("\c[sapphire]CompatVulnItem\c- (%s): post-damage: %d, damagetype: %s, TOTALFactor: %.8f", ownername, newdamage, damageType, TOTALFactor);
-				//
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && source) Console.Printf("(source: \c[green]%p\c-) %s", source, source.GetClassName());
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && inflictor) Console.Printf("(inflictor: \c[green]%p\c-) %s", inflictor, inflictor.GetClassName());
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && prevtarget) Console.Printf("(owner.target: \c[green]%p\c-) %s", prevtarget, prevtarget.GetClassName());
 
 				// LOLE Joke Items. Partial thanks to Naka Teleeli/Nakate for the inspiration. V:
-				if ((damageType == 'LOLEBowling' || damageType == 'HeelJackpotExplosion') && 
+				if ((damageType == 'LOLEBowling' || 
+						 damageType == 'HeelJackpotExplosion') && 
 						!owner.bFRIENDLY) 
 				{
 					damage = 1872; // 18 * 8 * 13;
@@ -5316,17 +5321,28 @@ class CompatVulnItem : PlaceholderItem
 				}
 				if (domusic) A_DynamicMusic(forcedplay:true);
 				
+				nm = "CCards_Actor_StoneDeath";
+				nn = "CCards_Actor_MysteryEgg";
 				if (source && 
 						prevtarget != source && 
 						(PlayerPawn(source) || source.bFRIENDLY) && 
 						!owner.bFRIENDLY && 
+						!ExplosiveBarrel(owner) && 
+						!ExplosiveBarrel2(owner) && 
+						!Pod(owner) &&
+						!PracticeTarget(owner) &&
+						!PracticeTarget2(owner) &&
+						!EEUniqueBoss(owner) &&
+						owner.GetClassName() != nm &&
+						owner.GetClassName() != nn &&
 						damageType != 'TrueIP' &&
 						!owner.bDORMANT)
 				{
 					int initdmg = newdamage;
 					surprisehit = true;
 					A_StopSound(32);
-					if (owner.InStateSequence(owner.curstate,owner.ResolveState("Spawn")))
+					if (InStateSequence(owner.curstate,ResolveState("Spawn")) ||
+							(InStateSequence(owner.curstate,ResolveState("Idle")) && Heresiarch(owner)))
 					{
 						owner.A_SetInventory("JustSurprised",1);
 						if (exex_hitweaksounds) owner.A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
