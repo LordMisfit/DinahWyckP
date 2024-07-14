@@ -2828,7 +2828,7 @@ class DD_EventHandler : EventHandler
 		int TrueGameSkill = skill;
 		
 		class<Actor> extracheck, extracheck2, extracheck3, extracheck4;
-		string nm, nn, no, np, nq, nr;
+		string nm, nn, no, np, nq, nr, ns, nt;
 		actor spawnee = e.thing;
 		actor source;
 		actor mastor;
@@ -2862,10 +2862,26 @@ class DD_EventHandler : EventHandler
 			}
 			
 			bool exception = CheckExceptions(spawnee);
-			if (!EEBaseZSC(spawnee) && spawnee.bISMONSTER && !exception) 
+			if (!EEBaseZSC(spawnee) && 
+					(spawnee.bISMONSTER || 
+					spawnee.bSHOOTABLE) && 
+					!exception) 
 			{
-				spawnee.A_SetInventory("CompatVulnItem",1);
+				
+				if (!(PlayerPawn(spawnee) ||
+						 ExplosiveBarrel(spawnee) ||
+						 ExplosiveBarrel2(spawnee) ||
+						 ShieldPartBase(spawnee) ||
+						 Pod(spawnee) ||
+						 BossBrainNew(spawnee))) 
+					{
+						spawnee.A_SetInventory("CompatVulnItem",1);
+					}
 			}
+			
+			if (ExplosiveBarrel(spawnee) ||
+					ExplosiveBarrel2(spawnee) ||
+					Pod(spawnee)) spawnee.bPUSHABLE = true;
 			
 			if (EECreature(spawnee))
 			{
@@ -3038,23 +3054,25 @@ class DD_EventHandler : EventHandler
 			invspawnee = Inventory(spawnee);
 			if (invspawnee) 
 			{
-				if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) == -1)
+				if (A_CheckBlooM())
 				{
 					if (YellowCard(invspawnee) || BlueCard(invspawnee) || RedCard(invspawnee)) invspawnee.PickupSound = "getkeycard";
 					if (YellowSkull(invspawnee) || BlueSkull(invspawnee) || RedSkull(invspawnee)) invspawnee.PickupSound = "getskullkey";
 				}
+				string invspawnname = invspawnee.GetClassName();
+
 				nm = "KDIZDGreenKey";
 				nn = "KDIZDSilverKey";
 				no = "KDIZDOrangeKey";
 				np = "KDIZDRedKey";
 				nq = "KDIZDBlueKey";
 				nr = "KDIZDYellowKey";
-				if (invspawnee.GetClassName() == nm ||
-						invspawnee.GetClassName() == nn || 
-						invspawnee.GetClassName() == no || 
-						invspawnee.GetClassName() == np || 
-						invspawnee.GetClassName() == nq || 
-						invspawnee.GetClassName() == nr) invspawnee.PickupSound = "getkeycard";
+				if (invspawnname == nm ||
+						invspawnname == nn || 
+						invspawnname == no || 
+						invspawnname == np || 
+						invspawnname == nq || 
+						invspawnname == nr) invspawnee.PickupSound = "getkeycard";
 			}
 		
 			if (!BowlingPin(spawnee) && 
