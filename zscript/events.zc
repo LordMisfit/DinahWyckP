@@ -5151,6 +5151,8 @@ class DD_EventHandler : EventHandler
 				if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
 				if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
 				luckbase = 0.0625 + (monsterrating * 0.015625);
+				luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+				luckbase *= exex_luckfactor;
 				lvldivider = 50;
 				if (IPAttack) 
 				{
@@ -5187,6 +5189,8 @@ class DD_EventHandler : EventHandler
 					}
 					if (A_CheckUOHYM()) basechance *= 8;
 					luckbase = 0.25 + (monsterrating * 0.0625);
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack) 
 					{
 						basechance *= baseIPBaseChanceMul;
@@ -5212,41 +5216,47 @@ class DD_EventHandler : EventHandler
 					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate6 * minmultlevel)) maxchance = (exex_inventorydroprate6 * minmultlevel);
 
-					if (random(1,maxchance) <= 1) // Main Drop Chance
+					int rollrand = random(1,maxchance);
+					if (rollrand <= 1) // Main Drop Chance
 					{
+						if (dydudebug_worlddied) Console.Printf("Weapon/Ammo Drop Roll Success");
 						int temp = 1;
-						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-						if (MiscItem) temp = (1 + (TrueLuck * 0.08334));
+						if (MiscItem) 
+						{
+							temp = (1 + (TrueLuck * 0.08334));
+						}
 						int randrollmax = 16;
 						nm = "CCards_Actor_Maestro"; if (vict == nm) randrollmax /= 8;
 						nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= 4;
 						nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) randrollmax *= 4;
+						
 						int randroll = random(1,randrollmax);
 						if (randroll <= temp) // Weapons
 						{
 							double rand = 1.0;
-							user_type = random(1,8);
+							int minval = 1;
+							int maxval = 8;
 							int temp2 = random(1,16);
 							if (A_CheckDDGame())
 							{
 								if (player.CountInv("IsCarnOfSouls"))
 								{
-									if (temp2 >= 1 && temp2 <= 2) user_type = random(1,10);
-									if (temp2 >= 3 && temp2 <= 5) user_type = random(1,9);
-									if (temp2 >= 6 && temp2 <= 16) user_type = random(1,8);
+									if (temp2 >= 1 && temp2 <= 2) maxval = 10;
+									if (temp2 >= 3 && temp2 <= 5) maxval = 9;
+									if (temp2 >= 6 && temp2 <= 16) maxval = 8;
 								}
 								else
 								{
-									if (temp2 >= 1 && temp2 <= 5) user_type = random(1,9);
-									if (temp2 >= 6 && temp2 <= 16) user_type = random(1,8);
+									if (temp2 >= 1 && temp2 <= 5) maxval = 9;
+									if (temp2 >= 6 && temp2 <= 16) maxval = 8;
 								}
 							}
 							else
 							{
-								if (temp2 >= 1 && temp2 <= 3) user_type = random(1,12);
-								if (temp2 >= 4 && temp2 <= 7) user_type = random(1,10);
-								if (temp2 >= 8 && temp2 <= 11) user_type = random(1,9);
-								if (temp2 >= 12 && temp2 <= 16) user_type = random(1,8);
+								if (temp2 >= 1 && temp2 <= 3) maxval = 12;
+								if (temp2 >= 4 && temp2 <= 7) maxval = 10;
+								if (temp2 >= 8 && temp2 <= 11) maxval = 9;
+								if (temp2 >= 12 && temp2 <= 16) maxval = 8;
 							}
 							double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
 							double raredropsndvol = frandom(1.75,2.25);
@@ -5254,6 +5264,8 @@ class DD_EventHandler : EventHandler
 							droptype = "ItemSatchel";
 							dropsnd = "uncommonitem/spawn";
 							if (random(1,32) <= 1) droptype = "MegaSatchel";
+							
+							user_type = random(minval,maxval);
 							if (user_type == 1) 
 							{
 								droptype = "CricketBat";
