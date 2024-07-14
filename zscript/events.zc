@@ -3073,8 +3073,21 @@ class DD_EventHandler : EventHandler
 						invspawnname == np || 
 						invspawnname == nq || 
 						invspawnname == nr) invspawnee.PickupSound = "getkeycard";
+				
+				if (invspawnname == "RedCard" ||
+						invspawnname == "BlueCard" ||
+						invspawnname == "YellowCard")
+				{
+					invspawnee.Pickupsound = "getkeycard";
+				}
+				if (invspawnname == "RedSkull" ||
+						invspawnname == "BlueSkull" ||
+						invspawnname == "YellowSkull")
+				{
+					invspawnee.Pickupsound = "getskullkey";
+				}
 			}
-		
+			
 			if (!BowlingPin(spawnee) && 
 					!DDMiniTank(spawnee) && 
 					!DDHoganTarget(spawnee) && 
@@ -3090,7 +3103,7 @@ class DD_EventHandler : EventHandler
 				int basemonsterrating = spawnee.CountInv("MonsterRating");
 				bool practicetarget;
 				if (PracticeTarget(spawnee) || PracticeTarget2(spawnee)) practicetarget = true;
-
+				
 				EECreature NightmareCreature;
 				NightmareCreature = EECreature(spawnee);
 				if (NightmareCreature)
@@ -3173,6 +3186,7 @@ class DD_EventHandler : EventHandler
 				
 				// Changes
 				int basehealth = spawnee.SpawnHealth();
+				if (basehealth <= 0) Console.Printf("\c[red]WARNING: %s has 0 base health!\c-", spawnname);
 				double healthmulfactor = 0.01;
 				
 				nm = "Balloon_Red"; extracheck = nm;
@@ -3265,7 +3279,24 @@ class DD_EventHandler : EventHandler
 				bool ispeasant = false;
 				// Strife Peasants
 				if (Peasant(spawnee)) ispeasant = true;
-
+				
+				nm = "IconOfSinBoss"; extracheck = nm;
+				if (spawnname == extracheck) 
+				{
+					if (Skill <= 0) healthmulfactor = 0.0075;
+					if (Skill == 1) healthmulfactor = 0.00875;
+					if (Skill == 2) healthmulfactor = 0.01;
+					if (Skill == 3) healthmulfactor = 0.01125;
+					if (Skill >= 4) healthmulfactor = 0.0125;
+					basehealth *= (1.0 + (TruePlayerLevel * healthmulfactor));
+					if (Skill <= 0) basehealth *= 0.8;
+					if (Skill == 1) basehealth *= 0.9;
+					if (Skill == 2) basehealth *= 1;
+					if (Skill == 3) basehealth *= 1.2;
+					if (Skill >= 4) basehealth *= 1.4;
+					spawnee.health = basehealth;
+				}
+				
 				// Eviternity's Archangelus Boss
 				nm = "ArchangelusA"; extracheck = nm;
 				if (spawnname == extracheck) 
@@ -3363,6 +3394,30 @@ class DD_EventHandler : EventHandler
 						if (A_CheckDDGame()) spawnee.bLOOKALLAROUND = false;
 					}
 				}
+				
+				if (DoomImp(spawnee)) spawnee.PainSound = "imp/pain";
+				if (LostSoul(spawnee)) 
+				{
+					spawnee.PainSound = "skull/pain";
+					spawnee.bONLYSLAMSOLID = true;
+				}
+				if (WolfensteinSS(spawnee)) spawnee.PainSound = "nazi/pain";
+				if (Cacodemon(spawnee)) spawnee.PainSound = "caco/pain";
+				if (Revenant(spawnee)) 
+				{
+					spawnee.PainSound = "revenant/pain";
+					spawnee.ProjectilePassHeight = 84;
+				}
+				if (RevenantNew(spawnee)) spawnee.ProjectilePassHeight = 84;
+				if (Arachnotron(spawnee)) spawnee.PainSound = "arachnotron/pain";
+				if (BaronOfHell(spawnee)) spawnee.PainSound = "baron/pain";
+				if (HellKnight(spawnee)) spawnee.PainSound = "knight/pain";
+				if (Cyberdemon(spawnee)) spawnee.PainSound = "cyberdemon/pain";
+				if (SpiderMastermind(spawnee)) spawnee.PainSound = "mastermind/pain";
+				
+				if (Demon1(spawnee) || Demon2(spawnee)) spawnee.ProjectilePassHeight = 104;
+				
+				if (ArchvileFire(spawnee)) spawnee.A_SetRenderStyle(frandompick(0.50,0.625,0.75),STYLE_Add);
 				
 				// Monster "Scaling"
 				MonsterStatsSet(spawnee, basemonsterrating, practicetarget, specialenemy, ispeasant);
