@@ -528,7 +528,7 @@ class DD_EventHandler : EventHandler
 					{
 						if (mo.bNORADIUSDMG) mo.bNORADIUSDMG = false; // hahahaha V:<
 						if (!mo.bISMONSTER) mo.bISMONSTER = true; // hehehehe >:V
-						if (kcdebug_worldtick) Console.Printf("LOLE [%p, %s]", mo, mo.GetClassName());
+						if (dydudebug_worldtick) Console.Printf("LOLE [%p, %s]", mo, mo.GetClassName());
 					}
 				}
 				
@@ -2722,6 +2722,12 @@ class DD_EventHandler : EventHandler
 		if (spawnname == "BaronBall")
 		{
 			spawnee.SetTag("HellNoble Plasma");
+			if (spawnee.target && HellKnight(spawnee.target))
+			{
+				spawnee.SetDamage((spawnee.Damage * 0.5));
+				spawnee.scale.x *= 0.75;
+				spawnee.scale.y *= 0.75;
+			}
 			ProjSetSpeed(spawnee);
 		}
 		if (spawnname == "FatShot")
@@ -2733,6 +2739,81 @@ class DD_EventHandler : EventHandler
 		{
 			spawnee.SetTag("Rocket");
 			ProjSetSpeed(spawnee);
+		}
+	}
+	
+	void A_SpawnerSetUp(actor spawnee, string spawnertype)
+	{
+		if (spawnee)
+		{
+			bool spawned;
+			actor mo;
+			if (dydudebug_monsterspawns) Console.Printf("\c[gold][pre] spawnee [%p]\c-: %s, total_monsters: %d", spawnee, spawnee.GetClassName(), level.total_monsters);
+			if (spawnee.bSOLID) spawnee.bSOLID = false;
+			[spawned, mo] = spawnee.A_SpawnItemEx(spawnertype,flags:SXF_TRANSFERAMBUSHFLAG|SXF_NOCHECKPOSITION|SXF_TRANSFERSPECIAL,tid:spawnee.tid);
+			if (mo)
+			{
+				mo.ChangeTID(spawnee.tid);
+				if (spawnee.tid) spawnee.ChangeTID(0);
+				mo.spawnflags = spawnee.spawnflags;
+				mo.special = spawnee.special;
+				mo.args[0] = spawnee.args[0];
+				mo.args[1] = spawnee.args[1];
+				mo.args[2] = spawnee.args[2];
+				mo.args[3] = spawnee.args[3];
+				mo.args[4] = spawnee.args[4];
+				mo.bCOUNTSECRET = spawnee.bCOUNTSECRET;
+				if (spawnee.bCOUNTSECRET) level.total_secrets -= 1;
+				mo.bCOUNTKILL = spawnee.bCOUNTKILL;
+				if (spawnee.bCOUNTKILL) level.total_monsters -= 1;
+				mo.bCOUNTITEM = spawnee.bCOUNTITEM;
+				if (spawnee.bCOUNTITEM) level.total_items -= 1;
+				if (spawnee.bBOSSDEATH) 
+				{
+					mo.bBOSSDEATH = spawnee.bBOSSDEATH;
+					spawnee.bBOSSDEATH = false;
+				}
+				if (spawnee.bE1M8BOSS) 
+				{
+					mo.bE1M8BOSS = spawnee.bE1M8BOSS;
+					spawnee.bE1M8BOSS = false;
+				}
+				if (spawnee.bE2M8BOSS) 
+				{
+					mo.bE2M8BOSS = spawnee.bE2M8BOSS;
+					spawnee.bE2M8BOSS = false;
+				}
+				if (spawnee.bE3M8BOSS) 
+				{
+					mo.bE3M8BOSS = spawnee.bE3M8BOSS;
+					spawnee.bE3M8BOSS = false;
+				}
+				if (spawnee.bE4M8BOSS) 
+				{
+					mo.bE4M8BOSS = spawnee.bE4M8BOSS;
+					spawnee.bE4M8BOSS = false;
+				}
+				if (spawnee.bMAP07BOSS1) 
+				{
+					mo.bMAP07BOSS1 = spawnee.bMAP07BOSS1;
+					spawnee.bMAP07BOSS1 = false;
+				}
+				if (spawnee.bMAP07BOSS2) 
+				{
+					mo.bMAP07BOSS2 = spawnee.bMAP07BOSS2;
+					spawnee.bMAP07BOSS2 = false;
+				}
+				if (dydudebug_monsterspawns) 
+				{
+					Console.Printf("spawnflags: %d, spawnee.spawnflags: %d", mo.spawnflags, spawnee.spawnflags);
+					Console.Printf("special: %d, spawnee.special: %d", mo.special, spawnee.special);
+					Console.Printf("tid: %d, spawnee.tid: %d", mo.tid, spawnee.tid);
+					Console.Printf("args[0/1/2/3/4]: %d/%d/%d/%d/%d, spawnee.args[0/1/2/3/4]: %d/%d/%d/%d/%d", mo.args[0],mo.args[1],mo.args[2],mo.args[3],mo.args[4], spawnee.args[0],spawnee.args[1],spawnee.args[2],spawnee.args[3],spawnee.args[4]);
+				}
+			}
+			//spawnee.A_BossDeath();
+			spawnee.Destroy();
+			if (dydudebug_monsterspawns) Console.Printf("\c[fire][post] spawnee [%p]\c-: %s, total_monsters: %d", spawnee, spawnee.GetClassName(), level.total_monsters);
 		}
 	}
 	
@@ -4410,7 +4491,7 @@ class DD_EventHandler : EventHandler
 			}
 			bossdropmulti *= (base9livesmult / 1.00);
 			skillmult *= (1.00 / base9livesmult);
-			if (kcdebug_worlddiedmonsterdrops) 
+			if (dydudebug_worlddiedmonsterdrops) 
 			{
 				Console.Printf("\c[brick]base9livesmult:\c- %.8f", base9livesmult);
 			}
