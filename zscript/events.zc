@@ -6963,9 +6963,9 @@ class DD_EventHandler : EventHandler
 			int TruePlayerLevel = 0;
 			if (exex_expenabled && MiscItem) TruePlayerLevel = MiscItem.PlayerLevel;
 			int user_type;
-			bool giveexp;
-			bool playerkill;
-			bool allykill;
+			bool giveexp = false;
+			bool playerkill = false;
+			bool allykill = false;
 			bool waslegendary = false;
 			EECreature EEC;
 			EEC = EECreature(victim);
@@ -6992,6 +6992,7 @@ class DD_EventHandler : EventHandler
 						victim.bBOSS == false) isCCardsIllusion = true;
 			}
 			
+			// Specific Foes [1]
 			if (FractalChicken(victim) || FractalChick(victim) || FractalHen(victim))
 			{
 				if (A_CheckDDGame() && level.levelnum == 45) // CoS
@@ -7087,14 +7088,11 @@ class DD_EventHandler : EventHandler
 			if (MiscItem)
 			{
 				PLuck = MiscItem.PlayerLUCK;
-				if (PLuck)
-				{
-					if (skill <= 0) TrueLuck = random((PLuck*0.75),PLuck);
-					if (skill == 1) TrueLuck = random((PLuck*0.625),PLuck);
-					if (skill == 2) TrueLuck = random((PLuck*0.5),PLuck);
-					if (skill == 3) TrueLuck = random((PLuck*0.375),PLuck);
-					if (skill >= 4) TrueLuck = random((PLuck*0.25),PLuck);
-				}
+				if (skill <= 0) TrueLuck = random((PLuck*0.75),PLuck);
+				if (skill == 1) TrueLuck = random((PLuck*0.625),PLuck);
+				if (skill == 2) TrueLuck = random((PLuck*0.5),PLuck);
+				if (skill == 3) TrueLuck = random((PLuck*0.375),PLuck);
+				if (skill >= 4) TrueLuck = random((PLuck*0.25),PLuck);
 				TrueLuck *= exex_pluckfactor;
 			}
 			if (dydudebug_worlddied) Console.Printf("[%p (%s)] WorldThingDied", victim, vict);
@@ -7196,6 +7194,7 @@ class DD_EventHandler : EventHandler
 						}
 						nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) giveexp = false;
 						if (Delila_Boss(victim)) giveexp = false;
+						if (dydudebug_worlddied) Console.Printf("playerkill: %d, allykill: %d", playerkill, allykill);
 						
 						if ((playerkill || allykill) && MiscItem)
 						{
@@ -7359,9 +7358,9 @@ class DD_EventHandler : EventHandler
 						}
 						ExpGain *= alterchance;
 						
+						int PLevel = playera.CountInv("PlayerLevel");
 						If (PLuck)
 						{
-							int PLevel = playera.CountInv("PlayerLevel");
 									 if (PLevel <= 11) ExpGain *= (1.00 + (TrueLuck * frandompick(0,0.00125,0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02)));
 							else if (PLevel <= 26) ExpGain *= (1.00 + (TrueLuck * frandompick(0.00125,0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.01,0.02,0.02)));
 							else if (PLevel <= 66) ExpGain *= (1.00 + (TrueLuck * frandompick(0.00125,0.0025,0.0025,0.0025,0.005,0.005,0.005,0.01,0.01,0.02,0.02,0.02,0.04)));
@@ -7415,7 +7414,6 @@ class DD_EventHandler : EventHandler
 							ExpGain *= (EEC.expshare * frandom(0.667,1.000));
 							int ExpLowCap = A_GetExpLowCap(BaseExpMultiBonus);
 							if (ExpGain < ExpLowCap) ExpGain = ExpLowCap;
-							
 							if (dydudebug_worlddied && ExpGain) Console.Printf("[EEC.expshare] x%.4f, ExpGain: %d [%d]", EEC.expshare, ExpGain, OExpGain);
 						}
 					
@@ -7445,7 +7443,8 @@ class DD_EventHandler : EventHandler
 							if (mod == 'GrowingPains') expgain = 0;
 
 							Actor playera = players[0].mo;
-							if (playera.health > 0 || !playera.CountInv("PlayerIsDead"))
+							if (playera.health > 0 || 
+									!playera.CountInv("PlayerIsDead"))
 							{
 								int EXPPrevReq = 0;
 								if (MiscItem.PlayerLevel > 0) EXPPrevReq = MiscItem.LevelExpRequirement[(MiscItem.PlayerLevel-1)];
@@ -7478,7 +7477,8 @@ class DD_EventHandler : EventHandler
 						else
 						{
 							Actor playera = players[0].mo;
-							if (playera.health > 0 || !playera.CountInv("PlayerIsDead"))
+							if (playera.health > 0 || 
+									!playera.CountInv("PlayerIsDead"))
 							{
 								playera.A_GiveInventory("KillsCount",1);
 								int Kills = playera.CountInv("KillsCount");
@@ -7521,6 +7521,8 @@ class DD_EventHandler : EventHandler
 										victim.CountInv(nm)) 
 								{
 									voicecheck = true;
+									//let speakitem = PlayerTargettedMonster(victim.FindInventory("PlayerTargettedMonster"));
+									//if (speakitem && speakitem.spoketoboss) voicecheck = false;
 								}
 							}
 							if (voicecheck)
@@ -7652,6 +7654,10 @@ class DD_EventHandler : EventHandler
 											voicenm = "dinah/NoEscape";
 											Console.Printf("\c[gold]'No escape!!'\c-");
 										}
+										if (dydudebug_worlddied) Console.Printf("One-Liner: %d", randvoice);
+										//
+										//
+										//
 										if (randvoice > 0)
 										{
 											playera.A_StopSound(CHAN_VOICE);
@@ -7666,13 +7672,16 @@ class DD_EventHandler : EventHandler
 					
 					// Item Drop Action
 					if (EEC && EEC.user_dontdroprandomstuff) { }
-					else if (mod == 'Crush') { }
-					else if (mod == 'Falling') { }
-					else if (mod == 'GrowingPains') { }
-					else if (exception) { }
 					else
 					{
-						[PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill] = A_KillDropTables(PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill);
+						if (mod != 'Crush' || 
+								mod != 'Falling' || 
+								mod != 'GrowingPains' || 
+								!exception) 
+						{
+							[PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill] = A_KillDropTables(PLuck, TrueLuck, victim, inflicter, source, mastor, IPAttack, specialtype, specialtype2, monsterrating, playerkill, allykill);
+							//[PLuck, TrueLuck, victim, inflicter, source, mastor, specialtype, monsterrating, playerkill, allykill] = A_KillDropTables(PLuck, TrueLuck, victim, inflicter, source, mastor, specialtype, monsterrating, playerkill, allykill);
+						}
 					}
 					
 					//*******************************
@@ -8350,74 +8359,77 @@ class DD_EventHandler : EventHandler
 		{
 			int key1, key2;
 			
-			[key1, key2] = Bindings.GetKeysForCommand("MKeyTest");
-			if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
+			if (!paused)
 			{
-				if (buttons & BT_SPEED) level.total_monsters += 1;
-													 else level.total_monsters -= 1;
-			}
-			[key1, key2] = Bindings.GetKeysForCommand("MKeyTest2");
-			if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
-			{
-				if (buttons & BT_SPEED) level.total_items += 1;
-													 else level.total_items -= 1;
-			}
-			[key1, key2] = Bindings.GetKeysForCommand("MKeyTest3");
-			if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
-			{
-				if (buttons & BT_SPEED) level.total_secrets += 1;
-													 else level.total_secrets -= 1;
-			}
-			[key1, key2] = Bindings.GetKeysForCommand("MKeyTest4");
-			if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
-			{
-				if (level.mapname == "E1M8") Floor_LowerToLowest(666, 8);
-			}
+				[key1, key2] = Bindings.GetKeysForCommand("MKeyTest");
+				if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
+				{
+					if (buttons & BT_SPEED) level.total_monsters += 1;
+														 else level.total_monsters -= 1;
+				}
+				[key1, key2] = Bindings.GetKeysForCommand("MKeyTest2");
+				if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
+				{
+					if (buttons & BT_SPEED) level.total_items += 1;
+														 else level.total_items -= 1;
+				}
+				[key1, key2] = Bindings.GetKeysForCommand("MKeyTest3");
+				if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
+				{
+					if (buttons & BT_SPEED) level.total_secrets += 1;
+														 else level.total_secrets -= 1;
+				}
+				[key1, key2] = Bindings.GetKeysForCommand("MKeyTest4");
+				if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
+				{
+					if (level.mapname == "E1M8") Floor_LowerToLowest(666, 8);
+				}
 
-			[key1, key2] = Bindings.GetKeysForCommand("UseArmorIP");
-			if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
-			{
-				if (player.CountInv("KnightGownItem"))
+				[key1, key2] = Bindings.GetKeysForCommand("UseArmorIP");
+				if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
 				{
-					player.A_SetInventory("KnightGown1IPItem",1);
-				}
-				else
-				if (player.CountInv("KnightGownItem2"))
-				{
-					player.A_SetInventory("KnightGown2IPItem",1);
-				}
-				else
-				if (player.CountInv("KnightGownItem3"))
-				{
-					player.A_SetInventory("KnightGown3IPItem",1);
-				}
-				else
-				if (player.CountInv("KnightGownItem4"))
-				{
-					player.A_SetInventory("KnightGown4IPItem",1);
-				}
-			}
-			[key1, key2] = Bindings.GetKeysForCommand("Whistl");
-			if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
-			{
-				let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
-				if (MiscItem)
-				{
-					if (player.health > 0 && MiscItem.whistlecooldown == 0)
+					if (player.CountInv("KnightGownItem"))
 					{
-						player.A_SpawnItemEx("PlayerWhistle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
-						if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) MiscItem.whistlecooldown = random(28,33);
-																																									 else MiscItem.whistlecooldown = random(42,49);
+						player.A_SetInventory("KnightGown1IPItem",1);
+					}
+					else
+					if (player.CountInv("KnightGownItem2"))
+					{
+						player.A_SetInventory("KnightGown2IPItem",1);
+					}
+					else
+					if (player.CountInv("KnightGownItem3"))
+					{
+						player.A_SetInventory("KnightGown3IPItem",1);
+					}
+					else
+					if (player.CountInv("KnightGownItem4"))
+					{
+						player.A_SetInventory("KnightGown4IPItem",1);
 					}
 				}
-			}
-			[key1, key2] = Bindings.GetKeysForCommand("RecallAll");
-			if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
-			{
-				let MiscItem = DDPlayerPawn(player);
-				if (DDPlayerPawn(player))
+				[key1, key2] = Bindings.GetKeysForCommand("Whistl");
+				if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
 				{
-					if (!automapactive) MiscItem.recalledall = true;
+					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
+					if (MiscItem)
+					{
+						if (player.health > 0 && MiscItem.whistlecooldown == 0)
+						{
+							player.A_SpawnItemEx("PlayerWhistle",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION);
+							if (player.CountInv("PowerStrength") || player.CountInv("PowerStrengthDD")) MiscItem.whistlecooldown = random(28,33);
+																																										 else MiscItem.whistlecooldown = random(42,49);
+						}
+					}
+				}
+				[key1, key2] = Bindings.GetKeysForCommand("RecallAll");
+				if ((key1 && key1 == e.Args[0]) || (key2 && key2 == e.Args[0]))
+				{
+					let MiscItem = DDPlayerPawn(player);
+					if (DDPlayerPawn(player))
+					{
+						if (!automapactive) MiscItem.recalledall = true;
+					}
 				}
 			}
 		}
@@ -9402,6 +9414,11 @@ class DD_StaticEventHandler : StaticEventHandler
 			StringTable.Localize("$STEP_FLATSUOHYM").Split(allSF,":");
 			Console.Printf("UOHYM TXT Loaded");
 		}
+		if (Wads.CheckNumForName("EE-UNFAM", Wads.ns_global, -1, true) != -1) 
+		{
+			StringTable.Localize("$STEP_FLATSUNFAM").Split(allSF,":");
+			Console.Printf("Unfamiliar Footsteps TXT Loaded");
+		}
 		
 		for (int j = allSF.Size() - 1; j >= 0; j -= 1)
 		{
@@ -9454,18 +9471,16 @@ class DD_StaticEventHandler : StaticEventHandler
 			{
 				if (texname == "" || 
 						texname == "-NOFLAT-") textfound = -1;
-				else
 				if (texname == "DOPE2 R") textfound = -1;
-				else
 				if (texname == "STEP1" || 
 						texname == "STEP2" || 
 						texname == "STEP3" ||
-					texname == "A-DAN1" ||
-					texname == "A-DAN2" ||
-					texname == "A-DAN3" ||
-					texname == "A-DAN4" ||
-					texname == "A-DAN5" ||
-					texname == "GRNROCK") textfound = -1;
+						texname == "A-DAN1" ||
+						texname == "A-DAN2" ||
+						texname == "A-DAN3" ||
+						texname == "A-DAN4" ||
+						texname == "A-DAN5" ||
+						texname == "GRNROCK") textfound = -1;
 				else
 				if (texname == "A-BRICK2" ||
 						texname == "A-BROCK1" ||
