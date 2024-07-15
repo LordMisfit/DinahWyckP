@@ -4581,7 +4581,7 @@ class DD_EventHandler : EventHandler
 				bossdropmulti *= frandom(2.5,3.25);
 				skillmult *= frandom(0.3076923076923077,0.4);
 			}
-			if (dydudebug_worlddied) 
+			if (dydudebug_worlddiedmonsterdrops) 
 			{
 				Console.Printf("\c[brick]bossdropmulti:\c- %.8f", bossdropmulti);
 				Console.Printf("\c[brick]skillmult:\c- %.8f", skillmult);
@@ -4625,7 +4625,7 @@ class DD_EventHandler : EventHandler
 					victim.CountInv("E1M8ExitRoomMonster")) candropitems = false;
 			nm = "PennywiseToy1"; extracheck = nm; if (vict == extracheck) candropitems = false;
 			nm = "ClayDevilNew"; extracheck = nm; if (vict == extracheck) candropitems = false;
-			if (dydudebug_worlddied) Console.Printf("candropitems: %d", candropitems);
+			if (dydudebug_worlddiedmonsterdrops) Console.Printf("candropitems: %d", candropitems);
 			if (!(playerkill || allykill))
 			{
 				if (!victim.CountInv("E1M8ExitRoomMonster"))
@@ -4638,7 +4638,7 @@ class DD_EventHandler : EventHandler
 			int tutlevelmax = 1804;
 			if (level.levelnum >= tutlevelmin && level.levelnum <= tutlevelmax) candropitems = false;
 			if (A_CheckUOHYM() && random(1,6) <= 1) candropitems = false;
-			if (dydudebug_worlddied) Console.Printf("candropitems: %d", candropitems);
+			if (dydudebug_worlddiedmonsterdrops) Console.Printf("candropitems: %d", candropitems);
 			
 			double minmultlevel = 0.25;
 			if (A_CheckUOHYM()) minmultlevel *= 2;
@@ -4648,7 +4648,7 @@ class DD_EventHandler : EventHandler
 			
 			if (candropitems)
 			{
-				if (dydudebug_worlddied) Console.Printf("candropitems [post]: %d", candropitems);
+				if (dydudebug_worlddiedmonsterdrops) Console.Printf("candropitems [post]: %d", candropitems);
 				droptimes = 1;
 				if (monsterrating == 1) droptimes = randompick(1,1,1,1,2);
 				if (monsterrating == 2) droptimes = randompick(1,1,1,2,2);
@@ -4664,6 +4664,8 @@ class DD_EventHandler : EventHandler
 					basedropdiv = 16384;
 					basedropdiv *= skillmult;
 					luckbase = 1.0 + (monsterrating * 0.25);
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack)
 					{
 						basedropdiv *= baseIPBaseChanceMul;
@@ -4692,7 +4694,7 @@ class DD_EventHandler : EventHandler
 
 				luckbase = 0.0625 + (monsterrating * 0.015625);
 				luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
-				//luckbase *= exex_luckfactor;
+				luckbase *= exex_luckfactor;
 				lvldivider = 35;
 				//
 				if (IPAttack) 
@@ -4880,6 +4882,8 @@ class DD_EventHandler : EventHandler
 					if (A_CheckDDGame()) basechance *= 16;
 					if (A_CheckUOHYM()) basechance *= 4;
 					luckbase = 0.25 + (monsterrating * 0.0625);
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (PLuck) basedropdiv -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 					if (IPAttack) 
 					{
@@ -5163,13 +5167,11 @@ class DD_EventHandler : EventHandler
 				if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 				if (inflicter && ((source && DDPlayerPawn(source))))
 				{
-					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 				}
 				else
 				if (inflicter && DDPlayerPawn(inflicter))
 				{
-					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 				}
 				if (victim.bBOSS) droptimes *= bossdropmulti;
@@ -5181,7 +5183,6 @@ class DD_EventHandler : EventHandler
 					basechance *= skillmult;
 					if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 					if (A_CheckBlooM()) basechance *= 0.75;
-					
 					if (A_CheckDDGame())
 					{
 						if (exex_nrpgmonsterlevels) basechance *= 8;
@@ -5219,11 +5220,12 @@ class DD_EventHandler : EventHandler
 					int rollrand = random(1,maxchance);
 					if (rollrand <= 1) // Main Drop Chance
 					{
-						if (dydudebug_worlddied) Console.Printf("Weapon/Ammo Drop Roll Success");
+						if (dydudebug_worlddiedmonsterdrops) Console.Printf("Weapon/Ammo Drop Roll Success");
 						int temp = 1;
 						if (MiscItem) 
 						{
 							temp = (1 + (TrueLuck * 0.08334));
+							//temp *= 2.5;
 						}
 						int randrollmax = 16;
 						nm = "CCards_Actor_Maestro"; if (vict == nm) randrollmax /= 8;
@@ -5597,6 +5599,8 @@ class DD_EventHandler : EventHandler
 					if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
 					if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
 					luckbase = 0.0625 + (monsterrating * 0.015625);
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					lvldivider = 35;
 					if (IPAttack) 
 					{
@@ -5607,13 +5611,11 @@ class DD_EventHandler : EventHandler
 					if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 					if (inflicter && ((source && DDPlayerPawn(source))))
 					{
-						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 					}
 					else
 					if (inflicter && DDPlayerPawn(inflicter))
 					{
-						let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 						if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 					}
 					if (victim.bBOSS) droptimes *= (bossdropmulti * 2);
@@ -5624,8 +5626,11 @@ class DD_EventHandler : EventHandler
 						basechance = exex_inventorydroprate11;
 						basechance *= exex_inventorydropratemulti;
 						basechance *= skillmult;
+						if (A_CheckUOHYM()) basechance *= 2;
 						if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 						luckbase = 0.5 + (monsterrating * 0.125);
+						luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+						luckbase *= exex_luckfactor;
 						if (IPAttack) 
 						{
 							basechance *= baseIPBaseChanceMul;
@@ -5646,6 +5651,9 @@ class DD_EventHandler : EventHandler
 						string cointype = "ArcadeChip";
 						if (player.CountInv("IsDynDuchess")) cointype = "ArcadeChip";
 						if (player.CountInv("IsCarnOfSouls")) cointype = "Money_Ducat";
+						nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+						nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+						nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 						if (maxchance < (exex_inventorydroprate11 * minmultlevel)) maxchance = (exex_inventorydroprate11 * minmultlevel);
 						
 						if (random(1,(maxchance)) == 1) victim.A_SpawnItemEx(cointype,frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
@@ -5668,6 +5676,8 @@ class DD_EventHandler : EventHandler
 					if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
 					if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
 					luckbase = 0.0625 + (monsterrating * 0.015625);
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					lvldivider = 35;
 					if (IPAttack) 
 					{
@@ -5701,6 +5711,8 @@ class DD_EventHandler : EventHandler
 						
 						basechance = A_DropCheckMiscGames(basechance);
 						luckbase = 0.5 + (monsterrating * 0.125);
+						luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+						luckbase *= exex_luckfactor;
 						if (IPAttack) 
 						{
 							basechance *= baseIPBaseChanceMul;
@@ -5718,6 +5730,9 @@ class DD_EventHandler : EventHandler
 							nm = "CCards_Actor_BorrowedTimeBuff";
 							if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 						}
+						nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+						nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+						nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 						if (maxchance < (exex_inventorydroprate9 * minmultlevel)) maxchance = (exex_inventorydroprate9 * minmultlevel);
 						
 						if (random(1,(maxchance)) == 1) 
@@ -5767,6 +5782,8 @@ class DD_EventHandler : EventHandler
 				if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
 				if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
 				luckbase = 0.0625 + (monsterrating * 0.015625);
+				luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+				luckbase *= exex_luckfactor;
 				lvldivider = 35;
 				if (IPAttack) 
 				{
@@ -5777,13 +5794,11 @@ class DD_EventHandler : EventHandler
 				if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 				if (inflicter && ((source && DDPlayerPawn(source))))
 				{
-					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 				}
 				else
 				if (inflicter && DDPlayerPawn(inflicter))
 				{
-					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 				}
 				if (victim.bBOSS) droptimes *= (bossdropmulti * 2);
@@ -5795,14 +5810,13 @@ class DD_EventHandler : EventHandler
 					basechance *= exex_inventorydropratemulti;
 					basechance *= skillmult;
 					if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
-					if (A_CheckDDGame()) 
-					{
-						if (exex_nrpgmonsterlevels) basechance *= 0.5;
-					}
+					if (A_CheckDDGame() && exex_nrpgmonsterlevels) basechance *= 0.5;
 					if (A_CheckUOHYM()) basechance *= 2;
 					if (A_CheckBlooM()) basechance *= 0.875;
 					
 					luckbase = 0.5 + (monsterrating * 0.125);
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack) 
 					{
 						basechance *= baseIPBaseChanceMul;
@@ -5820,6 +5834,9 @@ class DD_EventHandler : EventHandler
 						nm = "CCards_Actor_BorrowedTimeBuff";
 						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 					}
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate7 * minmultlevel)) maxchance = (exex_inventorydroprate7 * minmultlevel);
 					
 					if (random(1,(maxchance)) == 1) 
@@ -5857,6 +5874,8 @@ class DD_EventHandler : EventHandler
 				if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
 				if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
 				luckbase = 0.0625 + (monsterrating * 0.015625);
+				luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+				luckbase *= exex_luckfactor;
 				lvldivider = 70;
 				if (IPAttack) 
 				{
@@ -5867,13 +5886,11 @@ class DD_EventHandler : EventHandler
 				if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 				if (inflicter && ((source && DDPlayerPawn(source))))
 				{
-					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 				}
 				else
 				if (inflicter && DDPlayerPawn(inflicter))
 				{
-					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 				}
 				if (victim.bBOSS) droptimes *= bossdropmulti;
@@ -5893,6 +5910,8 @@ class DD_EventHandler : EventHandler
 					}
 					if (A_CheckUOHYM()) basechance *= 2;
 					luckbase = 1.0 + (monsterrating * 0.25);
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack) 
 					{
 						basechance *= baseIPBaseChanceMul;
@@ -5900,6 +5919,9 @@ class DD_EventHandler : EventHandler
 					}
 					if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 					maxchance = basechance;
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (BatPuff(inflicter) || BatSpinPuff(inflicter) || BatPuffIP(inflicter) || BatSpinPuffIP(inflicter)) maxchance = (basechance * 0.5);
 					if (ApplePuff(inflicter) || ApplePuffIP(inflicter)) maxchance = randompick((basechance * 0.375),(basechance * 0.4375),(basechance * 0.5),(basechance * 0.5625),(basechance * 0.625));
 					if (BlunderPuff(inflicter) || BlunderPuffIP(inflicter)) maxchance = (basechance * 16);
@@ -5910,11 +5932,17 @@ class DD_EventHandler : EventHandler
 						nm = "CCards_Actor_BorrowedTimeBuff";
 						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 8);
 					}
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate8 * minmultlevel)) maxchance = (exex_inventorydroprate8 * minmultlevel);
 					if (i > 0) maxchance *= 5;
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [armor]: %d (%d)", maxchance, basechance);
-					if (random(1,maxchance) <= 1)
+					
+					int rollrand = random(1,maxchance);
+					if (rollrand <= 1)
 					{
+						if (dydudebug_worlddiedmonsterdrops) Console.Printf("Full Armor Drop Roll Success");
 						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
 						double raredropsndvol = frandom(1.75,2.25);
 						int raredropsndchannel = randompick(191,192,222,223,264,265);
@@ -5938,6 +5966,7 @@ class DD_EventHandler : EventHandler
 					}
 					else
 					{
+						if (dydudebug_worlddiedmonsterdrops) Console.Printf("Drop Armor Bonuses [Attempt]");
 						scraprolls = 1;
 						if (BlunderPuff(inflicter) || BlunderPuffIP(inflicter)) 
 						{
@@ -6090,6 +6119,7 @@ class DD_EventHandler : EventHandler
 						int baseval2 = randompick(2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4);
 						for (int i = 0; i < tearolls; i++)
 						{
+							if (dydudebug_worlddiedmonsterdrops) Console.Printf("Drop Cups of Tea \c[orange][Attempt %d / %d]", (i+1), tearolls);
 							string teatype = "CupOfTea";
 							if (random(1,(baseval2*baseval2)) <= 1) victim.A_SpawnItemEx(teatype,frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
 							if (random(1,(baseval2*baseval2*baseval2*baseval2)) <= 1) victim.A_SpawnItemEx(teatype,frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),frandom(-rand,rand),SXF_NOCHECKPOSITION);
@@ -6112,6 +6142,12 @@ class DD_EventHandler : EventHandler
 					else if (TruePlayerLevel >= random(62,63)) killmod1 = randompick(25,50,50,50,50,50,50,50,50,75);
 					else if (TruePlayerLevel >= 0) killmod1 = randompick(50,75,75,75,75,75,75,75,75,100);
 				}
+				if (TrueGameSkill <= SKILL_VERY_EASY) killmod1 *= 0.67;
+				if (TrueGameSkill == SKILL_EASY) killmod1 *= 0.834;
+				if (TrueGameSkill == SKILL_NORMAL) killmod1 *= 1;
+				if (TrueGameSkill == SKILL_HARD) killmod1 *= 1.167;
+				if (TrueGameSkill >= SKILL_VERY_HARD) killmod1 *= 1.34;
+
 				int killmod2 = int(killmod1 * 0.5);
 				if (kills % killmod1 == killmod2) 
 				{
@@ -6153,6 +6189,8 @@ class DD_EventHandler : EventHandler
 				if (monsterrating == 7) droptimes = randompick(2,2,3,3,3);
 				if (monsterrating >= 8) droptimes = randompick(2,3,3,3,4);
 				luckbase = 0.0625 + (monsterrating * 0.015625);
+				luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+				luckbase *= exex_luckfactor;
 				lvldivider = 70;
 				if (IPAttack) 
 				{
@@ -6163,13 +6201,11 @@ class DD_EventHandler : EventHandler
 				if (A_CheckUOHYM()) droptimes = A_UOHYMDropCheck(droptimes);
 				if (inflicter && ((source && DDPlayerPawn(source))))
 				{
-					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 				}
 				else
 				if (inflicter && DDPlayerPawn(inflicter))
 				{
-					let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 					if (MiscItem && TruePlayerLevel >= lvldivider) droptimes += (TruePlayerLevel / lvldivider);
 				}
 				if (victim.bBOSS) droptimes *= bossdropmulti;
@@ -6181,9 +6217,10 @@ class DD_EventHandler : EventHandler
 					basechance *= skillmult;
 					if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 					if (A_CheckBlooM()) basechance *= 0.5;
-					
 					basechance = A_DropCheckMiscGames(basechance);
 					luckbase = 0.0625 + (monsterrating * 0.015625); // (512)
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack) 
 					{
 						basechance *= baseIPBaseChanceMul;
@@ -6201,11 +6238,16 @@ class DD_EventHandler : EventHandler
 						nm = "CCards_Actor_BorrowedTimeBuff";
 						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 					}
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate1 * minmultlevel)) maxchance = (exex_inventorydroprate1 * minmultlevel);
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [primaryinv]: %d (%d)", maxchance, basechance);
-
-					if (random(1,maxchance) <= 1)
+					
+					int randroll = random(1,maxchance);
+					if (randroll <= 1)
 					{
+						if (dydudebug_worlddiedmonsterdrops) Console.Printf("Primary Drop [success]");
 						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
 						double raredropsndvol = frandom(1.75,2.25);
 						int raredropsndchannel = randompick(191,192,222,223,264,265);
@@ -6245,6 +6287,7 @@ class DD_EventHandler : EventHandler
 						victim.A_SpawnItemEx(droptype,0.0,0.0,0.0,0.0,0.0,0.0,SXF_NOCHECKPOSITION); 
 						victim.A_StartSound(dropsnd,raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
 					}
+					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [primaryinv]: {%d vs %d} (%d) \c[orange][%d / %d]", randroll, maxchance, basechance, (i+1), droptimes);
 
 					// Secondary [Type 2]
 					basechance = exex_inventorydroprate2;
@@ -6255,6 +6298,8 @@ class DD_EventHandler : EventHandler
 					
 					basechance = A_DropCheckMiscGames(basechance);
 					luckbase = 0.5 + (monsterrating * 0.125); // (512)
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack) 
 					{
 						basechance *= baseIPBaseChanceMul;
@@ -6272,11 +6317,16 @@ class DD_EventHandler : EventHandler
 						nm = "CCards_Actor_BorrowedTimeBuff";
 						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 					}
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate2 * minmultlevel)) maxchance = (exex_inventorydroprate2 * minmultlevel);
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
-
-					if (random(1,maxchance) <= 1)
+					
+					int rollrand = random(1,maxchance);
+					if (rollrand <= 1)
 					{
+						if (dydudebug_worlddiedmonsterdrops) Console.Printf("Secondary Drop [success]");
 						user_type = random(1,401);
 						if (user_type >= 1 && user_type <= 140) 
 						{
@@ -6351,6 +6401,7 @@ class DD_EventHandler : EventHandler
 							victim.A_StartSound("ultrarareitem/spawn",raredropsndchannel,CHANF_OVERLAP|CHANF_NOPAUSE,raredropsndvol,ATTN_NONE,raredropsndpitch);
 						}
 					}
+					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: {%d vs %d} (%d) \c[orange][%d / %d]", rollrand, maxchance, basechance, (i+1), droptimes);
 
 					// Rare Powerup Drop [Type 3]
 					basechance = exex_inventorydroprate3;
@@ -6361,6 +6412,8 @@ class DD_EventHandler : EventHandler
 					
 					basechance = A_DropCheckMiscGames(basechance);
 					luckbase = 2.0 + (monsterrating * 0.5); // (512) 
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack) 
 					{
 						basechance *= baseIPBaseChanceMul;
@@ -6378,10 +6431,16 @@ class DD_EventHandler : EventHandler
 						nm = "CCards_Actor_BorrowedTimeBuff";
 						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 					}
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate3 * minmultlevel)) maxchance = (exex_inventorydroprate3 * minmultlevel);
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
-					if (random(1,maxchance) <= 1)
+					
+					rollrand = random(1,maxchance);
+					if (rollrand <= 1)
 					{
+						if (dydudebug_worlddiedmonsterdrops) Console.Printf("Rare Drop [success]");
 						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
 						double raredropsndvol = frandom(1.75,2.25);
 						int raredropsndchannel = randompick(191,192,222,223,264,265);
@@ -6420,13 +6479,15 @@ class DD_EventHandler : EventHandler
 					// Diving Helm [Type 4]
 					basechance = exex_inventorydroprate4;
 					basechance *= exex_inventorydropratemulti;
-					if (victim.waterlevel <= 2) basechance *= 128;
 					basechance *= skillmult;
+					if (victim.waterlevel <= 2) basechance *= 128;
 					if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 					if (A_CheckBlooM()) basechance *= 0.9;
 					
 					basechance = A_DropCheckMiscGames(basechance);
 					luckbase = 0.25 + (monsterrating * 0.0625); // (512)
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack) 
 					{
 						basechance *= baseIPBaseChanceMul;
@@ -6444,10 +6505,14 @@ class DD_EventHandler : EventHandler
 						nm = "CCards_Actor_BorrowedTimeBuff";
 						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 					}
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate4 * minmultlevel)) maxchance = (exex_inventorydroprate4 * minmultlevel);
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [secondaryinv]: %d (%d)", maxchance, basechance);
 					
-					if (random(1,maxchance) <= 1)
+					rollrand = random(1,maxchance);
+					if (rollrand <= 1)
 					{
 						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
 						double raredropsndvol = frandom(1.75,2.25);
@@ -6466,6 +6531,8 @@ class DD_EventHandler : EventHandler
 					
 					basechance = A_DropCheckMiscGames(basechance);
 					luckbase = 3.0 + (monsterrating * 0.75); // (682.66667)
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack) 
 					{
 						basechance *= baseIPBaseChanceMul;
@@ -6483,10 +6550,14 @@ class DD_EventHandler : EventHandler
 						nm = "CCards_Actor_BorrowedTimeBuff";
 						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 					}
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate5 * minmultlevel)) maxchance = (exex_inventorydroprate5 * minmultlevel);
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [extremerare]: %d (%d)", maxchance, basechance);
 
-					if (random(1,maxchance) <= 1)
+					rollrand = random(1,maxchance);
+					if (rollrand <= 1)
 					{
 						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
 						double raredropsndvol = frandom(1.75,2.25);
@@ -6524,13 +6595,19 @@ class DD_EventHandler : EventHandler
 					if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 2;
 					basechance = A_DropCheckMiscGames(basechance);
 					luckbase = 1.25 + (monsterrating * 0.3125);
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					// Weapons and IP Attacks do not effect drop rates here V:
 					if (PLuck) basechance -= (TrueLuck * frandompick((luckbase*0),(luckbase*0.25),(luckbase*0.25),(luckbase*0.25),(luckbase*0.5),(luckbase*0.5),(luckbase*0.5),(luckbase),(luckbase),(luckbase*2)));
 					maxchance = basechance;
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate10 * minmultlevel)) maxchance = (exex_inventorydroprate10 * minmultlevel);
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [ultimarare]: %d (%d)", maxchance, basechance);
 
-					if (random(1,maxchance) <= 1)
+					rollrand = random(1,maxchance);
+					if (rollrand <= 1)
 					{
 						double raredropsndpitch = frandompick(0.75,0.875,1.0,1.125,1.25);
 						double raredropsndvol = frandom(1.75,2.25);
@@ -6640,7 +6717,6 @@ class DD_EventHandler : EventHandler
 					basechance *= skillmult;
 					if (EECVict && (EECVict.isfractalspawned || EECVict.isPEspawned || EECVict.isHEspawned || EECVict.isHOspawned)) basechance *= 8;
 					if (A_CheckBlooM()) basechance *= 0.75;
-					
 					if (A_CheckDDGame())
 					{
 						if (exex_nrpgmonsterlevels) basechance *= 8;
@@ -6648,6 +6724,8 @@ class DD_EventHandler : EventHandler
 					}
 					if (A_CheckUOHYM()) basechance *= 8;
 					luckbase = 0.25 + (monsterrating * 0.0625);
+					luckbase *= (1.0 + (MiscItem.totalcompleted * allcompletefactor) + (MiscItem.totalcompleted * allkillsfactor) + (MiscItem.totalcompleted * allsecretsfactor) + (MiscItem.totalcompleted * allitemsfactor));
+					luckbase *= exex_luckfactor;
 					if (IPAttack) 
 					{
 						basechance *= baseIPBaseChanceMul;
@@ -6665,9 +6743,14 @@ class DD_EventHandler : EventHandler
 						nm = "CCards_Actor_BorrowedTimeBuff";
 						if (victim.CountInv(nm) && mod == 'Suck') maxchance = (basechance * 16);
 					}
+					nm = "CCards_Actor_Maestro"; if (vict == nm) maxchance /= random(16,32);
+					nm = "CCards_Actor_Horror"; if (vict == nm) maxchance /= random(8,16);
+					nm = "CCards_Actor_MiniMonsterPowerup"; if (victim.CountInv(nm)) maxchance *= random(2,4);
 					if (maxchance < (exex_inventorydroprate12 * minmultlevel)) maxchance = (exex_inventorydroprate12 * 0.25);
 					if (dydudebug_worlddiedmonsterdrops) Console.Printf("maxchance [situational]: %d (%d)", maxchance, basechance);
-					if (random(1,maxchance) <= 1) // Main Drop Chance
+
+					rollrand = random(1,maxchance);
+					if (rollrand <= 1) // Main Drop Chance
 					{
 						double rand = 1.0;
 						int int1, int2;
