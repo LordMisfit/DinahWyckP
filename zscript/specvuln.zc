@@ -10,6 +10,23 @@ class CompatVulnItem : PlaceholderItem
 	bool found;
 	double lastTOTALFactor;
 	
+	//*************************************
+	actor prevtarget;
+	actor prevmaster;
+	actor prevtracer;
+	state prevstate;
+	override void Tick()
+	{
+		super.Tick();
+		prevtarget = null;
+		if (owner) 
+		{
+			if (owner.target) prevtarget = owner.target;
+			if (owner.tracer) prevtracer = owner.tracer;
+			if (owner.master) prevmaster = owner.master;
+		}
+	}
+	
 	void A_DynamicMusic(int timerset = 200, int matktype = 0, bool bossfight = false, int bossmusic = -1, bool forcedplay = false, bool checkres = false)
 	{
 		timerset *= exex_dynmustimescale;
@@ -4742,28 +4759,29 @@ class CompatVulnItem : PlaceholderItem
 		return TOTALFactor;
 	}
 	
-	//*************************************
-	actor prevtarget;
-	actor prevmaster;
-	actor prevtracer;
-	state prevstate;
-	override void Tick()
+	int A_GetPlayerLvl2(int type = 0)
 	{
-		super.Tick();
-		prevtarget = null;
-		if (owner) 
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		
+		int Level = 0;
+		if (MiscItem)
 		{
-			if (owner.target) prevtarget = owner.target;
-			if (owner.tracer) prevtracer = owner.tracer;
-			if (owner.master) prevmaster = owner.master;
+			if (exex_expenabled) 
+			{
+				if (type == 0) Level = MiscItem.PlayerLevel;
+				if (type >= 1) Level = MiscItem.TruePlayerLevel;
+			}
 		}
+		if (dydudebug_playerlevelchecks) Console.Printf("\c[green](%s) \c[gold](A_GetPlayerLvl2 - MonsterCollider mixin)\c- PlayerLevel: %d [%d]", GetClassName(), level, gametic);
+		return Level;
 	}
 	
 	// Damage Tracking
 	int initdmg;
 	double, double, double A_DefenseIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool wasblastedimpact, bool bellefishzap, bool surprisehit, int angvstype)
 	{
-		string nm, nn, no, np;
+		string nm, nn, no, np, nq, nr, ns;
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = A_GetPlayerLvl2(1);
@@ -4772,6 +4790,20 @@ class CompatVulnItem : PlaceholderItem
 		double prevDamageFactor;
 		double basedmgfactor = owner.DamageFactor;
 		double ActorDefenseIgnoreFactor = 0.00;
+		string infl, sour;
+		bool isholosentry;
+		int d = Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true);
+		if (owner.bSOLID == false &&
+				owner.bBRIGHT == true &&
+				((owner.alpha == 0.5 && owner.GetRenderStyle() == STYLE_ADD) ||
+				(owner.alpha == 0.0 && owner.GetRenderStyle() == STYLE_NONE)) &&
+				d != -1)
+		{
+			isholosentry = true;
+		}
+		
+		if (inflictor) infl = inflictor.GetClassName();
+		if (source) sour = source.GetClassName();
 		if (inflictor == null && source == null) 
 		{
 			// BLASTED Impact Damage
@@ -4779,6 +4811,27 @@ class CompatVulnItem : PlaceholderItem
 		}
 		else
 		{
+			DDPlayerPawn FoundPlayer;
+			double ProjFactor;
+			EEProjectile EEProj;
+			if (inflictor)
+			{
+				EEProj = EEProjectile(inflictor);
+			}
+			else
+			{
+				if (source)
+				{
+					EEProj = EEProjectile(source);
+				}
+			}
+			if (EEProj)
+			{
+				ProjFactor = EEProj.defenseignorefactor;
+				ActorDefenseIgnoreFactor += (ProjFactor * (1.00 - ActorDefenseIgnoreFactor));
+				//Console.Printf("ProjFactor: %.8f", ProjFactor);
+			}
+			
 			double IPDmgFactor = 0.50;
 			if (skill <= 0) IPDmgFactor = 1.00;
 			if (skill == 1) IPDmgFactor = 0.875;
@@ -4790,7 +4843,7 @@ class CompatVulnItem : PlaceholderItem
 			if (sts >= 1.50) sts = 1.50;
 			IPDmgFactor *= sts;
 			if (IPDmgFactor > 1.00) IPDmgFactor = 1.00;
-
+			
 			EEProjectile IPAtk;
 			if (inflictor) IPAtk = EEProjectile(inflictor);
 			else if (source) IPAtk = EEProjectile(source);
@@ -4803,6 +4856,18 @@ class CompatVulnItem : PlaceholderItem
 				if (IPAtk2 && IPAtk2.IPAttack) ActorDefenseIgnoreFactor += (IPDmgFactor * (1.00 - ActorDefenseIgnoreFactor));
 			}
 			
+			
+			double PlushFactor = 1.00;
+			nm = "CCards_Actor_ThrownPlushEx";
+			nn = "CCards_Actor_ThrownPlushExB";
+			no = "CCards_Actor_ThrownPlush";
+			if (infl == nm ||
+					infl == nn ||
+					infl == no )
+			{
+				ActorDefenseIgnoreFactor += (PlushFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+
 			double AxeDebuffFactor = 0.00;
 			if (CountInv("BlunderHelmSplitter")) AxeDebuffFactor = 0.30;
 			if (CountInv("BlunderHelmSplitter2")) AxeDebuffFactor = 0.60;
@@ -4971,6 +5036,17 @@ class CompatVulnItem : PlaceholderItem
 			if (BeatsAOEFactor > 1.00) BeatsAOEFactor = 1.00;
 			if (mod == 'Beats' && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
+			double PlasmaFactor = frandom(0.225,0.275);
+			// Plasma Ignores 1/4th of "normal" damagefactor
+			if (mod == 'Plasma') 
+			{ 
+				if (isholosentry)
+				{
+					PlasmaFactor = frandom(0.5,0.6);
+					ActorDefenseIgnoreFactor += (PlasmaFactor * (1.00 - ActorDefenseIgnoreFactor));
+				}
+			}
+			
 			double WhistleFactor = 0.75;
 			if (inflictor && PlayerWhistle(inflictor) || source && PlayerWhistle(source)) ActorDefenseIgnoreFactor += (WhistleFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
@@ -5122,6 +5198,23 @@ class CompatVulnItem : PlaceholderItem
 				if (temp > 0.50) temp = 0.50;
 				CricketFactor += (temp * (1.00 - CricketFactor));
 			}
+			else
+			if ((inflictor && GameMother(inflictor)) ||
+					(source && GameMother(source)))
+			{
+				double temp;
+				EECreature EESource;
+				EESource = EECreature(source);
+				if (EESource) temp = (EESource.CountInv("MonsterLevel") * EESource.A_CheckMonsterLevelMult(0.005,true,EESource));
+				else 
+				{
+					EECreature EEInflictor;
+					EEInflictor = EECreature(source);
+					if (EEInflictor) temp = (EEInflictor.CountInv("MonsterLevel") * EEInflictor.A_CheckMonsterLevelMult(0.005,true,EEInflictor));
+				}
+				if (temp > 1.00) temp = 1.00;
+				CricketFactor += (temp * (1.00 - CricketFactor));
+			}
 			if (IPAtk && IPAtk.IPAttack) CricketFactor += (0.875 * (1.00 - CricketFactor));
 			ActorDefenseIgnoreFactor += (CricketFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
@@ -5145,7 +5238,6 @@ class CompatVulnItem : PlaceholderItem
 			if (EvilWarriorShieldBall(inflictor) || EvilWarriorShieldBall(source) ||
 					HellWarriorBall2(inflictor) || HellWarriorBall2(source)) ActorDefenseIgnoreFactor += (HWShieldFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
-			DDPlayerPawn FoundPlayer;
 			if (source) FoundPlayer = DDPlayerPawn(source);
 			if (!FoundPlayer && inflictor) FoundPlayer = DDPlayerPawn(inflictor);
 			if (FoundPlayer)
@@ -5222,7 +5314,11 @@ class CompatVulnItem : PlaceholderItem
 			if (surprisehit) 
 			{
 				nm = "SonicNail";
-				if (inflictor && inflictor.GetClassName() == nm)
+				if (inflictor && 
+						(inflictor.GetClassName() == nm ||
+						 inflictor.GetClassName() == "ImpalerMissile" ||
+						 inflictor.GetClassName() == "ImpalerMissile2" ||
+						 inflictor.GetClassName() == "ImpalerMissile3"))
 				{
 					ActorDefenseIgnoreFactor += ((random(30,32) * 0.03125) * (1.00 - ActorDefenseIgnoreFactor));
 				}
@@ -5231,7 +5327,6 @@ class CompatVulnItem : PlaceholderItem
 					ActorDefenseIgnoreFactor += ((random(6,8) * 0.125) * (1.00 - ActorDefenseIgnoreFactor));
 				}
 			}
-			
 			if (CountInv("PWDefenseBuff") > 0) ActorDefenseIgnoreFactor *= 0.25;
 		}
 
@@ -5259,7 +5354,6 @@ class CompatVulnItem : PlaceholderItem
 			if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
 			{
 				int angvstype;
-				bool surprisehit;
 				bool wasblastedimpact;
 				bool bellefishzap;
 
@@ -5268,6 +5362,7 @@ class CompatVulnItem : PlaceholderItem
 
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("\c[sapphire]CompatVulnItem\c-: pre-damage: %d, damagetype: %s", damage, damageType);
 				double TOTALFactor = 1.00;
+				//
 				//
 				found = false;
 				if (!found) TOTALFactor *= GetDoomResistances(damage, damageType, newdamage, passive, inflictor, source, flags);
@@ -5284,7 +5379,7 @@ class CompatVulnItem : PlaceholderItem
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && source) Console.Printf("(source: \c[green]%p\c-) %s", source, source.GetClassName());
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && inflictor) Console.Printf("(inflictor: \c[green]%p\c-) %s", inflictor, inflictor.GetClassName());
 				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && prevtarget) Console.Printf("(owner.target: \c[green]%p\c-) %s", prevtarget, prevtarget.GetClassName());
-
+				
 				// LOLE Joke Items. Partial thanks to Naka Teleeli/Nakate for the inspiration. V:
 				if ((damageType == 'LOLEBowling' || 
 						 damageType == 'HeelJackpotExplosion') && 
@@ -5346,7 +5441,6 @@ class CompatVulnItem : PlaceholderItem
 					{
 						owner.A_SetInventory("JustSurprised",1);
 						if (exex_hitweaksounds) owner.A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
-						nm = "SonicNail";
 						nm = "SonicNail";
 						if (inflictor && 
 								(inflictor.GetClassName() == nm ||
@@ -5569,7 +5663,6 @@ class CompatVulnItem : PlaceholderItem
 						}
 					}
 				}
-				
 				
 				// Healing from Punching/Kicking Practice Targets ala SW
 				if (PracticeTarget(owner) || PracticeTarget2(owner))

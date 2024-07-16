@@ -1800,6 +1800,18 @@ mixin class MonsterCollider
 		return false;
 	}
 	
+	bool CheckTimeFreeze()
+	{
+		bool check = false;
+		actor playera = players[0].mo;
+		let MiscItem = PlayerStatItem(playera.FindInventory("PlayerStatItem"));
+		if ((playera.CountInv("TimePotionTimeFreezer")))
+		{
+			check = true;
+		}
+		return check;
+	}
+	
 	bool A_CheckUOHYM1()
 	{
 		bool UOHYM = false;
@@ -1996,7 +2008,8 @@ mixin class MonsterCollider
 			//Console.Printf("\c[fire]RevivingMonster: %p\c-, \c[green]RevivedMonster: %p\c-", RevivingMonster, RevivedMonster);
 			if (!passive) // Monster is the one REVIVING...
 			{
-				if (GetClassName() == "Archvile" || GetClassName() == "ArchvileNew")
+				if (GetClassName() == "Archvile" || 
+						GetClassName() == "ArchvileNew")
 				{
 					if (RevivingMonster.timesrevivedamonster < maxviletimesrevived)
 					{
@@ -2236,7 +2249,7 @@ mixin class MonsterCollider
 	int initdmg;
 	double, double, double A_DefenseIgnoreFactor(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle, bool wasblastedimpact, bool bellefishzap, bool surprisehit, int angvstype)
 	{
-		string nm, nn, no, np;
+		string nm, nn, no, np, nq, nr, ns;
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		int TruePlayerLevel = A_GetPlayerLvl2(1);
@@ -2245,6 +2258,20 @@ mixin class MonsterCollider
 		double prevDamageFactor;
 		double basedmgfactor = DamageFactor;
 		double ActorDefenseIgnoreFactor = 0.00;
+		string infl, sour;
+		bool isholosentry;
+		int d = Wads.CheckNumForName("CCARDS", Wads.ns_global, -1, true);
+		if (bSOLID == false &&
+				bBRIGHT == true &&
+				((alpha == 0.5 && GetRenderStyle() == STYLE_ADD) ||
+				(alpha == 0.0 && GetRenderStyle() == STYLE_NONE)) &&
+				d != -1)
+		{
+			isholosentry = true;
+		}
+
+		if (inflictor) infl = inflictor.GetClassName();
+		if (source) sour = source.GetClassName();
 		if (inflictor == null && source == null) 
 		{
 			// BLASTED Impact Damage
@@ -2252,6 +2279,27 @@ mixin class MonsterCollider
 		}
 		else
 		{
+			DDPlayerPawn FoundPlayer;
+			double ProjFactor;
+			EEProjectile EEProj;
+			if (inflictor)
+			{
+				EEProj = EEProjectile(inflictor);
+			}
+			else
+			{
+				if (source)
+				{
+					EEProj = EEProjectile(source);
+				}
+			}
+			if (EEProj)
+			{
+				ProjFactor = EEProj.defenseignorefactor;
+				ActorDefenseIgnoreFactor += (ProjFactor * (1.00 - ActorDefenseIgnoreFactor));
+				//Console.Printf("ProjFactor: %.8f", ProjFactor);
+			}
+
 			double IPDmgFactor = 0.50;
 			if (skill <= 0) IPDmgFactor = 1.00;
 			if (skill == 1) IPDmgFactor = 0.875;
@@ -2274,6 +2322,18 @@ mixin class MonsterCollider
 				if (inflictor) IPAtk2 = DDPlayerPawn(inflictor);
 				else if (source) IPAtk2 = DDPlayerPawn(source);
 				if (IPAtk2 && IPAtk2.IPAttack) ActorDefenseIgnoreFactor += (IPDmgFactor * (1.00 - ActorDefenseIgnoreFactor));
+			}
+			
+			
+			double PlushFactor = 1.00;
+			nm = "CCards_Actor_ThrownPlushEx";
+			nn = "CCards_Actor_ThrownPlushExB";
+			no = "CCards_Actor_ThrownPlush";
+			if (infl == nm ||
+					infl == nn ||
+					infl == no )
+			{
+				ActorDefenseIgnoreFactor += (PlushFactor * (1.00 - ActorDefenseIgnoreFactor));
 			}
 			
 			double AxeDebuffFactor = 0.00;
@@ -2443,6 +2503,17 @@ mixin class MonsterCollider
 			}
 			if (BeatsAOEFactor > 1.00) BeatsAOEFactor = 1.00;
 			if (mod == 'Beats' && flags & DMG_EXPLOSION) ActorDefenseIgnoreFactor += (BeatsAOEFactor * (1.00 - ActorDefenseIgnoreFactor));
+			
+			double PlasmaFactor = frandom(0.225,0.275);
+			// Plasma Ignores 1/4th of "normal" damagefactor
+			if (mod == 'Plasma') 
+			{ 
+				if (isholosentry)
+				{
+					PlasmaFactor = frandom(0.5,0.6);
+					ActorDefenseIgnoreFactor += (PlasmaFactor * (1.00 - ActorDefenseIgnoreFactor));
+				}
+			}
 			
 			double WhistleFactor = 0.75;
 			if (inflictor && PlayerWhistle(inflictor) || source && PlayerWhistle(source)) ActorDefenseIgnoreFactor += (WhistleFactor * (1.00 - ActorDefenseIgnoreFactor));
@@ -2635,7 +2706,6 @@ mixin class MonsterCollider
 			if (EvilWarriorShieldBall(inflictor) || EvilWarriorShieldBall(source) ||
 					HellWarriorBall2(inflictor) || HellWarriorBall2(source)) ActorDefenseIgnoreFactor += (HWShieldFactor * (1.00 - ActorDefenseIgnoreFactor));
 			
-			DDPlayerPawn FoundPlayer;
 			if (source) FoundPlayer = DDPlayerPawn(source);
 			if (!FoundPlayer && inflictor) FoundPlayer = DDPlayerPawn(inflictor);
 			if (FoundPlayer)
@@ -2712,7 +2782,11 @@ mixin class MonsterCollider
 			if (surprisehit) 
 			{
 				nm = "SonicNail";
-				if (inflictor && inflictor.GetClassName() == nm)
+				if (inflictor && 
+						(inflictor.GetClassName() == nm ||
+						 inflictor.GetClassName() == "ImpalerMissile" ||
+						 inflictor.GetClassName() == "ImpalerMissile2" ||
+						 inflictor.GetClassName() == "ImpalerMissile3"))
 				{
 					ActorDefenseIgnoreFactor += ((random(30,32) * 0.03125) * (1.00 - ActorDefenseIgnoreFactor));
 				}
