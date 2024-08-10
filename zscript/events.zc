@@ -142,6 +142,7 @@ class DD_EventHandler : EventHandler
 		A_TmFrzCCardWTick_General("CCards_Actor_NoxiousBombThrower","EE_CCards_Actor_NoxiousBombThrower",type);
 		A_TmFrzCCardWTick_General("CCards_Actor_PumpkinBombThrower","EE_CCards_Actor_PumpkinBombThrower",type);
 		A_TmFrzCCardWTick_General("CCards_Actor_MoldingClayThrower","EE_CCards_Actor_MoldingClayThrower",type);
+		A_TmFrzCCardWTick_General("CCards_Actor_GravityBombThrower","EE_CCards_Actor_GravityBombThrower",type);
 		A_TmFrzCCardWTick_General("CCards_Actor_BarrelToss","EE_CCards_Actor_BarrelToss",type);
 		A_TmFrzCCardWTick_General("CCards_Actor_WebBombThrower","EE_CCards_Actor_WebBombThrower",type);
 		A_TmFrzCCardWTick_General("CCards_Actor_HighVoltage","EE_CCards_Actor_HighVoltage",type);
@@ -234,6 +235,36 @@ class DD_EventHandler : EventHandler
 					if (mo) 
 					{
 						if (mo.bNOTIMEFREEZE) mo.bNOTIMEFREEZE = false;
+					}
+				}
+				
+				nm = "CCards_Actor_SpiderFX";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo)
+					{
+						mo.Destroy();
+					}
+				}
+				
+				nm = "CCards_Actor_FlightFX";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo)
+					{
+						mo.Destroy();
+					}
+				}
+				
+				nm = "CCards_Actor_PetChain";
+				it = ThinkerIterator.Create(nm);
+				while (mo = Actor(it.Next()))
+				{
+					if (mo)
+					{
+						mo.Destroy();
 					}
 				}
 				
@@ -546,6 +577,9 @@ class DD_EventHandler : EventHandler
 					A_TmFrzCCardWTick_Giver("CCards_Actor_9LivesCounter","EE_CCards_Actor_9LivesCounter");
 					A_TmFrzCCardWTick_Giver("CCards_Actor_MonsterGodMode","EE_CCards_Actor_MonsterGodMode");
 					A_TmFrzCCardWTick_Giver("CCards_Actor_QuadDamage","EE_CCards_Actor_QuadDamage");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_NuclearCurse","EE_CCards_Actor_NuclearCurse");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_AbominationCurse","EE_CCards_Actor_AbominationCurse");
+					A_TmFrzCCardWTick_Giver("CCards_Actor_Dexterity","EE_CCards_Actor_Dexterity");
 					A_TmFrzCCardWTick_G3n(0);
 				}
 				
@@ -3629,6 +3663,9 @@ class DD_EventHandler : EventHandler
 				nm = "CCards_Actor_Horror"; if (victim.GetClassName() == nm) specialtype += 32768;
 				nm = "CCards_Actor_Cursed"; if (victim.CountInv(nm)) specialtype += 65536;
 				nm = "CCards_Actor_FleaCurse"; if (victim.CountInv(nm)) specialtype += 131072;
+				nm = "CCards_Actor_SpecialistDamageResist"; if (victim.CountInv(nm)) specialtype += 262144;
+				nm = "EE_CCards_Actor_AbominationCurse"; if (victim.CountInv(nm)) specialtype += 524288;
+				nm = "EE_CCards_Actor_Dexterity"; if (victim.CountInv(nm)) specialtype += 1048576;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
 					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype2 += 4;
@@ -4544,6 +4581,21 @@ class DD_EventHandler : EventHandler
 			{
 				bossdropmulti *= 8;
 				skillmult *= 0.125;
+			}
+			if (specialtype & 262144) // CCards_Actor_SpecialistDamageResist
+			{
+				bossdropmulti *= 1.75;
+				skillmult *= 0.5714285714285714;
+			}
+			if (specialtype & 524288) // EE_CCards_Actor_AbominationCurse
+			{
+				bossdropmulti *= 1.05;
+				skillmult *= 0.9523809523809524;
+			}
+			if (specialtype & 1048576) // EE_CCards_Actor_Dexterity
+			{
+				bossdropmulti *= 1.125;
+				skillmult *= 0.8888888888888889;
 			}
 
 			if (ninelivescurse)
@@ -7214,6 +7266,9 @@ class DD_EventHandler : EventHandler
 				nm = "CCards_Actor_Horror"; if (victim.GetClassName() == nm) specialtype += 32768;
 				nm = "CCards_Actor_Cursed"; if (victim.CountInv(nm)) specialtype += 65536;
 				nm = "CCards_Actor_FleaCurse"; if (victim.CountInv(nm)) specialtype += 131072;
+				nm = "CCards_Actor_SpecialistDamageResist"; if (victim.CountInv(nm)) specialtype += 262144;
+				nm = "EE_CCards_Actor_AbominationCurse"; if (victim.CountInv(nm)) specialtype += 524288;
+				nm = "EE_CCards_Actor_Dexterity"; if (victim.CountInv(nm)) specialtype += 1048576;
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1)
 				{
 					nm = "PurpleTentacle"; if (victim.GetClassName() == nm) specialtype2 += 4;
@@ -7391,6 +7446,9 @@ class DD_EventHandler : EventHandler
 						}
 						if (specialtype & 65536) if (victim.CountInv(nm)) ExpGain *= frandom(1.25,1.5); // CCards_Actor_Cursed
 						if (specialtype & 131072) if (victim.CountInv(nm)) ExpGain *= frandom(9.0,10.0); // CCards_Actor_FleaCurse
+						if (specialtype & 262144) if (victim.CountInv(nm)) ExpGain *= frandom(1.125,1.25); // CCards_Actor_SpecialistDamageResist
+						if (specialtype & 524288) if (victim.CountInv(nm)) ExpGain *= frandom(1.0125,1.025); // EE_CCards_Actor_AbominationCurse
+						if (specialtype & 1048576) if (victim.CountInv(nm)) ExpGain *= frandom(1.05,1.10); // EE_CCards_Actor_Dexterity
 						
 						if (EvilDinah(victim))
 						{
