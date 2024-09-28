@@ -3837,14 +3837,14 @@ mixin class MonsterCollider
 				  (InStateSequence(curstate,ResolveState("Idle")) && (Heresiarch(self) || HeresiarchNew(self))))
 			{
 				A_SetInventory("JustSurprised",1);
-				if (exex_hitweaksounds) A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+				if (exex_hitweaksounds && !CountInv("DedMonsterFlag")) A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
 				nm = "SonicNail";
 				if (inflictor && inflictor.GetClassName() == nm) damage *= frandompick(2.0000,2.50);
 																										else damage *= frandompick(1.3334,1.50);
 			}
 			else
 			{
-				if (exex_hitweaksounds) A_StartSound("Misc/WeaknessHit", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+				if (exex_hitweaksounds && !CountInv("DedMonsterFlag")) A_StartSound("Misc/WeaknessHit", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
 				nm = "SonicNail";
 				if (inflictor && inflictor.GetClassName() == nm) damage *= frandompick(1.5000,1.75);
 																										else damage *= frandompick(1.1667,1.25);
@@ -3891,12 +3891,12 @@ mixin class MonsterCollider
 			if (self.bFLOAT && self.bNOGRAVITY)
 			{
 				damage *= 0.4;
-				if (exex_hitweaksounds) A_StartSound("Misc/ResistanceHitMid", 31, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+				if (exex_hitweaksounds && !CountInv("DedMonsterFlag")) A_StartSound("Misc/ResistanceHitMid", 31, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
 			}
 			else
 			{
 				damage *= 2.5;
-				if (exex_hitweaksounds) A_StartSound("Misc/WeaknessHitMid", 31, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+				if (exex_hitweaksounds && !CountInv("DedMonsterFlag")) A_StartSound("Misc/WeaknessHitMid", 31, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
 			}
 		}
 		
@@ -4010,25 +4010,28 @@ mixin class MonsterCollider
 				}
 				damage *= critdmgmulti;
 				if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critical Hit Dealth: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, damage, damagefactor);
-				A_StartSound("misc/critsnd2", 218, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, 1.0);
 
 				double heightmult = frandompick(0.9375,1.0,1.0625,1.125,1.125,1.25,1.25,1.25,1.25,1.25);
 				actor SMASH;
 				bool success;
-				[success, SMASH] = A_SpawnItemEx("SMAAAASH",0.0,0.0,(self.default.height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
-				if (success && SMASH)
+				if (!CountInv("DedMonsterFlag"))
 				{
-					SMAAAASH SMASH2;
-					SMASH2 = SMAAAASH(SMASH);
-					if (SMASH2)
+					A_StartSound("misc/critsnd2", 218, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, 1.0);
+					[success, SMASH] = A_SpawnItemEx("SMAAAASH",0.0,0.0,(self.default.height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
+					if (success && SMASH)
 					{
-						double scalebase = frandom(0.875,1.125);
-						if (crittype >= 2) scalebase = frandom(1.25,1.50);
-						SMASH2.scale.x = (scalebase * self.scale.x);
-						SMASH2.scale.y = (scalebase * self.scale.y);
-						if (SMASH2.target != self) SMASH2.target = self;
-						if (SMASH2.height < (self.default.height * heightmult)) SMASH2.height = (self.default.height * heightmult);
-						SMASH2.initheight = (self.default.height * heightmult);
+						SMAAAASH SMASH2;
+						SMASH2 = SMAAAASH(SMASH);
+						if (SMASH2)
+						{
+							double scalebase = frandom(0.875,1.125);
+							if (crittype >= 2) scalebase = frandom(1.25,1.50);
+							SMASH2.scale.x = (scalebase * self.scale.x);
+							SMASH2.scale.y = (scalebase * self.scale.y);
+							if (SMASH2.target != self) SMASH2.target = self;
+							if (SMASH2.height < (self.default.height * heightmult)) SMASH2.height = (self.default.height * heightmult);
+							SMASH2.initheight = (self.default.height * heightmult);
+						}
 					}
 				}
 			}

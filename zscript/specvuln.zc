@@ -5597,7 +5597,7 @@ class CompatVulnItem : PlaceholderItem
 							(InStateSequence(owner.curstate,ResolveState("Idle")) && Heresiarch(owner)))
 					{
 						owner.A_SetInventory("JustSurprised",1);
-						if (exex_hitweaksounds) owner.A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+						if (exex_hitweaksounds && !owner.CountInv("DedMonsterFlag")) owner.A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
 						nm = "SonicNail";
 						if (inflictor && 
 								(inflictor.GetClassName() == nm ||
@@ -5611,7 +5611,7 @@ class CompatVulnItem : PlaceholderItem
 					}
 					else
 					{
-						if (exex_hitweaksounds) owner.A_StartSound("Misc/WeaknessHit", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+						if (exex_hitweaksounds && !owner.CountInv("DedMonsterFlag")) owner.A_StartSound("Misc/WeaknessHit", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
 						nm = "SonicNail";
 						if (inflictor && 
 								(inflictor.GetClassName() == nm ||
@@ -5714,25 +5714,28 @@ class CompatVulnItem : PlaceholderItem
 						}
 						newdamage *= critdmgmulti;
 						if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critical Hit Dealth: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, newdamage, damagefactor);
-						owner.A_StartSound("misc/critsnd2", 218, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, 1.0);
 		
 						double heightmult = frandompick(0.9375,1.0,1.0625,1.125,1.125,1.25,1.25,1.25,1.25,1.25);
 						actor SMASH;
 						bool success;
-						[success, SMASH] = owner.A_SpawnItemEx("SMAAAASH",0.0,0.0,(owner.default.height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
-						if (success && SMASH)
+						if (!owner.CountInv("DedMonsterFlag"))
 						{
-							SMAAAASH SMASH2;
-							SMASH2 = SMAAAASH(SMASH);
-							if (SMASH2)
+							owner.A_StartSound("misc/critsnd2", 218, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, 1.0);
+							[success, SMASH] = owner.A_SpawnItemEx("SMAAAASH",0.0,0.0,(owner.default.height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
+							if (success && SMASH)
 							{
-								double scalebase = frandom(0.875,1.125);
-								if (crittype >= 2) scalebase = frandom(1.25,1.50);
-								SMASH2.scale.x = (scalebase * owner.scale.x);
-								SMASH2.scale.y = (scalebase * owner.scale.y);
-								if (SMASH2.target != owner) SMASH2.target = owner;
-								if (SMASH2.height < (owner.default.height * heightmult)) SMASH2.height = (owner.default.height * heightmult);
-								SMASH2.initheight = (owner.default.height * heightmult);
+								SMAAAASH SMASH2;
+								SMASH2 = SMAAAASH(SMASH);
+								if (SMASH2)
+								{
+									double scalebase = frandom(0.875,1.125);
+									if (crittype >= 2) scalebase = frandom(1.25,1.50);
+									SMASH2.scale.x = (scalebase * owner.scale.x);
+									SMASH2.scale.y = (scalebase * owner.scale.y);
+									if (SMASH2.target != owner) SMASH2.target = owner;
+									if (SMASH2.height < (owner.default.height * heightmult)) SMASH2.height = (owner.default.height * heightmult);
+									SMASH2.initheight = (owner.default.height * heightmult);
+								}
 							}
 						}
 					}
