@@ -5506,366 +5506,369 @@ class CompatVulnItem : PlaceholderItem
 						ShieldPartBase(owner) ||
 						PlayerPawn(owner)) Destroy();
 			
-			firstdmgfactor = owner.DamageFactor;
-			ownername = owner.GetClassName();
-			if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
+			if (owner)
 			{
-				int angvstype;
-				bool wasblastedimpact;
-				bool bellefishzap;
+				firstdmgfactor = owner.DamageFactor;
+				ownername = owner.GetClassName();
+				if (passive && damage > 0) // If the owner [usually the player] of the item is the DEFENDER
+				{
+					int angvstype;
+					bool wasblastedimpact;
+					bool bellefishzap;
 
-				DDPlayerPawn FoundPlayer;
-				FoundPlayer = DDPlayerPawn(source);
+					DDPlayerPawn FoundPlayer;
+					FoundPlayer = DDPlayerPawn(source);
 
-				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("\c[sapphire]CompatVulnItem\c-: pre-damage: %d, damagetype: %s", damage, damageType);
-				double TOTALFactor = 1.00;
-				//
-				//
-				found = false;
-				if (!found) TOTALFactor *= GetDoomResistances(damage, damageType, newdamage, passive, inflictor, source, flags);
-				if (!found) TOTALFactor *= GetAfterDoomResistances1(damage, damageType, newdamage, passive, inflictor, source, flags);
-				if (!found) TOTALFactor *= GetBloodResistances1(damage, damageType, newdamage, passive, inflictor, source, flags);
-				if (!found) TOTALFactor *= GetBloodResistances2(damage, damageType, newdamage, passive, inflictor, source, flags);
-				if (!found) TOTALFactor *= GetMiscResistances1(damage, damageType, newdamage, passive, inflictor, source, flags);
-				if (!found) TOTALFactor *= GetMiscResistances2(damage, damageType, newdamage, passive, inflictor, source, flags);
-				if (!found) TOTALFactor *= GetCCardsResistances1(damage, damageType, newdamage, passive, inflictor, source, flags);
-						
-				newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
-				lastTOTALFactor = TOTALFactor;
-				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("\c[sapphire]CompatVulnItem\c- (%s): post-damage: %d, damagetype: %s, TOTALFactor: %.8f", ownername, newdamage, damageType, TOTALFactor);
-				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && source) Console.Printf("(source: \c[green]%p\c-) %s", source, source.GetClassName());
-				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && inflictor) Console.Printf("(inflictor: \c[green]%p\c-) %s", inflictor, inflictor.GetClassName());
-				if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && prevtarget) Console.Printf("(owner.target: \c[green]%p\c-) %s", prevtarget, prevtarget.GetClassName());
-				
-				// LOLE Joke Items. Partial thanks to Naka Teleeli/Nakate for the inspiration. V:
-				if ((damageType == 'LOLEBowling' || 
-						 damageType == 'HeelJackpotExplosion') && 
-						!owner.bFRIENDLY) 
-				{
-					damage = 1872; // 18 * 8 * 13;
-					if (DDOrigBoss(owner)) damage *= 1024;
-														else damage *= 128;
-					if (flags & !DMG_NO_PROTECT) flags |= DMG_NO_PROTECT;
-					if (flags & !DMG_NO_FACTOR) flags |= DMG_NO_FACTOR;
-					if (flags & !DMG_NO_ARMOR) flags |= DMG_NO_ARMOR;
-					if (flags & !DMG_FOILINVUL) flags |= DMG_FOILINVUL;
-					if (flags & !DMG_THRUSTLESS) flags |= DMG_THRUSTLESS;
-				}
-				
-				bool domusic = false;
-				if (!FoundPlayer) FoundPlayer = DDPlayerPawn(inflictor);
-				if (FoundPlayer)
-				{
-					if (!owner.bFRIENDLY) domusic = true;
-				}
-				else
-				{
-					if (owner.bFRIENDLY)
-					{
-						if (source && source.bISMONSTER && !source.bFRIENDLY) domusic = true;
-						if (inflictor && inflictor.bISMONSTER && !inflictor.bFRIENDLY) domusic = true;
-					}
-					else
-					{
-						if (source && source.bISMONSTER && source.bFRIENDLY) domusic = true;
-						if (inflictor && inflictor.bISMONSTER && inflictor.bFRIENDLY) domusic = true;
-					}
-				}
-				if (domusic) A_DynamicMusic(forcedplay:true);
-				
-				nm = "CCards_Actor_StoneDeath";
-				nn = "CCards_Actor_MysteryEgg";
-				if (source && 
-						prevtarget != source && 
-						(PlayerPawn(source) || source.bFRIENDLY) && 
-						!owner.bFRIENDLY && 
-						!ExplosiveBarrel(owner) && 
-						!ExplosiveBarrel2(owner) && 
-						!Pod(owner) &&
-						!PracticeTarget(owner) &&
-						!PracticeTarget2(owner) &&
-						!EEUniqueBoss(owner) &&
-						owner.GetClassName() != nm &&
-						owner.GetClassName() != nn &&
-						damageType != 'TrueIP' &&
-						!owner.bDORMANT &&
-						owner.bISMONSTER)
-				{
-					int initdmg = newdamage;
-					surprisehit = true;
-					A_StopSound(32);
-					if (InStateSequence(owner.curstate,ResolveState("Spawn")) ||
-							(InStateSequence(owner.curstate,ResolveState("Idle")) && Heresiarch(owner)))
-					{
-						owner.A_SetInventory("JustSurprised",1);
-						if (exex_hitweaksounds && !owner.CountInv("DedMonsterFlag")) owner.A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
-						nm = "SonicNail";
-						if (inflictor && 
-								(inflictor.GetClassName() == nm ||
-								inflictor.GetClassName() == "ImpalerMissile" ||
-								inflictor.GetClassName() == "ImpalerMissile2" ||
-								inflictor.GetClassName() == "ImpalerMissile3"))
-						{
-							newdamage *= frandompick(2.0000,2.50);
-						}
-						else newdamage *= frandompick(1.3334,1.50);
-					}
-					else
-					{
-						if (exex_hitweaksounds && !owner.CountInv("DedMonsterFlag")) owner.A_StartSound("Misc/WeaknessHit", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
-						nm = "SonicNail";
-						if (inflictor && 
-								(inflictor.GetClassName() == nm ||
-								inflictor.GetClassName() == "ImpalerMissile" ||
-								inflictor.GetClassName() == "ImpalerMissile2" ||
-								inflictor.GetClassName() == "ImpalerMissile3"))
-						{
-							newdamage *= frandompick(1.5000,1.75);
-						}
-						else newdamage *= frandompick(1.1667,1.25);
-					}
-					if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("(\c[green]%s\c-) surprisehit: damage: %d (initdmg: %d)", GetClassName(), newdamage, initdmg);
-				}
-				
-				bool criticalhit = false;
-				int CritRoll;
-				int TruePlayerLevel;
-				if (MiscItem && exex_expenabled) TruePlayerLevel = MiscItem.PlayerLevel;
-				if (FoundPlayer) 
-				{
-					int bosscritres = 75;
+					if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("\c[sapphire]CompatVulnItem\c-: pre-damage: %d, damagetype: %s", damage, damageType);
+					double TOTALFactor = 1.00;
+					//
+					//
+					found = false;
+					if (!found) TOTALFactor *= GetDoomResistances(damage, damageType, newdamage, passive, inflictor, source, flags);
+					if (!found) TOTALFactor *= GetAfterDoomResistances1(damage, damageType, newdamage, passive, inflictor, source, flags);
+					if (!found) TOTALFactor *= GetBloodResistances1(damage, damageType, newdamage, passive, inflictor, source, flags);
+					if (!found) TOTALFactor *= GetBloodResistances2(damage, damageType, newdamage, passive, inflictor, source, flags);
+					if (!found) TOTALFactor *= GetMiscResistances1(damage, damageType, newdamage, passive, inflictor, source, flags);
+					if (!found) TOTALFactor *= GetMiscResistances2(damage, damageType, newdamage, passive, inflictor, source, flags);
+					if (!found) TOTALFactor *= GetCCardsResistances1(damage, damageType, newdamage, passive, inflictor, source, flags);
+							
+					newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage * TOTALFactor));
+					lastTOTALFactor = TOTALFactor;
+					if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("\c[sapphire]CompatVulnItem\c- (%s): post-damage: %d, damagetype: %s, TOTALFactor: %.8f", ownername, newdamage, damageType, TOTALFactor);
+					if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && source) Console.Printf("(source: \c[green]%p\c-) %s", source, source.GetClassName());
+					if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && inflictor) Console.Printf("(inflictor: \c[green]%p\c-) %s", inflictor, inflictor.GetClassName());
+					if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs) && prevtarget) Console.Printf("(owner.target: \c[green]%p\c-) %s", prevtarget, prevtarget.GetClassName());
 					
-					if (FoundPlayer.CountInv("DealCriticalHit")) 
+					// LOLE Joke Items. Partial thanks to Naka Teleeli/Nakate for the inspiration. V:
+					if ((damageType == 'LOLEBowling' || 
+							 damageType == 'HeelJackpotExplosion') && 
+							!owner.bFRIENDLY) 
 					{
-						criticalhit = true;
-						if (owner.bBOSS && random(1,100) <= bosscritres) 
+						damage = 1872; // 18 * 8 * 13;
+						if (DDOrigBoss(owner)) damage *= 1024;
+															else damage *= 128;
+						if (flags & !DMG_NO_PROTECT) flags |= DMG_NO_PROTECT;
+						if (flags & !DMG_NO_FACTOR) flags |= DMG_NO_FACTOR;
+						if (flags & !DMG_NO_ARMOR) flags |= DMG_NO_ARMOR;
+						if (flags & !DMG_FOILINVUL) flags |= DMG_FOILINVUL;
+						if (flags & !DMG_THRUSTLESS) flags |= DMG_THRUSTLESS;
+					}
+					
+					bool domusic = false;
+					if (!FoundPlayer) FoundPlayer = DDPlayerPawn(inflictor);
+					if (FoundPlayer)
+					{
+						if (!owner.bFRIENDLY) domusic = true;
+					}
+					else
+					{
+						if (owner.bFRIENDLY)
 						{
-							criticalhit = false;
-							if (source == FoundPlayer || inflictor == FoundPlayer)
+							if (source && source.bISMONSTER && !source.bFRIENDLY) domusic = true;
+							if (inflictor && inflictor.bISMONSTER && !inflictor.bFRIENDLY) domusic = true;
+						}
+						else
+						{
+							if (source && source.bISMONSTER && source.bFRIENDLY) domusic = true;
+							if (inflictor && inflictor.bISMONSTER && inflictor.bFRIENDLY) domusic = true;
+						}
+					}
+					if (domusic) A_DynamicMusic(forcedplay:true);
+					
+					nm = "CCards_Actor_StoneDeath";
+					nn = "CCards_Actor_MysteryEgg";
+					if (source && 
+							prevtarget != source && 
+							(PlayerPawn(source) || source.bFRIENDLY) && 
+							!owner.bFRIENDLY && 
+							!ExplosiveBarrel(owner) && 
+							!ExplosiveBarrel2(owner) && 
+							!Pod(owner) &&
+							!PracticeTarget(owner) &&
+							!PracticeTarget2(owner) &&
+							!EEUniqueBoss(owner) &&
+							owner.GetClassName() != nm &&
+							owner.GetClassName() != nn &&
+							damageType != 'TrueIP' &&
+							!owner.bDORMANT &&
+							owner.bISMONSTER)
+					{
+						int initdmg = newdamage;
+						surprisehit = true;
+						A_StopSound(32);
+						if (InStateSequence(owner.curstate,ResolveState("Spawn")) ||
+								(InStateSequence(owner.curstate,ResolveState("Idle")) && Heresiarch(owner)))
+						{
+							owner.A_SetInventory("JustSurprised",1);
+							if (exex_hitweaksounds && !owner.CountInv("DedMonsterFlag")) owner.A_StartSound("Misc/WeaknessHitMid", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+							nm = "SonicNail";
+							if (inflictor && 
+									(inflictor.GetClassName() == nm ||
+									inflictor.GetClassName() == "ImpalerMissile" ||
+									inflictor.GetClassName() == "ImpalerMissile2" ||
+									inflictor.GetClassName() == "ImpalerMissile3"))
 							{
-								If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 0)
+								newdamage *= frandompick(2.0000,2.50);
+							}
+							else newdamage *= frandompick(1.3334,1.50);
+						}
+						else
+						{
+							if (exex_hitweaksounds && !owner.CountInv("DedMonsterFlag")) owner.A_StartSound("Misc/WeaknessHit", 32, CHANF_DEFAULT, (exex_hitweaksoundvol * frandom(0.75,1.25)), ATTN_NONE, 0.67);
+							nm = "SonicNail";
+							if (inflictor && 
+									(inflictor.GetClassName() == nm ||
+									inflictor.GetClassName() == "ImpalerMissile" ||
+									inflictor.GetClassName() == "ImpalerMissile2" ||
+									inflictor.GetClassName() == "ImpalerMissile3"))
+							{
+								newdamage *= frandompick(1.5000,1.75);
+							}
+							else newdamage *= frandompick(1.1667,1.25);
+						}
+						if ((dydudebug_actordmgdisplays || dydudebug_defensebuffs)) Console.Printf("(\c[green]%s\c-) surprisehit: damage: %d (initdmg: %d)", GetClassName(), newdamage, initdmg);
+					}
+					
+					bool criticalhit = false;
+					int CritRoll;
+					int TruePlayerLevel;
+					if (MiscItem && exex_expenabled) TruePlayerLevel = MiscItem.PlayerLevel;
+					if (FoundPlayer) 
+					{
+						int bosscritres = 75;
+						
+						if (FoundPlayer.CountInv("DealCriticalHit")) 
+						{
+							criticalhit = true;
+							if (owner.bBOSS && random(1,100) <= bosscritres) 
+							{
+								criticalhit = false;
+								if (source == FoundPlayer || inflictor == FoundPlayer)
 								{
-									if (!criticalhit && random(1,16) <= 15) criticalhit = true;
+									If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 0)
+									{
+										if (!criticalhit && random(1,16) <= 15) criticalhit = true;
+									}
 								}
 							}
 						}
-					}
-					else
-					{
-						If (MiscItem)
+						else
 						{
-							CritRoll = MiscItem.CritRoll;
-							if (MiscItem.CritRoll <= 1) 
+							If (MiscItem)
 							{
-								criticalhit = true;
-								if (owner.bBOSS && random(1,100) <= bosscritres) 
+								CritRoll = MiscItem.CritRoll;
+								if (MiscItem.CritRoll <= 1) 
 								{
-									criticalhit = false;
-									if (source == FoundPlayer || inflictor == FoundPlayer)
+									criticalhit = true;
+									if (owner.bBOSS && random(1,100) <= bosscritres) 
 									{
-										If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 0)
+										criticalhit = false;
+										if (source == FoundPlayer || inflictor == FoundPlayer)
 										{
-											if (!criticalhit && random(1,16) <= 15) criticalhit = true;
+											If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 0)
+											{
+												if (!criticalhit && random(1,16) <= 15) criticalhit = true;
+											}
 										}
 									}
 								}
 							}
 						}
+						if (dydudebug_actordmgdisplays && MiscItem) Console.Printf("DamageMobj [SpecVuln] (\c[green]%s\c-): Critbase: %d / %d", GetClassName(), MiscItem.CritChance, CritRoll);
+						if (FoundPlayer.CountInv("CheatCrit") || FoundPlayer.CountInv("CheatCritUltimate")) criticalhit = true;
 					}
-					if (dydudebug_actordmgdisplays && MiscItem) Console.Printf("DamageMobj [SpecVuln] (\c[green]%s\c-): Critbase: %d / %d", GetClassName(), MiscItem.CritChance, CritRoll);
-					if (FoundPlayer.CountInv("CheatCrit") || FoundPlayer.CountInv("CheatCritUltimate")) criticalhit = true;
-				}
-				
-				int initdmg = newdamage;
-				if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [SpecVuln] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, newdamage, damageType);
-				double critdmgmulti = 2.0 + (0.01 * random(-10,10));
-				if (criticalhit && !owner.bINVULNERABLE && initdmg)
-				{
-					int crittype = 1;
-					if (!(ExplosiveBarrel(owner) ||
-								ExplosiveBarrel2(owner) ||
-								ExplosiveBarrelNew(owner) ||
-								Pod(self)))
+					
+					int initdmg = newdamage;
+					if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [SpecVuln] (\c[green]%s\c-): initdmg vs Damage: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, newdamage, damageType);
+					double critdmgmulti = 2.0 + (0.01 * random(-10,10));
+					if (criticalhit && !owner.bINVULNERABLE && initdmg)
 					{
-						owner.A_SetInventory("TookCriticalHit",1);
-						if (source == FoundPlayer || inflictor == FoundPlayer)
+						int crittype = 1;
+						if (!(ExplosiveBarrel(owner) ||
+									ExplosiveBarrel2(owner) ||
+									ExplosiveBarrelNew(owner) ||
+									Pod(self)))
 						{
-							bool supercrit = false;
-							If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 1)
+							owner.A_SetInventory("TookCriticalHit",1);
+							if (source == FoundPlayer || inflictor == FoundPlayer)
 							{
-								MiscItem.MortalBlowCritBoostTimer = randompick(0,1,1,1,1,1,1,1,1,2);
-								supercrit = true;
-							}
-							else
-							if (FoundPlayer.CountInv("CheatCritUltimate")) supercrit = true;
-							
-							if (supercrit)
-							{
-								critdmgmulti *= (2.5 + (0.0125 * random(-10,10)));
-								owner.A_StartSound("misc/critsnd2", 216, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.625,0.9375));
-								owner.A_StartSound("misc/critsnd2", 217, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.9375,1.0625));
-								crittype = 2;
-							}
-							nm = "CCards_Actor_FirebluTotemDefBuff";
-							if (owner.CountInv(nm))
-							{
-								if (supercrit) critdmgmulti *= 20;
-													else critdmgmulti *= 5;
-							}
-						}
-						newdamage *= critdmgmulti;
-						if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critical Hit Dealth: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, newdamage, damagefactor);
-		
-						double heightmult = frandompick(0.9375,1.0,1.0625,1.125,1.125,1.25,1.25,1.25,1.25,1.25);
-						actor SMASH;
-						bool success;
-						if (!owner.CountInv("DedMonsterFlag"))
-						{
-							owner.A_StartSound("misc/critsnd2", 218, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, 1.0);
-							[success, SMASH] = owner.A_SpawnItemEx("SMAAAASH",0.0,0.0,(owner.default.height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
-							if (success && SMASH)
-							{
-								SMAAAASH SMASH2;
-								SMASH2 = SMAAAASH(SMASH);
-								if (SMASH2)
+								bool supercrit = false;
+								If (MiscItem && MiscItem.MortalBlowCritBoostTimer > 1)
 								{
-									double scalebase = frandom(0.875,1.125);
-									if (crittype >= 2) scalebase = frandom(1.25,1.50);
-									SMASH2.scale.x = (scalebase * owner.scale.x);
-									SMASH2.scale.y = (scalebase * owner.scale.y);
-									if (SMASH2.target != owner) SMASH2.target = owner;
-									if (SMASH2.height < (owner.default.height * heightmult)) SMASH2.height = (owner.default.height * heightmult);
-									SMASH2.initheight = (owner.default.height * heightmult);
+									MiscItem.MortalBlowCritBoostTimer = randompick(0,1,1,1,1,1,1,1,1,2);
+									supercrit = true;
+								}
+								else
+								if (FoundPlayer.CountInv("CheatCritUltimate")) supercrit = true;
+								
+								if (supercrit)
+								{
+									critdmgmulti *= (2.5 + (0.0125 * random(-10,10)));
+									owner.A_StartSound("misc/critsnd2", 216, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.625,0.9375));
+									owner.A_StartSound("misc/critsnd2", 217, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, frandom(0.9375,1.0625));
+									crittype = 2;
+								}
+								nm = "CCards_Actor_FirebluTotemDefBuff";
+								if (owner.CountInv(nm))
+								{
+									if (supercrit) critdmgmulti *= 20;
+														else critdmgmulti *= 5;
+								}
+							}
+							newdamage *= critdmgmulti;
+							if (dydudebug_actordmgdisplays) Console.Printf("DamageMobj [Mixin] (\c[green]%s\c-): Critical Hit Dealth: %d vs %d (damagefactor: %.8f)", GetClassName(), initdmg, newdamage, damagefactor);
+			
+							double heightmult = frandompick(0.9375,1.0,1.0625,1.125,1.125,1.25,1.25,1.25,1.25,1.25);
+							actor SMASH;
+							bool success;
+							if (!owner.CountInv("DedMonsterFlag"))
+							{
+								owner.A_StartSound("misc/critsnd2", 218, CHANF_DEFAULT, frandom(0.75,1.25), ATTN_NONE, 1.0);
+								[success, SMASH] = owner.A_SpawnItemEx("SMAAAASH",0.0,0.0,(owner.default.height * heightmult),0.0,0.0,0.0,SXF_NOCHECKPOSITION|SXF_SETTARGET,0,0);
+								if (success && SMASH)
+								{
+									SMAAAASH SMASH2;
+									SMASH2 = SMAAAASH(SMASH);
+									if (SMASH2)
+									{
+										double scalebase = frandom(0.875,1.125);
+										if (crittype >= 2) scalebase = frandom(1.25,1.50);
+										SMASH2.scale.x = (scalebase * owner.scale.x);
+										SMASH2.scale.y = (scalebase * owner.scale.y);
+										if (SMASH2.target != owner) SMASH2.target = owner;
+										if (SMASH2.height < (owner.default.height * heightmult)) SMASH2.height = (owner.default.height * heightmult);
+										SMASH2.initheight = (owner.default.height * heightmult);
+									}
 								}
 							}
 						}
 					}
-				}
-				
-				if (inflictor)
-				{
-					if ((KickPuff(inflictor) || KickPuffNoThrust(inflictor) || BadKickPuff(inflictor) || damageType == 'Kick') && newdamage > 0) owner.A_SetInventory("JustKicked",1);
-					if ((UppercutPuff(inflictor) && damageType == 'Fist') && newdamage > 0) owner.A_SetInventory("JustUppercutted",1);
-					if ((FistPuff(inflictor) && damageType == 'Fist') && newdamage > 0) owner.A_SetInventory("JustPunched",1);
-					if (damageType == 'DashingBG' && newdamage > 0) owner.A_SetInventory("JustBatDashed",1);
-					if (damageType == 'DashingSD' && newdamage > 0) owner.A_SetInventory("JustShieldDashed",1);
-				}
-				//
-				wasblastedimpact = false;
-				if (inflictor == null && source == null && damageType == 'Melee') 
-				{
-					wasblastedimpact = true;
-					if (owner.bBLASTED && random(1,20) <= 19) 
-					{
-						newdamage *= 0.0625;
-						owner.bBLASTED = false;
-					}
-					else
-					{
-						newdamage *= 0.25;
-					}
-					if (owner.vel.x != 0.0) owner.vel.x *= 0.1;
-					if (owner.vel.y != 0.0) owner.vel.y *= 0.1;
-					if (dydudebug_actordmgdisplays && wasblastedimpact) Console.Printf("(\c[green]%s\c-) (\czwasblastedimpact?: %d", owner.GetClassName(), wasblastedimpact);
-				}
-				
-				int predmginr = newdamage;
-				// (Partial) Defense Ignoring Attacks
-				double prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor;
-				[prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor] = A_DefenseIgnoreFactor(inflictor, source, damage, damagetype, flags, angle, wasblastedimpact, bellefishzap, surprisehit, angvstype);
-				if (dydudebug_actordmgdisplays) Console.Printf("ActorDefenseIgnoreFactor: %.8f", ActorDefenseIgnoreFactor);
-
-				// Defense Checks
-				if (damageType == 'Crush' && !inflictor && !source)
-				{
-					double basecrushdmgfact;
-					if (PowerStrength(owner.FindInventory("PowerStrength")) || PowerStrengthDD(owner.FindInventory("PowerStrengthDD")))
-					{
-						basecrushdmgfact = frandompick(25,33.4,33.4,50,50,50,50,50,50,66.7,66.7,75);
-					}
-					else
-					{
-						basecrushdmgfact = frandompick(75,87.5,87.5,100,100,100,100,100,100,112.5,112.5,125);
-					}
-					newdamage *= double(basecrushdmgfact / (owner.mass * frandompick(0.25,0.334,0.334,0.5,0.5,0.5,0.5,0.5,0.667,0.667,0.75)));
-					newdamage *= (basecrushdmgfact * 0.01);
-					if (newdamage <= (predmginr * 0.334)) newdamage = (predmginr * 0.334);
-					if (newdamage >= (predmginr * 3)) newdamage = (predmginr * 3);
 					
-					if (dydudebug_actordmgdisplays && newdamage > 0)
+					if (inflictor)
 					{
-						Console.Printf("    (\czActor Defensive Input [Crush]\c-: \cydmg = %d\c, prevdmg: %d, basecrushdmgfact: %.8f, mass: %d)", newdamage, predmginr, basecrushdmgfact, owner.mass);
+						if ((KickPuff(inflictor) || KickPuffNoThrust(inflictor) || BadKickPuff(inflictor) || damageType == 'Kick') && newdamage > 0) owner.A_SetInventory("JustKicked",1);
+						if ((UppercutPuff(inflictor) && damageType == 'Fist') && newdamage > 0) owner.A_SetInventory("JustUppercutted",1);
+						if ((FistPuff(inflictor) && damageType == 'Fist') && newdamage > 0) owner.A_SetInventory("JustPunched",1);
+						if (damageType == 'DashingBG' && newdamage > 0) owner.A_SetInventory("JustBatDashed",1);
+						if (damageType == 'DashingSD' && newdamage > 0) owner.A_SetInventory("JustShieldDashed",1);
 					}
-				}
-				
-				//******************************
-				//*This ignores damage factors *
-				//******************************
-				if (ActorDefenseIgnoreFactor > 1.00) ActorDefenseIgnoreFactor = 1.00;
-				prevDamageFactor = owner.DamageFactor;
-				if (owner.DamageFactor < 1.00) 
-				{
-					if (criticalhit) 
+					//
+					wasblastedimpact = false;
+					if (inflictor == null && source == null && damageType == 'Melee') 
 					{
-						ActorDefenseIgnoreFactor = 1.00;
-					}
-					if (ActorDefenseIgnoreFactor > 0.00)
-					{
-						int predmg = newdamage;
-						double newdmgfct = (prevDamageFactor + ((1.00 - prevDamageFactor) * ActorDefenseIgnoreFactor));
-						double dmgmul = double(newdmgfct / prevDamageFactor);
-						newdamage *= dmgmul;
-						//owner.DamageFactor += ((1.00 - owner.DamageFactor) * ActorDefenseIgnoreFactor); 
-						if (dydudebug_actordmgdisplays && damage > 0)
+						wasblastedimpact = true;
+						if (owner.bBLASTED && random(1,20) <= 19) 
 						{
-							Console.Printf("newdmgfct: %.8f, prevDamageFactor: %.8f, dmgmul: %.8f (predmg: %d vs damage: %d)", newdmgfct, prevDamageFactor, dmgmul, predmg, damage);
-							if (ActorDefenseIgnoreFactor > 0.00) Console.Printf("    (\czActor Defensive Input [Def Ignoring]\c-: \caDefenseIgnoreFactor = %.8f\c-, \cadmgfactor = %.8f\c-, \caprevdmgfactor = %.8f\c-, \cypredmg = %d\c-, \cydmg = %d\c- (Monster Actor))", ActorDefenseIgnoreFactor, owner.DamageFactor, prevDamageFactor, predmg, newdamage);
-																							else Console.Printf("    (\czActor Defensive Input [Def Ignoring]\c-: \caSKIPPED\c-, \cydmg = %d\c-)", predmg);
+							newdamage *= 0.0625;
+							owner.bBLASTED = false;
+						}
+						else
+						{
+							newdamage *= 0.25;
+						}
+						if (owner.vel.x != 0.0) owner.vel.x *= 0.1;
+						if (owner.vel.y != 0.0) owner.vel.y *= 0.1;
+						if (dydudebug_actordmgdisplays && wasblastedimpact) Console.Printf("(\c[green]%s\c-) (\czwasblastedimpact?: %d", owner.GetClassName(), wasblastedimpact);
+					}
+					
+					int predmginr = newdamage;
+					// (Partial) Defense Ignoring Attacks
+					double prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor;
+					[prevDamageFactor, basedmgfactor, ActorDefenseIgnoreFactor] = A_DefenseIgnoreFactor(inflictor, source, damage, damagetype, flags, angle, wasblastedimpact, bellefishzap, surprisehit, angvstype);
+					if (dydudebug_actordmgdisplays) Console.Printf("ActorDefenseIgnoreFactor: %.8f", ActorDefenseIgnoreFactor);
+
+					// Defense Checks
+					if (damageType == 'Crush' && !inflictor && !source)
+					{
+						double basecrushdmgfact;
+						if (PowerStrength(owner.FindInventory("PowerStrength")) || PowerStrengthDD(owner.FindInventory("PowerStrengthDD")))
+						{
+							basecrushdmgfact = frandompick(25,33.4,33.4,50,50,50,50,50,50,66.7,66.7,75);
+						}
+						else
+						{
+							basecrushdmgfact = frandompick(75,87.5,87.5,100,100,100,100,100,100,112.5,112.5,125);
+						}
+						newdamage *= double(basecrushdmgfact / (owner.mass * frandompick(0.25,0.334,0.334,0.5,0.5,0.5,0.5,0.5,0.667,0.667,0.75)));
+						newdamage *= (basecrushdmgfact * 0.01);
+						if (newdamage <= (predmginr * 0.334)) newdamage = (predmginr * 0.334);
+						if (newdamage >= (predmginr * 3)) newdamage = (predmginr * 3);
+						
+						if (dydudebug_actordmgdisplays && newdamage > 0)
+						{
+							Console.Printf("    (\czActor Defensive Input [Crush]\c-: \cydmg = %d\c, prevdmg: %d, basecrushdmgfact: %.8f, mass: %d)", newdamage, predmginr, basecrushdmgfact, owner.mass);
 						}
 					}
-				}
-				
-				// Healing from Punching/Kicking Practice Targets ala SW
-				if (PracticeTarget(owner) || PracticeTarget2(owner))
-				{
-					if ((damageType == 'Fist' || damageType == 'Kick'))
+					
+					//******************************
+					//*This ignores damage factors *
+					//******************************
+					if (ActorDefenseIgnoreFactor > 1.00) ActorDefenseIgnoreFactor = 1.00;
+					prevDamageFactor = owner.DamageFactor;
+					if (owner.DamageFactor < 1.00) 
 					{
-						if (!(flags & DMG_EXPLOSION))
+						if (criticalhit) 
 						{
-							double multfactorHP = 1.0;
-							int randbonusincreaseHP = randompick(3,3,4) * frandom(3.75,5.25) * frandom(0.5,1.5);
-							if (damageType == 'Fist' && damageType == "UppercutPuff") multfactorHP *= frandompick(1.125,1.1875);
-							if (damageType == 'Kick') multfactorHP *= frandompick(1.0834,1.1667);
-							randbonusincreaseHP *= multfactorHP;
-							if (criticalhit) randbonusincreaseHP *= critdmgmulti;
-							//if (dydudebug_regenpenaltydisplay) Console.Printf("HPBonusTimeAdd: %d", randbonusincreaseHP);
-							if (MiscItem) 
+							ActorDefenseIgnoreFactor = 1.00;
+						}
+						if (ActorDefenseIgnoreFactor > 0.00)
+						{
+							int predmg = newdamage;
+							double newdmgfct = (prevDamageFactor + ((1.00 - prevDamageFactor) * ActorDefenseIgnoreFactor));
+							double dmgmul = double(newdmgfct / prevDamageFactor);
+							newdamage *= dmgmul;
+							//owner.DamageFactor += ((1.00 - owner.DamageFactor) * ActorDefenseIgnoreFactor); 
+							if (dydudebug_actordmgdisplays && damage > 0)
 							{
-								int HPRegenBoostTimeAmt = randbonusincreaseHP;
-								MiscItem.HPRegenBoostTimer += HPRegenBoostTimeAmt;
+								Console.Printf("newdmgfct: %.8f, prevDamageFactor: %.8f, dmgmul: %.8f (predmg: %d vs damage: %d)", newdmgfct, prevDamageFactor, dmgmul, predmg, damage);
+								if (ActorDefenseIgnoreFactor > 0.00) Console.Printf("    (\czActor Defensive Input [Def Ignoring]\c-: \caDefenseIgnoreFactor = %.8f\c-, \cadmgfactor = %.8f\c-, \caprevdmgfactor = %.8f\c-, \cypredmg = %d\c-, \cydmg = %d\c- (Monster Actor))", ActorDefenseIgnoreFactor, owner.DamageFactor, prevDamageFactor, predmg, newdamage);
+																								else Console.Printf("    (\czActor Defensive Input [Def Ignoring]\c-: \caSKIPPED\c-, \cydmg = %d\c-)", predmg);
 							}
-							
-							DDPlayerPawn playpawn;
-							playpawn = FoundPlayer;
-							if (playpawn)
+						}
+					}
+					
+					// Healing from Punching/Kicking Practice Targets ala SW
+					if (PracticeTarget(owner) || PracticeTarget2(owner))
+					{
+						if ((damageType == 'Fist' || damageType == 'Kick'))
+						{
+							if (!(flags & DMG_EXPLOSION))
 							{
-								int prehealth = playpawn.player.mo.health;
-								int phealmax;
+								double multfactorHP = 1.0;
+								int randbonusincreaseHP = randompick(3,3,4) * frandom(3.75,5.25) * frandom(0.5,1.5);
+								if (damageType == 'Fist' && damageType == "UppercutPuff") multfactorHP *= frandompick(1.125,1.1875);
+								if (damageType == 'Kick') multfactorHP *= frandompick(1.0834,1.1667);
+								randbonusincreaseHP *= multfactorHP;
+								if (criticalhit) randbonusincreaseHP *= critdmgmulti;
+								//if (dydudebug_regenpenaltydisplay) Console.Printf("HPBonusTimeAdd: %d", randbonusincreaseHP);
 								if (MiscItem) 
 								{
-									phealmax = MiscItem.MaxHealthTrue;
-									phealmax *= (1.0 + (TruePlayerLevel * 0.005));
-									if (phealmax > MiscItem.MaxHealthTrue * 2.0) phealmax = (MiscItem.MaxHealthTrue * 2.0);
+									int HPRegenBoostTimeAmt = randbonusincreaseHP;
+									MiscItem.HPRegenBoostTimer += HPRegenBoostTimeAmt;
 								}
-								if ((prehealth < phealmax) && random(1,16) <= random(7,9))
+								
+								DDPlayerPawn playpawn;
+								playpawn = FoundPlayer;
+								if (playpawn)
 								{
-									int targhealamt = (randompick(1,1,1,1,1,1,1,1,1,1,1,2) * critdmgmulti * multfactorHP);
-									prehealth += targhealamt;
-									A_RecoverHUD(targhealamt, 0, true);
-									//if ((dvds_showdamagemessages & 1) && targhealamt > 0) A_PrintHealingMessage(playpawn, targhealamt);
-									//Console.Printf("prehealth: %d, phealmax: %d, targhealamt: %d", prehealth, phealmax, targhealamt);
-									if (prehealth > phealmax) prehealth = phealmax;
-									playpawn.player.mo.health = playpawn.player.health = prehealth;
+									int prehealth = playpawn.player.mo.health;
+									int phealmax;
+									if (MiscItem) 
+									{
+										phealmax = MiscItem.MaxHealthTrue;
+										phealmax *= (1.0 + (TruePlayerLevel * 0.005));
+										if (phealmax > MiscItem.MaxHealthTrue * 2.0) phealmax = (MiscItem.MaxHealthTrue * 2.0);
+									}
+									if ((prehealth < phealmax) && random(1,16) <= random(7,9))
+									{
+										int targhealamt = (randompick(1,1,1,1,1,1,1,1,1,1,1,2) * critdmgmulti * multfactorHP);
+										prehealth += targhealamt;
+										A_RecoverHUD(targhealamt, 0, true);
+										//if ((dvds_showdamagemessages & 1) && targhealamt > 0) A_PrintHealingMessage(playpawn, targhealamt);
+										//Console.Printf("prehealth: %d, phealmax: %d, targhealamt: %d", prehealth, phealmax, targhealamt);
+										if (prehealth > phealmax) prehealth = phealmax;
+										playpawn.player.mo.health = playpawn.player.health = prehealth;
+									}
 								}
 							}
 						}
