@@ -1,3 +1,167 @@
+mixin class SmokeDetector
+{
+	void A_DetectSmoke(string actortype = "CCards_Actor_Smoke", double radius = 256, double sabsamtmin = 0.015625, double sabsamtmax = 0.03125, double salpfloor = 0.0)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+
+		if (dydudebug_supervacproj) Console.Printf("actortype: %s, radius: %.4f, sabsamtmin: %.4f, sabsamtmax: %.4f, salpfloor: %.4f", actortype, radius, sabsamtmin, sabsamtmax, salpfloor);
+		double xp = pos.x;
+		double yp = pos.y;
+		double zp = pos.z;
+		ThinkerIterator it = ThinkerIterator.Create(actortype);
+		Actor mo;
+		while (mo = Actor(it.Next()))
+		{
+			if (dydudebug_supervacproj) Console.Printf("mo: %p, type: %s", mo, mo.GetClassName());
+			double absx = abs(xp - mo.pos.x);
+			double absy = abs(yp - mo.pos.y);
+			double absz = abs(zp - mo.pos.z);
+			if (dydudebug_supervacproj)
+			{
+				string debug = "\c[green]absx: ";
+				if (absx <= radius)	debug.AppendFormat("\c[gold]");
+											 else debug.AppendFormat("\c[red]");
+				debug.AppendFormat("%.4f\c[green], ", absx);
+				debug.AppendFormat("\c[green]absy: ");
+				if (absy <= radius)	debug.AppendFormat("\c[gold]");
+											 else debug.AppendFormat("\c[red]");
+				debug.AppendFormat("%.4f\c[green], ", absy);
+				debug.AppendFormat("\c[green]absz: ");
+				if (absz <= radius)	debug.AppendFormat("\c[gold]");
+											 else debug.AppendFormat("\c[red]");
+				debug.AppendFormat("%.4f", absz);
+				if (absx <= radius &&
+						absy <= radius &&
+						absz <= radius)
+				{
+					Console.Printf(debug);
+				}
+			}
+			if (absx <= radius &&
+					absy <= radius &&
+					absz <= radius)
+			{
+				if (dydudebug_supervacproj) Console.Printf("\c[lightblue]In Radius (\c[green]%.4f\c[lightblue])", radius);
+				double moalph = mo.alpha;
+				if (mo.alpha >= salpfloor)
+				{
+					mo.A_FadeOut(frandom(sabsamtmin,sabsamtmax));
+					if (dydudebug_supervacproj) Console.Printf("\c[brick]Reduce Smoke Alpha [from \c[green]%.4f\c[brick] to \c[green]%.4f\c[brick]]", moalph, mo.alpha);
+					moalph = mo.alpha;
+					if (moalph <= 0.00) 
+					{
+						if (dydudebug_supervacproj) Console.Printf("\c[red]Remove Smoke Actor");
+						mo.Destroy();
+					}
+				}
+			}
+		}
+	}
+	
+	void A_PreCheckSmoke(double cradius = 256, double minreduce = double(1.0/64), double maxreduce = double(1.0/32), double alpfloor = 0.0)
+	{
+		actor player = players[0].mo;
+		let MiscItem = PlayerStatItem(Player.FindInventory("PlayerStatItem"));
+		double upgradeboost = (player.CountInv("SuperVacUpgrade") * frandom(0.1667,0.3334));
+		double upgradeboost2 = (player.CountInv("SuperVacUpgrade") * frandom(0.1667,0.3334));
+
+		cradius *= (1.0 + upgradeboost);
+		minreduce *= (1.0 + upgradeboost2);
+		maxreduce *= (1.0 + upgradeboost2);
+		
+		A_DetectSmoke("FogPatchSmall",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("FogPatchMedium",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("FogPatchLarge",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("GhostCloud",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("PoisonCloud",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("PoisonCloudEE",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("BigSmokes",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("ExplosionSmoke",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("RevenantTracerSmoke",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("DBTPuffSmoke",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("MinotaurSmoke",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("RocketSmokeTrail",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("GrenadeSmokeTrail",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("RocketTrail",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("BlunderSmokeSmall",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("BlunderSmokeSmallD",cradius,minreduce,maxreduce,alpfloor);
+		A_DetectSmoke("BlunderSmokeSmallH",cradius,minreduce,maxreduce,alpfloor);
+		if (Wads.CheckNumForName("CCDAILIES", Wads.ns_global, -1, true) != -1)
+		{
+			A_DetectSmoke("CCards_NukeSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_Smoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_BloodSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_DevourSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_DamageSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_RomeroSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_RevengeSmokeFX",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_BossRevengeSmokeFX",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_LeapSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_MiasmaSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_PumpkinBombFX",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_Actor_Mist",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CCards_VesselFX",cradius,minreduce,maxreduce,alpfloor);
+		}
+		if (Wads.CheckNumForName("EE-EXDAY", Wads.ns_global, -1, true) != -1)
+		{
+			A_DetectSmoke("DestroyedBuildingSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SmokePillarParticle",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SmokePillarParticleHorizontal",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BurningBuildingParticle",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXBrownSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXBigExplosionBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXSmallExplosionBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXTinyExplosionBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SFXDistantExplosionSmokeBombing",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BigNeoSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("HugeNeoSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("RidiculousNeoSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("HeavyExplosionSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ShinnySmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("CasingSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("TankShellSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ExplosionSmokeFast22",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("PlasmaSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ExplosionSmokeHD",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ExplosionSmokeHDLarge",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BigBlackSmokeLarger",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BigBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MediumBlackSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("NukeSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("NukeSmokeBig",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SmallSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("ShotSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("AltSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MeleeSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("PuffSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("HitpuffSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("OldschoolRocketSmokeTrail2",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("OldschoolRocketSmokeTrail2Bigger",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("OldschoolRocketSmokeTrailDarker",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("GunFireSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("RocketSmokeTrail52",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("GunBarrelSmoke",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("Haze1",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("Haze2",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("Haze3",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("Haze4",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BrownCloud",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BrownCloudSmall",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BrownCloudSmallLong",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("BrownCloudShort",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MudDust",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MudDustSmall",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("MudDustFromTrail",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloud",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloudShort",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloudSmall",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloudSmallLong",cradius,minreduce,maxreduce,alpfloor);
+			A_DetectSmoke("SandCloudFootstep",cradius,minreduce,maxreduce,alpfloor);
+		}
+	}
+}
+
 mixin class GameChecker
 {
 	bool A_CheckDDGame()
