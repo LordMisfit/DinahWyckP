@@ -1476,8 +1476,26 @@ class CentaurionSgt : Centaurion
 	
 	States
 	{
+		Spawn:
+			CSGT Z 10 A_Look();
+			Loop;
+		See:
+			CSGT AABBCCDD 2 fast 
+			{
+				A_CentaurionShieldOff();
+				if (CountInv("LDLegendaryMonsterTransformed"))
+				{
+					if (random(1,8) <= 1) A_EEChase("Melee","Missile",0,1,3,1,1);
+													 else A_EEChase("Melee",null,0,1,3,1,1);
+				}
+				else
+				{
+					A_EEChase("Melee","Missile",0,1,3,1,1);
+				}
+			}
+			Loop;
 		ShieldUp:
-			C2NB AABBCCDD 3 fast 
+			CSGB AABBCCDD 3 fast 
 			{
 				A_CentaurionShieldOn();
 				int shldchance = 256;
@@ -1496,14 +1514,14 @@ class CentaurionSgt : Centaurion
 					A_EEChase("Melee",null,0,1,3,1,1);
 				}
 			}
-			C2NB D 0 fast 
+			CSGB D 0 fast 
 			{
 				int shldchance = 108;
 				if (CountInv("ScramblerConfusion")) shldchance *= frandom(3,4);
 				if (random(1,256) <= shldchance) return resolvestate("See");
 				return resolvestate(null);
 			}
-			C2NB D 0 fast 
+			CSGB D 0 fast 
 			{
 				int shldchance = 108;
 				if (CountInv("ScramblerConfusion")) shldchance *= frandom(0.25,0.334);
@@ -1512,10 +1530,10 @@ class CentaurionSgt : Centaurion
 			}
 			Loop;
 		SwordZap:
-			C2NT A 0 fast A_CentaurionShieldOff();
-			C2NZ A 6 fast bright;
-			C2NZ B 6 fast bright A_FaceTarget();
-			C2NZ C 6 fast bright 
+			CSGT A 0 fast A_CentaurionShieldOff();
+			CSGZ A 6 fast bright;
+			CSGZ B 6 fast bright A_FaceTarget();
+			CSGZ C 6 fast bright 
 			{
 				A_StartSound("zappo",CHAN_BODY);
 				A_SpawnProjectile("BadZapshot",48,0);
@@ -1536,14 +1554,14 @@ class CentaurionSgt : Centaurion
 					}
 				}
 			}
-			C2NZ D 6 fast bright A_DynamicMusic();
-			C2NZ E 6 fast bright;
+			CSGZ D 6 fast bright A_DynamicMusic();
+			CSGZ E 6 fast bright;
 			Goto See;
 		Melee:
-			C2NT A 0 fast A_CentaurionShieldOff();
-			C2NT E 4 fast A_StartSound("cent/sight",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
-			C2NT F 4 fast A_FaceTarget();
-			C2NT G 6 fast 
+			CSGT A 0 fast A_CentaurionShieldOff();
+			CSGT E 4 fast A_StartSound("cent/sight",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+			CSGT F 4 fast A_FaceTarget();
+			CSGT G 6 fast 
 			{
 				if (exex_monsterlevelenabledflags && A_CheckMonsterLevel(30,1,true,self)) A_SetTics(5); 
 				if (exex_monsterlevelenabledflags && A_CheckMonsterLevel(60,1,true,self)) A_SetTics(4);
@@ -1551,25 +1569,33 @@ class CentaurionSgt : Centaurion
 				
 				A_CustomMeleeAttack (dmg, "gard/swing", "gard/swing", "", 1);
 			}
-			C2NT H 4 fast A_DynamicMusic();
-			C2NT I 4 fast;
+			CSGT H 4 fast A_DynamicMusic();
+			CSGT I 4 fast;
 			Goto See;
+		Pain:
+			CSGT J 6 fast A_EEPain();
+			CSGT J 3 fast A_DynamicMusic();
+			CSGT K 0 fast A_Jump(192,"See");
+			CSGT K 6 fast A_CentaurionShieldOn();
+			CSGT K 12 fast;
+			Goto ShieldUp;
 		Death:
-			C2NT L 6 Bright 
+			CSGT L 6 Bright 
 			{
 				A_Scream();
 				A_StartSound("cent/pain",233,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.95,1.05));
 				A_StartSound("cent/pain",234,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
 				A_StartSound("cent/pain",235,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.85,1.15));
 			}
-			C2NT MNO 6 Bright;
-			C2NT P 10 
+			CSGT MNO 6 Bright;
+			CSGT P 10 
 			{
 				A_NoBlocking();
 				A_Drop();
 			}
-			C2NT QRST 7;
-			C2NT T 0 
+			CSGT QR 7;
+			CSGT ST 7;
+			CSGT T 0 
 			{
 				CCCardDeathCheck();
 				actor player = players[0].mo;
@@ -1577,7 +1603,7 @@ class CentaurionSgt : Centaurion
 			}
 			Stop;
 		Raise:
-			C2NT TSRQPONML 5;
+			CSGT TSRQPONML 5;
 			Goto See;
 	}
 }
@@ -1645,7 +1671,7 @@ class NightmareCentaurionSgt : CentaurionSgt
 	States
 	{
 		ShieldUp:
-			C2NB AABBCCDD 3 fast
+			CSGB AABBCCDD 3 fast
 			{
 				A_CentaurionShieldOn();
 				int shldchance = 256;
@@ -1653,14 +1679,14 @@ class NightmareCentaurionSgt : CentaurionSgt
 				if (random(1,256) <= shldchance) A_EEChase("Melee","SwordZap",0,1,3,1,1);
 																		else A_EEChase("Melee",null,0,1,3,1,1);
 			}
-			C2NB D 0 fast 
+			CSGB D 0 fast 
 			{
 				int shldchance = 108;
 				if (CountInv("ScramblerConfusion")) shldchance *= frandom(3,4);
 				if (random(1,256) <= shldchance) return resolvestate("See");
 				return resolvestate(null);
 			}
-			C2NB D 0 fast 
+			CSGB D 0 fast 
 			{
 				int shldchance = 108;
 				if (CountInv("ScramblerConfusion")) shldchance *= frandom(0.25,0.334);
@@ -1669,10 +1695,10 @@ class NightmareCentaurionSgt : CentaurionSgt
 			}
 			Loop;
 		SwordZap:
-			C2NT A 0 fast A_CentaurionShieldOff();
-			C2NZ A 5 fast bright;
-			C2NZ B 5 fast bright A_FaceTarget();
-			C2NZ C 5 fast bright 
+			CSGT A 0 fast A_CentaurionShieldOff();
+			CSGZ A 5 fast bright;
+			CSGZ B 5 fast bright A_FaceTarget();
+			CSGZ C 5 fast bright 
 			{
 				A_StartSound("zappo",CHAN_BODY);
 				A_SpawnProjectile("BadZapshot",48,0);
@@ -1693,39 +1719,39 @@ class NightmareCentaurionSgt : CentaurionSgt
 					}
 				}
 			}
-			C2NZ D 5 fast bright A_DynamicMusic();
-			C2NZ E 5 fast bright;
+			CSGZ D 5 fast bright A_DynamicMusic();
+			CSGZ E 5 fast bright;
 			Goto See;
 		Melee:
-			C2NT A 0 fast A_CentaurionShieldOff();
-			C2NT E 3 fast A_StartSound("cent/sight",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
-			C2NT F 3 fast A_FaceTarget();
-			C2NT G 5 fast 
+			CSGT A 0 fast A_CentaurionShieldOff();
+			CSGT E 3 fast A_StartSound("cent/sight",CHAN_VOICE,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
+			CSGT F 3 fast A_FaceTarget();
+			CSGT G 5 fast 
 			{
 				if (exex_monsterlevelenabledflags && A_CheckMonsterLevel(30,1,true,self)) A_SetTics(4); 
 				if (exex_monsterlevelenabledflags && A_CheckMonsterLevel(60,1,true,self)) A_SetTics(3);
 				int dmg = A_CalcDamageFormula2(random(25,45),0.005,random(15,35),0.3334,random(10,20),0.1667,0.005);
 				A_CustomMeleeAttack (dmg, "gard/swing", "gard/swing", "", 1);
 			}
-			C2NT H 3 fast A_DynamicMusic();
-			C2NT I 3 fast;
+			CSGT H 3 fast A_DynamicMusic();
+			CSGT I 3 fast;
 			Goto See;
 		Death:
-			C2NT L 6 Bright 
+			CSGT L 6 Bright 
 			{
 				A_Scream();
 				A_StartSound("cent/pain",233,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.95,1.05));
 				A_StartSound("cent/pain",234,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.9,1.1));
 				A_StartSound("cent/pain",235,CHANF_DEFAULT,1.0,ATTN_NORM,frandom(0.85,1.15));
 			}
-			C2NT MNO 6 Bright;
-			C2NT P 10 
+			CSGT MNO 6 Bright;
+			CSGT P 10 
 			{
 				A_NoBlocking();
 				A_Drop();
 			}
-			C2NT QRST 7;
-			C2NT T 0 
+			CSGT QRST 7;
+			CSGT T 0 
 			{
 				CCCardDeathCheck();
 				actor player = players[0].mo;
@@ -1733,9 +1759,111 @@ class NightmareCentaurionSgt : CentaurionSgt
 			}
 			Stop;
 		Raise:
-			C2NT TSRQPONML 5;
+			CSGT TSRQPONML 5;
 			Goto See;
 	}
+}
+
+//CENTAURION MAULER
+class CentaurionMauler : DDOrigCreature //6121
+{
+	default
+	{
+		//$Category RPMonsters
+		Health 400;
+		Radius 24;
+		Height 64;
+		Scale 1.25;
+		Speed 10;
+		PainChance 180;
+		DamageFactor "Lead", 2;
+		DamageFactor "Zap", 4;
+		Mass 600;
+		MONSTER;
+		+FLOORCLIP;
+		+NOBLOOD;
+		+NOINFIGHTING;
+		+NEVERFAST;
+		SeeSound "cent/sight";
+		PainSound "cent/active";
+		DeathSound "cent/pain";
+		ActiveSound "cent/active";
+		MeleeSound "gard/swing";
+		Obituary "%o was pulped by a centaurion mauler.";
+		MeleeDamage 5;
+		MeleeRange 80;
+		Tag "Centaurion Mauler";
+		DropItem "JackAmmo";
+	}
+	
+	States
+	{
+		Spawn:
+			CENC A 0 A_SetReflectiveInvulnerable();
+			CENG AAAA 10 A_Look();
+			CENG BCB 6;
+			CENG AAAA 10 A_Look();
+			CENG DEAAAADEA 3;
+			Loop;
+		Active:
+			CENC A 0 A_SetReflectiveInvulnerable();
+			CENG AAAA 10 A_Look();
+			CENG BCB 6;
+			CENG AAAA 10 A_Look();
+			CENG DEAAAADEA 3;
+			Loop;
+		Inactive:
+			CENC A 0 A_SetReflectiveInvulnerable();
+			CENG AAAA 10;
+			CENG BCB 6;
+			CENG AAAA 10;
+			CENG DEAAAADEA 3;
+			Loop;
+		See:
+			CENC A 0 A_SetReflectiveInvulnerable();
+			CENC AABBCCDDAABBCCDD 3 A_Chase();
+			Goto See;
+		Melee:
+			CENC A 0 A_UnSetReflectiveInvulnerable();
+			CENC E 4 A_PlaySound("cent/sight",CHAN_VOICE);
+			CENC FG 4 A_FaceTarget();
+			CENC H 6 A_CustomMeleeAttack (random(15,35), "MalletHit", "gard/swing", "", 1);
+			CENC I 4 A_DynamicMusic();
+			CENC I 0 A_SetReflectiveInvulnerable();
+			Goto See;
+		Pain:
+			CENC J 6 A_EEPain();
+			CENC J 3 A_DynamicMusic();
+			CENC A 0 A_Jump(192,"See");
+			CENC A 6 A_SetReflectiveInvulnerable();
+			CENC A 12;
+			Goto See;
+		Death.Suck:
+			CENC J 5 A_PlaySound("VacDed",CHAN_BODY);
+			CENC J 2 A_RadiusGive("VacAmmo",128,RGF_PLAYERS,12);
+			Stop;
+		Death:
+			CENC K 6 Bright A_Scream();
+			CENC LMN 6 Bright;
+			CENC O 10 A_NoBlocking();
+			CENC PQRS 7;
+			Stop;
+	}
+}
+
+class CentaurionMaulerFuzzy : CentaurionMauler
+{
+	default
+	{
+		+SHADOW
+		RenderStyle "OptFuzzy";
+		Tag "Centaurion Mauler (Spectral)";
+	}
+}
+
+class NightmareCentaurionMauler : CentaurionMauler
+{
+	// TBC
 }
 
 //PUDDING DOG
