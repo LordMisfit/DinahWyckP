@@ -2855,6 +2855,7 @@ class DeathIncarnate : EECreature
 		Death:
 			TNT1 A 0 
 			{
+				IncarnRegenAttempts = 0;
 				if (health <= ((SpawnHealth() + Stamina) * -1)) return resolvestate("XDeath");
 				int chance = (192 - (user_deathcounter * 24));
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1) chance = (96 - (user_deathcounter * 24));
@@ -2867,6 +2868,7 @@ class DeathIncarnate : EECreature
 		Death.Magic:
 			TNT1 A 0 
 			{
+				IncarnRegenAttempts = 0;
 				if (health <= ((SpawnHealth() + Stamina) * -1)) return resolvestate("XDeath");
 				int chance = (96 - (user_deathcounter * 24));
 				if (Wads.CheckNumForName("EE-STAEONS", Wads.ns_global, -1, true) != -1) chance = (48 - (user_deathcounter * 24));
@@ -2879,6 +2881,7 @@ class DeathIncarnate : EECreature
 		Death.Sigil:
 			TNT1 A 0 
 			{
+				IncarnRegenAttempts = 0;
 				if (health <= ((SpawnHealth() + Stamina) * -1)) return resolvestate("XDeath");
 				if (random(1,256) <= 8) return resolvestate("FakeDeath");
 				return resolvestate(null);
@@ -3002,11 +3005,24 @@ class DeathIncarnate : EECreature
 			INCA Q 0 CanRaise Thing_Raise(0);
 			INCA Q 5
 			{
-				if (random(1,8) <= 3) A_IncarnateFDSpark();
-				if (random(1,12) <= 4) A_IncarnateFDSpark();
-				if (random(1,16) <= 4) A_IncarnateFDSpark();
+				if (IncarnRegenAttempts >= 100)
+				{
+					return resolvestate("RegenFail");
+				}
+				else
+				{
+					if (random(1,8) <= 3) A_IncarnateFDSpark();
+					if (random(1,12) <= 4) A_IncarnateFDSpark();
+					if (random(1,16) <= 4) A_IncarnateFDSpark();
+					IncarnRegenAttempts++;
+				}
+				return resolvestate(null);
 			}
 			loop;
+		RegenFail:
+			INCX Q 0 Bright A_SpawnItemEx("HadesSphere",0,0,32,0,0,0,0,SXF_TRANSFERAMBUSHFLAG | SXF_NOCHECKPOSITION | SXF_TRANSFERSPECIAL,0,tid);
+			INCA Q -1;
+			Stop;
 
 		Death.Massacre:
 		Death.SilentMassacre:
