@@ -617,3 +617,135 @@ class EE_CCards_Actor_BladeTrap2 : EEBaseZSC
 		Super.Tick();
 	}
 }
+
+class EE_CCards_Actor_ShadowClone : Actor
+{
+	Default
+	{
+		+NOINTERACTION;
+		-SOLID;
+		+MISSILE;
+		Renderstyle "Stencil";
+		Stencilcolor "Black";
+		alpha 0.1;
+		obituary "%o's soul was chased away by a shadow.";
+	}
+
+	Array<EE_CCards_ClonePos> positions; 
+
+	states
+	{
+		Spawn:
+			PLAY ABCDABCD 4 A_FadeIn(0.12);
+		Chase:
+			PLAY ABCD 4;
+			loop;
+	}
+
+	int p;
+
+	override void PostBeginPlay()
+	{
+		A_StartSound("corruptioncards/shadowambient", CHAN_AUTO, CHANF_LOOP, 1.0, 1);
+
+		reactiontime = 85;
+
+		positions.Resize(reactiontime);
+
+		if(target)
+		{
+			A_SetScale(target.scale.x, target.scale.y);
+			Actor a = Spawn("EE_CCards_Actor_ShadowCloneFlames");
+			a.target = self;
+		}
+	}
+
+	override void Tick()
+	{
+		if(target)
+		{
+			if(positions[p])
+			{
+				SetOrigin(positions[p].pos, true);
+				angle = positions[p].angle;
+
+				if(GetAge() % 3 == 0 && GetAge() > 35*5)
+				{
+					for(int i; i<players.Size(); i++)
+					{
+						if(players[i].mo && Distance3D(players[i].mo) < 68 && players[i].mo.CountInv("EE_CCards_Actor_ShadowCloneDamaged") == 0)
+						{
+							players[i].mo.DamageMobj(self, self, 12, "CCShadow", DMG_THRUSTLESS);
+							players[i].mo.GiveInventory("EE_CCards_Actor_ShadowCloneDamaged", 1);
+						}
+					}
+				}
+			}
+
+			EE_CCards_ClonePos cp = new ("EE_CCards_ClonePos");
+			cp.pos = target.pos;
+			cp.angle = target.angle;
+			positions[p] = cp;
+			p++;
+
+			if(p > positions.Size() - 1)
+			{
+				p = 0;
+			}
+		}
+		else
+		{
+			Destroy();
+		}
+
+		Super.Tick();
+	}
+}
+
+class EE_CCards_Actor_ShadowCloneDamaged : Powerup
+{
+	Default
+	{
+		powerup.duration 30;
+		tag "Shadow Damage";
+	}
+}
+
+class EE_CCards_Actor_ShadowCloneFlames : Actor
+{
+	Default
+	{
+		Renderstyle "Translucent";
+		translation "CCards_Black";
+		+NOINTERACTION;
+		scale 1.2;
+		alpha 0.4;
+	}
+
+	states
+	{
+		Spawn:
+		C_F4 JKL 2;
+		TNT1 A 0 
+		{
+			bXFLIP = !bXFLIP;
+		}
+		loop;
+	}
+
+	override void Tick()
+	{
+		if(target)
+		{
+			Warp(target, 0,0,0,0,WARPF_INTERPOLATE|WARPF_NOCHECKPOSITION);
+		}
+		Super.Tick();
+	}
+}
+
+class EE_CCards_ClonePos
+{
+	Vector3 pos;
+	int angle;
+}
+
