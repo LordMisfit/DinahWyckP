@@ -3763,6 +3763,7 @@ mixin class MonsterCollider
 
 	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
 	{
+		let globalvars = DDGlobalVariables.Get();
 		actor player = players[0].mo;
 		let MiscItem = PlayerStatItem(player.FindInventory("PlayerStatItem"));
 		double firstdmgfactor = DamageFactor;
@@ -4613,18 +4614,24 @@ mixin class MonsterCollider
 		if (mod == 'Crush' && !inflictor && !source)
 		{
 			double basecrushdmgfact;
-			if (PowerStrength(FindInventory("PowerStrength")) || PowerStrengthDD(FindInventory("PowerStrengthDD")))
+			bool isspecial = false;
+			if (player.CountInv("PlayingAugerZenith") && 
+					(BossBrain(self) || BossBrainNew(self))) isspecial = true;
+			if (!isspecial)
 			{
-				basecrushdmgfact = frandompick(25,33.4,33.4,50,50,50,50,50,50,66.7,66.7,75);
+				if (PowerStrength(FindInventory("PowerStrength")) || PowerStrengthDD(FindInventory("PowerStrengthDD")))
+				{
+					basecrushdmgfact = frandompick(25,33.4,33.4,50,50,50,50,50,50,66.7,66.7,75);
+				}
+				else
+				{
+					basecrushdmgfact = frandompick(75,87.5,87.5,100,100,100,100,100,100,112.5,112.5,125);
+				}
+				damage *= double(basecrushdmgfact / (mass * frandompick(0.25,0.334,0.334,0.5,0.5,0.5,0.5,0.5,0.667,0.667,0.75)));
+				damage *= (basecrushdmgfact * 0.01);
+				if (damage <= (predmginr * 0.334)) damage = (predmginr * 0.334);
+				if (damage >= (predmginr * 3)) damage = (predmginr * 3);
 			}
-			else
-			{
-				basecrushdmgfact = frandompick(75,87.5,87.5,100,100,100,100,100,100,112.5,112.5,125);
-			}
-			damage *= double(basecrushdmgfact / (mass * frandompick(0.25,0.334,0.334,0.5,0.5,0.5,0.5,0.5,0.667,0.667,0.75)));
-			damage *= (basecrushdmgfact * 0.01);
-			if (damage <= (predmginr * 0.334)) damage = (predmginr * 0.334);
-			if (damage >= (predmginr * 3)) damage = (predmginr * 3);
 			
 			if (dydudebug_actordmgdisplays && damage > 0)
 			{
