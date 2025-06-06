@@ -32,6 +32,28 @@ class DD_EventHandler : EventHandler
 		if (Wads.CheckNumForName("EE-BLOOM", Wads.ns_global, -1, true) != -1) BlooM = true;
 		return BlooM;
 	}
+
+	bool A_CheckCCards()
+	{
+		bool CCards = false;
+		if (Wads.CheckNumForName("CCDAILIES", Wads.ns_global, -1, true) != -1) CCards = true;
+		return CCards;
+	}
+	
+	bool A_CCardsCheckHoloSentry(actor victim)
+	{
+		bool isholosentry;
+		int d = Wads.CheckNumForName("CCDAILIES", Wads.ns_global, -1, true);
+		if (victim.bSOLID == false &&
+				victim.bBRIGHT == true &&
+				((victim.alpha == 0.5 && victim.GetRenderStyle() == STYLE_ADD) ||
+				(victim.alpha == 0.0 && victim.GetRenderStyle() == STYLE_NONE)) &&
+				d != -1) 
+		{
+			isholosentry = true;
+		}
+		return isholosentry;
+	}
 	
 	bool A_CheckDDGame()
 	{
@@ -1349,6 +1371,7 @@ class DD_EventHandler : EventHandler
 			bool PlutMap2930Foe = false;
 			bool PlutMap32Foe = false;
 			bool exception = CheckExceptions(spawnee);
+			bool isholosentry = A_CCardsCheckHoloSentry(spawnee);
 			bool isamonster = false;
 			if (spawnee.bISMONSTER) 
 			{
@@ -2938,6 +2961,11 @@ class DD_EventHandler : EventHandler
 		
 		if (spawnee)
 		{
+			bool isholosentry = A_CCardsCheckHoloSentry(spawnee);
+			string targname;
+
+			if (spawnee.target) targname = spawnee.target.GetClassName();
+			
 			if (spawnee.bCOUNTITEM ||
 					Ammo(spawnee) || 
 					Weapon(spawnee) ||
@@ -2962,6 +2990,17 @@ class DD_EventHandler : EventHandler
 					spawnee.bSHOOTABLE) && 
 					!exception) 
 			{
+				if (spawnee.bISMONSTER)
+				{
+					if (isholosentry)
+					{
+						if (spawnee.bCOUNTKILL) 
+						{
+							spawnee.bCOUNTKILL = false;
+							level.total_monsters -= 1;
+						}
+					}
+				}
 				
 				if (!(PlayerPawn(spawnee) ||
 						 ExplosiveBarrel(spawnee) ||
@@ -4420,7 +4459,14 @@ class DD_EventHandler : EventHandler
 				
 				if (playdmgsounds)
 				{
-					if (exex_q3aqchitsounds2 && victim.bISMONSTER && (victim.bCOUNTKILL || specialtype || specialtype2 || DDAFDNPC(victim) || BossBrainNew(victim)) && victim.CountInv("TempNoHitSound") <= 0)
+					if (exex_q3aqchitsounds2 && 
+							victim.bISMONSTER && 
+							(victim.bCOUNTKILL || 
+							specialtype || 
+							specialtype2 || 
+							DDAFDNPC(victim) || 
+							BossBrainNew(victim)) && 
+							victim.CountInv("TempNoHitSound") <= 0)
 					{
 						victim.A_SetInventory("TempNoHitSound",1);
 						
@@ -4797,7 +4843,7 @@ class DD_EventHandler : EventHandler
 			if (waslegendary) skillmult *= frandom(0.334,0.4585);
 			bool candropitems = false;
 			if (specialtype || specialtype2) candropitems = true;
-			if (!victim.bFRIENDLY && (victim.bCOUNTKILL || specialtype|| specialtype2)) candropitems = true;
+			if (!victim.bFRIENDLY && (victim.bCOUNTKILL || specialtype || specialtype2)) candropitems = true;
 			if (PracticeTarget(victim) || 
 					PracticeTarget2(victim) || 
 					DDAFDNPC(victim) || 
@@ -7192,6 +7238,7 @@ class DD_EventHandler : EventHandler
 			EECreature EEC;
 			EEC = EECreature(victim);
 			bool exception = CheckExceptions(victim);
+			bool isholosentry = A_CCardsCheckHoloSentry(victim);
 			
 			bool isCCardsIllusion = false;
 			if (victim)
@@ -7634,6 +7681,8 @@ class DD_EventHandler : EventHandler
 						}
 						EXPGain *= exex_expmultiplier;
 						
+						if (isholosentry) ExpGain *= frandompick(0.125,0.167,0.167,0.167,0.25,0.25,0.25,0.25,0.25,0.33,0.33,0.33,0.5);
+						
 						EECreature EEC;
 						EEC = EECreature(victim);
 						if ((EEC && EEC.expshare >= 0.001) && !(playerkill || allykill)) 
@@ -7685,7 +7734,9 @@ class DD_EventHandler : EventHandler
 								int ExpNew = playera.CountInv("ExpPts");
 								int ExpNeeded = playera.CountInv("ExpPtsNeeded");
 								int PlayerLevel = playera.CountInv("PlayerLevel");
-								if (exex_showexpgains && ExpGain) 
+								if (exex_showexpgains && 
+										ExpGain && 
+										!isholosentry)
 								{
 									Console.Printf("\c[green]+%d EXP! \c[darkgreen][Have: %d / %d (Lvl: %d)] \c[red](Kills: %d)", ExpGain, ExpNew, ExpNeeded, PlayerLevel, Kills);
 									MiscItem.KillComboCount += 1;
@@ -7900,6 +7951,7 @@ class DD_EventHandler : EventHandler
 					
 					// Item Drop Action
 					if (EEC && EEC.user_dontdroprandomstuff) { }
+					else if (isholosentry) { } 
 					else
 					{
 						if (mod != 'Crush' || 
