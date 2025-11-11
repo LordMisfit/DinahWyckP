@@ -4960,418 +4960,420 @@ class DDPlayerPawn : PlayerPawn
 						Pod(inflictor))) A_DynamicMusic(forcedplay:true);
 		}
 		
-		string combatlogmsg = "\c[sapphire]*\c- ";
-		name armorclasstype = "KGArmor";
-		int armdmg = (armoramt - CountInv(armorclasstype));
-		if (armdmg <= 0) armdmg = 0;
-		if (dydudebug_playerdamagemobj && armdmg) Console.Printf("Armor Damage: %d", armdmg);
-		if (armdmg && exex_armordmgsounds && !isCCardsIllusion)
+		if (oldhealth > 0)
 		{
-			A_StopSound(213);
-			if (CountInv(armorclasstype)) A_StartSound("armordamaged",213,CHANF_DEFAULT,1.0,ATTN_NORM);
-															 else A_StartSound("armorbroken",213,CHANF_DEFAULT,1.0,ATTN_NORM);
-		}
-		if (exex_playerdmglog)
-		{
-			if (!isCCardsIllusion)
+			string combatlogmsg = "\c[sapphire]*\c- ";
+			name armorclasstype = "KGArmor";
+			int armdmg = (armoramt - CountInv(armorclasstype));
+			if (armdmg <= 0) armdmg = 0;
+			if (dydudebug_playerdamagemobj && armdmg) Console.Printf("Armor Damage: %d", armdmg);
+			if (armdmg && exex_armordmgsounds && !isCCardsIllusion)
 			{
-				if (ret || armdmg)
+				A_StopSound(213);
+				if (CountInv(armorclasstype)) A_StartSound("armordamaged",213,CHANF_DEFAULT,1.0,ATTN_NORM);
+																 else A_StartSound("armorbroken",213,CHANF_DEFAULT,1.0,ATTN_NORM);
+			}
+			if (exex_playerdmglog)
+			{
+				if (!isCCardsIllusion)
 				{
-					if (armdmg && !ret) combatlogmsg.AppendFormat("\c[darkgreen]%d AP\c- ", armdmg);
-					else if (armdmg && ret) combatlogmsg.AppendFormat("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- ", ret, armdmg);
-					else combatlogmsg.AppendFormat("\c[darkred]%d HP\c- ", ret);
-					if (dydudebug_dmgdiffdebug)
+					if (ret || armdmg)
 					{
-						int dmgdiff = ((ret + armdmg) - firstdmg);
-						if (dmgdiff)
+						if (armdmg && !ret) combatlogmsg.AppendFormat("\c[darkgreen]%d AP\c- ", armdmg);
+						else if (armdmg && ret) combatlogmsg.AppendFormat("\c[darkred]%d HP\c- & \c[darkgreen]%d AP\c- ", ret, armdmg);
+						else combatlogmsg.AppendFormat("\c[darkred]%d HP\c- ", ret);
+						if (dydudebug_dmgdiffdebug)
 						{
-							//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
-							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
+							int dmgdiff = ((ret + armdmg) - firstdmg);
+							if (dmgdiff)
 							{
-								combatlogmsg.AppendFormat("[", dmgdiff);
-								if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
-								if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
-								if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
-								if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
-							}
-							else
-							{
-								combatlogmsg.AppendFormat("[", dmgdiff);
-							}
-							if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
-							{
-								double dmgdiffper;
-								if (firstdmg) 
+								//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
+								if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
 								{
-									dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
-									if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
-									if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
-									if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
-									if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
-																							else combatlogmsg.AppendFormat(")", dmgdiff);
+									combatlogmsg.AppendFormat("[", dmgdiff);
+									if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
+									if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
+									if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
+									if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
 								}
-							}
-							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
-						}
-					}
-					if (mod == 'SigilDrain') combatlogmsg.AppendFormat("of damage drained");
-															else combatlogmsg.AppendFormat("of damage taken");
-				}
-				else
-				{
-					if (isinvuln) 
-					{
-						combatlogmsg.AppendFormat("\c[green]Invulnerable!\c- No Damage \c-");
-					}
-					else
-					{
-						A_StartSound("Player/TookNoDamage",199,CHANF_DEFAULT,(frandom(0.5,0.75) * exex_playernodmgvol),ATTN_NORM);
-						combatlogmsg.AppendFormat("\c[white]No Damage \c-");
-					}
-					if (dydudebug_dmgdiffdebug)
-					{
-						int dmgdiff = ((ret + armdmg) - firstdmg);
-						if (dmgdiff)
-						{
-							//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
-							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
-							{
-								combatlogmsg.AppendFormat("[", dmgdiff);
-								if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
-								if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
-								if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
-								if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
-							}
-							else
-							{
-								combatlogmsg.AppendFormat("[", dmgdiff);
-							}
-							if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
-							{
-								double dmgdiffper;
-								if (firstdmg) 
+								else
 								{
-									dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
-									if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
-									if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
-									if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
-									if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
-																							else combatlogmsg.AppendFormat(")", dmgdiff);
+									combatlogmsg.AppendFormat("[", dmgdiff);
 								}
+								if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
+								{
+									double dmgdiffper;
+									if (firstdmg) 
+									{
+										dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
+										if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
+										if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
+										if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
+										if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
+																								else combatlogmsg.AppendFormat(")", dmgdiff);
+									}
+								}
+								if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
 							}
-							if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
 						}
-					}
-					combatlogmsg.AppendFormat("\c[white]taken\c-");
-				}
-				if (source) // Has a source
-				{
-					combatlogmsg.AppendFormat(" from \c[purple]%s\c-", source.GetTag());
-					if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[purple]'s\c- \c[brick]%s\c-", inflictor.GetTag());
-				}
-				else
-				if (inflictor) // No source, but has an inflictor
-				{
-					if (mod == 'SigilDrain') combatlogmsg.AppendFormat(" by the Sigil!");
-															else combatlogmsg.AppendFormat(" from \c[brick]%s!", inflictor.GetTag());
-				}
-				else // If no source OR inflictor
-				{
-					if (mod == 'Slime') combatlogmsg.AppendFormat(" from a damaging surface");
-					else if (mod == 'Lava' || mod == 'Magma' || mod == 'IceWater' || mod == 'ShockFloor' || tookflrdmg) combatlogmsg.AppendFormat(" from a damaging surface");
-					else if (mod == 'Crush') combatlogmsg.AppendFormat(" from a crushing ceiling");
-					else if (mod == 'Falling') combatlogmsg.AppendFormat(" from falling");
-					else if (mod == 'Drowning') combatlogmsg.AppendFormat(" from drowning");
-					combatlogmsg.AppendFormat("!");
-				}
-				combatlogmsg.AppendFormat(" [%s]", mod);
-				//Console.Printf("armoramt: %d, PlayerArmorIgnoreFactor: %.8f", armoramt, PlayerArmorIgnoreFactor);
-				if ((ret || armdmg) && armoramt && PlayerArmorIgnoreFactor)
-				{
-					double temp = (PlayerArmorIgnoreFactor * 100.0);
-					combatlogmsg.AppendFormat(" \c[orange](");
-					if (flags & DMG_NO_ARMOR)
-					{
-						combatlogmsg.AppendFormat("FULL", temp);
+						if (mod == 'SigilDrain') combatlogmsg.AppendFormat("of damage drained");
+																else combatlogmsg.AppendFormat("of damage taken");
 					}
 					else
 					{
-						combatlogmsg.AppendFormat("%.2f%%", temp);
+						if (isinvuln) 
+						{
+							combatlogmsg.AppendFormat("\c[green]Invulnerable!\c- No Damage \c-");
+						}
+						else
+						{
+							A_StartSound("Player/TookNoDamage",199,CHANF_DEFAULT,(frandom(0.5,0.75) * exex_playernodmgvol),ATTN_NORM);
+							combatlogmsg.AppendFormat("\c[white]No Damage \c-");
+						}
+						if (dydudebug_dmgdiffdebug)
+						{
+							int dmgdiff = ((ret + armdmg) - firstdmg);
+							if (dmgdiff)
+							{
+								//Console.Printf("Dmgdiff: %d, FinalDmg: %d, OrigDmg: %d", dmgdiff, (ret + armdmg), firstdmg);
+								if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2)
+								{
+									combatlogmsg.AppendFormat("[", dmgdiff);
+									if (dmgdiff < 0) combatlogmsg.AppendFormat("\c[lightblue]%d\c-", dmgdiff);
+									if (dmgdiff == 0) combatlogmsg.AppendFormat("0", dmgdiff);
+									if (dmgdiff > 0) combatlogmsg.AppendFormat("\c[brick]+%d\c-", dmgdiff);
+									if (firstdmg) combatlogmsg.AppendFormat(" (", dmgdiff);
+								}
+								else
+								{
+									combatlogmsg.AppendFormat("[", dmgdiff);
+								}
+								if (dydudebug_dmgdiffdebug >= 2 && dydudebug_dmgdiffdebug <= 3 && MiscItem)
+								{
+									double dmgdiffper;
+									if (firstdmg) 
+									{
+										dmgdiffper = ((((ret + armdmg) * 100.0 / firstdmg)) - 100.0);
+										if (dmgdiffper < 0) combatlogmsg.AppendFormat("\c[lightblue]%.2f%%\c-", dmgdiffper);
+										if (dmgdiffper == 0) combatlogmsg.AppendFormat("0%%", dmgdiffper);
+										if (dmgdiffper > 0) combatlogmsg.AppendFormat("\c[brick]+%.2f%%\c-", dmgdiffper);
+										if (dydudebug_dmgdiffdebug >= 3) combatlogmsg.AppendFormat("] ", dmgdiff);
+																								else combatlogmsg.AppendFormat(")", dmgdiff);
+									}
+								}
+								if (dydudebug_dmgdiffdebug >= 1 && dydudebug_dmgdiffdebug <= 2) combatlogmsg.AppendFormat("] ", dmgdiff);
+							}
+						}
+						combatlogmsg.AppendFormat("\c[white]taken\c-");
 					}
-					combatlogmsg.AppendFormat("  armor bypass)\c-");
-				}
-				if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-");
-				if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
-				Console.Printf(combatlogmsg);
-			}
-		}
-		
-		// Interrupt HP Regen For a Bit
-		if (MiscItem && ret > 0)
-		{
-			double regenintfactor = 1.0;
-			if (A_CheckDDGame())
-			{
-				if (TrueGameSkill <= SKILL_VERY_EASY)	regenintfactor = 2.0;
-				if (TrueGameSkill == SKILL_EASY)			regenintfactor = 2.25;
-				if (TrueGameSkill == SKILL_NORMAL)		regenintfactor = 2.5;
-				if (TrueGameSkill == SKILL_HARD)			regenintfactor = 2.75;
-				if (TrueGameSkill >= SKILL_VERY_HARD)	regenintfactor = 3.0;
-			}
-			else
-			{
-				if (TrueGameSkill <= SKILL_VERY_EASY)	regenintfactor = 1.0;
-				if (TrueGameSkill == SKILL_EASY)			regenintfactor = 1.125;
-				if (TrueGameSkill == SKILL_NORMAL)		regenintfactor = 1.25;
-				if (TrueGameSkill == SKILL_HARD)			regenintfactor = 1.375;
-				if (TrueGameSkill >= SKILL_VERY_HARD)	regenintfactor = 1.5;
-			}
-			if (mod == 'Ice' || 
-					mod == 'IceWater' || 
-					mod == 'Chill' || 
-					mod == 'Frost') 
-			{
-				if (tookflrdmg) regenintfactor *= frandompick(1.375,1.5,1.5,1.5,1.5,1.5,1.625);
-									 else regenintfactor *= frandompick(1.1875,1.25,1.25,1.25,1.25,1.25,1.3125);
-			}
-			if (mod == 'Fire' || 
-					mod == 'CCFire' || 
-					mod == 'Flames' || 
-					mod == 'CCardsEyeFire' || 
-					mod == 'Burn' || 
-					mod == 'Inferno' || 
-					mod == 'Flare' || 
-					mod == 'Solar' || 
-					mod == 'Boiling' || 
-					mod == 'Lava' || 
-					mod == 'Magma' ||
-					mod == 'SpecialFire')
-			{
-				if (tookflrdmg) regenintfactor *= frandompick(0.6875,0.75,0.75,0.75,0.75,0.75,0.8125);
-									 else regenintfactor *= frandompick(0.375,0.5,0.5,0.5,0.5,0.5,0.625);
-			}
-			int regendmg = (randompick(9,10,10,11,11,12,13) * ((ret * frandompick(0.875,1.0625)) * regenintfactor));
-			MiscItem.HPRegenBoostTimer -= regendmg;
-			if (MiscItem.HPRegenBoostTimer < (-350 * regenintfactor)) MiscItem.HPRegenBoostTimer = (-350 * regenintfactor);
-			if (dydudebug_playerdamagemobj) Console.Printf("MiscItem.HPRegenBoostTimer: %d, regendmg: %d, regenintfactor: %.8f, dmgfactor: %s, tookflrdmg: %d", MiscItem.HPRegenBoostTimer, regendmg, regenintfactor, mod, tookflrdmg);
-		}
-		
-		// Item/Ikari Point Gains
-		if (CheckIPEnabled() && ret && MiscItem && globalvars && health > 0 && !isCCardsIllusion)
-		{
-			int gain = 0;
-			double factor = 1.00;
-			if ((source && source != self) && (inflictor && inflictor != self)) gain += 1;
-			if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || tookflrdmg || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush')) gain += 1;
-			if ((mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || tookflrdmg || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush') && !inflictor && !source) 
-			{
-				if (MiscItem)
-				{
-					int armortype = 0;
-					if (CountInv("ExpeditionHat")) armortype++;
-					if (CountInv("ClassyRibbon")) armortype++;
-					
-					double basechance = 3.000;
-					if (armortype >= 2) basechance = 1.500;
-					if (armortype == 1) basechance = 2.250;
-					if (armortype <= 0) basechance = 3.000;
-					if (frandom(0.001,3.000) <= (1.0000 + (MiscItem.TruePlayerLevel * 0.025)))
+					if (source) // Has a source
 					{
-						gain += 2;
-						int type = random(1,10);
-						if (armortype >= 2) type = random(1,3);
-						if (armortype == 1) type = random(1,6);
-						if (armortype <= 0) type = random(1,10);
-						if (type <= 1)
-						{
-							factor = (0.10 + (MiscItem.TruePlayerLevel * 0.04));
-							if (armortype >= 2) { if (factor > 2.0) factor = 2.0; }
-							else if (armortype == 1) { if (factor > 1.5) factor = 1.5; }
-							else if (armortype <= 0) { if (factor >= 1.25) factor = 1.25; }
-						}
-						else
-						if (type >= 2 && type <= 3)
-						{
-							factor = (0.05 + (MiscItem.TruePlayerLevel * 0.02));
-							if (armortype >= 2) { if (factor > 1.5) factor = 1.5; }
-							else if (armortype == 1) { if (factor > 1.25) factor = 1.25; }
-							else if (armortype <= 0) { if (factor >= 1.00) factor = 1.00; }
-							if (factor > 1.00) factor = 1.00;
-						}
-						else
-						if (type >= 4 && type <= 6)
-						{
-							factor = (0.025 + (MiscItem.TruePlayerLevel * 0.01));
-							if (armortype >= 2) { if (factor > 1.25) factor = 1.25; }
-							else if (armortype == 1) { if (factor > 1.0) factor = 1.0; }
-							else if (armortype <= 0) { if (factor >= 0.5) factor = 0.5; }
-						}
-						else
-						{
-							factor = (0.0125 + (MiscItem.TruePlayerLevel * 0.005));
-							if (armortype >= 2) { if (factor > 1.0) factor = 1.0; }
-							else if (armortype == 1) { if (factor > 0.5) factor = 0.5; }
-							else if (armortype <= 0) { if (factor >= 0.25) factor = 0.25; }
-						}
+						combatlogmsg.AppendFormat(" from \c[purple]%s\c-", source.GetTag());
+						if (inflictor && inflictor != source) combatlogmsg.AppendFormat("\c[purple]'s\c- \c[brick]%s\c-", inflictor.GetTag());
 					}
 					else
+					if (inflictor) // No source, but has an inflictor
 					{
-						gain -= 1;
+						if (mod == 'SigilDrain') combatlogmsg.AppendFormat(" by the Sigil!");
+																else combatlogmsg.AppendFormat(" from \c[brick]%s!", inflictor.GetTag());
 					}
-				}
-				else gain -= 1;
-			}
-			//Console.Printf("IP Gain: %d", gain);
-			if (gain > 0 && MiscItem.IPNoGainTimer <= 0 && !MiscItem.HasHarmonicAnger)
-			{
-				double base;
-				// The mod's first and original formula
-				if (exex_ikaripointscalctype <= 0)
-				{
-					base = ret * 100.0 / MiscItem.MaxHealthTrue;
-					if (oldhealthratio == 0) base *= 1.0;
-					if (oldhealthratio == 1) base *= 1.125;
-					if (oldhealthratio == 2) base *= 1.25;
-					if (oldhealthratio == 3) base *= 1.5;
-					if (oldhealthratio == 4) base *= 2.25;
-					if (oldhealth > 1 && health == 1) base *= 3.25;
-					if (MiscItem.PlayerLUCK) base *= (0.125 + (ActualLevel * 0.00125) + (random(1,MiscItem.PlayerLUCK) * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
-															else base *= (0.125 + (ActualLevel * 0.00125));
-					
-				}
-				// The more Lufia II equse formula
-				if (exex_ikaripointscalctype >= 0)
-				{
-					base = ret * 100.0 / oldhealth; // % of remaining HP removed
-					if (base >= 0.001)
+					else // If no source OR inflictor
 					{
-						if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
-						if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
-						if (base >= 65.001 && base <= 75.000) base *= 0.646154;
-						if (base >= 75.001 && base <= 85.000) base *= 0.76; 
-						if (base >= 85.001 && base <= 90.000) base *= 0.90; 
-						if (base >= 90.001 && base <= 100.000) base *= 1.00; 
-						if (base >= 100.001) base *= 1.25;
-						if (oldhealth > 1 && health == 1) base += MiscItem.MaxItemPoints;
+						if (mod == 'Slime') combatlogmsg.AppendFormat(" from a damaging surface");
+						else if (mod == 'Lava' || mod == 'Magma' || mod == 'IceWater' || mod == 'ShockFloor' || tookflrdmg) combatlogmsg.AppendFormat(" from a damaging surface");
+						else if (mod == 'Crush') combatlogmsg.AppendFormat(" from a crushing ceiling");
+						else if (mod == 'Falling') combatlogmsg.AppendFormat(" from falling");
+						else if (mod == 'Drowning') combatlogmsg.AppendFormat(" from drowning");
+						combatlogmsg.AppendFormat("!");
 					}
-				}
-				nm = "CCards_Actor_AcidBlood"; extracheck = nm;
-				if (infl == extracheck || sour == extracheck) base *= frandompick(1.375,1.5,1.5,1.5,1.5,1.5,1.625);
-				nm = "CCards_Actor_HighVoltageZapp"; extracheck = nm;
-				if (infl == extracheck || sour == extracheck) base *= frandompick(1.5625,1.75,1.75,1.75,1.75,1.75,1.9375);
-				nm = "CCards_Actor_ThrownCorpseHitbox"; extracheck = nm;
-				if (infl == extracheck || sour == extracheck) base *= frandompick(1.1875,1.25,1.25,1.25,1.25,1.25,1.3125);
-				if (mod == 'SigilDrain')
-				{
-					base *= frandompick(0.2,0.25,0.25,0.25,0.25,0.25,0.334);
-				}
-				if (DDOrigCreature(source) || DDOrigCreature(inflictor))
-				{
-					base *= frandompick(1.667,2.0,2.0,2.0,2.0,2.5,2.5,2.5,2.5,3);
-				}
-				if (DDOrigBoss(source) || DDOrigBoss(inflictor))
-				{
-					base *= (frandompick(1.667,2.0,2.0,2.0,2.0,2.5,2.5,2.5,2.5,3) * frandompick(1.5,2.0));
-				}
-				double basef = base;
-				if (SigilDrain)
-				{
-					base *= (1.0 / frandompick(1.5,1.75,1.75,2,2,2,2.25,2.25,2.5));
-					basef *= (0.334 / frandompick(1.5,1.75,1.75,2,2,2,2.25,2.25,2.5));
-				}
-				if (flags & DMG_CANTKILL) 
-				{
-					base *= 0.03125;
-					basef *= 0;
-				}
-				if (gain >= 2) 
-				{
-					base *= factor;
-					basef *= factor;
-				}
-				A_AddIP(base, basef, true, true, 0);
-			}
-		}
-		
-		if (ret)
-		{
-			int damagetakefactor = ret * 100 / MiscItem.MaxHealthTrue;
-			if (damagetakefactor < 1) damagetakefactor = 1;
-			if (MiscItem)
-			{
-				MiscItem.HPHUDShakeType = 1;
-				if (damagetakefactor >= 10) MiscItem.HPHUDShakeType = 2;
-				if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
-				if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
-			}
-			player.damagecount -= ret;
-			if (player.damagecount < 0) player.damagecount = 0;
-			player.damagecount += damagetakefactor;
-			if (player.damagecount > 100) player.damagecount = 100;
-			if (dydudebug_countdisplays) Console.Printf("player.damagecount: %d, damagetakefactor: %d, dmg: %d / %d", player.damagecount, damagetakefactor, ret, MiscItem.MaxHealthTrue);
-		}
-		
-		if (armdmg && armortier)
-		{
-			int armmax;
-			if (MiscItem)
-			{
-				if (armortier == 1) armmax = MiscItem.ArmorItemMax1;
-				if (armortier == 2) armmax = MiscItem.ArmorItemMax2;
-				if (armortier == 3) armmax = MiscItem.ArmorItemMax3;
-				if (armortier == 4) armmax = MiscItem.ArmorItemMax4;
-			}
-			if (armmax > 0)
-			{
-				int damagetakefactor = armdmg * 100 / armmax;
-				if (MiscItem)
-				{
-					MiscItem.APHUDShakeType = 1;
-					if (damagetakefactor >= 10) MiscItem.APHUDShakeType = 2;
-					if (damagetakefactor >= 50) MiscItem.APHUDShakeType = 3;
-					if (damagetakefactor >= 100) MiscItem.APHUDShakeType = 4;
+					combatlogmsg.AppendFormat(" [%s]", mod);
+					//Console.Printf("armoramt: %d, PlayerArmorIgnoreFactor: %.8f", armoramt, PlayerArmorIgnoreFactor);
+					if ((ret || armdmg) && armoramt && PlayerArmorIgnoreFactor)
+					{
+						double temp = (PlayerArmorIgnoreFactor * 100.0);
+						combatlogmsg.AppendFormat(" \c[orange](");
+						if (flags & DMG_NO_ARMOR)
+						{
+							combatlogmsg.AppendFormat("FULL", temp);
+						}
+						else
+						{
+							combatlogmsg.AppendFormat("%.2f%%", temp);
+						}
+						combatlogmsg.AppendFormat("  armor bypass)\c-");
+					}
+					if (flags & DMG_EXPLOSION) combatlogmsg.AppendFormat(" \c[brick][AOE]\c-");
+					if (dydudebug_showgametic) combatlogmsg.AppendFormat(" \c[green][tic: %d]\c-", gametic);
+					Console.Printf(combatlogmsg);
 				}
 			}
-		}
-		
-		A_LossHUD(ret, 0, true);
-		A_LossHUD(armdmg, 1, true);
-		
-		PlayerArmorIgnoreFactor = 0.00;
-		PlayerDefenseIgnoreFactor = 0.00;
-		
-		
-		int dmgindtype = -1;
-		let DMGIND = EEDHIMonitor(FindInventory("EEDHIMonitor"));
-		if (DMGIND)
-		{
-			if (CountInv("EvadeAnAttack")) dmgindtype = 5;
-			else
-			if (playtooktsadamage) 
-			{
-				dmgindtype = 1;
-				playtooktsadamage = 0;
-			}
-			else
-			if (playabsorbtsadamage) 
-			{
-				dmgindtype = 4;
-				playabsorbtsadamage = 0;
-			}
-			else if (ret <= 0)
-			{
-				if (armdmg) dmgindtype = 3;
-							 else dmgindtype = 2;
-			}
-			else dmgindtype = 0;
-			if (dydudebug_playerdmgindicators) Console.Printf("dmgindtype: %d", dmgindtype);
 			
-			if (dmgindtype >= 0) DMGIND.DmgIndTrigger(1, inflictor, source, dmgindtype);
-		}
-		else
-		{
-			if (playtooktsadamage) playtooktsadamage = 0;
-			if (playabsorbtsadamage) playabsorbtsadamage = 0;
+			// Interrupt HP Regen For a Bit
+			if (MiscItem && ret > 0)
+			{
+				double regenintfactor = 1.0;
+				if (A_CheckDDGame())
+				{
+					if (TrueGameSkill <= SKILL_VERY_EASY)	regenintfactor = 2.0;
+					if (TrueGameSkill == SKILL_EASY)			regenintfactor = 2.25;
+					if (TrueGameSkill == SKILL_NORMAL)		regenintfactor = 2.5;
+					if (TrueGameSkill == SKILL_HARD)			regenintfactor = 2.75;
+					if (TrueGameSkill >= SKILL_VERY_HARD)	regenintfactor = 3.0;
+				}
+				else
+				{
+					if (TrueGameSkill <= SKILL_VERY_EASY)	regenintfactor = 1.0;
+					if (TrueGameSkill == SKILL_EASY)			regenintfactor = 1.125;
+					if (TrueGameSkill == SKILL_NORMAL)		regenintfactor = 1.25;
+					if (TrueGameSkill == SKILL_HARD)			regenintfactor = 1.375;
+					if (TrueGameSkill >= SKILL_VERY_HARD)	regenintfactor = 1.5;
+				}
+				if (mod == 'Ice' || 
+						mod == 'IceWater' || 
+						mod == 'Chill' || 
+						mod == 'Frost') 
+				{
+					if (tookflrdmg) regenintfactor *= frandompick(1.375,1.5,1.5,1.5,1.5,1.5,1.625);
+										 else regenintfactor *= frandompick(1.1875,1.25,1.25,1.25,1.25,1.25,1.3125);
+				}
+				if (mod == 'Fire' || 
+						mod == 'CCFire' || 
+						mod == 'Flames' || 
+						mod == 'CCardsEyeFire' || 
+						mod == 'Burn' || 
+						mod == 'Inferno' || 
+						mod == 'Flare' || 
+						mod == 'Solar' || 
+						mod == 'Boiling' || 
+						mod == 'Lava' || 
+						mod == 'Magma' ||
+						mod == 'SpecialFire')
+				{
+					if (tookflrdmg) regenintfactor *= frandompick(0.6875,0.75,0.75,0.75,0.75,0.75,0.8125);
+										 else regenintfactor *= frandompick(0.375,0.5,0.5,0.5,0.5,0.5,0.625);
+				}
+				int regendmg = (randompick(9,10,10,11,11,12,13) * ((ret * frandompick(0.875,1.0625)) * regenintfactor));
+				MiscItem.HPRegenBoostTimer -= regendmg;
+				if (MiscItem.HPRegenBoostTimer < (-350 * regenintfactor)) MiscItem.HPRegenBoostTimer = (-350 * regenintfactor);
+				if (dydudebug_playerdamagemobj) Console.Printf("MiscItem.HPRegenBoostTimer: %d, regendmg: %d, regenintfactor: %.8f, dmgfactor: %s, tookflrdmg: %d", MiscItem.HPRegenBoostTimer, regendmg, regenintfactor, mod, tookflrdmg);
+			}
+			
+			// Item/Ikari Point Gains
+			if (CheckIPEnabled() && ret && MiscItem && globalvars && health > 0 && !isCCardsIllusion)
+			{
+				int gain = 0;
+				double factor = 1.00;
+				if ((source && source != self) && (inflictor && inflictor != self)) gain += 1;
+				if (!(mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || tookflrdmg || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush')) gain += 1;
+				if ((mod == 'Slime' || mod == 'Lava' || mod == 'Magma' || tookflrdmg || mod == 'Drowning' || mod == 'Falling' || mod == 'Crush') && !inflictor && !source) 
+				{
+					if (MiscItem)
+					{
+						int armortype = 0;
+						if (CountInv("ExpeditionHat")) armortype++;
+						if (CountInv("ClassyRibbon")) armortype++;
+						
+						double basechance = 3.000;
+						if (armortype >= 2) basechance = 1.500;
+						if (armortype == 1) basechance = 2.250;
+						if (armortype <= 0) basechance = 3.000;
+						if (frandom(0.001,3.000) <= (1.0000 + (MiscItem.TruePlayerLevel * 0.025)))
+						{
+							gain += 2;
+							int type = random(1,10);
+							if (armortype >= 2) type = random(1,3);
+							if (armortype == 1) type = random(1,6);
+							if (armortype <= 0) type = random(1,10);
+							if (type <= 1)
+							{
+								factor = (0.10 + (MiscItem.TruePlayerLevel * 0.04));
+								if (armortype >= 2) { if (factor > 2.0) factor = 2.0; }
+								else if (armortype == 1) { if (factor > 1.5) factor = 1.5; }
+								else if (armortype <= 0) { if (factor >= 1.25) factor = 1.25; }
+							}
+							else
+							if (type >= 2 && type <= 3)
+							{
+								factor = (0.05 + (MiscItem.TruePlayerLevel * 0.02));
+								if (armortype >= 2) { if (factor > 1.5) factor = 1.5; }
+								else if (armortype == 1) { if (factor > 1.25) factor = 1.25; }
+								else if (armortype <= 0) { if (factor >= 1.00) factor = 1.00; }
+								if (factor > 1.00) factor = 1.00;
+							}
+							else
+							if (type >= 4 && type <= 6)
+							{
+								factor = (0.025 + (MiscItem.TruePlayerLevel * 0.01));
+								if (armortype >= 2) { if (factor > 1.25) factor = 1.25; }
+								else if (armortype == 1) { if (factor > 1.0) factor = 1.0; }
+								else if (armortype <= 0) { if (factor >= 0.5) factor = 0.5; }
+							}
+							else
+							{
+								factor = (0.0125 + (MiscItem.TruePlayerLevel * 0.005));
+								if (armortype >= 2) { if (factor > 1.0) factor = 1.0; }
+								else if (armortype == 1) { if (factor > 0.5) factor = 0.5; }
+								else if (armortype <= 0) { if (factor >= 0.25) factor = 0.25; }
+							}
+						}
+						else
+						{
+							gain -= 1;
+						}
+					}
+					else gain -= 1;
+				}
+				//Console.Printf("IP Gain: %d", gain);
+				if (gain > 0 && MiscItem.IPNoGainTimer <= 0 && !MiscItem.HasHarmonicAnger)
+				{
+					double base;
+					// The mod's first and original formula
+					if (exex_ikaripointscalctype <= 0)
+					{
+						base = ret * 100.0 / MiscItem.MaxHealthTrue;
+						if (oldhealthratio == 0) base *= 1.0;
+						if (oldhealthratio == 1) base *= 1.125;
+						if (oldhealthratio == 2) base *= 1.25;
+						if (oldhealthratio == 3) base *= 1.5;
+						if (oldhealthratio == 4) base *= 2.25;
+						if (oldhealth > 1 && health == 1) base *= 3.25;
+						if (MiscItem.PlayerLUCK) base *= (0.125 + (ActualLevel * 0.00125) + (random(1,MiscItem.PlayerLUCK) * frandompick(0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.0005,0.001,0.001,0.001,0.001,0.001,0.001,0.002,0.002,0.002,0.002,0.003,0.003)));
+																else base *= (0.125 + (ActualLevel * 0.00125));
+						
+					}
+					// The more Lufia II equse formula
+					if (exex_ikaripointscalctype >= 0)
+					{
+						base = ret * 100.0 / oldhealth; // % of remaining HP removed
+						if (base >= 0.001)
+						{
+							if (base >= 0.001 && base <= 50.000) base *= 0.50; // <= 50% equals half of the percent in IP points given [up to 25%]
+							if (base >= 50.001 && base <= 65.000) base *= 0.558077; 
+							if (base >= 65.001 && base <= 75.000) base *= 0.646154;
+							if (base >= 75.001 && base <= 85.000) base *= 0.76; 
+							if (base >= 85.001 && base <= 90.000) base *= 0.90; 
+							if (base >= 90.001 && base <= 100.000) base *= 1.00; 
+							if (base >= 100.001) base *= 1.25;
+							if (oldhealth > 1 && health == 1) base += MiscItem.MaxItemPoints;
+						}
+					}
+					nm = "CCards_Actor_AcidBlood"; extracheck = nm;
+					if (infl == extracheck || sour == extracheck) base *= frandompick(1.375,1.5,1.5,1.5,1.5,1.5,1.625);
+					nm = "CCards_Actor_HighVoltageZapp"; extracheck = nm;
+					if (infl == extracheck || sour == extracheck) base *= frandompick(1.5625,1.75,1.75,1.75,1.75,1.75,1.9375);
+					nm = "CCards_Actor_ThrownCorpseHitbox"; extracheck = nm;
+					if (infl == extracheck || sour == extracheck) base *= frandompick(1.1875,1.25,1.25,1.25,1.25,1.25,1.3125);
+					if (mod == 'SigilDrain')
+					{
+						base *= frandompick(0.2,0.25,0.25,0.25,0.25,0.25,0.334);
+					}
+					if (DDOrigCreature(source) || DDOrigCreature(inflictor))
+					{
+						base *= frandompick(1.667,2.0,2.0,2.0,2.0,2.5,2.5,2.5,2.5,3);
+					}
+					if (DDOrigBoss(source) || DDOrigBoss(inflictor))
+					{
+						base *= (frandompick(1.667,2.0,2.0,2.0,2.0,2.5,2.5,2.5,2.5,3) * frandompick(1.5,2.0));
+					}
+					double basef = base;
+					if (SigilDrain)
+					{
+						base *= (1.0 / frandompick(1.5,1.75,1.75,2,2,2,2.25,2.25,2.5));
+						basef *= (0.334 / frandompick(1.5,1.75,1.75,2,2,2,2.25,2.25,2.5));
+					}
+					if (flags & DMG_CANTKILL) 
+					{
+						base *= 0.03125;
+						basef *= 0;
+					}
+					if (gain >= 2) 
+					{
+						base *= factor;
+						basef *= factor;
+					}
+					A_AddIP(base, basef, true, true, 0);
+				}
+			}
+			
+			if (ret)
+			{
+				int damagetakefactor = ret * 100 / MiscItem.MaxHealthTrue;
+				if (damagetakefactor < 1) damagetakefactor = 1;
+				if (MiscItem)
+				{
+					MiscItem.HPHUDShakeType = 1;
+					if (damagetakefactor >= 10) MiscItem.HPHUDShakeType = 2;
+					if (damagetakefactor >= 50) MiscItem.HPHUDShakeType = 3;
+					if (damagetakefactor >= 100) MiscItem.HPHUDShakeType = 4;
+				}
+				player.damagecount -= ret;
+				if (player.damagecount < 0) player.damagecount = 0;
+				player.damagecount += damagetakefactor;
+				if (player.damagecount > 100) player.damagecount = 100;
+				if (dydudebug_countdisplays) Console.Printf("player.damagecount: %d, damagetakefactor: %d, dmg: %d / %d", player.damagecount, damagetakefactor, ret, MiscItem.MaxHealthTrue);
+			}
+			
+			if (armdmg && armortier)
+			{
+				int armmax;
+				if (MiscItem)
+				{
+					if (armortier == 1) armmax = MiscItem.ArmorItemMax1;
+					if (armortier == 2) armmax = MiscItem.ArmorItemMax2;
+					if (armortier == 3) armmax = MiscItem.ArmorItemMax3;
+					if (armortier == 4) armmax = MiscItem.ArmorItemMax4;
+				}
+				if (armmax > 0)
+				{
+					int damagetakefactor = armdmg * 100 / armmax;
+					if (MiscItem)
+					{
+						MiscItem.APHUDShakeType = 1;
+						if (damagetakefactor >= 10) MiscItem.APHUDShakeType = 2;
+						if (damagetakefactor >= 50) MiscItem.APHUDShakeType = 3;
+						if (damagetakefactor >= 100) MiscItem.APHUDShakeType = 4;
+					}
+				}
+			}
+			
+			A_LossHUD(ret, 0, true);
+			A_LossHUD(armdmg, 1, true);
+			
+			PlayerArmorIgnoreFactor = 0.00;
+			PlayerDefenseIgnoreFactor = 0.00;
+			
+			int dmgindtype = -1;
+			let DMGIND = EEDHIMonitor(FindInventory("EEDHIMonitor"));
+			if (DMGIND)
+			{
+				if (CountInv("EvadeAnAttack")) dmgindtype = 5;
+				else
+				if (playtooktsadamage) 
+				{
+					dmgindtype = 1;
+					playtooktsadamage = 0;
+				}
+				else
+				if (playabsorbtsadamage) 
+				{
+					dmgindtype = 4;
+					playabsorbtsadamage = 0;
+				}
+				else if (ret <= 0)
+				{
+					if (armdmg) dmgindtype = 3;
+								 else dmgindtype = 2;
+				}
+				else dmgindtype = 0;
+				if (dydudebug_playerdmgindicators) Console.Printf("dmgindtype: %d", dmgindtype);
+				
+				if (dmgindtype >= 0) DMGIND.DmgIndTrigger(1, inflictor, source, dmgindtype);
+			}
+			else
+			{
+				if (playtooktsadamage) playtooktsadamage = 0;
+				if (playabsorbtsadamage) playabsorbtsadamage = 0;
+			}
 		}
 		return ret;
 	}
